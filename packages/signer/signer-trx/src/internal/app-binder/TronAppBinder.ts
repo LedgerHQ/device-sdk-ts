@@ -9,11 +9,13 @@ import { inject, injectable } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
+import { type GetECDHSecretDAReturnType } from "@api/app-binder/GetECDHSecretDeviceActionTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTransactionHashDAReturnType } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
+import { GetECDHSecretCommand } from "@internal/app-binder/command/GetECDHSecretCommand";
 import { SignTransactionHashCommand } from "@internal/app-binder/command/SignTransactionHashCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { SignPersonalMessageTask } from "@internal/app-binder/task/SignPersonalMessageTask";
@@ -64,6 +66,27 @@ export class TronAppBinder {
               derivationPath: args.derivationPath,
               transaction: args.transaction,
             }).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          skipOpenApp: args.skipOpenApp ?? false,
+        },
+      }),
+    });
+  }
+
+  getECDHSecret(args: {
+    derivationPath: string;
+    publicKey: Uint8Array;
+    skipOpenApp?: boolean;
+  }): GetECDHSecretDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new GetECDHSecretCommand({
+            derivationPath: args.derivationPath,
+            publicKey: args.publicKey,
+          }),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,

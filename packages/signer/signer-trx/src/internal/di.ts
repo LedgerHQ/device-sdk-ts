@@ -8,6 +8,7 @@ import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule
 import { externalTypes } from "@internal/externalTypes";
 import { addressModuleFactory } from "@internal/use-cases/address/di/addressModule";
 import { appConfigurationModuleFactory } from "@internal/use-cases/app-configuration/di/appConfigurationModule";
+import { ecdhModuleFactory } from "@internal/use-cases/ecdh/di/ecdhModule";
 import { messageModuleFactory } from "@internal/use-cases/message/di/messageModule";
 import { transactionModuleFactory } from "@internal/use-cases/transaction/di/transactionModule";
 
@@ -30,6 +31,7 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
     transactionModuleFactory(),
     messageModuleFactory(),
     appConfigurationModuleFactory(),
+    ecdhModuleFactory(),
   );
 
   return container;

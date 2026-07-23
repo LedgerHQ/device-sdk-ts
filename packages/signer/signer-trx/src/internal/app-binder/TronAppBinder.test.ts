@@ -20,6 +20,11 @@ import {
   type GetAppConfigurationDAOutput,
 } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import {
+  type GetECDHSecretDAError,
+  type GetECDHSecretDAIntermediateValue,
+  type GetECDHSecretDAOutput,
+} from "@api/app-binder/GetECDHSecretDeviceActionTypes";
+import {
   type SignPersonalMessageDAError,
   type SignPersonalMessageDAIntermediateValue,
   type SignPersonalMessageDAOutput,
@@ -36,6 +41,7 @@ import {
 } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
+import { GetECDHSecretCommand } from "@internal/app-binder/command/GetECDHSecretCommand";
 import { SignTransactionHashCommand } from "@internal/app-binder/command/SignTransactionHashCommand";
 import { type TronAppCommandError } from "@internal/app-binder/command/utils/tronApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
@@ -550,6 +556,110 @@ describe("TronAppBinder", () => {
           }),
         }),
       );
+    });
+  });
+
+  describe("getECDHSecret", () => {
+    const derivationPath = "44'/195'/0'/0/0";
+    const publicKey = new Uint8Array(65).fill(0x04);
+
+    it("should return the shared secret", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const output: GetECDHSecretDAOutput = new Uint8Array(65).fill(0xcd);
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output,
+            } as DeviceActionState<
+              GetECDHSecretDAOutput,
+              GetECDHSecretDAError,
+              GetECDHSecretDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        const { observable } = binder.getECDHSecret({
+          derivationPath,
+          publicKey,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          GetECDHSecretDAOutput,
+          GetECDHSecretDAError,
+          GetECDHSecretDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: reject,
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                { status: DeviceActionStatus.Completed, output },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    describe("calls executeDeviceAction with the correct params", () => {
+      it("requires the SignTransaction interaction", () => {
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        binder.getECDHSecret({ derivationPath, publicKey, skipOpenApp: true });
+
+        // THEN
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sessionId: "sessionId",
+            deviceAction: new SendCommandInAppDeviceAction({
+              input: {
+                command: new GetECDHSecretCommand({
+                  derivationPath,
+                  publicKey,
+                }),
+                appName: APP_NAME,
+                requiredUserInteraction:
+                  UserInteractionRequired.SignTransaction,
+                skipOpenApp: true,
+              },
+            }),
+          }),
+        );
+      });
+
+      it("defaults skipOpenApp to false", () => {
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        binder.getECDHSecret({ derivationPath, publicKey });
+
+        // THEN
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            deviceAction: new SendCommandInAppDeviceAction({
+              input: {
+                command: new GetECDHSecretCommand({
+                  derivationPath,
+                  publicKey,
+                }),
+                appName: APP_NAME,
+                requiredUserInteraction:
+                  UserInteractionRequired.SignTransaction,
+                skipOpenApp: false,
+              },
+            }),
+          }),
+        );
+      });
     });
   });
 });
