@@ -92,8 +92,37 @@ export const sampleOrchardAction = (): PcztOrchardAction => ({
   rcv: bytes(32, 0x0c),
 });
 
+/**
+ * A dummy padding spend (spend value 0). The PCZT IoFinalizer self-signs these
+ * host-side, so the device must NOT be asked to sign them.
+ */
+export const dummyOrchardAction = (): PcztOrchardAction => ({
+  ...sampleOrchardAction(),
+  spendValue: 0n,
+  value: 0n,
+});
+
 export const sampleOrchardBundle = (): PcztOrchardBundle => ({
   actions: [sampleOrchardAction()],
+  flags: 2,
+  valueBalance: 0n,
+  anchor: bytes(32, 0x0d),
+});
+
+/**
+ * Orchard bundle with padding: dummy, real, dummy. Only the real spend
+ * (action index 1) is device-signed.
+ */
+export const mixedDummyOrchardBundle = (): PcztOrchardBundle => ({
+  actions: [dummyOrchardAction(), sampleOrchardAction(), dummyOrchardAction()],
+  flags: 2,
+  valueBalance: 0n,
+  anchor: bytes(32, 0x0d),
+});
+
+/** Orchard bundle made only of dummy padding spends (no device signature). */
+export const allDummyOrchardBundle = (): PcztOrchardBundle => ({
+  actions: [dummyOrchardAction(), dummyOrchardAction()],
   flags: 2,
   valueBalance: 0n,
   anchor: bytes(32, 0x0d),

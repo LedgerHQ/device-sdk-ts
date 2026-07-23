@@ -15,6 +15,8 @@ import { INS_PCZT_SIGN_ORCHARD } from "@internal/app-binder/command/SignPcztOrch
 import { INS_PCZT_SIGN_TRANSPARENT } from "@internal/app-binder/command/SignPcztTransparentCommand";
 import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
+  allDummyOrchardBundle,
+  mixedDummyOrchardBundle,
   privateToPrivateTransaction,
   privateToPublicTransaction,
   publicToPrivateTransaction,
@@ -156,6 +158,43 @@ describe("SignPcztTransactionTask", () => {
       }
     },
   );
+
+  it("signs only real spends and skips dummy padding actions", async () => {
+    // Bundle order: dummy (0), real (1), dummy (2). Only index 1 is device-signed.
+    const result = await run({
+      ...privateToPrivateTransaction(),
+      orchardBundle: mixedDummyOrchardBundle(),
+    });
+
+    expect(isSuccessDmkResult(result)).toBe(true);
+    if (isSuccessDmkResult(result)) {
+      expect(result.data.orchard).toHaveLength(1);
+      // spendAuthSig is keyed on the signed action's index (P2) by the mock.
+      expect(result.data.orchard[0]!.spendAuthSig).toEqual(
+        new Uint8Array(64).fill(1),
+      );
+    }
+    // All three actions are still streamed, but only the real spend is signed.
+    expect(
+      calls.filter((c) => c.ins === INS_PCZT_ORCHARD_ACTION).length,
+    ).toBeGreaterThan(0);
+    const orchardSigns = calls.filter((c) => c.ins === INS_PCZT_SIGN_ORCHARD);
+    expect(orchardSigns).toHaveLength(1);
+    expect(orchardSigns[0]!.p2).toBe(1);
+  });
+
+  it("requests no Orchard signature when every action is dummy padding", async () => {
+    const result = await run({
+      ...privateToPrivateTransaction(),
+      orchardBundle: allDummyOrchardBundle(),
+    });
+
+    expect(isSuccessDmkResult(result)).toBe(true);
+    if (isSuccessDmkResult(result)) {
+      expect(result.data.orchard).toHaveLength(0);
+    }
+    expect(calls.some((c) => c.ins === INS_PCZT_SIGN_ORCHARD)).toBe(false);
+  });
 
   it("aborts and surfaces the error when a bundle command fails", async () => {
     vi.mocked(apiMock.sendCommand).mockImplementation((command: unknown) => {
