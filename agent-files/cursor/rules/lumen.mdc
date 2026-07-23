@@ -1,0 +1,124 @@
+---
+name: lumen
+description: How to use the Lumen design system (@ledgerhq/lumen-ui-react + @ledgerhq/lumen-design-core, Tailwind v4) in this repo. Use when adding/editing Lumen components, importing Lumen icons/tokens, touching apps/sample home device buttons, tailwind.config.ts, src/styles/lumen.css, or postcss.config.js. Source: node_modules/@ledgerhq/lumen-ui-react/ai-rules/RULES.md.
+alwaysApply: false
+---
+
+## Project context (READ FIRST)
+
+Lumen is **not** the primary UI stack of this monorepo. It coexists with the
+legacy stack and is currently used in a **very limited scope**:
+
+- `apps/sample` still uses `@ledgerhq/react-ui` + `styled-components` for
+  everything. Do **not** migrate other components to Lumen unless explicitly
+  asked.
+- The **only** Lumen usage today is the two device-selection buttons on the
+  home page: `apps/sample/src/components/ConnectDevice/ConnectDeviceButtons.tsx`.
+- `packages/devtools/**` is a separate package and does not use Lumen.
+
+### How Lumen is wired in `apps/sample` (do not break this)
+
+- **Tailwind v4** (`tailwindcss@^4`, `@tailwindcss/postcss`). Config in
+  `apps/sample/tailwind.config.ts` uses `ledgerLivePreset` from
+  `@ledgerhq/lumen-design-core`.
+- `apps/sample/src/styles/lumen.css` deliberately **does NOT** `@import "tailwindcss";`
+  (that would pull Tailwind preflight, a global reset that breaks react-ui).
+  Instead it imports only the theme layer + **utilities UNLAYERED**.
+  - Utilities must stay unlayered: react-ui ships an unlayered global reset
+    (`button { color: inherit }`), and per the CSS cascade unlayered rules beat
+    layered ones. Layered utilities would be overridden (white-on-white text).
+- Dark mode: wrap Lumen components in an element with `className="dark"` (the app
+  is dark-themed via react-ui). White primary button = `appearance="base"` (maps
+  to `bg-interactive` = white in dark mode).
+- Import the type-safe barrel: `import { Button } from "@ledgerhq/lumen-ui-react"`.
+
+---
+
+## Lumen UI React — usage rules
+
+### Setup Requirements
+
+- Import components from `@ledgerhq/lumen-ui-react`
+- Import icons from `@ledgerhq/lumen-ui-react/symbols` (not from main package)
+- Import design tokens/presets from `@ledgerhq/lumen-design-core`
+- Font: Lumen typography sets `font-family: Inter`. The sample app already loads
+  Inter via react-ui's `StyleProvider` (`fontsPath="/fonts"`).
+- Tailwind config MUST include Lumen in `content`:
+  `'./node_modules/@ledgerhq/lumen-ui-react/dist/lib/**/*.{js,ts,jsx,tsx}'`
+- Always use a preset: `ledgerLivePreset`, `enterprisePreset` or `websitesPreset`.
+
+### Peer Dependencies
+
+- Button requires `@radix-ui/react-slot`
+- Checkbox requires `@radix-ui/react-checkbox`
+- Switch requires `@radix-ui/react-switch`
+- Dialog requires `@radix-ui/react-dialog`
+- Tooltip requires `@radix-ui/react-tooltip`
+- Select requires `@base-ui/react/combobox`
+
+### Design Tokens
+
+**Typography** — do NOT use Tailwind typography utilities (`font-bold`, `text-sm`, …).
+Use Lumen utilities: `responsive-display-1..4`, `heading-0..5` (+ `-semi-bold`),
+`body-1..4` (+ `-semi-bold`).
+
+**Colors** — do NOT use Tailwind's default palette (`text-gray-500`, `bg-blue-600`).
+Use Lumen semantic tokens (auto-adapt to light/dark):
+- Backgrounds: `bg-canvas(-muted/-sheet/-overlay)`, `bg-base(-hover/-pressed)`,
+  `bg-muted*`, `bg-accent*`, `bg-interactive*`, `bg-error/-warning/-success*`,
+  `bg-active*`, `bg-surface*`, `bg-white/-black/-disabled`, `bg-crypto-*`, `bg-discover-*`.
+- Text: `text-base*`, `text-muted*`, `text-interactive*`, `text-error/-warning/-success`,
+  `text-on-accent/-on-interactive/-on-error-strong/-on-warning/-on-success-strong`,
+  `text-white/-black/-grey/-disabled/-active`.
+- Borders: `border-base*`, `border-muted*`, `border-error/-warning/-success`,
+  `border-focus/-active`, `border-black/-white/-disabled`.
+
+**Size & spacing** — pixel-based scale (number = pixels, e.g. `p-16` = 16px, `h-64` = 64px).
+- Sizes: `w-/h-/size-/min-/max-` with scale `1,2,4,6,8,10,12,16,20,24,32,40,48,64,80,96,112,128,144,160,176,208,224,256,320,400,480,560`.
+- Spacing (`p/m/gap` + variants): `0,1,2,4,6,8,10,12,14,16,20,24,32,40,48,56,64,80,96,112,128,144,160,256`.
+
+**Borders/shadows/gradients**: `rounded-sm/md/lg`, `border`/`border-2`,
+`drop-shadow-sm..2xl`, `bg-gradient-top/-bottom/-{crypto}`.
+
+**Discovery**: token/CSS-variable mappings live in
+`node_modules/@ledgerhq/lumen-design-core/dist/lib/themes/**` (`css/` + `js/`) and
+`.../dist/lib/utils/create*Plugin.js` (e.g. `createCustomPlugin.js`, `createPrimitivesPlugin.js`).
+
+### Tailwind classname rules
+
+- Never concatenate/interpolate class names. Always use complete strings.
+- Valid: `className={cn("text-base", color && "bg-muted")}`
+- Invalid: `` className={`text-${color}`} ``
+
+### Icons
+
+- Always import from `/symbols`: `import { ArrowRight } from '@ledgerhq/lumen-ui-react/symbols'`
+- Use as component `<ArrowRight size={20} />` or prop `<Button icon={ArrowRight}>Label</Button>`
+- Available sizes: 12, 16, 20, 24, 32, 40, 48, 56
+
+### Compound components
+
+Import parts together, e.g.:
+`import { Select, SelectTrigger, SelectContent, SelectItem, SelectItemText } from '@ledgerhq/lumen-ui-react'`
+`import { Dialog, DialogTrigger, DialogContent, DialogHeader } from '@ledgerhq/lumen-ui-react'`
+`import { Tooltip, TooltipTrigger, TooltipContent } from '@ledgerhq/lumen-ui-react'`
+
+### Dark mode
+
+- Components support dark mode via CSS custom properties.
+- Enable by adding `dark` class to a root/ancestor element. No component changes needed.
+
+### Figma → Tailwind token mapping
+
+Use only the unique part after the last hyphen of the CSS variable:
+- `var(--background-base)` → `bg-base` (not `bg-background-base`)
+- `var(--text-on-accent)` → `text-on-accent`
+- `var(--border-muted)` → `border-muted`
+- `var(--spacing-16)` → `p-16` / `m-16`
+- `var(--radius-lg)` → `rounded-lg`
+- `var(--border-width)` → `border`; `var(--border-width-active)` → `border-2`
+- Typography comment `/* body/3 */` → `body-3`; `/* heading/2-semi-bold */` → `heading-2-semi-bold`
+
+> Full, always-up-to-date reference (version-locked with the installed package):
+> `apps/sample/node_modules/@ledgerhq/lumen-ui-react/ai-rules/RULES.md`
+> and component docs at https://ldls.vercel.app

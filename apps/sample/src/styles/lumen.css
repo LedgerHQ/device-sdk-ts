@@ -1,0 +1,24 @@
+/**
+ * Lumen (Tailwind v4) styles, scoped to the few Lumen components used in the app.
+ *
+ * IMPORTANT: We deliberately do NOT `@import "tailwindcss";` because that would
+ * pull in Tailwind's preflight (a global CSS reset) and break the existing
+ * @ledgerhq/react-ui + styled-components styling. Instead we only import the
+ * theme (design tokens / CSS variables) and the utilities layers.
+ */
+@layer theme, base;
+
+/* Design tokens (CSS variables) live in low-priority layers so they never fight
+   with the app's styling. */
+@import "tailwindcss/theme.css" layer(theme);
+
+/* Utilities are imported UNLAYERED on purpose. @ledgerhq/react-ui ships an
+   unlayered global reset (e.g. `button { color: inherit }`). Per the CSS
+   cascade, unlayered rules always beat layered ones, which would override
+   Lumen's `text-*` / `bg-*` utilities. Keeping utilities unlayered lets them
+   win by normal specificity where they are actually used (Lumen components),
+   without affecting the rest of the react-ui app. Preflight is intentionally
+   NOT imported so the global reset stays untouched. */
+@import "tailwindcss/utilities.css";
+
+@config "../../tailwind.config.ts";
