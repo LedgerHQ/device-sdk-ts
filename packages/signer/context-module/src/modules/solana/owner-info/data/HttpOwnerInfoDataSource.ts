@@ -25,13 +25,7 @@ export class HttpOwnerInfoDataSource implements OwnerInfoDataSource {
     private readonly config: ContextModuleServiceConfig,
     @inject(networkTypes.NetworkClient)
     private readonly http: DmkNetworkClient,
-  ) {
-    if (!this.config.originToken) {
-      throw new Error(
-        "[ContextModule] - HttpOwnerInfoDataSource: origin token is required",
-      );
-    }
-  }
+  ) {}
 
   private isSolanaSPLOwnerInfo(data: {
     tokenAccount?: unknown;
