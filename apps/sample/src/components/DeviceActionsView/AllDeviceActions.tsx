@@ -76,6 +76,14 @@ import {
   type CreateBackupDAIntermediateValue,
   type CreateBackupDAOutput,
   CreateBackupDeviceAction,
+  type RestoreAppsStorageDAError,
+  type RestoreAppsStorageDAIntermediateValue,
+  type RestoreAppsStorageDAOutput,
+  RestoreAppsStorageDeviceAction,
+  type RestoreBackupDAError,
+  type RestoreBackupDAIntermediateValue,
+  type RestoreBackupDAOutput,
+  RestoreBackupDeviceAction,
 } from "@ledgerhq/dmk-ledger-wallet";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -486,6 +494,120 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         CreateBackupDAInput,
         CreateBackupDAError,
         CreateBackupDAIntermediateValue
+      >,
+      {
+        title: `${SECURE_CHANNEL_ICON} Restore Apps Storage`,
+        description:
+          "Restore per-app storage backups (as produced by Create Backup) onto the device",
+        executeDeviceAction: (
+          { backupAppsJson, isMasterConsentGranted, unlockTimeout },
+          inspect,
+        ) => {
+          const backupApps = JSON.parse(backupAppsJson) as Array<{
+            appName: string;
+            data: `0x${string}` | undefined;
+          }>;
+          const deviceAction = new RestoreAppsStorageDeviceAction({
+            input: {
+              backupApps,
+              isMasterConsentGranted,
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          backupAppsJson: JSON.stringify([
+            { appName: "Ethereum", data: "0x00" },
+          ]),
+          isMasterConsentGranted: false,
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        labelSelector: {
+          backupAppsJson: "Backup apps (JSON array of {appName, data})",
+        },
+        validateValues: ({ backupAppsJson }) => {
+          try {
+            return Array.isArray(JSON.parse(backupAppsJson));
+          } catch {
+            return false;
+          }
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        RestoreAppsStorageDAOutput,
+        {
+          backupAppsJson: string;
+          isMasterConsentGranted: boolean;
+          unlockTimeout: number;
+        },
+        RestoreAppsStorageDAError,
+        RestoreAppsStorageDAIntermediateValue
+      >,
+      {
+        title: `${SECURE_CHANNEL_ICON} Restore Backup`,
+        description:
+          "Perform all the actions necessary to restore a full backup (as produced by Create Backup) onto the device after an OS update",
+        executeDeviceAction: ({ backupJson, unlockTimeout }, inspect) => {
+          const parsedBackup = JSON.parse(backupJson) as {
+            languageId: number | undefined;
+            installedApps: Array<{
+              appName: string;
+              data: `0x${string}` | undefined;
+            }>;
+            clsHexImage: `0x${string}` | undefined;
+          };
+          const deviceAction = new RestoreBackupDeviceAction({
+            input: {
+              backup: {
+                languageId: parsedBackup.languageId,
+                installedApps: parsedBackup.installedApps,
+                clsHexImage: parsedBackup.clsHexImage,
+                createdAt: new Date(),
+              },
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          backupJson: JSON.stringify({
+            languageId: 1,
+            installedApps: [{ appName: "Ethereum", data: "0x00" }],
+            clsHexImage: undefined,
+          }),
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        labelSelector: {
+          backupJson: "Backup (JSON: {languageId, installedApps, clsHexImage})",
+        },
+        validateValues: ({ backupJson }) => {
+          try {
+            const parsed = JSON.parse(backupJson) as {
+              installedApps?: unknown;
+            };
+            return Array.isArray(parsed.installedApps);
+          } catch {
+            return false;
+          }
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        RestoreBackupDAOutput,
+        {
+          backupJson: string;
+          unlockTimeout: number;
+        },
+        RestoreBackupDAError,
+        RestoreBackupDAIntermediateValue
       >,
     ],
     [deviceModelId, dmk, sessionId],

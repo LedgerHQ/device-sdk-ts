@@ -1,7 +1,7 @@
 import { GoToDashboardDeviceAction } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
-import { goToDashboard } from "@api/device-action/OsUpdate/Backup/Substeps/GoToDashboard";
+import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
 
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =

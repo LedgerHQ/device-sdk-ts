@@ -119,6 +119,28 @@ export type {
   CreateBackupDAState,
   CreateBackupSteps,
 } from "./api/device-action/OsUpdate/Backup/types";
+export { RestoreAppsStorageDeviceAction } from "./api/device-action/OsUpdate/Restore/RestoreAppsStorage/RestoreAppsStorageDeviceAction";
+export type {
+  RestoreAppsStorageDAError,
+  RestoreAppsStorageDAInput,
+  RestoreAppsStorageDAIntermediateValue,
+  RestoreAppsStorageDAOutput,
+  RestoreAppsStorageDARequiredInteraction,
+  RestoreAppsStorageDAState,
+  RestoreAppsStorageSteps,
+  RestoreAppStorageResult,
+} from "./api/device-action/OsUpdate/Restore/RestoreAppsStorage/types";
+export { RestoreBackupDeviceAction } from "./api/device-action/OsUpdate/Restore/RestoreBackup/RestoreBackupDeviceAction";
+export type {
+  RestoreAppResult,
+  RestoreBackupDAError,
+  RestoreBackupDAInput,
+  RestoreBackupDAIntermediateValue,
+  RestoreBackupDAOutput,
+  RestoreBackupDARequiredInteraction,
+  RestoreBackupDAState,
+  RestoreBackupSteps,
+} from "./api/device-action/OsUpdate/Restore/RestoreBackup/types";
 export { RemoveCustomLockScreenDeviceAction } from "./api/device-action/RemoveCustomLockScreen/RemoveCustomLockScreenDeviceAction";
 export type {
   RemoveCustomLockScreenDAError,

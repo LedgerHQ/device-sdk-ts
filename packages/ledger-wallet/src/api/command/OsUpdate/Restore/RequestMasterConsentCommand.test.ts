@@ -1,11 +1,13 @@
 import {
   ApduResponse,
   CommandResultFactory,
+  DeviceModelId,
   InvalidArgumentError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
 import {
+  isMasterConsentSupported,
   RequestMasterConsentCommand,
   RequestMasterConsentCommandError,
 } from "./RequestMasterConsentCommand";
@@ -93,6 +95,20 @@ describe("RequestMasterConsentCommand", () => {
         expect(
           (caughtError as InvalidArgumentError).originalError.message,
         ).toBe(expectedErrorMessage);
+      },
+    );
+
+    it.each([DeviceModelId.STAX, DeviceModelId.FLEX, DeviceModelId.APEX])(
+      "should return true for %s",
+      (deviceModelId) => {
+        expect(isMasterConsentSupported(deviceModelId)).toBe(true);
+      },
+    );
+
+    it.each([DeviceModelId.NANO_X, DeviceModelId.NANO_SP])(
+      "should return false for %s",
+      (deviceModelId) => {
+        expect(isMasterConsentSupported(deviceModelId)).toBe(false);
       },
     );
   });
