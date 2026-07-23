@@ -705,6 +705,20 @@ describe("buildActionStructure", () => {
         "81e20101" + // BUY_OR_NOT
         "81d6080000000000989680", // NTLI
     },
+    {
+      name: "action type userSetAbstraction (unifiedAccount)",
+      action: {
+        type: "userSetAbstraction",
+        hyperliquidChain: "Mainnet",
+        signatureChainId: "0xa4b1",
+        user: "0xc0708cdd6cd166d51da264e3f49a0422be26e35b",
+        abstraction: "unifiedAccount",
+        nonce: 1716531066415,
+      } satisfies HyperliquidAction,
+      expectedHex:
+        "2302a4b1" + // CHAIN_ID (tag 0x23, length 2, value a4b1)
+        "81df0101", // ABSTRACTION (tag 0xdf, length 1, value 0x01 = unifiedAccount)
+    },
   ])("$name", ({ action, expectedHex }) => {
     const result = buildActionStructure(action);
 

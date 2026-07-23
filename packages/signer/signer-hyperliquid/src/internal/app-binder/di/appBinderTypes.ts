@@ -88,4 +88,12 @@ export type HyperliquidAction =
       isBuy: boolean; // cross-leverage
       ntli: number;
       nonce: number;
+    }
+  | {
+      type: "userSetAbstraction";
+      hyperliquidChain: "Mainnet" | "Testnet";
+      signatureChainId: string; // chainId in hex format. Ex: 0xa4b1 for Arbitrum
+      user: HexaString; // User address — NOT sent to the device per ADR; device computes it
+      abstraction: "disabled" | "unifiedAccount" | "portfolioMargin";
+      nonce: number;
     };
