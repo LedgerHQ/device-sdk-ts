@@ -10,7 +10,7 @@ const STAX_WITH_TRX: DeviceConfig = {
   firmware_version: "1.9.1",
   apps: [
     { name: "BOLOS", version: "1.9.1" },
-    { name: "Tron", version: "0.5.0" },
+    { name: "Tron", version: "0.7.4" },
   ],
   masks: [0x33200000],
 };
