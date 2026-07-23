@@ -26,6 +26,12 @@ const { observable: signObservable } = signer.signTransaction(
   rawTransaction,
 );
 
+// Sign a transaction hash (requires the "Sign by hash" app setting)
+const { observable: hashObservable } = signer.signTransactionHash(
+  "44'/195'/0'/0/0",
+  transactionHash,
+);
+
 // Sign a personal message
 const { observable: messageObservable } = signer.signPersonalMessage(
   "44'/195'/0'/0/0",
@@ -143,6 +149,47 @@ The returned device action resolves to the 65-byte signature
 const { observable, cancel } = signer.signTransaction(
   "44'/195'/0'/0/0",
   rawTransaction,
+);
+
+observable.subscribe((state) => {
+  switch (state.status) {
+    case "completed":
+      console.log(state.output); // Uint8Array(65) signature
+      break;
+    case "error":
+      console.error(state.error);
+      break;
+  }
+});
+```
+
+### Sign transaction hash
+
+Signs a transaction hash directly, without transmitting (or reviewing) the
+transaction itself — the device only displays the hash. Use with care: the
+signer cannot verify what is being signed. Only accepted by the Tron app when
+its **"Sign by hash"** setting is enabled on the device (see the `signByHash`
+flag returned by `getAppConfiguration()`); otherwise the device action fails.
+
+```typescript
+signer.signTransactionHash(
+  derivationPath: string,
+  // the 32-byte hash of the protobuf-serialized `raw_data` of the transaction
+  transactionHash: Uint8Array,
+  options?: {
+    // Skip the "open app" step if the Tron app is already open (default: false).
+    skipOpenApp?: boolean;
+  },
+): SignTransactionHashDAReturnType;
+```
+
+The returned device action resolves to the 65-byte signature
+(`r[32] + s[32] + v[1]`) as a `Uint8Array`.
+
+```typescript
+const { observable, cancel } = signer.signTransactionHash(
+  "44'/195'/0'/0/0",
+  transactionHash,
 );
 
 observable.subscribe((state) => {

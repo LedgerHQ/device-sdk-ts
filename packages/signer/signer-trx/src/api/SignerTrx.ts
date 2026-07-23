@@ -2,6 +2,7 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignTransactionHashDAReturnType } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
@@ -17,6 +18,12 @@ export interface SignerTrx {
     transaction: Uint8Array,
     options?: TransactionOptions,
   ) => SignTransactionDAReturnType;
+
+  signTransactionHash: (
+    derivationPath: string,
+    transactionHash: Uint8Array,
+    options?: TransactionOptions,
+  ) => SignTransactionHashDAReturnType;
 
   signPersonalMessage: (
     derivationPath: string,

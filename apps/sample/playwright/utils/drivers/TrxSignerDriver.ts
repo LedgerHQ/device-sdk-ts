@@ -69,6 +69,25 @@ export class TrxSignerDriver {
   }
 
   /**
+   * Open the Sign transaction hash action, fill the hash (hex-encoded 32-byte
+   * hash of the protobuf-serialized `raw_data`) and Execute it. Only accepted
+   * by the Tron app when its "sign by hash" setting is enabled.
+   */
+  async signTransactionHash(
+    transactionHash: string,
+    { skipOpenApp = false }: { skipOpenApp?: boolean } = {},
+  ): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign transaction hash").click();
+    const input = this.page.getByTestId("input-text_transactionHash");
+    await input.waitFor({ state: "visible" });
+    await input.fill(transactionHash);
+    if (skipOpenApp) {
+      await this.page.getByTestId("input-switch_skipOpenApp").click();
+    }
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
    * Open the Sign personal message action, fill the message (plain text) and
    * Execute it. The action stays pending until the message is reviewed and
    * signed on Speculos.

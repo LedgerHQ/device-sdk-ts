@@ -15,6 +15,9 @@ import {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
+  type SignTransactionHashDAError,
+  type SignTransactionHashDAIntermediateValue,
+  type SignTransactionHashDAOutput,
 } from "@ledgerhq/device-signer-kit-tron";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -92,6 +95,39 @@ export const SignerTrxView: React.FC<{ sessionId: string }> = ({
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
+      >,
+      {
+        title: "Sign transaction hash",
+        description:
+          "Perform all the actions necessary to sign a transaction hash (hex-encoded 32-byte hash of the protobuf-serialized raw_data) with the device. Requires the 'sign by hash' setting to be enabled in the Tron app.",
+        executeDeviceAction: ({
+          derivationPath,
+          transactionHash,
+          skipOpenApp,
+        }) => {
+          const hash = hexaStringToBuffer(transactionHash);
+          if (!hash || hash.length === 0) {
+            throw new Error("Invalid transaction hash format");
+          }
+          return signer.signTransactionHash(derivationPath, hash, {
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          transactionHash: "",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignTransactionHashDAOutput,
+        {
+          derivationPath: string;
+          transactionHash: string;
+          skipOpenApp?: boolean;
+        },
+        SignTransactionHashDAError,
+        SignTransactionHashDAIntermediateValue
       >,
       {
         title: "Sign personal message",

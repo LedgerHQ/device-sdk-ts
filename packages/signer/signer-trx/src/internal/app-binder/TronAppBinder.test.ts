@@ -29,8 +29,14 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import {
+  type SignTransactionHashDAError,
+  type SignTransactionHashDAIntermediateValue,
+  type SignTransactionHashDAOutput,
+} from "@api/app-binder/SignTransactionHashDeviceActionTypes";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
+import { SignTransactionHashCommand } from "@internal/app-binder/command/SignTransactionHashCommand";
 import { type TronAppCommandError } from "@internal/app-binder/command/utils/tronApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
 
@@ -260,6 +266,116 @@ describe("TronAppBinder", () => {
 
         // THEN
         expect(executedDeviceAction().input.skipOpenApp).toBe(false);
+      });
+    });
+  });
+
+  describe("signTransactionHash", () => {
+    const derivationPath = "44'/195'/0'/0/0";
+    const transactionHash = new Uint8Array(32).fill(0x25);
+
+    it("should return the signature", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const output: SignTransactionHashDAOutput = new Uint8Array(65).fill(
+          0xab,
+        );
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output,
+            } as DeviceActionState<
+              SignTransactionHashDAOutput,
+              SignTransactionHashDAError,
+              SignTransactionHashDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        const { observable } = binder.signTransactionHash({
+          derivationPath,
+          transactionHash,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          SignTransactionHashDAOutput,
+          SignTransactionHashDAError,
+          SignTransactionHashDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: reject,
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                { status: DeviceActionStatus.Completed, output },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    describe("calls executeDeviceAction with the correct params", () => {
+      it("requires the SignTransaction interaction", () => {
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        binder.signTransactionHash({
+          derivationPath,
+          transactionHash,
+          skipOpenApp: true,
+        });
+
+        // THEN
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sessionId: "sessionId",
+            deviceAction: new SendCommandInAppDeviceAction({
+              input: {
+                command: new SignTransactionHashCommand({
+                  derivationPath,
+                  transactionHash,
+                }),
+                appName: APP_NAME,
+                requiredUserInteraction:
+                  UserInteractionRequired.SignTransaction,
+                skipOpenApp: true,
+              },
+            }),
+          }),
+        );
+      });
+
+      it("defaults skipOpenApp to false", () => {
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        binder.signTransactionHash({ derivationPath, transactionHash });
+
+        // THEN
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            deviceAction: new SendCommandInAppDeviceAction({
+              input: {
+                command: new SignTransactionHashCommand({
+                  derivationPath,
+                  transactionHash,
+                }),
+                appName: APP_NAME,
+                requiredUserInteraction:
+                  UserInteractionRequired.SignTransaction,
+                skipOpenApp: false,
+              },
+            }),
+          }),
+        );
       });
     });
   });
