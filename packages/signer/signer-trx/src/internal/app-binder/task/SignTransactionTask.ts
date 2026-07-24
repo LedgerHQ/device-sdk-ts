@@ -1,7 +1,6 @@
 import {
   type CommandResult,
   DmkResultFactory,
-  hexaStringToBuffer,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -19,7 +18,6 @@ import {
 type SignTransactionTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
-  tokenSignatures?: string[];
 };
 
 export class SignTransactionTask {
@@ -29,20 +27,7 @@ export class SignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, TronAppErrorCodes>> {
-    const { derivationPath, transaction, tokenSignatures = [] } = this.args;
-
-    const decodedTokenSignatures: Uint8Array[] = [];
-    for (const signature of tokenSignatures) {
-      const decoded = hexaStringToBuffer(signature);
-      if (decoded === null) {
-        return DmkResultFactory({
-          error: new InvalidStatusWordError(
-            `Invalid token signature hex: ${signature}`,
-          ),
-        });
-      }
-      decodedTokenSignatures.push(decoded);
-    }
+    const { derivationPath, transaction } = this.args;
 
     // Serialization can throw (e.g. a single protobuf field exceeds the APDU
     // chunk size). Convert that into a typed command error instead of letting
@@ -52,7 +37,6 @@ export class SignTransactionTask {
       frames = serializeTransaction(
         encodeDerivationPath(derivationPath),
         transaction,
-        decodedTokenSignatures,
       );
     } catch (error) {
       return DmkResultFactory({
