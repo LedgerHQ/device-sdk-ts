@@ -3,13 +3,11 @@ import { ContainerModule } from "inversify";
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
-import { type DockerContainer } from "@root/src/domain/adapters/DockerContainer";
 import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
-import { type AppVersionResolver } from "@root/src/domain/services/AppVersionResolver";
 import { type DeviceSetupService } from "@root/src/domain/services/DeviceSetupService";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
 import { type RetryService } from "@root/src/domain/services/RetryService";
@@ -19,13 +17,11 @@ import { SpeculosNanoController } from "@root/src/infrastructure/adapters/device
 import { SpeculosTouchscreenController } from "@root/src/infrastructure/adapters/device-controllers/SpeculosTouchscreenController";
 import { SpeculosScreenReader } from "@root/src/infrastructure/adapters/speculos/SpeculosScreenReader";
 import { SpeculosScreenshotSaver } from "@root/src/infrastructure/adapters/speculos/SpeculosScreenshotSaver";
-import { NodeDockerContainer } from "@root/src/infrastructure/adapters/system/NodeDockerContainer";
 import { NodeFileReader } from "@root/src/infrastructure/adapters/system/NodeFileReader";
 import { NodeJsonParser } from "@root/src/infrastructure/adapters/system/NodeJsonParser";
 import { SpeculosDeviceRepository } from "@root/src/infrastructure/repositories/SpeculosDeviceRepository";
 import { MainServiceController } from "@root/src/infrastructure/service-controllers/MainServiceController";
-import { SpeculosServiceController } from "@root/src/infrastructure/service-controllers/SpeculosServiceController";
-import { AppVersionResolverService } from "@root/src/infrastructure/services/AppVersionResolverService";
+import { SpeculinhoServiceController } from "@root/src/infrastructure/service-controllers/SpeculinhoServiceController";
 import { DefaultDeviceSetupService } from "@root/src/infrastructure/services/DefaultDeviceSetupService";
 import { DefaultFlowOrchestrator } from "@root/src/infrastructure/services/DefaultFlowOrchestrator";
 import { DefaultRetryService } from "@root/src/infrastructure/services/DefaultRetryService";
@@ -59,9 +55,6 @@ export const sharedInfrastructureModuleFactory = (
     bind<RetryService>(TYPES.RetryService)
       .to(DefaultRetryService)
       .inSingletonScope();
-    bind<AppVersionResolver>(TYPES.AppVersionResolver)
-      .to(AppVersionResolverService)
-      .inSingletonScope();
     bind<DeviceSetupService>(TYPES.DeviceSetupService)
       .to(DefaultDeviceSetupService)
       .inSingletonScope();
@@ -84,8 +77,9 @@ export const sharedInfrastructureModuleFactory = (
     bind<ServiceController>(TYPES.MainServiceController)
       .to(MainServiceController)
       .inSingletonScope();
-    bind<ServiceController>(TYPES.SpeculosServiceController)
-      .to(SpeculosServiceController)
+
+    bind<ServiceController>(TYPES.SpeculinhoServiceController)
+      .to(SpeculinhoServiceController)
       .inSingletonScope();
 
     // Adapters
@@ -97,12 +91,9 @@ export const sharedInfrastructureModuleFactory = (
       .inSingletonScope();
     bind<FileReader>(TYPES.FileReader).to(NodeFileReader).inSingletonScope();
     bind<JsonParser>(TYPES.JsonParser).to(NodeJsonParser).inSingletonScope();
-    bind<DockerContainer>(TYPES.DockerContainer)
-      .to(NodeDockerContainer)
-      .inSingletonScope();
 
     // Device Controllers
-    const device = config.speculos.device;
+    const device = config.speculinho.device;
     switch (device) {
       case "stax":
       case "flex":

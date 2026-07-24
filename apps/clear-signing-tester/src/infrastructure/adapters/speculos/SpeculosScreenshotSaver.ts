@@ -8,22 +8,23 @@ import * as path from "path";
 
 import { TYPES } from "@root/src/di/types";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
-import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
+import { getEmulatorBaseUrl } from "@root/src/domain/utils/getEmulatorBaseUrl";
 
 @injectable()
 export class SpeculosScreenshotSaver implements ScreenshotSaver {
-  private readonly speculosUrl: string;
+  private readonly config: SpeculinhoConfig;
   private readonly logger: LoggerPublisherService;
   private readonly screenshotPath: string | null;
   private readonly http: DmkNetworkClient;
   private counter = 0;
 
   constructor(
-    @inject(TYPES.SpeculosConfig) config: SpeculosConfig,
+    @inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.speculosUrl = `${config.url}:${config.port}`;
+    this.config = config;
     this.screenshotPath = config.screenshotPath ?? null;
     this.logger = loggerFactory("screenshot-saver");
     this.http = new DmkNetworkClient();
@@ -49,7 +50,7 @@ export class SpeculosScreenshotSaver implements ScreenshotSaver {
       const filePath = path.join(this.screenshotPath, filename);
 
       const arrayBuffer = (await this.http.get(
-        `${this.speculosUrl}/screenshot`,
+        `${getEmulatorBaseUrl(this.config)}/screenshot`,
         {
           headers: { accept: "image/png" },
           responseType: "arrayBuffer",

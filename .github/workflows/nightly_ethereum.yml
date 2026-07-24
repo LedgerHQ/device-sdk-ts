@@ -1,5 +1,9 @@
 name: "[Tests] Ethereum Nightly"
 on:
+  # TODO: TEMPORARY – remove before merging feat/no-issue-use-speculinho-CS-tester
+  push:
+    branches:
+      - feat/no-issue-use-speculinho-CS-tester
   schedule:
     # Run every day at 2:00 AM UTC
     - cron: "0 2 * * *"
@@ -64,12 +68,12 @@ jobs:
           dapp: ${{ matrix.dapp }}
           device: ${{ matrix.device }}
           coin-app: Ethereum
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: erc7730-calldata-logs
           summary-prefix: "ERC7730 Calldata Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
@@ -104,12 +108,12 @@ jobs:
           dapp: ${{ matrix.dapp }}
           device: ${{ matrix.device }}
           coin-app: Ethereum
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: erc7730-ethereum-logs
           summary-prefix: "ERC7730 Ethereum Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
@@ -131,12 +135,12 @@ jobs:
           test: test:gating
           device: ${{ matrix.device }}
           coin-app: Ethereum
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: ethereum-gating-logs
           summary-prefix: "Ethereum Gating Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
