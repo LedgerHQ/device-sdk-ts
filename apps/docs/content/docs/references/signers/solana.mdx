@@ -128,20 +128,11 @@ const { observable, cancel } = signerSolana.signTransaction(
   - **solanaRPCURL** `string` _(optional)_  
     Overrides the RPC URL from `SignerSolanaBuilder` for this call (inspection and delayed signing).
 
-  - **transactionResolutionContext** `object`  
-    Lets you explicitly pass `tokenAddress` and ATA details, bypassing extraction from the transaction itself.
+  - **transactionResolutionContext** `object` _(optional)_  
+    Provides additional context for clear signing.
 
-    - **tokenAddress** `string`  
-      SPL token address being transferred.
-
-    - **createATA** `object`  
-      Information about creating an associated token account (ATA).
-
-      - **address** `string` – Address (owner) of the ATA.
-      - **mintAddress** `string` – Mint address of the ATA.
-
-    - **tokenInternalId** `string`
-      Ledger internal token ID
+    - **mintAddress** `string`  
+      Mint address of the SPL token, used for SPL basic clear signing. If omitted, the signer will attempt to resolve the token metadata automatically, if resolution fails, a degraded UI is shown on the device (`???` instead of the token symbol).
 
 - **skipOpenApp** `boolean`  
   If `true`, skips opening the Solana app on the device.
