@@ -443,4 +443,162 @@ describe("BuildFullContextsTask", () => {
       });
     });
   });
+
+  describe("Contacts precedence (Contacts wins over TRUSTED_NAME)", () => {
+    beforeEach(() => {
+      vi.resetAllMocks();
+      buildSubContextTaskRunMock.mockReturnValue({ subcontextCallbacks: [] });
+    });
+
+    const recipient = "0xabcDABCDabcdabcdABCDABCDabcdabcdabcdABCD";
+    const subsetWithRecipient: TransactionSubset = {
+      chainId: 1,
+      data: "0x",
+      selector: "0x",
+      to: recipient,
+    };
+
+    const externalContactContext = {
+      type: ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL,
+      payload: "",
+      address: recipient,
+      decoration: {
+        contactName: "Alice",
+        scope: "default",
+        addressHex: recipient,
+        groupHandleHex: "cc".repeat(32),
+        hmacNameHex: "dd".repeat(32),
+        hmacRestHex: "ee".repeat(32),
+        derivationPath: "",
+        chainId: 1,
+      },
+    };
+
+    it("drops TRUSTED_NAME when a CONTACT_* covers the same recipient (case-insensitive)", async () => {
+      buildBaseContextsTaskRunMock.mockReturnValueOnce({
+        clearSignContexts: [
+          externalContactContext,
+          {
+            type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+            payload: "ens-payload",
+          },
+        ],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.BASIC,
+        contextErrorCount: 0,
+      });
+
+      const task = new BuildFullContextsTask(
+        apiMock,
+        {
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+          options: defaultOptions,
+          appConfig: defaultAppConfig,
+          derivationPath: defaultDerivationPath,
+          subset: subsetWithRecipient,
+          deviceModelId: DeviceModelId.STAX,
+          loggerFactory: mockLoggerFactory,
+        },
+        buildSubcontextsTaskFactory,
+        buildBaseContextsTaskFactory,
+        parseNestedTransactionTaskFactory,
+      );
+
+      const result = await task.run();
+
+      const types = result.clearSignContexts.map((c) => c.context.type);
+      expect(types).toContain(ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL);
+      expect(types).not.toContain(ClearSignContextType.ETHEREUM_TRUSTED_NAME);
+    });
+
+    it("keeps TRUSTED_NAME when no CONTACT_* covers the recipient", async () => {
+      buildBaseContextsTaskRunMock.mockReturnValueOnce({
+        clearSignContexts: [
+          {
+            type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+            payload: "ens-payload",
+          },
+        ],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.BASIC,
+        contextErrorCount: 0,
+      });
+
+      const task = new BuildFullContextsTask(
+        apiMock,
+        {
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+          options: defaultOptions,
+          appConfig: defaultAppConfig,
+          derivationPath: defaultDerivationPath,
+          subset: subsetWithRecipient,
+          deviceModelId: DeviceModelId.STAX,
+          loggerFactory: mockLoggerFactory,
+        },
+        buildSubcontextsTaskFactory,
+        buildBaseContextsTaskFactory,
+        parseNestedTransactionTaskFactory,
+      );
+
+      const result = await task.run();
+
+      const types = result.clearSignContexts.map((c) => c.context.type);
+      expect(types).toEqual([ClearSignContextType.ETHEREUM_TRUSTED_NAME]);
+    });
+
+    it("does not drop TRUSTED_NAME when only a from-side CONTACT_LEDGER_ACCOUNT is present", async () => {
+      buildBaseContextsTaskRunMock.mockReturnValueOnce({
+        clearSignContexts: [
+          {
+            type: ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT,
+            payload: "",
+            address: "0x1111111111111111111111111111111111111111",
+            decoration: {
+              accountName: "from-account",
+              hmacProofHex: "aa".repeat(32),
+              derivationPath: "44'/60'/0'/0/0",
+              chainId: 1,
+            },
+          },
+          {
+            type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+            payload: "ens-payload",
+          },
+        ],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.BASIC,
+        contextErrorCount: 0,
+      });
+
+      const task = new BuildFullContextsTask(
+        apiMock,
+        {
+          contextModule: contextModuleMock,
+          mapper: mapperMock,
+          parser: parserMock,
+          options: defaultOptions,
+          appConfig: defaultAppConfig,
+          derivationPath: defaultDerivationPath,
+          subset: subsetWithRecipient,
+          deviceModelId: DeviceModelId.STAX,
+          loggerFactory: mockLoggerFactory,
+        },
+        buildSubcontextsTaskFactory,
+        buildBaseContextsTaskFactory,
+        parseNestedTransactionTaskFactory,
+      );
+
+      const result = await task.run();
+
+      const types = result.clearSignContexts.map((c) => c.context.type);
+      expect(types).toContain(ClearSignContextType.ETHEREUM_TRUSTED_NAME);
+      expect(types).toContain(
+        ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT,
+      );
+    });
+  });
 });
