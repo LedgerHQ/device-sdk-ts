@@ -183,6 +183,24 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     return isBlocked;
   }
 
+  async isWeb3ChecksOptInScreen(): Promise<boolean> {
+    const data = await this.readScreenContent();
+    const markers = ["transaction check", "maybe later"];
+    const isScreen = markers.some((text) =>
+      data.text.toLowerCase().includes(text),
+    );
+
+    if (isScreen) {
+      this.logger.debug("Current screen is the Web3 Checks opt-in modal");
+    } else {
+      this.logger.debug(
+        "Current screen is not (yet) the Web3 Checks opt-in modal",
+      );
+    }
+
+    return isScreen;
+  }
+
   async isHomePage(): Promise<boolean> {
     const data = await this.readScreenContent();
     const homePageTexts = [

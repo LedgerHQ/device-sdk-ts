@@ -1,5 +1,5 @@
 name: "Clear Signing Tester"
-description: "Run a single Clear Signing Tester cell (one device, one test) against Speculos."
+description: "Run a single Clear Signing Tester cell (one device, one test) via Speculinho."
 
 inputs:
   runner:
@@ -16,7 +16,7 @@ inputs:
     description: "Single device type (stax, nanox, flex)"
     required: true
   coin-app:
-    description: "Coin app name for ELF sparse checkout (Ethereum or Solana)"
+    description: "Coin app folder name in coin-apps (e.g. Ethereum, Solana)"
     required: true
   artifact-prefix:
     description: "Prefix for uploaded artifact names"
@@ -83,18 +83,28 @@ runs:
           ${{ inputs.device }}/*/${{ inputs.coin-app }}/*.elf
         sparse-checkout-cone-mode: false
 
-    - name: Pull Speculos Docker image
+    - name: Discover latest OS and app versions
+      id: versions
       shell: bash
-      run: docker pull ghcr.io/ledgerhq/speculos
+      env:
+        INPUT_DEVICE: ${{ inputs.device }}
+        INPUT_COIN_APP: ${{ inputs.coin-app }}
+      run: |
+        OS_VERSION=$(ls "coin-apps/$INPUT_DEVICE/" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+        APP_VERSION=$(ls "coin-apps/$INPUT_DEVICE/$OS_VERSION/$INPUT_COIN_APP/" | grep -E '^app_[0-9]+\.[0-9]+\.[0-9]+\.elf$' | sed 's/app_//;s/\.elf//' | sort -V | tail -1)
+        echo "os-version=$OS_VERSION" >> "$GITHUB_OUTPUT"
+        echo "app-version=$APP_VERSION" >> "$GITHUB_OUTPUT"
+        echo "Discovered: device=$INPUT_DEVICE os=$OS_VERSION app=$APP_VERSION"
 
     - name: Run Clear Signing Test
       shell: bash
       env:
         FORCE_COLOR: "0"
         GATING_TOKEN: ${{ inputs.gating-token }}
-        COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
         SOLANA_RPC_URL: ${{ inputs.solana-rpc-url }}
         INPUT_DEVICE: ${{ inputs.device }}
+        INPUT_APP_VERSION: ${{ steps.versions.outputs.app-version }}
+        INPUT_OS_VERSION: ${{ steps.versions.outputs.os-version }}
         INPUT_LOG_LEVEL: ${{ inputs.log-level }}
         INPUT_USE_RPC: ${{ inputs.use-rpc }}
         INPUT_SCAN_LIMIT: ${{ inputs.scan-limit }}
@@ -108,6 +118,19 @@ runs:
         mkdir -p /tmp/logs/screenshots
 
         ARGS=("--device" "$INPUT_DEVICE")
+
+        if [ -n "$INPUT_APP_VERSION" ]; then
+          # Detect ETH vs Solana runner to use the right flag name
+          if [[ "$INPUT_RUNNER" == *":solana"* ]]; then
+            ARGS+=("--app-sol-version" "$INPUT_APP_VERSION")
+          else
+            ARGS+=("--app-eth-version" "$INPUT_APP_VERSION")
+          fi
+        fi
+
+        if [ -n "$INPUT_OS_VERSION" ]; then
+          ARGS+=("--os-version" "$INPUT_OS_VERSION")
+        fi
 
         if [ -n "$INPUT_LOG_LEVEL" ]; then
           ARGS+=("--log-level" "$INPUT_LOG_LEVEL")

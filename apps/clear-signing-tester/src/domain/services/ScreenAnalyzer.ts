@@ -48,6 +48,13 @@ export interface ScreenAnalyzerService {
   isBlindSigningBlocked(): Promise<boolean>;
 
   /**
+   * Check if the Web3 Checks opt-in modal has rendered before sending touchScreen events.
+   * If the rendering is not done, this can cause misclick on the "Quit app" zone.
+   * @returns Promise<boolean> - True if the Web3 Checks opt-in modal is shown
+   */
+  isWeb3ChecksOptInScreen(): Promise<boolean>;
+
+  /**
    * Analyze all accumulated screen texts for expected texts
    * @param expectedTexts - Array of texts to look for
    * @returns Promise<{ containsAll: boolean; found: string[]; missing: string[] }> - Result of the analysis

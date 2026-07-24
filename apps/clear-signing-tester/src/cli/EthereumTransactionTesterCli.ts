@@ -19,31 +19,26 @@ import {
   CLI_LOG_LEVELS,
   type CliLogLevel,
 } from "@root/src/domain/models/config/LoggerConfig";
-import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
 import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
 
 export type CliConfig = {
-  // config.speculos
-  speculosUrl: string;
-  speculosPort: number;
-  speculosVncPort?: number;
-  dockerImageTag?: string;
-  device: SpeculosConfig["device"];
-  appEthVersion?: SpeculosConfig["version"];
-  osVersion?: SpeculosConfig["os"];
-  plugin?: string;
-  pluginVersion?: string;
+  // config.speculinho
+  device: SpeculinhoConfig["device"];
+  appEthVersion?: string;
+  osVersion?: string;
   screenshotFolderPath?: string;
-  customApp?: string;
-  forcePull?: boolean;
-  externalSpeculos?: boolean;
+  speculinhoUrl?: string;
+  speculosHttpTimeoutMs?: number;
 
   // config.signer
   skipCal?: boolean;
   erc7730Files?: string[];
   blindSigningEnabled?: boolean;
+
+  // Used by gating tests to simulate an unauthenticated caller.
   skipOriginToken?: boolean;
 
   // config.logger
@@ -75,29 +70,18 @@ export class EthereumTransactionTesterCli {
   constructor(config: CliConfig) {
     this.config = config;
 
-    const randomPort = Math.floor(Math.random() * 10000) + 10000;
-    const randomVncPort = Math.floor(Math.random() * 10000) + 20000;
-
-    // Use test signatures when custom ERC7730 files are provided
     const calMode =
       config.erc7730Files && config.erc7730Files.length > 0 ? "test" : "prod";
 
     // Create DI container configuration
     const diConfig: ClearSigningTesterConfig = {
-      speculos: {
-        url: config.speculosUrl || `http://localhost`,
-        port: config.speculosPort || randomPort,
-        vncPort: config.speculosVncPort || randomVncPort,
-        dockerImageTag: config.dockerImageTag || "latest",
+      speculinho: {
         device: config.device,
-        os: config.osVersion,
-        version: config.appEthVersion,
-        plugin: config.plugin,
-        pluginVersion: config.pluginVersion,
+        osVersion: config.osVersion,
+        appVersion: config.appEthVersion,
         screenshotPath: config.screenshotFolderPath,
-        customAppPath: config.customApp,
-        forcePull: config.forcePull,
-        externalSpeculos: config.externalSpeculos,
+        speculinhoUrl: config.speculinhoUrl,
+        speculosHttpTimeoutMs: config.speculosHttpTimeoutMs,
       },
       signer: {
         originToken: config.skipOriginToken
@@ -112,9 +96,6 @@ export class EthereumTransactionTesterCli {
       },
       etherscan: {
         apiKey: process.env["ETHERSCAN_API_KEY"] || "default-key",
-      },
-      apps: {
-        path: process.env["COIN_APPS_PATH"] || "",
       },
       onlySpeculos: config.onlySpeculos,
     };
@@ -213,33 +194,6 @@ export class EthereumTransactionTesterCli {
         "44'/60'/0'/0/0",
       )
       .option(
-        "--speculos-url <url>",
-        "Speculos server URL (default: http://localhost)",
-        "http://localhost",
-      )
-      .option(
-        "--speculos-port <port>",
-        "Speculos server port (random port if not provided)",
-        (value: string) => {
-          const port = parseInt(value);
-          if (isNaN(port) || port < 1 || port > 65535) {
-            throw new Error("Invalid port number");
-          }
-          return port;
-        },
-      )
-      .option(
-        "--speculos-vnc-port <port>",
-        "Speculos VNC port (random port if not provided)",
-        (value: string) => {
-          const port = parseInt(value);
-          if (isNaN(port) || port < 1 || port > 65535) {
-            throw new Error("Invalid port number");
-          }
-          return port;
-        },
-      )
-      .option(
         "--device <device>",
         "Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax)",
         (value: string) => {
@@ -271,39 +225,21 @@ export class EthereumTransactionTesterCli {
         "Device OS version (e.g., 1.8.1). If not specified, uses latest OS version for the device.",
       )
       .option(
-        "--plugin <plugin>",
-        "Plugin to use. If not specified, uses no plugin.",
-      )
-      .option(
-        "--plugin-version <version>",
-        "Plugin version to use. If not specified, uses latest version.",
-      )
-      .option(
         "--erc7730-files <files...>",
         "One or more ERC7730 JSON files to inject for clear signing testing",
-      )
-      .option(
-        "--docker-image-tag <tag>",
-        "Docker image tag for Speculos (default: latest)",
-        "latest",
       )
       .option(
         "--screenshot-folder-path <path>",
         "Save screenshots to a folder during transaction signing",
       )
       .option(
-        "--custom-app <path>",
-        "Custom app file path. Relative paths resolve to COIN_APPS_PATH, absolute paths are mounted automatically. Bypasses automatic Ethereum app version resolution.",
+        "--speculinho-url <url>",
+        "Speculinho operator URL (default: https://speculinho.ledgerlabs.net, overrides SPECULINHO_URL env var).",
       )
       .option(
-        "--force-pull",
-        "Force pulling the Docker image even if it already exists locally",
-        false,
-      )
-      .option(
-        "--external-speculos",
-        "Skip Docker Speculos lifecycle and connect to an already-running Speculos instance on the configured --speculos-port.",
-        false,
+        "--speculos-http-timeout <ms>",
+        "HTTP timeout in ms for Speculos pod requests (0 = no timeout, default). Raise this on slow connections.",
+        (value: string) => parseInt(value, 10),
       )
       .option(
         "--log-level <level>",
@@ -355,14 +291,6 @@ export class EthereumTransactionTesterCli {
     program.hook("preAction", async (_, command) => {
       const config = command.parent!.opts() as CliConfig;
       config.onlySpeculos = command.name() === "start-speculos";
-
-      if (config.onlySpeculos && config.externalSpeculos) {
-        throw new Error(
-          "--external-speculos cannot be used with start-speculos. " +
-            "Use start-speculos to let cs-tester manage Speculos, " +
-            "or use other commands with --external-speculos to connect to an already-running instance.",
-        );
-      }
 
       cli = new EthereumTransactionTesterCli(config);
       await cli.initialize();
@@ -585,7 +513,6 @@ export class EthereumTransactionTesterCli {
     const result = await batchTestUseCase.execute(file, {
       defaultDerivationPath: this.config.derivationPath,
       skipCal,
-      plugin: this.config.plugin,
     });
 
     console.log(`\n${result.title}`);

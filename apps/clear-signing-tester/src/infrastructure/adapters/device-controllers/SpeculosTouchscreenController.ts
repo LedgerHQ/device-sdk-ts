@@ -7,10 +7,11 @@ import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { DeviceController } from "@root/src/domain/adapters/DeviceController";
-import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
+import { getEmulatorBaseUrl } from "@root/src/domain/utils/getEmulatorBaseUrl";
 
-const DEFAULT_DELAY_MS = 5000;
-const FLEX_DELAY_MS = 15000;
+const DEFAULT_DELAY_MS = 2000;
+const FLEX_DELAY_MS = 5000;
 const SETTINGS_NAV_DELAY_MS = 1000;
 
 /**
@@ -22,22 +23,30 @@ const SETTINGS_NAV_DELAY_MS = 1000;
 @injectable()
 export class SpeculosTouchscreenController implements DeviceController {
   private readonly logger: LoggerPublisherService;
-  private readonly tap: ReturnType<DeviceControllerClient["tapFactory"]>;
+  private readonly config: SpeculinhoConfig;
   private readonly delayMs: number;
+  private _tap: ReturnType<DeviceControllerClient["tapFactory"]> | null = null;
+
+  private get tap(): ReturnType<DeviceControllerClient["tapFactory"]> {
+    if (!this._tap) {
+      this._tap = deviceControllerClientFactory(
+        getEmulatorBaseUrl(this.config),
+        {
+          timeoutMs: this.config.speculosHttpTimeoutMs ?? 0,
+        },
+      ).tapFactory(this.config.device);
+    }
+    return this._tap;
+  }
 
   constructor(
-    @inject(TYPES.SpeculosConfig) config: SpeculosConfig,
+    @inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    const speculosUrl = `${config.url}:${config.port}`;
+    this.config = config;
     this.logger = loggerFactory("touchscreen-controller");
-
-    const client = deviceControllerClientFactory(speculosUrl);
-    this.tap = client.tapFactory(config.device);
-
     this.delayMs = config.device === "flex" ? FLEX_DELAY_MS : DEFAULT_DELAY_MS;
-
     this.logger.info(`Initialized touchscreen controller for ${config.device}`);
   }
 
