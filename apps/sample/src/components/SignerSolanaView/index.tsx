@@ -59,6 +59,7 @@ type SignTransactionInput = {
   delayed: boolean;
   templateId: string;
   tokenAddress: string;
+  mintAddress: string;
   tokenInternalId: string;
   createATAAddress: string;
   createATAMintAddress: string;
@@ -74,6 +75,7 @@ const MAIN_KEYS: (keyof SignTransactionInput)[] = [
 const CONTEXT_KEYS: (keyof SignTransactionInput)[] = [
   "templateId",
   "tokenAddress",
+  "mintAddress",
   "tokenInternalId",
   "createATAAddress",
   "createATAMintAddress",
@@ -245,6 +247,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
           delayed,
           templateId,
           tokenAddress,
+          mintAddress,
           tokenInternalId,
           createATAAddress,
           createATAMintAddress,
@@ -258,13 +261,18 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
               : undefined;
 
           const hasResolutionContext =
-            templateId || tokenAddress || tokenInternalId || createATA;
+            templateId ||
+            tokenAddress ||
+            mintAddress ||
+            tokenInternalId ||
+            createATA;
 
           return signer.signTransaction(derivationPath, serializedTransaction, {
             ...(hasResolutionContext && {
               transactionResolutionContext: {
                 templateId: templateId || undefined,
                 tokenAddress: tokenAddress || undefined,
+                mintAddress: mintAddress || undefined,
                 tokenInternalId: tokenInternalId || undefined,
                 createATA,
               },
@@ -279,6 +287,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
           delayed: false,
           templateId: "",
           tokenAddress: "",
+          mintAddress: "",
           tokenInternalId: "",
           createATAAddress: "",
           createATAMintAddress: "",

@@ -1,10 +1,11 @@
 export type TransactionResolutionContext = {
   tokenAddress?: string;
+  mintAddress?: string;
+  tokenInternalId?: string;
   createATA?: {
     address: string;
     mintAddress: string;
   };
-  tokenInternalId?: string;
   templateId?: string;
   userInputType?: UserInputType;
 };
