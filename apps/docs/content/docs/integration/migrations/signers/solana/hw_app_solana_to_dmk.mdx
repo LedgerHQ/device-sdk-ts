@@ -118,9 +118,11 @@ const { signature } = await solana.signTransaction("44'/501'/0'", txBuffer);
 
 ```typescript
 const { observable } = signer.signTransaction("44'/501'/0'", txBytes, {
-  // optional clear-signing context
+  // optional — provide mintAddress for SPL basic clear signing;
+  // if omitted the signer resolves it automatically, degrading to "???"
+  // on the device if resolution fails
   transactionResolutionContext: {
-    tokenAddress: "EPjFWdd5...",
+    mintAddress: "EPjFWdd5...",
   },
 });
 
