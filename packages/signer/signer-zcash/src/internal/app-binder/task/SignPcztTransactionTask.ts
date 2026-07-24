@@ -134,8 +134,9 @@ export class SignPcztTransactionTask {
     }
 
     // 2. Collect one spendAuthSig per Orchard action the device must sign.
-    //    Only real spends are signed on-device. Dummy padding spends (value 0)
-    //    are self-signed host-side by the PCZT IoFinalizer at build time, so the
+    //    Only real spends are signed on-device. Dummy padding spends
+    //    (`spendValue === 0n`) are self-signed host-side by the PCZT
+    //    IoFinalizer at build time, so the
     //    finalizer leaves only real spends unsigned and expects exactly one
     //    device signature per unsigned action, applied in action-index order
     //    (zcash-utils finalize.rs). Signing a dummy here would make the device

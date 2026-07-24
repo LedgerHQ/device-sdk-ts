@@ -128,6 +128,23 @@ export const allDummyOrchardBundle = (): PcztOrchardBundle => ({
   anchor: bytes(32, 0x0d),
 });
 
+/**
+ * Orchard bundle with two real spends interleaved with dummy padding
+ * (dummy, real, real, dummy) — exercises the ascending action-index ordering
+ * of device signing requests when more than one real spend is present.
+ */
+export const multiRealDummyOrchardBundle = (): PcztOrchardBundle => ({
+  actions: [
+    dummyOrchardAction(),
+    sampleOrchardAction(),
+    sampleOrchardAction(),
+    dummyOrchardAction(),
+  ],
+  flags: 2,
+  valueBalance: 0n,
+  anchor: bytes(32, 0x0d),
+});
+
 /** Public → Public: transparent only, no Orchard bundle. */
 export const publicToPublicTransaction = (): PcztTransaction => ({
   global: SAMPLE_GLOBAL,

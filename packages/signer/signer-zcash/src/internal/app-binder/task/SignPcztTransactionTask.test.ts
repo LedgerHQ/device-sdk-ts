@@ -17,6 +17,7 @@ import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
   allDummyOrchardBundle,
   mixedDummyOrchardBundle,
+  multiRealDummyOrchardBundle,
   privateToPrivateTransaction,
   privateToPublicTransaction,
   publicToPrivateTransaction,
@@ -181,6 +182,22 @@ describe("SignPcztTransactionTask", () => {
     const orchardSigns = calls.filter((c) => c.ins === INS_PCZT_SIGN_ORCHARD);
     expect(orchardSigns).toHaveLength(1);
     expect(orchardSigns[0]!.p2).toBe(1);
+  });
+
+  it("signs multiple real spends in ascending action-index order, skipping dummies", async () => {
+    // Bundle order: dummy (0), real (1), real (2), dummy (3). Indices 1 and 2
+    // are device-signed, strictly in ascending order; the dummies are skipped.
+    const result = await run({
+      ...privateToPrivateTransaction(),
+      orchardBundle: multiRealDummyOrchardBundle(),
+    });
+
+    expect(isSuccessDmkResult(result)).toBe(true);
+    if (isSuccessDmkResult(result)) {
+      expect(result.data.orchard).toHaveLength(2);
+    }
+    const orchardSigns = calls.filter((c) => c.ins === INS_PCZT_SIGN_ORCHARD);
+    expect(orchardSigns.map((c) => c.p2)).toEqual([1, 2]);
   });
 
   it("requests no Orchard signature when every action is dummy padding", async () => {
