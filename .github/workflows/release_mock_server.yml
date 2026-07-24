@@ -24,19 +24,19 @@ jobs:
     runs-on: ledgerhq-device-sdk
     steps:
       - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ env.REF }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
 
       - name: Get token from JFrog
         id: jfrog-login
         uses: LedgerHQ/actions-security/actions/jfrog-login@3868be0ef1ec8722fbdb2c6cda90f739cbfc742d # actions/jfrog-login-1
 
       - name: Login to JFrog OCI Registry
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
+        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4
         with:
           registry: ${{ env.JFROG_REGISTRY }}/${{ env.JFROG_REGISTRY_REPO }}
           username: ${{ steps.jfrog-login.outputs.oidc-user }}
