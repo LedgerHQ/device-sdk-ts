@@ -12,6 +12,9 @@ import { StyledComponentsRegistry } from "@/lib/registry";
 
 import ClientRootLayout from "./client-layout";
 
+// Lumen (Tailwind v4) styles, used only by the home page device buttons.
+import "@/styles/lumen.css";
+
 export const metadata = {
   title: "Ledger Device Management Kit",
   description: "Ledger Device Management Kit Sample App",
