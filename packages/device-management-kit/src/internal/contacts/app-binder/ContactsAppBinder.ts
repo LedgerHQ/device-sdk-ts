@@ -6,6 +6,7 @@ import { type EditExternalAddressLabelArgs } from "@api/contacts/model/EditExter
 import { type RenameContactArgs } from "@api/contacts/model/RenameContactArgs";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
+import { CallTaskOnDashboardDeviceAction } from "@api/device-action/os/CallTaskOnDashboardDeviceAction/CallTaskOnDashboardDeviceAction";
 import { type DeviceSessionId } from "@api/device-session/types";
 import { type DeviceManagementKit } from "@api/DeviceManagementKit";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
@@ -13,11 +14,10 @@ import { SendEditContactNameTask } from "@internal/contacts/app-binder/task/Send
 import { SendEditScopeTask } from "@internal/contacts/app-binder/task/SendEditScopeTask";
 import { contactsExternalTypes } from "@internal/contacts/externalTypes";
 
-// UPGRADE POINT — OS-dispatch.
-// Today the Contacts DMK-core ops dispatch via the open ETH app's CLA
-// (0xB0). When firmware OS-dispatch lands and these ops move to OS-level
-// CLA, this constant goes away (the binder swaps to a direct send) and
-// the ContactsService public API stays identical.
+// Edit External Address Label (Edit Scope) is still an Ethereum-app op — it
+// carries a chain id + address the coin app must validate — so it dispatches
+// via the open app's CLA (0xB0). Rename Contact, by contrast, is now the OS
+// dashboard command E0 2E (see renameContact below).
 const POLYFILL_APP_NAME = "Ethereum";
 
 @injectable()
@@ -31,18 +31,18 @@ export class ContactsAppBinder {
 
   renameContact(args: RenameContactArgs): RenameContactDAReturnType {
     const taskLogger = this.dmkLoggerFactory("SendEditContactNameTask");
+    // Rename is the blockchain-agnostic OS command E0 2E: close any running
+    // app (GoToDashboard) then dispatch on the dashboard.
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new CallTaskInAppDeviceAction({
+      deviceAction: new CallTaskOnDashboardDeviceAction({
         input: {
           task: async (internalApi) =>
             new SendEditContactNameTask(internalApi, {
               ...args,
               logger: taskLogger,
             }).run(),
-          appName: POLYFILL_APP_NAME,
           requiredUserInteraction: UserInteractionRequired.RegisterWallet,
-          skipOpenApp: false,
         },
         logger: this.dmkLoggerFactory("SendEditContactNameTask"),
       }),

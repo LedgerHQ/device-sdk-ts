@@ -89,6 +89,7 @@ export {
 } from "@api/device-action/model/DeviceActionState";
 export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
+export { CallTaskOnDashboardDeviceAction } from "@api/device-action/os/CallTaskOnDashboardDeviceAction/CallTaskOnDashboardDeviceAction";
 export { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 export {
   AppAlreadyInstalledDAError,

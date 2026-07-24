@@ -1,12 +1,18 @@
-// Wire reference:
-// ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md
-//   prepare_edit_contact_name → CLA=0xB0, INS=0x10, P1=0x02, P2=0x00.
-// Caller (SendEditContactNameTask) assembles the TLV payload; this command
-// just frames it and parses the 33-byte structured response (struct_type + hmac_name).
+// Edit Contact Name (rename an external contact) — the blockchain-agnostic
+// address-book rename. It is dispatched as an OS/dashboard command
+// (CLA 0xE0 / INS 0x2E / P1 0x00), NOT through the Ethereum app: the caller
+// closes any running app first (CallTaskOnDashboardDeviceAction) so the OS
+// handles it directly. SendEditContactNameTask + sendFramedContactsPayload
+// assemble the TLV, prepend the 2-byte BE total length and slice into ≤255B
+// chunks; this command frames one chunk and, on the final chunk, parses the
+// 33-byte response: struct_type(0x2e) + rotated hmac_name(32). Intermediate
+// chunks ack with SW=0x9000 and no data.
 //
-// UPGRADE POINT — OS-dispatch: today the polyfill dispatches via the ETH
-// app's CLA (0xB0). When firmware OS-dispatch lands, the CLA byte changes
-// to the OS-level one; the payload and response shape don't.
+// The device is stateless: it verifies the supplied group handle + old-name
+// proof against the seed-derived key (SW 0x6982 on a seed mismatch, before any
+// UI) and, on approval, returns a fresh proof for the new name. Contract
+// verified on-device (Ledger Flex, BOLOS 1.7.0-rc2).
+// Protocol: ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md §5.2
 import { type Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
@@ -21,18 +27,24 @@ import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { DmkResultFactory } from "@api/model/DmkResult";
 
 export type EditContactNameCommandArgs = {
-  /** Pre-assembled TLV payload. Built by SendEditContactNameTask. */
+  /** One framed chunk built by sendFramedContactsPayload. */
   readonly data: Uint8Array;
+  /** 0x00 for the first/only chunk, 0x80 for continuation chunks. */
+  readonly p2: number;
 };
 
 export type EditContactNameCommandResponse = {
-  readonly hmacNameHex: string;
+  /**
+   * Present only on the final chunk — the device returns struct_type(0x2e) +
+   * rotated hmac_name(32) there. Intermediate chunks return SW=0x9000 with no
+   * data.
+   */
+  readonly hmacNameHex?: string;
 };
 
-const EDIT_CONTACT_NAME_CLA = 0xb0;
-const EDIT_CONTACT_NAME_INS = 0x10;
-const EDIT_CONTACT_NAME_P1 = 0x02;
-const EDIT_CONTACT_NAME_P2 = 0x00;
+const EDIT_CONTACT_NAME_CLA = 0xe0;
+const EDIT_CONTACT_NAME_INS = 0x2e;
+const EDIT_CONTACT_NAME_P1 = 0x00;
 
 const RESPONSE_STRUCT_TYPE = 0x2e;
 const HMAC_NAME_BYTES = 32;
@@ -57,7 +69,7 @@ export class EditContactNameCommand
       cla: EDIT_CONTACT_NAME_CLA,
       ins: EDIT_CONTACT_NAME_INS,
       p1: EDIT_CONTACT_NAME_P1,
-      p2: EDIT_CONTACT_NAME_P2,
+      p2: this.args.p2,
     })
       .addBufferToData(this.args.data)
       .build();
@@ -71,6 +83,11 @@ export class EditContactNameCommand
       return DmkResultFactory({
         error: getContactsCommandError(response),
       });
+    }
+
+    if (response.data.length === 0) {
+      // Intermediate chunk — device acks with SW=0x9000 and no payload.
+      return DmkResultFactory({ data: {} });
     }
 
     const parser = new ApduParser(response);

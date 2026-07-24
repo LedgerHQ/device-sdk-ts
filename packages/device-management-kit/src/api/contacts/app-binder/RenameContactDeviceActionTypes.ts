@@ -5,19 +5,20 @@ import { type ExecuteDeviceActionReturnType } from "@api/device-action/DeviceAct
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
-  type OpenAppDAError,
-  type OpenAppDARequiredInteraction,
-} from "@api/device-action/os/OpenAppDeviceAction/types";
+  type GoToDashboardDAError,
+  type GoToDashboardDARequiredInteraction,
+} from "@api/device-action/os/GoToDashboard/types";
 
 export type RenameContactDAOutput = RenameContactResult;
 
 export type RenameContactDAError =
-  | OpenAppDAError
+  | GoToDashboardDAError
   | CommandErrorResult<ContactsErrorCodes>["error"];
 
 type RenameContactDARequiredInteraction =
-  | OpenAppDARequiredInteraction
-  | UserInteractionRequired.RegisterWallet;
+  | GoToDashboardDARequiredInteraction
+  | UserInteractionRequired.RegisterWallet
+  | UserInteractionRequired.None;
 
 export type RenameContactDAIntermediateValue = {
   requiredUserInteraction: RenameContactDARequiredInteraction;

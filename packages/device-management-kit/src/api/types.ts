@@ -31,6 +31,11 @@ export {
   type CallTaskInAppDAOutput,
 } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceActionTypes";
 export {
+  type CallTaskOnDashboardDAError,
+  type CallTaskOnDashboardDAIntermediateValue,
+  type CallTaskOnDashboardDAOutput,
+} from "@api/device-action/os/CallTaskOnDashboardDeviceAction/CallTaskOnDashboardDeviceActionTypes";
+export {
   type GetDeviceMetadataDAError,
   type GetDeviceMetadataDAInput,
   type GetDeviceMetadataDAIntermediateValue,

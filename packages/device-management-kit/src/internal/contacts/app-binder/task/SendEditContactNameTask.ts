@@ -1,17 +1,21 @@
-// Builds the TLV payload for op 4 (Edit Contact Name / Rename Contact) and
-// dispatches it via EditContactNameCommand. Single APDU regardless of N
-// entries on the contact.
+// Builds the TLV payload for the Edit Contact Name (rename) op and dispatches
+// it via the chunked-framing scheme. The rename is an OS/dashboard command
+// (CLA 0xE0 / INS 0x2E) — the caller runs this task inside
+// CallTaskOnDashboardDeviceAction, which closes any running app first.
 //
 // Reference:
-// ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md
-//   prepare_edit_contact_name → tag order is STRUCT_TYPE, STRUCT_VERSION,
+// ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md §5.2
+//   edit contact name → tag order STRUCT_TYPE, STRUCT_VERSION,
 //   CONTACT_NAME (new), PREVIOUS_CONTACT_NAME (old), GROUP_HANDLE,
-//   DERIVATION_PATH, HMAC_PROOF.
+//   DERIVATION_PATH, HMAC_PROOF. Response: struct_type(0x2e) + rotated
+//   hmac_name(32).
 import { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 import { InvalidStatusWordError } from "@api/command/Errors";
 import { type CommandResult } from "@api/command/model/CommandResult";
-import { type ContactsErrorCodes } from "@api/contacts/ContactsErrors";
-import { type RenameContactArgs } from "@api/contacts/model/RenameContactArgs";
+import {
+  type RenameContactArgs,
+  type RenameContactResult,
+} from "@api/contacts/model/RenameContactArgs";
 import {
   CONTACTS_TLV_TAG,
   encodeTlvAscii,
@@ -22,15 +26,14 @@ import {
   STRUCT_TYPE_EDIT_CONTACT_NAME,
   STRUCT_VERSION_VALUE,
 } from "@api/contacts/utils/contactsTlvSerializer";
+import { sendFramedContactsPayload } from "@api/contacts/utils/sendFramedContactsPayload";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { DmkResultFactory } from "@api/model/DmkResult";
-import {
-  EditContactNameCommand,
-  type EditContactNameCommandResponse,
-} from "@internal/contacts/app-binder/command/EditContactNameCommand";
+import { DmkResultFactory, isSuccessDmkResult } from "@api/model/DmkResult";
+import { EditContactNameCommand } from "@internal/contacts/app-binder/command/EditContactNameCommand";
 
-const APDU_DATA_MAX_BYTES = 255;
+// P1 is 0x00 for the OS edit-contact-name command (not a sub-command byte).
+const EDIT_CONTACT_NAME_P1 = 0x00;
 
 type SendEditContactNameTaskArgs = RenameContactArgs & {
   readonly logger: LoggerPublisherService;
@@ -46,9 +49,7 @@ export class SendEditContactNameTask {
     this._logger = args.logger;
   }
 
-  async run(): Promise<
-    CommandResult<EditContactNameCommandResponse, ContactsErrorCodes>
-  > {
+  async run(): Promise<CommandResult<RenameContactResult>> {
     const payload = this.buildPayload(this.args);
 
     this._logger.info("[run] payload built", {
@@ -63,24 +64,30 @@ export class SendEditContactNameTask {
       },
     });
 
-    if (payload.length > APDU_DATA_MAX_BYTES) {
-      this._logger.error("[run] Payload exceeds APDU data limit", {
-        tag: "SendEditContactNameTask",
-        data: { length: payload.length, max: APDU_DATA_MAX_BYTES },
-      });
+    const result = await sendFramedContactsPayload(this.api, {
+      payload,
+      p1: EDIT_CONTACT_NAME_P1,
+      makeCommand: (chunk, p2) =>
+        new EditContactNameCommand({ data: chunk, p2 }),
+      logger: this._logger,
+      commandTag: "editContactName",
+    });
+
+    if (!isSuccessDmkResult(result)) {
+      return result;
+    }
+    // The final chunk's response carries the rotated hmac_name; if it's
+    // missing, the device returned a malformed structure.
+    if (!result.data.hmacNameHex) {
       return DmkResultFactory({
         error: new InvalidStatusWordError(
-          `Edit contact name payload is ${payload.length} bytes (max ${APDU_DATA_MAX_BYTES}).`,
+          "EditContactName final-chunk response did not carry hmac_name",
         ),
       });
     }
-
-    this._logger.debug("[send] dispatching EditContactNameCommand", {
-      tag: "editContactName",
-      data: { payloadLen: payload.length },
+    return DmkResultFactory({
+      data: { hmacNameHex: result.data.hmacNameHex },
     });
-
-    return this.api.sendCommand(new EditContactNameCommand({ data: payload }));
   }
 
   private buildPayload(args: SendEditContactNameTaskArgs): Uint8Array {
