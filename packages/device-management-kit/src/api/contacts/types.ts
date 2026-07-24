@@ -15,10 +15,10 @@
 export const WALLET_SCHEMA_VERSION = 1 as const;
 
 /**
- * Mirrors `AddressBookResponseType` in the upstream Python client
- * (`app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py`).
- * Single source of truth for the response-discriminator byte the
- * device prepends to RAPDU data on success.
+ * Response-discriminator (struct-type) byte the device prepends to RAPDU
+ * data on success. Mirrors the `TYPE_*` constants in the BOLOS SDK
+ * (ledger-secure-sdk/app_features/address_book/include/identity.h; spec
+ * doc/address_book_spec.md §4).
  */
 export enum ResponseType {
   RegisterIdentity = 0x2d,

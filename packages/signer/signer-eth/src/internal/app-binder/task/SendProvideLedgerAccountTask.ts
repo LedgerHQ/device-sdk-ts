@@ -3,7 +3,7 @@
 // shared with op 2/3 and the sibling Provide-Contact op.
 //
 // Reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py:449-486
+// ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md
 //   prepare_provide_ledger_account_contact → tag order is STRUCT_TYPE,
 //   STRUCT_VERSION, CONTACT_NAME, DERIVATION_PATH, CHAIN_ID,
 //   BLOCKCHAIN_FAMILY, HMAC_PROOF (the 32-byte proof returned by op 5).

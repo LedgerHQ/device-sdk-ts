@@ -1,7 +1,7 @@
 // DER-style TLV encoding for the Contacts feature.
 // Tags ≥ 0x80 use the 2-byte form (0x81 0xTT); lengths ≥ 0x80 use long form.
-// Matches `tlv.py` (`der_encode` + `serialize_field`) in the
-// app-ethereum python client.
+// Wire format per the BOLOS SDK address-book spec
+// (ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md §4.2).
 import { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 
 const LONG_TAG_PREFIX_HIGH_BYTE = 0x81 << 8;
@@ -9,7 +9,7 @@ const LONG_TAG_PREFIX_HIGH_BYTE = 0x81 << 8;
 export const CONTACTS_TLV_TAG = {
   STRUCT_TYPE: 0x01,
   STRUCT_VERSION: 0x02,
-  DERIVATION_PATH: 0x21,
+  DERIVATION_PATH: 0x69, // 0x69 since SDK commit 963d72b7 (was 0x21)
   CHAIN_ID: 0x23,
   HMAC_PROOF: 0x29,
   BLOCKCHAIN_FAMILY: 0x51,

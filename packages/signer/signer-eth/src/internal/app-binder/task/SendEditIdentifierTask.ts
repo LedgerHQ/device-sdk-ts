@@ -3,7 +3,7 @@
 // with op 2 + the Provide ops.
 //
 // Reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py:242-294
+// ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md
 //   prepare_edit_identifier → tag order is STRUCT_TYPE, STRUCT_VERSION,
 //   CONTACT_NAME, SCOPE, ACCOUNT_IDENTIFIER (new), PREVIOUS_IDENTIFIER (old),
 //   GROUP_HANDLE, DERIVATION_PATH, CHAIN_ID, HMAC_PROOF (hmac_name),

@@ -1,14 +1,13 @@
-// Chunked-framing transport for Contacts ops that opt into the 2-byte
-// BE length prefix + ≤255-byte chunking scheme. Mirrors
-// `address_book.py:54-91` `send_async_raw` for SUB_CMD_EDIT_IDENTIFIER,
-// SUB_CMD_EDIT_SCOPE, SUB_CMD_PROVIDE_CONTACT,
-// SUB_CMD_PROVIDE_LEDGER_ACCOUNT_CONTACT.
+// Chunked-framing transport for the Contacts ops. Since the BOLOS SDK
+// "use uniform chunked transport for all sub-commands" change, every
+// address-book sub-command frames its TLV this way.
 //
 // First chunk is dispatched with P2=0x00 and carries the 2-byte BE
 // total-payload-length prefix. Subsequent chunks use P2=0x80. The
 // caller-supplied `makeCommand` builds a Command per chunk; the helper
 // returns the final chunk's CommandResult unchanged so the caller can
 // parse the device's structured response off the last exchange.
+// Protocol: ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md §3
 import type { Command } from "@api/command/Command";
 import type { CommandResult } from "@api/command/model/CommandResult";
 import type { InternalApi } from "@api/device-action/DeviceAction";

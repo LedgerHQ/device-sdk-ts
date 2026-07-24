@@ -1,7 +1,8 @@
-// Byte-level parity with the playground fixtures at
-// ~/dev/ledger-contacts-playground/docs/fixtures/apdu-traces.json
-//   - register_external_address_first_time     (fresh contact, 77-byte payload)
-//   - register_external_address_extends_existing (extension, 179-byte payload)
+// RegisterIdentityCommand is a thin chunk-framer: it wraps a pre-framed chunk
+// (2-byte BE length prefix + TLV, assembled by SendRegisterIdentityTask +
+// sendFramedContactsPayload) under B0 10 01 <P2>, and parses the 129-byte
+// register response on the final chunk. TLV byte-parity is asserted in
+// SendRegisterIdentityTask.test.ts.
 import {
   type ApduResponse,
   CommandResultStatus,
@@ -19,29 +20,13 @@ function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-// Fixture: register_external_address_first_time
-const FRESH_REQUEST = hexToBytes(
-  "b01001004d01012d02010181f005416c69636581f108457468206d61696e81f21400000000000000000000000000000000deadbeef2115058000002c8000003c800000000000000000000000230101510101",
-);
-
-const FRESH_RESPONSE_HEX =
+// Device response is unchanged by the protocol update:
+// struct_type(0x2d) + group_handle(64) + hmac_name(32) + hmac_rest(32).
+const RESPONSE_HEX =
   "2dccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-const FRESH_GROUP_HANDLE_HEX = "cc".repeat(64);
-const FRESH_HMAC_NAME_HEX = "dd".repeat(32);
-const FRESH_HMAC_REST_HEX = "aa".repeat(32);
-
-// Fixture: register_external_address_extends_existing
-const EXTENSION_REQUEST = hexToBytes(
-  "b0100100b301012d02010181f005416c69636581f108417262206d61696e81f21444444444444444444444444444444444444444442115058000002c8000003c8000000000000000000000002302a4b151010181f640cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc2920dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
-);
-
-const EXTENSION_RESPONSE_HEX =
-  "2dccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd9999999999999999999999999999999999999999999999999999999999999999";
-const EXTENSION_GROUP_HANDLE_HEX = "cc".repeat(64);
-const EXTENSION_HMAC_NAME_HEX = "dd".repeat(32);
-const EXTENSION_HMAC_REST_HEX = "99".repeat(32);
-
-const APDU_HEADER_LENGTH = 5; // CLA, INS, P1, P2, Lc
+const GROUP_HANDLE_HEX = "cc".repeat(64);
+const HMAC_NAME_HEX = "dd".repeat(32);
+const HMAC_REST_HEX = "aa".repeat(32);
 
 function makeResponse(hex: string): ApduResponse {
   return {
@@ -52,63 +37,69 @@ function makeResponse(hex: string): ApduResponse {
 
 describe("RegisterIdentityCommand", () => {
   describe("getApdu", () => {
-    it("frames the fresh-register payload byte-equal to fixture", () => {
-      const command = new RegisterIdentityCommand({
-        data: FRESH_REQUEST.slice(APDU_HEADER_LENGTH),
-      });
+    it("wraps the framed chunk under B0 10 01 with P2=0x00 for the first/only chunk", () => {
+      const data = Uint8Array.from([0x00, 0x03, 0xaa, 0xbb, 0xcc]);
 
-      const apdu = command.getApdu();
+      const apdu = new RegisterIdentityCommand({ data, p2: 0x00 }).getApdu();
 
-      expect(apdu.getRawApdu()).toStrictEqual(FRESH_REQUEST);
+      expect(apdu.getRawApdu()).toStrictEqual(
+        Uint8Array.from([
+          0xb0, 0x10, 0x01, 0x00, 0x05, 0x00, 0x03, 0xaa, 0xbb, 0xcc,
+        ]),
+      );
     });
 
-    it("frames the extension-register payload byte-equal to fixture", () => {
-      const command = new RegisterIdentityCommand({
-        data: EXTENSION_REQUEST.slice(APDU_HEADER_LENGTH),
-      });
+    it("uses P2=0x80 for continuation chunks", () => {
+      const data = Uint8Array.from([0xaa, 0xbb]);
 
-      const apdu = command.getApdu();
+      const apdu = new RegisterIdentityCommand({ data, p2: 0x80 }).getApdu();
 
-      expect(apdu.getRawApdu()).toStrictEqual(EXTENSION_REQUEST);
+      expect(apdu.getRawApdu()).toStrictEqual(
+        Uint8Array.from([0xb0, 0x10, 0x01, 0x80, 0x02, 0xaa, 0xbb]),
+      );
     });
   });
 
   describe("parseResponse", () => {
-    it("extracts group_handle / hmac_name / hmac_rest from a fresh-register response", () => {
-      const command = new RegisterIdentityCommand({ data: new Uint8Array() });
-
-      const result = command.parseResponse(makeResponse(FRESH_RESPONSE_HEX));
+    it("returns an empty payload for an intermediate chunk (SW=0x9000, no data)", () => {
+      const result = new RegisterIdentityCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      }).parseResponse({
+        data: Buffer.from([]),
+        statusCode: Buffer.from([0x90, 0x00]),
+      });
 
       expect(result).toStrictEqual({
         status: CommandResultStatus.Success,
-        data: {
-          groupHandleHex: FRESH_GROUP_HANDLE_HEX,
-          hmacNameHex: FRESH_HMAC_NAME_HEX,
-          hmacRestHex: FRESH_HMAC_REST_HEX,
-        },
+        data: {},
       });
     });
 
-    it("extracts the fresh hmac_rest from an extension-register response, group_handle/hmac_name unchanged", () => {
-      const command = new RegisterIdentityCommand({ data: new Uint8Array() });
+    it("extracts group_handle / hmac_name / hmac_rest from a register response", () => {
+      const command = new RegisterIdentityCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
 
-      const result = command.parseResponse(
-        makeResponse(EXTENSION_RESPONSE_HEX),
-      );
+      const result = command.parseResponse(makeResponse(RESPONSE_HEX));
 
       expect(result).toStrictEqual({
         status: CommandResultStatus.Success,
         data: {
-          groupHandleHex: EXTENSION_GROUP_HANDLE_HEX,
-          hmacNameHex: EXTENSION_HMAC_NAME_HEX,
-          hmacRestHex: EXTENSION_HMAC_REST_HEX,
+          groupHandleHex: GROUP_HANDLE_HEX,
+          hmacNameHex: HMAC_NAME_HEX,
+          hmacRestHex: HMAC_REST_HEX,
         },
       });
     });
 
     it("returns InvalidStatusWordError when struct_type is wrong", () => {
-      const wrongType = "ee" + FRESH_RESPONSE_HEX.slice(2); // replace 0x2d with 0xee
-      const command = new RegisterIdentityCommand({ data: new Uint8Array() });
+      const wrongType = "ee" + RESPONSE_HEX.slice(2); // replace 0x2d with 0xee
+      const command = new RegisterIdentityCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
 
       const result = command.parseResponse(makeResponse(wrongType));
 
@@ -116,7 +107,10 @@ describe("RegisterIdentityCommand", () => {
     });
 
     it("maps a known SW (0x6985) to a ContactsCommandError", () => {
-      const command = new RegisterIdentityCommand({ data: new Uint8Array() });
+      const command = new RegisterIdentityCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
 
       const result = command.parseResponse({
         data: Buffer.from([]),
@@ -133,7 +127,10 @@ describe("RegisterIdentityCommand", () => {
     it("maps SW=0x6982 to a seed-mismatch ContactsCommandError", () => {
       // Reached when extending an existing contact whose group handle was
       // registered with another seed (once the app verifies before the UI).
-      const command = new RegisterIdentityCommand({ data: new Uint8Array() });
+      const command = new RegisterIdentityCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
 
       const result = command.parseResponse({
         data: Buffer.from([]),

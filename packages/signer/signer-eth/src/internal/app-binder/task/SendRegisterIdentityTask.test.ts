@@ -1,8 +1,8 @@
-// Validates that the TLV serializer + tag ordering produces byte-equal
-// payloads against the playground fixtures at
-// ~/dev/ledger-contacts-playground/docs/fixtures/apdu-traces.json
-//   - register_external_address_first_time
-//   - register_external_address_extends_existing
+// Validates that the TLV serializer + tag ordering + chunk framing produce the
+// expected wire bytes for op 1 (Register Identity). The framed chunk = 2-byte
+// BE total length + TLV, with DERIVATION_PATH under tag 0x69 (SDK 963d72b7).
+// (The playground fixtures at ~/dev/ledger-contacts-playground were generated
+// against the pre-1.23 protocol — tag 0x21, no length prefix — and are stale.)
 import {
   CommandResultFactory,
   InvalidStatusWordError,
@@ -29,18 +29,15 @@ function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-const APDU_HEADER_LENGTH = 5;
-
-const FRESH_FIXTURE_REQUEST = hexToBytes(
-  "b01001004d01012d02010181f005416c69636581f108457468206d61696e81f21400000000000000000000000000000000deadbeef2115058000002c8000003c800000000000000000000000230101510101",
+// Framed chunk = "00 <Lc>" (2-byte BE total TLV length) + TLV. Derivation path
+// under tag 0x69.
+const FRESH_FRAMED_CHUNK = hexToBytes(
+  "004d01012d02010181f005416c69636581f108457468206d61696e81f21400000000000000000000000000000000deadbeef6915058000002c8000003c800000000000000000000000230101510101",
 );
-const FRESH_EXPECTED_PAYLOAD = FRESH_FIXTURE_REQUEST.slice(APDU_HEADER_LENGTH);
 
-const EXTENSION_FIXTURE_REQUEST = hexToBytes(
-  "b0100100b301012d02010181f005416c69636581f108417262206d61696e81f21444444444444444444444444444444444444444442115058000002c8000003c8000000000000000000000002302a4b151010181f640cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc2920dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+const EXTENSION_FRAMED_CHUNK = hexToBytes(
+  "00b301012d02010181f005416c69636581f108417262206d61696e81f21444444444444444444444444444444444444444446915058000002c8000003c8000000000000000000000002302a4b151010181f640cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc2920dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
 );
-const EXTENSION_EXPECTED_PAYLOAD =
-  EXTENSION_FIXTURE_REQUEST.slice(APDU_HEADER_LENGTH);
 
 describe("SendRegisterIdentityTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
@@ -56,7 +53,7 @@ describe("SendRegisterIdentityTask", () => {
     vi.resetAllMocks();
   });
 
-  it("assembles a fresh-register payload byte-equal to fixture and dispatches RegisterIdentityCommand", async () => {
+  it("assembles a fresh-register framed chunk and dispatches RegisterIdentityCommand", async () => {
     apiMock.sendCommand.mockResolvedValueOnce(okResponse);
 
     await new SendRegisterIdentityTask(apiMock, {
@@ -70,11 +67,11 @@ describe("SendRegisterIdentityTask", () => {
 
     expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
     expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
-      new RegisterIdentityCommand({ data: FRESH_EXPECTED_PAYLOAD }),
+      new RegisterIdentityCommand({ data: FRESH_FRAMED_CHUNK, p2: 0x00 }),
     );
   });
 
-  it("appends GROUP_HANDLE + HMAC_PROOF on extension and matches the extension fixture", async () => {
+  it("appends GROUP_HANDLE + HMAC_PROOF on extension and frames the extension payload", async () => {
     apiMock.sendCommand.mockResolvedValueOnce(okResponse);
 
     await new SendRegisterIdentityTask(apiMock, {
@@ -92,7 +89,7 @@ describe("SendRegisterIdentityTask", () => {
 
     expect(apiMock.sendCommand.mock.calls).toHaveLength(1);
     expect(apiMock.sendCommand.mock.calls[0]![0]).toStrictEqual(
-      new RegisterIdentityCommand({ data: EXTENSION_EXPECTED_PAYLOAD }),
+      new RegisterIdentityCommand({ data: EXTENSION_FRAMED_CHUNK, p2: 0x00 }),
     );
   });
 

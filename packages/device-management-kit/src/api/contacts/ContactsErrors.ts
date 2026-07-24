@@ -31,6 +31,7 @@ export type ContactsErrorCodes =
   | "6982"
   | "6800"
   | "6983"
+  | "6984"
   | "6985"
   | "6a80"
   | "6a84"
@@ -46,12 +47,16 @@ export const CONTACTS_APP_ERRORS: CommandErrors<ContactsErrorCodes> = {
   },
   "6800": { message: "Internal error (Please report)" },
   "6983": { message: "Wrong data length" },
+  "6984": {
+    message:
+      "Unsupported address-book operation for this device or app configuration",
+  },
   "6985": { message: "Condition not satisfied" },
   "6a80": { message: "Invalid contact data, or operation refused on device" },
   "6a84": { message: "Insufficient memory: the device address book is full" },
   "6a88": { message: "Contact data not found" },
   "6af0": { message: "Invalid value for this contact entry" },
-  "6b00": { message: "Incorrect parameter P1 or P2" },
+  "6b00": { message: "The app rejected the contact data" },
   "6f00": { message: "Technical problem (Internal error, please report)" },
 };
 

@@ -1,8 +1,8 @@
-// Wire reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py
-//   prepare_edit_ledger_account → P1=0x12, struct type 0x30. TLV order:
-//   STRUCT_TYPE, STRUCT_VERSION, CONTACT_NAME(new), PREVIOUS_CONTACT_NAME(old),
-//   DERIVATION_PATH, CHAIN_ID, HMAC_PROOF, BLOCKCHAIN_FAMILY.
+// EditLedgerAccountCommand is a thin chunk-framer: it wraps a pre-framed chunk
+// (2-byte BE length prefix + TLV, assembled by SendEditLedgerAccountTask +
+// sendFramedContactsPayload) under B0 10 12 <P2>, and parses the 33-byte
+// response (struct_type 0x30 + rotated hmac_proof) on the final chunk. TLV
+// byte-parity is asserted in SendEditLedgerAccountTask.test.ts.
 import {
   type ApduResponse,
   CommandResultStatus,
@@ -20,33 +20,8 @@ function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-const HMAC_PROOF_HEX = "ee".repeat(32);
-
-// Edit "Vault" → "Safe", path m/44'/60'/0'/0/0, chainId 1.
-const EDIT_REQUEST = hexToBytes(
-  [
-    "b010120054", // CLA=b0 INS=10 P1=12 P2=00 Lc=0x54
-    "010130", // STRUCT_TYPE = 0x30 (edit ledger account)
-    "020101", // STRUCT_VERSION = 1
-    "81f00453616665", // CONTACT_NAME = "Safe"
-    "81f3055661756c74", // PREVIOUS_CONTACT_NAME = "Vault"
-    "2115058000002c8000003c800000000000000000000000", // DERIVATION_PATH
-    "230101", // CHAIN_ID = 1
-    "2920" + HMAC_PROOF_HEX, // HMAC_PROOF (32 bytes)
-    "510101", // BLOCKCHAIN_FAMILY = ETH
-  ].join(""),
-);
-
 const ROTATED_PROOF_HEX = "ab".repeat(32);
-const EDIT_RESPONSE_HEX = "30" + ROTATED_PROOF_HEX;
-
-const ARGS = {
-  name: "Safe",
-  oldName: "Vault",
-  derivationPath: "44'/60'/0'/0/0",
-  chainId: 1,
-  hmacProofHex: HMAC_PROOF_HEX,
-};
+const RESPONSE_HEX = "30" + ROTATED_PROOF_HEX;
 
 function makeResponse(hex: string): ApduResponse {
   return {
@@ -57,20 +32,50 @@ function makeResponse(hex: string): ApduResponse {
 
 describe("EditLedgerAccountCommand", () => {
   describe("getApdu", () => {
-    it("frames the edit payload with P1=0x12 and previous-name + hmac-proof TLVs", () => {
-      const command = new EditLedgerAccountCommand(ARGS);
+    it("wraps the framed chunk under B0 10 12 with P2=0x00 for the first/only chunk", () => {
+      const data = Uint8Array.from([0x00, 0x02, 0xaa, 0xbb]);
 
-      const apdu = command.getApdu();
+      const apdu = new EditLedgerAccountCommand({ data, p2: 0x00 }).getApdu();
 
-      expect(apdu.getRawApdu()).toStrictEqual(EDIT_REQUEST);
+      expect(apdu.getRawApdu()).toStrictEqual(
+        Uint8Array.from([0xb0, 0x10, 0x12, 0x00, 0x04, 0x00, 0x02, 0xaa, 0xbb]),
+      );
+    });
+
+    it("uses P2=0x80 for continuation chunks", () => {
+      const data = Uint8Array.from([0xcc]);
+
+      const apdu = new EditLedgerAccountCommand({ data, p2: 0x80 }).getApdu();
+
+      expect(apdu.getRawApdu()).toStrictEqual(
+        Uint8Array.from([0xb0, 0x10, 0x12, 0x80, 0x01, 0xcc]),
+      );
     });
   });
 
   describe("parseResponse", () => {
-    it("extracts the rotated hmac_proof from a successful response", () => {
-      const command = new EditLedgerAccountCommand(ARGS);
+    it("returns an empty payload for an intermediate chunk (SW=0x9000, no data)", () => {
+      const result = new EditLedgerAccountCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      }).parseResponse({
+        data: Buffer.from([]),
+        statusCode: Buffer.from([0x90, 0x00]),
+      });
 
-      const result = command.parseResponse(makeResponse(EDIT_RESPONSE_HEX));
+      expect(result).toStrictEqual({
+        status: CommandResultStatus.Success,
+        data: {},
+      });
+    });
+
+    it("extracts the rotated hmac_proof from a successful response", () => {
+      const command = new EditLedgerAccountCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
+
+      const result = command.parseResponse(makeResponse(RESPONSE_HEX));
 
       expect(result).toStrictEqual({
         status: CommandResultStatus.Success,
@@ -79,8 +84,11 @@ describe("EditLedgerAccountCommand", () => {
     });
 
     it("returns an error when struct_type is wrong", () => {
-      const wrongType = "ee" + EDIT_RESPONSE_HEX.slice(2);
-      const command = new EditLedgerAccountCommand(ARGS);
+      const wrongType = "ee" + RESPONSE_HEX.slice(2);
+      const command = new EditLedgerAccountCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
 
       const result = command.parseResponse(makeResponse(wrongType));
 
@@ -91,7 +99,10 @@ describe("EditLedgerAccountCommand", () => {
       // The device returns 0x6982 (before showing any UI) only when the
       // seed-bound HMAC proof verification fails — i.e. the Ledger account was
       // registered with a different seed than the one currently connected.
-      const command = new EditLedgerAccountCommand(ARGS);
+      const command = new EditLedgerAccountCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
 
       const result = command.parseResponse({
         data: Buffer.from([]),
@@ -108,7 +119,10 @@ describe("EditLedgerAccountCommand", () => {
     });
 
     it("maps a known SW (0x6985 user-cancel) to a ContactsCommandError", () => {
-      const command = new EditLedgerAccountCommand(ARGS);
+      const command = new EditLedgerAccountCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
 
       const result = command.parseResponse({
         data: Buffer.from([]),

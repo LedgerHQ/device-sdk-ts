@@ -1,5 +1,5 @@
 // Wire reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py:449-486
+// ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md
 //   prepare_provide_ledger_account_contact → CLA=0xB0, INS=0x10, P1=0x21
 //   (SUB_CMD_PROVIDE_LEDGER_ACCOUNT_CONTACT).
 // Caller (SendProvideLedgerAccountTask + sendFramedContactsPayload) assembles

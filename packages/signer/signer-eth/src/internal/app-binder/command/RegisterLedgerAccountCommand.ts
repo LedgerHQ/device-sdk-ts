@@ -1,33 +1,23 @@
-// Wire reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py:156-186
-//   prepare_register_ledger_account → CLA=0xB0, INS=0x10,
-//   P1=SUB_CMD_REGISTER_LEDGER_ACCOUNT (0x11), P2=0x00.
-// The TLV layout is fixed (no fresh-vs-extension branching), so the
-// command builds the payload itself rather than delegating to a Task.
+// Register Ledger Account (register a signer-controlled account) — sub-command
+// P1=0x11 of the address-book APDU (CLA 0xB0 / INS 0x10). Caller
+// (SendRegisterLedgerAccountTask + sendFramedContactsPayload) assembles the TLV,
+// prepends the 2-byte BE total length and slices into ≤255B chunks; this command
+// frames one chunk and, on the final chunk, parses the 33-byte response:
+// struct_type(0x2f) + hmac_proof(32). Intermediate chunks ack with SW=0x9000
+// and no data.
+// Protocol: ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md §5.5
 import {
   type Apdu,
   ApduBuilder,
   ApduParser,
   type ApduResponse,
-  BLOCKCHAIN_FAMILY_ETH,
-  ByteArrayBuilder,
   type Command,
   type CommandResult,
   CommandResultFactory,
-  CONTACTS_TLV_TAG,
-  encodeTlvAscii,
-  encodeTlvBuffer,
-  encodeTlvChainId,
-  encodeTlvUInt8,
   InvalidStatusWordError,
-  packDerivationPath,
   STRUCT_TYPE_REGISTER_LEDGER_ACCOUNT,
-  STRUCT_VERSION_VALUE,
 } from "@ledgerhq/device-management-kit";
-import {
-  CommandErrorHelper,
-  DerivationPathUtils,
-} from "@ledgerhq/signer-utils";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
@@ -37,20 +27,23 @@ import {
 } from "./utils/ethAppErrors";
 
 export type RegisterLedgerAccountCommandArgs = {
-  readonly name: string;
-  /** BIP32 path without the leading "m/" (e.g. "44'/60'/0'/0/0"). */
-  readonly derivationPath: string;
-  readonly chainId: number;
+  /** One framed chunk built by sendFramedContactsPayload. */
+  readonly data: Uint8Array;
+  /** 0x00 for the first/only chunk, 0x80 for continuation chunks. */
+  readonly p2: number;
 };
 
 export type RegisterLedgerAccountCommandResponse = {
-  readonly hmacProofHex: string;
+  /**
+   * Present only on the final chunk — struct_type(0x2f) + hmac_proof(32).
+   * Intermediate chunks return SW=0x9000 with no data.
+   */
+  readonly hmacProofHex?: string;
 };
 
 const CLA = 0xb0;
 const INS = 0x10;
 const P1_REGISTER_LEDGER_ACCOUNT = 0x11;
-const P2 = 0x00;
 
 const RESPONSE_STRUCT_TYPE = STRUCT_TYPE_REGISTER_LEDGER_ACCOUNT;
 const HMAC_PROOF_BYTES = 32;
@@ -75,36 +68,13 @@ export class RegisterLedgerAccountCommand
   }
 
   getApdu(): Apdu {
-    const segments = DerivationPathUtils.splitPath(this.args.derivationPath);
-    const pathBytes = packDerivationPath(segments);
-
-    const builder = new ByteArrayBuilder();
-    encodeTlvUInt8(
-      builder,
-      CONTACTS_TLV_TAG.STRUCT_TYPE,
-      STRUCT_TYPE_REGISTER_LEDGER_ACCOUNT,
-    );
-    encodeTlvUInt8(
-      builder,
-      CONTACTS_TLV_TAG.STRUCT_VERSION,
-      STRUCT_VERSION_VALUE,
-    );
-    encodeTlvAscii(builder, CONTACTS_TLV_TAG.CONTACT_NAME, this.args.name);
-    encodeTlvBuffer(builder, CONTACTS_TLV_TAG.DERIVATION_PATH, pathBytes);
-    encodeTlvChainId(builder, CONTACTS_TLV_TAG.CHAIN_ID, this.args.chainId);
-    encodeTlvUInt8(
-      builder,
-      CONTACTS_TLV_TAG.BLOCKCHAIN_FAMILY,
-      BLOCKCHAIN_FAMILY_ETH,
-    );
-
     return new ApduBuilder({
       cla: CLA,
       ins: INS,
       p1: P1_REGISTER_LEDGER_ACCOUNT,
-      p2: P2,
+      p2: this.args.p2,
     })
-      .addBufferToData(builder.build())
+      .addBufferToData(this.args.data)
       .build();
   }
 
@@ -114,6 +84,11 @@ export class RegisterLedgerAccountCommand
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
+      if (response.data.length === 0) {
+        // Intermediate chunk — device acks with SW=0x9000 and no payload.
+        return CommandResultFactory({ data: {} });
+      }
+
       const parser = new ApduParser(response);
 
       const structType = parser.extract8BitUInt();

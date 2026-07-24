@@ -1,5 +1,5 @@
 // Wire reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py:242-294
+// ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md
 //   prepare_edit_identifier → CLA=0xB0, INS=0x10, P1=0x03 (SUB_CMD_EDIT_IDENTIFIER).
 // Caller (SendEditIdentifierTask + sendFramedContactsPayload) assembles the TLV
 // payload, prepends the 2-byte BE total length, and slices into ≤255B chunks;

@@ -3,7 +3,7 @@
 // entries on the contact.
 //
 // Reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py:296-336
+// ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md
 //   prepare_edit_contact_name → tag order is STRUCT_TYPE, STRUCT_VERSION,
 //   CONTACT_NAME (new), PREVIOUS_CONTACT_NAME (old), GROUP_HANDLE,
 //   DERIVATION_PATH, HMAC_PROOF.

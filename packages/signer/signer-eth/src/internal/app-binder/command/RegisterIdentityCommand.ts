@@ -1,8 +1,11 @@
-// Wire reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py:187-223
-//   prepare_register_identity → CLA=0xB0, INS=0x10, P1=0x01, P2=0x00.
-// Caller (SendRegisterIdentityTask) assembles the TLV payload; this command
-// just frames it and parses the 129-byte structured response.
+// Register Identity (register external contact) — sub-command P1=0x01 of the
+// address-book APDU (CLA 0xB0 / INS 0x10). Caller (SendRegisterIdentityTask +
+// sendFramedContactsPayload) assembles the TLV, prepends the 2-byte BE total
+// length and slices into ≤255B chunks; this command frames one chunk and, on
+// the final chunk, parses the 129-byte response: struct_type(0x2d) +
+// group_handle(64) + hmac_name(32) + hmac_rest(32). Intermediate chunks ack
+// with SW=0x9000 and no data.
+// Protocol: ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md §5.1
 import {
   type Apdu,
   ApduBuilder,
@@ -20,20 +23,26 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 export type RegisterIdentityCommandArgs = {
-  /** Pre-assembled TLV payload (≤ 255 bytes). Built by SendRegisterIdentityTask. */
+  /** One framed chunk built by sendFramedContactsPayload. */
   readonly data: Uint8Array;
+  /** 0x00 for the first/only chunk, 0x80 for continuation chunks. */
+  readonly p2: number;
 };
 
 export type RegisterIdentityCommandResponse = {
-  readonly groupHandleHex: string;
-  readonly hmacNameHex: string;
-  readonly hmacRestHex: string;
+  /**
+   * Present only on the final chunk — the device returns struct_type(0x2d) +
+   * group_handle(64) + hmac_name(32) + hmac_rest(32) there. Intermediate
+   * chunks return SW=0x9000 with no data.
+   */
+  readonly groupHandleHex?: string;
+  readonly hmacNameHex?: string;
+  readonly hmacRestHex?: string;
 };
 
 const REGISTER_IDENTITY_CLA = 0xb0;
 const REGISTER_IDENTITY_INS = 0x10;
 const REGISTER_IDENTITY_P1 = 0x01;
-const REGISTER_IDENTITY_P2 = 0x00;
 
 const RESPONSE_STRUCT_TYPE = 0x2d;
 const GROUP_HANDLE_BYTES = 64;
@@ -64,7 +73,7 @@ export class RegisterIdentityCommand
       cla: REGISTER_IDENTITY_CLA,
       ins: REGISTER_IDENTITY_INS,
       p1: REGISTER_IDENTITY_P1,
-      p2: REGISTER_IDENTITY_P2,
+      p2: this.args.p2,
     })
       .addBufferToData(this.args.data)
       .build();
@@ -76,6 +85,11 @@ export class RegisterIdentityCommand
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
+      if (response.data.length === 0) {
+        // Intermediate chunk — device acks with SW=0x9000 and no payload.
+        return CommandResultFactory({ data: {} });
+      }
+
       const parser = new ApduParser(response);
 
       const structType = parser.extract8BitUInt();

@@ -1,68 +1,50 @@
-// Wire reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py
-//   prepare_edit_ledger_account → CLA=0xB0, INS=0x10,
-//   P1=SUB_CMD_EDIT_LEDGER_ACCOUNT (0x12), P2=0x00.
-// The TLV layout is fixed, so the command builds the payload itself rather
-// than delegating to a Task. Unlike RegisterLedgerAccount, errors are mapped
-// through CONTACTS_APP_ERRORS so the seed-bound HMAC rejection (SW 0x6982,
-// returned by the device *before* any UI) surfaces as the typed
+// Edit Ledger Account (rename a signer-controlled account) — sub-command
+// P1=0x12 of the address-book APDU (CLA 0xB0 / INS 0x10). Caller
+// (SendEditLedgerAccountTask + sendFramedContactsPayload) assembles the TLV,
+// prepends the 2-byte BE total length and slices into ≤255B chunks; this command
+// frames one chunk and, on the final chunk, parses the 33-byte response:
+// struct_type(0x30) + rotated hmac_proof(32).
+//
+// Errors are mapped through CONTACTS_APP_ERRORS so the seed-bound HMAC rejection
+// (SW 0x6982, returned by the device *before* any UI) surfaces as the typed
 // "registered with a different seed" ContactsCommandError rather than the
 // generic ETH "Security status not satisfied" message.
+// Protocol: ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md §5.6
 import {
   type Apdu,
   ApduBuilder,
   ApduParser,
   type ApduResponse,
-  BLOCKCHAIN_FAMILY_ETH,
-  ByteArrayBuilder,
   type Command,
   type CommandResult,
   CommandResultFactory,
   CONTACTS_APP_ERRORS,
-  CONTACTS_TLV_TAG,
   contactsCommandErrorFactory,
   type ContactsErrorCodes,
-  encodeTlvAscii,
-  encodeTlvBuffer,
-  encodeTlvChainId,
-  encodeTlvHex,
-  encodeTlvUInt8,
   InvalidStatusWordError,
-  packDerivationPath,
   STRUCT_TYPE_EDIT_LEDGER_ACCOUNT,
-  STRUCT_VERSION_VALUE,
 } from "@ledgerhq/device-management-kit";
-import {
-  CommandErrorHelper,
-  DerivationPathUtils,
-} from "@ledgerhq/signer-utils";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 export type EditLedgerAccountCommandArgs = {
-  /** New account name. */
-  readonly name: string;
-  /** Current (previous) account name — verified by the device's HMAC proof. */
-  readonly oldName: string;
-  /** BIP32 path without the leading "m/" (e.g. "44'/60'/0'/0/0"). */
-  readonly derivationPath: string;
-  readonly chainId: number;
-  /**
-   * 32-byte HMAC proof from the previous registration (lowercase hex, no 0x).
-   * The device re-derives the seed-bound key at `derivationPath` and rejects
-   * with SW 0x6982 if this proof was minted under a different seed.
-   */
-  readonly hmacProofHex: string;
+  /** One framed chunk built by sendFramedContactsPayload. */
+  readonly data: Uint8Array;
+  /** 0x00 for the first/only chunk, 0x80 for continuation chunks. */
+  readonly p2: number;
 };
 
 export type EditLedgerAccountCommandResponse = {
-  /** Freshly rotated 32-byte HMAC proof to persist (lowercase hex, no 0x). */
-  readonly hmacProofHex: string;
+  /**
+   * Present only on the final chunk — struct_type(0x30) + rotated
+   * hmac_proof(32). Intermediate chunks return SW=0x9000 with no data.
+   */
+  readonly hmacProofHex?: string;
 };
 
 const CLA = 0xb0;
 const INS = 0x10;
 const P1_EDIT_LEDGER_ACCOUNT = 0x12;
-const P2 = 0x00;
 
 const RESPONSE_STRUCT_TYPE = STRUCT_TYPE_EDIT_LEDGER_ACCOUNT;
 const HMAC_PROOF_BYTES = 32;
@@ -87,42 +69,13 @@ export class EditLedgerAccountCommand
   }
 
   getApdu(): Apdu {
-    const segments = DerivationPathUtils.splitPath(this.args.derivationPath);
-    const pathBytes = packDerivationPath(segments);
-
-    const builder = new ByteArrayBuilder();
-    encodeTlvUInt8(
-      builder,
-      CONTACTS_TLV_TAG.STRUCT_TYPE,
-      STRUCT_TYPE_EDIT_LEDGER_ACCOUNT,
-    );
-    encodeTlvUInt8(
-      builder,
-      CONTACTS_TLV_TAG.STRUCT_VERSION,
-      STRUCT_VERSION_VALUE,
-    );
-    encodeTlvAscii(builder, CONTACTS_TLV_TAG.CONTACT_NAME, this.args.name);
-    encodeTlvAscii(
-      builder,
-      CONTACTS_TLV_TAG.PREVIOUS_CONTACT_NAME,
-      this.args.oldName,
-    );
-    encodeTlvBuffer(builder, CONTACTS_TLV_TAG.DERIVATION_PATH, pathBytes);
-    encodeTlvChainId(builder, CONTACTS_TLV_TAG.CHAIN_ID, this.args.chainId);
-    encodeTlvHex(builder, CONTACTS_TLV_TAG.HMAC_PROOF, this.args.hmacProofHex);
-    encodeTlvUInt8(
-      builder,
-      CONTACTS_TLV_TAG.BLOCKCHAIN_FAMILY,
-      BLOCKCHAIN_FAMILY_ETH,
-    );
-
     return new ApduBuilder({
       cla: CLA,
       ins: INS,
       p1: P1_EDIT_LEDGER_ACCOUNT,
-      p2: P2,
+      p2: this.args.p2,
     })
-      .addBufferToData(builder.build())
+      .addBufferToData(this.args.data)
       .build();
   }
 
@@ -132,6 +85,11 @@ export class EditLedgerAccountCommand
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
+      if (response.data.length === 0) {
+        // Intermediate chunk — device acks with SW=0x9000 and no payload.
+        return CommandResultFactory({ data: {} });
+      }
+
       const parser = new ApduParser(response);
 
       const structType = parser.extract8BitUInt();

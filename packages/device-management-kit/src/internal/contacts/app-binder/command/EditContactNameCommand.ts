@@ -1,5 +1,5 @@
 // Wire reference:
-// ~/dev/app-ethereum/client/src/ledger_app_clients/ethereum/address_book.py:296-336
+// ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md
 //   prepare_edit_contact_name → CLA=0xB0, INS=0x10, P1=0x02, P2=0x00.
 // Caller (SendEditContactNameTask) assembles the TLV payload; this command
 // just frames it and parses the 33-byte structured response (struct_type + hmac_name).
