@@ -25,7 +25,13 @@ export type OrchardActionSignature = {
  * from `bsk = Σ rcv` and never involves the device.
  */
 export type SignPcztTransactionResult = {
-  /** One `spendAuthSig` per Orchard action, in action order. */
+  /**
+   * One `spendAuthSig` per Orchard action the device signs — i.e. per real
+   * spend, in ascending action-index order. Dummy padding spends
+   * (`spendValue === 0n`) are self-signed host-side by the PCZT IoFinalizer
+   * and are omitted here, so the
+   * count matches the finalizer's unsigned-action count.
+   */
   orchard: OrchardActionSignature[];
   /**
    * One signature per transparent input, in input order. Each entry is the
