@@ -32,11 +32,11 @@ jobs:
     # npmjs requires attestation to be generated on a public runner
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ env.REF }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@782348bef82aa368dab022732397062155f65666
 
       - name: Update workspace syntax to use fixed version
         run: git ls-files | grep 'package\.json$' | xargs sed -i 's/workspace:\^/workspace:*/g'
@@ -80,11 +80,11 @@ jobs:
     # JFrog is accessible only from a ledger private runner
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ env.REF }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@782348bef82aa368dab022732397062155f65666
 
       - name: Download packages from GitHub Artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -93,7 +93,7 @@ jobs:
           path: dist
 
       - name: Publish snapshot packages to JFrog
-        uses: LedgerHQ/device-sdk-ts/.github/actions/publish-to-jfrog-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+        uses: LedgerHQ/device-sdk-ts/.github/actions/publish-to-jfrog-composite@782348bef82aa368dab022732397062155f65666
         with:
           npm-registry: ${{ env.NPM_REGISTRY }}
           dist-path: dist
