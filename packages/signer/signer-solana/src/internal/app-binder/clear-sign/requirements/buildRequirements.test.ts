@@ -220,13 +220,19 @@ describe("buildRequirements", () => {
     expect(result.tokenAccountStates).toEqual([]);
   });
 
-  it("emits ALT_RESOLUTION for ALT-supplied accounts only", () => {
+  it("emits ALT_RESOLUTION only for accounts referenced by DISPLAY_FIELD ACCOUNT_PATH or MINT_ASSOC", () => {
     const result = run([
       matched({
         accounts: [
           account("staticKey"),
           account(undefined, { altAddress: "ALT", entryIndex: 3 }),
+          account(undefined, { altAddress: "ALT", entryIndex: 9 }), // unreferenced
         ],
+        descriptor: {
+          // account[1] is referenced by a display field → emitted
+          displayFields: [trustedNameDisplayField(accountPathValue(1))],
+          // account[2] is not referenced by any display field or MINT_ASSOC → excluded
+        },
       }),
     ]);
     expect(result.altResolutions).toEqual([
@@ -336,9 +342,10 @@ describe("buildRequirements", () => {
       DefaultBs58Encoder.encode(inMint),
       DefaultBs58Encoder.encode(outMint),
     ]);
-    expect(result.altResolutions).toEqual([
-      { altAddress: "ALT", entryIndex: 7 },
-    ]);
+    // account[2] is ALT-backed but not referenced by any display field or
+    // MINT_ASSOC, so it is excluded from altResolutions (stays within the
+    // device's 16-entry ALT cache limit).
+    expect(result.altResolutions).toEqual([]);
   });
 
   it("surfaces a malformed type pool as a typed Left", () => {

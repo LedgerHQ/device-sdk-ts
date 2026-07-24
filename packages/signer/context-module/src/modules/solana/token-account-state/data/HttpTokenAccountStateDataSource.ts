@@ -82,6 +82,7 @@ export class HttpTokenAccountStateDataSource
           return Right({
             tokenAccount,
             descriptor,
+            mint: dto.mint,
             keyId: validated.keyId,
             keyUsage: validated.keyUsage,
           });

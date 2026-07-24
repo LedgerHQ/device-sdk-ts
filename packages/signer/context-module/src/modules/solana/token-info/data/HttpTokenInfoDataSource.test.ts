@@ -46,7 +46,7 @@ describe("HttpTokenInfoDataSource", () => {
       {
         params: {
           contract_address: mint,
-          network,
+          network: "solana", // "solana-mainnet" mapped to the CAL short slug
           output: "contract_address,network,descriptor",
           ref: "branch:main",
         },

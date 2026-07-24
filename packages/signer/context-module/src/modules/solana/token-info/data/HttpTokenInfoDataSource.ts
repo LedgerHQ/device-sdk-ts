@@ -17,6 +17,13 @@ const calSignaturesCodec = Codec.interface({
   test: optional(string),
 });
 
+// The CAL /tokens endpoint uses short chain slugs (e.g. "solana") while the
+// SDK identifies networks with qualified names (e.g. "solana-mainnet").
+const NETWORK_SLUG: Readonly<Record<string, string>> = {
+  "solana-mainnet": "solana",
+  "solana-devnet": "solana-devnet",
+};
+
 const tokenInfoResponseEntryCodec = Codec.interface({
   descriptor: Codec.interface({
     data: string,
@@ -42,7 +49,7 @@ export class HttpTokenInfoDataSource implements TokenInfoDataSource {
       data = await this.http.get(`${this.config.cal.url}/tokens`, {
         params: {
           contract_address: mint,
-          network,
+          network: NETWORK_SLUG[network] ?? network,
           output: "contract_address,network,descriptor",
           ref: `branch:${this.config.cal.branch}`,
         },
