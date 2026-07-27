@@ -86,20 +86,14 @@ export class DefaultSignerSolana implements SignerSolana {
    *     the delayed path.
    *
    *   - **transactionResolutionContext** `object`
-   *     Lets you explicitly pass `tokenAddress` and ATA details, bypassing
-   *     extraction from the transaction itself.
+   *     Provides additional context for clear signing.
    *
-   *     - **tokenAddress** `string`
-   *       SPL token address being transferred.
-   *
-   *     - **createATA** `object`
-   *       Information about creating an associated token account (ATA).
-   *
-   *       - **address** `string` – Address (owner) of the ATA.
-   *       - **mintAddress** `string` – Mint address of the ATA.
-   *
-   *     - **tokenInternalId** `string`
-   *       Ledger internal token ID.
+   *     - **mintAddress** `string`
+   *       Mint address of the SPL token, used for SPL basic clear signing.
+   *       If omitted, the signer will attempt to resolve the token metadata
+   *       automatically, if resolution fails,
+   *       a degraded UI is shown on the device (`???` instead of the token
+   *       symbol).
    *
    *   - **skipOpenApp** `boolean`
    *     If `true`, skips opening the Solana app on the device.
@@ -114,7 +108,7 @@ export class DefaultSignerSolana implements SignerSolana {
    * @example
    * ```ts
    * const { observable } = signer.signTransaction("44'/501'/0'/0'", serializedTx, {
-   *   transactionResolutionContext: { tokenAddress: "EPjFWdd5..." },
+   *   transactionResolutionContext: { mintAddress: "EPjFWdd5..." },
    * });
    * observable.subscribe({
    *   next: (state) => {
