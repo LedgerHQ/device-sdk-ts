@@ -428,7 +428,11 @@ export function buildActionStructure(action: HyperliquidAction): Uint8Array {
         portfolioMargin: 0x02,
       } as const;
       encodeInTlvFromHexa(b, TLV_TAG.CHAIN_ID, action.signatureChainId);
-      encodeInTlvFromUInt8(b, TLV_TAG.ABSTRACTION, ABSTRACTION_VALUE[action.abstraction]);
+      encodeInTlvFromUInt8(
+        b,
+        TLV_TAG.ABSTRACTION,
+        ABSTRACTION_VALUE[action.abstraction],
+      );
       break;
     }
     default:

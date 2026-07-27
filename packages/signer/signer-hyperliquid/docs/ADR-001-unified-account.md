@@ -1,4 +1,4 @@
-# 001 - Unified Address
+# 001 - Unified Account
 
 Date: 2026-07-22
 
@@ -7,6 +7,7 @@ Date: 2026-07-22
 Accepted
 
 ## Context
+
 With the integration of HIP-3, the use of a “unified account” allows user to maintain a shared balance between different Hyperliquid features: perps, HIP-3, spot, …
 
 ```
@@ -22,6 +23,7 @@ If a userSetAbstraction action is asked to Ledger Wallet (i.e. DMK / Device App)
 ```
 
 ### Analysis
+
 To activate an unified account, the user need to sign a EIP-712 message:
 
 ```typescript
@@ -45,17 +47,19 @@ To activate an unified account, the user need to sign a EIP-712 message:
 The abstraction value can take one of the following value: disabled, unifiedAccountand portfolioMargin. The value must be set to unifiedAccount.
 
 ### Security concerns
+
 The user value will never be passed as a value to the Device. The App will compute it as the user’s one.
 
 We can add a check on the value passed for the abstractionas unifiedAccountto avoid user’s confusion.
 
-
 ## Decision
+
 Adapt the current codebase to this new requirement
 
 ## Consequences
 
 ### Hyperliquid App
+
 The app must embed a new EIP-712 template message (like the one for approveBuilderFee). The template is:
 
 ```typescript
@@ -93,25 +97,27 @@ The app must embed a new EIP-712 template message (like the one for approveBuild
 Like the approvalBuilderFee message, it doesn’t have to be displayed to the user.
 
 #### ADPU
+
 An update on the setAction APDU (INS = 0x03) ; the action_type can take a new value
 
-| Field | Tag | Length | Type | Description |
-| ----- | --- | ------ | ---- | ----------- |
-| action_type | 0xd0 - ACTION_TYPE | 1 | required u8 | One of:<ul><li>order: 0x00</li><li>modify: 0x01</li><li>cancel: 0x02</li><li>updateLeverage: 0x03</li><li>approvalBuilderFee: 0x04</li><li>updateIsolatedMargin: 0x05</li><li>**userSetAbstraction: 0x06**</li></ul> |
-| action_structure | 0xdb - ACTION_STRUCTURE | var | create_order|update_order|cancel_order|leverage|approveBuilderFee|updateIsolatedMargin|userSetAbstraction | Depending on action_type the describe action has a specific structure. |
+| Field            | Tag                     | Length | Type         | Description                                                                                                                                                                                                          |
+| ---------------- | ----------------------- | ------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | -------- | ----------------- | -------------------- | ------------------ | ---------------------------------------------------------------------- |
+| action_type      | 0xd0 - ACTION_TYPE      | 1      | required u8  | One of:<ul><li>order: 0x00</li><li>modify: 0x01</li><li>cancel: 0x02</li><li>updateLeverage: 0x03</li><li>approvalBuilderFee: 0x04</li><li>updateIsolatedMargin: 0x05</li><li>**userSetAbstraction: 0x06**</li></ul> |
+| action_structure | 0xdb - ACTION_STRUCTURE | var    | create_order | update_order                                                                                                                                                                                                         | cancel_order | leverage | approveBuilderFee | updateIsolatedMargin | userSetAbstraction | Depending on action_type the describe action has a specific structure. |
 
-The values associated to this new type, userSetAbstraction,  are:
+The values associated to this new type, userSetAbstraction, are:
 
-| Field | Tag | Length | Type | Description |
-| ----- | --- | ------ | ---- | ----------- |
-| chain_id | 0x23 - CHAIN_ID | 8 | byte[] | Network identifier |
-| abstraction | 0xdf - ABSTRACTION | 1 | required u8 | One of:<ul><li>disabled: 0x00</li><li>unifiedAccount: 0x01</li><li>portfolioMargin: 0x02</li></ul> |
+| Field       | Tag                | Length | Type        | Description                                                                                        |
+| ----------- | ------------------ | ------ | ----------- | -------------------------------------------------------------------------------------------------- |
+| chain_id    | 0x23 - CHAIN_ID    | var    | byte[]      | Network identifier (encoded as raw bytes)                                                          |
+| abstraction | 0xdf - ABSTRACTION | 1      | required u8 | One of:<ul><li>disabled: 0x00</li><li>unifiedAccount: 0x01</li><li>portfolioMargin: 0x02</li></ul> |
 
 ```
 As there is no “user address” field in this APDU, the field user in the EIP-712 will need to be filled during the signature process, along with the derivation path parameters passed.
 ```
 
 ### Hyperliquid Signer
+
 A new type of Action is possible: userSetAbstraction
 
 Impact on type definition:
@@ -137,4 +143,3 @@ Impact on type definition:
 ```
 
 The actionTlvSerializer will need to be updated in order to marshalling this new action type correctly.
-
