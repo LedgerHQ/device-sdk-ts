@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3
+
+### Patch Changes
+
+- [#1672](https://github.com/LedgerHQ/device-sdk-ts/pull/1672) [`934c060`](https://github.com/LedgerHQ/device-sdk-ts/commit/934c060e78745807141c8740757129979aef0e47) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Request a device spend-auth signature only for real Orchard spends. Dummy padding spends (spend value 0) are self-signed host-side by the PCZT IO finalizer, so signing them on-device made the device signature count exceed the finalizer's unsigned-action count and the transaction was rejected. The full bundle is still streamed to the device; only the signing requests are restricted to real spends.
+
 ## 0.4.2
 
 ### Patch Changes
