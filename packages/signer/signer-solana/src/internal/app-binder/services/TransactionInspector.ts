@@ -48,6 +48,7 @@ export type TxInspectorResult = {
   data: {
     tokenAddress?: string;
     createATA?: { address: string; mintAddress: string };
+    mintAddress?: string;
   };
 };
 
@@ -143,15 +144,36 @@ export class TransactionInspector {
     const parsed = await this.parser.parse(rawTransactionBytes).run();
     return parsed.caseOf<TxInspectorResult>({
       Left: () => standard,
-      Right: ({ message }) => {
+      Right: ({ message, usesAddressLookupTables }) => {
         try {
-          return classify(message, tokenAddress, createATA);
+          return enrichWithMint(
+            classify(message, tokenAddress, createATA),
+            message,
+            usesAddressLookupTables,
+          );
         } catch {
           return standard;
         }
       },
     });
   }
+}
+
+/**
+ * Merges a resolved mint address into an SPL result.
+ * Returns the result unchanged for non-SPL types or when no mint is found.
+ * @internal — exported for unit testing.
+ */
+export function enrichWithMint(
+  result: TxInspectorResult,
+  message: NormalizedMessage,
+  usesAddressLookupTables: boolean,
+): TxInspectorResult {
+  if (result.transactionType !== SolanaTransactionTypes.SPL) return result;
+  const mintAddress = extractMintAddress(message, usesAddressLookupTables);
+  return mintAddress !== undefined
+    ? { ...result, data: { ...result.data, mintAddress } }
+    : result;
 }
 
 /** @internal — exported for unit testing. */
@@ -332,4 +354,74 @@ export function extractSPLData(
     default:
       return null;
   }
+}
+
+/**
+ * Returns the instruction-local account slot index that holds the mint for the
+ * given SPL instruction, or `null` when the instruction carries no mint.
+ */
+function getMintSlot(programId: PublicKey, data: Uint8Array): number | null {
+  if (programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)) return 3;
+
+  if (
+    !programId.equals(TOKEN_PROGRAM_ID) &&
+    !programId.equals(TOKEN_2022_PROGRAM_ID)
+  ) {
+    return null;
+  }
+  if (data.length === 0) return null;
+
+  switch (data[0]) {
+    case DISC.TRANSFER_CHECKED:
+    case DISC.BURN:
+    case DISC.BURN_CHECKED:
+    case DISC.FREEZE_ACCOUNT:
+    case DISC.THAW_ACCOUNT:
+    case DISC.INITIALIZE_ACCOUNT:
+    case DISC.INITIALIZE_ACCOUNT_2:
+    case DISC.INITIALIZE_ACCOUNT_3:
+      return 1;
+    case DISC.TRANSFER_FEE_EXTENSION:
+      return data.length > 1 && data[1] === SUB_TRANSFER_CHECKED_WITH_FEE
+        ? 1
+        : null;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Scans compiled SPL instructions for the first resolvable mint address.
+ *
+ * Returns `undefined` when:
+ * - the mint resides in an address lookup table (device cannot verify ALT keys), or
+ * - no mint-bearing instruction is found.
+ *
+ * @internal — exported for unit testing.
+ */
+export function extractMintAddress(
+  message: NormalizedMessage,
+  usesAddressLookupTables: boolean,
+): string | undefined {
+  for (const ix of message.compiledInstructions) {
+    const programId = message.allKeys[ix.programIdIndex];
+    if (!programId || !isSPLProgram(programId)) continue;
+
+    const mintSlot = getMintSlot(programId, ix.data);
+    if (mintSlot === null) continue;
+
+    const globalIdx = ix.accountKeyIndexes[mintSlot];
+    if (globalIdx === undefined) continue;
+
+    const mintKey = message.allKeys[globalIdx];
+    if (!mintKey) {
+      // Mint account is not in the static key list — it is an ALT-resolved
+      // address. The device cannot verify ALT entries, so bail out entirely.
+      if (usesAddressLookupTables) return undefined;
+      continue;
+    }
+
+    return mintKey.toBase58();
+  }
+  return undefined;
 }
