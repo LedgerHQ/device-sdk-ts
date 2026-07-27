@@ -41,7 +41,10 @@ export const icpGetAddressApduHeader = (p1: number) => ({
 export const P1_CHECK_ON_DEVICE = 0x01;
 export const P1_NO_CHECK_ON_DEVICE = 0x00;
 const DERIVATION_PATH_LENGTH = 5;
+// GET_ADDR response is fixed-length: publicKey(65) · principal(29) · accountId(32) · principalText.
 const PUBLIC_KEY_LENGTH = 65;
+const PRINCIPAL_LENGTH = 29;
+const ACCOUNT_ID_LENGTH = 32;
 
 export class GetAddressCommand
   implements
@@ -92,23 +95,20 @@ export class GetAddressCommand
       const apduParser = new ApduParser(apduResponse);
 
       const publicKey = apduParser.extractFieldByLength(PUBLIC_KEY_LENGTH);
-      const accountIdLength = apduParser.extract8BitUInt();
-      const accountId =
-        accountIdLength !== undefined
-          ? apduParser.extractFieldByLength(accountIdLength)
-          : undefined;
-      const principalLength = apduParser.extract8BitUInt();
-      const principal =
-        principalLength !== undefined
-          ? apduParser.extractFieldByLength(principalLength)
-          : undefined;
+      // Validate the raw principal's presence; consumers use the account identifier + textual principal.
+      const rawPrincipal = apduParser.extractFieldByLength(PRINCIPAL_LENGTH);
+      const accountId = apduParser.extractFieldByLength(ACCOUNT_ID_LENGTH);
+      const principalText = apduParser.extractFieldByLength(
+        apduParser.getUnparsedRemainingLength(),
+      );
 
       if (
         publicKey === undefined ||
+        rawPrincipal === undefined ||
         accountId === undefined ||
         accountId.length === 0 ||
-        principal === undefined ||
-        principal.length === 0
+        principalText === undefined ||
+        principalText.length === 0
       ) {
         return CommandResultFactory({
           error: new InvalidStatusWordError("Cannot extract address"),
@@ -119,7 +119,10 @@ export class GetAddressCommand
         data: {
           publicKey: apduParser.encodeToHexaString(publicKey),
           accountId: apduParser.encodeToHexaString(accountId),
-          principal: apduParser.encodeToString(principal),
+          // Canonical ICP text form: dash-separated 5-char segments, no trailing dash.
+          principal: apduParser
+            .encodeToString(principalText)
+            .replace(/(.{5})(?=.)/g, "$1-"),
         },
       });
     });

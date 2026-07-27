@@ -29,6 +29,8 @@ export const P1_LAST = 0x02;
 export const P2_NO_STAKE = 0x00;
 
 const DERIVATION_PATH_LENGTH = 5;
+// The last-chunk signature response is prefixed by the pre-sign hash, then r‖s, v, and DER.
+const PRESIGN_HASH_LENGTH = 43;
 const SIGNATURE_R_LENGTH = 32;
 const SIGNATURE_S_LENGTH = 32;
 const SIGNATURE_V_LENGTH = 1;
@@ -96,6 +98,8 @@ export class SignTransactionCommand
         return CommandResultFactory({ data: Nothing });
       }
 
+      // Validate the pre-sign hash's presence; it is not surfaced.
+      const preSignHash = apduParser.extractFieldByLength(PRESIGN_HASH_LENGTH);
       const r = apduParser.extractFieldByLength(SIGNATURE_R_LENGTH);
       const s = apduParser.extractFieldByLength(SIGNATURE_S_LENGTH);
       const v = apduParser.extractFieldByLength(SIGNATURE_V_LENGTH);
@@ -104,6 +108,7 @@ export class SignTransactionCommand
       );
 
       if (
+        preSignHash === undefined ||
         r === undefined ||
         s === undefined ||
         v === undefined ||
