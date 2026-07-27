@@ -56,11 +56,11 @@ describe("GetVersionCommand", () => {
       expect(isSuccessCommandResult(result)).toBe(true);
     });
 
-    it("should report testMode true when TEST byte is 0xFF", () => {
+    it("should report testMode true when the TEST byte is non-zero", () => {
       // ARRANGE
       const response = new ApduResponse({
         statusCode: new Uint8Array([0x90, 0x00]),
-        data: new Uint8Array([0xff, 0x01, 0x02, 0x03, 0x00]),
+        data: new Uint8Array([0x01, 0x01, 0x02, 0x03, 0x00]),
       });
       // ACT
       const result = command.parseResponse(response);
