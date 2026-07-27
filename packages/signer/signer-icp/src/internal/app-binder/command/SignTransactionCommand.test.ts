@@ -8,13 +8,17 @@ import { expectStatusWordError } from "@internal/app-binder/command/__test-utils
 import { pathToBuffer } from "@internal/app-binder/command/__test-utils__/pathToBuffer";
 import {
   icpSignTransactionApduHeader,
+  P2_NO_STAKE,
+  P2_STAKE,
+  SignTransactionCommand,
+} from "@internal/app-binder/command/SignTransactionCommand";
+import { IcpErrorCodes } from "@internal/app-binder/command/utils/IcpApplicationErrors";
+import {
   P1_ADD,
   P1_INIT,
   P1_LAST,
   SignPhase,
-  SignTransactionCommand,
-} from "@internal/app-binder/command/SignTransactionCommand";
-import { IcpErrorCodes } from "@internal/app-binder/command/utils/IcpApplicationErrors";
+} from "@internal/app-binder/constants";
 
 const DERIVATION_PATH = "44'/223'/0'/0/0";
 
@@ -38,7 +42,9 @@ describe("SignTransactionCommand", () => {
         phase: SignPhase.INIT,
         derivationPath: DERIVATION_PATH,
       });
-      const expected = new ApduBuilder(icpSignTransactionApduHeader(P1_INIT))
+      const expected = new ApduBuilder(
+        icpSignTransactionApduHeader(P1_INIT, P2_NO_STAKE),
+      )
         .addBufferToData(pathToBuffer(DERIVATION_PATH))
         .build();
       // ACT
@@ -54,7 +60,9 @@ describe("SignTransactionCommand", () => {
         phase: SignPhase.ADD,
         transactionChunk: chunk,
       });
-      const expected = new ApduBuilder(icpSignTransactionApduHeader(P1_ADD))
+      const expected = new ApduBuilder(
+        icpSignTransactionApduHeader(P1_ADD, P2_NO_STAKE),
+      )
         .addBufferToData(chunk)
         .build();
       // ACT
@@ -70,13 +78,34 @@ describe("SignTransactionCommand", () => {
         phase: SignPhase.LAST,
         transactionChunk: chunk,
       });
-      const expected = new ApduBuilder(icpSignTransactionApduHeader(P1_LAST))
+      const expected = new ApduBuilder(
+        icpSignTransactionApduHeader(P1_LAST, P2_NO_STAKE),
+      )
         .addBufferToData(chunk)
         .build();
       // ACT
       const apdu = command.getApdu();
       // ASSERT
       expect(apdu.getRawApdu()).toStrictEqual(expected.getRawApdu());
+    });
+
+    it("should set P2=stake on the INIT packet when the stake flag is set", () => {
+      // ARRANGE
+      const command = new SignTransactionCommand({
+        phase: SignPhase.INIT,
+        derivationPath: DERIVATION_PATH,
+        stake: true,
+      });
+      const expected = new ApduBuilder(
+        icpSignTransactionApduHeader(P1_INIT, P2_STAKE),
+      )
+        .addBufferToData(pathToBuffer(DERIVATION_PATH))
+        .build();
+      // ACT
+      const apdu = command.getApdu();
+      // ASSERT
+      expect(apdu.getRawApdu()).toStrictEqual(expected.getRawApdu());
+      expect(apdu.getRawApdu()[3]).toBe(P2_STAKE);
     });
 
     it("should throw when phase is INIT and derivationPath is missing", () => {

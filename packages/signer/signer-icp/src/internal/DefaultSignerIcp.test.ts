@@ -62,4 +62,22 @@ describe("DefaultSignerIcp", () => {
     expect(executeDeviceActionMock).toHaveBeenCalledTimes(1);
     expect(result).toBe(expectedResult);
   });
+
+  it("signUpdateCall should delegate to the update-call device action", () => {
+    // ARRANGE
+    const expectedResult = { observable: {}, cancel: vi.fn() };
+    const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
+    const signer = makeSigner(executeDeviceActionMock);
+
+    // ACT
+    const result = signer.signUpdateCall(
+      "44'/223'/0'/0/0",
+      new Uint8Array([0x01, 0x02]),
+      new Uint8Array([0x03, 0x04]),
+    );
+
+    // ASSERT
+    expect(executeDeviceActionMock).toHaveBeenCalledTimes(1);
+    expect(result).toBe(expectedResult);
+  });
 });
