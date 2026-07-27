@@ -5,6 +5,7 @@ export type SolanaTransactionContext = {
   challenge?: string;
   tokenAddress?: string;
   tokenInternalId?: string;
+  mintAddress?: string;
   templateId?: string;
   createATA?: {
     address: string;

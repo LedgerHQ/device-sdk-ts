@@ -201,6 +201,9 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
                 options: {
                   tokenAddress: inspectorData?.tokenAddress,
                   createATA: inspectorData?.createATA,
+                  mintAddress:
+                    context.input.resolutionContext?.mintAddress ??
+                    inspectorData?.mintAddress,
                   tokenInternalId:
                     context.input.resolutionContext?.tokenInternalId,
                   templateId: context.input.resolutionContext?.templateId,

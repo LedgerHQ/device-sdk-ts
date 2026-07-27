@@ -50,6 +50,7 @@ export class BuildBasicClearSignContextTask {
       tokenAddress: options.tokenAddress,
       challenge,
       createATA: options.createATA,
+      mintAddress: options.mintAddress,
       tokenInternalId: options.tokenInternalId,
       templateId: options.templateId,
     };

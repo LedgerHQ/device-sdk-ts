@@ -1,5 +1,6 @@
 import { ContainerModule } from "inversify";
 
+import { HttpMintToIdDataSource } from "@/modules/solana/token/data/HttpMintToIdDataSource";
 import { HttpTokenDataSource } from "@/modules/solana/token/data/HttpTokenDataSource";
 import { tokenTypes } from "@/modules/solana/token/di/tokenTypes";
 import { TokenContextLoader } from "@/modules/solana/token/domain/TokenContextLoader";
@@ -7,5 +8,6 @@ import { TokenContextLoader } from "@/modules/solana/token/domain/TokenContextLo
 export const tokenModuleFactory = () =>
   new ContainerModule(({ bind }) => {
     bind(tokenTypes.TokenDataSource).to(HttpTokenDataSource);
+    bind(tokenTypes.MintToIdDataSource).to(HttpMintToIdDataSource);
     bind(tokenTypes.TokenContextLoader).to(TokenContextLoader);
   });
