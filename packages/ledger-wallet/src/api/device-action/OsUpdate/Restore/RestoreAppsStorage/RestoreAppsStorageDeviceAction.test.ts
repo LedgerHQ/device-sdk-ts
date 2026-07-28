@@ -16,10 +16,8 @@ import {
   RestoreAppStorageError,
 } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/RestoreAppsStorageDeviceActionErrors";
 import { commitRestoreAppStorage } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/CommitRestoreAppStorage";
-import { goToDashboard } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/GoToDashboard";
 import { initRestoreAppStorage } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/InitRestoreAppStorage";
 import { restoreAppStorage } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/RestoreAppStorage";
-import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/WaitForAppAndVersion";
 import {
   InitRestoreAppStorageConsentResult,
   type RestoreAppsStorageDAError,
@@ -28,13 +26,11 @@ import {
   type RestoreAppsStorageDAState,
   RestoreAppsStorageSteps,
 } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/types";
+import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
+import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion";
 
-vi.mock(
-  "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/WaitForAppAndVersion",
-);
-vi.mock(
-  "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/GoToDashboard",
-);
+vi.mock("@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion");
+vi.mock("@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard");
 vi.mock(
   "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/InitRestoreAppStorage",
 );

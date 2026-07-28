@@ -11,10 +11,20 @@ import {
   CommandResultFactory,
   CommandUtils,
   DeviceExchangeError,
+  DeviceModelId,
   GlobalCommandErrorHandler,
   InvalidArgumentError,
   isCommandErrorCode,
 } from "@ledgerhq/device-management-kit";
+
+export const MASTER_CONSENT_SUPPORTED_DEVICE_MODEL_IDS: Set<DeviceModelId> =
+  new Set([DeviceModelId.STAX, DeviceModelId.FLEX, DeviceModelId.APEX]);
+
+export function isMasterConsentSupported(
+  deviceModelId: DeviceModelId,
+): boolean {
+  return MASTER_CONSENT_SUPPORTED_DEVICE_MODEL_IDS.has(deviceModelId);
+}
 
 export type RequestMasterConsentCommandArgs = {
   languagePackConsentEnabled: boolean;

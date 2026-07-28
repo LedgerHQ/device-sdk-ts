@@ -1,7 +1,7 @@
 import { WaitForAppAndVersionDeviceAction } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
-import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/WaitForAppAndVersion";
+import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion";
 
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =

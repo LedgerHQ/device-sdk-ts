@@ -1,7 +1,6 @@
 import {
   bufferToHexaString,
   type DeviceActionStateMachine,
-  DeviceModelId,
   type InternalApi,
   isDashboardName,
   type StateMachineTypes,
@@ -11,13 +10,12 @@ import {
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
+import { isCustomLockScreenSupported } from "@api/customLockScreenUtils/screenSpecs";
 import { backupAppsStorage } from "@api/device-action/OsUpdate/Backup/Substeps/BackupAppsStorage";
 import { downloadCustomLockScreenDevice } from "@api/device-action/OsUpdate/Backup/Substeps/DownloadCustomLockScreen";
 import { getIsOnboarded } from "@api/device-action/OsUpdate/Backup/Substeps/GetIsOnboarded";
 import { getLanguageId } from "@api/device-action/OsUpdate/Backup/Substeps/GetLanguageId";
-import { goToDashboard } from "@api/device-action/OsUpdate/Backup/Substeps/GoToDashboard";
 import { listInstalledApps } from "@api/device-action/OsUpdate/Backup/Substeps/ListInstalledApps";
-import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Backup/Substeps/WaitForAppAndVersion";
 import {
   type CreateBackupDAError,
   type CreateBackupDAInput,
@@ -26,6 +24,8 @@ import {
   type CreateBackupDAOutput,
   CreateBackupSteps,
 } from "@api/device-action/OsUpdate/Backup/types";
+import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
+import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion";
 
 export class CreateBackupDeviceAction extends XStateDeviceAction<
   CreateBackupDAOutput,
@@ -84,9 +84,7 @@ export class CreateBackupDeviceAction extends XStateDeviceAction<
         isDeviceOnboarded: ({ context }) =>
           context._internalState.isDeviceOnboarded,
         isCustomLockScreenFeatureSupported: () =>
-          [DeviceModelId.APEX, DeviceModelId.FLEX, DeviceModelId.STAX].includes(
-            internalAPI.getDeviceModel().id,
-          ),
+          isCustomLockScreenSupported(internalAPI.getDeviceModel().id),
         hasError: ({ context }) => context._internalState.error !== null,
       },
       actions: {
