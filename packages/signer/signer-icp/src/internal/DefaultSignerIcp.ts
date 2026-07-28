@@ -7,8 +7,10 @@ import { type Container } from "inversify";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetVersionDAReturnType } from "@api/app-binder/GetVersionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignUpdateCallDAReturnType } from "@api/app-binder/SignUpdateCallDeviceActionTypes";
 import {
   type AddressOptions,
+  type CommonOptions,
   type SignerIcp,
   type TransactionOptions,
 } from "@api/SignerIcp";
@@ -19,6 +21,7 @@ import { configTypes } from "@internal/use-cases/config/di/configTypes";
 import { type GetAppConfigurationUseCase } from "@internal/use-cases/config/GetAppConfigurationUseCase";
 import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
 import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
+import { type SignUpdateCallUseCase } from "@internal/use-cases/transaction/SignUpdateCallUseCase";
 
 type DefaultSignerIcpConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -55,5 +58,16 @@ export class DefaultSignerIcp implements SignerIcp {
     return this._container
       .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
       .execute(derivationPath, transaction, options);
+  }
+
+  signUpdateCall(
+    derivationPath: string,
+    callRequest: Uint8Array,
+    readStateRequest: Uint8Array,
+    options?: CommonOptions,
+  ): SignUpdateCallDAReturnType {
+    return this._container
+      .get<SignUpdateCallUseCase>(transactionTypes.SignUpdateCallUseCase)
+      .execute(derivationPath, callRequest, readStateRequest, options);
   }
 }

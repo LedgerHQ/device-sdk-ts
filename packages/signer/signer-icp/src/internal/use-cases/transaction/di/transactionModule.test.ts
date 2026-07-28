@@ -1,15 +1,21 @@
 import { Container } from "inversify";
 
 import { transactionModuleFactory } from "./transactionModule";
+import { transactionTypes } from "./transactionTypes";
 
 describe("transactionModuleFactory", () => {
-  it("should return the transaction module", () => {
+  it("should bind the transaction use-cases", () => {
     // ARRANGE
     const mod = transactionModuleFactory();
     const container = new Container();
     // ACT
     container.loadSync(mod);
     // ASSERT
-    expect(mod).toBeDefined();
+    expect(container.isBound(transactionTypes.SignTransactionUseCase)).toBe(
+      true,
+    );
+    expect(container.isBound(transactionTypes.SignUpdateCallUseCase)).toBe(
+      true,
+    );
   });
 });

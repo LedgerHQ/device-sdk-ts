@@ -23,8 +23,31 @@ describe("SignTransactionUseCase", () => {
     expect(signTransactionMock).toHaveBeenCalledWith({
       derivationPath,
       transaction,
+      stake: undefined,
       skipOpenApp: undefined,
     });
     expect(result).toBe(expectedResult);
+  });
+
+  it("should forward the stake flag from options to appBinder.signTransaction", () => {
+    // ARRANGE
+    const derivationPath = "44'/223'/0'/0/0";
+    const transaction = new Uint8Array([0x01, 0x02, 0x03]);
+    const signTransactionMock = vi.fn().mockReturnValue({});
+    const appBinderMock = {
+      signTransaction: signTransactionMock,
+    } as unknown as IcpAppBinder;
+    const useCase = new SignTransactionUseCase(appBinderMock);
+
+    // ACT
+    useCase.execute(derivationPath, transaction, { stake: true });
+
+    // ASSERT
+    expect(signTransactionMock).toHaveBeenCalledWith({
+      derivationPath,
+      transaction,
+      stake: true,
+      skipOpenApp: undefined,
+    });
   });
 });

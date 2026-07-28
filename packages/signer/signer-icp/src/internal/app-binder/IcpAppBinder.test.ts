@@ -110,4 +110,28 @@ describe("IcpAppBinder", () => {
     expect(args.deviceAction.input.skipOpenApp).toBe(false);
     expect(result).toBe(expectedResult);
   });
+
+  it("signUpdateCall should run a CallTaskInAppDeviceAction requiring SignTransaction", () => {
+    // ARRANGE
+    const expectedResult = { observable: {}, cancel: vi.fn() };
+    const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
+    const binder = makeBinder(executeDeviceActionMock);
+
+    // ACT
+    const result = binder.signUpdateCall({
+      derivationPath: DERIVATION_PATH,
+      callRequest: new Uint8Array([0x01, 0x02]),
+      readStateRequest: new Uint8Array([0x03, 0x04]),
+    });
+
+    // ASSERT
+    const args = executeDeviceActionMock.mock.calls[0]![0];
+    expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+    expect(args.deviceAction.input.appName).toBe(APP_NAME);
+    expect(args.deviceAction.input.requiredUserInteraction).toBe(
+      UserInteractionRequired.SignTransaction,
+    );
+    expect(args.deviceAction.input.skipOpenApp).toBe(false);
+    expect(result).toBe(expectedResult);
+  });
 });
