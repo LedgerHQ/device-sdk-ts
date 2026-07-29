@@ -119,6 +119,15 @@ export type {
   CreateBackupDAState,
   CreateBackupSteps,
 } from "./api/device-action/OsUpdate/Backup/types";
+export { CleanDeviceDeviceAction } from "./api/device-action/OsUpdate/CleanDevice/CleanDeviceDeviceAction";
+export type {
+  CleanDeviceDAError,
+  CleanDeviceDAInput,
+  CleanDeviceDAIntermediateValue,
+  CleanDeviceDAOutput,
+  CleanDeviceDARequiredInteraction,
+  CleanDeviceDAState,
+} from "./api/device-action/OsUpdate/CleanDevice/types";
 export { RestoreAppsStorageDeviceAction } from "./api/device-action/OsUpdate/Restore/RestoreAppsStorage/RestoreAppsStorageDeviceAction";
 export type {
   RestoreAppsStorageDAError,

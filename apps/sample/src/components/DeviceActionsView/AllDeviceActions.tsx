@@ -71,6 +71,11 @@ import {
   WaitForAppAndVersionDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import {
+  type CleanDeviceDAError,
+  type CleanDeviceDAInput,
+  type CleanDeviceDAIntermediateValue,
+  type CleanDeviceDAOutput,
+  CleanDeviceDeviceAction,
   type CreateBackupDAError,
   type CreateBackupDAInput,
   type CreateBackupDAIntermediateValue,
@@ -494,6 +499,32 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         CreateBackupDAInput,
         CreateBackupDAError,
         CreateBackupDAIntermediateValue
+      >,
+      {
+        title: `${SECURE_CHANNEL_ICON} Clean Device`,
+        description:
+          "Uninstall all installed apps, delete the installed language pack, and remove the custom lock screen to prepare the device for an OS update",
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+          const deviceAction = new CleanDeviceDeviceAction({
+            input: {
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        CleanDeviceDAOutput,
+        CleanDeviceDAInput,
+        CleanDeviceDAError,
+        CleanDeviceDAIntermediateValue
       >,
       {
         title: `${SECURE_CHANNEL_ICON} Restore Apps Storage`,
