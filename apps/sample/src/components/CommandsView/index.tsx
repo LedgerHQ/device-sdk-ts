@@ -28,6 +28,8 @@ import {
   BackupAppStorageCommand,
   type BackupAppStorageCommandErrorCodes,
   type BackupAppStorageCommandResponse,
+  CommitRestoreAppStorageCommand,
+  type CommitRestoreAppStorageCommandErrorCodes,
   GetAppStorageInfoCommand,
   type GetAppStorageInfoCommandArgs,
   type GetAppStorageInfoCommandErrorCodes,
@@ -38,9 +40,15 @@ import {
   RequestMasterConsentCommand,
   type RequestMasterConsentCommandArgs,
   type RequestMasterConsentCommandErrorCodes,
+  RestoreAppStorageCommand,
+  type RestoreAppStorageCommandErrorCodes,
 } from "@ledgerhq/dmk-ledger-wallet";
 import { Grid } from "@ledgerhq/react-ui";
 
+import {
+  hexStringToUint8Array,
+  isValidHexString,
+} from "@/components/ApduView/hexUtils";
 import { getValueSelectorFromEnum } from "@/components/Form";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -219,6 +227,46 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         InitRestoreAppStorageCommandArgs,
         void,
         InitRestoreAppStorageCommandErrorCodes
+      >,
+      {
+        title: "Restore app storage",
+        description: "Restore a previously backed up app storage",
+        sendCommand: ({ chunkDataHex }) => {
+          if (!isValidHexString(chunkDataHex)) {
+            return Promise.reject({
+              message:
+                "chunkDataHex must be a valid hex string (even length, hex characters only).",
+            });
+          }
+          const command = new RestoreAppStorageCommand({
+            chunkData: hexStringToUint8Array(chunkDataHex),
+          });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: { chunkDataHex: "" },
+      } satisfies CommandProps<
+        { chunkDataHex: string },
+        void,
+        RestoreAppStorageCommandErrorCodes
+      >,
+      {
+        title: "Commit restore app storage",
+        description: "Commit the restore of a previously backed up app storage",
+        sendCommand: () => {
+          const command = new CommitRestoreAppStorageCommand();
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: undefined,
+      } satisfies CommandProps<
+        void,
+        void,
+        CommitRestoreAppStorageCommandErrorCodes
       >,
       {
         title: "List language packs",
