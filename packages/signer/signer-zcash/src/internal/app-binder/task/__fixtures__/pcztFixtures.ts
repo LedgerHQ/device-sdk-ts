@@ -1,5 +1,7 @@
 import {
   type PcztGlobal,
+  type PcztIronwoodAction,
+  type PcztIronwoodBundle,
   type PcztOrchardAction,
   type PcztOrchardBundle,
   type PcztTransaction,
@@ -31,6 +33,27 @@ export const SAMPLE_GLOBAL: PcztGlobal = {
   coinType: 133,
   txModifiable: 0,
 };
+
+/** V6 global — identical to `SAMPLE_GLOBAL` but with `txVersion: 6`. */
+export const SAMPLE_GLOBAL_V6: PcztGlobal = {
+  ...SAMPLE_GLOBAL,
+  txVersion: 6,
+};
+
+/**
+ * Expected `PCZT_HEADER` payload for {@link SAMPLE_GLOBAL_V6}.
+ * PCZT version field is 2 for V6 transactions.
+ */
+export const SAMPLE_HEADER_HEX_V6 =
+  "50435a54" + // "PCZT"
+  "02000000" + // PCZT version 2 (V6)
+  "06000000" + // tx_version 6
+  "0a27a726" + // version_group_id 0x26A7270A LE
+  "b4d0d6c2" + // consensus_branch_id 0xC2D6D0B4 LE
+  "0100000000" + // fallback_lock_time Option<u32>: present, 0
+  "00000000" + // expiry_height 0
+  "85000000" + // coin_type 133 LE
+  "00"; // tx_modifiable 0
 
 /**
  * Expected `PCZT_HEADER` payload for {@link SAMPLE_GLOBAL}, computed by hand
@@ -145,6 +168,58 @@ export const multiRealDummyOrchardBundle = (): PcztOrchardBundle => ({
   anchor: bytes(32, 0x0d),
 });
 
+/**
+ * A sample Ironwood action with distinct fill bytes (0x10–0x1f range) to
+ * distinguish from Orchard action data in tests.
+ */
+export const sampleIronwoodAction = (): PcztIronwoodAction => ({
+  cvNet: bytes(32, 0x11),
+  nullifier: bytes(32, 0x12),
+  rk: bytes(32, 0x13),
+  spendRecipient: bytes(43, 0x14),
+  spendValue: 5n,
+  spendRho: bytes(32, 0x15),
+  spendRseed: bytes(32, 0x16),
+  alpha: bytes(32, 0x17),
+  signingPath: "44'/133'/0'",
+  seedFingerprint: bytes(32, 0x00),
+  cmx: bytes(32, 0x18),
+  ephemeralKey: bytes(32, 0x19),
+  encCiphertext: bytes(ORCHARD_ENC_CIPHERTEXT_SIZE, 0xcc),
+  outCiphertext: bytes(ORCHARD_OUT_CIPHERTEXT_SIZE, 0xdd),
+  recipient: bytes(43, 0x1a),
+  value: 5n,
+  rseed: bytes(32, 0x1b),
+  rcv: bytes(32, 0x1c),
+  notePlaintextVersion: 0x03,
+});
+
+/** Ironwood bundle with one action. */
+export const sampleIronwoodBundle = (): PcztIronwoodBundle => ({
+  actions: [sampleIronwoodAction()],
+  flags: 2,
+  valueBalance: 0n,
+  anchor: bytes(32, 0x1d),
+});
+
+/**
+ * A dummy Ironwood padding spend (spendValue 0). The PCZT IoFinalizer
+ * self-signs these host-side; the device must NOT be asked to sign them.
+ */
+export const dummyIronwoodAction = (): PcztIronwoodAction => ({
+  ...sampleIronwoodAction(),
+  spendValue: 0n,
+  value: 0n,
+});
+
+/** Ironwood bundle made entirely of dummy padding spends (no device signature). */
+export const allDummyIronwoodBundle = (): PcztIronwoodBundle => ({
+  actions: [dummyIronwoodAction(), dummyIronwoodAction()],
+  flags: 2,
+  valueBalance: 0n,
+  anchor: bytes(32, 0x1d),
+});
+
 /** Public → Public: transparent only, no Orchard bundle. */
 export const publicToPublicTransaction = (): PcztTransaction => ({
   global: SAMPLE_GLOBAL,
@@ -176,3 +251,22 @@ export const privateToPublicTransaction = (): PcztTransaction => ({
   transparentOutputs: [sampleTransparentOutput()],
   orchardBundle: sampleOrchardBundle(),
 });
+
+/** V6 transaction with both Orchard and Ironwood bundles. */
+export const v6TransactionWithOrchardAndIronwood = (): PcztTransaction => ({
+  global: SAMPLE_GLOBAL_V6,
+  transparentInputs: [],
+  transparentOutputs: [],
+  orchardBundle: sampleOrchardBundle(),
+  ironwoodBundle: sampleIronwoodBundle(),
+});
+
+/** V6 transaction with Orchard, Ironwood, and a transparent input. */
+export const v6TransactionWithTransparentOrchardAndIronwood =
+  (): PcztTransaction => ({
+    global: SAMPLE_GLOBAL_V6,
+    transparentInputs: [sampleTransparentInput()],
+    transparentOutputs: [],
+    orchardBundle: sampleOrchardBundle(),
+    ironwoodBundle: sampleIronwoodBundle(),
+  });

@@ -1,6 +1,7 @@
 import {
   CommandResultFactory,
   type InternalApi,
+  InvalidArgumentError,
   InvalidStatusWordError,
   isSuccessDmkResult,
 } from "@ledgerhq/device-management-kit";
@@ -8,13 +9,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type PcztTransaction } from "@api/model/PcztTransaction";
 import { INS_PCZT_HEADER } from "@internal/app-binder/command/PcztHeaderCommand";
+import { INS_PCZT_IRONWOOD_ACTION } from "@internal/app-binder/command/PcztIronwoodActionCommand";
 import { INS_PCZT_ORCHARD_ACTION } from "@internal/app-binder/command/PcztOrchardActionCommand";
 import { INS_PCZT_TRANSPARENT_INPUT } from "@internal/app-binder/command/PcztTransparentInputCommand";
 import { INS_PCZT_TRANSPARENT_OUTPUT } from "@internal/app-binder/command/PcztTransparentOutputCommand";
+import { INS_PCZT_SIGN_IRONWOOD } from "@internal/app-binder/command/SignPcztIronwoodCommand";
 import { INS_PCZT_SIGN_ORCHARD } from "@internal/app-binder/command/SignPcztOrchardCommand";
 import { INS_PCZT_SIGN_TRANSPARENT } from "@internal/app-binder/command/SignPcztTransparentCommand";
 import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
+  allDummyIronwoodBundle,
   allDummyOrchardBundle,
   mixedDummyOrchardBundle,
   multiRealDummyOrchardBundle,
@@ -22,6 +26,9 @@ import {
   privateToPublicTransaction,
   publicToPrivateTransaction,
   publicToPublicTransaction,
+  sampleIronwoodBundle,
+  v6TransactionWithOrchardAndIronwood,
+  v6TransactionWithTransparentOrchardAndIronwood,
 } from "@internal/app-binder/task/__fixtures__/pcztFixtures";
 
 import { SignPcztTransactionTask } from "./SignPcztTransactionTask";
@@ -50,6 +57,14 @@ describe("SignPcztTransactionTask", () => {
         return Promise.resolve(
           CommandResultFactory({
             data: { spendAuthSig: new Uint8Array(64).fill(raw[3]!) },
+          }),
+        );
+      }
+      if (cmd.name === "SignPcztIronwood") {
+        // spendAuthSig keyed on the action index (P2) + 0x10 offset to distinguish from Orchard.
+        return Promise.resolve(
+          CommandResultFactory({
+            data: { spendAuthSig: new Uint8Array(64).fill(raw[3]! + 0x10) },
           }),
         );
       }
@@ -248,5 +263,205 @@ describe("SignPcztTransactionTask", () => {
 
     const result = await run(privateToPrivateTransaction());
     expect(isSuccessDmkResult(result)).toBe(false);
+  });
+
+  // V6 / Ironwood tests
+
+  it("V5 regression: FINISHED stays on last Orchard packet and no IRONWOOD APDUs sent", async () => {
+    await run(privateToPrivateTransaction());
+
+    const orchardPackets = calls.filter(
+      (c) => c.ins === INS_PCZT_ORCHARD_ACTION,
+    );
+    // Last Orchard packet carries FINISHED.
+    expect(orchardPackets[orchardPackets.length - 1]!.p2).toBe(
+      PCZT_P2.FINISHED,
+    );
+    // No Ironwood APDUs are sent for a V5 transaction.
+    expect(calls.some((c) => c.ins === INS_PCZT_IRONWOOD_ACTION)).toBe(false);
+    expect(calls.some((c) => c.ins === INS_PCZT_SIGN_IRONWOOD)).toBe(false);
+  });
+
+  it("V6: FINISHED moves to last Ironwood packet; all Orchard packets use CONTINUE", async () => {
+    await run(v6TransactionWithOrchardAndIronwood());
+
+    const orchardPackets = calls.filter(
+      (c) => c.ins === INS_PCZT_ORCHARD_ACTION,
+    );
+    const ironwoodPackets = calls.filter(
+      (c) => c.ins === INS_PCZT_IRONWOOD_ACTION,
+    );
+
+    // All Orchard packets carry CONTINUE for V6.
+    orchardPackets.forEach((c) => expect(c.p2).toBe(PCZT_P2.CONTINUE));
+    // Last Ironwood packet carries FINISHED.
+    expect(ironwoodPackets[ironwoodPackets.length - 1]!.p2).toBe(
+      PCZT_P2.FINISHED,
+    );
+  });
+
+  it("V6: APDU order — HEADER, inputs, outputs, ORCHARD, IRONWOOD, SIGN_ORCHARD, SIGN_IRONWOOD", async () => {
+    await run(v6TransactionWithOrchardAndIronwood());
+
+    const insSequence = calls.map((c) => c.ins);
+    const lastOrchard = insSequence.lastIndexOf(INS_PCZT_ORCHARD_ACTION);
+    const firstIronwood = insSequence.indexOf(INS_PCZT_IRONWOOD_ACTION);
+    const lastIronwood = insSequence.lastIndexOf(INS_PCZT_IRONWOOD_ACTION);
+    const firstSignOrchard = insSequence.indexOf(INS_PCZT_SIGN_ORCHARD);
+    const firstSignIronwood = insSequence.indexOf(INS_PCZT_SIGN_IRONWOOD);
+
+    // All Orchard streaming before any Ironwood streaming.
+    expect(lastOrchard).toBeLessThan(firstIronwood);
+    // All Ironwood streaming before any sign commands.
+    expect(lastIronwood).toBeLessThan(firstSignOrchard);
+    // Orchard signing before Ironwood signing.
+    expect(firstSignOrchard).toBeLessThan(firstSignIronwood);
+  });
+
+  it("V6: collects one spendAuthSig per Ironwood action", async () => {
+    const result = await run(v6TransactionWithOrchardAndIronwood());
+
+    expect(isSuccessDmkResult(result)).toBe(true);
+    if (isSuccessDmkResult(result)) {
+      expect(result.data.ironwood).toHaveLength(1);
+      // Mock keys spendAuthSig on P2 + 0x10.
+      expect(result.data.ironwood[0]!.spendAuthSig).toEqual(
+        new Uint8Array(64).fill(0x10),
+      );
+    }
+    const ironwoodSigns = calls.filter((c) => c.ins === INS_PCZT_SIGN_IRONWOOD);
+    expect(ironwoodSigns).toHaveLength(1);
+    expect(ironwoodSigns[0]!.p2).toBe(0);
+  });
+
+  it("V6: returns error immediately when ironwoodBundle is null (V6 requires Ironwood)", async () => {
+    const result = await run({
+      ...v6TransactionWithOrchardAndIronwood(),
+      ironwoodBundle: null,
+    });
+
+    expect(isSuccessDmkResult(result)).toBe(false);
+    if (!isSuccessDmkResult(result)) {
+      expect(result.error).toBeInstanceOf(InvalidArgumentError);
+    }
+    // No APDUs sent — the guard fires before streaming.
+    expect(calls).toHaveLength(0);
+  });
+
+  it("V5: returns error immediately when ironwoodBundle is non-null (V5 does not support Ironwood)", async () => {
+    const result = await run({
+      ...privateToPrivateTransaction(),
+      ironwoodBundle: sampleIronwoodBundle(),
+    });
+
+    expect(isSuccessDmkResult(result)).toBe(false);
+    if (!isSuccessDmkResult(result)) {
+      expect(result.error).toBeInstanceOf(InvalidArgumentError);
+    }
+    // No APDUs sent — the guard fires before streaming.
+    expect(calls).toHaveLength(0);
+  });
+
+  it("V6: device rejection during Ironwood streaming returns error", async () => {
+    vi.mocked(apiMock.sendCommand).mockImplementation((command: unknown) => {
+      const cmd = command as CapturedCommand;
+      const raw: Uint8Array = cmd.getApdu().getRawApdu();
+      calls.push({ name: cmd.name, ins: raw[1]!, p1: raw[2]!, p2: raw[3]! });
+      if (cmd.name === "PcztIronwoodAction") {
+        return Promise.resolve(
+          CommandResultFactory({
+            error: new InvalidStatusWordError("ironwood rejected"),
+          }),
+        );
+      }
+      if (cmd.name === "SignPcztOrchard") {
+        return Promise.resolve(
+          CommandResultFactory({
+            data: { spendAuthSig: new Uint8Array(64).fill(0x00) },
+          }),
+        );
+      }
+      return Promise.resolve(CommandResultFactory({ data: undefined }));
+    });
+
+    const result = await run(v6TransactionWithOrchardAndIronwood());
+    expect(isSuccessDmkResult(result)).toBe(false);
+    // No SIGN_IRONWOOD issued after the streaming failure.
+    expect(calls.some((c) => c.ins === INS_PCZT_SIGN_IRONWOOD)).toBe(false);
+  });
+
+  it("V6: device rejection during Ironwood signing returns error", async () => {
+    vi.mocked(apiMock.sendCommand).mockImplementation((command: unknown) => {
+      const cmd = command as CapturedCommand;
+      const raw: Uint8Array = cmd.getApdu().getRawApdu();
+      calls.push({ name: cmd.name, ins: raw[1]!, p1: raw[2]!, p2: raw[3]! });
+      if (cmd.name === "SignPcztIronwood") {
+        return Promise.resolve(
+          CommandResultFactory({
+            error: new InvalidStatusWordError("ironwood sign rejected"),
+          }),
+        );
+      }
+      if (cmd.name === "SignPcztOrchard") {
+        return Promise.resolve(
+          CommandResultFactory({
+            data: { spendAuthSig: new Uint8Array(64).fill(0x00) },
+          }),
+        );
+      }
+      return Promise.resolve(CommandResultFactory({ data: undefined }));
+    });
+
+    const result = await run(v6TransactionWithOrchardAndIronwood());
+    expect(isSuccessDmkResult(result)).toBe(false);
+  });
+
+  it("V5 result includes empty ironwood array for backward compat", async () => {
+    const result = await run(privateToPrivateTransaction());
+
+    expect(isSuccessDmkResult(result)).toBe(true);
+    if (isSuccessDmkResult(result)) {
+      expect(result.data.ironwood).toHaveLength(0);
+    }
+  });
+
+  it("V6: requests no Ironwood signature when every action is a dummy spend", async () => {
+    const result = await run({
+      ...v6TransactionWithOrchardAndIronwood(),
+      ironwoodBundle: allDummyIronwoodBundle(),
+    });
+
+    expect(isSuccessDmkResult(result)).toBe(true);
+    if (isSuccessDmkResult(result)) {
+      expect(result.data.ironwood).toHaveLength(0);
+    }
+    expect(calls.some((c) => c.ins === INS_PCZT_SIGN_IRONWOOD)).toBe(false);
+  });
+
+  it("V6 + transparent: SIGN_TRANSPARENT comes after SIGN_IRONWOOD in APDU order", async () => {
+    await run(v6TransactionWithTransparentOrchardAndIronwood());
+
+    const insSequence = calls.map((c) => c.ins);
+    const lastSignIronwood = insSequence.lastIndexOf(INS_PCZT_SIGN_IRONWOOD);
+    const firstSignTransparent = insSequence.indexOf(INS_PCZT_SIGN_TRANSPARENT);
+
+    expect(lastSignIronwood).not.toBe(-1);
+    expect(firstSignTransparent).not.toBe(-1);
+    // Transparent signing must follow all Ironwood signing.
+    expect(lastSignIronwood).toBeLessThan(firstSignTransparent);
+  });
+
+  it("V6 + transparent: result includes both ironwood sigs and transparentInputSigs", async () => {
+    const result = await run(v6TransactionWithTransparentOrchardAndIronwood());
+
+    expect(isSuccessDmkResult(result)).toBe(true);
+    if (isSuccessDmkResult(result)) {
+      expect(result.data.ironwood).toHaveLength(1);
+      expect(result.data.transparentInputSigs).toHaveLength(1);
+      // Mock keys ironwood spendAuthSig on actionIndex (0) + 0x10 offset.
+      expect(result.data.ironwood[0]!.spendAuthSig).toEqual(
+        new Uint8Array(64).fill(0x10),
+      );
+    }
   });
 });

@@ -19,6 +19,17 @@ export type OrchardActionSignature = {
 };
 
 /**
+ * Per-Ironwood-action signature returned by the device for V6 transactions.
+ *
+ * The device returns the RedPallas `spendAuthSig` only; `alpha` is a
+ * host-supplied PCZT field carried *to* the device and is never returned.
+ */
+export type IronwoodActionSignature = {
+  /** RedPallas spend-authorization signature, 64 bytes. */
+  spendAuthSig: Uint8Array;
+};
+
+/**
  * Result of {@link SignerZcash.signPcztTransaction}.
  *
  * No `bindingSig`: the binding signature is computed host-side (zcash-utils)
@@ -40,4 +51,9 @@ export type SignPcztTransactionResult = {
    * `SIGHASH_ALL`).
    */
   transparentInputSigs: Uint8Array[];
+  /**
+   * One `spendAuthSig` per Ironwood action for V6 transactions, in ascending
+   * action-index order. Empty for V5 transactions.
+   */
+  ironwood: IronwoodActionSignature[];
 };
