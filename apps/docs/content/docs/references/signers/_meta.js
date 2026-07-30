@@ -8,4 +8,5 @@ export default {
   concordium: "Signer Concordium",
   zcash: "Signer Zcash",
   polkadot: "Signer Polkadot",
+  icp: "Signer Internet Computer",
 };
