@@ -8,6 +8,11 @@ const TIMEOUT = 2000; // 2 second timeout for availability check
 
 const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
 
+export const ensureHttpScheme = (url: string): string =>
+  url.startsWith("http://") || url.startsWith("https://")
+    ? url
+    : `http://${url}`;
+
 export class HttpSpeculosDatasource implements SpeculosDatasource {
   private readonly baseUrl: string;
   private readonly clientHeader: string;
@@ -17,7 +22,7 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
     baseUrl: string,
     clientHeader: string = `ldmk-transport-speculos/${PACKAGE.version}`,
   ) {
-    this.baseUrl = removeTrailingSlashes(baseUrl);
+    this.baseUrl = removeTrailingSlashes(ensureHttpScheme(baseUrl));
     this.clientHeader = clientHeader;
     this.http = new DmkNetworkClient({
       headers: {
