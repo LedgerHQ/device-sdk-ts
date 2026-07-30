@@ -80,6 +80,32 @@ describe("GetFullViewingKeyTask", () => {
     expect(readPathsFromApdu(c1)).toEqual(["32'/133'/0'", "44'/133'/0'"]);
   });
 
+  it("should reject a UFVK request when coin type component is empty", async () => {
+    const sendCommand = vi.fn();
+    const api = { sendCommand } as unknown as InternalApi;
+
+    const result = await new GetFullViewingKeyTask(api, {
+      derivationPath: "44'//0'",
+      mode: "ufvk",
+    }).run();
+
+    expect(isSuccessCommandResult(result)).toBe(false);
+    expect(sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("should reject a UFVK request when account component is empty", async () => {
+    const sendCommand = vi.fn();
+    const api = { sendCommand } as unknown as InternalApi;
+
+    const result = await new GetFullViewingKeyTask(api, {
+      derivationPath: "44'/133'/",
+      mode: "ufvk",
+    }).run();
+
+    expect(isSuccessCommandResult(result)).toBe(false);
+    expect(sendCommand).not.toHaveBeenCalled();
+  });
+
   it("should reject a UFVK request when the derivation path has fewer than three levels", async () => {
     const sendCommand = vi.fn();
     const api = { sendCommand } as unknown as InternalApi;

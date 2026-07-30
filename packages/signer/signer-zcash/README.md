@@ -3,6 +3,7 @@
 This module provides the implementation of the Ledger Zcash signer of the Device Management Kit. It enables interaction with the Zcash application on a Ledger device including:
 
 - Retrieving a transparent Zcash address for a given derivation path;
+- Retrieving a unified shielded address (Orchard receiver) for a given transparent derivation path;
 - Retrieving a unified or Orchard full viewing key (ZIP-32 account path);
 - Signing a transparent Zcash payment transaction (Ledger Wallet / `hw-app-btc` compatible shape);
 - Signing an Orchard shielded (PCZT) transaction, returning per-action Orchard spend-authorization signatures and per-input transparent signatures;
@@ -23,6 +24,7 @@ This module provides the implementation of the Ledger Zcash signer of the Device
    - [Sign Message](#use-case-5-sign-message)
    - [Get Trusted Input](#use-case-6-get-trusted-input)
    - [Get App Configuration](#use-case-7-get-app-configuration)
+   - [Get Shielded Address](#use-case-8-get-shielded-address)
 5. [Observable Behavior](#observable-behavior)
 6. [Example](#example)
 7. [Development](#development)
@@ -434,6 +436,43 @@ const { observable, cancel } = signerZcash.getTrustedInput(
 ```typescript
 const { observable, cancel } = signerZcash.getAppConfig();
 ```
+
+---
+
+### Use Case 8: Get Shielded Address
+
+Retrieve a unified shielded address (single Orchard receiver) for a transparent derivation path. The device uses the transparent path for account matching and on-device display.
+
+```typescript
+const { observable, cancel } = signerZcash.getShieldedAddress(
+  "44'/133'/0'/0/0",
+  { checkOnDevice: false, skipOpenApp: false },
+);
+```
+
+#### Parameters
+
+- `derivationPath` — **Required** — `string` (e.g. `"44'/133'/0'/0/0"`)
+- `options` — Optional — `AddressOptions`
+
+  ```typescript
+  type AddressOptions = {
+    checkOnDevice?: boolean;
+    skipOpenApp?: boolean;
+  };
+  ```
+
+#### Returns
+
+On success, `output` includes:
+
+```typescript
+type GetShieldedAddressDAOutput = {
+  readonly address: string; // unified address beginning with "u1"
+};
+```
+
+Intermediate value may require `UserInteractionRequired.VerifyAddress` when `checkOnDevice` is true.
 
 ---
 

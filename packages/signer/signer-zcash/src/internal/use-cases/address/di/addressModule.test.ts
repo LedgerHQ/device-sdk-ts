@@ -26,5 +26,11 @@ describe("addressModuleFactory", () => {
         container.isBound(addressTypes.GetFullViewingKeyUseCase),
       ).toBeTruthy();
     });
+
+    it("should bind GetShieldedAddressUseCase", () => {
+      expect(
+        container.isBound(addressTypes.GetShieldedAddressUseCase),
+      ).toBeTruthy();
+    });
   });
 });

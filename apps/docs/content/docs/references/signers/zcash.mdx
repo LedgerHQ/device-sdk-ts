@@ -3,6 +3,7 @@
 This module provides the implementation of the Ledger zcash signer of the Device Management Kit. It enables interaction with the zcash application on a Ledger device including:
 
 - Retrieving the zcash address using a given derivation path
+- Retrieving a unified shielded address (Orchard receiver) using a given transparent derivation path
 - Retrieving the zcash full viewing key (UFVK or Orchard FVK)
 - Signing a zcash transaction
 - Signing a message displayed on a Ledger device
@@ -20,6 +21,7 @@ This module provides the implementation of the Ledger zcash signer of the Device
    - [Sign Transaction](#use-case-4-sign-transaction)
    - [Sign PCZT Transaction](#use-case-5-sign-pczt-transaction)
    - [Sign Message](#use-case-6-sign-message)
+   - [Get Shielded Address](#use-case-7-get-shielded-address)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
@@ -366,6 +368,54 @@ type Signature = {
   r: string;
   s: string;
   v?: number;
+};
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 7: Get Shielded Address
+
+This method allows users to retrieve a unified shielded address (single Orchard receiver) based on a transparent derivation path. The device uses the transparent path for account matching and on-device display; the returned unified address begins with `u1`.
+
+```typescript
+const { observable, cancel } = signerZcash.getShieldedAddress(
+  derivationPath,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"44'/133'/0'/0/0"`)
+  - Transparent derivation path (BIP-44). The Orchard account path (`32'/coin/account'`) is derived from it automatically.
+
+- `options`
+
+  - Optional
+  - Type: `AddressOptions`
+
+    ```typescript
+    type AddressOptions = {
+      checkOnDevice?: boolean;
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `checkOnDevice`: An optional boolean indicating whether user confirmation on the device is required (`true`) or not (`false`).
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the zcash app automatically (`true`) or not (`false`).
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type GetShieldedAddressDAOutput = {
+  readonly address: string; // unified address beginning with "u1"
 };
 ```
 

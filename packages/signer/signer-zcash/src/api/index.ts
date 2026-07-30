@@ -15,6 +15,12 @@ export type {
   GetFullViewingKeyDAReturnType,
 } from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
 export type {
+  GetShieldedAddressDAError,
+  GetShieldedAddressDAIntermediateValue,
+  GetShieldedAddressDAOutput,
+  GetShieldedAddressDAReturnType,
+} from "@api/app-binder/GetShieldedAddressDeviceActionTypes";
+export type {
   GetTrustedInputDAError,
   GetTrustedInputDAIntermediateValue,
   GetTrustedInputDAOutput,
