@@ -1,6 +1,7 @@
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
@@ -23,6 +24,14 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
   container
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
+
+  container
+    .bind<
+      (tag: string) => LoggerPublisherService
+    >(externalTypes.DmkLoggerFactory)
+    .toConstantValue((tag: string) =>
+      dmk.getLoggerFactory()(["SignerTron", tag]),
+    );
 
   container.loadSync(
     appBindingModuleFactory(),
