@@ -28,6 +28,8 @@ import { GetFullViewingKeyTask } from "./task/GetFullViewingKeyTask";
 import { GetTrustedInputTask } from "./task/GetTrustedInputTask";
 import { SignPcztTransactionTask } from "./task/SignPcztTransactionTask";
 import { SignTransactionTask } from "./task/SignTransactionTask";
+import { type GetShieldedAddressDAReturnType } from "@api/app-binder/GetShieldedAddressDeviceActionTypes";
+import { GetShieldedAddressTask } from "./task/GetShieldedAddressTask";
 
 @injectable()
 export class ZcashAppBinder {
@@ -60,6 +62,29 @@ export class ZcashAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAddressCommand(args),
+          appName: APP_NAME,
+          requiredUserInteraction: args.checkOnDevice
+            ? UserInteractionRequired.VerifyAddress
+            : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+  getShieldedAddress(args: {
+    derivationPath: string;
+    checkOnDevice: boolean;
+    skipOpenApp: boolean;
+  }): GetShieldedAddressDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi: InternalApi) =>
+            new GetShieldedAddressTask(internalApi, {
+              derivationPath: args.derivationPath,
+              checkOnDevice: args.checkOnDevice,
+            }).run(),
           appName: APP_NAME,
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress

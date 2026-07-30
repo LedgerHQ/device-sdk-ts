@@ -1,6 +1,7 @@
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetFullViewingKeyDAReturnType } from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
+import { type GetShieldedAddressDAReturnType } from "@api/app-binder/GetShieldedAddressDeviceActionTypes";
 import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInputActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignPcztTransactionDAReturnType } from "@api/app-binder/SignPcztTransactionDeviceActionTypes";
@@ -23,6 +24,11 @@ export interface SignerZcash {
     derivationPath: string,
     options?: FullViewingKeyOptions,
   ) => GetFullViewingKeyDAReturnType;
+
+  getShieldedAddress: (
+    derivationPath: string,
+    options?: AddressOptions,
+  ) => GetShieldedAddressDAReturnType;
 
   signTransaction: (
     args: LegacyCreateTransactionArg,
