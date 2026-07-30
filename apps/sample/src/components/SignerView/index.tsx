@@ -51,6 +51,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Polkadot signer functionality",
     icon: <CryptoIcon ledgerId="polkadot" ticker="POLKADOT" size={size} />,
   },
+  {
+    title: "Tron",
+    description: "Access Tron signer functionality",
+    icon: <CryptoIcon ledgerId="tron" ticker="TRX" size={size} />,
+  },
 ];
 
 export const SignerView = () => {
