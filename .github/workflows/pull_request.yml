@@ -84,109 +84,122 @@ jobs:
           DANGER_GITHUB_API_BASE_URL: "https://api.github.com"
         run: pnpm danger:ci
 
-  build-libraries:
-    name: Build libraries and apps
+  checks:
+    name: Checks (build, prettier, lint, typecheck, test)
+    # Single job running each Turbo task as its own step. Because everything
+    # runs on one runner, build output stays on disk between steps, so there is
+    # no cross-job build-cache upload/download. `--affected` restricts every
+    # task to the packages changed versus the PR base branch.
     needs: [setup]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    env:
+      # Base reference used by `turbo run --affected` to detect changed packages.
+      TURBO_SCM_BASE: origin/${{ github.event.pull_request.base.ref }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
-
-      # Cache the sample app production build so the sample-integration job can
-      # reuse it instead of rebuilding before the Playwright run.
-      - name: Cache sample app build
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
-          path: apps/sample/.next
-          key: ${{ runner.os }}-sample-next-${{ github.sha }}
+          # Full history + the base branch are required so Turbo can compute the
+          # merge-base for `--affected`.
+          fetch-depth: 0
 
-      - name: Build apps
-        run: pnpm build
+      - name: Fetch base branch for --affected
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
-  prettier:
-    name: Run prettier
-    needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - name: Build
+        id: build
+        run: pnpm turbo run build --affected
 
       - name: Prettier
         id: prettier
-        run: pnpm prettier
-
-  lint:
-    name: Run lint
-    needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: pnpm turbo run prettier --affected
 
       - name: Lint
         id: lint
-        run: pnpm lint
-
-  typecheck:
-    name: Run typecheck
-    needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: pnpm turbo run lint --affected
 
       - name: Typecheck
         id: typecheck
-        run: pnpm typecheck
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: pnpm turbo run typecheck --affected
 
-  tests:
-    name: Run unit tests
-    needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-        with:
-          fetch-depth: 0
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
-
-      - name: Tests
-        id: unit-tests
-        run: pnpm test:coverage
+      - name: Test
+        id: test
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: pnpm turbo run test:coverage --affected
 
       - uses: sonarsource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8
-        if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
+        if: ${{ steps.test.outcome == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      - name: Report
+        if: ${{ !cancelled() }}
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          PRETTIER_OUTCOME: ${{ steps.prettier.outcome }}
+          LINT_OUTCOME: ${{ steps.lint.outcome }}
+          TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
+          TEST_OUTCOME: ${{ steps.test.outcome }}
+        run: |
+          icon() {
+            case "$1" in
+              success) echo "✅ Passed" ;;
+              failure) echo "❌ Failed" ;;
+              skipped) echo "⏭️ Skipped" ;;
+              *)       echo "➖ ${1:-not run}" ;;
+            esac
+          }
+
+          {
+            echo "## Checks summary"
+            echo ""
+            echo "| Step | Result |"
+            echo "| --- | --- |"
+            echo "| Build | $(icon "$BUILD_OUTCOME") |"
+            echo "| Prettier | $(icon "$PRETTIER_OUTCOME") |"
+            echo "| Lint | $(icon "$LINT_OUTCOME") |"
+            echo "| Typecheck | $(icon "$TYPECHECK_OUTCOME") |"
+            echo "| Test | $(icon "$TEST_OUTCOME") |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          failed=0
+          for outcome in "$BUILD_OUTCOME" "$PRETTIER_OUTCOME" "$LINT_OUTCOME" "$TYPECHECK_OUTCOME" "$TEST_OUTCOME"; do
+            if [ "$outcome" = "failure" ]; then
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -eq 1 ]; then
+            echo "One or more checks failed. See the summary above."
+            exit 1
+          fi
+          echo "All checks passed."
+
   sample-integration:
     name: Run playwright
-    needs: [build-libraries]
+    needs: [checks]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
-
-      # Reuse the sample app build produced by build-libraries; start-servers.sh
-      # then skips the build and starts the prebuilt app directly.
-      - name: Restore sample app build
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: apps/sample/.next
-          key: ${{ runner.os }}-sample-next-${{ github.sha }}
 
       - name: Install Playwright browsers
         run: pnpm --filter @ledgerhq/device-management-kit-sample exec playwright install --with-deps chromium
 
       - name: Run sample Playwright tests
-        # The Playwright webServer (start-servers.sh) starts both the device mock
-        # server and the sample app, so neither is launched here.
+        # The Playwright webServer (start-servers.sh) runs a production
+        # `next build` and starts both the device mock server and the sample
+        # app, so neither is launched here.
         run: pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -199,9 +212,9 @@ jobs:
 
   health-check:
     name: Run health check
-    # Aggregates the split checks and tests into a single required status so
+    # Aggregates the checks and integration jobs into a single required status so
     # branch protection only needs to require "Run health check".
-    needs: [build-libraries, prettier, lint, typecheck, tests, sample-integration]
+    needs: [checks, sample-integration]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     steps:
@@ -214,7 +227,7 @@ jobs:
           echo "All required checks passed."
 
   cs-tester:
-    needs: [build-libraries, detect-changes]
+    needs: [checks, detect-changes]
     if: needs.detect-changes.outputs.should-run-ethereum-cs-tester == 'true'
     name: Ethereum Clear Signing Test (${{ matrix.device }} - ${{ matrix.test }})
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
@@ -244,7 +257,7 @@ jobs:
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   solana-cs-tester:
-    needs: [build-libraries, detect-changes]
+    needs: [checks, detect-changes]
     if: needs.detect-changes.outputs.should-run-solana-cs-tester == 'true'
     name: Solana Fixture Test (${{ matrix.device }} - ${{ matrix.test }})
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
