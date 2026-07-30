@@ -9,9 +9,6 @@
   },
   "main": "lib/cjs/index.js",
   "types": "lib/types/index.d.ts",
-  "bin": {
-    "device-mock-server": "./lib/cjs/main.js"
-  },
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
