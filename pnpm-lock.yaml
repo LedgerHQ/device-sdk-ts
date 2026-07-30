@@ -61,8 +61,8 @@ catalogs:
       specifier: 0.81.0
       version: 0.81.0
     '@react-native/codegen':
-      specifier: ^0.76.6
-      version: 0.76.6
+      specifier: ^0.86.2
+      version: 0.86.2
     '@react-native/gradle-plugin':
       specifier: ^0.76.6
       version: 0.76.6
@@ -871,7 +871,7 @@ importers:
         version: 0.81.0(@babel/core@7.28.3)
       '@react-native/codegen':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/preset-env@7.26.9(@babel/core@7.28.3))
+        version: 0.86.2(@babel/core@7.28.3)
       '@react-native/gradle-plugin':
         specifier: 'catalog:'
         version: 0.76.6
