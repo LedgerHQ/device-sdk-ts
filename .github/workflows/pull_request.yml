@@ -141,6 +141,38 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      # Only run the (heavy) Playwright E2E when the sample app or one of its
+      # dependencies is in the affected set; skip it otherwise.
+      - name: Detect if sample app is affected
+        id: sample-affected
+        if: ${{ !cancelled() }}
+        run: |
+          affected=$(pnpm turbo run build --affected --dry=json 2>/dev/null \
+            | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log((j.packages||[]).includes("@ledgerhq/device-management-kit-sample")?"true":"false")}catch(e){console.log("true")}})')
+          echo "affected=$affected" >> "$GITHUB_OUTPUT"
+          echo "sample app affected: $affected"
+
+      - name: Install Playwright browsers
+        if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' }}
+        run: pnpm --filter @ledgerhq/device-management-kit-sample exec playwright install --with-deps chromium
+
+      - name: Run sample Playwright tests
+        id: playwright
+        # The Playwright webServer (start-servers.sh) runs a production
+        # `next build` and starts both the device mock server and the sample
+        # app, so neither is launched here. Reuses the libs already built above.
+        if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' }}
+        continue-on-error: true
+        run: pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: ${{ !cancelled() && steps.playwright.outcome == 'failure' }}
+        with:
+          name: sample-playwright-traces
+          path: apps/sample/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Report
         if: ${{ !cancelled() }}
         env:
@@ -149,6 +181,7 @@ jobs:
           LINT_OUTCOME: ${{ steps.lint.outcome }}
           TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
           TEST_OUTCOME: ${{ steps.test.outcome }}
+          PLAYWRIGHT_OUTCOME: ${{ steps.playwright.outcome }}
         run: |
           icon() {
             case "$1" in
@@ -169,10 +202,11 @@ jobs:
             echo "| Lint | $(icon "$LINT_OUTCOME") |"
             echo "| Typecheck | $(icon "$TYPECHECK_OUTCOME") |"
             echo "| Test | $(icon "$TEST_OUTCOME") |"
+            echo "| Playwright (sample) | $(icon "$PLAYWRIGHT_OUTCOME") |"
           } >> "$GITHUB_STEP_SUMMARY"
 
           failed=0
-          for outcome in "$BUILD_OUTCOME" "$PRETTIER_OUTCOME" "$LINT_OUTCOME" "$TYPECHECK_OUTCOME" "$TEST_OUTCOME"; do
+          for outcome in "$BUILD_OUTCOME" "$PRETTIER_OUTCOME" "$LINT_OUTCOME" "$TYPECHECK_OUTCOME" "$TEST_OUTCOME" "$PLAYWRIGHT_OUTCOME"; do
             if [ "$outcome" = "failure" ]; then
               failed=1
             fi
@@ -184,37 +218,11 @@ jobs:
           fi
           echo "All checks passed."
 
-  sample-integration:
-    name: Run playwright
-    needs: [checks]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
-
-      - name: Install Playwright browsers
-        run: pnpm --filter @ledgerhq/device-management-kit-sample exec playwright install --with-deps chromium
-
-      - name: Run sample Playwright tests
-        # The Playwright webServer (start-servers.sh) runs a production
-        # `next build` and starts both the device mock server and the sample
-        # app, so neither is launched here.
-        run: pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
-
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        if: ${{ failure() }}
-        with:
-          name: sample-playwright-traces
-          path: apps/sample/test-results
-          if-no-files-found: ignore
-          retention-days: 7
-
   health-check:
     name: Run health check
-    # Aggregates the checks and integration jobs into a single required status so
-    # branch protection only needs to require "Run health check".
-    needs: [checks, sample-integration]
+    # Aggregates the checks into a single required status so branch protection
+    # only needs to require "Run health check".
+    needs: [checks]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     steps:
