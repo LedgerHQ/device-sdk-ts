@@ -1,6 +1,7 @@
 import {
   ApduBuilder,
   ApduResponse,
+  bufferToHexaString,
   type InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -13,9 +14,6 @@ import { GetAddressCommand } from "./GetAddressCommand";
 
 const PATH = "44'/195'/0'/0/0";
 const ADDRESS = "TWdnWBzFdBP1b8sqZ5RcFDbkV3sBmnxsYu";
-
-const toHex = (bytes: Uint8Array): string =>
-  Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 
 describe("GetAddressCommand", () => {
   describe("name", () => {
@@ -100,7 +98,9 @@ describe("GetAddressCommand", () => {
 
       expect(isSuccessCommandResult(result)).toBe(true);
       if (isSuccessCommandResult(result)) {
-        expect(result.data.publicKey).toBe(toHex(publicKey));
+        expect(result.data.publicKey).toBe(
+          bufferToHexaString(publicKey, false),
+        );
         expect(result.data.address).toBe(ADDRESS);
         expect(result.data.chainCode).toBeUndefined();
       }
@@ -117,7 +117,9 @@ describe("GetAddressCommand", () => {
 
       expect(isSuccessCommandResult(result)).toBe(true);
       if (isSuccessCommandResult(result)) {
-        expect(result.data.chainCode).toBe(toHex(chainCode));
+        expect(result.data.chainCode).toBe(
+          bufferToHexaString(chainCode, false),
+        );
       }
     });
 
