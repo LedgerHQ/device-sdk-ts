@@ -18,7 +18,7 @@ import { HttpCalldataDescriptorDataSource } from "./HttpCalldataDescriptorDataSo
 
 const config = {
   cal: {
-    url: "https://crypto-assets-service.api.ledger.com/v1",
+    url: "https://global.api.prd.ledger.com/cal/v1",
     mode: "test",
     branch: "main",
   },

@@ -59,9 +59,9 @@ describe("provideEnumVariantContext", () => {
     const cmd = api.sendCommand.mock.calls[1]![0];
     expect(cmd).toBeInstanceOf(ProvideEnumVariantCommand);
     // data (aabb) + trailing SIGNATURE (0x15) TLV over the picked signature
-    // (abcd), behind the 2-byte length prefix.
+    // (abcd), no length prefix.
     expect(cmd.args.payload).toStrictEqual(
-      new Uint8Array([0x00, 0x06, 0xaa, 0xbb, 0x15, 0x02, 0xab, 0xcd]),
+      new Uint8Array([0xaa, 0xbb, 0x15, 0x02, 0xab, 0xcd]),
     );
   });
 

@@ -1,5 +1,13 @@
 # @ledgerhq/device-transport-kit-mock-client
 
+## 1.2.0
+
+### Minor Changes
+
+- [#1590](https://github.com/LedgerHQ/device-sdk-ts/pull/1590) [`4720647`](https://github.com/LedgerHQ/device-sdk-ts/commit/4720647322df385f9b84f52a97ccb57f35b4a6c7) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Expose installable-app metadata on the device model. `DeviceApp` now carries an optional `hash`, and `DeviceConfig` accepts a `catalog` of `CatalogApp` entries used by the mock server to resolve an install hash to its app.
+
+- [#1553](https://github.com/LedgerHQ/device-sdk-ts/pull/1553) [`3bc2530`](https://github.com/LedgerHQ/device-sdk-ts/commit/3bc2530fbb238424c3b92a3a489d82564cf04b05) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Support ordered response sequences on mocks. A `Mock` now exposes `responses: string[]` (instead of a single `response`), and `MockConfig` accepts either an ordered `responses` list or the single-response `response` shorthand.
+
 ## 1.1.0
 
 ### Minor Changes

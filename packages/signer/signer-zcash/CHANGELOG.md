@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.4.3
+
+### Patch Changes
+
+- [#1672](https://github.com/LedgerHQ/device-sdk-ts/pull/1672) [`934c060`](https://github.com/LedgerHQ/device-sdk-ts/commit/934c060e78745807141c8740757129979aef0e47) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Request a device spend-auth signature only for real Orchard spends. Dummy padding spends (spend value 0) are self-signed host-side by the PCZT IO finalizer, so signing them on-device made the device signature count exceed the finalizer's unsigned-action count and the transaction was rejected. The full bundle is still streamed to the device; only the signing requests are restricted to real spends.
+
+## 0.4.2
+
+### Patch Changes
+
+- [#1648](https://github.com/LedgerHQ/device-sdk-ts/pull/1648) [`980abc8`](https://github.com/LedgerHQ/device-sdk-ts/commit/980abc8d926783aa558b46a8faf6090b8f56cf16) Thanks [@semeano](https://github.com/semeano)! - Fix UFVK export to support orchard + transparent paths
+
+## 0.4.1
+
+### Patch Changes
+
+- [#1638](https://github.com/LedgerHQ/device-sdk-ts/pull/1638) [`bdcbd2a`](https://github.com/LedgerHQ/device-sdk-ts/commit/bdcbd2a9460b3242af9a5acfc7f4aee4601df7c0) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Add the NU6.3 consensus branch id (0x37a5165b, mainnet activation height 3,428,143) to the Zcash transparent height→branch-id dispatch so transactions signed after NU6.3 activation are accepted by the network.
+
+## 0.4.0
+
+### Minor Changes
+
+- [#1587](https://github.com/LedgerHQ/device-sdk-ts/pull/1587) [`a2fa9a5`](https://github.com/LedgerHQ/device-sdk-ts/commit/a2fa9a58a19867f7ba32c4953954644160576ee2) Thanks [@may01](https://github.com/may01)! - Add PCZT Orchard shielded signing. A new `signPcztTransaction` method streams the PCZT bundle (header, transparent inputs/outputs, Orchard actions) to the device and returns the per-action Orchard `spendAuthSig`s and per-input transparent signatures. The legacy transparent `signTransaction` path is unchanged.
+
 ## 0.3.0
 
 ### Minor Changes

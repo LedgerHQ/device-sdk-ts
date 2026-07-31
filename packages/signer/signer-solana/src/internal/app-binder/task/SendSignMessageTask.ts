@@ -5,6 +5,7 @@ import {
   InvalidArgumentError,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import {
   type CommandFactory,
@@ -18,7 +19,10 @@ import {
   SignOffChainMessageCommand,
   type SignOffChainRawResponse,
 } from "@internal/app-binder/command/SignOffChainMessageCommand";
-import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import {
+  SOLANA_APP_COMMAND_ERROR_TAG,
+  type SolanaAppErrorCodes,
+} from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { SOLANA_PUBKEY_LEN } from "@internal/app-binder/constants";
 import {
   type Bs58Encoder,
@@ -27,17 +31,19 @@ import {
 import {
   LEGACY_OFFCHAINMSG_MAX_LEN,
   OffchainMessageBuilder,
-  OFFCHAINMSG_MAX_V0_LEN,
-  OFFCHAINMSG_MAX_V1_LEN,
+  OFFCHAINMSG_MAX_LEN,
 } from "@internal/app-binder/services/OffchainMessageBuilder";
 
 export { MessageFormat } from "@internal/app-binder/services/OffchainMessageBuilder";
 
 const V1_MAX_SIGNERS = 255;
 
+// V0 and V1 share the device's single off-chain payload ceiling
+// (app-solana MAX_OFFCHAIN_MESSAGE_LENGTH). Legacy targets older, smaller-buffer
+// devices, so it keeps its own tighter limit.
 const MESSAGE_SIZE_LIMITS: Partial<Record<SignMessageVersion, number>> = {
-  [SignMessageVersion.V1]: OFFCHAINMSG_MAX_V1_LEN,
-  [SignMessageVersion.V0]: OFFCHAINMSG_MAX_V0_LEN,
+  [SignMessageVersion.V1]: OFFCHAINMSG_MAX_LEN,
+  [SignMessageVersion.V0]: OFFCHAINMSG_MAX_LEN,
   [SignMessageVersion.Legacy]: LEGACY_OFFCHAINMSG_MAX_LEN,
 };
 
@@ -55,6 +61,7 @@ export type SendSignMessageTaskRunFunctionReturn = Promise<
 
 export class SendSignMessageTask {
   private readonly _builder: OffchainMessageBuilder;
+  private readonly _logger?: LoggerPublisherService;
 
   constructor(
     private api: InternalApi,
@@ -62,6 +69,7 @@ export class SendSignMessageTask {
     private readonly bs58Encoder: Bs58Encoder = DefaultBs58Encoder,
   ) {
     this._builder = new OffchainMessageBuilder(args.appDomain);
+    this._logger = api.loggerFactory?.("SendSignMessageTask");
   }
 
   async run(): SendSignMessageTaskRunFunctionReturn {
@@ -222,15 +230,31 @@ export class SendSignMessageTask {
       });
     }
 
-    const v1OCM = this._builder.buildV1(sendingData, [
-      signerPubkey,
-      ...extraSigners,
-    ]);
-    const v1Result = await this._sendAndWrap(v1OCM, paths);
+    const signers = [signerPubkey, ...extraSigners];
 
-    return (
-      v1Result ?? this._runV0(sendingData, derivationPath, paths, signerPubkey)
+    // Preferred: finalised sRFC 38 layout (no length prefix). Older firmware
+    // rejects it with 6a81 (header.length != trailing bytes), so fall back to
+    // the pre-spec-update layout that still carries the 2-byte length prefix.
+    const v1OCM = this._builder.buildV1(sendingData, signers, false);
+    const v1Result = await this._sendAndWrap(v1OCM, paths);
+    if (v1Result) {
+      return v1Result;
+    }
+    this._logger?.warn(
+      "[_runV1] V1 (no length prefix) not supported by device firmware, falling back to V1 (with length prefix)",
+      { data: { signersCount: signers.length } },
     );
+
+    const v1LegacyOCM = this._builder.buildV1(sendingData, signers, true);
+    const v1LegacyResult = await this._sendAndWrap(v1LegacyOCM, paths);
+    if (v1LegacyResult) {
+      return v1LegacyResult;
+    }
+    this._logger?.warn(
+      "[_runV1] V1 (with length prefix) not supported by device firmware, falling back to V0",
+    );
+
+    return this._runV0(sendingData, derivationPath, paths, signerPubkey);
   }
 
   private async _runV0(
@@ -260,8 +284,14 @@ export class SendSignMessageTask {
 
     const v0OCM = this._builder.buildV0(sendingData, pubkey);
     const v0Result = await this._sendAndWrap(v0OCM, paths);
+    if (v0Result) {
+      return v0Result;
+    }
+    this._logger?.warn(
+      "[_runV0] V0 not supported by device firmware, falling back to Legacy",
+    );
 
-    return v0Result ?? this._runLegacy(sendingData, paths);
+    return this._runLegacy(sendingData, paths);
   }
 
   /**
@@ -299,7 +329,7 @@ export class SendSignMessageTask {
     if (!e || typeof e !== "object") return false;
     const obj = e as Record<string, unknown>;
     return (
-      obj["_tag"] === "SolanaAppCommandError" &&
+      obj["_tag"] === SOLANA_APP_COMMAND_ERROR_TAG &&
       typeof obj["errorCode"] === "string" &&
       (obj["errorCode"] as string).toLowerCase() === "6a81"
     );

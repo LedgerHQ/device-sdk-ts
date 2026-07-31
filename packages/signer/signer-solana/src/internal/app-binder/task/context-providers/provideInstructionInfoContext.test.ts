@@ -69,21 +69,18 @@ describe("provideInstructionInfoContext", () => {
     const info = api.sendCommand.mock.calls[1]![0];
     expect(info).toBeInstanceOf(ProvideInstructionInfoCommand);
     // data (aabb) + trailing SIGNATURE (0x15) TLV over the picked signature
-    // (abcd), behind the 2-byte length prefix.
+    // (abcd), no length prefix.
     expect(info.args.payload).toStrictEqual(
-      new Uint8Array([0x00, 0x06, 0xaa, 0xbb, 0x15, 0x02, 0xab, 0xcd]),
+      new Uint8Array([0xaa, 0xbb, 0x15, 0x02, 0xab, 0xcd]),
     );
 
     const sub0 = api.sendCommand.mock.calls[2]![0];
     expect(sub0).toBeInstanceOf(ProvideInstructionSubstructureCommand);
-    expect(sub0.args.payload).toStrictEqual(
-      new Uint8Array([0x00, 0x03, 0x00, 0xcc, 0xdd]),
-    );
+    // substructure type byte (0x00) then TLV (ccdd), no length prefix.
+    expect(sub0.args.payload).toStrictEqual(new Uint8Array([0x00, 0xcc, 0xdd]));
 
     const sub1 = api.sendCommand.mock.calls[3]![0];
-    expect(sub1.args.payload).toStrictEqual(
-      new Uint8Array([0x00, 0x02, 0x01, 0xee]),
-    );
+    expect(sub1.args.payload).toStrictEqual(new Uint8Array([0x01, 0xee]));
   });
 
   it("throws when the device rejects the INSTRUCTION_INFO", async () => {

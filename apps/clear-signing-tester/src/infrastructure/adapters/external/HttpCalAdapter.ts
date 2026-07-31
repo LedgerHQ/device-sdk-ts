@@ -8,10 +8,10 @@ import { TYPES } from "@root/src/di/types";
 import { type CalAdapter } from "@root/src/domain/adapters/CalAdapter";
 import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 
-const CAL_BASE_URL = "https://crypto-assets-service.api.ledger.com/v1";
+const CAL_BASE_URL = "https://global.api.prd.ledger.com/cal/v1";
 
 /**
- * Response DTO from the crypto-assets-service API
+ * Response DTO from the CAL (Crypto Assets List) API
  */
 type CalldataDto = {
   descriptors_calldata: {

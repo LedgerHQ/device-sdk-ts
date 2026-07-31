@@ -35,10 +35,9 @@ export type ProvideInstructionInfoCommandArgs = {
 /**
  * Provides one signed `INSTRUCTION_INFO` TLV to the device.
  *
- * The caller pre-builds the wire payload (2-byte BE length prefix followed by
- * the `INSTRUCTION_INFO` TLV) and splits it into ≤255-byte chunks, then sends
- * each chunk through this command with `isFirstChunk` / `hasMore` flags driving
- * the standard `P2_MORE` / `P2_EXTEND` chunking convention.
+ * The caller pre-builds the wire payload and splits it into ≤255-byte chunks,
+ * then sends each chunk through this command with `isFirstChunk` / `hasMore`
+ * flags driving the standard `P2_MORE` / `P2_EXTEND` chunking convention.
  */
 export class ProvideInstructionInfoCommand
   implements

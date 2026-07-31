@@ -12,10 +12,14 @@ import {
  * forwarding APDUs to the per-pod Speculos emulator.
  */
 export interface SpeculosOperatorDataSource {
-  /** Create a Speculos instance; resolves the (echoed) `run_id`. */
+  /**
+   * Create a Speculos instance; resolves the (echoed) `run_id`.
+   * `seed` is the BIP39 mnemonic for this session (see SessionRecord.seed).
+   */
   acquire(
     req: AcquireRequest,
     runId: string,
+    seed: string,
   ): EitherAsync<SpeculosError, string>;
   /** Poll until ready; resolves the emulator URL, or fails on failed/timeout. */
   waitUntilReady(runId: string): EitherAsync<SpeculosError, string>;

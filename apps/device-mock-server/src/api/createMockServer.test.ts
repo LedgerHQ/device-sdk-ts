@@ -370,4 +370,79 @@ describe("createMockServer (HTTP contract)", () => {
       expect(afterDelete.status).toBe(401);
     });
   });
+
+  describe("PUT /sessions/current/seed", () => {
+    it("returns 401 without a bearer token", async () => {
+      const res = await api("/sessions/current/seed", {
+        method: "PUT",
+        body: JSON.stringify({
+          seed: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+        }),
+      });
+      expect(res.status).toBe(401);
+    });
+
+    it("returns 200 and echoes the trimmed seed on success", async () => {
+      const token = await authenticate();
+      const res = await api(
+        "/sessions/current/seed",
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            seed: "  glory promote mansion idle axis finger extend february uncover one trip resolve toe  ",
+          }),
+        },
+        token,
+      );
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { seed: string };
+      expect(body.seed).toBe(
+        "glory promote mansion idle axis finger extend february uncover one trip resolve toe",
+      );
+    });
+
+    it("returns 400 when seed is missing", async () => {
+      const token = await authenticate();
+      const res = await api(
+        "/sessions/current/seed",
+        { method: "PUT", body: JSON.stringify({}) },
+        token,
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 400 when seed is blank", async () => {
+      const token = await authenticate();
+      const res = await api(
+        "/sessions/current/seed",
+        { method: "PUT", body: JSON.stringify({ seed: "   " }) },
+        token,
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 400 when seed is not a string", async () => {
+      const token = await authenticate();
+      const res = await api(
+        "/sessions/current/seed",
+        { method: "PUT", body: JSON.stringify({ seed: 42 }) },
+        token,
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 400 when Content-Type is not JSON and body is absent", async () => {
+      const token = await authenticate();
+      const res = await api(
+        "/sessions/current/seed",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          body: "glory promote mansion idle axis finger extend february uncover one trip resolve toe",
+        },
+        token,
+      );
+      expect(res.status).toBe(400);
+    });
+  });
 });

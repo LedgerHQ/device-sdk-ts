@@ -154,15 +154,14 @@ describe("buildRequirements", () => {
     expect(result.tokenInfos).toEqual([]);
   });
 
-  it("RESOLVE port with CAL's singular account_index resolves the token account", () => {
+  it("RESOLVE port with a single-account candidate list resolves the token account", () => {
     const result = run([
       matched({
         accounts: [account("userAta")],
         descriptor: {
-          // Live CAL emits a single `account_index` (not the spec's
-          // `account_indices` list); it must still resolve.
+          // The common single-account port is a 1-element `account_indices` list.
           valueFlowPorts: [
-            { account_index: 0, token_value: { kind: "RESOLVE" } },
+            { account_indices: [0], token_value: { kind: "RESOLVE" } },
           ],
         },
       }),

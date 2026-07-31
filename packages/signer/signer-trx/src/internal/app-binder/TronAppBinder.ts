@@ -2,6 +2,7 @@ import {
   CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
+  LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -23,6 +24,8 @@ export class TronAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+    @inject(externalTypes.DmkLoggerFactory)
+    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getAddress(args: {
@@ -44,6 +47,7 @@ export class TronAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this.dmkLoggerFactory("GetAddressCommand"),
       }),
     });
   }
@@ -51,6 +55,7 @@ export class TronAppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Uint8Array;
+    tokenSignatures?: string[];
     skipOpenApp?: boolean;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
@@ -61,11 +66,13 @@ export class TronAppBinder {
             new SignTransactionTask(internalApi, {
               derivationPath: args.derivationPath,
               transaction: args.transaction,
+              tokenSignatures: args.tokenSignatures,
             }).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
+        logger: this.dmkLoggerFactory("SignTransactionTask"),
       }),
     });
   }
@@ -88,6 +95,7 @@ export class TronAppBinder {
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp ?? false,
         },
+        logger: this.dmkLoggerFactory("SignPersonalMessageTask"),
       }),
     });
   }
@@ -102,6 +110,7 @@ export class TronAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: false,
         },
+        logger: this.dmkLoggerFactory("GetAppConfigurationCommand"),
       }),
     });
   }

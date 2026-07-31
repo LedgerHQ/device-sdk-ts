@@ -116,7 +116,6 @@ beforeEach(async () => {
   const built = createMockServer({
     speculos: {
       baseUrl: "https://speculinho.test",
-      seed: "test seed",
       pollIntervalMs: 0,
       readyTimeoutMs: 1000,
     },

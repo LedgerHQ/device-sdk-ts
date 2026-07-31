@@ -1,5 +1,35 @@
 # @ledgerhq/context-module
 
+## 2.3.1
+
+### Patch Changes
+
+- [#1669](https://github.com/LedgerHQ/device-sdk-ts/pull/1669) [`a10c22d`](https://github.com/LedgerHQ/device-sdk-ts/commit/a10c22da56656a1a7c65bfa26ba12501a9fa68cb) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Remove check from solana module
+
+- [#1656](https://github.com/LedgerHQ/device-sdk-ts/pull/1656) [`6758ce2`](https://github.com/LedgerHQ/device-sdk-ts/commit/6758ce29b2f9ea28e038bc85545c3c5acba84a33) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Fix LiFi System Program Transfer descriptor selection
+
+## 2.3.0
+
+### Minor Changes
+
+- [#1641](https://github.com/LedgerHQ/device-sdk-ts/pull/1641) [`6c3bc74`](https://github.com/LedgerHQ/device-sdk-ts/commit/6c3bc749971f13824b67489dadfc3c8c88e62ade) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Align Solana CAL instruction descriptors with the `solana_programs` spec and fetch the CALLDATA certificate for the instruction-info and enum-variant loaders
+
+### Patch Changes
+
+- [#1651](https://github.com/LedgerHQ/device-sdk-ts/pull/1651) [`b6479da`](https://github.com/LedgerHQ/device-sdk-ts/commit/b6479dab3d25481a7bddcb5312f9c2518cc4ceb7) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Update default CAL and transaction-checks endpoints to the Gravitee gateway URLs
+
+## 2.2.0
+
+### Minor Changes
+
+- [#1604](https://github.com/LedgerHQ/device-sdk-ts/pull/1604) [`9c87a98`](https://github.com/LedgerHQ/device-sdk-ts/commit/9c87a983663f6bd534c209c6d9aa301dbbe4e36f) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Simplify solana basic clear sign flow
+
+- [#1511](https://github.com/LedgerHQ/device-sdk-ts/pull/1511) [`f424b9e`](https://github.com/LedgerHQ/device-sdk-ts/commit/f424b9e3effa196e3dd7a17b889d9fbdf7004836) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add Solana clear-signing context loaders (ALT resolution, instruction info, enum variant, token info, token account state, trusted name) and shared certificate/result utilities.
+
+- [#1581](https://github.com/LedgerHQ/device-sdk-ts/pull/1581) [`fef79ae`](https://github.com/LedgerHQ/device-sdk-ts/commit/fef79aeb6db3bf900cf449bc8402aadc50407a58) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Switch from hand-parsing signed TLV bytes to CAL's provided
+
+- [#1571](https://github.com/LedgerHQ/device-sdk-ts/pull/1571) [`eba9c16`](https://github.com/LedgerHQ/device-sdk-ts/commit/eba9c161314306c1de73d6160c03e6f54e714184) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add support for generic clear sign providers
+
 ## 2.1.0
 
 ### Minor Changes

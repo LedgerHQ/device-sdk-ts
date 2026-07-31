@@ -16,11 +16,11 @@ import {
 
 type TokenAccountStateResponseDto = {
   descriptorType?: string;
-  descriptorVersion?: string;
-  account_address?: string;
+  descriptorVersion?: number;
+  tokenAccount?: string;
   mint?: string;
   owner?: string;
-  balance?: string;
+  preBalance?: number;
   signedDescriptor: string;
   keyId: string;
   keyUsage: string;

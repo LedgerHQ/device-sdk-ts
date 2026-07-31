@@ -20,6 +20,7 @@ import {
   type SessionRecord,
   type SpeculosProxySession,
 } from "@internal/session/model/SessionModels";
+import { DEFAULT_SPECULOS_SEED } from "@internal/speculos/model/SpeculosModels";
 
 const DEFAULT_TTL_MS = 30 * 60 * 1000; // 30 minutes
 const DEFAULT_MAX_LIFETIME_MS = 4 * 60 * 60 * 1000; // 4 hours
@@ -47,12 +48,14 @@ export class InMemorySessionRepository implements SessionRepository {
       token: randomUUID(),
       createdAt: now,
       lastSeenAt: now,
+      seed: DEFAULT_SPECULOS_SEED,
       devices: new Map(),
       deviceMocks: new Map(),
       deviceMockCursors: new Map(),
       speculos: new Map(),
       catalog: new Map(),
       pendingAppOperations: new Map(),
+      pendingFirmwareOperations: new Map(),
     };
     this.sessions.set(record.token, record);
     return { token: record.token, expiresAt: this.expiresAt(record) };
@@ -97,6 +100,10 @@ export class InMemorySessionRepository implements SessionRepository {
       }
     }
     return evicted;
+  }
+
+  updateSeed(record: SessionRecord, seed: string): void {
+    record.seed = seed;
   }
 
   // --- Devices --------------------------------------------------------------
@@ -199,6 +206,30 @@ export class InMemorySessionRepository implements SessionRepository {
           ? apps.filter((existing) => existing.name !== app.name)
           : [...apps, { name: app.name, version: app.version, hash: app.hash }],
       };
+      record.devices.set(deviceId, updated);
+      return updated;
+    });
+  }
+
+  setPendingFirmwareOperation(
+    record: SessionRecord,
+    deviceId: string,
+    targetVersion: string,
+  ): void {
+    record.pendingFirmwareOperations.set(deviceId, targetVersion);
+  }
+
+  commitPendingFirmwareOperation(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<Device> {
+    const targetVersion = record.pendingFirmwareOperations.get(deviceId);
+    if (targetVersion === undefined) {
+      return Maybe.empty();
+    }
+    record.pendingFirmwareOperations.delete(deviceId);
+    return this.findDevice(record, deviceId).map((device) => {
+      const updated: Device = { ...device, firmware_version: targetVersion };
       record.devices.set(deviceId, updated);
       return updated;
     });
@@ -312,6 +343,7 @@ export class InMemorySessionRepository implements SessionRepository {
     record.speculos.clear();
     record.catalog.clear();
     record.pendingAppOperations.clear();
+    record.pendingFirmwareOperations.clear();
     for (const device of snapshot.devices) {
       this.addDevice(record, device);
     }

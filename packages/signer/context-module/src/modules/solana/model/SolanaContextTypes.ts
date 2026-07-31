@@ -18,6 +18,7 @@ export type SolanaTransactionDescriptorRaw = {
 export type SolanaLifiDescriptorEntry = {
   program_id: string;
   discriminator_hex?: string;
+  has_basis_point?: boolean;
   descriptor: SolanaTransactionDescriptorRaw;
 };
 
@@ -28,13 +29,14 @@ export type GetTransactionDescriptorsResponse = {
     program_id: string;
     discriminator?: number;
     discriminator_hex?: string;
+    amount?: { capped_bps?: number };
   }>;
   descriptors: SolanaLifiDescriptorEntry[];
 };
 
 export type SolanaTransactionDescriptorList = Record<
   string,
-  SolanaTransactionDescriptor
+  SolanaTransactionDescriptor[]
 >;
 
 // The signer registry (`provideContextRegistry.ts`) uses a required mapped
@@ -50,7 +52,8 @@ export type SolanaContextSuccessType =
   | ClearSignContextType.SOLANA_TOKEN_INFO
   | ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE
   | ClearSignContextType.SOLANA_ALT_RESOLUTION
-  | ClearSignContextType.SOLANA_TRUSTED_NAME;
+  | ClearSignContextType.SOLANA_TRUSTED_NAME
+  | ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME;
 
 export type SolanaContextSuccess<
   T extends SolanaContextSuccessType = SolanaContextSuccessType,
@@ -86,6 +89,9 @@ export type SolanaAltResolutionContextSuccess =
 
 export type SolanaTrustedNameContextSuccess =
   ClearSignContextSuccess<ClearSignContextType.SOLANA_TRUSTED_NAME>;
+
+export type SolanaBasicTrustedNameContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME>;
 
 export type SolanaTokenContextResult =
   | SolanaTokenContextSuccess

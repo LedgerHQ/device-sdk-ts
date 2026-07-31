@@ -10,7 +10,7 @@ import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-act
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 import {
   OffchainMessageBuilder,
-  OFFCHAINMSG_MAX_V0_LEN,
+  OFFCHAINMSG_MAX_LEN,
 } from "@internal/app-binder/services/OffchainMessageBuilder";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
 
@@ -114,9 +114,9 @@ describe("SendSignMessageTask", () => {
         ).rejects.toThrow();
       });
 
-      it("enforces V0 size limit (65515 bytes)", async () => {
+      it("enforces V0 size limit (device payload ceiling)", async () => {
         const res = await makeTask(apiMock, {
-          sendingData: new Uint8Array(OFFCHAINMSG_MAX_V0_LEN + 1).fill(0xaa),
+          sendingData: new Uint8Array(OFFCHAINMSG_MAX_LEN + 1).fill(0xaa),
           version: SignMessageVersion.V0,
         }).run();
 
@@ -124,7 +124,7 @@ describe("SendSignMessageTask", () => {
         expect((res as any).error).toBeInstanceOf(InvalidStatusWordError);
       });
 
-      it("accepts V0 message at exactly 65515 bytes (not rejected by guard)", async () => {
+      it("accepts V0 message at exactly the device limit (not rejected by guard)", async () => {
         apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({
             error: new InvalidStatusWordError("pubkey error"),
@@ -132,7 +132,7 @@ describe("SendSignMessageTask", () => {
         );
 
         const res = await makeTask(apiMock, {
-          sendingData: new Uint8Array(OFFCHAINMSG_MAX_V0_LEN).fill(0x41),
+          sendingData: new Uint8Array(OFFCHAINMSG_MAX_LEN).fill(0x41),
           version: SignMessageVersion.V0,
         }).run();
 
@@ -140,16 +140,6 @@ describe("SendSignMessageTask", () => {
         expect((res as any).error).toEqual(
           new InvalidStatusWordError("Error getting public key from device"),
         );
-      });
-
-      it("rejects V0 message at 65516 bytes", async () => {
-        const res = await makeTask(apiMock, {
-          sendingData: new Uint8Array(OFFCHAINMSG_MAX_V0_LEN + 1).fill(0x41),
-          version: SignMessageVersion.V0,
-        }).run();
-
-        expect(apiMock.sendCommand).toHaveBeenCalledTimes(0);
-        expect((res as any).error).toBeInstanceOf(InvalidStatusWordError);
       });
 
       it("enforces Legacy size limit (1232 bytes)", async () => {
@@ -162,9 +152,9 @@ describe("SendSignMessageTask", () => {
         expect((res as any).error).toBeInstanceOf(InvalidStatusWordError);
       });
 
-      it("enforces V1 size limit (65535 bytes)", async () => {
+      it("enforces V1 size limit (device payload ceiling)", async () => {
         const res = await makeTask(apiMock, {
-          sendingData: new Uint8Array(65536).fill(0xbb),
+          sendingData: new Uint8Array(OFFCHAINMSG_MAX_LEN + 1).fill(0xbb),
           version: SignMessageVersion.V1,
         }).run();
 
@@ -172,7 +162,7 @@ describe("SendSignMessageTask", () => {
         expect((res as any).error).toBeInstanceOf(InvalidStatusWordError);
       });
 
-      it("accepts V1 message at exactly 65535 bytes", async () => {
+      it("accepts V1 message at exactly the device limit", async () => {
         apiMock.sendCommand.mockResolvedValueOnce(
           CommandResultFactory({
             error: new InvalidStatusWordError("pubkey error"),
@@ -180,7 +170,7 @@ describe("SendSignMessageTask", () => {
         );
 
         const res = await makeTask(apiMock, {
-          sendingData: new Uint8Array(65535).fill(0x41),
+          sendingData: new Uint8Array(OFFCHAINMSG_MAX_LEN).fill(0x41),
           version: SignMessageVersion.V1,
         }).run();
 
@@ -556,12 +546,39 @@ describe("SendSignMessageTask", () => {
         expect((res as any).error).toBeInstanceOf(InvalidStatusWordError);
       });
 
-      it("V1 -> V0 on 6a81", async () => {
+      it("V1 (no prefix) -> V1 (with prefix) on 6a81", async () => {
         const msg = new Uint8Array([0x61, 0x62]);
         const rawSig = new Uint8Array(64).fill(0x99);
 
         apiMock.sendCommand
           .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+          .mockResolvedValueOnce(
+            CommandResultFactory({ error: solanaHeaderErr() as any }),
+          )
+          .mockResolvedValueOnce(CommandResultFactory({ data: rawSig }));
+
+        const v1PrefixOCM = builder.buildV1(msg, [PUBKEY], true);
+        const res = await makeTask(apiMock, {
+          sendingData: msg,
+          version: SignMessageVersion.V1,
+        }).run();
+
+        expect(apiMock.sendCommand).toHaveBeenCalledTimes(3);
+        const envelope = DefaultBs58Encoder.decode(
+          (res as any).data.signature as string,
+        );
+        expect(envelope.slice(65)).toEqual(v1PrefixOCM);
+      });
+
+      it("V1 -> V0 after both V1 layouts 6a81", async () => {
+        const msg = new Uint8Array([0x61, 0x62]);
+        const rawSig = new Uint8Array(64).fill(0x99);
+
+        apiMock.sendCommand
+          .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+          .mockResolvedValueOnce(
+            CommandResultFactory({ error: solanaHeaderErr() as any }),
+          )
           .mockResolvedValueOnce(
             CommandResultFactory({ error: solanaHeaderErr() as any }),
           )
@@ -573,37 +590,22 @@ describe("SendSignMessageTask", () => {
           version: SignMessageVersion.V1,
         }).run();
 
-        expect(apiMock.sendCommand).toHaveBeenCalledTimes(3);
+        expect(apiMock.sendCommand).toHaveBeenCalledTimes(4);
         const envelope = DefaultBs58Encoder.decode(
           (res as any).data.signature as string,
         );
         expect(envelope.slice(65)).toEqual(v0OCM);
       });
 
-      it("V1 -> V0 size error when message exceeds V0 limit", async () => {
-        const msg = new Uint8Array(65520).fill(0x41);
-
-        apiMock.sendCommand
-          .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
-          .mockResolvedValueOnce(
-            CommandResultFactory({ error: solanaHeaderErr() as any }),
-          );
-
-        const res = await makeTask(apiMock, {
-          sendingData: msg,
-          version: SignMessageVersion.V1,
-        }).run();
-
-        expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
-        expect((res as any).error).toBeInstanceOf(InvalidStatusWordError);
-      });
-
-      it("V1 -> V0 -> Legacy on double 6a81", async () => {
+      it("V1 -> V0 -> Legacy on triple 6a81", async () => {
         const msg = new Uint8Array([0x63]);
         const rawSig = new Uint8Array(64).fill(0xaa);
 
         apiMock.sendCommand
           .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+          .mockResolvedValueOnce(
+            CommandResultFactory({ error: solanaHeaderErr() as any }),
+          )
           .mockResolvedValueOnce(
             CommandResultFactory({ error: solanaHeaderErr() as any }),
           )
@@ -618,7 +620,7 @@ describe("SendSignMessageTask", () => {
           version: SignMessageVersion.V1,
         }).run();
 
-        expect(apiMock.sendCommand).toHaveBeenCalledTimes(4);
+        expect(apiMock.sendCommand).toHaveBeenCalledTimes(5);
         const envelope = DefaultBs58Encoder.decode(
           (res as any).data.signature as string,
         );

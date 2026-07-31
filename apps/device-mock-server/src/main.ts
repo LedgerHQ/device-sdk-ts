@@ -3,7 +3,6 @@ import "reflect-metadata";
 import { createMockServer } from "@api/createMockServer";
 import { type MockServerConfig } from "@api/model/MockServerConfig";
 import { logger } from "@internal/logger/logger";
-import { DEFAULT_SPECULOS_SEED } from "@internal/speculos/model/SpeculosModels";
 
 const port = Number(process.env["PORT"] ?? 9752);
 
@@ -17,7 +16,6 @@ const speculinhoUrl =
 const speculos: MockServerConfig["speculos"] = speculinhoUrl
   ? {
       baseUrl: speculinhoUrl,
-      seed: process.env["SPECULOS_SEED"] ?? DEFAULT_SPECULOS_SEED,
       speculosVersion: process.env["SPECULOS_VERSION"],
       readyTimeoutMs: process.env["SPECULOS_READY_TIMEOUT_MS"]
         ? Number(process.env["SPECULOS_READY_TIMEOUT_MS"])

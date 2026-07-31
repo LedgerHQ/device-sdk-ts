@@ -116,7 +116,8 @@ describe("DefaultSignerZcash", () => {
     expect(firstCommand.getApdu()).toEqual(
       new GetFullViewingKeyCommand({
         isContinue: false,
-        derivationPath,
+        derivationPath: "32'/133'/0'",
+        transparentDerivationPath: "44'/133'/0'",
         p2: zcashFvkP2FromMode("ufvk"),
       }).getApdu(),
     );

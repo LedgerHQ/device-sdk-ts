@@ -10,10 +10,11 @@ const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
     text: () => Promise.resolve(JSON.stringify(body)),
   }) as unknown as Response;
 
+const TEST_SEED = "test seed";
+
 const newOperator = () =>
   new HttpSpeculosOperatorDataSource({
     baseUrl: "https://speculinho.test/",
-    seed: "test seed",
     pollIntervalMs: 0,
     readyTimeoutMs: 1_000,
   });
@@ -37,6 +38,7 @@ describe("HttpSpeculosOperatorDataSource", () => {
           device_os_version: "1.3.0",
         },
         "run-1",
+        TEST_SEED,
       )
       .run();
 
@@ -47,7 +49,7 @@ describe("HttpSpeculosOperatorDataSource", () => {
     expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({
       coin_app: "btc",
       device: "nanox",
-      seed: "test seed",
+      seed: TEST_SEED,
       run_id: "run-1",
     });
   });
@@ -65,6 +67,7 @@ describe("HttpSpeculosOperatorDataSource", () => {
           device_os_version: "1.3.0",
         },
         "run-1",
+        TEST_SEED,
       )
       .run();
     expect(result.isLeft()).toBe(true);

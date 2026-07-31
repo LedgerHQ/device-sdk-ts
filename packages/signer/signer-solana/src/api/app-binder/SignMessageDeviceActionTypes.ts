@@ -1,4 +1,5 @@
 import {
+  type CommandErrorResult,
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
@@ -11,6 +12,9 @@ import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/Sol
 export type SignMessageDAOutput = {
   signature: string;
 };
+
+export type SignMessageTaskError =
+  CommandErrorResult<SolanaAppErrorCodes>["error"];
 
 export type SignMessageDAError =
   | OpenAppDAError

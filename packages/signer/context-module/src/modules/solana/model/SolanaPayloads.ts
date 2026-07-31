@@ -13,15 +13,17 @@ export type SolanaTransactionDescriptor = {
   descriptorType: string;
   descriptorVersion: string;
   signature: string;
+  has_basis_point?: boolean;
 };
 
 export type SolanaLifiInstructionMeta = {
   program_id: string;
   discriminator_hex?: string;
+  has_basis_point?: boolean;
 };
 
 export type SolanaLifiPayload = {
-  descriptors: Record<string, SolanaTransactionDescriptor>;
+  descriptors: Record<string, SolanaTransactionDescriptor[]>;
   instructions: SolanaLifiInstructionMeta[];
 };
 
@@ -109,12 +111,10 @@ export type SolanaCalTokenValue = {
 };
 
 export type SolanaCalValueFlowPort = {
-  /** Ordered candidate list (spec form). */
-  account_indices?: number[];
-  /** Single-account form currently emitted by CAL; treated as a 1-element list. */
-  account_index?: number;
+  /** Ordered candidate list of account indices (length 1 for a single-account port). */
+  account_indices: number[];
   optional_account_strategy?: string;
-  token_value?: SolanaCalTokenValue;
+  token_value: SolanaCalTokenValue;
 };
 
 export type SolanaCalAccountReset = {
@@ -179,5 +179,6 @@ export type SolanaAltResolutionPayload = {
   descriptor: Uint8Array;
 };
 
-// SOLANA_TRUSTED_NAME already exists with `payload: Uint8Array`, emitted by
-// both OwnerInfoContextLoader and SolanaTrustedNameContextLoader.
+// SOLANA_TRUSTED_NAME (generic flow, with 2-byte length prefix) is emitted by
+// SolanaTrustedNameContextLoader. SOLANA_BASIC_TRUSTED_NAME (basic flow, raw
+// bytes) is emitted by OwnerInfoContextLoader. Both carry `payload: Uint8Array`.

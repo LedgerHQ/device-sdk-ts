@@ -41,7 +41,7 @@ const config = {
     url: "web3checksUrl",
   },
   cal: {
-    url: "https://crypto-assets-service.api.ledger.com/v1",
+    url: "https://global.api.prd.ledger.com/cal/v1",
     mode: "prod",
   },
   originToken: "originToken",
@@ -122,7 +122,7 @@ describe("HttpTypedDataDataSource", () => {
 
     // THEN
     expect(httpMock.get).toHaveBeenCalledWith(
-      "https://crypto-assets-service.api.ledger.com/v1/dapps",
+      "https://global.api.prd.ledger.com/cal/v1/dapps",
       expect.objectContaining({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         params: expect.objectContaining({

@@ -14,7 +14,7 @@ describe("HttpTokenDataSource", () => {
     vi.clearAllMocks();
     const config = {
       cal: {
-        url: "https://crypto-assets-service.api.ledger.com/v1",
+        url: "https://global.api.prd.ledger.com/cal/v1",
         mode: "prod",
         branch: "main",
       },
@@ -35,7 +35,7 @@ describe("HttpTokenDataSource", () => {
 
     // THEN
     expect(httpMock.get).toHaveBeenCalledWith(
-      "https://crypto-assets-service.api.ledger.com/v1/tokens",
+      "https://global.api.prd.ledger.com/cal/v1/tokens",
       {
         params: {
           contract_address: "0x00",

@@ -1,5 +1,6 @@
 import { type RequirementInstruction } from "@internal/app-binder/clear-sign/requirements/model";
 import {
+  PARAM_TYPE_ACCOUNT,
   PARAM_TYPE_TRUSTED_NAME,
   type ParsedDisplayField,
   type ParsedInstruction,
@@ -59,6 +60,45 @@ describe("applyTrustedNameRule", () => {
       [],
     );
     expect(result).toEqual([DefaultBs58Encoder.encode(addr)]);
+  });
+
+  it("resolves an ACCOUNT display field target (best-effort CAL name)", () => {
+    const result = run(
+      [
+        {
+          paramType: PARAM_TYPE_ACCOUNT,
+          value: {
+            source: ValueSource.ACCOUNT_PATH,
+            payload: Uint8Array.of(0),
+          },
+        },
+      ],
+      ["account"],
+    );
+    expect(result).toEqual(["account"]);
+  });
+
+  it("deduplicates an address referenced by ACCOUNT and TRUSTED_NAME fields", () => {
+    const result = run(
+      [
+        {
+          paramType: PARAM_TYPE_ACCOUNT,
+          value: {
+            source: ValueSource.ACCOUNT_PATH,
+            payload: Uint8Array.of(0),
+          },
+        },
+        {
+          paramType: PARAM_TYPE_TRUSTED_NAME,
+          value: {
+            source: ValueSource.ACCOUNT_PATH,
+            payload: Uint8Array.of(0),
+          },
+        },
+      ],
+      ["shared"],
+    );
+    expect(result).toEqual(["shared"]);
   });
 
   it("ignores non-trusted-name fields and unresolved account targets", () => {

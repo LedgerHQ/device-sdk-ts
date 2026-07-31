@@ -1,8 +1,5 @@
 import React, { useMemo } from "react";
 import {
-  BackupAppStorageCommand,
-  type BackupAppStorageCommandErrorCodes,
-  type BackupAppStorageCommandResponse,
   BatteryStatusType,
   CloseAppCommand,
   DeleteLanguagePackCommand,
@@ -10,18 +7,11 @@ import {
   type DeleteLanguagePackErrorCodes,
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
-  GetAppStorageInfoCommand,
-  type GetAppStorageInfoCommandArgs,
-  type GetAppStorageInfoCommandErrorCodes,
-  type GetAppStorageInfoCommandResponse,
   type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
   type GetBatteryStatusResponse,
   GetOsVersionCommand,
   type GetOsVersionResponse,
-  InitRestoreAppStorageCommand,
-  type InitRestoreAppStorageCommandArgs,
-  type InitRestoreAppStorageCommandErrorCodes,
   type ListAppsArgs,
   ListAppsCommand,
   type ListAppsErrorCodes,
@@ -34,8 +24,31 @@ import {
   OpenAppCommand,
   type OpenAppErrorCodes,
 } from "@ledgerhq/device-management-kit";
+import {
+  BackupAppStorageCommand,
+  type BackupAppStorageCommandErrorCodes,
+  type BackupAppStorageCommandResponse,
+  CommitRestoreAppStorageCommand,
+  type CommitRestoreAppStorageCommandErrorCodes,
+  GetAppStorageInfoCommand,
+  type GetAppStorageInfoCommandArgs,
+  type GetAppStorageInfoCommandErrorCodes,
+  type GetAppStorageInfoCommandResponse,
+  InitRestoreAppStorageCommand,
+  type InitRestoreAppStorageCommandArgs,
+  type InitRestoreAppStorageCommandErrorCodes,
+  RequestMasterConsentCommand,
+  type RequestMasterConsentCommandArgs,
+  type RequestMasterConsentCommandErrorCodes,
+  RestoreAppStorageCommand,
+  type RestoreAppStorageCommandErrorCodes,
+} from "@ledgerhq/dmk-ledger-wallet";
 import { Grid } from "@ledgerhq/react-ui";
 
+import {
+  hexStringToUint8Array,
+  isValidHexString,
+} from "@/components/ApduView/hexUtils";
 import { getValueSelectorFromEnum } from "@/components/Form";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -165,6 +178,37 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         BackupAppStorageCommandErrorCodes
       >,
       {
+        title: "Request master consent",
+        description: "Request master consent for the device",
+        sendCommand: ({
+          languagePackConsentEnabled,
+          lockScreenPictureConsentEnabled,
+          appNumber,
+          appStorageNumber,
+        }) => {
+          const command = new RequestMasterConsentCommand({
+            languagePackConsentEnabled,
+            lockScreenPictureConsentEnabled,
+            appNumber,
+            appStorageNumber,
+          });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: {
+          languagePackConsentEnabled: true,
+          lockScreenPictureConsentEnabled: true,
+          appNumber: 1,
+          appStorageNumber: 1,
+        },
+      } satisfies CommandProps<
+        RequestMasterConsentCommandArgs,
+        void,
+        RequestMasterConsentCommandErrorCodes
+      >,
+      {
         title: "Init restore app storage",
         description:
           "Initialize the restore of a previously backed up app storage",
@@ -183,6 +227,46 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         InitRestoreAppStorageCommandArgs,
         void,
         InitRestoreAppStorageCommandErrorCodes
+      >,
+      {
+        title: "Restore app storage",
+        description: "Restore a previously backed up app storage",
+        sendCommand: ({ chunkDataHex }) => {
+          if (!isValidHexString(chunkDataHex)) {
+            return Promise.reject({
+              message:
+                "chunkDataHex must be a valid hex string (even length, hex characters only).",
+            });
+          }
+          const command = new RestoreAppStorageCommand({
+            chunkData: hexStringToUint8Array(chunkDataHex),
+          });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: { chunkDataHex: "" },
+      } satisfies CommandProps<
+        { chunkDataHex: string },
+        void,
+        RestoreAppStorageCommandErrorCodes
+      >,
+      {
+        title: "Commit restore app storage",
+        description: "Commit the restore of a previously backed up app storage",
+        sendCommand: () => {
+          const command = new CommitRestoreAppStorageCommand();
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: undefined,
+      } satisfies CommandProps<
+        void,
+        void,
+        CommitRestoreAppStorageCommandErrorCodes
       >,
       {
         title: "List language packs",

@@ -1,16 +1,18 @@
-import { isSolanaContextSuccess } from "@ledgerhq/context-module";
+import {
+  ClearSignContextType,
+  isSolanaContextSuccess,
+  type SolanaContext,
+} from "@ledgerhq/context-module";
 import {
   type InternalApi,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
-import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
 import {
   DefaultSolanaMessageNormaliser,
   type SolanaMessageNormaliser,
 } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
 
-import { loadCertificate } from "./context-providers/loadCertificate";
 import { dispatchProvideContext } from "./context-providers/provideContextRegistry";
 import { type ProvideContextDeps } from "./context-providers/provideContextTypes";
 import { type BasicClearSignContext } from "./BuildBasicClearSignContextTask";
@@ -25,7 +27,7 @@ export class ProvideBasicClearSignContextTask {
   private readonly _logger: LoggerPublisherService;
   private readonly _deps: ProvideContextDeps;
   constructor(
-    private readonly api: InternalApi,
+    api: InternalApi,
     private readonly args: ProvideBasicClearSignContextTaskArgs,
   ) {
     this._logger = args.loggerFactory("ProvideBasicClearSignContextTask");
@@ -37,40 +39,27 @@ export class ProvideBasicClearSignContextTask {
     };
   }
 
+  private static readonly PROVISION_ORDER = [
+    ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
+    ClearSignContextType.SOLANA_TOKEN,
+    ClearSignContextType.SOLANA_LIFI,
+    ClearSignContextType.SOLANA_TRANSACTION_CHECK,
+  ] as const;
+
   async run(): Promise<void> {
     this._logger.debug("[run] Starting ProvideBasicClearSignContextTask");
-    const { tlvDescriptor, trustedNamePKICertificate, loadersResults } =
-      this.args;
+    const { loadersResults } = this.args;
 
-    // --------------------------------------------------------------------
-    // providing default solana context (trusted name cert + TLV descriptor)
-    // only needed when owner info was resolved (SPL token flows)
-    if (trustedNamePKICertificate && tlvDescriptor) {
-      await loadCertificate(
-        this.api,
-        trustedNamePKICertificate,
-        "[SignerSolana] ProvideBasicClearSignContextTask: failed to load trusted-name certificate",
-      );
-      await this.api.sendCommand(
-        new ProvideTLVDescriptorCommand({ payload: tlvDescriptor }),
-      );
-    }
+    const ordered = ProvideBasicClearSignContextTask.PROVISION_ORDER.map(
+      (type) => loadersResults.find((c) => c.type === type),
+    ).filter((c): c is SolanaContext => c !== undefined);
 
-    // --------------------------------------------------------------------
-    // providing optional solana context via context module loaders results
-    this._logger.debug("[run] Providing optional Solana context from loaders", {
-      data: { loadersResults },
+    this._logger.debug("[run] Providing Solana context from loaders", {
+      data: { ordered },
     });
 
-    for (const loaderResult of loadersResults) {
-      // Skip non-success (ERROR) loader results; same guard the generic
-      // provide task uses for its pool descriptors.
-      if (!isSolanaContextSuccess(loaderResult)) {
-        this._logger.debug("[run] Non-success loader result, skipping", {
-          data: { type: loaderResult.type },
-        });
-        continue;
-      }
+    for (const loaderResult of ordered) {
+      if (!isSolanaContextSuccess(loaderResult)) continue;
       this._logger.debug(`[run] Providing ${loaderResult.type}`);
       await dispatchProvideContext(loaderResult, this._deps);
     }

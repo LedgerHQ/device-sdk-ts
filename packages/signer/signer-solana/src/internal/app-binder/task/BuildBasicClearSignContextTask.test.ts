@@ -46,7 +46,7 @@ const defaultArgs = {
 };
 
 const trustedNameSuccessContext = {
-  type: ClearSignContextType.SOLANA_TRUSTED_NAME as const,
+  type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME as const,
   payload: trustedNamePayload,
   certificate: trustedNameCert,
 };
@@ -102,12 +102,12 @@ describe("BuildBasicClearSignContextTask", () => {
       [
         ClearSignContextType.SOLANA_TOKEN,
         ClearSignContextType.SOLANA_LIFI,
-        ClearSignContextType.SOLANA_TRUSTED_NAME,
+        ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
       ],
     );
   });
 
-  it("returns trustedName cert + tlvDescriptor when SOLANA_TRUSTED_NAME context is present", async () => {
+  it("includes SOLANA_BASIC_TRUSTED_NAME in loadersResults when present", async () => {
     (contextModuleMock.getContexts as any).mockResolvedValue([
       trustedNameSuccessContext,
     ]);
@@ -116,14 +116,12 @@ describe("BuildBasicClearSignContextTask", () => {
     const result = await task.run();
 
     expect(result).toEqual<BasicClearSignContext>({
-      tlvDescriptor: trustedNamePayload,
-      trustedNamePKICertificate: trustedNameCert,
-      loadersResults: [],
+      loadersResults: [trustedNameSuccessContext],
       contextErrorCount: 0,
     });
   });
 
-  it("includes SOLANA_TOKEN and SOLANA_LIFI results in loadersResults", async () => {
+  it("includes SOLANA_BASIC_TRUSTED_NAME, SOLANA_TOKEN, and SOLANA_LIFI in loadersResults", async () => {
     const tokenContext = {
       type: ClearSignContextType.SOLANA_TOKEN as const,
       payload: { solanaTokenDescriptor: { data: "aa", signature: "bb" } },
@@ -143,7 +141,11 @@ describe("BuildBasicClearSignContextTask", () => {
     const task = new BuildBasicClearSignContextTask(apiMock, defaultArgs);
     const result = await task.run();
 
-    expect(result.loadersResults).toEqual([tokenContext, lifiContext]);
+    expect(result.loadersResults).toEqual([
+      trustedNameSuccessContext,
+      tokenContext,
+      lifiContext,
+    ]);
   });
 
   it("throws when challenge command fails", async () => {
@@ -160,7 +162,7 @@ describe("BuildBasicClearSignContextTask", () => {
     );
   });
 
-  it("counts ERROR contexts and surfaces them via contextErrorCount and loadersResults", async () => {
+  it("counts ERROR contexts via contextErrorCount but excludes them from loadersResults", async () => {
     const error = new Error("token loader failure");
     (contextModuleMock.getContexts as any).mockResolvedValue([
       trustedNameSuccessContext,
@@ -170,15 +172,11 @@ describe("BuildBasicClearSignContextTask", () => {
     const task = new BuildBasicClearSignContextTask(apiMock, defaultArgs);
     const result = await task.run();
 
-    expect(result.trustedNamePKICertificate).toEqual(trustedNameCert);
-    expect(result.tlvDescriptor).toEqual(trustedNamePayload);
     expect(result.contextErrorCount).toBe(1);
-    expect(result.loadersResults).toEqual([
-      { type: ClearSignContextType.ERROR, error },
-    ]);
+    expect(result.loadersResults).toEqual([trustedNameSuccessContext]);
   });
 
-  it("returns empty trusted-name fields when owner info is not required and only errors are returned", async () => {
+  it("omits SOLANA_BASIC_TRUSTED_NAME and errors from loadersResults when owner info is not required", async () => {
     const error = new Error("solana context failure");
     const argsWithoutOwnerInfo = {
       ...defaultArgs,
@@ -194,15 +192,11 @@ describe("BuildBasicClearSignContextTask", () => {
     );
     const result = await task.run();
 
-    expect(result.trustedNamePKICertificate).toBeUndefined();
-    expect(result.tlvDescriptor).toBeUndefined();
     expect(result.contextErrorCount).toBe(1);
-    expect(result.loadersResults).toEqual([
-      { type: ClearSignContextType.ERROR, error },
-    ]);
+    expect(result.loadersResults).toEqual([]);
   });
 
-  it("throws when owner info is required but no SOLANA_TRUSTED_NAME context was returned", async () => {
+  it("throws when owner info is required but no SOLANA_BASIC_TRUSTED_NAME context was returned", async () => {
     (contextModuleMock.getContexts as any).mockResolvedValue([
       {
         type: ClearSignContextType.ERROR,

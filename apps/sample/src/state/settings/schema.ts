@@ -71,12 +71,12 @@ export const initialState: SettingsState = {
 
   // Context module config objects
   calConfig: {
-    url: "https://crypto-assets-service.api.ledger.com/v1",
+    url: "https://global.api.prd.ledger.com/cal/v1",
     mode: "prod",
     branch: "main",
   },
   web3ChecksConfig: {
-    url: "https://web3checks-backend.api.ledger.com/v3",
+    url: "https://global.api.prd.ledger.com/transaction-checks/v3",
   },
   metadataServiceConfig: {
     url: "https://nft.api.live.ledger.com",

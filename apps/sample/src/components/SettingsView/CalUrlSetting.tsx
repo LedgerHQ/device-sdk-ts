@@ -34,7 +34,7 @@ export const CalUrlSetting: React.FC = () => {
           renderLeft={<InputLabel>CAL URL</InputLabel>}
           value={calUrl}
           onChange={onValueChange}
-          placeholder="https://crypto-assets-service.api.ledger.com/v1"
+          placeholder="https://global.api.prd.ledger.com/cal/v1"
         />
       </Flex>
       <ResetSettingCTA

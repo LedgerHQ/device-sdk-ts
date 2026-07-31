@@ -1,5 +1,11 @@
 # @ledgerhq/signer-utils
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1533](https://github.com/LedgerHQ/device-sdk-ts/pull/1533) [`61d837f`](https://github.com/LedgerHQ/device-sdk-ts/commit/61d837f04a021933e417b74964a717a7e230108c) Thanks [@sprohaszka-ledger](https://github.com/sprohaszka-ledger)! - APDU chunk mechanism factorized
+
 ## 1.2.0
 
 ### Minor Changes

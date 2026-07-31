@@ -1,3 +1,4 @@
+export { GetAddressDeviceActionFactory } from "@api/app-binder/GetAddressDeviceActionFactory";
 export type {
   GetAddressDAError,
   GetAddressDAIntermediateValue,
@@ -9,20 +10,31 @@ export type {
   GetAppConfigurationDAIntermediateValue,
   GetAppConfigurationDAOutput,
 } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
+export { SignMessageDeviceActionFactory } from "@api/app-binder/SignMessageDeviceActionFactory";
 export type {
   SignMessageDAError,
   SignMessageDAIntermediateValue,
   SignMessageDAOutput,
+  SignMessageTaskError,
 } from "@api/app-binder/SignMessageDeviceActionTypes";
-export type {
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue,
-  SignTransactionDAOutput,
-  SignTransactionDAReturnType,
+export { SignTransactionDeviceActionFactory } from "@api/app-binder/SignTransactionDeviceActionFactory";
+export {
+  type ClearSignMode,
+  type SignTransactionDAError,
+  type SignTransactionDAInput,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
+  type SignTransactionDAReturnType,
+  type SignTransactionDAStateStep,
+  signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export type { MessageOptions } from "@api/model/MessageOptions";
 export { SignMessageVersion } from "@api/model/MessageOptions";
 export type { Signature } from "@api/model/Signature";
+export {
+  isSolanaAppError,
+  SolanaAppCommandError,
+} from "@api/model/SolanaAppErrors";
 export type { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 export type { Transaction } from "@api/model/Transaction";
 export type {
@@ -37,3 +49,4 @@ export {
   type GetPubKeyCommandResponse,
 } from "@internal/app-binder/command/GetPubKeyCommand";
 export type { SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+export { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransactionDeviceAction";

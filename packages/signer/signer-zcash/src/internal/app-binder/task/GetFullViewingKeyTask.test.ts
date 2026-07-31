@@ -17,8 +17,88 @@ import {
   ORCHARD_FVK_BYTE_LENGTH,
 } from "./GetFullViewingKeyTask";
 
+/**
+ * Decodes the prefixed derivation path groups from a GET_VK APDU data field.
+ * The layout is `[len][elem*4]...` repeated, so UFVK exports return the orchard
+ * path followed by the transparent path.
+ */
+function readPathsFromApdu(command: GetFullViewingKeyCommand): string[] {
+  const raw = command.getApdu().getRawApdu();
+  const data = raw.slice(5);
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  const paths: string[] = [];
+  let i = 0;
+  while (i < data.length) {
+    const len = data[i]!;
+    i += 1;
+    const elements: string[] = [];
+    for (let e = 0; e < len; e += 1) {
+      const value = view.getUint32(i, false);
+      i += 4;
+      const hardened = (value & 0x80000000) !== 0;
+      elements.push(`${value & 0x7fffffff}${hardened ? "'" : ""}`);
+    }
+    paths.push(elements.join("/"));
+  }
+  return paths;
+}
+
 describe("GetFullViewingKeyTask", () => {
   const path = "44'/133'/0'/0/0";
+
+  const okUfvk = () => {
+    const utf8 = new TextEncoder().encode("uviewtest");
+    const data = new Uint8Array(2 + utf8.length);
+    new DataView(data.buffer).setUint16(0, utf8.length, false);
+    data.set(utf8, 2);
+    return CommandResultFactory({ data: { data } });
+  };
+
+  it("should send 32'/coin'/account' orchard and 44'/coin'/account' transparent paths for a BIP-44 UFVK input", async () => {
+    const sendCommand = vi.fn().mockResolvedValue(okUfvk());
+    const api = { sendCommand } as unknown as InternalApi;
+
+    await new GetFullViewingKeyTask(api, {
+      derivationPath: "44'/133'/0'/0/0",
+      mode: "ufvk",
+    }).run();
+
+    const c1 = sendCommand.mock.calls[0]![0] as GetFullViewingKeyCommand;
+    expect(readPathsFromApdu(c1)).toEqual(["32'/133'/0'", "44'/133'/0'"]);
+  });
+
+  it("should send 32'/coin'/account' orchard and 44'/coin'/account' transparent paths for a ZIP-32 UFVK input", async () => {
+    const sendCommand = vi.fn().mockResolvedValue(okUfvk());
+    const api = { sendCommand } as unknown as InternalApi;
+
+    await new GetFullViewingKeyTask(api, {
+      derivationPath: "32'/133'/0'",
+      mode: "ufvk",
+    }).run();
+
+    const c1 = sendCommand.mock.calls[0]![0] as GetFullViewingKeyCommand;
+    expect(readPathsFromApdu(c1)).toEqual(["32'/133'/0'", "44'/133'/0'"]);
+  });
+
+  it("should reject a UFVK request when the derivation path has fewer than three levels", async () => {
+    const sendCommand = vi.fn();
+    const api = { sendCommand } as unknown as InternalApi;
+
+    const result = await new GetFullViewingKeyTask(api, {
+      derivationPath: "32'/133'",
+      mode: "ufvk",
+    }).run();
+
+    expect(isSuccessCommandResult(result)).toBe(false);
+    if (!isSuccessCommandResult(result)) {
+      expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+      const err = result.error as InvalidStatusWordError;
+      expect((err.originalError as { message: string }).message).toContain(
+        "must have at least purpose/coin/account levels",
+      );
+    }
+    expect(sendCommand).not.toHaveBeenCalled();
+  });
 
   it("should parse single-chunk UFVK (u16 length + UTF-8)", async () => {
     const ufvk = "uviewtest";

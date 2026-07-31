@@ -222,4 +222,36 @@ describe("InMemorySessionRepository", () => {
       .unsafeCoerce();
     expect(uninstalled.apps).toEqual([{ name: "BOLOS", version: "1.5.0" }]);
   });
+
+  it("applies a pending firmware operation to the device version on commit", () => {
+    const { repo, record } = newSession();
+    const device = repo.addDevice(record, {
+      device_type: "stax",
+      firmware_version: "1.9.0",
+    });
+
+    // Nothing pending: no-op.
+    expect(
+      repo.commitPendingFirmwareOperation(record, device.id).isNothing(),
+    ).toBe(true);
+
+    // OSU install -> device reports the `-osu` version.
+    repo.setPendingFirmwareOperation(record, device.id, "1.9.1-osu");
+    expect(
+      repo.commitPendingFirmwareOperation(record, device.id).unsafeCoerce()
+        .firmware_version,
+    ).toBe("1.9.1-osu");
+
+    // Pending was cleared.
+    expect(
+      repo.commitPendingFirmwareOperation(record, device.id).isNothing(),
+    ).toBe(true);
+
+    // Final install -> device lands on the clean version.
+    repo.setPendingFirmwareOperation(record, device.id, "1.9.1");
+    expect(
+      repo.commitPendingFirmwareOperation(record, device.id).unsafeCoerce()
+        .firmware_version,
+    ).toBe("1.9.1");
+  });
 });

@@ -10,8 +10,8 @@ describe("GetAppConfigurationUseCase", () => {
     blindSigningEnabled: false,
     pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
     version: "1.0.0",
-    web3ChecksEnabled: false,
-    web3ChecksOptIn: false,
+    transactionChecksEnabled: false,
+    transactionChecksOptIn: false,
   };
   const appBinderMock = {
     getAppConfiguration: getAppConfigurationMock,

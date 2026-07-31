@@ -1,8 +1,7 @@
 import {
-  type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
-  type LoaderResult,
+  isSolanaContextSuccess,
   type SolanaTransactionContextResultSuccess,
 } from "@ledgerhq/context-module";
 import {
@@ -51,6 +50,7 @@ export class BuildBasicClearSignContextTask {
       tokenAddress: options.tokenAddress,
       challenge,
       createATA: options.createATA,
+      mintAddress: options.mintAddress,
       tokenInternalId: options.tokenInternalId,
       templateId: options.templateId,
     };
@@ -66,7 +66,7 @@ export class BuildBasicClearSignContextTask {
       [
         ClearSignContextType.SOLANA_TOKEN,
         ClearSignContextType.SOLANA_LIFI,
-        ClearSignContextType.SOLANA_TRUSTED_NAME,
+        ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
       ],
     );
 
@@ -79,33 +79,20 @@ export class BuildBasicClearSignContextTask {
         contextResponseItem.type === ClearSignContextType.ERROR,
     ).length;
 
-    const trustedNameCtx = contexts.find(
-      (
-        contextResponseItem,
-      ): contextResponseItem is ClearSignContextSuccess<ClearSignContextType.SOLANA_TRUSTED_NAME> =>
-        contextResponseItem.type === ClearSignContextType.SOLANA_TRUSTED_NAME,
-    );
-    const trustedNamePKICertificate = trustedNameCtx?.certificate;
-    const tlvDescriptor = trustedNameCtx?.payload;
-
     const ownerInfoRequired = !!(options.tokenAddress || options.createATA);
-    if (ownerInfoRequired && trustedNameCtx === undefined) {
+    if (
+      ownerInfoRequired &&
+      !contexts.some(
+        (c) => c.type === ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
+      )
+    ) {
       throw new Error(
         "[SignerSolana] BuildBasicClearSignContextTask: owner info was required but could not be resolved",
       );
     }
 
-    const loadersResults = contexts.filter(
-      (contextResponseItem): contextResponseItem is LoaderResult =>
-        contextResponseItem.type === ClearSignContextType.ERROR ||
-        contextResponseItem.type === ClearSignContextType.SOLANA_TOKEN ||
-        contextResponseItem.type === ClearSignContextType.SOLANA_LIFI,
-    );
-
     return {
-      trustedNamePKICertificate,
-      tlvDescriptor,
-      loadersResults,
+      loadersResults: contexts.filter(isSolanaContextSuccess),
       contextErrorCount,
     };
   }

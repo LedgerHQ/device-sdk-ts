@@ -53,9 +53,7 @@ describe("provideTokenAccountStateContext", () => {
     );
     const cmd = api.sendCommand.mock.calls[1]![0];
     expect(cmd).toBeInstanceOf(ProvideTokenAccountStateCommand);
-    expect(cmd.args.payload).toStrictEqual(
-      new Uint8Array([0x00, 0x02, 0xaa, 0xbb]),
-    );
+    expect(cmd.args.payload).toStrictEqual(new Uint8Array([0xaa, 0xbb]));
   });
 
   it("throws when the device rejects the descriptor", async () => {

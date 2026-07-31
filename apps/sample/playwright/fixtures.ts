@@ -12,6 +12,7 @@ import { MockDeviceDriver } from "./utils/drivers/MockDeviceDriver";
 import { SettingsDriver } from "./utils/drivers/SettingsDriver";
 import { SidebarDriver } from "./utils/drivers/SidebarDriver";
 import { SpeculosDriver } from "./utils/drivers/SpeculosDriver";
+import { TrxSignerDriver } from "./utils/drivers/TrxSignerDriver";
 import { setupMockServerSession } from "./utils/setup";
 
 type Fixtures = {
@@ -29,6 +30,7 @@ type Fixtures = {
   sidebar: SidebarDriver;
   ethSigner: EthSignerDriver;
   btcSigner: BtcSignerDriver;
+  trxSigner: TrxSignerDriver;
   /** Build a Speculos driver for a connected device (its app must be opened). */
   speculos: (device: Device) => SpeculosDriver;
 };
@@ -68,6 +70,9 @@ export const test = base.extend<Fixtures>({
   },
   btcSigner: async ({ page }, use) => {
     await use(new BtcSignerDriver(page));
+  },
+  trxSigner: async ({ page }, use) => {
+    await use(new TrxSignerDriver(page));
   },
   speculos: async ({ mockClient }, use, testInfo) => {
     const drivers: SpeculosDriver[] = [];

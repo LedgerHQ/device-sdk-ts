@@ -56,7 +56,7 @@ Branch names **MUST** follow this format and are validated by CI.
 
 **Ticket** (required for branches on the main repository, not forks):
 
-- `DSDK-<number>` or `LIVE-<number>` — Jira ticket reference
+- `DSDK-<number>`, `LIVE-<number>` or `LBD-<number>` — Jira ticket reference
 - `no-issue` — When no ticket exists (**default for automated/AI contributions**)
 - `issue-<number>` — GitHub issue reference
 

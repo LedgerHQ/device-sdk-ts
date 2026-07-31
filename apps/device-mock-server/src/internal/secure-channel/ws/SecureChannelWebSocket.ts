@@ -8,6 +8,7 @@ import { type WebSocket, WebSocketServer } from "ws";
 
 import { logger } from "@internal/logger/logger";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
+import { type FirmwareUpdateResolver } from "@internal/secure-channel/service/FirmwareUpdateResolver";
 import { type InstallAppResolver } from "@internal/secure-channel/service/InstallAppResolver";
 import {
   buildSecureChannelScript,
@@ -47,6 +48,8 @@ export class SecureChannelWebSocket {
     private readonly repository: SessionRepository,
     @inject(secureChannelTypes.InstallAppResolver)
     private readonly installResolver: InstallAppResolver,
+    @inject(secureChannelTypes.FirmwareUpdateResolver)
+    private readonly firmwareResolver: FirmwareUpdateResolver,
   ) {}
 
   /** Attach the secure-channel WebSocket handler to an HTTP server. */
@@ -60,12 +63,7 @@ export class SecureChannelWebSocket {
         return;
       }
       wss.handleUpgrade(request, socket, head, (ws) => {
-        void this.handleConnection(
-          ws,
-          parsed.token,
-          parsed.endpoint,
-          parsed.hash,
-        );
+        void this.handleConnection(ws, parsed);
       });
     });
 
@@ -74,10 +72,9 @@ export class SecureChannelWebSocket {
 
   private async handleConnection(
     ws: WebSocket,
-    token: string,
-    endpoint: SecureChannelEndpoint,
-    hash?: string,
+    parsed: ParsedPath,
   ): Promise<void> {
+    const { token, endpoint, hash, firmware, targetId } = parsed;
     const record = this.repository.findByToken(token).extract();
     if (!record) {
       closeWithError(ws, "Invalid session token");
@@ -108,6 +105,14 @@ export class SecureChannelWebSocket {
         device.id,
         app.unsafeCoerce(),
       );
+    } else if (endpoint === "install" && firmware) {
+      // A firmware install hits the same `install` endpoint but carries
+      // `firmware`/`perso`/`firmwareKey` instead of an app `hash`. Arm the
+      // target `firmware_version`, applied once the final install block is
+      // acknowledged, so the device "reboots" onto the new firmware.
+      if (!(await this.armFirmwareOperation(ws, record, device, targetId))) {
+        return;
+      }
     }
 
     logger.info(`Secure channel [${endpoint}] opened for device ${device.id}`);
@@ -121,6 +126,41 @@ export class SecureChannelWebSocket {
     }
   }
 
+  /**
+   * Arm the clean target `firmware_version` the OSU install applies on commit,
+   * resolved from the Manager API like the real ScriptRunner backend. Returns
+   * `false` (after closing the socket) when the next version cannot be resolved,
+   * so the install fails fast instead of appearing to succeed while the device
+   * stays on its old version.
+   */
+  private async armFirmwareOperation(
+    ws: WebSocket,
+    record: SessionRecord,
+    device: Device,
+    targetId?: string,
+  ): Promise<boolean> {
+    const currentVersion = device.firmware_version ?? "";
+    const resolvedTargetId = targetId ?? device.masks?.[0]?.toString();
+    if (resolvedTargetId === undefined) {
+      closeWithError(ws, "Missing targetId for firmware update");
+      return false;
+    }
+    const next = await this.firmwareResolver.resolveNextVersion({
+      targetId: resolvedTargetId,
+      currentVersion,
+    });
+    if (next.isNothing()) {
+      closeWithError(ws, `No firmware update for ${currentVersion}`);
+      return false;
+    }
+    this.repository.setPendingFirmwareOperation(
+      record,
+      device.id,
+      next.unsafeCoerce(),
+    );
+    return true;
+  }
+
   /** Prefer the connected device; fall back to the first one in the session. */
   private pickDevice(record: SessionRecord): Device | undefined {
     const devices = this.repository.listDevices(record);
@@ -128,13 +168,24 @@ export class SecureChannelWebSocket {
   }
 }
 
+/** Parsed `/secure-channel/...` upgrade path. */
+interface ParsedPath {
+  token: string;
+  endpoint: SecureChannelEndpoint;
+  /** App install hash (`install` app flow). */
+  hash?: string;
+  /** Firmware binary id (`install` firmware flow). */
+  firmware?: string;
+  /** Device target id (`install` firmware flow). */
+  targetId?: string;
+}
+
 /**
- * Extract `{ token, endpoint, hash? }` from a `/secure-channel/...` upgrade
- * path. The install `hash` query param identifies which app is being installed.
+ * Extract the token, endpoint and install params from a `/secure-channel/...`
+ * upgrade path. The install `hash` query param identifies which app is being
+ * installed; a firmware install carries `firmware`/`targetId` instead.
  */
-function parsePath(
-  url: string,
-): { token: string; endpoint: SecureChannelEndpoint; hash?: string } | null {
+function parsePath(url: string): ParsedPath | null {
   const [pathname = "", query = ""] = url.split("?");
   if (!pathname.startsWith(PATH_PREFIX)) {
     return null;
@@ -151,8 +202,14 @@ function parsePath(
   if (!endpoint) {
     return null;
   }
-  const hash = new URLSearchParams(query).get("hash") ?? undefined;
-  return { token, endpoint, hash };
+  const params = new URLSearchParams(query);
+  return {
+    token,
+    endpoint,
+    hash: params.get("hash") ?? undefined,
+    firmware: params.get("firmware") ?? undefined,
+    targetId: params.get("targetId") ?? undefined,
+  };
 }
 
 /** Run the scripted message sequence, relaying `exchange` APDUs to the client. */

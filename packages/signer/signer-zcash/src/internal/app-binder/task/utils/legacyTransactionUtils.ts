@@ -20,7 +20,7 @@ export const OP_EQUALVERIFY = 0x88;
 export const OP_CHECKSIG = 0xac;
 
 const ZCASH_ACTIVATION_HEIGHTS = {
-  // https://z.cash/upgrade/nu6.2/
+  NU6_3: 3428143,
   NU6_2: 3364600,
   NU6_1: 3146400,
   NU6: 2726400,
@@ -324,9 +324,11 @@ export const getZcashBranchId = (
   if (
     blockHeight === null ||
     blockHeight === undefined ||
-    blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_2
+    blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_3
   ) {
     // NOTE: null and undefined should default to the latest version
+    return uint32ToBytesLE(0x37a5165b);
+  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_2) {
     return uint32ToBytesLE(0x5437f330);
   } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_1) {
     return uint32ToBytesLE(0x4dec4df0);

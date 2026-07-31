@@ -6,7 +6,7 @@
 // `HttpInstructionInfoDataSource` can hand the loaders a payload they can
 // dereference without runtime-throwing on a malformed descriptor.
 
-import { array, Codec, optional, record, string } from "purify-ts";
+import { array, Codec, number, optional, record, string } from "purify-ts";
 
 export type CalSignatures = {
   prod?: string;
@@ -53,27 +53,10 @@ export type CalTypePoolEntryDto = {
   enum_id?: string;
 };
 
-export type CalInstructionInfoDto = {
-  version: number;
-  program_id: string;
-  discriminator: string;
-  hash: string;
-  operation_type?: string;
-  program_name?: string;
-  descriptor: CalSignedDescriptorDto;
-  idl_descriptor?: {
-    type_pool?: CalTypePoolEntryDto[];
-    root_type?: number;
-  };
-  mint_association?: CalMintAssociationDto;
-  owner_association?: unknown;
-};
-
 export type CalEnumVariantDto = {
   variant_name: string;
   payload_kind?: string;
-  data: string;
-  signatures: CalSignatures;
+  descriptor: CalSignedDescriptorDto;
 };
 
 /** A substructure CAL serves only as opaque TLV (e.g. HIDE_RULE). */
@@ -82,10 +65,9 @@ export type CalSubstructureDto = {
 };
 
 export type CalValueFlowPortDto = CalSubstructureDto & {
-  account_indices?: number[];
-  account_index?: number;
+  account_indices: number[];
   optional_account_strategy?: string;
-  token_value?: CalTokenValueDto;
+  token_value: CalTokenValueDto;
 };
 
 export type CalAccountResetDto = CalSubstructureDto & {
@@ -99,11 +81,15 @@ export type CalDisplayFieldDto = CalSubstructureDto & {
 };
 
 export type CalInstructionDescriptorDto = {
-  type: string;
-  source?: string;
-  network?: string;
-  version?: string;
-  instruction_info: CalInstructionInfoDto;
+  discriminator_hex: string;
+  instruction_name?: string;
+  descriptor: CalSignedDescriptorDto;
+  idl_descriptor?: {
+    type_pool?: CalTypePoolEntryDto[];
+    root_type?: number;
+  };
+  mint_association?: CalMintAssociationDto;
+  owner_association?: unknown;
   enum_variants?: Record<string, Record<string, CalEnumVariantDto>>;
   display_fields?: CalDisplayFieldDto[];
   value_flow_ports?: CalValueFlowPortDto[];
@@ -111,14 +97,17 @@ export type CalInstructionDescriptorDto = {
   account_resets?: CalAccountResetDto[];
 };
 
-// Outer shape: array containing one envelope object keyed by program_id
-// then by discriminator hex.
-export type CalInstructionInfoResponseDto = Array<{
-  descriptors_instruction: Record<
-    string,
-    Record<string, CalInstructionDescriptorDto>
-  >;
-}>;
+// One program object of the `solana_programs` response: the program `id`, its
+// `chain_id`, and the flat `instructions` array (keyed downstream by
+// `discriminator_hex`).
+export type CalInstructionProgramDto = {
+  id: string;
+  chain_id: number;
+  instructions: CalInstructionDescriptorDto[];
+};
+
+// Outer shape: array of program objects (one per requested `id`).
+export type CalInstructionInfoResponseDto = CalInstructionProgramDto[];
 
 // --- Validation codecs (runtime). Validate only the fields the loaders read;
 // `Codec.interface` ignores unknown extras so CAL can add fields freely. ---
@@ -133,14 +122,8 @@ const calSignedDescriptorCodec = Codec.interface({
   signatures: calSignaturesCodec,
 });
 
-const calInstructionInfoCodec = Codec.interface({
-  program_id: string,
-  descriptor: calSignedDescriptorCodec,
-});
-
 const calEnumVariantCodec = Codec.interface({
-  data: string,
-  signatures: calSignaturesCodec,
+  descriptor: calSignedDescriptorCodec,
 });
 
 const calSubstructureCodec = Codec.interface({
@@ -148,7 +131,8 @@ const calSubstructureCodec = Codec.interface({
 });
 
 const calInstructionDescriptorCodec = Codec.interface({
-  instruction_info: calInstructionInfoCodec,
+  discriminator_hex: string,
+  descriptor: calSignedDescriptorCodec,
   enum_variants: optional(record(string, record(string, calEnumVariantCodec))),
   display_fields: optional(array(calSubstructureCodec)),
   value_flow_ports: optional(array(calSubstructureCodec)),
@@ -157,12 +141,13 @@ const calInstructionDescriptorCodec = Codec.interface({
 });
 
 /**
- * Codec for the per-program descriptor map (keyed by discriminator hex).
- * Used by the datasource to validate the inner CAL payload before handing
- * it to the loaders. Only loader-consumed fields are validated; unrelated
- * CAL fields (`idl_descriptor`, `mint_association`, …) are ignored.
+ * Codec for one program object of the `solana_programs` response. Used by the
+ * datasource to validate the CAL payload before handing it to the loaders.
+ * Only loader-consumed fields are validated; unrelated CAL fields
+ * (`idl_descriptor`, `mint_association`, …) are ignored.
  */
-export const calInstructionDescriptorsCodec = record(
-  string,
-  calInstructionDescriptorCodec,
-);
+export const calInstructionProgramCodec = Codec.interface({
+  id: string,
+  chain_id: number,
+  instructions: array(calInstructionDescriptorCodec),
+});

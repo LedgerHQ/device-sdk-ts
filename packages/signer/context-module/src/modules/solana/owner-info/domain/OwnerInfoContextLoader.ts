@@ -15,7 +15,7 @@ import {
 } from "@/shared/model/ClearSignContext";
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
-  ClearSignContextType.SOLANA_TRUSTED_NAME,
+  ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
 ];
 
 @injectable()
@@ -87,7 +87,7 @@ export class OwnerInfoContextLoader
         if (tlvDescriptor !== undefined) {
           return [
             {
-              type: ClearSignContextType.SOLANA_TRUSTED_NAME,
+              type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
               payload: tlvDescriptor,
               certificate: trustedNamePKICertificate,
             },

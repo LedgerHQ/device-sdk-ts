@@ -133,9 +133,22 @@ export class SignPcztTransactionTask {
       }
     }
 
-    // 2. Collect one spendAuthSig per Orchard action.
+    // 2. Collect one spendAuthSig per Orchard action the device must sign.
+    //    Only real spends are signed on-device. Dummy padding spends
+    //    (`spendValue === 0n`) are self-signed host-side by the PCZT
+    //    IoFinalizer at build time, so the
+    //    finalizer leaves only real spends unsigned and expects exactly one
+    //    device signature per unsigned action, applied in action-index order
+    //    (zcash-utils finalize.rs). Signing a dummy here would make the device
+    //    signature count exceed the unsigned-action count and be rejected
+    //    ("Orchard signature count N != unsigned action count M"). Skipping by
+    //    index preserves that ordering: the full bundle is still streamed above,
+    //    only the signing requests are restricted to real spends.
     const orchard: OrchardActionSignature[] = [];
     for (let i = 0; i < bundle.actions.length; i += 1) {
+      if (bundle.actions[i]!.spendValue === 0n) {
+        continue;
+      }
       const result = await this.api.sendCommand(
         new SignPcztOrchardCommand({ actionIndex: i }),
       );

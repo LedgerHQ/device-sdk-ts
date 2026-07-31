@@ -52,10 +52,12 @@ describe("OwnerInfoContextLoader", () => {
     );
 
   describe("canHandle", () => {
-    it("returns true when SOLANA_TRUSTED_NAME is in expectedTypes and tokenAddress is present", () => {
+    it("returns true when SOLANA_BASIC_TRUSTED_NAME is in expectedTypes and tokenAddress is present", () => {
       const loader = makeLoader();
       expect(
-        loader.canHandle(baseCtx, [ClearSignContextType.SOLANA_TRUSTED_NAME]),
+        loader.canHandle(baseCtx, [
+          ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
+        ]),
       ).toBe(true);
     });
 
@@ -66,11 +68,11 @@ describe("OwnerInfoContextLoader", () => {
         createATA: { address: "addr", mintAddress: "mint" },
       };
       expect(
-        loader.canHandle(ctx, [ClearSignContextType.SOLANA_TRUSTED_NAME]),
+        loader.canHandle(ctx, [ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME]),
       ).toBe(true);
     });
 
-    it("returns false when SOLANA_TRUSTED_NAME is not in expectedTypes", () => {
+    it("returns false when SOLANA_BASIC_TRUSTED_NAME is not in expectedTypes", () => {
       const loader = makeLoader();
       expect(
         loader.canHandle(baseCtx, [ClearSignContextType.SOLANA_TOKEN]),
@@ -83,23 +85,27 @@ describe("OwnerInfoContextLoader", () => {
         deviceModelId: DeviceModelId.FLEX,
       };
       expect(
-        loader.canHandle(ctx, [ClearSignContextType.SOLANA_TRUSTED_NAME]),
+        loader.canHandle(ctx, [ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME]),
       ).toBe(false);
     });
 
     it("returns false for non-object inputs", () => {
       const loader = makeLoader();
       expect(
-        loader.canHandle(null, [ClearSignContextType.SOLANA_TRUSTED_NAME]),
+        loader.canHandle(null, [
+          ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
+        ]),
       ).toBe(false);
       expect(
-        loader.canHandle("string", [ClearSignContextType.SOLANA_TRUSTED_NAME]),
+        loader.canHandle("string", [
+          ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
+        ]),
       ).toBe(false);
     });
   });
 
   describe("load", () => {
-    it("returns SOLANA_TRUSTED_NAME context with cert when datasource returns Right with tlvDescriptor", async () => {
+    it("returns SOLANA_BASIC_TRUSTED_NAME context with cert when datasource returns Right with tlvDescriptor", async () => {
       const loader = makeLoader();
       const tlvDescriptor = new Uint8Array([0x01, 0x02, 0x03]);
 
@@ -119,7 +125,7 @@ describe("OwnerInfoContextLoader", () => {
 
       expect(result).toEqual([
         {
-          type: ClearSignContextType.SOLANA_TRUSTED_NAME,
+          type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
           payload: tlvDescriptor,
           certificate: mockCert,
         },

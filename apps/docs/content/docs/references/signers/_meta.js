@@ -1,0 +1,12 @@
+export default {
+  eth: "Signer Ethereum (EVM)",
+  solana: "Signer Solana",
+  btc: "Signer Bitcoin",
+  hyperliquid: "Signer Hyperliquid",
+  cosmos: "Signer Cosmos",
+  aleo: "Signer Aleo",
+  concordium: "Signer Concordium",
+  zcash: "Signer Zcash",
+  polkadot: "Signer Polkadot",
+  icp: "Signer Internet Computer",
+};

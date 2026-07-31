@@ -223,10 +223,33 @@ export const openapiDefinition: OAS3Definition = {
         },
         required: ["status", "sessions"],
       },
+      SeedUpdate: {
+        type: "object",
+        description:
+          "BIP39 mnemonic for the session's Speculos emulator. " +
+          "⚠️ Not secure — stored and transmitted in plaintext. " +
+          "Use only test/dummy mnemonics, never real production keys.",
+        properties: {
+          seed: {
+            type: "string",
+            example:
+              "glory promote mansion idle axis finger extend february uncover one trip resolve toe",
+          },
+        },
+        required: ["seed"],
+      },
     },
     responses: {
       Unauthorized: {
         description: "Missing, invalid or expired bearer token.",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/Error" },
+          },
+        },
+      },
+      BadRequest: {
+        description: "Request body is malformed or failed validation.",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/Error" },

@@ -55,15 +55,14 @@
     "danger:local:fork": "pnpm danger local --dangerfile danger/dangerfile-local-fork.ts --base origin/develop",
     "danger:ci": "pnpm danger ci --dangerfile danger/dangerfile-ci.ts",
     "cli": "pnpm --filter @ledgerhq/ldmk-cli",
-    "tool": "pnpm ldmk-tool",
+    "tool": "node ./packages/tools/ldmk-tool/cli.cjs",
+    "ldmk-tool": "node ./packages/tools/ldmk-tool/cli.cjs",
     "signer-zcash": "pnpm --filter @ledgerhq/device-signer-kit-zcash"
   },
   "devDependencies": {
     "@changesets/changelog-github": "catalog:",
     "@changesets/cli": "catalog:",
     "@changesets/parse": "catalog:",
-    "@ledgerhq/ldmk-cli": "workspace:^",
-    "@ledgerhq/ldmk-tool": "workspace:^",
     "@types/node": "catalog:",
     "@vitest/coverage-istanbul": "catalog:",
     "concurrently": "catalog:",
@@ -86,5 +85,10 @@
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "pnpm@10.34.4"
+  "packageManager": "pnpm@10.34.4",
+  "pnpm": {
+    "overrides": {
+      "zod@>=4.4.0": "4.3.6"
+    }
+  }
 }

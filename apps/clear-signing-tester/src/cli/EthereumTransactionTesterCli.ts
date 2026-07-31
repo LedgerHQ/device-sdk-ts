@@ -106,7 +106,7 @@ export class EthereumTransactionTesterCli {
         blindSigningEnabled: config.blindSigningEnabled ?? false,
       },
       cal: {
-        url: "https://crypto-assets-service.api.ledger.com/v1",
+        url: "https://global.api.prd.ledger.com/cal/v1",
         mode: calMode,
         branch: "main",
       },

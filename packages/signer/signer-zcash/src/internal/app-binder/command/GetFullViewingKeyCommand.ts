@@ -33,11 +33,23 @@ export type ZcashFvkP2 = (typeof P2_VK)[keyof typeof P2_VK];
 
 export type GetFullViewingKeyCommandArgs =
   | {
-      /** First GET_VK exchange: P1=FIRST and path in APDU data. */
+      /** First GET_VK exchange: P1=FIRST, orchard + transparent paths in APDU data. */
       readonly isContinue: false;
       readonly derivationPath: string;
-      /** See app `P2VkMode` (UFVK string vs raw Orchard FVK bytes). */
-      readonly p2: ZcashFvkP2;
+      /**
+       * Transparent account path (44'/coin'/account') serialized after the
+       * orchard path. Mandatory for UFVK export (app-zcash >= v3.8.0): omitting
+       * it produces the pre-v3.8.0 APDU that newer firmware rejects.
+       */
+      readonly transparentDerivationPath: string;
+      readonly p2: typeof P2_VK.UFVK;
+    }
+  | {
+      /** First GET_VK exchange: P1=FIRST and orchard path in APDU data. */
+      readonly isContinue: false;
+      readonly derivationPath: string;
+      /** See app `P2VkMode` (raw Orchard FVK bytes). */
+      readonly p2: typeof P2_VK.ORCHARD_FVK;
     }
   | {
       /** Subsequent chunk(s): P1=NEXT and empty APDU data. */
@@ -90,6 +102,25 @@ export class GetFullViewingKeyCommand
       path.forEach((element) => {
         builder.add32BitUIntToData(element);
       });
+
+      // app-zcash >= v3.8.0 requires UFVK export to carry a second prefixed
+      // path for the transparent account key (44'/133'/<account>'). Guard at
+      // runtime so a JS caller cannot silently emit the old, firmware-rejected
+      // APDU by passing an empty/undefined transparent path.
+      if (this.args.p2 === P2_VK.UFVK) {
+        if (!this.args.transparentDerivationPath) {
+          throw new Error(
+            "GetFullViewingKeyCommand: UFVK export requires a transparent derivation path (app-zcash >= v3.8.0)",
+          );
+        }
+        const transparentPath = DerivationPathUtils.splitPath(
+          this.args.transparentDerivationPath,
+        );
+        builder.add8BitUIntToData(transparentPath.length);
+        transparentPath.forEach((element) => {
+          builder.add32BitUIntToData(element);
+        });
+      }
     }
 
     return builder.build();

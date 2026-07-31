@@ -57,6 +57,10 @@ export type SolanaPayloadOverrides = {
     payload: Uint8Array;
     certificate?: PkiCertificate;
   };
+  [ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME]: {
+    payload: Uint8Array;
+    certificate?: PkiCertificate;
+  };
   [ClearSignContextType.SOLANA_TRANSACTION_CHECK]: {
     payload: SolanaTransactionCheckPayload;
     certificate?: PkiCertificate;
@@ -87,6 +91,7 @@ export const SolanaContextType = {
   TOKEN: ClearSignContextType.SOLANA_TOKEN,
   LIFI: ClearSignContextType.SOLANA_LIFI,
   TRUSTED_NAME: ClearSignContextType.SOLANA_TRUSTED_NAME,
+  BASIC_TRUSTED_NAME: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
   TRANSACTION_CHECK: ClearSignContextType.SOLANA_TRANSACTION_CHECK,
   INSTRUCTION_INFO: ClearSignContextType.SOLANA_INSTRUCTION_INFO,
   ENUM_VARIANT: ClearSignContextType.SOLANA_ENUM_VARIANT,

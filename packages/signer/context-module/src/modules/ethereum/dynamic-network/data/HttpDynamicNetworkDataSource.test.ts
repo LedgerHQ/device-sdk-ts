@@ -11,7 +11,7 @@ describe("HttpNetworkDataSource", () => {
   let httpMock: { get: ReturnType<typeof vi.fn> };
   const mockConfig: ContextModuleServiceConfig = {
     cal: {
-      url: "https://crypto-assets-service.api.ledger.com",
+      url: "https://global.api.prd.ledger.com/cal/v1",
       mode: "prod",
       branch: "main",
     },

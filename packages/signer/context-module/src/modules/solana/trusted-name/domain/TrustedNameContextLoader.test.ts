@@ -4,6 +4,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { SolanaTransactionScanChainId } from "@/modules/solana/model/SolanaTransactionScanChainId";
 import { type SolanaTrustedNameDataSource } from "@/modules/solana/trusted-name/data/TrustedNameDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
@@ -52,7 +53,7 @@ describe("SolanaTrustedNameContextLoader", () => {
               {
                 address: ADDR_A,
                 challenge: "c",
-                types: ["eoa"],
+                types: ["token", "smart_contract"],
                 sources: ["sns"],
               },
             ],
@@ -70,7 +71,7 @@ describe("SolanaTrustedNameContextLoader", () => {
               {
                 address: ADDR_A,
                 challenge: "c",
-                types: ["eoa"],
+                types: ["token", "smart_contract"],
                 sources: ["sns"],
               },
             ],
@@ -123,13 +124,13 @@ describe("SolanaTrustedNameContextLoader", () => {
           {
             address: ADDR_A,
             challenge: "c1",
-            types: ["eoa"],
+            types: ["token", "smart_contract"],
             sources: ["sns"],
           },
           {
             address: ADDR_B,
             challenge: "c2",
-            types: ["program"],
+            types: ["token", "smart_contract"],
             sources: ["cal"],
           },
         ],
@@ -174,7 +175,7 @@ describe("SolanaTrustedNameContextLoader", () => {
       expect(out[1]?.type).toBe(ClearSignContextType.ERROR);
     });
 
-    it("forwards default network=mainnet when input.network is omitted", async () => {
+    it("forwards default chain id 900 when input.network is omitted", async () => {
       const spy = vi.spyOn(dataSource, "getTrustedName").mockResolvedValue(
         Right({
           address: ADDR_A,
@@ -190,7 +191,30 @@ describe("SolanaTrustedNameContextLoader", () => {
       });
 
       expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({ network: "mainnet" }),
+        expect.objectContaining({
+          network: String(SolanaTransactionScanChainId.MAINNET),
+        }),
+      );
+    });
+
+    it("maps a cluster name to its numeric chain id", async () => {
+      const spy = vi.spyOn(dataSource, "getTrustedName").mockResolvedValue(
+        Right({
+          address: ADDR_A,
+          descriptor: new Uint8Array([1]),
+          keyId: "k",
+          keyUsage: "u",
+        }),
+      );
+
+      await makeLoader().load({
+        deviceModelId: DeviceModelId.NANO_X,
+        network: "solana-devnet",
+        requests: [{ address: ADDR_A, challenge: "c", types: [], sources: [] }],
+      });
+
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({ network: "901" }),
       );
     });
   });

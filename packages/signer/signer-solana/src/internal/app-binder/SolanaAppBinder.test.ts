@@ -164,7 +164,10 @@ describe("SolanaAppBinder", () => {
             sessionId: "sessionId",
             deviceAction: expect.objectContaining({
               input: {
-                command: new GetPubKeyCommand(params),
+                command: new GetPubKeyCommand({
+                  derivationPath: params.derivationPath,
+                  checkOnDevice,
+                }),
                 appName: APP_NAME,
                 requiredUserInteraction: UserInteractionRequired.VerifyAddress,
                 skipOpenApp: false,
@@ -199,7 +202,10 @@ describe("SolanaAppBinder", () => {
             sessionId: "sessionId",
             deviceAction: expect.objectContaining({
               input: {
-                command: new GetPubKeyCommand(params),
+                command: new GetPubKeyCommand({
+                  derivationPath: params.derivationPath,
+                  checkOnDevice,
+                }),
                 appName: APP_NAME,
                 requiredUserInteraction: UserInteractionRequired.None,
                 skipOpenApp: false,

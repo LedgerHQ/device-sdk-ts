@@ -10,17 +10,17 @@ const DEVICE_LEGACY_PAYLOAD_CEILING = 1280;
 const RESERVED_HEADER_BYTES = 40;
 const RESERVED_TRANSPORT_BYTES = 8;
 
-const OFFCHAINMSG_MAX_LEN =
+// The device buffers the whole off-chain message (header + body) into a single
+// payload; this matches app-solana's MAX_OFFCHAIN_MESSAGE_LENGTH
+// (= PACKET_DATA_SIZE = (15 * 1024) - 40 - 8 = 15312) and is the real ceiling
+// for every off-chain message version, regardless of wire layout.
+export const OFFCHAINMSG_MAX_LEN =
   DEVICE_V0_PAYLOAD_CEILING - RESERVED_HEADER_BYTES - RESERVED_TRANSPORT_BYTES;
 
 export const LEGACY_OFFCHAINMSG_MAX_LEN =
   DEVICE_LEGACY_PAYLOAD_CEILING -
   RESERVED_HEADER_BYTES -
   RESERVED_TRANSPORT_BYTES; // 1232
-
-export const OFFCHAINMSG_MAX_V0_LEN = 65515;
-
-export const OFFCHAINMSG_MAX_V1_LEN = 65535; // 2-byte LE uint16 max
 
 const ED25519_SIGNATURE_LEN = 64;
 const APP_DOMAIN_LEN = 32;
@@ -33,7 +33,6 @@ const LINE_FEED_ASCII = 0x0a;
 export enum MessageFormat {
   Ascii = 0,
   Utf8 = 1,
-  Utf8LongV0 = 2,
 }
 
 export class OffchainMessageBuilder {
@@ -44,7 +43,7 @@ export class OffchainMessageBuilder {
    *   signing domain  (16 B): 0xFF + "solana offchain"
    *   version         ( 1 B): 0x00
    *   application domain (32 B): UTF-8, padded/truncated to 32 bytes
-   *   format          ( 1 B): 0 = ASCII, 1 = UTF-8, 2 = UTF-8 long
+   *   format          ( 1 B): 0 = ASCII, 1 = UTF-8
    *   signer count    ( 1 B): 1
    *   signer          (32 B)
    *   message length  ( 2 B): little-endian uint16
@@ -95,15 +94,24 @@ export class OffchainMessageBuilder {
   }
 
   /**
-   * V1 wire format (per app-solana parser):
+   * V1 wire format (sRFC 38, per app-solana parser):
    *   signing domain  (16 B): 0xFF + "solana offchain"
    *   version         ( 1 B): 0x01
    *   signer count    ( 1 B)
    *   signers         (N * 32 B): lexicographically sorted, deduplicated
-   *   message length  ( 2 B): little-endian uint16
+   *   [message length ( 2 B): little-endian uint16] — only when includeLengthPrefix
    *   message body    (variable)
+   *
+   * The finalised sRFC 38 layout drops the length prefix: the message body is
+   * the trailing bytes. `includeLengthPrefix` reproduces the pre-spec-update
+   * layout for backward compatibility with older firmware, the task tries the
+   * no-prefix form first and falls back to the prefixed form on a 6a81 reject.
    */
-  buildV1(messageBody: Uint8Array, signers: Uint8Array[]): Uint8Array {
+  buildV1(
+    messageBody: Uint8Array,
+    signers: Uint8Array[],
+    includeLengthPrefix = false,
+  ): Uint8Array {
     const sorted = this.sortAndDedupeSigners(signers);
     const builder = new ByteArrayBuilder();
 
@@ -115,7 +123,9 @@ export class OffchainMessageBuilder {
       builder.addBufferToData(signer);
     }
 
-    this._writeLeU16(builder, messageBody.length);
+    if (includeLengthPrefix) {
+      this._writeLeU16(builder, messageBody.length);
+    }
     builder.addBufferToData(messageBody);
 
     return builder.build();
@@ -174,16 +184,13 @@ export class OffchainMessageBuilder {
       ? LEGACY_OFFCHAINMSG_MAX_LEN
       : OFFCHAINMSG_MAX_LEN;
 
-    if (message.length <= maxLedgerLen) {
-      if (this._isPrintableASCII(message, isLegacy)) return MessageFormat.Ascii;
-      if (this._isUTF8(message)) return MessageFormat.Utf8;
-    } else if (message.length <= OFFCHAINMSG_MAX_V0_LEN) {
-      if (this._isUTF8(message)) return MessageFormat.Utf8LongV0;
-    } else {
+    if (message.length > maxLedgerLen) {
       throw new OffchainMessageBuildError(
-        `Message too long: ${message.length} bytes (max is ${OFFCHAINMSG_MAX_V0_LEN})`,
+        `Message too long: ${message.length} bytes (max is ${maxLedgerLen})`,
       );
     }
+    if (this._isPrintableASCII(message, isLegacy)) return MessageFormat.Ascii;
+    if (this._isUTF8(message)) return MessageFormat.Utf8;
     throw new OffchainMessageBuildError(
       "Message is not valid printable ASCII or UTF-8",
     );

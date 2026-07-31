@@ -52,6 +52,45 @@ export {
 } from "./api/device-action/customLockScreenDeviceActionErrors";
 
 // Device Actions
+export {
+  BackupAppStorageCommand,
+  type BackupAppStorageCommandErrorCodes,
+  type BackupAppStorageCommandResponse,
+  type BackupAppStorageCommandResult,
+} from "./api/command/OsUpdate/Backup/BackupAppStorageCommand";
+export {
+  GetAppStorageInfoCommand,
+  type GetAppStorageInfoCommandArgs,
+  type GetAppStorageInfoCommandErrorCodes,
+  type GetAppStorageInfoCommandResponse,
+  type GetAppStorageInfoCommandResult,
+} from "./api/command/OsUpdate/Backup/GetAppStorageInfoCommand";
+export {
+  CommitRestoreAppStorageCommand,
+  CommitRestoreAppStorageCommandError,
+  type CommitRestoreAppStorageCommandErrorCodes,
+  type CommitRestoreAppStorageCommandResult,
+} from "./api/command/OsUpdate/Restore/CommitRestoreAppStorageCommand";
+export {
+  InitRestoreAppStorageCommand,
+  type InitRestoreAppStorageCommandArgs,
+  InitRestoreAppStorageCommandError,
+  type InitRestoreAppStorageCommandErrorCodes,
+  type InitRestoreAppStorageCommandResult,
+} from "./api/command/OsUpdate/Restore/InitRestoreAppStorageCommand";
+export {
+  RequestMasterConsentCommand,
+  type RequestMasterConsentCommandArgs,
+  type RequestMasterConsentCommandErrorCodes,
+  type RequestMasterConsentCommandResult,
+} from "./api/command/OsUpdate/Restore/RequestMasterConsentCommand";
+export {
+  RestoreAppStorageCommand,
+  type RestoreAppStorageCommandArgs,
+  RestoreAppStorageCommandError,
+  type RestoreAppStorageCommandErrorCodes,
+  type RestoreAppStorageCommandResult,
+} from "./api/command/OsUpdate/Restore/RestoreAppStorageCommand";
 export { DownloadCustomLockScreenDeviceAction } from "./api/device-action/DownloadCustomLockScreen/DownloadCustomLockScreenDeviceAction";
 export type {
   DownloadCustomLockScreenDAError,
@@ -80,6 +119,37 @@ export type {
   CreateBackupDAState,
   CreateBackupSteps,
 } from "./api/device-action/OsUpdate/Backup/types";
+export { CleanDeviceDeviceAction } from "./api/device-action/OsUpdate/CleanDevice/CleanDeviceDeviceAction";
+export type {
+  CleanDeviceDAError,
+  CleanDeviceDAInput,
+  CleanDeviceDAIntermediateValue,
+  CleanDeviceDAOutput,
+  CleanDeviceDARequiredInteraction,
+  CleanDeviceDAState,
+} from "./api/device-action/OsUpdate/CleanDevice/types";
+export { RestoreAppsStorageDeviceAction } from "./api/device-action/OsUpdate/Restore/RestoreAppsStorage/RestoreAppsStorageDeviceAction";
+export type {
+  RestoreAppsStorageDAError,
+  RestoreAppsStorageDAInput,
+  RestoreAppsStorageDAIntermediateValue,
+  RestoreAppsStorageDAOutput,
+  RestoreAppsStorageDARequiredInteraction,
+  RestoreAppsStorageDAState,
+  RestoreAppsStorageSteps,
+  RestoreAppStorageResult,
+} from "./api/device-action/OsUpdate/Restore/RestoreAppsStorage/types";
+export { RestoreBackupDeviceAction } from "./api/device-action/OsUpdate/Restore/RestoreBackup/RestoreBackupDeviceAction";
+export type {
+  RestoreAppResult,
+  RestoreBackupDAError,
+  RestoreBackupDAInput,
+  RestoreBackupDAIntermediateValue,
+  RestoreBackupDAOutput,
+  RestoreBackupDARequiredInteraction,
+  RestoreBackupDAState,
+  RestoreBackupSteps,
+} from "./api/device-action/OsUpdate/Restore/RestoreBackup/types";
 export { RemoveCustomLockScreenDeviceAction } from "./api/device-action/RemoveCustomLockScreen/RemoveCustomLockScreenDeviceAction";
 export type {
   RemoveCustomLockScreenDAError,
@@ -98,3 +168,9 @@ export type {
   UploadCustomLockScreenDAState,
 } from "./api/device-action/UploadCustomLockScreen/types";
 export { UploadCustomLockScreenDeviceAction } from "./api/device-action/UploadCustomLockScreen/UploadCustomLockScreenDeviceAction";
+export { BackupAppStorageTask } from "./api/task/OsUpdate/Backup/BackupAppStorageTask";
+export {
+  RestoreAppStorageTask,
+  type RestoreAppStorageTaskArgs,
+  type RestoreAppStorageTaskError,
+} from "./api/task/OsUpdate/Restore/RestoreAppStorageTask";

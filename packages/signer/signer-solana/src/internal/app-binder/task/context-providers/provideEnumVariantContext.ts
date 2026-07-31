@@ -9,10 +9,7 @@ import {
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
 import { ProvideEnumVariantCommand } from "@internal/app-binder/command/ProvideEnumVariantCommand";
-import {
-  appendSignatureTlv,
-  frameClearSignPayload,
-} from "@internal/app-binder/command/utils/apduChunking";
+import { appendSignatureTlv } from "@internal/app-binder/command/utils/apduChunking";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import { loadCertificate } from "./loadCertificate";
@@ -59,7 +56,7 @@ export const provideEnumVariantContext: ProvideContextHandler<
   const res = await new SendCommandInChunksTask<void, SolanaAppErrorCodes>(
     api,
     {
-      data: frameClearSignPayload(appendSignatureTlv(tlv, signature)),
+      data: appendSignatureTlv(tlv, signature),
       commandFactory: (args) =>
         new ProvideEnumVariantCommand({
           payload: args.chunkedData,

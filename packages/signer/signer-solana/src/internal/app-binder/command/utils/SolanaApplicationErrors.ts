@@ -33,9 +33,11 @@ export const SOLANA_APP_ERRORS: CommandErrors<SolanaAppErrorCodes> = {
   "6f13": { message: "Delayed signing derivation mismatch" },
 };
 
+export const SOLANA_APP_COMMAND_ERROR_TAG = "SolanaAppCommandError";
+
 export class SolanaAppCommandError extends DeviceExchangeError<SolanaAppErrorCodes> {
   constructor(args: CommandErrorArgs<SolanaAppErrorCodes>) {
-    super({ tag: "SolanaAppCommandError", ...args });
+    super({ tag: SOLANA_APP_COMMAND_ERROR_TAG, ...args });
   }
 }
 

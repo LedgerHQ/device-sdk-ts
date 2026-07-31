@@ -56,7 +56,7 @@ export function valueFlowPort(opts: {
       opts.accountIndices ??
       (opts.accountIndex !== undefined ? [opts.accountIndex] : []),
     optional_account_strategy: opts.optionalAccountStrategy,
-    token_value: opts.tokenValue,
+    token_value: opts.tokenValue ?? tokenValue("NATIVE"),
   };
 }
 

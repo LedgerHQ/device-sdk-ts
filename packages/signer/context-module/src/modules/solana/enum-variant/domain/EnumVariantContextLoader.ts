@@ -122,8 +122,8 @@ export class EnumVariantContextLoader
     // Cert load and CAL fetches are independent — run them in parallel. A
     // PKI failure still degrades each selection to ERROR.
     const certPromise = loadCertificateResult(this.certificateLoader, {
-      keyId: KeyId.TokenMetadataKey,
-      keyUsage: KeyUsage.CoinMeta,
+      keyId: KeyId.CalCalldataKey,
+      keyUsage: KeyUsage.Calldata,
       targetDevice: input.deviceModelId,
     });
 

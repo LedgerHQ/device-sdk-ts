@@ -1,5 +1,4 @@
 import {
-  BackupAppStorageTask,
   type InstalledApp,
   type InternalApi,
   isSuccessCommandResult,
@@ -9,6 +8,7 @@ import { type Either, Left, Right } from "purify-ts";
 
 import { BackupAppsStorageError } from "@api/device-action/OsUpdate/Backup/CreateBackupDeviceActionErrors";
 import { type BackupApp } from "@api/device-action/OsUpdate/Backup/types";
+import { BackupAppStorageTask } from "@api/task/OsUpdate/Backup/BackupAppStorageTask";
 
 const EMPTY_STORAGE = "0x";
 

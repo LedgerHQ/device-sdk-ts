@@ -16,6 +16,7 @@ coverage
 
 # node
 node_modules
+.pnpm-store
 
 # IDE
 .idea

@@ -47,18 +47,32 @@ export const provideLifiContext: ProvideContextHandler<
     },
   );
 
+  // Mutable copy of descriptor queues — consumed as instructions are matched.
+  const queues: SolanaTransactionDescriptorList = Object.fromEntries(
+    Object.entries(lifiDescriptors).map(([k, v]) => [k, [...v]]),
+  );
+
+  // Per-key meta queues mirror the CAL template instruction sequence. Consumed
+  // FIFO so that `has_basis_point` from the template entry guides which
+  // descriptor variant to pick for each instruction occurrence (e.g.
+  // normal-transfer vs fee-transfer for System Program discriminator 02).
+  const metaQueues: Record<string, SolanaLifiInstructionMeta[]> = {};
+  for (const meta of instructionsMeta) {
+    const key = `${meta.program_id}:${meta.discriminator_hex ?? ""}`;
+    (metaQueues[key] ??= []).push(meta);
+  }
+
   for (const [index, instruction] of message.compiledInstructions.entries()) {
     const programId = message.allKeys[instruction.programIdIndex];
     const programIdStr = programId?.toBase58();
 
-    const descriptor = findMatchingDescriptor(
+    const descriptor = popMatchingDescriptor(
       programIdStr,
       instruction.data,
-      instructionsMeta,
-      lifiDescriptors,
+      metaQueues,
+      queues,
       logger,
     );
-    const sigHex = descriptor?.signature;
 
     logger.debug(
       `[provideLifiContext] Instruction ${index}: ${descriptor ? "matched" : "no match"}`,
@@ -67,72 +81,101 @@ export const provideLifiContext: ProvideContextHandler<
           index,
           programId: programIdStr,
           hasDescriptor: !!descriptor,
-          hasSignature: !!sigHex,
-          signatureHex: sigHex ?? null,
+          hasSignature: !!descriptor?.signature,
         },
       },
     );
 
-    if (descriptor && sigHex) {
+    if (descriptor?.signature) {
       await api.sendCommand(
         new ProvideInstructionDescriptorCommand({
           dataHex: descriptor.data,
-          signatureHex: sigHex,
+          signatureHex: descriptor.signature,
         }),
       );
     }
   }
 };
 
-function findMatchingDescriptor(
+// For each compiled instruction, finds the right descriptor by:
+// 1. Matching program_id (via key prefix) and discriminator bytes.
+// 2. When only one descriptor remains for that key, reusing it in-place so
+//    repeated instructions of the same type (e.g. multiple SPL transfers) each
+//    get a match without exhausting the queue.
+// 3. When multiple descriptors remain, advancing the per-key meta queue (FIFO)
+//    to obtain the template-declared `has_basis_point` for this instruction
+//    occurrence, then selecting the descriptor whose `has_basis_point` matches.
+//    This correctly routes normal-transfer vs fee-transfer entries even when the
+//    CAL `descriptors` array order differs from the `instructions` order.
+// 4. Falling back to FIFO position when `has_basis_point` is absent (e.g. in
+//    tests or older CAL responses that predate the has_basis_point field).
+function popMatchingDescriptor(
   programIdStr: string | undefined,
   instructionData: Uint8Array,
-  instructionsMeta: SolanaLifiInstructionMeta[],
-  descriptors: SolanaTransactionDescriptorList,
+  metaQueues: Record<string, SolanaLifiInstructionMeta[]>,
+  queues: SolanaTransactionDescriptorList,
   logger: LoggerPublisherService,
 ): SolanaTransactionDescriptor | undefined {
   if (!programIdStr) return undefined;
 
-  const candidates = instructionsMeta.filter(
-    (meta) => meta.program_id === programIdStr,
-  );
+  const prefix = `${programIdStr}:`;
 
-  if (candidates.length === 0) {
-    logger.debug(
-      "[findMatchingDescriptor] No instruction metadata found for program",
-      { data: { programId: programIdStr } },
-    );
-    return undefined;
-  }
+  for (const [key, descQueue] of Object.entries(queues)) {
+    if (!key.startsWith(prefix)) continue;
 
-  for (const candidate of candidates) {
-    const discriminatorHex = candidate.discriminator_hex ?? "";
+    const discriminatorHex = key.slice(prefix.length);
+    if (!matchesDiscriminator(instructionData, discriminatorHex)) continue;
+    if (!descQueue.length) continue;
 
-    if (matchesDiscriminator(instructionData, discriminatorHex)) {
-      const key = `${programIdStr}:${discriminatorHex}`;
-      const descriptor = descriptors[key];
-
-      logger.debug("[findMatchingDescriptor] Discriminator matched", {
-        data: {
-          programId: programIdStr,
-          discriminatorHex,
-          key,
-          found: !!descriptor,
-        },
+    // Single descriptor: reuse for repeated same-type instructions.
+    if (descQueue.length === 1) {
+      logger.debug("[popMatchingDescriptor] Single descriptor, reusing", {
+        data: { key },
       });
-
-      if (descriptor) return descriptor;
+      return descQueue[0]!;
     }
+
+    // Multiple descriptors: advance meta queue and select by has_basis_point.
+    const metaQueue = metaQueues[key];
+    const meta =
+      metaQueue && metaQueue.length > 0
+        ? metaQueue.length > 1
+          ? metaQueue.shift()!
+          : metaQueue[0]!
+        : undefined;
+
+    if (meta?.has_basis_point !== undefined) {
+      const matchIndex = descQueue.findIndex(
+        (d) => d.has_basis_point === meta.has_basis_point,
+      );
+      if (matchIndex !== -1) {
+        const matched =
+          matchIndex === 0
+            ? descQueue.shift()!
+            : descQueue.splice(matchIndex, 1)[0]!;
+        logger.debug(
+          "[popMatchingDescriptor] Matched descriptor by has_basis_point",
+          { data: { key, has_basis_point: meta.has_basis_point } },
+        );
+        return matched;
+      }
+    }
+
+    // Fallback: FIFO by position (no has_basis_point available).
+    const descriptor =
+      descQueue.length > 1 ? descQueue.shift()! : descQueue[0]!;
+    logger.debug("[popMatchingDescriptor] FIFO fallback selection", {
+      data: { key, remaining: descQueue.length },
+    });
+    return descriptor;
   }
 
-  logger.debug("[findMatchingDescriptor] No matching discriminator found", {
+  logger.debug("[popMatchingDescriptor] No matching descriptor found", {
     data: {
       programId: programIdStr,
       instructionDataLength: instructionData.length,
-      candidateDiscriminators: candidates.map((c) => c.discriminator_hex ?? ""),
     },
   });
-
   return undefined;
 }
 

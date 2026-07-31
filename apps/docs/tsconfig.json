@@ -11,11 +11,10 @@
   },
   "include": [
     "next-env.d.ts",
+    ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx",
-    "**/*.js",
-    "pages/_app.js",
-    "tailwind.config.js"
+    "**/*.js"
   ],
   "exclude": ["node_modules"]
 }

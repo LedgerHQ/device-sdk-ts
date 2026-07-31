@@ -30,6 +30,14 @@ export enum OptionalAccountStrategy {
 /** `DISPLAY_FIELD.PARAM_TYPE` value for an address resolved via trusted name. */
 export const PARAM_TYPE_TRUSTED_NAME = 0x07;
 
+/**
+ * `DISPLAY_FIELD.PARAM_TYPE` value for a raw account address (base58 short
+ * form). We attempt a trusted-name lookup for these too, so the device can show
+ * a CAL name (e.g. a token mint's name) instead of an opaque pubkey when one is
+ * available; it falls back to base58 otherwise.
+ */
+export const PARAM_TYPE_ACCOUNT = 0x08;
+
 /** `DISPLAY_FIELD.PARAM_TYPE` value for a token amount with a token reference. */
 export const PARAM_TYPE_TOKEN_AMOUNT = 0x02;
 

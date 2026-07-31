@@ -44,7 +44,6 @@ export class HttpSpeculosOperatorDataSource
   implements SpeculosOperatorDataSource
 {
   private readonly baseUrl: string;
-  private readonly seed: string;
   private readonly speculosVersion?: string;
   private readonly readyTimeoutMs: number;
   private readonly pollIntervalMs: number;
@@ -53,7 +52,6 @@ export class HttpSpeculosOperatorDataSource
     @inject(speculosTypes.OperatorConfig) config: SpeculosOperatorConfig,
   ) {
     this.baseUrl = stripTrailingSlashes(config.baseUrl);
-    this.seed = config.seed;
     this.speculosVersion = config.speculosVersion;
     this.readyTimeoutMs = config.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS;
     this.pollIntervalMs = config.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
@@ -62,11 +60,12 @@ export class HttpSpeculosOperatorDataSource
   acquire(
     req: AcquireRequest,
     runId: string,
+    seed: string,
   ): EitherAsync<SpeculosError, string> {
     return EitherAsync(async ({ throwE }) => {
       const body: Record<string, unknown> = {
         ...req,
-        seed: this.seed,
+        seed,
         run_id: runId,
       };
       if (this.speculosVersion) body["speculos_version"] = this.speculosVersion;

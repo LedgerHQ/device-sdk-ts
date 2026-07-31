@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   DeviceModelId,
   type DmkNetworkClient,
@@ -215,20 +214,6 @@ describe("HttpOwnerInfoDataSource", () => {
           "[ContextModule] - HttpOwnerInfoDataSource: invalid computeAddressMetadata response shape",
         ),
       ),
-    );
-  });
-
-  it("should throw if originToken is missing", () => {
-    expect(() => {
-      new HttpOwnerInfoDataSource(
-        {
-          ...config,
-          originToken: undefined,
-        } as any,
-        httpMock as unknown as DmkNetworkClient,
-      );
-    }).toThrow(
-      "[ContextModule] - HttpOwnerInfoDataSource: origin token is required",
     );
   });
 });

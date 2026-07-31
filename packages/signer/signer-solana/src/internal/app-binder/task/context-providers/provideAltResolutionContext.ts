@@ -6,7 +6,6 @@ import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
 import { ProvideAltResolutionCommand } from "@internal/app-binder/command/ProvideAltResolutionCommand";
-import { frameClearSignPayload } from "@internal/app-binder/command/utils/apduChunking";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import { loadCertificate } from "./loadCertificate";
@@ -35,7 +34,7 @@ export const provideAltResolutionContext: ProvideContextHandler<
   const res = await new SendCommandInChunksTask<void, SolanaAppErrorCodes>(
     api,
     {
-      data: frameClearSignPayload(payload.descriptor),
+      data: payload.descriptor,
       commandFactory: (args) =>
         new ProvideAltResolutionCommand({
           payload: args.chunkedData,
