@@ -1,5 +1,9 @@
 name: "[Tests] Solana Nightly"
 on:
+  # TODO: TEMPORARY – remove before merging feat/no-issue-use-speculinho-CS-tester
+  push:
+    branches:
+      - feat/no-issue-use-speculinho-CS-tester
   schedule:
     # Run every day at 3:00 AM UTC (offset from Ethereum/ERC7730 nightly at 2:00 AM)
     - cron: "0 3 * * *"
@@ -56,12 +60,12 @@ jobs:
           test: ${{ matrix.test }}
           device: ${{ matrix.device }}
           coin-app: Solana
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: solana-cs-tester-logs
           summary-prefix: "Solana Fixture Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
@@ -88,13 +92,13 @@ jobs:
           test: ${{ matrix.test }}
           device: ${{ matrix.device }}
           coin-app: Solana
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           use-rpc: "true"
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: solana-program-cs-tester-logs
           summary-prefix: "Solana Program Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 

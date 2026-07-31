@@ -14,7 +14,6 @@ export const TYPES = {
   SigningFlowOrchestrator: Symbol.for("SigningFlowOrchestrator"),
   SignableInteractions: Symbol.for("SignableInteractions"),
   RetryService: Symbol.for("RetryService"),
-  AppVersionResolver: Symbol.for("AppVersionResolver"),
   DeviceSetupService: Symbol.for("DeviceSetupService"),
   TransactionCraftingService: Symbol.for("TransactionCraftingService"),
 
@@ -28,7 +27,7 @@ export const TYPES = {
   MainServiceController: Symbol.for("MainServiceController"),
   DMKServiceController: Symbol.for("DMKServiceController"),
   SolanaDMKServiceController: Symbol.for("SolanaDMKServiceController"),
-  SpeculosServiceController: Symbol.for("SpeculosServiceController"),
+  SpeculinhoServiceController: Symbol.for("SpeculinhoServiceController"),
   ServiceControllers: Symbol.for("ServiceControllers"),
 
   // Adapters
@@ -36,7 +35,6 @@ export const TYPES = {
   ScreenshotSaver: Symbol.for("ScreenshotSaver"),
   FileReader: Symbol.for("FileReader"),
   JsonParser: Symbol.for("JsonParser"),
-  DockerContainer: Symbol.for("DockerContainer"),
   CalAdapter: Symbol.for("CalAdapter"),
 
   // Device Controllers
@@ -68,14 +66,14 @@ export const TYPES = {
   TestSolanaProgramUseCase: Symbol.for("TestSolanaProgramUseCase"),
 
   // Config
-  SpeculosConfig: Symbol.for("SpeculosConfig"),
+  SpeculinhoConfig: Symbol.for("SpeculinhoConfig"),
   SignerConfig: Symbol.for("SignerConfig"),
   EtherscanConfig: Symbol.for("EtherscanConfig"),
   SolanaRpcConfig: Symbol.for("SolanaRpcConfig"),
-  AppsConfig: Symbol.for("AppsConfig"),
   CalConfig: Symbol.for("CalConfig"),
 
   // Logger
   LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),
   LoggerSubscribers: Symbol.for("LoggerSubscribers"),
+  LogLevel: Symbol.for("LogLevel"),
 };

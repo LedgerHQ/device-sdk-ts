@@ -23,6 +23,8 @@ for TEST_FILE in "${FILES[@]}"; do
   esac
 
   echo "=== Running gating test: $BASENAME ($CMD) ==="
+  # --skip-origin-token: simulate an unauthenticated client (no Ledger-Origin-Token header).
+  # Test that the device falls back on the gating screen.
   (cd "$ROOT_PATH" && pnpm cli "$CMD" "$TEST_FILE" --blind-signing-enabled --skip-origin-token "${EXTRA_ARGS[@]}") || EXIT_CODE=$?
 done
 

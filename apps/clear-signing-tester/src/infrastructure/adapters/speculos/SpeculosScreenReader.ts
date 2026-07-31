@@ -6,8 +6,9 @@ import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
-import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
 import { type ScreenEvent } from "@root/src/domain/models/ScreenContent";
+import { getEmulatorBaseUrl } from "@root/src/domain/utils/getEmulatorBaseUrl";
 
 /**
  * Speculos implementation of screen reading functionality
@@ -16,16 +17,16 @@ import { type ScreenEvent } from "@root/src/domain/models/ScreenContent";
  */
 @injectable()
 export class SpeculosScreenReader implements ScreenReader {
-  private readonly speculosUrl: string;
+  private readonly config: SpeculinhoConfig;
   private readonly logger: LoggerPublisherService;
   private readonly http: DmkNetworkClient;
 
   constructor(
-    @inject(TYPES.SpeculosConfig) config: SpeculosConfig,
+    @inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.speculosUrl = `${config.url}:${config.port}`;
+    this.config = config;
     this.logger = loggerFactory("screen-reader");
     this.http = new DmkNetworkClient();
   }
@@ -36,9 +37,12 @@ export class SpeculosScreenReader implements ScreenReader {
    */
   async readRawScreenEvents(): Promise<ScreenEvent[]> {
     try {
-      const data = (await this.http.get(`${this.speculosUrl}/events`, {
-        params: { stream: false, currentscreenonly: true },
-      })) as { events: ScreenEvent[] };
+      const data = (await this.http.get(
+        `${getEmulatorBaseUrl(this.config)}/events`,
+        {
+          params: { stream: false, currentscreenonly: true },
+        },
+      )) as { events: ScreenEvent[] };
 
       const rawEvents = data.events || [];
 

@@ -65,11 +65,9 @@ export const solanaInfrastructureModuleFactory = (
     bind<ServiceController[]>(TYPES.ServiceControllers)
       .toDynamicValue((context) => {
         const controllers: ServiceController[] = [];
-        if (!config.speculos.externalSpeculos) {
-          controllers.push(
-            context.get<ServiceController>(TYPES.SpeculosServiceController),
-          );
-        }
+        controllers.push(
+          context.get<ServiceController>(TYPES.SpeculinhoServiceController),
+        );
         if (!config.onlySpeculos) {
           controllers.push(
             context.get<ServiceController>(TYPES.SolanaDMKServiceController),

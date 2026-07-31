@@ -7,6 +7,7 @@ import { ContainerModule, type Factory } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import {
+  type CliLogLevel,
   type LoggerConfig,
   parseLogLevel,
 } from "@root/src/domain/models/config/LoggerConfig";
@@ -33,6 +34,8 @@ export const loggerModuleFactory = ({ config }: FactoryProps) => {
   }
 
   return new ContainerModule(({ bind }) => {
+    bind<CliLogLevel>(TYPES.LogLevel).toConstantValue(config.cli.level);
+
     bind<LoggerSubscriberService[]>(TYPES.LoggerSubscribers).toConstantValue(
       subscribers,
     );
