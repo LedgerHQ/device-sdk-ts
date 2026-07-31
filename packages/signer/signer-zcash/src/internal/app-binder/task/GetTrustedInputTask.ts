@@ -322,12 +322,14 @@ const orchardActionDigestParts = (action: Uint8Array): DigestParts => {
   };
 };
 
+// MEMO_SIZE is a whole number of MEMO_CHUNK_SIZE, so slicing each memo on its
+// own yields the same stream as slicing their concatenation, without the copy.
 const pushMemoChunks = (chunks: Uint8Array[], memos: Uint8Array[]): void => {
-  const stream = concatUint8Arrays(...memos);
-
-  for (let offset = 0; offset < stream.length; offset += MEMO_CHUNK_SIZE) {
-    chunks.push(stream.subarray(offset, offset + MEMO_CHUNK_SIZE));
-  }
+  memos.forEach((memo) => {
+    for (let offset = 0; offset < memo.length; offset += MEMO_CHUNK_SIZE) {
+      chunks.push(memo.subarray(offset, offset + MEMO_CHUNK_SIZE));
+    }
+  });
 };
 
 /**
