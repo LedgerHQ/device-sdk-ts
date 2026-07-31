@@ -43,6 +43,12 @@ export class TrxSignerDriver {
     await this.page.getByTestId("CTA_send-device-action").click();
   }
 
+  /** Open the Get app configuration action and Execute it (no inputs). */
+  async getAppConfiguration(): Promise<void> {
+    await this.page.getByTestId("CTA_command-Get app configuration").click();
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
   /**
    * Wait for the last emitted device-action state to be terminal and return it
    * parsed.

@@ -4,6 +4,9 @@ import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
+  type GetAppConfigurationDAError,
+  type GetAppConfigurationDAIntermediateValue,
+  type GetAppConfigurationDAOutput,
   SignerTrxBuilder,
 } from "@ledgerhq/device-signer-kit-tron";
 
@@ -55,6 +58,21 @@ export const SignerTrxView: React.FC<{ sessionId: string }> = ({
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
+      >,
+      {
+        title: "Get app configuration",
+        description:
+          "Perform all the actions necessary to get the Tron app configuration from the device",
+        executeDeviceAction: () => {
+          return signer.getAppConfiguration();
+        },
+        initialValues: {},
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetAppConfigurationDAOutput,
+        Record<string, never>,
+        GetAppConfigurationDAError,
+        GetAppConfigurationDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],

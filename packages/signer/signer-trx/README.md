@@ -80,6 +80,43 @@ observable.subscribe((state) => {
 });
 ```
 
+### Get app configuration
+
+Reads the Tron app configuration from the device (version and the flags the app
+was built with). No user interaction is required.
+
+```typescript
+signer.getAppConfiguration(): GetAppConfigurationDAReturnType;
+```
+
+The returned device action resolves to:
+
+```typescript
+{
+  version: string; // semantic version, e.g. "0.5.0"
+  versionN: number; // numeric version (major * 10000 + minor * 100 + patch)
+  allowData: boolean; // "sign data" setting enabled on the device
+  allowContract: boolean; // "sign custom contracts" setting enabled
+  truncateAddress: boolean; // addresses are truncated on the device screen
+  signByHash: boolean; // "sign by hash" setting enabled
+}
+```
+
+```typescript
+const { observable, cancel } = signer.getAppConfiguration();
+
+observable.subscribe((state) => {
+  switch (state.status) {
+    case "completed":
+      console.log(state.output.version, state.output.allowContract);
+      break;
+    case "error":
+      console.error(state.error);
+      break;
+  }
+});
+```
+
 ## Development
 
 ```bash
