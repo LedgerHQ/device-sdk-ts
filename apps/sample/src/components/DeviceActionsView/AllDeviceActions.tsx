@@ -81,6 +81,11 @@ import {
   type CreateBackupDAIntermediateValue,
   type CreateBackupDAOutput,
   CreateBackupDeviceAction,
+  type ResolveOsUpdatePathDAError,
+  type ResolveOsUpdatePathDAInput,
+  type ResolveOsUpdatePathDAIntermediateValue,
+  type ResolveOsUpdatePathDAOutput,
+  ResolveOsUpdatePathDeviceAction,
   type RestoreAppsStorageDAError,
   type RestoreAppsStorageDAIntermediateValue,
   type RestoreAppsStorageDAOutput,
@@ -347,6 +352,26 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         GetDeviceMetadataDAInput,
         GetDeviceMetadataDAError,
         GetDeviceMetadataDAIntermediateValue
+      >,
+      {
+        title: "Resolve OS update path",
+        description: "Resolve the OS update path for the given device",
+        executeDeviceAction: ({ unlockTimeout }) => {
+          const deviceAction = new ResolveOsUpdatePathDeviceAction({
+            input: { unlockTimeout },
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        ResolveOsUpdatePathDAOutput,
+        ResolveOsUpdatePathDAInput,
+        ResolveOsUpdatePathDAError,
+        ResolveOsUpdatePathDAIntermediateValue
       >,
       {
         title: `${SECURE_CHANNEL_ICON} Genuine Check`,
