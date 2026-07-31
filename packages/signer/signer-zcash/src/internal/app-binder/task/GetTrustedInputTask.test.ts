@@ -7,6 +7,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { GetTrustedInputCommand } from "@internal/app-binder/command/GetTrustedInputCommand";
+import {
+  apduRecordStoreFromLogs,
+  splitTransactionArgsFromLogsSecond,
+} from "@internal/app-binder/task/__fixtures__/signTransactionFromLedgerWalletLogs2026-05-12";
 import { signTransactionFromLedgerWalletLogs20260615 } from "@internal/app-binder/task/__fixtures__/signTransactionFromLedgerWalletLogs2026-06-15";
 import {
   getZcashBranchId,
@@ -43,6 +47,31 @@ const makeSuccessResponse = (byte: number) => ({
   statusCode: new Uint8Array([0x90, 0x00]),
   data: new Uint8Array([byte]),
 });
+
+/**
+ * GET_TRUSTED_INPUT APDUs recorded in the 2026-05-12 log, grouped per call (P1=00
+ * starts a new one). They were produced by the pre-DMK implementation, and the
+ * device answered them with the ZIP-244 txids kept in `trustedInputHexesFromLogs`,
+ * which match the chain — so they are the reference framing for a previous
+ * transaction, including the second call whose source carries an Orchard bundle.
+ */
+const trustedInputApduCallsFromLogs = (): string[][] => {
+  const calls: string[][] = [];
+
+  apduRecordStoreFromLogs
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("=> e042"))
+    .map((line) => line.slice(3))
+    .forEach((apdu) => {
+      if (apdu.startsWith("e04200")) {
+        calls.push([]);
+      }
+      calls.at(-1)?.push(apdu);
+    });
+
+  return calls;
+};
 
 describe("GetTrustedInputTask", () => {
   let apiMock: InternalApi;
@@ -160,6 +189,51 @@ describe("GetTrustedInputTask", () => {
     // so the chunker read the count off the locktime byte → "...f04dec4d00" (0 inputs)
     // → the device misparsed the stream and returned 6a80.
     expect(header).toBe("000000000400008085202f89f04dec4d03");
+  });
+
+  it("regroups the shielded fields of a v5 Orchard previous transaction by ZIP-244 digest (regression: wrong txid, then 504 on broadcast)", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: hexToBytes(
+        splitTransactionArgsFromLogsSecond.transactionHex,
+      ),
+      indexLookup: 0,
+    }).run();
+
+    const sentApdus = vi
+      .mocked(apiMock.sendCommand)
+      .mock.calls.map(([command]) =>
+        bytesToHex((command as GetTrustedInputCommand).getApdu().getRawApdu()),
+      );
+
+    // On chain an Orchard action keeps its own fields together, while the device
+    // hashes one digest per stream — compact parts, then memos, then non-compact
+    // parts — and rejects any digest block split across two APDUs. Streaming the
+    // raw bytes in their on-chain order made it commit to a txid that no output
+    // carried, so the signed transaction spent an unknown input and the broadcast
+    // timed out.
+    expect(sentApdus).toEqual(trustedInputApduCallsFromLogs()[1]);
+  });
+
+  it("rejects a transaction version the device app does not handle in this flow", async () => {
+    // v6 header (Ironwood): version | nVersionGroupId | branchId | locktime | expiry.
+    // The app turns v6 away with "V6 transaction in legacy path", so the stream
+    // must not be built as if the bundles followed the v5 layout.
+    const v6Header = "060000800a27a726f04dec4d00000000a6233300";
+
+    await expect(
+      new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(v6Header),
+        indexLookup: 0,
+      }).run(),
+    ).rejects.toThrow(
+      "Unsupported transaction version 6 while splitting trusted input chunks",
+    );
+
+    expect(apiMock.sendCommand).not.toHaveBeenCalled();
   });
 
   it("throws for malformed transaction input before sending any command", async () => {
