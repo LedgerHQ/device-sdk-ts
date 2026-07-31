@@ -9,6 +9,7 @@ import { type ServiceController } from "@root/src/domain/services/ServiceControl
 
 const DEFAULT_READY_TIMEOUT_MS = 120_000;
 const DEFAULT_POLL_INTERVAL_MS = 2_000;
+const ROUTE_TIMEOUT_SECONDS = 60;
 
 /** Well-known Speculos test mnemonic. Overridable via SPECULOS_SEED env var. */
 const DEFAULT_SPECULOS_SEED =
@@ -113,6 +114,7 @@ export class SpeculinhoServiceController implements ServiceController {
       device_os_version: osVersion,
       seed,
       run_id: this.runId,
+      route_timeout_seconds: ROUTE_TIMEOUT_SECONDS,
     };
 
     // Boot the pod's Speculos with "-p" so it trusts the production PKI root
@@ -123,6 +125,10 @@ export class SpeculinhoServiceController implements ServiceController {
     if (this.calConfig.mode === "prod") {
       body["extra_args"] = ["-p"];
     }
+
+    this.logger.debug("Acquiring Speculinho pod", {
+      data: { body },
+    });
 
     let res: Response;
     try {
