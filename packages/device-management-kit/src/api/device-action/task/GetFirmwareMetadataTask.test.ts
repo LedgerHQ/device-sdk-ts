@@ -1,4 +1,4 @@
-import { EitherAsync } from "purify-ts";
+import { EitherAsync, Just, Nothing } from "purify-ts";
 
 import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandResultFactory } from "@api/command/model/CommandResult";
@@ -38,6 +38,7 @@ describe("GetFirmwareMetadataTask", () => {
   const OSU_VERSION = {
     id: 362,
     perso: "perso_11",
+    notes: "notes",
   } as OsuFirmware;
 
   const NEXT_FIRMWARE_VERSION = {
@@ -51,10 +52,12 @@ describe("GetFirmwareMetadataTask", () => {
     {
       id: 3,
       name: "other_version",
+      fromBootloaderVersion: "1.0",
     },
     {
       id: 1,
       name: "mcu_version",
+      fromBootloaderVersion: "1.0",
     },
   ] as McuFirmware[];
 
@@ -67,7 +70,7 @@ describe("GetFirmwareMetadataTask", () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
 
     apiMock.getManagerApiService.mockReturnValue(
       MANAGER_MOCK as unknown as ManagerApiService,
@@ -79,7 +82,7 @@ describe("GetFirmwareMetadataTask", () => {
       EitherAsync(async () => FIRMWARE_VERSION),
     );
     MANAGER_MOCK.getLatestFirmwareVersion.mockReturnValue(
-      EitherAsync(async () => OSU_VERSION),
+      EitherAsync(async () => Just(OSU_VERSION)),
     );
     MANAGER_MOCK.getNextFirmwareVersion.mockReturnValue(
       EitherAsync(async () => NEXT_FIRMWARE_VERSION),
@@ -88,6 +91,40 @@ describe("GetFirmwareMetadataTask", () => {
   });
 
   it("success with no firmware update available", async () => {
+    // GIVEN
+    apiMock.sendCommand
+      .mockResolvedValueOnce(CommandResultFactory({ data: OS_VERSION }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: CUSTOM_IMAGE_SIZE }));
+    MANAGER_MOCK.getLatestFirmwareVersion.mockReturnValueOnce(
+      EitherAsync(async () => Nothing),
+    );
+
+    // WHEN
+    const result = await new GetFirmwareMetadataTask(apiMock).run();
+
+    // THEN
+    expect(result).toStrictEqual(
+      DmkResultFactory({
+        data: {
+          deviceVersion: DEVICE_VERSION,
+          firmware: FIRMWARE_VERSION,
+          firmwareVersion: {
+            mcu: "mcu_version",
+            bootloader: "bl_version",
+            os: "se_version",
+            metadata: OS_VERSION,
+          },
+          firmwareUpdateContext: {
+            currentFirmware: FIRMWARE_VERSION,
+            availableUpdate: undefined,
+          },
+          customImage: { size: CUSTOM_IMAGE_SIZE },
+        },
+      }),
+    );
+  });
+
+  it("success with no firmware update when latest firmware cannot be fetched", async () => {
     // GIVEN
     apiMock.sendCommand
       .mockResolvedValueOnce(CommandResultFactory({ data: OS_VERSION }))
@@ -209,6 +246,128 @@ describe("GetFirmwareMetadataTask", () => {
               finalFirmware: nextFirmware,
               mcuUpdateRequired: true,
             },
+          },
+          customImage: {},
+        },
+      }),
+    );
+  });
+
+  it("success with a firmware update available when current MCU is unknown", async () => {
+    // GIVEN
+    apiMock.sendCommand
+      .mockResolvedValueOnce(CommandResultFactory({ data: OS_VERSION }))
+      .mockResolvedValueOnce(
+        CommandResultFactory({ error: new InvalidStatusWordError("error") }),
+      );
+    MANAGER_MOCK.getMcuList.mockReturnValueOnce(
+      EitherAsync(async () => [
+        {
+          id: 3,
+          name: "other_version",
+          fromBootloaderVersion: "1.0",
+        },
+      ]),
+    );
+
+    // WHEN
+    const result = await new GetFirmwareMetadataTask(apiMock).run();
+
+    // THEN
+    expect(result).toStrictEqual(
+      DmkResultFactory({
+        data: {
+          deviceVersion: DEVICE_VERSION,
+          firmware: FIRMWARE_VERSION,
+          firmwareVersion: {
+            mcu: "mcu_version",
+            bootloader: "bl_version",
+            os: "se_version",
+            metadata: OS_VERSION,
+          },
+          firmwareUpdateContext: {
+            currentFirmware: FIRMWARE_VERSION,
+            availableUpdate: {
+              osuFirmware: OSU_VERSION,
+              finalFirmware: NEXT_FIRMWARE_VERSION,
+              mcuUpdateRequired: true,
+            },
+          },
+          customImage: {},
+        },
+      }),
+    );
+  });
+
+  it("success with no firmware update when next firmware cannot be fetched", async () => {
+    // GIVEN
+    apiMock.sendCommand
+      .mockResolvedValueOnce(CommandResultFactory({ data: OS_VERSION }))
+      .mockResolvedValueOnce(
+        CommandResultFactory({ error: new InvalidStatusWordError("error") }),
+      );
+    MANAGER_MOCK.getNextFirmwareVersion.mockReturnValueOnce(
+      EitherAsync(async ({ throwE }) => {
+        throwE(new Error("error"));
+      }),
+    );
+
+    // WHEN
+    const result = await new GetFirmwareMetadataTask(apiMock).run();
+
+    // THEN
+    expect(result).toStrictEqual(
+      DmkResultFactory({
+        data: {
+          deviceVersion: DEVICE_VERSION,
+          firmware: FIRMWARE_VERSION,
+          firmwareVersion: {
+            mcu: "mcu_version",
+            bootloader: "bl_version",
+            os: "se_version",
+            metadata: OS_VERSION,
+          },
+          firmwareUpdateContext: {
+            currentFirmware: FIRMWARE_VERSION,
+            availableUpdate: undefined,
+          },
+          customImage: {},
+        },
+      }),
+    );
+  });
+
+  it("success with no firmware update when MCU list cannot be fetched", async () => {
+    // GIVEN
+    apiMock.sendCommand
+      .mockResolvedValueOnce(CommandResultFactory({ data: OS_VERSION }))
+      .mockResolvedValueOnce(
+        CommandResultFactory({ error: new InvalidStatusWordError("error") }),
+      );
+    MANAGER_MOCK.getMcuList.mockReturnValueOnce(
+      EitherAsync(async ({ throwE }) => {
+        throwE(new Error("error"));
+      }),
+    );
+
+    // WHEN
+    const result = await new GetFirmwareMetadataTask(apiMock).run();
+
+    // THEN
+    expect(result).toStrictEqual(
+      DmkResultFactory({
+        data: {
+          deviceVersion: DEVICE_VERSION,
+          firmware: FIRMWARE_VERSION,
+          firmwareVersion: {
+            mcu: "mcu_version",
+            bootloader: "bl_version",
+            os: "se_version",
+            metadata: OS_VERSION,
+          },
+          firmwareUpdateContext: {
+            currentFirmware: FIRMWARE_VERSION,
+            availableUpdate: undefined,
           },
           customImage: {},
         },
