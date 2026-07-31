@@ -1,5 +1,5 @@
 import { inject, injectable } from "inversify";
-import { EitherAsync } from "purify-ts";
+import { EitherAsync, Just, Maybe, Nothing } from "purify-ts";
 
 import { type DmkConfig } from "@api/DmkConfig";
 import { DmkNetworkClient } from "@api/network/DmkNetworkClient";
@@ -169,7 +169,7 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
 
   getLatestFirmwareVersion(
     params: GetLatestFirmwareVersionParams,
-  ): EitherAsync<HttpFetchApiError, OsuFirmware> {
+  ): EitherAsync<HttpFetchApiError, Maybe<OsuFirmware>> {
     const livecommonversion = "34.27.0"; // Legacy parameter that should just be a too old
     const { currentFinalFirmwareId, deviceId } = params;
     return EitherAsync(() =>
@@ -330,13 +330,15 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
           if (
             typeof mcu !== "object" ||
             typeof mcu.id !== "number" ||
-            typeof mcu.name !== "string"
+            typeof mcu.name !== "string" ||
+            typeof mcu.from_bootloader_version !== "string"
           ) {
             throw new Error(`Incomplete MCU version: ${JSON.stringify(mcu)}`);
           }
           const ret: McuFirmware = {
             id: mcu.id,
             name: mcu.name,
+            fromBootloaderVersion: mcu.from_bootloader_version,
           };
           return ret;
         }),
@@ -402,8 +404,15 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
 
   private mapLatestFirmwareDto(
     latestFirmware: LatestFirmwareOsuVersionResponseDto,
-  ): EitherAsync<Error, OsuFirmware> {
-    return EitherAsync<Error, FirmwareOsuVersionDto>(() => {
+  ): EitherAsync<Error, Maybe<OsuFirmware>> {
+    return EitherAsync<Error, FirmwareOsuVersionDto | null>(() => {
+      /**
+       * This is how we know that there is no update available.
+       * See the {@link https://github.com/LedgerHQ/ledger-live/blob/develop/libs/device-core/src/managerApi/repositories/HttpManagerApiRepository.ts#L59-L61 | ledger-live implementation}.
+       */
+      if (latestFirmware.result === "null") {
+        return Promise.resolve(null);
+      }
       if (
         latestFirmware.result !== "success" ||
         !latestFirmware.se_firmware_osu_version
@@ -414,7 +423,14 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
       }
       const osuDto = latestFirmware.se_firmware_osu_version;
       return Promise.resolve(osuDto);
-    }).chain((osuDto) => this.mapOsuFirmwareDto(osuDto));
+    }).chain((osuDto) => {
+      if (null === osuDto) {
+        return EitherAsync(() => Promise.resolve(Nothing));
+      }
+      return this.mapOsuFirmwareDto(osuDto).map((osuFirmware) =>
+        Just(osuFirmware),
+      );
+    });
   }
 
   private mapOsuFirmwareDto(
@@ -424,6 +440,7 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
       if (
         typeof osuDto !== "object" ||
         typeof osuDto.id !== "number" ||
+        (osuDto.notes !== null && typeof osuDto.notes !== "string") ||
         typeof osuDto.perso !== "string" ||
         typeof osuDto.firmware !== "string" ||
         typeof osuDto.firmware_key !== "string" ||
@@ -436,6 +453,7 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
       }
       const ret: OsuFirmware = {
         id: osuDto.id,
+        notes: osuDto.notes,
         perso: osuDto.perso,
         firmware: osuDto.firmware,
         firmwareKey: osuDto.firmware_key,

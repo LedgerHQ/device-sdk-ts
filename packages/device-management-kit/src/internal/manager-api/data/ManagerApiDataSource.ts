@@ -1,4 +1,4 @@
-import { type EitherAsync } from "purify-ts";
+import { type EitherAsync, type Maybe } from "purify-ts";
 
 import { type Application } from "@internal/manager-api/model/Application";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
@@ -95,14 +95,14 @@ export interface ManagerApiDataSource {
   ): EitherAsync<HttpFetchApiError, OsuFirmware>;
 
   /**
-   * Retrieves the latest firmware available for a given current firmware, device ID.
+   * Retrieves the latest firmware available, if any, for a given device.
    *
    * @param params - The parameters for getting the firmware version.
-   * @returns EitherAsync containing the OSU firmware or an HttpFetchApiError.
+   * @returns EitherAsync containing either an `HttpFetchApiError` or a `Maybe<OsuFirmware>` (Nothing when no update is available).
    */
   getLatestFirmwareVersion(
     params: GetLatestFirmwareVersionParams,
-  ): EitherAsync<HttpFetchApiError, OsuFirmware>;
+  ): EitherAsync<HttpFetchApiError, Maybe<OsuFirmware>>;
 
   /**
    * Retrieves the available language packages for a device.

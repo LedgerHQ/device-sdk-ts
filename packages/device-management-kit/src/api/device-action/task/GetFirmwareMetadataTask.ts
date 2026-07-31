@@ -14,7 +14,11 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { type DmkResult, DmkResultFactory } from "@api/model/DmkResult";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
-import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
+import {
+  type FinalFirmware,
+  type OsuFirmware,
+} from "@internal/manager-api/model/Firmware";
+import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 export type GetFirmwareMetadataTaskResponse = {
   deviceVersion: DeviceVersion;
@@ -67,30 +71,13 @@ export class GetFirmwareMetadataTask {
     }
     const { deviceVersion, currentFirmware } = result.unsafeCoerce();
 
-    // Fetch latest firmware available, if any
-    const maybeUpdate = await manager
-      .getLatestFirmwareVersion(currentFirmware, deviceVersion)
-      .chain((osuFirmware) =>
-        manager.getNextFirmwareVersion(osuFirmware).chain((finalFirmware) =>
-          manager
-            .getMcuList()
-            .map((mcus) => mcus.find((mcu) => mcu.name === firmwareVersion.mcu))
-            .map(
-              (mcu) =>
-                mcu === undefined ||
-                !finalFirmware.mcuVersions.includes(mcu.id),
-            )
-            .map((mcuUpdateRequired) => ({
-              osuFirmware,
-              finalFirmware,
-              mcuUpdateRequired,
-            })),
-        ),
-      );
-    const availableUpdate: FirmwareUpdate | undefined = maybeUpdate.caseOf({
-      Right: (data) => data,
-      Left: (_error) => undefined,
-    });
+    const availableUpdate = await this.getAvailableUpdate(
+      manager,
+      currentFirmware,
+      deviceVersion,
+      firmwareVersion,
+    );
+
     const firmwareUpdateContext = {
       currentFirmware,
       availableUpdate,
@@ -115,5 +102,61 @@ export class GetFirmwareMetadataTask {
         customImage,
       },
     });
+  }
+
+  private async getAvailableUpdate(
+    manager: ManagerApiService,
+    currentFirmware: FinalFirmware,
+    deviceVersion: DeviceVersion,
+    firmwareVersion: FirmwareVersion,
+  ): Promise<FirmwareUpdate | undefined> {
+    // Fetch latest firmware available, if any
+    const maybeOsuFirmwareResult = await manager.getLatestFirmwareVersion(
+      currentFirmware,
+      deviceVersion,
+    );
+    if (maybeOsuFirmwareResult.isLeft()) {
+      return undefined;
+    }
+
+    const maybeOsuFirmware = maybeOsuFirmwareResult.unsafeCoerce();
+    if (maybeOsuFirmware.isNothing()) {
+      return undefined;
+    }
+
+    return this.getFirmwareUpdate(
+      manager,
+      maybeOsuFirmware.unsafeCoerce(),
+      firmwareVersion,
+    );
+  }
+
+  private async getFirmwareUpdate(
+    manager: ManagerApiService,
+    osuFirmware: OsuFirmware,
+    firmwareVersion: FirmwareVersion,
+  ): Promise<FirmwareUpdate | undefined> {
+    const finalFirmwareResult =
+      await manager.getNextFirmwareVersion(osuFirmware);
+    if (finalFirmwareResult.isLeft()) {
+      return undefined;
+    }
+
+    const mcusResult = await manager.getMcuList();
+    if (mcusResult.isLeft()) {
+      return undefined;
+    }
+
+    const finalFirmware = finalFirmwareResult.unsafeCoerce();
+    const mcu = mcusResult
+      .unsafeCoerce()
+      .find((candidate) => candidate.name === firmwareVersion.mcu);
+
+    return {
+      osuFirmware,
+      finalFirmware,
+      mcuUpdateRequired:
+        mcu === undefined || !finalFirmware.mcuVersions.includes(mcu.id),
+    };
   }
 }
