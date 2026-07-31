@@ -1,0 +1,244 @@
+---
+title: "Migrate from LedgerJS to the DMK"
+category: how-to
+---
+
+# Migrate from LedgerJS to the DMK
+
+LedgerJS (`hw-transport-*` and `hw-app-*`) is deprecated. Starting in September 2026, it will no longer work with the Ethereum app due to a breaking change in EIP-712 signing. All integrations must move to the [Device Management Kit (DMK)](../../../getting-started).
+
+This guide covers the cross-chain migration steps that apply to every signer: replacing transports, initializing the DMK, connecting to a device, and adapting from a promise-based API to an observable-based one.
+
+For method-by-method API mappings, see the per-chain guides:
+
+- [Ethereum (hw-app-eth → device-signer-kit-ethereum)](./signers/eth/hw_app_eth_to_dmk)
+- [Solana (hw-app-solana → device-signer-kit-solana)](./signers/solana/hw_app_solana_to_dmk)
+
+> **Note:** For chains that do not yet have a DMK signer (Algorand, Stellar, Tezos, Tron, XRP, and others), you can still communicate with the device using `dmk.sendCommand()` and `dmk.sendApdu()`. See [Build a custom command](../how_to/build_custom_command).
+
+---
+
+## Step 1: Update your packages
+
+Replace `hw-transport-*` packages with the corresponding DMK transport packages, and `hw-app-*` packages with the corresponding signer kits.
+
+### Transport packages
+
+```diff
+- npm install @ledgerhq/hw-transport-webhid
++ npm install @ledgerhq/device-management-kit @ledgerhq/device-transport-kit-web-hid
+```
+
+```diff
+- npm install @ledgerhq/hw-transport-web-ble
++ npm install @ledgerhq/device-management-kit @ledgerhq/device-transport-kit-web-ble
+```
+
+```diff
+- npm install @ledgerhq/hw-transport-node-hid
++ npm install @ledgerhq/device-management-kit @ledgerhq/device-transport-kit-node-hid
+```
+
+**Full transport package map:**
+
+| LedgerJS                                  | DMK                                               | Factory export            |
+| ----------------------------------------- | ------------------------------------------------- | ------------------------- |
+| `@ledgerhq/hw-transport-webhid`           | `@ledgerhq/device-transport-kit-web-hid`          | `webHidTransportFactory`  |
+| `@ledgerhq/hw-transport-web-ble`          | `@ledgerhq/device-transport-kit-web-ble`          | `webBleTransportFactory`  |
+| `@ledgerhq/hw-transport-node-hid`         | `@ledgerhq/device-transport-kit-node-hid`         | `nodeHidTransportFactory` |
+| `@ledgerhq/react-native-hw-transport-ble` | `@ledgerhq/device-transport-kit-react-native-ble` | `RNBleTransportFactory`   |
+
+### Signer packages
+
+| LedgerJS                  | DMK                                    |
+| ------------------------- | -------------------------------------- |
+| `@ledgerhq/hw-app-eth`    | `@ledgerhq/device-signer-kit-ethereum` |
+| `@ledgerhq/hw-app-btc`    | `@ledgerhq/device-signer-kit-bitcoin`  |
+| `@ledgerhq/hw-app-solana` | `@ledgerhq/device-signer-kit-solana`   |
+
+---
+
+## Step 2: Initialize the DMK
+
+LedgerJS required you to create a transport object directly. The DMK uses a builder instead, and you register transports into it at startup.
+
+### Before
+
+```typescript
+import TransportWebHID from "@ledgerhq/hw-transport-webhid";
+
+const transport = await TransportWebHID.create();
+```
+
+### After
+
+```typescript
+import { DeviceManagementKitBuilder } from "@ledgerhq/device-management-kit";
+import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
+
+const dmk = new DeviceManagementKitBuilder()
+  .addTransport(webHidTransportFactory)
+  .build();
+```
+
+Build the DMK once at application startup and keep the instance for the lifetime of your app. You can register multiple transports in a single instance.
+
+---
+
+## Step 3: Discover and connect
+
+LedgerJS created a transport for a single device. The DMK uses session-based discovery that can manage multiple devices.
+
+### Before
+
+```typescript
+// WebHID: browser prompts the user to pick a device
+const transport = await TransportWebHID.create();
+// `transport` is ready to use
+```
+
+### After
+
+```typescript
+import { DeviceManagementKitBuilder } from "@ledgerhq/device-management-kit";
+import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
+
+const dmk = new DeviceManagementKitBuilder()
+  .addTransport(webHidTransportFactory)
+  .build();
+
+// startDiscovering must be called from a user gesture (e.g. a button click)
+const sessionId = await new Promise<string>((resolve) => {
+  const sub = dmk.startDiscovering({}).subscribe({
+    next: async (device) => {
+      const id = await dmk.connect({ device });
+      sub.unsubscribe();
+      resolve(id);
+    },
+  });
+});
+```
+
+`sessionId` identifies the connected device for all subsequent calls. Store it alongside your signer instance.
+
+> **Note:** `startDiscovering` for WebHID must be called as a direct result of a user gesture (such as a button `click` event) because browsers require user activation before showing the HID device picker.
+
+---
+
+## Step 4: Create a signer
+
+LedgerJS instantiated the app layer by passing a transport. The DMK uses builder classes that receive the `dmk` instance and `sessionId`.
+
+### Before
+
+```typescript
+import Eth from "@ledgerhq/hw-app-eth";
+
+const eth = new Eth(transport);
+```
+
+### After
+
+```typescript
+import { SignerEthBuilder } from "@ledgerhq/device-signer-kit-ethereum";
+
+const signerEth = new SignerEthBuilder({ dmk, sessionId }).build();
+```
+
+**Signer builder reference:**
+
+| Chain    | Builder                                                         | Required arguments                         |
+| -------- | --------------------------------------------------------------- | ------------------------------------------ |
+| Ethereum | `SignerEthBuilder` from `@ledgerhq/device-signer-kit-ethereum`  | `dmk`, `sessionId`, optional `originToken` |
+| Bitcoin  | `SignerBtcBuilder` from `@ledgerhq/device-signer-kit-bitcoin`   | `dmk`, `sessionId`                         |
+| Solana   | `SignerSolanaBuilder` from `@ledgerhq/device-signer-kit-solana` | `dmk`, `sessionId`                         |
+
+> **Note:** For the Ethereum signer, `originToken` is optional but required if you want Ledger's Transaction Checks (security service). Contact Ledger to obtain a token for your application.
+
+---
+
+## Step 5: Migrate API calls from promises to observables
+
+Every method in LedgerJS returned a `Promise`. Every method in the DMK returns an object with two properties:
+
+- `observable`: an [RxJS Observable](https://rxjs.dev/guide/observable) that emits [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts) updates
+- `cancel`: a function to cancel the in-progress action
+
+```typescript
+import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
+
+const { observable, cancel } = signerEth.getAddress("44'/60'/0'/0/0");
+
+observable.subscribe({
+  next: (state) => {
+    switch (state.status) {
+      case DeviceActionStatus.Completed:
+        console.log("Address:", state.output.address);
+        break;
+      case DeviceActionStatus.Error:
+        console.error("Error:", state.error);
+        break;
+      case DeviceActionStatus.Pending:
+        // state.intermediateValue.requiredUserInteraction tells you
+        // what the user needs to do on the device right now
+        break;
+    }
+  },
+});
+```
+
+### Optional: wrap observables in promises
+
+If your codebase is heavily promise-based, you can use this helper to keep the call sites familiar while you migrate incrementally:
+
+```typescript
+import { type Observable } from "rxjs";
+import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
+
+function toPromise<Output>(action: {
+  observable: Observable<{ status: string; output?: Output; error?: unknown }>;
+}): Promise<Output> {
+  return new Promise((resolve, reject) => {
+    const sub = action.observable.subscribe({
+      next: (state: any) => {
+        if (state.status === DeviceActionStatus.Completed) {
+          sub.unsubscribe();
+          resolve(state.output);
+        } else if (state.status === DeviceActionStatus.Error) {
+          sub.unsubscribe();
+          reject(state.error);
+        } else if (state.status === DeviceActionStatus.Stopped) {
+          sub.unsubscribe();
+          reject(new Error("Action cancelled"));
+        }
+      },
+      error: (err: unknown) => reject(err),
+    });
+  });
+}
+
+// Usage
+const { address } = await toPromise(signerEth.getAddress("44'/60'/0'/0/0"));
+```
+
+> **Caution:** The `toPromise` wrapper discards intermediate states, including `requiredUserInteraction`. These states are important for building responsive wallet UIs (for example, showing a "Confirm on your Ledger" message). Prefer the full observable subscription for production code.
+
+---
+
+## Key differences to be aware of
+
+### The app opens automatically
+
+In LedgerJS, you had to open the correct coin app on the device yourself before calling any signer method. The DMK signers open the app automatically as part of every operation.
+
+### Transport failures and reconnection
+
+LedgerJS had no reconnection logic. The DMK exposes `dmk.reconnect({ device, sessionId })` and `dmk.getDeviceSessionState({ sessionId })` to monitor and recover from disconnections.
+
+### `rxjs` is a peer dependency
+
+Install it explicitly if it is not already a dependency of your project:
+
+```bash
+npm install rxjs
+```
