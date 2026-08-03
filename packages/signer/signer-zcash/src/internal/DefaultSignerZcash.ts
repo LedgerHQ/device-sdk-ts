@@ -7,6 +7,7 @@ import { type Container } from "inversify";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetFullViewingKeyDAReturnType } from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
+import { type GetShieldedAddressDAReturnType } from "@api/app-binder/GetShieldedAddressDeviceActionTypes";
 import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInputActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignPcztTransactionDAReturnType } from "@api/app-binder/SignPcztTransactionDeviceActionTypes";
@@ -21,6 +22,7 @@ import { makeContainer } from "@internal/di";
 import { addressTypes } from "@internal/use-cases/address/di/addressTypes";
 import { type GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";
 import { type GetFullViewingKeyUseCase } from "@internal/use-cases/address/GetFullViewingKeyUseCase";
+import { type GetShieldedAddressUseCase } from "@internal/use-cases/address/GetShieldedAddressUseCase";
 import { configTypes } from "@internal/use-cases/config/di/configTypes";
 import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";
 import { messageTypes } from "@internal/use-cases/message/di/messageTypes";
@@ -63,6 +65,15 @@ export class DefaultSignerZcash implements SignerZcash {
   ): GetFullViewingKeyDAReturnType {
     return this._container
       .get<GetFullViewingKeyUseCase>(addressTypes.GetFullViewingKeyUseCase)
+      .execute(derivationPath, options);
+  }
+
+  getShieldedAddress(
+    derivationPath: string,
+    options?: AddressOptions,
+  ): GetShieldedAddressDAReturnType {
+    return this._container
+      .get<GetShieldedAddressUseCase>(addressTypes.GetShieldedAddressUseCase)
       .execute(derivationPath, options);
   }
 

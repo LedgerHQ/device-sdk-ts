@@ -32,6 +32,7 @@ import type { ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashAp
 import { APP_NAME } from "@internal/app-binder/constants";
 import { privateToPrivateTransaction } from "@internal/app-binder/task/__fixtures__/pcztFixtures";
 import { GetFullViewingKeyTask } from "@internal/app-binder/task/GetFullViewingKeyTask";
+import { GetShieldedAddressTask } from "@internal/app-binder/task/GetShieldedAddressTask";
 import { GetTrustedInputTask } from "@internal/app-binder/task/GetTrustedInputTask";
 import { SignPcztTransactionTask } from "@internal/app-binder/task/SignPcztTransactionTask";
 import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
@@ -55,6 +56,15 @@ type ExecuteDeviceActionTaskCallArgs = {
     unknown,
     DmkError,
     UserInteractionRequired.None | UserInteractionRequired.SignTransaction
+  >;
+};
+
+type ExecuteDeviceActionAddressTaskCallArgs = {
+  sessionId: DeviceSessionId;
+  deviceAction: CallTaskInAppDeviceAction<
+    unknown,
+    DmkError,
+    UserInteractionRequired.None | UserInteractionRequired.VerifyAddress
   >;
 };
 
@@ -199,6 +209,72 @@ describe("ZcashAppBinder", () => {
 
       await args.deviceAction.input.task({} as InternalApi);
       expect(runSpy).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("getShieldedAddress", () => {
+    it("should call dmk.executeDeviceAction with CallTaskInAppDeviceAction and run GetShieldedAddressTask", async () => {
+      const sessionId = "test-session-id";
+      const expectedResult = {
+        observable: from([]),
+        cancel: vi.fn(),
+      };
+      const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, sessionId);
+      const runSpy = vi
+        .spyOn(GetShieldedAddressTask.prototype, "run")
+        .mockResolvedValue(
+          {} as unknown as Awaited<
+            ReturnType<typeof GetShieldedAddressTask.prototype.run>
+          >,
+        );
+
+      const result = binder.getShieldedAddress({
+        derivationPath: "44'/133'/0'/0/0",
+        checkOnDevice: false,
+        skipOpenApp: false,
+      });
+
+      expect(executeDeviceActionMock).toHaveBeenCalledTimes(1);
+      const args = executeDeviceActionMock.mock
+        .calls[0]![0] as ExecuteDeviceActionAddressTaskCallArgs;
+      expect(args.sessionId).toBe(sessionId);
+      expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+      expect(args.deviceAction.input.appName).toBe(APP_NAME);
+      expect(args.deviceAction.input.requiredUserInteraction).toBe(
+        UserInteractionRequired.None,
+      );
+      expect(args.deviceAction.input.skipOpenApp).toBe(false);
+      expect(result).toBe(expectedResult);
+
+      await args.deviceAction.input.task({} as InternalApi);
+      expect(runSpy).toHaveBeenCalledOnce();
+    });
+
+    it("should set VerifyAddress interaction when checkOnDevice is true", () => {
+      const executeDeviceActionMock = vi.fn().mockReturnValue({
+        observable: from([]),
+        cancel: vi.fn(),
+      });
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, "session-id");
+
+      binder.getShieldedAddress({
+        derivationPath: "44'/133'/0'/0/0",
+        checkOnDevice: true,
+        skipOpenApp: false,
+      });
+
+      const args = executeDeviceActionMock.mock
+        .calls[0]![0] as ExecuteDeviceActionAddressTaskCallArgs;
+      expect(args.deviceAction.input.requiredUserInteraction).toBe(
+        UserInteractionRequired.VerifyAddress,
+      );
     });
   });
 
