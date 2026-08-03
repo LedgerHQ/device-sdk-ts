@@ -11,24 +11,57 @@ import {
   type GetTrustedInputCommandResponse,
 } from "@internal/app-binder/command/GetTrustedInputCommand";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+import { createVarint } from "@internal/app-binder/task/utils/legacyTransactionUtils";
 import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 
 const MAX_APDU_DATA_LENGTH = 0xff;
 const INDEX_LOOKUP_LENGTH = 4;
 const FIRST_CHUNK_MAX_LENGTH = MAX_APDU_DATA_LENGTH - INDEX_LOOKUP_LENGTH;
 const NEXT_CHUNK_MAX_LENGTH = MAX_APDU_DATA_LENGTH;
-const HEADER_V5_SIZE = 4 * 5;
-const HEADER_V4_SIZE = 4 * 3;
-const SAPLING_SPEND_SIZE = 32 + 32 + 32;
-const SAPLING_OUTPUT_COMPACT_SIZE = 32 + 32 + 52;
-const SAPLING_OUTPUT_NON_COMPACT_SIZE = 32 + 16 + 80;
-const ORCHARD_ACTION_COMPACT_SIZE = 32 + 32 + 32 + 52;
-const ORCHARD_ACTION_NON_COMPACT_SIZE = 32 + 32 + 16 + 80;
-const ORCHARD_DIGEST_DATA_SIZE = 1 + 8 + 32;
-const MEMO_CHUNK_SIZE = 128;
+const UINT32_SIZE = 4;
+// version | versionGroupId | consensusBranchId | lockTime | expiryHeight
+const HEADER_V5_SIZE = 5 * UINT32_SIZE;
+// version | versionGroupId | consensusBranchId
+const HEADER_V4_SIZE = 3 * UINT32_SIZE;
+const HASH_SIZE = 32;
+const VALUE_BALANCE_SIZE = 8;
+const FLAGS_SIZE = 1;
+const SIGNATURE_SIZE = 64;
+const SAPLING_PROOF_SIZE = 192;
+const ENC_CIPHERTEXT_COMPACT_SIZE = 52;
+const ENC_CIPHERTEXT_TAG_SIZE = 16;
 const MEMO_SIZE = 512;
+const ENC_CIPHERTEXT_SIZE =
+  ENC_CIPHERTEXT_COMPACT_SIZE + MEMO_SIZE + ENC_CIPHERTEXT_TAG_SIZE;
+const OUT_CIPHERTEXT_SIZE = 80;
+// SpendDescriptionV5 on chain: cv | nullifier | rk
+const SAPLING_SPEND_NULLIFIER_OFFSET = HASH_SIZE;
+const SAPLING_SPEND_RK_OFFSET = SAPLING_SPEND_NULLIFIER_OFFSET + HASH_SIZE;
+const SAPLING_SPEND_SIZE = SAPLING_SPEND_RK_OFFSET + HASH_SIZE;
+// OutputDescriptionV5 on chain: cv | cmu | ephemeralKey | encCiphertext | outCiphertext
+const SAPLING_OUTPUT_CMU_OFFSET = HASH_SIZE;
+const SAPLING_OUTPUT_EPHEMERAL_KEY_OFFSET =
+  SAPLING_OUTPUT_CMU_OFFSET + HASH_SIZE;
+const SAPLING_OUTPUT_ENC_OFFSET =
+  SAPLING_OUTPUT_EPHEMERAL_KEY_OFFSET + HASH_SIZE;
+const SAPLING_OUTPUT_SIZE =
+  SAPLING_OUTPUT_ENC_OFFSET + ENC_CIPHERTEXT_SIZE + OUT_CIPHERTEXT_SIZE;
+// OrchardAction on chain: cv | nullifier | rk | cmx | ephemeralKey | encCiphertext | outCiphertext
+const ORCHARD_ACTION_NULLIFIER_OFFSET = HASH_SIZE;
+const ORCHARD_ACTION_RK_OFFSET = ORCHARD_ACTION_NULLIFIER_OFFSET + HASH_SIZE;
+const ORCHARD_ACTION_CMX_OFFSET = ORCHARD_ACTION_RK_OFFSET + HASH_SIZE;
+const ORCHARD_ACTION_EPHEMERAL_KEY_OFFSET =
+  ORCHARD_ACTION_CMX_OFFSET + HASH_SIZE;
+const ORCHARD_ACTION_ENC_OFFSET =
+  ORCHARD_ACTION_EPHEMERAL_KEY_OFFSET + HASH_SIZE;
+const ORCHARD_ACTION_SIZE =
+  ORCHARD_ACTION_ENC_OFFSET + ENC_CIPHERTEXT_SIZE + OUT_CIPHERTEXT_SIZE;
+const ORCHARD_DIGEST_DATA_SIZE = FLAGS_SIZE + VALUE_BALANCE_SIZE + HASH_SIZE;
+const MEMO_CHUNK_SIZE = 128;
 const SCRIPT_SIG_SEQUENCE_CHUNK_SIZE = 50;
 const TX_VERSION_MASK = 0x7fffffff;
+const TX_VERSION_V4 = 4;
+const TX_VERSION_V5 = 5;
 
 type GetTrustedInputTaskArgs = {
   transaction: Uint8Array;
@@ -158,12 +191,241 @@ const splitV5ExtraData = (
   expiry: Uint8Array,
 ): Uint8Array => concatUint8Arrays(locktime, new Uint8Array([0x04]), expiry);
 
+type ShieldedBundles = {
+  saplingSpends: Uint8Array[];
+  saplingOutputs: Uint8Array[];
+  saplingValueBalance: Uint8Array;
+  saplingAnchor: Uint8Array;
+  orchardActions: Uint8Array[];
+  orchardDigestData: Uint8Array;
+};
+
+type DigestParts = {
+  compact: Uint8Array;
+  memo: Uint8Array;
+  nonCompact: Uint8Array;
+};
+
+const createFieldReader = (buffer: Uint8Array, startOffset: number) => {
+  let offset = startOffset;
+
+  return {
+    take: (size: number): Uint8Array => {
+      ensureRange(buffer, offset, offset + size);
+      const bytes = buffer.slice(offset, offset + size);
+      offset += size;
+      return bytes;
+    },
+    skip: (size: number): void => {
+      ensureRange(buffer, offset, offset + size);
+      offset += size;
+    },
+    takeCount: (): number => {
+      const { value, nextOffset } = readCompactSize(buffer, offset);
+      offset = nextOffset;
+      return value;
+    },
+  };
+};
+
+/**
+ * Reads the shielded bundles of a v5 transaction as they are laid out on chain
+ * (ZIP-225): each description keeps its own fields together, and the proofs and
+ * signatures trail the descriptions. Proofs and signatures are skipped, as they
+ * belong to the authorizing data commitment rather than to the txid, but the
+ * Sapling ones still have to be stepped over to reach the Orchard action count.
+ */
+const readShieldedBundles = (
+  transaction: Uint8Array,
+  offset: number,
+): ShieldedBundles => {
+  const reader = createFieldReader(transaction, offset);
+
+  const spendCount = reader.takeCount();
+  const saplingSpends = Array.from({ length: spendCount }, () =>
+    reader.take(SAPLING_SPEND_SIZE),
+  );
+
+  const outputCount = reader.takeCount();
+  const saplingOutputs = Array.from({ length: outputCount }, () =>
+    reader.take(SAPLING_OUTPUT_SIZE),
+  );
+
+  let saplingValueBalance: Uint8Array = new Uint8Array();
+  let saplingAnchor: Uint8Array = new Uint8Array();
+
+  if (spendCount > 0 || outputCount > 0) {
+    saplingValueBalance = reader.take(VALUE_BALANCE_SIZE);
+    if (spendCount > 0) {
+      saplingAnchor = reader.take(HASH_SIZE);
+    }
+    reader.skip(
+      spendCount * (SAPLING_PROOF_SIZE + SIGNATURE_SIZE) +
+        outputCount * SAPLING_PROOF_SIZE +
+        SIGNATURE_SIZE,
+    );
+  }
+
+  const actionCount = reader.takeCount();
+  const orchardActions = Array.from({ length: actionCount }, () =>
+    reader.take(ORCHARD_ACTION_SIZE),
+  );
+
+  return {
+    saplingSpends,
+    saplingOutputs,
+    saplingValueBalance,
+    saplingAnchor,
+    orchardActions,
+    orchardDigestData:
+      actionCount > 0
+        ? reader.take(ORCHARD_DIGEST_DATA_SIZE)
+        : new Uint8Array(),
+  };
+};
+
+const saplingOutputDigestParts = (output: Uint8Array): DigestParts => {
+  const cv = output.subarray(0, SAPLING_OUTPUT_CMU_OFFSET);
+  const cmuAndEphemeralKey = output.subarray(
+    SAPLING_OUTPUT_CMU_OFFSET,
+    SAPLING_OUTPUT_ENC_OFFSET,
+  );
+  const enc = output.subarray(
+    SAPLING_OUTPUT_ENC_OFFSET,
+    SAPLING_OUTPUT_ENC_OFFSET + ENC_CIPHERTEXT_SIZE,
+  );
+  const out = output.subarray(SAPLING_OUTPUT_ENC_OFFSET + ENC_CIPHERTEXT_SIZE);
+
+  return {
+    compact: concatUint8Arrays(
+      cmuAndEphemeralKey,
+      enc.subarray(0, ENC_CIPHERTEXT_COMPACT_SIZE),
+    ),
+    memo: enc.subarray(
+      ENC_CIPHERTEXT_COMPACT_SIZE,
+      ENC_CIPHERTEXT_COMPACT_SIZE + MEMO_SIZE,
+    ),
+    nonCompact: concatUint8Arrays(
+      cv,
+      enc.subarray(ENC_CIPHERTEXT_COMPACT_SIZE + MEMO_SIZE),
+      out,
+    ),
+  };
+};
+
+const orchardActionDigestParts = (action: Uint8Array): DigestParts => {
+  const cv = action.subarray(0, ORCHARD_ACTION_NULLIFIER_OFFSET);
+  const nullifier = action.subarray(
+    ORCHARD_ACTION_NULLIFIER_OFFSET,
+    ORCHARD_ACTION_RK_OFFSET,
+  );
+  const rk = action.subarray(
+    ORCHARD_ACTION_RK_OFFSET,
+    ORCHARD_ACTION_CMX_OFFSET,
+  );
+  const cmxAndEphemeralKey = action.subarray(
+    ORCHARD_ACTION_CMX_OFFSET,
+    ORCHARD_ACTION_ENC_OFFSET,
+  );
+  const enc = action.subarray(
+    ORCHARD_ACTION_ENC_OFFSET,
+    ORCHARD_ACTION_ENC_OFFSET + ENC_CIPHERTEXT_SIZE,
+  );
+  const out = action.subarray(ORCHARD_ACTION_ENC_OFFSET + ENC_CIPHERTEXT_SIZE);
+
+  return {
+    compact: concatUint8Arrays(
+      nullifier,
+      cmxAndEphemeralKey,
+      enc.subarray(0, ENC_CIPHERTEXT_COMPACT_SIZE),
+    ),
+    memo: enc.subarray(
+      ENC_CIPHERTEXT_COMPACT_SIZE,
+      ENC_CIPHERTEXT_COMPACT_SIZE + MEMO_SIZE,
+    ),
+    nonCompact: concatUint8Arrays(
+      cv,
+      rk,
+      enc.subarray(ENC_CIPHERTEXT_COMPACT_SIZE + MEMO_SIZE),
+      out,
+    ),
+  };
+};
+
+// MEMO_SIZE is a whole number of MEMO_CHUNK_SIZE, so slicing each memo on its
+// own yields the same stream as slicing their concatenation, without the copy.
+const pushMemoChunks = (chunks: Uint8Array[], memos: Uint8Array[]): void => {
+  memos.forEach((memo) => {
+    for (let offset = 0; offset < memo.length; offset += MEMO_CHUNK_SIZE) {
+      chunks.push(memo.subarray(offset, offset + MEMO_CHUNK_SIZE));
+    }
+  });
+};
+
+/**
+ * ZIP-244 spreads a shielded description over three digests — compact, memos and
+ * non-compact — and the device app hashes each one from its own stream: it takes
+ * the compact part of every description, then every memo, then every non-compact
+ * part. On chain those fields are interleaved description by description, so they
+ * must be regrouped here; the app hashes as bytes arrive and cannot reorder them.
+ * Sapling spends are the exception and keep their on-chain layout, since the app
+ * reads cv, nullifier and rk individually and routes each to the right digest.
+ */
+const pushShieldedChunks = (
+  chunks: Uint8Array[],
+  bundles: ShieldedBundles,
+): void => {
+  chunks.push(
+    concatUint8Arrays(
+      createVarint(bundles.saplingSpends.length),
+      createVarint(bundles.saplingOutputs.length),
+      createVarint(bundles.orchardActions.length),
+    ),
+  );
+
+  if (bundles.saplingSpends.length > 0 || bundles.saplingOutputs.length > 0) {
+    chunks.push(
+      concatUint8Arrays(bundles.saplingValueBalance, bundles.saplingAnchor),
+    );
+
+    bundles.saplingSpends.forEach((spend) => chunks.push(spend));
+
+    const outputParts = bundles.saplingOutputs.map(saplingOutputDigestParts);
+    outputParts.forEach(({ compact }) => chunks.push(compact));
+    pushMemoChunks(
+      chunks,
+      outputParts.map(({ memo }) => memo),
+    );
+    outputParts.forEach(({ nonCompact }) => chunks.push(nonCompact));
+  }
+
+  if (bundles.orchardActions.length > 0) {
+    const actionParts = bundles.orchardActions.map(orchardActionDigestParts);
+    actionParts.forEach(({ compact }) => chunks.push(compact));
+    pushMemoChunks(
+      chunks,
+      actionParts.map(({ memo }) => memo),
+    );
+    actionParts.forEach(({ nonCompact }) => chunks.push(nonCompact));
+    chunks.push(bundles.orchardDigestData);
+  }
+};
+
 const splitTransactionToTrustedInputChunks = (
   transaction: Uint8Array,
 ): Uint8Array[] => {
   const rawVersion = readUInt32LE(transaction, 0);
   const txVersion = rawVersion & TX_VERSION_MASK;
-  const isTxV4 = txVersion === 4;
+  const isTxV4 = txVersion === TX_VERSION_V4;
+
+  // The device app computes a txid for v4 and v5 only in this flow, and turns
+  // anything newer away with "V6 transaction in legacy path". Naming the version
+  // here beats streaming, say, a v6 as though its bundles followed ZIP-225.
+  if (!isTxV4 && txVersion !== TX_VERSION_V5) {
+    throw new Error(
+      `Unsupported transaction version ${txVersion} while splitting trusted input chunks`,
+    );
+  }
 
   let offset = 0;
   let locktime = new Uint8Array();
@@ -229,120 +491,24 @@ const splitTransactionToTrustedInputChunks = (
     chunks.push(transaction.slice(valueStart, offset));
   }
 
-  const saplingOrchardStart = offset;
-  const saplingSpends = readCompactSize(transaction, offset);
-  offset = saplingSpends.nextOffset;
-  const saplingOutputs = readCompactSize(transaction, offset);
-  offset = saplingOutputs.nextOffset;
-  const orchardActions = readCompactSize(transaction, offset);
-  offset = orchardActions.nextOffset;
-  chunks.push(transaction.slice(saplingOrchardStart, offset));
-
-  if (saplingSpends.value > 0 || saplingOutputs.value > 0) {
-    const saplingHeaderStart = offset;
-    ensureRange(transaction, offset, offset + 8);
-    offset += 8;
-
-    if (saplingSpends.value > 0) {
-      ensureRange(transaction, offset, offset + 32);
-      offset += 32;
-    }
-    chunks.push(transaction.slice(saplingHeaderStart, offset));
-
-    for (
-      let spendIndex = 0;
-      spendIndex < saplingSpends.value;
-      spendIndex += 1
-    ) {
-      const spendStart = offset;
-      ensureRange(transaction, offset, offset + SAPLING_SPEND_SIZE);
-      offset += SAPLING_SPEND_SIZE;
-      chunks.push(transaction.slice(spendStart, offset));
-    }
-
-    for (
-      let outputIndex = 0;
-      outputIndex < saplingOutputs.value;
-      outputIndex += 1
-    ) {
-      const compactStart = offset;
-      ensureRange(transaction, offset, offset + SAPLING_OUTPUT_COMPACT_SIZE);
-      offset += SAPLING_OUTPUT_COMPACT_SIZE;
-      chunks.push(transaction.slice(compactStart, offset));
-    }
-
-    let saplingMemoRemaining = saplingOutputs.value * MEMO_SIZE;
-    while (saplingMemoRemaining > 0) {
-      const memoChunkSize = Math.min(MEMO_CHUNK_SIZE, saplingMemoRemaining);
-      ensureRange(transaction, offset, offset + memoChunkSize);
-      chunks.push(transaction.slice(offset, offset + memoChunkSize));
-      offset += memoChunkSize;
-      saplingMemoRemaining -= memoChunkSize;
-    }
-
-    for (
-      let outputIndex = 0;
-      outputIndex < saplingOutputs.value;
-      outputIndex += 1
-    ) {
-      const nonCompactStart = offset;
-      ensureRange(
-        transaction,
-        offset,
-        offset + SAPLING_OUTPUT_NON_COMPACT_SIZE,
-      );
-      offset += SAPLING_OUTPUT_NON_COMPACT_SIZE;
-      chunks.push(transaction.slice(nonCompactStart, offset));
-    }
-  }
-
-  if (orchardActions.value > 0) {
-    for (
-      let actionIndex = 0;
-      actionIndex < orchardActions.value;
-      actionIndex += 1
-    ) {
-      const compactStart = offset;
-      ensureRange(transaction, offset, offset + ORCHARD_ACTION_COMPACT_SIZE);
-      offset += ORCHARD_ACTION_COMPACT_SIZE;
-      chunks.push(transaction.slice(compactStart, offset));
-    }
-
-    let orchardMemoRemaining = orchardActions.value * MEMO_SIZE;
-    while (orchardMemoRemaining > 0) {
-      const memoChunkSize = Math.min(MEMO_CHUNK_SIZE, orchardMemoRemaining);
-      ensureRange(transaction, offset, offset + memoChunkSize);
-      chunks.push(transaction.slice(offset, offset + memoChunkSize));
-      offset += memoChunkSize;
-      orchardMemoRemaining -= memoChunkSize;
-    }
-
-    for (
-      let actionIndex = 0;
-      actionIndex < orchardActions.value;
-      actionIndex += 1
-    ) {
-      const nonCompactStart = offset;
-      ensureRange(
-        transaction,
-        offset,
-        offset + ORCHARD_ACTION_NON_COMPACT_SIZE,
-      );
-      offset += ORCHARD_ACTION_NON_COMPACT_SIZE;
-      chunks.push(transaction.slice(nonCompactStart, offset));
-    }
-
-    const digestStart = offset;
-    ensureRange(transaction, offset, offset + ORCHARD_DIGEST_DATA_SIZE);
-    offset += ORCHARD_DIGEST_DATA_SIZE;
-    chunks.push(transaction.slice(digestStart, offset));
-  }
-
   if (isTxV4) {
-    chunks.push(transaction.slice(offset));
-  } else {
-    chunks.push(splitV5ExtraData(locktime, expiry));
+    // A v4 previous transaction reaches this point already framed the way the
+    // device expects — three zeroed shielded counts, then locktime, extra data
+    // length and extra data (see `serializeTransaction`), its Sapling fields
+    // travelling in that extra data. Its trailing bytes are forwarded as they
+    // are, the counts keeping the separate chunk the device app was tested with.
+    const spendCount = readCompactSize(transaction, offset);
+    const outputCount = readCompactSize(transaction, spendCount.nextOffset);
+    const actionCount = readCompactSize(transaction, outputCount.nextOffset);
+
+    chunks.push(transaction.slice(offset, actionCount.nextOffset));
+    chunks.push(transaction.slice(actionCount.nextOffset));
+
+    return splitForApduData(chunks);
   }
+
+  pushShieldedChunks(chunks, readShieldedBundles(transaction, offset));
+  chunks.push(splitV5ExtraData(locktime, expiry));
 
   return splitForApduData(chunks);
 };

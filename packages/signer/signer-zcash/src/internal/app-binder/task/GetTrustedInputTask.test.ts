@@ -7,6 +7,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { GetTrustedInputCommand } from "@internal/app-binder/command/GetTrustedInputCommand";
+import {
+  apduRecordStoreFromLogs,
+  splitTransactionArgsFromLogsSecond,
+} from "@internal/app-binder/task/__fixtures__/signTransactionFromLedgerWalletLogs2026-05-12";
 import { signTransactionFromLedgerWalletLogs20260615 } from "@internal/app-binder/task/__fixtures__/signTransactionFromLedgerWalletLogs2026-06-15";
 import {
   getZcashBranchId,
@@ -38,11 +42,154 @@ const hexToBytes = (hex: string): Uint8Array =>
   Uint8Array.from(Buffer.from(hex, "hex"));
 const bytesToHex = (bytes: Uint8Array): string =>
   Buffer.from(bytes).toString("hex");
+const concatBytes = (...parts: Uint8Array[]): Uint8Array =>
+  Uint8Array.from(Buffer.concat(parts.map((part) => Buffer.from(part))));
+const byteRun = (marker: number, length: number): Uint8Array =>
+  new Uint8Array(length).fill(marker);
+const runHex = (marker: number, length: number): string =>
+  bytesToHex(byteRun(marker, length));
+
+// Markers for the fields of the synthetic v5 Sapling transaction below. Every
+// field gets its own byte, so a wrong offset or a mixed-up group is readable in
+// the assertion instead of showing up as an opaque hex mismatch. AUTHORIZING
+// fills the proofs and signatures, which the txid does not commit to: it must
+// appear nowhere in the stream.
+const VALUE_BALANCE_MARKER = 0x41;
+const ANCHOR_MARKER = 0x42;
+const AUTHORIZING_MARKER = 0xee;
+const SPEND_CV_MARKER = 0x11;
+const SPEND_NULLIFIER_MARKER = 0x12;
+const SPEND_RK_MARKER = 0x13;
+
+// Sizes the device app reads per field (see `sapling.rs`): a compact output is
+// cmu | ephemeralKey | 52 compact bytes, and a non-compact one is cv | the
+// 16-byte tag of encCiphertext | outCiphertext.
+const SAPLING_SPEND_SIZE = 96;
+const SAPLING_OUTPUTS_COMPACT_SIZE = 116;
+const SAPLING_OUTPUTS_NONCOMPACT_SIZE = 128;
+const SAPLING_MEMO_SIZE = 512;
+const MEMO_CHUNK_SIZE = 128;
+const SAPLING_SPEND_PROOF_AND_SIG_SIZE = 192 + 64;
+const SAPLING_OUTPUT_PROOF_SIZE = 192;
+const SAPLING_BINDING_SIG_SIZE = 64;
+
+const V5_HEADER_HEX = "050000800a27a7265510e7c8"; // version | versionGroupId | branchId
+const V5_LOCK_TIME_HEX = "01020304";
+const V5_EXPIRY_HEX = "05060708";
+// One transparent input and one transparent output, deliberately small so the
+// assertions stay focused on the shielded groups.
+const TRANSPARENT_BODY_HEX =
+  "01" + // tx_in count
+  "51".repeat(32) +
+  "00000000" + // prevout
+  "02" +
+  "5152" + // scriptSig
+  "ffffffff" + // sequence
+  "01" + // tx_out count
+  "40420f0000000000" + // value
+  "02" +
+  "5354"; // scriptPubKey
+
+/** OutputDescriptionV5 on chain: cv | cmu | ephemeralKey | encCiphertext | outCiphertext. */
+const saplingOutputFields = (base: number) => ({
+  cv: byteRun(base + 0x01, 32),
+  cmu: byteRun(base + 0x02, 32),
+  ephemeralKey: byteRun(base + 0x03, 32),
+  encCompact: byteRun(base + 0x04, 52),
+  memo: byteRun(base + 0x05, SAPLING_MEMO_SIZE),
+  encTag: byteRun(base + 0x06, 16),
+  outCiphertext: byteRun(base + 0x07, 80),
+});
+type SaplingOutputFields = ReturnType<typeof saplingOutputFields>;
+
+const serializeSaplingOutput = (output: SaplingOutputFields): Uint8Array =>
+  concatBytes(
+    output.cv,
+    output.cmu,
+    output.ephemeralKey,
+    output.encCompact,
+    output.memo,
+    output.encTag,
+    output.outCiphertext,
+  );
+
+/**
+ * Builds a v5 transaction whose Sapling bundle follows the ZIP-225 on-chain
+ * layout: the descriptions first, then the value balance and the anchor, then
+ * the proofs and signatures that belong to the authorizing data commitment
+ * rather than to the txid.
+ */
+const buildV5TxWithSaplingBundle = (
+  spendCount: number,
+  outputs: SaplingOutputFields[],
+): Uint8Array => {
+  const hasBundle = spendCount > 0 || outputs.length > 0;
+
+  return concatBytes(
+    hexToBytes(V5_HEADER_HEX),
+    hexToBytes(V5_LOCK_TIME_HEX),
+    hexToBytes(V5_EXPIRY_HEX),
+    hexToBytes(TRANSPARENT_BODY_HEX),
+    new Uint8Array([spendCount]),
+    ...Array.from({ length: spendCount }, () =>
+      concatBytes(
+        byteRun(SPEND_CV_MARKER, 32),
+        byteRun(SPEND_NULLIFIER_MARKER, 32),
+        byteRun(SPEND_RK_MARKER, 32),
+      ),
+    ),
+    new Uint8Array([outputs.length]),
+    ...outputs.map(serializeSaplingOutput),
+    hasBundle ? byteRun(VALUE_BALANCE_MARKER, 8) : new Uint8Array(),
+    spendCount > 0 ? byteRun(ANCHOR_MARKER, 32) : new Uint8Array(),
+    byteRun(
+      AUTHORIZING_MARKER,
+      spendCount * SAPLING_SPEND_PROOF_AND_SIG_SIZE +
+        outputs.length * SAPLING_OUTPUT_PROOF_SIZE +
+        (hasBundle ? SAPLING_BINDING_SIG_SIZE : 0),
+    ),
+    new Uint8Array([0x00]), // no Orchard action
+  );
+};
+
+const memoChunksHex = (memo: Uint8Array): string[] =>
+  Array.from({ length: memo.length / MEMO_CHUNK_SIZE }, () =>
+    runHex(memo[0] ?? 0, MEMO_CHUNK_SIZE),
+  );
+const compactHex = (output: SaplingOutputFields): string =>
+  bytesToHex(concatBytes(output.cmu, output.ephemeralKey, output.encCompact));
+const nonCompactHex = (output: SaplingOutputFields): string =>
+  bytesToHex(concatBytes(output.cv, output.encTag, output.outCiphertext));
 
 const makeSuccessResponse = (byte: number) => ({
   statusCode: new Uint8Array([0x90, 0x00]),
   data: new Uint8Array([byte]),
 });
+
+/**
+ * GET_TRUSTED_INPUT APDUs recorded in the 2026-05-12 log, grouped per call (P1=00
+ * starts a new one). They were produced by the pre-DMK implementation, and the
+ * device answered them with the ZIP-244 txids kept in `trustedInputHexesFromLogs`,
+ * which match the chain — so they are the reference framing for a previous
+ * transaction, including the second call whose source carries an Orchard bundle.
+ */
+const trustedInputApduCallsFromLogs = (): string[][] => {
+  const calls: string[][] = [];
+
+  apduRecordStoreFromLogs
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("=> e042"))
+    .map((line) => line.slice(3))
+    .forEach((apdu) => {
+      if (apdu.startsWith("e04200")) {
+        calls.push([]);
+      }
+      calls.at(-1)?.push(apdu);
+    });
+
+  return calls;
+};
 
 describe("GetTrustedInputTask", () => {
   let apiMock: InternalApi;
@@ -52,6 +199,16 @@ describe("GetTrustedInputTask", () => {
       sendCommand: vi.fn(),
     } as unknown as InternalApi;
   });
+
+  /** Data sent per APDU, the 5-byte APDU header aside. */
+  const sentApduData = (): string[] =>
+    vi
+      .mocked(apiMock.sendCommand)
+      .mock.calls.map(([command]) =>
+        bytesToHex(
+          (command as GetTrustedInputCommand).getApdu().getRawApdu().slice(5),
+        ),
+      );
 
   it("sends the expected trusted-input APDU sequence and returns the last response", async () => {
     const txBytes = hexToBytes(TRANSPARENT_V5_TX_HEX);
@@ -160,6 +317,127 @@ describe("GetTrustedInputTask", () => {
     // so the chunker read the count off the locktime byte → "...f04dec4d00" (0 inputs)
     // → the device misparsed the stream and returned 6a80.
     expect(header).toBe("000000000400008085202f89f04dec4d03");
+  });
+
+  it("regroups the shielded fields of a v5 Orchard previous transaction by ZIP-244 digest (regression: wrong txid, then 504 on broadcast)", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: hexToBytes(
+        splitTransactionArgsFromLogsSecond.transactionHex,
+      ),
+      indexLookup: 0,
+    }).run();
+
+    const sentApdus = vi
+      .mocked(apiMock.sendCommand)
+      .mock.calls.map(([command]) =>
+        bytesToHex((command as GetTrustedInputCommand).getApdu().getRawApdu()),
+      );
+
+    // On chain an Orchard action keeps its own fields together, while the device
+    // hashes one digest per stream — compact parts, then memos, then non-compact
+    // parts — and rejects any digest block split across two APDUs. Streaming the
+    // raw bytes in their on-chain order made it commit to a txid that no output
+    // carried, so the signed transaction spent an unknown input and the broadcast
+    // timed out.
+    expect(sentApdus).toEqual(trustedInputApduCallsFromLogs()[1]);
+  });
+
+  it("regroups a v5 Sapling bundle per ZIP-244 digest and leaves the authorizing data out", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+    const outputs = [saplingOutputFields(0x20), saplingOutputFields(0x30)];
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: buildV5TxWithSaplingBundle(1, outputs),
+      indexLookup: 0,
+    }).run();
+
+    const [firstChunk, ...nextChunks] = sentApduData();
+    expect(firstChunk).toBe(`00000000${V5_HEADER_HEX}01`);
+    expect(nextChunks).toEqual([
+      `${"51".repeat(32)}0000000002`, // prevout | scriptSig length
+      "5152ffffffff", // scriptSig | sequence
+      "01", // tx_out count
+      "40420f0000000000025354", // value | scriptPubKey
+      "010200", // one spend, two outputs, no action
+      runHex(VALUE_BALANCE_MARKER, 8) + runHex(ANCHOR_MARKER, 32),
+      // A spend keeps its on-chain layout, since the app reads cv, nullifier and
+      // rk one by one and routes each to the digest it belongs to.
+      runHex(SPEND_CV_MARKER, 32) +
+        runHex(SPEND_NULLIFIER_MARKER, 32) +
+        runHex(SPEND_RK_MARKER, 32),
+      // Outputs, on the other hand, are regrouped: every compact part, then
+      // every memo, then every non-compact part.
+      compactHex(outputs[0]!),
+      compactHex(outputs[1]!),
+      ...memoChunksHex(outputs[0]!.memo),
+      ...memoChunksHex(outputs[1]!.memo),
+      nonCompactHex(outputs[0]!),
+      nonCompactHex(outputs[1]!),
+      `${V5_LOCK_TIME_HEX}04${V5_EXPIRY_HEX}`,
+    ]);
+
+    // The app reads these three blocks with `hash_reader_exact`, which rejects a
+    // block split across two APDUs — hence the sizes it expects.
+    expect(compactHex(outputs[0]!).length / 2).toBe(
+      SAPLING_OUTPUTS_COMPACT_SIZE,
+    );
+    expect(nonCompactHex(outputs[0]!).length / 2).toBe(
+      SAPLING_OUTPUTS_NONCOMPACT_SIZE,
+    );
+    expect(nextChunks[6]!.length / 2).toBe(SAPLING_SPEND_SIZE);
+
+    // Proofs and signatures are authorizing data, which the txid does not commit
+    // to: not one of their bytes may reach the device.
+    expect(concatBytes(...sentApduData().map(hexToBytes))).not.toContain(
+      AUTHORIZING_MARKER,
+    );
+  });
+
+  it("omits the Sapling anchor when the bundle has outputs but no spend", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+    const output = saplingOutputFields(0x20);
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: buildV5TxWithSaplingBundle(0, [output]),
+      indexLookup: 0,
+    }).run();
+
+    // ZIP-225 writes the anchor only for a bundle that has spends, and the app
+    // likewise reads the value balance alone before the compact outputs.
+    expect(sentApduData().slice(5)).toEqual([
+      "000100", // no spend, one output, no action
+      runHex(VALUE_BALANCE_MARKER, 8),
+      compactHex(output),
+      ...memoChunksHex(output.memo),
+      nonCompactHex(output),
+      `${V5_LOCK_TIME_HEX}04${V5_EXPIRY_HEX}`,
+    ]);
+  });
+
+  it("rejects a transaction version the device app does not handle in this flow", async () => {
+    // v6 header (Ironwood): version | nVersionGroupId | branchId | locktime | expiry.
+    // The app turns v6 away with "V6 transaction in legacy path", so the stream
+    // must not be built as if the bundles followed the v5 layout.
+    const v6Header = "060000800a27a726f04dec4d00000000a6233300";
+
+    await expect(
+      new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(v6Header),
+        indexLookup: 0,
+      }).run(),
+    ).rejects.toThrow(
+      "Unsupported transaction version 6 while splitting trusted input chunks",
+    );
+
+    expect(apiMock.sendCommand).not.toHaveBeenCalled();
   });
 
   it("throws for malformed transaction input before sending any command", async () => {
