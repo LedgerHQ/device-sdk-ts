@@ -8,6 +8,11 @@ import {
 
 import { GetTrustedInputCommand } from "@internal/app-binder/command/GetTrustedInputCommand";
 import {
+  ironwoodV6OnChainTxHex,
+  ironwoodV6ShieldedChunksHex,
+  ironwoodV6StreamedHex,
+} from "@internal/app-binder/task/__fixtures__/ironwoodV6TrustedInput";
+import {
   apduRecordStoreFromLogs,
   splitTransactionArgsFromLogsSecond,
 } from "@internal/app-binder/task/__fixtures__/signTransactionFromLedgerWalletLogs2026-05-12";
@@ -54,8 +59,11 @@ const runHex = (marker: number, length: number): string =>
 // the assertion instead of showing up as an opaque hex mismatch. AUTHORIZING
 // fills the proofs and signatures, which the txid does not commit to: it must
 // appear nowhere in the stream.
-const VALUE_BALANCE_MARKER = 0x41;
-const ANCHOR_MARKER = 0x42;
+// Kept clear of every other byte in these transactions — including the transparent
+// ones — so that finding one of them in the stream can only mean the trailer leaked.
+const VALUE_BALANCE_MARKER = 0xb1;
+const ANCHOR_MARKER = 0xb2;
+const FLAGS_MARKER = 0xb3;
 const AUTHORIZING_MARKER = 0xee;
 const SPEND_CV_MARKER = 0x11;
 const SPEND_NULLIFIER_MARKER = 0x12;
@@ -152,6 +160,77 @@ const buildV5TxWithSaplingBundle = (
   );
 };
 
+const V6_HEADER_HEX = "0600008098b684d85b16a537"; // version | versionGroupId | branchId
+const ORCHARD_PROOF_SIZE = 2720;
+
+/** OrchardAction on chain: cv | nullifier | rk | cmx | ephemeralKey | encCiphertext | outCiphertext. */
+const orchardActionFields = (base: number) => ({
+  cv: byteRun(base + 0x01, 32),
+  nullifier: byteRun(base + 0x02, 32),
+  rk: byteRun(base + 0x03, 32),
+  cmx: byteRun(base + 0x04, 32),
+  ephemeralKey: byteRun(base + 0x05, 32),
+  encCompact: byteRun(base + 0x06, 52),
+  memo: byteRun(base + 0x07, SAPLING_MEMO_SIZE),
+  encTag: byteRun(base + 0x08, 16),
+  outCiphertext: byteRun(base + 0x09, 80),
+});
+type OrchardActionFields = ReturnType<typeof orchardActionFields>;
+
+const serializeOrchardAction = (action: OrchardActionFields): Uint8Array =>
+  concatBytes(
+    action.cv,
+    action.nullifier,
+    action.rk,
+    action.cmx,
+    action.ephemeralKey,
+    action.encCompact,
+    action.memo,
+    action.encTag,
+    action.outCiphertext,
+  );
+
+/**
+ * Serializes an action bundle the way ZIP-230 lays it out on chain: the count, the
+ * actions, then a trailer of flags, value balance and anchor followed by the proofs
+ * and signatures. Only the flags and the value balance belong to the v6 txid digest.
+ */
+const serializeV6ActionBundle = (actions: OrchardActionFields[]): Uint8Array =>
+  concatBytes(
+    new Uint8Array([actions.length]),
+    ...actions.map(serializeOrchardAction),
+    ...(actions.length === 0
+      ? []
+      : [
+          byteRun(FLAGS_MARKER, 1),
+          byteRun(VALUE_BALANCE_MARKER, 8),
+          byteRun(ANCHOR_MARKER, 32),
+          new Uint8Array([
+            0xfd,
+            ORCHARD_PROOF_SIZE & 0xff,
+            ORCHARD_PROOF_SIZE >> 8,
+          ]),
+          byteRun(AUTHORIZING_MARKER, ORCHARD_PROOF_SIZE),
+          byteRun(AUTHORIZING_MARKER, actions.length * 64), // spendAuthSigs
+          byteRun(AUTHORIZING_MARKER, 64), // bindingSig
+        ]),
+  );
+
+/** A v6 transaction carrying both action pools, with no Sapling bundle. */
+const buildV6TxWithActionBundles = (
+  orchardActions: OrchardActionFields[],
+  ironwoodActions: OrchardActionFields[],
+): Uint8Array =>
+  concatBytes(
+    hexToBytes(V6_HEADER_HEX),
+    hexToBytes(V5_LOCK_TIME_HEX),
+    hexToBytes(V5_EXPIRY_HEX),
+    hexToBytes(TRANSPARENT_BODY_HEX),
+    new Uint8Array([0x00, 0x00]), // no Sapling spend, no Sapling output
+    serializeV6ActionBundle(orchardActions),
+    serializeV6ActionBundle(ironwoodActions),
+  );
+
 const memoChunksHex = (memo: Uint8Array): string[] =>
   Array.from({ length: memo.length / MEMO_CHUNK_SIZE }, () =>
     runHex(memo[0] ?? 0, MEMO_CHUNK_SIZE),
@@ -160,6 +239,19 @@ const compactHex = (output: SaplingOutputFields): string =>
   bytesToHex(concatBytes(output.cmu, output.ephemeralKey, output.encCompact));
 const nonCompactHex = (output: SaplingOutputFields): string =>
   bytesToHex(concatBytes(output.cv, output.encTag, output.outCiphertext));
+const compactActionHex = (action: OrchardActionFields): string =>
+  bytesToHex(
+    concatBytes(
+      action.nullifier,
+      action.cmx,
+      action.ephemeralKey,
+      action.encCompact,
+    ),
+  );
+const nonCompactActionHex = (action: OrchardActionFields): string =>
+  bytesToHex(
+    concatBytes(action.cv, action.rk, action.encTag, action.outCiphertext),
+  );
 
 const makeSuccessResponse = (byte: number) => ({
   statusCode: new Uint8Array([0x90, 0x00]),
@@ -422,19 +514,95 @@ describe("GetTrustedInputTask", () => {
     ]);
   });
 
-  it("rejects a transaction version the device app does not handle in this flow", async () => {
-    // v6 header (Ironwood): version | nVersionGroupId | branchId | locktime | expiry.
-    // The app turns v6 away with "V6 transaction in legacy path", so the stream
-    // must not be built as if the bundles followed the v5 layout.
-    const v6Header = "060000800a27a726f04dec4d00000000a6233300";
+  it("streams a v6 Ironwood previous transaction the way the device app was validated against", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: hexToBytes(ironwoodV6OnChainTxHex),
+      indexLookup: 0,
+    }).run();
+
+    // Fed these bytes, the device app answered with the txid this transaction has on
+    // chain. Spending a UTXO it created depends on that match: a trusted input built on
+    // any other stream commits to a txid no output carries.
+    const sent = sentApduData();
+    expect(sent.join("")).toBe(`00000000${ironwoodV6StreamedHex}`);
+
+    // Within the shielded section the boundaries matter too, since the app reads each
+    // action block with `hash_reader_exact` and rejects one split across two APDUs.
+    expect(sent.slice(-ironwoodV6ShieldedChunksHex.length)).toEqual(
+      ironwoodV6ShieldedChunksHex,
+    );
+  });
+
+  it("regroups a v6 Orchard bundle and the Ironwood bundle behind it, anchors excluded", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+    // Bases chosen clear of the bundle-trailer markers, so that finding one of those in
+    // the stream can only mean the trailer leaked.
+    const orchardAction = orchardActionFields(0x20);
+    const ironwoodAction = orchardActionFields(0x60);
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: buildV6TxWithActionBundles(
+        [orchardAction],
+        [ironwoodAction],
+      ),
+      indexLookup: 0,
+    }).run();
+
+    expect(sentApduData().slice(5)).toEqual([
+      "00000101", // no Sapling, one Orchard action, one Ironwood action
+      // Each bundle is streamed in turn, regrouped per ZIP-244 digest.
+      compactActionHex(orchardAction),
+      ...memoChunksHex(orchardAction.memo),
+      nonCompactActionHex(orchardAction),
+      // ZIP-230 moved the anchor to the authorizing digest, so a v6 bundle commits
+      // to its flags and value balance alone — 9 bytes where a v5 one sends 41.
+      runHex(FLAGS_MARKER, 1) + runHex(VALUE_BALANCE_MARKER, 8),
+      compactActionHex(ironwoodAction),
+      ...memoChunksHex(ironwoodAction.memo),
+      nonCompactActionHex(ironwoodAction),
+      runHex(FLAGS_MARKER, 1) + runHex(VALUE_BALANCE_MARKER, 8),
+      `${V5_LOCK_TIME_HEX}04${V5_EXPIRY_HEX}`,
+    ]);
+
+    // Anchors, proofs and signatures are authorizing data: the txid does not commit
+    // to them, so not one of their bytes may reach the device.
+    const streamed = concatBytes(...sentApduData().map(hexToBytes));
+    expect(streamed).not.toContain(ANCHOR_MARKER);
+    expect(streamed).not.toContain(AUTHORIZING_MARKER);
+  });
+
+  it("rejects a v6 transaction whose version group id is not the one the app expects", async () => {
+    // The app keys its v6 detection on both words and would parse this as a v5.
+    const wrongGroupId = `06000080${"0a27a726"}5b16a53700000000a6233300`;
 
     await expect(
       new GetTrustedInputTask(apiMock, {
-        transaction: hexToBytes(v6Header),
+        transaction: hexToBytes(wrongGroupId),
         indexLookup: 0,
       }).run(),
     ).rejects.toThrow(
-      "Unsupported transaction version 6 while splitting trusted input chunks",
+      "Unexpected version group id for a v6 transaction while splitting trusted input chunks",
+    );
+
+    expect(apiMock.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("rejects a transaction version the device app does not handle in this flow", async () => {
+    const v7Header = "070000800a27a726f04dec4d00000000a6233300";
+
+    await expect(
+      new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(v7Header),
+        indexLookup: 0,
+      }).run(),
+    ).rejects.toThrow(
+      "Unsupported transaction version 7 while splitting trusted input chunks",
     );
 
     expect(apiMock.sendCommand).not.toHaveBeenCalled();
