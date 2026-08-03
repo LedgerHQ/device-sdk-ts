@@ -18,8 +18,11 @@ const MAX_APDU_DATA_LENGTH = 0xff;
 const INDEX_LOOKUP_LENGTH = 4;
 const FIRST_CHUNK_MAX_LENGTH = MAX_APDU_DATA_LENGTH - INDEX_LOOKUP_LENGTH;
 const NEXT_CHUNK_MAX_LENGTH = MAX_APDU_DATA_LENGTH;
-const HEADER_V5_SIZE = 4 * 5;
-const HEADER_V4_SIZE = 4 * 3;
+const UINT32_SIZE = 4;
+// version | versionGroupId | consensusBranchId | lockTime | expiryHeight
+const HEADER_V5_SIZE = 5 * UINT32_SIZE;
+// version | versionGroupId | consensusBranchId
+const HEADER_V4_SIZE = 3 * UINT32_SIZE;
 const HASH_SIZE = 32;
 const VALUE_BALANCE_SIZE = 8;
 const FLAGS_SIZE = 1;
@@ -31,11 +34,28 @@ const MEMO_SIZE = 512;
 const ENC_CIPHERTEXT_SIZE =
   ENC_CIPHERTEXT_COMPACT_SIZE + MEMO_SIZE + ENC_CIPHERTEXT_TAG_SIZE;
 const OUT_CIPHERTEXT_SIZE = 80;
-const SAPLING_SPEND_SIZE = 3 * HASH_SIZE;
+// SpendDescriptionV5 on chain: cv | nullifier | rk
+const SAPLING_SPEND_NULLIFIER_OFFSET = HASH_SIZE;
+const SAPLING_SPEND_RK_OFFSET = SAPLING_SPEND_NULLIFIER_OFFSET + HASH_SIZE;
+const SAPLING_SPEND_SIZE = SAPLING_SPEND_RK_OFFSET + HASH_SIZE;
+// OutputDescriptionV5 on chain: cv | cmu | ephemeralKey | encCiphertext | outCiphertext
+const SAPLING_OUTPUT_CMU_OFFSET = HASH_SIZE;
+const SAPLING_OUTPUT_EPHEMERAL_KEY_OFFSET =
+  SAPLING_OUTPUT_CMU_OFFSET + HASH_SIZE;
+const SAPLING_OUTPUT_ENC_OFFSET =
+  SAPLING_OUTPUT_EPHEMERAL_KEY_OFFSET + HASH_SIZE;
 const SAPLING_OUTPUT_SIZE =
-  3 * HASH_SIZE + ENC_CIPHERTEXT_SIZE + OUT_CIPHERTEXT_SIZE;
+  SAPLING_OUTPUT_ENC_OFFSET + ENC_CIPHERTEXT_SIZE + OUT_CIPHERTEXT_SIZE;
+// OrchardAction on chain: cv | nullifier | rk | cmx | ephemeralKey | encCiphertext | outCiphertext
+const ORCHARD_ACTION_NULLIFIER_OFFSET = HASH_SIZE;
+const ORCHARD_ACTION_RK_OFFSET = ORCHARD_ACTION_NULLIFIER_OFFSET + HASH_SIZE;
+const ORCHARD_ACTION_CMX_OFFSET = ORCHARD_ACTION_RK_OFFSET + HASH_SIZE;
+const ORCHARD_ACTION_EPHEMERAL_KEY_OFFSET =
+  ORCHARD_ACTION_CMX_OFFSET + HASH_SIZE;
+const ORCHARD_ACTION_ENC_OFFSET =
+  ORCHARD_ACTION_EPHEMERAL_KEY_OFFSET + HASH_SIZE;
 const ORCHARD_ACTION_SIZE =
-  5 * HASH_SIZE + ENC_CIPHERTEXT_SIZE + OUT_CIPHERTEXT_SIZE;
+  ORCHARD_ACTION_ENC_OFFSET + ENC_CIPHERTEXT_SIZE + OUT_CIPHERTEXT_SIZE;
 const ORCHARD_DIGEST_DATA_SIZE = FLAGS_SIZE + VALUE_BALANCE_SIZE + HASH_SIZE;
 const MEMO_CHUNK_SIZE = 128;
 const SCRIPT_SIG_SEQUENCE_CHUNK_SIZE = 50;
@@ -264,15 +284,17 @@ const readShieldedBundles = (
   };
 };
 
-// OutputDescriptionV5 on chain: cv | cmu | ephemeralKey | encCiphertext | outCiphertext
 const saplingOutputDigestParts = (output: Uint8Array): DigestParts => {
-  const cv = output.subarray(0, HASH_SIZE);
-  const cmuAndEphemeralKey = output.subarray(HASH_SIZE, 3 * HASH_SIZE);
-  const enc = output.subarray(
-    3 * HASH_SIZE,
-    3 * HASH_SIZE + ENC_CIPHERTEXT_SIZE,
+  const cv = output.subarray(0, SAPLING_OUTPUT_CMU_OFFSET);
+  const cmuAndEphemeralKey = output.subarray(
+    SAPLING_OUTPUT_CMU_OFFSET,
+    SAPLING_OUTPUT_ENC_OFFSET,
   );
-  const out = output.subarray(3 * HASH_SIZE + ENC_CIPHERTEXT_SIZE);
+  const enc = output.subarray(
+    SAPLING_OUTPUT_ENC_OFFSET,
+    SAPLING_OUTPUT_ENC_OFFSET + ENC_CIPHERTEXT_SIZE,
+  );
+  const out = output.subarray(SAPLING_OUTPUT_ENC_OFFSET + ENC_CIPHERTEXT_SIZE);
 
   return {
     compact: concatUint8Arrays(
@@ -291,17 +313,25 @@ const saplingOutputDigestParts = (output: Uint8Array): DigestParts => {
   };
 };
 
-// OrchardAction on chain: cv | nullifier | rk | cmx | ephemeralKey | encCiphertext | outCiphertext
 const orchardActionDigestParts = (action: Uint8Array): DigestParts => {
-  const cv = action.subarray(0, HASH_SIZE);
-  const nullifier = action.subarray(HASH_SIZE, 2 * HASH_SIZE);
-  const rk = action.subarray(2 * HASH_SIZE, 3 * HASH_SIZE);
-  const cmxAndEphemeralKey = action.subarray(3 * HASH_SIZE, 5 * HASH_SIZE);
-  const enc = action.subarray(
-    5 * HASH_SIZE,
-    5 * HASH_SIZE + ENC_CIPHERTEXT_SIZE,
+  const cv = action.subarray(0, ORCHARD_ACTION_NULLIFIER_OFFSET);
+  const nullifier = action.subarray(
+    ORCHARD_ACTION_NULLIFIER_OFFSET,
+    ORCHARD_ACTION_RK_OFFSET,
   );
-  const out = action.subarray(5 * HASH_SIZE + ENC_CIPHERTEXT_SIZE);
+  const rk = action.subarray(
+    ORCHARD_ACTION_RK_OFFSET,
+    ORCHARD_ACTION_CMX_OFFSET,
+  );
+  const cmxAndEphemeralKey = action.subarray(
+    ORCHARD_ACTION_CMX_OFFSET,
+    ORCHARD_ACTION_ENC_OFFSET,
+  );
+  const enc = action.subarray(
+    ORCHARD_ACTION_ENC_OFFSET,
+    ORCHARD_ACTION_ENC_OFFSET + ENC_CIPHERTEXT_SIZE,
+  );
+  const out = action.subarray(ORCHARD_ACTION_ENC_OFFSET + ENC_CIPHERTEXT_SIZE);
 
   return {
     compact: concatUint8Arrays(
