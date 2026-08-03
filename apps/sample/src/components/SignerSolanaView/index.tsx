@@ -55,6 +55,7 @@ const DEFAULT_DERIVATION_PATH = "44'/501'/0'/0'";
 type SignTransactionInput = {
   derivationPath: string;
   transaction: string;
+  serializedTransactionForTransactionCheck: string;
   skipOpenApp: boolean;
   delayed: boolean;
   templateId: string;
@@ -68,6 +69,7 @@ type SignTransactionInput = {
 const MAIN_KEYS: (keyof SignTransactionInput)[] = [
   "derivationPath",
   "transaction",
+  "serializedTransactionForTransactionCheck",
   "skipOpenApp",
   "delayed",
 ];
@@ -244,6 +246,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         executeDeviceAction: ({
           derivationPath,
           transaction,
+          serializedTransactionForTransactionCheck,
           delayed,
           templateId,
           tokenAddress,
@@ -254,6 +257,11 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         }) => {
           const serializedTransaction =
             base64StringToBuffer(transaction) ?? new Uint8Array();
+
+          const serializedTxForCheck = serializedTransactionForTransactionCheck
+            ? (base64StringToBuffer(serializedTransactionForTransactionCheck) ??
+              undefined)
+            : undefined;
 
           const createATA =
             createATAAddress && createATAMintAddress
@@ -278,11 +286,13 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
               },
             }),
             delayed,
+            serializedTransactionForTransactionCheck: serializedTxForCheck,
           });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           transaction: "",
+          serializedTransactionForTransactionCheck: "",
           skipOpenApp: false,
           delayed: false,
           templateId: "",

@@ -31,6 +31,13 @@ export type ProvideTransactionCheckTaskArgs = {
    */
   readonly isBlockhashRefreshNeeded: boolean;
   readonly blockhashService?: BlockhashService;
+  /**
+   * Full wire-format serialized transaction (`tx.serialize()`). When provided,
+   * co-signer signatures already present in this blob are forwarded in the
+   * Transaction Check payload instead of being zero-filled. Never sent to the
+   * device. Must serialize the same message as `transactionBytes`.
+   */
+  readonly serializedTransactionForTransactionCheck?: Uint8Array;
 };
 
 /**
@@ -101,6 +108,8 @@ export class ProvideTransactionCheckTask {
           from: pubKeyResult.data,
           transactionBytes,
           chain: SolanaTransactionScanChainId.MAINNET,
+          serializedTransactionForTransactionCheck:
+            this.args.serializedTransactionForTransactionCheck,
         },
       },
       [ClearSignContextType.SOLANA_TRANSACTION_CHECK],

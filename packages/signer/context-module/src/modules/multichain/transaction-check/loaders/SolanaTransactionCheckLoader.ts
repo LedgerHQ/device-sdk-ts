@@ -3,7 +3,7 @@ import {
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
-import { Codec, number, string } from "purify-ts";
+import { Codec, number, optional, string } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
@@ -28,6 +28,13 @@ export type SolanaTransactionCheckRequest = {
   from: string;
   transactionBytes: Uint8Array;
   chain: number;
+  /**
+   * Full wire-format serialized transaction (`tx.serialize()`). When provided,
+   * co-signer signatures already present in this blob are forwarded in the
+   * Transaction Check payload instead of being zero-filled. Never sent to the
+   * device. Must serialize the same message as `transactionBytes`.
+   */
+  serializedTransactionForTransactionCheck?: Uint8Array;
 };
 
 export type SolanaTransactionCheckContextInput = {
@@ -45,6 +52,8 @@ const VERSIONED_MESSAGE_PREFIX_MASK = 0x80;
 const SHORTVEC_CONTINUATION_BIT = 0x80;
 const SHORTVEC_DATA_MASK = 0x7f;
 const SHORTVEC_DATA_BITS = 7;
+const PLACEHOLDER_SIGNATURE_FILL = 0x01;
+const SHORTVEC_MAX_SHIFT = 21;
 
 const solanaTransactionCheckInputCodec = Codec.interface({
   deviceModelId: deviceModelIdCodec,
@@ -52,6 +61,7 @@ const solanaTransactionCheckInputCodec = Codec.interface({
     from: string,
     transactionBytes: uint8ArrayCodec,
     chain: number,
+    serializedTransactionForTransactionCheck: optional(uint8ArrayCodec),
   }),
 });
 
@@ -89,12 +99,20 @@ export class SolanaTransactionCheckLoader
   async load(
     ctx: SolanaTransactionCheckContextInput,
   ): Promise<ClearSignContext[]> {
-    const { from, transactionBytes, chain } = ctx.transactionCheck;
+    const {
+      from,
+      transactionBytes,
+      chain,
+      serializedTransactionForTransactionCheck,
+    } = ctx.transactionCheck;
 
     let rawTx: string;
     try {
       rawTx = this.bs58Encoder.encode(
-        this.wrapMessageAsTransaction(transactionBytes),
+        this.wrapMessageAsTransaction(
+          transactionBytes,
+          serializedTransactionForTransactionCheck,
+        ),
       );
     } catch (error) {
       const result: ClearSignContext[] = [
@@ -139,15 +157,14 @@ export class SolanaTransactionCheckLoader
   }
 
   /**
-   * Wrap a serialized Solana Message into a serialized Transaction expected
-   * by the web3checks endpoint, by prepending a compact-u16 signature count
-   * and the matching number of zero-filled signature placeholders.
-   *
-   * Supports legacy and versioned messages: versioned messages start with a
-   * version prefix byte (high bit set), shifting `numRequiredSignatures` by
-   * one position.
+   * Wraps a serialized Solana message into a transaction for the web3checks
+   * endpoint by prepending signature placeholders, and (when provided) forwards
+   * valid co-signer signatures recovered from serializedTransactionForTransactionCheck.
    */
-  private wrapMessageAsTransaction(message: Uint8Array): Uint8Array {
+  private wrapMessageAsTransaction(
+    message: Uint8Array,
+    serializedTransactionForTransactionCheck?: Uint8Array,
+  ): Uint8Array {
     const numRequiredSignatures = this.readNumRequiredSignatures(message);
     const sigCount = this.encodeShortVec(numRequiredSignatures);
     const placeholdersLength = numRequiredSignatures * SOLANA_SIGNATURE_LENGTH;
@@ -157,7 +174,84 @@ export class SolanaTransactionCheckLoader
     );
     wrapped.set(sigCount, 0);
     wrapped.set(message, sigCount.length + placeholdersLength);
+
+    for (const [index, signature] of this.recoverSignatures(
+      message,
+      numRequiredSignatures,
+      serializedTransactionForTransactionCheck,
+    )) {
+      wrapped.set(signature, sigCount.length + index * SOLANA_SIGNATURE_LENGTH);
+    }
+
     return wrapped;
+  }
+
+  private recoverSignatures(
+    message: Uint8Array,
+    numRequiredSignatures: number,
+    serialized: Uint8Array | undefined,
+  ): Map<number, Uint8Array> {
+    const none = new Map<number, Uint8Array>();
+    if (!serialized || serialized.length === 0) return none;
+
+    const header = this.decodeShortVec(serialized);
+    if (header === null) return this.skipRecovery("unreadable signature count");
+    const { value: count, byteLength } = header;
+
+    if (count !== numRequiredSignatures)
+      return this.skipRecovery("signature count does not match message header");
+
+    const messageOffset = byteLength + count * SOLANA_SIGNATURE_LENGTH;
+    if (serialized.length - messageOffset !== message.length)
+      return this.skipRecovery("message region length mismatch");
+    if (!this.bytesEqual(serialized.subarray(messageOffset), message))
+      return this.skipRecovery("message region does not match transaction");
+
+    const recovered = new Map<number, Uint8Array>();
+    for (let i = 0; i < count; i++) {
+      const start = byteLength + i * SOLANA_SIGNATURE_LENGTH;
+      const signature = serialized.subarray(
+        start,
+        start + SOLANA_SIGNATURE_LENGTH,
+      );
+      if (!this.isPlaceholderSignature(signature)) recovered.set(i, signature);
+    }
+    return recovered;
+  }
+
+  private skipRecovery(reason: string): Map<number, Uint8Array> {
+    this.logger.debug("[recoverSignatures] skipping recovery", {
+      data: { reason },
+    });
+    return new Map();
+  }
+
+  private decodeShortVec(
+    bytes: Uint8Array,
+  ): { value: number; byteLength: number } | null {
+    let value = 0;
+    let shift = 0;
+    for (let i = 0; i < bytes.length; i++) {
+      const byte = bytes[i]!;
+      value |= (byte & SHORTVEC_DATA_MASK) << shift;
+      if ((byte & SHORTVEC_CONTINUATION_BIT) === 0) {
+        return { value, byteLength: i + 1 };
+      }
+      shift += SHORTVEC_DATA_BITS;
+      if (shift > SHORTVEC_MAX_SHIFT) return null;
+    }
+    return null;
+  }
+
+  private isPlaceholderSignature(signature: Uint8Array): boolean {
+    const first = signature[0];
+    if (first !== 0x00 && first !== PLACEHOLDER_SIGNATURE_FILL) return false;
+    return signature.every((byte) => byte === first);
+  }
+
+  private bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
+    if (a.length !== b.length) return false;
+    return a.every((byte, i) => byte === b[i]);
   }
 
   private readNumRequiredSignatures(message: Uint8Array): number {

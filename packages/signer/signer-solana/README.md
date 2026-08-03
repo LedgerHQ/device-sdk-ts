@@ -134,6 +134,9 @@ const { observable, cancel } = signerSolana.signTransaction(
   - **fetchBlockhash** `() => Promise<Uint8Array>` _(optional)_  
     Custom callback to supply the fresh 32-byte blockhash for delayed signing instead of fetching via `solanaRPCURL`. When provided, `solanaRPCURL` is not required for the delayed path.
 
+  - **serializedTransactionForTransactionCheck** `Uint8Array` _(optional)_  
+    Full wire-format serialized transaction (`tx.serialize()`). When provided, co-signer signatures already present in this blob are forwarded in the Transaction Check payload instead of being zero-filled. **Never sent to the device.** Must serialize the same message as `transaction`. Pass this for multi-signer transactions (e.g. LP position creation on Meteora or Orca) where co-signer signatures are already present at sign time. Note: when delayed signing refreshes the blockhash, Transaction Check uses a blockhash-zeroed preview message, so a blob for the original transaction will be ignored.
+
   - **transactionResolutionContext** `object` _(optional)_  
     Provides additional context for clear signing.
 

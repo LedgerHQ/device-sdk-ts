@@ -63,6 +63,7 @@ export type MachineDependencies = {
       transaction: Uint8Array;
       contextModule: ContextModule;
       isBlockhashRefreshNeeded: boolean;
+      serializedTransactionForTransactionCheck?: Uint8Array;
     };
   }) => Promise<void>;
 };
@@ -433,6 +434,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 contextModule: context.input.contextModule,
                 isBlockhashRefreshNeeded:
                   rpcUrl !== undefined || fetchBlockhash !== undefined,
+                serializedTransactionForTransactionCheck:
+                  context.input.transactionOptions
+                    ?.serializedTransactionForTransactionCheck,
               };
             },
             // Best-effort: a failed scan-descriptor stream never blocks signing.
@@ -677,6 +681,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         transaction: Uint8Array;
         contextModule: ContextModule;
         isBlockhashRefreshNeeded: boolean;
+        serializedTransactionForTransactionCheck?: Uint8Array;
       };
     }) =>
       new ProvideTransactionCheckTask(internalApi, {
@@ -684,6 +689,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         transactionBytes: arg0.input.transaction,
         contextModule: arg0.input.contextModule,
         isBlockhashRefreshNeeded: arg0.input.isBlockhashRefreshNeeded,
+        serializedTransactionForTransactionCheck:
+          arg0.input.serializedTransactionForTransactionCheck,
         loggerFactory: this.getLoggerFactory(internalApi),
       }).run();
 

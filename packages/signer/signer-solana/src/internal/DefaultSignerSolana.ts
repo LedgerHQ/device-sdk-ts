@@ -95,6 +95,17 @@ export class DefaultSignerSolana implements SignerSolana {
    *       a degraded UI is shown on the device (`???` instead of the token
    *       symbol).
    *
+   *   - **serializedTransactionForTransactionCheck** `Uint8Array` *(optional)*
+   *     Full wire-format serialized transaction (`tx.serialize()`). When
+   *     provided, co-signer signatures already present in this blob are
+   *     forwarded in the Transaction Check payload instead of being
+   *     zero-filled. **Never sent to the device.** Must serialize the same
+   *     message as `transaction`. Pass this for multi-signer transactions
+   *     (e.g. LP position creation) where co-signer signatures are already
+   *     present at sign time. When delayed signing refreshes the blockhash,
+   *     Transaction Check uses a blockhash-zeroed preview message, so a blob
+   *     for the original transaction will be ignored.
+   *
    *   - **skipOpenApp** `boolean`
    *     If `true`, skips opening the Solana app on the device.
    *

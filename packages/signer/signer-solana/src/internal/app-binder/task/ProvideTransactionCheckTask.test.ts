@@ -47,6 +47,7 @@ function makeTask(
   getContexts: Mock = vi.fn(async () => [txCheckContext]),
   transactionBytes: Uint8Array = TX,
   isBlockhashRefreshNeeded = true,
+  serializedTransactionForTransactionCheck?: Uint8Array,
 ) {
   const api = {
     sendCommand: vi.fn(async (cmd: unknown) => {
@@ -64,6 +65,7 @@ function makeTask(
     transactionBytes,
     contextModule,
     isBlockhashRefreshNeeded,
+    serializedTransactionForTransactionCheck,
     loggerFactory: () =>
       ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) as any,
   });
@@ -160,5 +162,50 @@ describe("ProvideTransactionCheckTask", () => {
 
     await expect(task.run()).resolves.toBeUndefined();
     expect(getContexts).not.toHaveBeenCalled();
+  });
+
+  it("forwards serializedTransactionForTransactionCheck to getContexts unchanged", async () => {
+    const blob = new Uint8Array([0x01, 0x02, 0x03]);
+    const getContexts = vi.fn(async () => [txCheckContext]);
+    const { task } = makeTask(getContexts, TX, false, blob);
+
+    await task.run();
+
+    const sentTransactionCheck = (getContexts.mock.calls[0] as any)[0]
+      .transactionCheck;
+    expect(sentTransactionCheck.serializedTransactionForTransactionCheck).toBe(
+      blob,
+    );
+  });
+
+  it("passes undefined serializedTransactionForTransactionCheck when field is absent", async () => {
+    const getContexts = vi.fn(async () => [txCheckContext]);
+    const { task } = makeTask(getContexts, TX, false, undefined);
+
+    await task.run();
+
+    const sentTransactionCheck = (getContexts.mock.calls[0] as any)[0]
+      .transactionCheck;
+    expect(
+      sentTransactionCheck.serializedTransactionForTransactionCheck,
+    ).toBeUndefined();
+  });
+
+  it("still zeroes transactionBytes when isBlockhashRefreshNeeded and serializedTransactionForTransactionCheck is supplied", async () => {
+    const message = buildLegacyMessage();
+    const blob = new Uint8Array([0xde, 0xad]);
+    const getContexts = vi.fn(async () => [txCheckContext]);
+    const { task } = makeTask(getContexts, message, true, blob);
+
+    await task.run();
+
+    const sentTransactionCheck = (getContexts.mock.calls[0] as any)[0]
+      .transactionCheck;
+    const expected = new BlockhashService().zeroBlockhash(message);
+    expect(sentTransactionCheck.transactionBytes).toEqual(expected);
+    // blob is forwarded untouched
+    expect(sentTransactionCheck.serializedTransactionForTransactionCheck).toBe(
+      blob,
+    );
   });
 });
