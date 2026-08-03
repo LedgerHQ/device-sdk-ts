@@ -14,6 +14,7 @@ import {
 } from "@/modules/solana/model/SolanaContextTypes";
 import { type SolanaTokenData } from "@/modules/solana/model/SolanaPayloads";
 import { type SolanaTransactionContext } from "@/modules/solana/model/SolanaTransactionContext";
+import { type MintToIdDataSource } from "@/modules/solana/token/data/MintToIdDataSource";
 import {
   type TokenDataResponse,
   type TokenDataSource,
@@ -38,6 +39,8 @@ export class TokenContextLoader
   constructor(
     @inject(tokenTypes.TokenDataSource)
     private readonly dataSource: TokenDataSource,
+    @inject(tokenTypes.MintToIdDataSource)
+    private readonly mintToIdDataSource: MintToIdDataSource,
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
@@ -56,18 +59,18 @@ export class TokenContextLoader
       return false;
     }
 
-    if (
-      typeof input !== "object" ||
-      input === null ||
-      !("tokenInternalId" in input)
-    ) {
+    if (typeof input !== "object" || input === null) {
       return false;
     }
 
-    const tokenInternalId = (input as { tokenInternalId: unknown })
-      .tokenInternalId;
+    const obj = input as { tokenInternalId?: unknown; mintAddress?: unknown };
 
-    return typeof tokenInternalId === "string" && tokenInternalId.length > 0;
+    const hasTokenInternalId =
+      typeof obj.tokenInternalId === "string" && obj.tokenInternalId.length > 0;
+    const hasMintAddress =
+      typeof obj.mintAddress === "string" && obj.mintAddress.length > 0;
+
+    return hasTokenInternalId || hasMintAddress;
   }
 
   public async load(
@@ -93,15 +96,36 @@ export class TokenContextLoader
   private async _loadInternal(
     solanaTokenContextInput: SolanaTransactionContext,
   ): Promise<SolanaTokenContextSuccess | SolanaContextError> {
-    const { tokenInternalId, deviceModelId } = solanaTokenContextInput;
+    const { deviceModelId, mintAddress } = solanaTokenContextInput;
+    let { tokenInternalId } = solanaTokenContextInput;
 
     if (!tokenInternalId) {
-      return {
-        type: ClearSignContextType.ERROR,
-        error: new Error(
-          "[ContextModule] TokenContextLoader: tokenInternalId is missing",
-        ),
-      };
+      if (!mintAddress) {
+        return {
+          type: ClearSignContextType.ERROR,
+          error: new Error(
+            "[ContextModule] TokenContextLoader: tokenInternalId and mintAddress are missing",
+          ),
+        };
+      }
+
+      this.logger.debug(
+        "[_loadInternal] Resolving tokenInternalId from mintAddress",
+        { data: { mintAddress } },
+      );
+
+      const idResult = await this.mintToIdDataSource.getIdFromMint({
+        mintAddress,
+      });
+
+      if (idResult.isLeft()) {
+        return {
+          type: ClearSignContextType.ERROR,
+          error: idResult.extract() as Error,
+        };
+      }
+
+      tokenInternalId = idResult.extract() as string;
     }
 
     const payload = await this.dataSource.getTokenInfosPayload({

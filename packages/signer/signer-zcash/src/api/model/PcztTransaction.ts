@@ -12,7 +12,7 @@
 
 /** PCZT header `common::Global` fields, sent once in `PCZT_HEADER`. */
 export type PcztGlobal = {
-  /** Transaction version (V5 = 5). */
+  /** Transaction version (V5 = 5, V6 = 6). */
   txVersion: number;
   versionGroupId: number;
   consensusBranchId: number;
@@ -108,14 +108,74 @@ export type PcztOrchardBundle = {
   anchor: Uint8Array;
 };
 
+/** A single Ironwood action (NU6.3, V6 transactions). Wire format mirrors
+ * `orchard::Action` with the addition of a 1-byte `note_plaintext_version`
+ * field (PCZT v2). */
+export type PcztIronwoodAction = {
+  /** Value commitment, 32 bytes. */
+  cvNet: Uint8Array;
+  /** Spend nullifier, 32 bytes. */
+  nullifier: Uint8Array;
+  /** Randomized verification key, 32 bytes. */
+  rk: Uint8Array;
+  /** Raw Orchard payment address of the spent note, 43 bytes. */
+  spendRecipient: Uint8Array;
+  /** Spent-note value in zatoshis. */
+  spendValue: bigint;
+  /** Spend rho (ρ), 32 bytes. */
+  spendRho: Uint8Array;
+  /** Spend rseed, 32 bytes. */
+  spendRseed: Uint8Array;
+  /**
+   * Spend-authorization randomizer (Pallas scalar), 32 bytes. Host-supplied:
+   * carried to the device, never returned.
+   */
+  alpha: Uint8Array;
+  /** ZIP-32 derivation path of the signing key. */
+  signingPath: string;
+  /** ZIP-32 seed fingerprint, 32 bytes. Defaults to 32 zero bytes if omitted. */
+  seedFingerprint?: Uint8Array;
+  /** Note commitment x-coordinate, 32 bytes. */
+  cmx: Uint8Array;
+  /** Ephemeral key, 32 bytes. */
+  ephemeralKey: Uint8Array;
+  encCiphertext: Uint8Array;
+  outCiphertext: Uint8Array;
+  /** Raw Orchard payment address of the output note, 43 bytes. */
+  recipient: Uint8Array;
+  /** Output-note value in zatoshis. */
+  value: bigint;
+  /** Output rseed, 32 bytes. */
+  rseed: Uint8Array;
+  /** Randomized commitment value, 32 bytes (required by the device). */
+  rcv: Uint8Array;
+  /**
+   * Note-plaintext version (PCZT v2), 1 byte. `0x03` for Ironwood notes.
+   * Carried to the device; required for PCZT v2 parsing.
+   */
+  notePlaintextVersion: number;
+};
+
+/** The Ironwood action bundle plus its trailer (V6 transactions only). */
+export type PcztIronwoodBundle = {
+  actions: PcztIronwoodAction[];
+  flags: number;
+  /** Net value balance in zatoshis (signed). */
+  valueBalance: bigint;
+  /** Ironwood commitment-tree anchor, 32 bytes. */
+  anchor: Uint8Array;
+};
+
 /**
  * Full structured PCZT to sign. The transparent sections are always streamed
  * (count `0` when empty); `orchardBundle` may be `null`, treated as an empty
- * Orchard bundle.
+ * Orchard bundle. `ironwoodBundle` is only present for V6 transactions.
  */
 export type PcztTransaction = {
   global: PcztGlobal;
   transparentInputs: PcztTransparentInput[];
   transparentOutputs: PcztTransparentOutput[];
   orchardBundle: PcztOrchardBundle | null;
+  /** V6 Ironwood bundle; absent or `null` for V5 transactions. */
+  ironwoodBundle?: PcztIronwoodBundle | null;
 };

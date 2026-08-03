@@ -1,4 +1,4 @@
-import { Left, Right } from "purify-ts";
+import { Just, Left, Nothing, Right } from "purify-ts";
 
 import {
   BTC_APP,
@@ -443,6 +443,7 @@ describe("HttpManagerApiDataSource", () => {
             se_firmware_osu_version: {
               id: 361,
               perso: "perso_11",
+              notes: "notes",
               firmware: "test",
               firmware_key: "testKey",
               hash: "hash",
@@ -460,16 +461,41 @@ describe("HttpManagerApiDataSource", () => {
 
       // then
       expect(response).toEqual(
-        Right({
-          id: 361,
-          perso: "perso_11",
-          firmware: "test",
-          firmwareKey: "testKey",
-          hash: "hash",
-          nextFinalFirmware: 567,
-        }),
+        Right(
+          Just({
+            id: 361,
+            perso: "perso_11",
+            notes: "notes",
+            firmware: "test",
+            firmwareKey: "testKey",
+            hash: "hash",
+            nextFinalFirmware: 567,
+          }),
+        ),
       );
     });
+
+    it("should return nothing when no latest firmware version is available", async () => {
+      // given
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            result: "null",
+            se_firmware_osu_version: null,
+          }),
+        ),
+      );
+
+      // when
+      const response = await api.getLatestFirmwareVersion({
+        currentFinalFirmwareId: 200,
+        deviceId: 42,
+      });
+
+      // then
+      expect(response).toEqual(Right(Nothing));
+    });
+
     it("should return an error if result is not success", async () => {
       // given
       vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -550,6 +576,7 @@ describe("HttpManagerApiDataSource", () => {
           JSON.stringify({
             id: 361,
             perso: "perso_11",
+            notes: "notes",
             firmware: "test",
             firmware_key: "testKey",
             hash: "hash",
@@ -569,6 +596,7 @@ describe("HttpManagerApiDataSource", () => {
         Right({
           id: 361,
           perso: "perso_11",
+          notes: "notes",
           firmware: "test",
           firmwareKey: "testKey",
           hash: "hash",
@@ -752,7 +780,7 @@ describe("HttpManagerApiDataSource", () => {
     afterEach(() => {
       vi.restoreAllMocks();
     });
-    it("should return a the list of MCUs", async () => {
+    it("should return the list of MCUs", async () => {
       // given
       vi.spyOn(globalThis, "fetch").mockResolvedValue(
         new Response(
@@ -764,7 +792,7 @@ describe("HttpManagerApiDataSource", () => {
               description: null,
               providers: [],
               device_versions: [1, 2],
-              from_bootloader_version: "",
+              from_bootloader_version: "1.0",
               from_bootloader_version_id: 2,
               se_firmware_final_versions: [7, 12, 13, 14, 15],
               date_creation: "2018-09-20T13:30:50.156394Z",
@@ -777,7 +805,7 @@ describe("HttpManagerApiDataSource", () => {
               description: null,
               providers: [],
               device_versions: [1, 2],
-              from_bootloader_version: "",
+              from_bootloader_version: "1.0",
               from_bootloader_version_id: 2,
               se_firmware_final_versions: [7, 12, 13, 14, 15],
               date_creation: "2018-09-20T13:30:50.339966Z",
@@ -796,10 +824,12 @@ describe("HttpManagerApiDataSource", () => {
           {
             id: 1,
             name: "1.0",
+            fromBootloaderVersion: "1.0",
           },
           {
             id: 2,
             name: "1.1",
+            fromBootloaderVersion: "1.0",
           },
         ]),
       );

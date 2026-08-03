@@ -10,15 +10,14 @@ import {
 import { type Maybe, Nothing } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
-import {
-  SignPhase,
-  SignTransactionCommand,
-} from "@internal/app-binder/command/SignTransactionCommand";
+import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type IcpErrorCodes } from "@internal/app-binder/command/utils/IcpApplicationErrors";
+import { SignPhase } from "@internal/app-binder/constants";
 
 type SignTransactionTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
+  stake?: boolean;
 };
 
 export class SignTransactionTask {
@@ -29,7 +28,7 @@ export class SignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, IcpErrorCodes>> {
-    const { derivationPath, transaction } = this.args;
+    const { derivationPath, transaction, stake } = this.args;
 
     this.logger.debug("[run] Starting SignTransactionTask", {
       data: {
@@ -49,6 +48,7 @@ export class SignTransactionTask {
       new SignTransactionCommand({
         phase: SignPhase.INIT,
         derivationPath,
+        stake,
       }),
     );
 
@@ -73,7 +73,7 @@ export class SignTransactionTask {
       );
 
       const result = await this.api.sendCommand(
-        new SignTransactionCommand({ phase, transactionChunk }),
+        new SignTransactionCommand({ phase, transactionChunk, stake }),
       );
 
       if (!isSuccessCommandResult(result)) {

@@ -16,11 +16,23 @@ export {
   type SignTransactionDAOutput,
   type SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export {
+  type SignUpdateCallDAError,
+  type SignUpdateCallDAIntermediateValue,
+  type SignUpdateCallDAOutput,
+  type SignUpdateCallDAReturnType,
+} from "@api/app-binder/SignUpdateCallDeviceActionTypes";
 export { type Address } from "@api/model/Address";
 export { type Signature } from "@api/model/Signature";
+export {
+  type CombinedSignature,
+  type DeviceUpdateCallSignature,
+  type UpdateCallSignature,
+} from "@api/model/UpdateCallSignature";
 export { type Version } from "@api/model/Version";
 export {
   type AddressOptions,
+  type CommonOptions,
   type SignerIcp,
   type TransactionOptions,
 } from "@api/SignerIcp";

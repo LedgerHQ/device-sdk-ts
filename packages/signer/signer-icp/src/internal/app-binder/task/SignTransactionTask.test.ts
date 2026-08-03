@@ -11,16 +11,15 @@ import { Just, Nothing } from "purify-ts";
 import { vi } from "vitest";
 
 import {
-  P1_ADD,
-  P1_INIT,
-  P1_LAST,
   P2_NO_STAKE,
+  P2_STAKE,
   type SignTransactionCommand,
 } from "@internal/app-binder/command/SignTransactionCommand";
 import {
   IcpAppCommandError,
   IcpErrorCodes,
 } from "@internal/app-binder/command/utils/IcpApplicationErrors";
+import { P1_ADD, P1_INIT, P1_LAST } from "@internal/app-binder/constants";
 import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
 
 const DERIVATION_PATH = "44'/223'/0'/0/0";
@@ -100,6 +99,33 @@ describe("SignTransactionTask", () => {
       expect(new Uint8Array([...add!.payload, ...last!.payload])).toStrictEqual(
         transaction,
       );
+    });
+
+    it("should pin P2=stake on every packet when the stake flag is set", async () => {
+      // ARRANGE — 300 bytes → INIT + one ADD + one LAST, all must carry P2=stake
+      const transaction = new Uint8Array(300).map((_, i) => i & 0xff);
+      sendCommandMock
+        .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
+        .mockResolvedValueOnce(CommandResultFactory({ data: Nothing })) // ADD
+        .mockResolvedValueOnce(CommandResultFactory({ data: Just(signature) })); // LAST
+
+      const task = new SignTransactionTask(
+        apiMock,
+        { derivationPath: DERIVATION_PATH, transaction, stake: true },
+        loggerMock,
+      );
+
+      // ACT
+      await task.run();
+
+      // ASSERT
+      const packets = sendCommandMock.mock.calls.map((c) =>
+        inspect(c[0] as SignTransactionCommand),
+      );
+      expect(packets).toHaveLength(3);
+      for (const packet of packets) {
+        expect(packet!.p2).toBe(P2_STAKE);
+      }
     });
 
     it("should send the whole transaction in a single LAST chunk when it fits one packet", async () => {

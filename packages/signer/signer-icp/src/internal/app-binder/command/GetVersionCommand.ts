@@ -20,8 +20,6 @@ import {
 
 export type GetVersionCommandResponse = Version;
 
-const TEST_MODE_FLAG = 0xff;
-
 export const icpGetVersionApduHeader = {
   cla: 0x11,
   ins: 0x00,
@@ -71,7 +69,7 @@ export class GetVersionCommand
       return CommandResultFactory({
         data: {
           version: `${major}.${minor}.${patch}`,
-          testMode: test === TEST_MODE_FLAG,
+          testMode: test !== 0,
           locked: locked !== 0,
         },
       });

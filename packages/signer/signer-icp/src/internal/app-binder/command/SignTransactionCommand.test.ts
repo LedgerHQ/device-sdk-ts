@@ -8,13 +8,17 @@ import { expectStatusWordError } from "@internal/app-binder/command/__test-utils
 import { pathToBuffer } from "@internal/app-binder/command/__test-utils__/pathToBuffer";
 import {
   icpSignTransactionApduHeader,
+  P2_NO_STAKE,
+  P2_STAKE,
+  SignTransactionCommand,
+} from "@internal/app-binder/command/SignTransactionCommand";
+import { IcpErrorCodes } from "@internal/app-binder/command/utils/IcpApplicationErrors";
+import {
   P1_ADD,
   P1_INIT,
   P1_LAST,
   SignPhase,
-  SignTransactionCommand,
-} from "@internal/app-binder/command/SignTransactionCommand";
-import { IcpErrorCodes } from "@internal/app-binder/command/utils/IcpApplicationErrors";
+} from "@internal/app-binder/constants";
 
 const DERIVATION_PATH = "44'/223'/0'/0/0";
 
@@ -38,7 +42,9 @@ describe("SignTransactionCommand", () => {
         phase: SignPhase.INIT,
         derivationPath: DERIVATION_PATH,
       });
-      const expected = new ApduBuilder(icpSignTransactionApduHeader(P1_INIT))
+      const expected = new ApduBuilder(
+        icpSignTransactionApduHeader(P1_INIT, P2_NO_STAKE),
+      )
         .addBufferToData(pathToBuffer(DERIVATION_PATH))
         .build();
       // ACT
@@ -54,7 +60,9 @@ describe("SignTransactionCommand", () => {
         phase: SignPhase.ADD,
         transactionChunk: chunk,
       });
-      const expected = new ApduBuilder(icpSignTransactionApduHeader(P1_ADD))
+      const expected = new ApduBuilder(
+        icpSignTransactionApduHeader(P1_ADD, P2_NO_STAKE),
+      )
         .addBufferToData(chunk)
         .build();
       // ACT
@@ -70,13 +78,34 @@ describe("SignTransactionCommand", () => {
         phase: SignPhase.LAST,
         transactionChunk: chunk,
       });
-      const expected = new ApduBuilder(icpSignTransactionApduHeader(P1_LAST))
+      const expected = new ApduBuilder(
+        icpSignTransactionApduHeader(P1_LAST, P2_NO_STAKE),
+      )
         .addBufferToData(chunk)
         .build();
       // ACT
       const apdu = command.getApdu();
       // ASSERT
       expect(apdu.getRawApdu()).toStrictEqual(expected.getRawApdu());
+    });
+
+    it("should set P2=stake on the INIT packet when the stake flag is set", () => {
+      // ARRANGE
+      const command = new SignTransactionCommand({
+        phase: SignPhase.INIT,
+        derivationPath: DERIVATION_PATH,
+        stake: true,
+      });
+      const expected = new ApduBuilder(
+        icpSignTransactionApduHeader(P1_INIT, P2_STAKE),
+      )
+        .addBufferToData(pathToBuffer(DERIVATION_PATH))
+        .build();
+      // ACT
+      const apdu = command.getApdu();
+      // ASSERT
+      expect(apdu.getRawApdu()).toStrictEqual(expected.getRawApdu());
+      expect(apdu.getRawApdu()[3]).toBe(P2_STAKE);
     });
 
     it("should throw when phase is INIT and derivationPath is missing", () => {
@@ -122,13 +151,15 @@ describe("SignTransactionCommand", () => {
   describe("parseResponse", () => {
     it("should split the last-chunk response into r, s, v and DER signature", () => {
       // ARRANGE
+      const preSignHash = new Uint8Array(43).fill(0x11);
       const r = new Uint8Array(32).fill(0xaa);
       const s = new Uint8Array(32).fill(0xbb);
       const v = new Uint8Array([0x01]);
       const der = new Uint8Array([
         0x30, 0x06, 0x02, 0x01, 0x01, 0x02, 0x01, 0x01,
       ]);
-      const data = new Uint8Array([...r, ...s, ...v, ...der]);
+      // Last-chunk layout: preSignHash(43) · r(32) · s(32) · v(1) · DER.
+      const data = new Uint8Array([...preSignHash, ...r, ...s, ...v, ...der]);
       const response = new ApduResponse({
         statusCode: new Uint8Array([0x90, 0x00]),
         data,
@@ -173,12 +204,13 @@ describe("SignTransactionCommand", () => {
 
     it("should reject a response that carries r, s and v but no DER signature", () => {
       // ARRANGE
+      const preSignHash = new Uint8Array(43).fill(0x11);
       const r = new Uint8Array(32).fill(0xaa);
       const s = new Uint8Array(32).fill(0xbb);
       const v = new Uint8Array([0x01]);
       const response = new ApduResponse({
         statusCode: new Uint8Array([0x90, 0x00]),
-        data: new Uint8Array([...r, ...s, ...v]), // 65 bytes, DER missing
+        data: new Uint8Array([...preSignHash, ...r, ...s, ...v]), // DER missing
       });
       const command = new SignTransactionCommand({
         phase: SignPhase.LAST,
@@ -190,9 +222,9 @@ describe("SignTransactionCommand", () => {
       expect(isSuccessCommandResult(result)).toBe(false);
     });
 
-    it("should reject a non-empty response too short to hold r (truncated, not empty)", () => {
-      // ARRANGE — 20 bytes: non-empty but fewer than the 32-byte r; must be
-      // treated as malformed, not as an empty intermediate reply.
+    it("should reject a non-empty response too short to hold the signature (truncated, not empty)", () => {
+      // ARRANGE — 20 bytes: non-empty but shorter than preSignHash+signature; must
+      // be treated as malformed, not as an empty intermediate reply.
       const response = new ApduResponse({
         statusCode: new Uint8Array([0x90, 0x00]),
         data: new Uint8Array(20).fill(0xaa),
@@ -207,13 +239,14 @@ describe("SignTransactionCommand", () => {
       expect(isSuccessCommandResult(result)).toBe(false);
     });
 
-    it("should reject a response that has r but truncates before v/DER", () => {
-      // ARRANGE — 64 bytes: r and s present, v and DER missing
+    it("should reject a response that has r/s but truncates before v/DER", () => {
+      // ARRANGE — preSignHash + r + s present, v and DER missing
+      const preSignHash = new Uint8Array(43).fill(0x11);
       const r = new Uint8Array(32).fill(0xaa);
       const s = new Uint8Array(32).fill(0xbb);
       const response = new ApduResponse({
         statusCode: new Uint8Array([0x90, 0x00]),
-        data: new Uint8Array([...r, ...s]),
+        data: new Uint8Array([...preSignHash, ...r, ...s]),
       });
       const command = new SignTransactionCommand({
         phase: SignPhase.LAST,

@@ -10,6 +10,7 @@ import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleCon
 import type { PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import type { SolanaTransactionContext } from "@/modules/solana/owner-info/domain/solanaContextTypes";
+import { type MintToIdDataSource } from "@/modules/solana/token/data/MintToIdDataSource";
 import {
   type TokenDataResponse,
   type TokenDataSource,
@@ -28,6 +29,7 @@ const mockLoggerFactory = () => ({
 
 describe("TokenContextLoader", () => {
   let mockDataSource: TokenDataSource;
+  let mockMintToIdDataSource: MintToIdDataSource;
   let mockCertLoader: PkiCertificateLoader;
 
   const bytes = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
@@ -55,6 +57,10 @@ describe("TokenContextLoader", () => {
       getTokenInfosPayload: vi.fn(),
     } as unknown as TokenDataSource;
 
+    mockMintToIdDataSource = {
+      getIdFromMint: vi.fn(),
+    } as unknown as MintToIdDataSource;
+
     mockCertLoader = {
       loadCertificate: vi.fn(),
     } as unknown as PkiCertificateLoader;
@@ -64,6 +70,7 @@ describe("TokenContextLoader", () => {
     const config = { cal: { mode } } as unknown as ContextModuleServiceConfig;
     return new TokenContextLoader(
       mockDataSource,
+      mockMintToIdDataSource,
       config,
       mockCertLoader,
       mockLoggerFactory,
@@ -110,6 +117,29 @@ describe("TokenContextLoader", () => {
       ).toBe(false);
       expect(
         loader.canHandle({} as any, [ClearSignContextType.SOLANA_TOKEN]),
+      ).toBe(false);
+    });
+
+    it("returns true when only mintAddress is provided (no tokenInternalId)", () => {
+      const loader = makeLoader("prod");
+
+      expect(
+        loader.canHandle(
+          {
+            mintAddress: "3iql8bfs2Ve7mwW4EHaqqHasbmrnCrPxiZWat2ZFyr9Y",
+          } as any,
+          [ClearSignContextType.SOLANA_TOKEN],
+        ),
+      ).toBe(true);
+    });
+
+    it("returns false when both tokenInternalId and mintAddress are absent or empty", () => {
+      const loader = makeLoader("prod");
+
+      expect(
+        loader.canHandle({ mintAddress: "" } as any, [
+          ClearSignContextType.SOLANA_TOKEN,
+        ]),
       ).toBe(false);
     });
   });
@@ -223,6 +253,73 @@ describe("TokenContextLoader", () => {
           ),
         },
       ]);
+    });
+
+    describe("mintAddress resolution", () => {
+      const mintCtx = {
+        mintAddress: "3iql8bfs2Ve7mwW4EHaqqHasbmrnCrPxiZWat2ZFyr9Y",
+        deviceModelId: DeviceModelId.FLEX,
+      };
+
+      it("resolves tokenInternalId from mintAddress when tokenInternalId is absent", async () => {
+        const loader = makeLoader("prod");
+
+        vi.spyOn(mockMintToIdDataSource, "getIdFromMint").mockResolvedValue(
+          Right("sol:usdc"),
+        );
+        vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
+          Right(tokenDataResponse),
+        );
+        vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue({
+          keyUsageNumber: 0,
+          payload: bytes,
+        });
+
+        await loader.load(mintCtx as any);
+
+        expect(mockMintToIdDataSource.getIdFromMint).toHaveBeenCalledWith({
+          mintAddress: mintCtx.mintAddress,
+        });
+        expect(mockDataSource.getTokenInfosPayload).toHaveBeenCalledWith({
+          tokenInternalId: "sol:usdc",
+        });
+      });
+
+      it("skips mintAddress resolution when tokenInternalId is already provided", async () => {
+        const loader = makeLoader("prod");
+
+        vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(
+          Right(tokenDataResponse),
+        );
+        vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue({
+          keyUsageNumber: 0,
+          payload: bytes,
+        });
+
+        await loader.load({
+          ...mintCtx,
+          tokenInternalId: "sol:usdc-direct",
+        } as any);
+
+        expect(mockMintToIdDataSource.getIdFromMint).not.toHaveBeenCalled();
+        expect(mockDataSource.getTokenInfosPayload).toHaveBeenCalledWith({
+          tokenInternalId: "sol:usdc-direct",
+        });
+      });
+
+      it("returns ERROR when mintToIdDataSource returns Left", async () => {
+        const loader = makeLoader("prod");
+        const error = new Error("mint resolution failed");
+
+        vi.spyOn(mockMintToIdDataSource, "getIdFromMint").mockResolvedValue(
+          Left(error),
+        );
+
+        const result = await loader.load(mintCtx as any);
+
+        expect(result).toEqual([{ type: ClearSignContextType.ERROR, error }]);
+        expect(mockDataSource.getTokenInfosPayload).not.toHaveBeenCalled();
+      });
     });
   });
 

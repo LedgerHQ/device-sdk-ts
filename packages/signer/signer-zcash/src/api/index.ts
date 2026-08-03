@@ -15,6 +15,12 @@ export type {
   GetFullViewingKeyDAReturnType,
 } from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
 export type {
+  GetShieldedAddressDAError,
+  GetShieldedAddressDAIntermediateValue,
+  GetShieldedAddressDAOutput,
+  GetShieldedAddressDAReturnType,
+} from "@api/app-binder/GetShieldedAddressDeviceActionTypes";
+export type {
   GetTrustedInputDAError,
   GetTrustedInputDAIntermediateValue,
   GetTrustedInputDAOutput,
@@ -47,12 +53,15 @@ export type {
   ZcashFullViewingKeyMode,
 } from "@api/model/FullViewingKeyOptions";
 export type {
+  IronwoodActionSignature,
   OrchardActionSignature,
   SignPcztTransactionResult,
 } from "@api/model/PcztSignature";
 export type {
   PcztBip32Derivation,
   PcztGlobal,
+  PcztIronwoodAction,
+  PcztIronwoodBundle,
   PcztOrchardAction,
   PcztOrchardBundle,
   PcztTransaction,

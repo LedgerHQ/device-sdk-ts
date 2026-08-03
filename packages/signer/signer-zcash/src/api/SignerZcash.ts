@@ -1,6 +1,7 @@
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetFullViewingKeyDAReturnType } from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
+import { type GetShieldedAddressDAReturnType } from "@api/app-binder/GetShieldedAddressDeviceActionTypes";
 import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInputActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignPcztTransactionDAReturnType } from "@api/app-binder/SignPcztTransactionDeviceActionTypes";
@@ -23,6 +24,19 @@ export interface SignerZcash {
     derivationPath: string,
     options?: FullViewingKeyOptions,
   ) => GetFullViewingKeyDAReturnType;
+
+  /**
+   * Returns a unified shielded address (single Orchard receiver) for the given
+   * transparent derivation path. `derivationPath` must be a 5-level BIP44 path
+   * (`44'/coin'/account'/change/index`); the Orchard account path
+   * (`32'/coin'/account'`) is derived from it automatically by the task.
+   * Pass `checkOnDevice: true` to have the address displayed on the device for
+   * user confirmation.
+   */
+  getShieldedAddress: (
+    derivationPath: string,
+    options?: AddressOptions,
+  ) => GetShieldedAddressDAReturnType;
 
   signTransaction: (
     args: LegacyCreateTransactionArg,

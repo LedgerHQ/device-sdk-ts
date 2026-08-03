@@ -4,6 +4,7 @@ This module provides the implementation of the Ledger Internet Computer (ICP) si
 
 - Retrieving the ICP public key, account identifier and principal for a given derivation path;
 - Signing an Internet Computer transaction;
+- Signing an update call together with its read-state request (neuron management);
 - Retrieving the app configuration (version);
 
 ## 🔹 Index
@@ -14,7 +15,8 @@ This module provides the implementation of the Ledger Internet Computer (ICP) si
 4. [Use Cases](#-use-cases)
    - [Get Address](#use-case-1-get-address)
    - [Sign Transaction](#use-case-2-sign-transaction)
-   - [Get App Configuration](#use-case-3-get-app-configuration)
+   - [Sign Update Call](#use-case-3-sign-update-call)
+   - [Get App Configuration](#use-case-4-get-app-configuration)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
@@ -42,7 +44,7 @@ const signerIcp = new SignerIcpBuilder({ dmk, sessionId }).build();
 
 ## 🔹 Use Cases
 
-The `SignerIcpBuilder.build()` method will return a `SignerIcp` instance that exposes 3 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+The `SignerIcpBuilder.build()` method will return a `SignerIcp` instance that exposes 4 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
 
 ---
 
@@ -127,10 +129,12 @@ const { observable, cancel } = signerIcp.signTransaction(
     ```typescript
     type TransactionOptions = {
       skipOpenApp?: boolean;
+      stake?: boolean;
     };
     ```
 
   - `skipOpenApp`: An optional boolean indicating whether to skip opening the ICP app on the device (`true`) or not (`false`). Use when the app is already open.
+  - `stake`: An optional boolean signing a neuron-creation transfer (a governance-subaccount transfer, `true`) instead of a plain transfer (`false`, default).
 
 #### **Returns**
 
@@ -149,7 +153,71 @@ type Signature = {
 
 ---
 
-### Use Case 3: Get App Configuration
+### Use Case 3: Sign Update Call
+
+Sign an Internet Computer update call together with its companion read-state request. Most neuron-management operations (dissolve, follow, split, hot-keys, maturity, …) are update calls to the NNS governance canister signed this way.
+
+```typescript
+const { observable, cancel } = signerIcp.signUpdateCall(
+  derivationPath,
+  callRequest,
+  readStateRequest,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"44'/223'/0'/0/0"`)
+  - The derivation path used for the ICP address.
+
+- `callRequest`
+
+  - **Required**
+  - **Type:** `Uint8Array`
+  - The serialized update-call request bytes (CBOR envelope) to sign.
+
+- `readStateRequest`
+
+  - **Required**
+  - **Type:** `Uint8Array`
+  - The serialized read-state request bytes (CBOR envelope) signed alongside the call, used afterwards to poll the call's status.
+
+- `options`
+
+  - Optional
+  - Type: `CommonOptions`
+
+    ```typescript
+    type CommonOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the ICP app on the device (`true`) or not (`false`). Use when the app is already open.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type UpdateCallSignature = {
+  requestHash: string; // hex-encoded signed request digest
+  requestSignature: { r: string; s: string }; // hex-encoded r‖s over the call
+  readStateHash: string; // hex-encoded signed read-state digest
+  readStateSignature: { r: string; s: string }; // hex-encoded r‖s over the read-state
+  readStateBody: Uint8Array; // the read-state request that was signed
+};
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 4: Get App Configuration
 
 This method allows the user to fetch the current app configuration.
 

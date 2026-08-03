@@ -18,6 +18,7 @@ import {
 } from "@internal/app-binder/command/GetFullViewingKeyCommand";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
+import { deriveOrchardAccountPath } from "@internal/utils/deriveOrchardAccountPath";
 
 export type GetFullViewingKeyTaskArgs = {
   derivationPath: string;
@@ -165,8 +166,15 @@ function deriveUfvkAccountPaths(
     };
   }
   const [, coinType, account] = components;
+  if (!coinType || !account) {
+    return {
+      error: new InvalidStatusWordError(
+        `Zcash UFVK derivation path components are malformed (got "${derivationPath}")`,
+      ),
+    };
+  }
   return {
-    orchardDerivationPath: `32'/${coinType}/${account}`,
+    orchardDerivationPath: deriveOrchardAccountPath(coinType, account),
     transparentDerivationPath: `44'/${coinType}/${account}`,
   };
 }

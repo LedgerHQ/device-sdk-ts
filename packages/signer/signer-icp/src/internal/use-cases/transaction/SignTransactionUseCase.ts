@@ -21,6 +21,7 @@ export class SignTransactionUseCase {
     return this._appBinder.signTransaction({
       derivationPath,
       transaction,
+      stake: options?.stake,
       skipOpenApp: options?.skipOpenApp,
     });
   }

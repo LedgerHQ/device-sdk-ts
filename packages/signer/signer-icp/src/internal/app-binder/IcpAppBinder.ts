@@ -11,6 +11,7 @@ import { inject, injectable } from "inversify";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetVersionDAReturnType } from "@api/app-binder/GetVersionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignUpdateCallDAReturnType } from "@api/app-binder/SignUpdateCallDeviceActionTypes";
 import {
   GetAddressCommand,
   type GetAddressCommandArgs,
@@ -18,6 +19,7 @@ import {
 import { GetVersionCommand } from "@internal/app-binder/command/GetVersionCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
+import { SignUpdateCallTask } from "@internal/app-binder/task/SignUpdateCallTask";
 import { externalTypes } from "@internal/externalTypes";
 
 @injectable()
@@ -64,6 +66,7 @@ export class IcpAppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Uint8Array;
+    stake?: boolean;
     skipOpenApp?: boolean;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
@@ -81,6 +84,31 @@ export class IcpAppBinder {
           skipOpenApp: args.skipOpenApp ?? false,
         },
         logger: this.dmkLoggerFactory("SignTransactionCommand"),
+      }),
+    });
+  }
+
+  signUpdateCall(args: {
+    derivationPath: string;
+    callRequest: Uint8Array;
+    readStateRequest: Uint8Array;
+    skipOpenApp?: boolean;
+  }): SignUpdateCallDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new SignUpdateCallTask(
+              internalApi,
+              args,
+              this.dmkLoggerFactory("SignUpdateCallTask"),
+            ).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          skipOpenApp: args.skipOpenApp ?? false,
+        },
+        logger: this.dmkLoggerFactory("SignUpdateCallTask"),
       }),
     });
   }

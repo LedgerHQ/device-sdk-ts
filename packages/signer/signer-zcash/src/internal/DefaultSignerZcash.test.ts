@@ -123,6 +123,38 @@ describe("DefaultSignerZcash", () => {
     );
   });
 
+  it("should call getShieldedAddress via device action with derivation path and defaults", () => {
+    const sessionId = "test-session-id" as DeviceSessionId;
+    const derivationPath = "44'/133'/0'/0/0";
+    const executeDeviceAction = vi.fn().mockReturnValue({
+      observable: from([]),
+      cancel: vi.fn(),
+    });
+    const dmk = {
+      executeDeviceAction,
+    } as unknown as DeviceManagementKit;
+    const signer = new DefaultSignerZcash({ dmk, sessionId });
+
+    signer.getShieldedAddress(derivationPath, {});
+
+    expect(executeDeviceAction).toHaveBeenCalledTimes(1);
+    const call = executeDeviceAction.mock.calls[0]![0] as {
+      sessionId: DeviceSessionId;
+      deviceAction: CallTaskInAppDeviceAction<
+        unknown,
+        DmkError,
+        UserInteractionRequired.None
+      >;
+    };
+    expect(call.sessionId).toBe(sessionId);
+    expect(call.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+    expect(call.deviceAction.input.appName).toBe(APP_NAME);
+    expect(call.deviceAction.input.requiredUserInteraction).toBe(
+      UserInteractionRequired.None,
+    );
+    expect(call.deviceAction.input.skipOpenApp).toBe(false);
+  });
+
   it("should call legacy-compatible signTransaction via device action", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),

@@ -8,6 +8,7 @@ import {
 import {
   pcztP1,
   pcztP2,
+  serializeIronwoodActions,
   serializeOrchardActions,
   serializePcztHeader,
   serializeTransparentInputs,
@@ -19,7 +20,10 @@ import {
   hexToBytes,
   ORCHARD_ENC_CIPHERTEXT_SIZE,
   SAMPLE_GLOBAL,
+  SAMPLE_GLOBAL_V6,
   SAMPLE_HEADER_HEX,
+  SAMPLE_HEADER_HEX_V6,
+  sampleIronwoodBundle,
   sampleOrchardBundle,
   sampleTransparentInput,
   sampleTransparentOutput,
@@ -40,6 +44,12 @@ describe("pcztSerializer", () => {
       );
       // ...consensus_branch_id, then 0x00 (absent), then expiry_height...
       expect(hex).toContain("b4d0d6c200" + "00000000");
+    });
+
+    it("encodes PCZT version 2 for V6 transactions", () => {
+      expect(bytesToHex(serializePcztHeader(SAMPLE_GLOBAL_V6))).toBe(
+        SAMPLE_HEADER_HEX_V6,
+      );
     });
   });
 
@@ -167,6 +177,82 @@ describe("pcztSerializer", () => {
       expect(trailer[0]).toBe(0x02); // flags
       expect(trailer[1]).toBe(0x07); // |−7| first LE byte
       expect(trailer[9]).toBe(0x01); // negative sign flag
+    });
+  });
+
+  describe("serializeIronwoodActions", () => {
+    it("emits only a CompactSize 0 count packet when called with zero actions", () => {
+      const packets = serializeIronwoodActions({
+        actions: [],
+        flags: 0,
+        valueBalance: 0n,
+        anchor: bytes(32, 0x00),
+      });
+      expect(packets).toHaveLength(1);
+      expect(bytesToHex(packets[0]!)).toBe("00");
+    });
+
+    it("serializes one action: verifies count, spend, zip32, cmx+ephemeral, enc, out, metadata, and trailer", () => {
+      const packets = serializeIronwoodActions(sampleIronwoodBundle());
+
+      // count + [spend, zip32, cmx+ephemeral, enc x3, out, metadata] + trailer.
+      expect(packets).toHaveLength(10);
+      expect(bytesToHex(packets[0]!)).toBe("01");
+
+      // spend small fields: cv|nullifier|rk|recipient|value8|rho|rseed|alpha.
+      const spend = packets[1]!;
+      expect(spend).toHaveLength(32 * 3 + 43 + 8 + 32 * 3);
+      // cvNet fills with 0x11 — first byte of spend packet.
+      expect(spend[0]).toBe(0x11);
+      // spendValue = 5n: first LE byte at offset 32*3+43.
+      expect(spend[32 * 3 + 43]).toBe(0x05);
+
+      // zip32: fingerprint[32] + path("44'/133'/0'": len 3 + 3 BE u32).
+      expect(bytesToHex(packets[2]!)).toBe(
+        bytesToHex(bytes(32, 0x00)) +
+          "03" +
+          "8000002c" +
+          "80000085" +
+          "80000000",
+      );
+
+      // cmx[32] + ephemeralKey[32] packet.
+      expect(packets[3]!).toHaveLength(64);
+      expect(packets[3]![0]).toBe(0x18); // cmx fill byte
+
+      // enc ciphertext split across 3 packets — verify CompactSize prefix.
+      const encField = concatUint8Arrays(packets[4]!, packets[5]!, packets[6]!);
+      expect(bytesToHex(encField.subarray(0, 3))).toBe("fd4402"); // CompactSize 580
+      expect(encField.length - 3).toBe(ORCHARD_ENC_CIPHERTEXT_SIZE);
+
+      // out ciphertext in one packet (80 bytes + 1-byte CompactSize = 81).
+      expect(packets[7]![0]).toBe(0x50); // CompactSize 80
+      expect(packets[7]!).toHaveLength(81);
+
+      // metadata packet: recipient[43] + value u64 LE + rseed[32] + rcv[32] + notePlaintextVersion u8.
+      const meta = packets[8]!;
+      expect(meta[0]).toBe(0x1a); // recipient fill byte
+      expect(meta).toHaveLength(43 + 8 + 32 + 32 + 1); // +1 for notePlaintextVersion
+      expect(meta[43 + 8 + 32 + 32]).toBe(0x03); // notePlaintextVersion
+
+      // trailer: flags(1) + |valueBalance| u64 LE + sign(1) + anchor[32].
+      const trailer = packets[9]!;
+      expect(trailer[0]).toBe(0x02); // flags
+      expect(trailer[1]).toBe(0x00); // valueBalance 0 first LE byte
+      expect(trailer[9]).toBe(0x00); // sign: non-negative
+      expect(trailer[10]).toBe(0x1d); // anchor fill byte
+
+      // every emitted packet stays within the APDU payload cap.
+      packets.forEach((packet) => {
+        expect(packet.length).toBeLessThanOrEqual(PCZT_MAX_PACKET_SIZE);
+      });
+    });
+
+    it("all packets are at most PCZT_MAX_PACKET_SIZE bytes", () => {
+      const packets = serializeIronwoodActions(sampleIronwoodBundle());
+      packets.forEach((packet) => {
+        expect(packet.length).toBeLessThanOrEqual(PCZT_MAX_PACKET_SIZE);
+      });
     });
   });
 

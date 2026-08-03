@@ -21,35 +21,39 @@ import {
   IcpAppCommandErrorFactory,
   type IcpErrorCodes,
 } from "@internal/app-binder/command/utils/IcpApplicationErrors";
+import {
+  P1_ADD,
+  P1_INIT,
+  P1_LAST,
+  SignPhase,
+} from "@internal/app-binder/constants";
 
-export const P1_INIT = 0x00;
-export const P1_ADD = 0x01;
-export const P1_LAST = 0x02;
-// P2 carries the neuron-stake flag; plain transfers always use 0.
+// P2 carries the transaction-type flag: a plain transfer uses 0x00, a
+// neuron-creation (governance-subaccount) transfer uses 0x01. The device reads
+// it on the first chunk and requires the same value on every following chunk.
 export const P2_NO_STAKE = 0x00;
+export const P2_STAKE = 0x01;
 
 const DERIVATION_PATH_LENGTH = 5;
+// The last-chunk signature response is prefixed by the pre-sign hash, then r‖s, v, and DER.
+const PRESIGN_HASH_LENGTH = 43;
 const SIGNATURE_R_LENGTH = 32;
 const SIGNATURE_S_LENGTH = 32;
 const SIGNATURE_V_LENGTH = 1;
 
-export enum SignPhase {
-  INIT = "init",
-  ADD = "add",
-  LAST = "last",
-}
-
-export const icpSignTransactionApduHeader = (p1: number) => ({
+export const icpSignTransactionApduHeader = (p1: number, p2: number) => ({
   cla: 0x11,
   ins: 0x02,
   p1,
-  p2: P2_NO_STAKE,
+  p2,
 });
 
 export type SignTransactionCommandArgs = {
   phase: SignPhase;
   derivationPath?: string;
   transactionChunk?: Uint8Array;
+  // Sign a neuron-creation transfer (P2=0x01) instead of a plain transfer.
+  stake?: boolean;
 };
 
 export type SignTransactionCommandResponse = Maybe<Signature>;
@@ -75,7 +79,12 @@ export class SignTransactionCommand
 
   constructor(args: SignTransactionCommandArgs) {
     this.args = args;
-    this.apduBuilder = new ApduBuilder(icpSignTransactionApduHeader(this.p1()));
+    this.apduBuilder = new ApduBuilder(
+      icpSignTransactionApduHeader(
+        this.p1(),
+        this.args.stake ? P2_STAKE : P2_NO_STAKE,
+      ),
+    );
   }
 
   public getApdu(): Apdu {
@@ -96,6 +105,8 @@ export class SignTransactionCommand
         return CommandResultFactory({ data: Nothing });
       }
 
+      // Validate the pre-sign hash's presence; it is not surfaced.
+      const preSignHash = apduParser.extractFieldByLength(PRESIGN_HASH_LENGTH);
       const r = apduParser.extractFieldByLength(SIGNATURE_R_LENGTH);
       const s = apduParser.extractFieldByLength(SIGNATURE_S_LENGTH);
       const v = apduParser.extractFieldByLength(SIGNATURE_V_LENGTH);
@@ -104,6 +115,7 @@ export class SignTransactionCommand
       );
 
       if (
+        preSignHash === undefined ||
         r === undefined ||
         s === undefined ||
         v === undefined ||

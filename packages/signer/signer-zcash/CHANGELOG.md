@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- [#1688](https://github.com/LedgerHQ/device-sdk-ts/pull/1688) [`d480142`](https://github.com/LedgerHQ/device-sdk-ts/commit/d4801425021f4c0fb99e4b2642bdbae50dac4532) Thanks [@may01](https://github.com/may01)! - Add Ironwood (NU6.3) PCZT v2 bundle signing support for V6 transactions
+
+- [#1695](https://github.com/LedgerHQ/device-sdk-ts/pull/1695) [`e4925b8`](https://github.com/LedgerHQ/device-sdk-ts/commit/e4925b8f0b8c602509bf791e07620ff5b898b584) Thanks [@vladyslavchupovskiy-ext-art](https://github.com/vladyslavchupovskiy-ext-art)! - Add `getShieldedAddress` to `SignerZcash` for INS_GET_SHIELD_ADDR (0x51).
+
+Sends the transparent derivation path (`44'/coin/account'/change/index`) together with the derived Orchard account path (`32'/coin/account'`) to the device. The device uses the transparent path for account matching and on-device display; the returned unified address contains a single Orchard receiver. Pass `checkOnDevice: true` to have the device display the address for user confirmation.
+
+### Patch Changes
+
+- [#1702](https://github.com/LedgerHQ/device-sdk-ts/pull/1702) [`ace9406`](https://github.com/LedgerHQ/device-sdk-ts/commit/ace940626888f9f5678cc80088d27f11245b227c) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Regroup the shielded fields of a previous transaction per ZIP-244 digest when streaming it for GET_TRUSTED_INPUT, so the device commits to the right txid, and reject versions this flow does not support instead of streaming them as v5
+
 ## 0.4.3
 
 ### Patch Changes

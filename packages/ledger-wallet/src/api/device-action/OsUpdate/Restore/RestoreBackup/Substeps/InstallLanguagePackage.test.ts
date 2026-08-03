@@ -1,36 +1,38 @@
-import { GoToDashboardDeviceAction } from "@ledgerhq/device-management-kit";
+import { InstallLanguagePackageDeviceAction } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
-import { goToDashboard } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/GoToDashboard";
+import { installLanguagePackage } from "@api/device-action/OsUpdate/Restore/RestoreBackup/Substeps/InstallLanguagePackage";
 
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
   return {
     ...original,
-    GoToDashboardDeviceAction: vi.fn(),
+    InstallLanguagePackageDeviceAction: vi.fn(),
   };
 });
 
-describe("GoToDashboard", () => {
+describe("InstallLanguagePackage", () => {
   const apiMock = makeDeviceActionInternalApiMock();
-  const MockDA = vi.mocked(GoToDashboardDeviceAction);
+  const MockDA = vi.mocked(InstallLanguagePackageDeviceAction);
 
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
   describe("Success", () => {
-    it("Should return the go to dashboard device action state machine", () => {
+    it("Should return the install language package device action state machine", () => {
       const fakeStateMachine = Symbol("stateMachine");
       const makeStateMachineMock = vi.fn().mockReturnValue(fakeStateMachine);
       MockDA.mockImplementation(
         () => ({ makeStateMachine: makeStateMachineMock }) as never,
       );
 
-      const result = goToDashboard(apiMock, 5000);
+      const result = installLanguagePackage(apiMock, 5000, "brazilian");
 
-      expect(MockDA).toHaveBeenCalledWith({ input: { unlockTimeout: 5000 } });
+      expect(MockDA).toHaveBeenCalledWith({
+        input: { unlockTimeout: 5000, language: "brazilian" },
+      });
       expect(makeStateMachineMock).toHaveBeenCalledWith(apiMock);
       expect(result).toBe(fakeStateMachine);
     });
@@ -46,7 +48,9 @@ describe("GoToDashboard", () => {
         () => ({ makeStateMachine: makeStateMachineMock }) as never,
       );
 
-      expect(() => goToDashboard(apiMock, 5000)).toThrow(error);
+      expect(() => installLanguagePackage(apiMock, 5000, "brazilian")).toThrow(
+        error,
+      );
     });
   });
 });
