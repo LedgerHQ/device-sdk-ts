@@ -3,10 +3,12 @@ import {
   type DmkResult,
   DmkResultFactory,
   type InternalApi,
+  InvalidArgumentError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
 import {
+  type IronwoodActionSignature,
   type OrchardActionSignature,
   type SignPcztTransactionResult,
 } from "@api/model/PcztSignature";
@@ -15,15 +17,18 @@ import {
   type PcztTransaction,
 } from "@api/model/PcztTransaction";
 import { PcztHeaderCommand } from "@internal/app-binder/command/PcztHeaderCommand";
+import { PcztIronwoodActionCommand } from "@internal/app-binder/command/PcztIronwoodActionCommand";
 import { PcztOrchardActionCommand } from "@internal/app-binder/command/PcztOrchardActionCommand";
 import { PcztTransparentInputCommand } from "@internal/app-binder/command/PcztTransparentInputCommand";
 import { PcztTransparentOutputCommand } from "@internal/app-binder/command/PcztTransparentOutputCommand";
+import { SignPcztIronwoodCommand } from "@internal/app-binder/command/SignPcztIronwoodCommand";
 import { SignPcztOrchardCommand } from "@internal/app-binder/command/SignPcztOrchardCommand";
 import { SignPcztTransparentCommand } from "@internal/app-binder/command/SignPcztTransparentCommand";
 import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
   pcztP1,
   pcztP2,
+  serializeIronwoodActions,
   serializeOrchardActions,
   serializePcztHeader,
   serializeTransparentInputs,
@@ -50,15 +55,23 @@ const EMPTY_ORCHARD_BUNDLE: PcztOrchardBundle = {
   anchor: new Uint8Array(32),
 };
 
+/** Transaction version that introduces Ironwood bundles (NU6.3). */
+const V6_TX_VERSION = 6;
+
 /**
- * Drives the device PCZT Orchard signing protocol end-to-end:
+ * Drives the device PCZT signing protocol end-to-end, supporting both V5
+ * (Orchard) and V6 (Orchard + Ironwood) transactions:
  *
  * 1. streams the PCZT bundle in the fixed order — `PCZT_HEADER`,
- *    `PCZT_TRANSPARENT_INPUT`, `PCZT_TRANSPARENT_OUTPUT`, `PCZT_ORCHARD_ACTION`
- *    (every section always sent; count `0` when empty), the last Orchard packet
- *    carrying `PCZT_P2.FINISHED` to finalize the payload;
+ *    `PCZT_TRANSPARENT_INPUT`, `PCZT_TRANSPARENT_OUTPUT`, `PCZT_ORCHARD_ACTION`,
+ *    and for V6: `PCZT_IRONWOOD_ACTION` (a null Ironwood bundle on a V6
+ *    transaction is rejected as invalid input before any APDU is sent). For
+ *    V5, the last Orchard packet carries `PCZT_P2.FINISHED`; for V6, the last
+ *    Ironwood packet carries `PCZT_P2.FINISHED`;
  * 2. collects one `spendAuthSig[64]` per Orchard action (`PCZT_SIGN_ORCHARD`);
- * 3. collects one secp256k1 signature per transparent input
+ * 3. collects one `spendAuthSig[64]` per Ironwood action for V6
+ *    (`PCZT_SIGN_IRONWOOD`);
+ * 4. collects one secp256k1 signature per transparent input
  *    (`PCZT_SIGN_TRANSPARENT`).
  *
  * It never sends `bsk` nor collects `bindingSig` — the binding signature is a
@@ -72,9 +85,37 @@ export class SignPcztTransactionTask {
   ) {}
 
   async run(): Promise<SignPcztTransactionTaskResult> {
-    const { global, transparentInputs, transparentOutputs, orchardBundle } =
-      this.args.transaction;
+    const {
+      global,
+      transparentInputs,
+      transparentOutputs,
+      orchardBundle,
+      ironwoodBundle: ironwoodBundleInput,
+    } = this.args.transaction;
     const bundle = orchardBundle ?? EMPTY_ORCHARD_BUNDLE;
+    const ironwoodBundle = ironwoodBundleInput ?? null;
+
+    // V6 transactions have an Ironwood bundle; PCZT_P2.FINISHED moves to the
+    // last Ironwood packet instead of the last Orchard packet.
+    const isV6 = global.txVersion === V6_TX_VERSION;
+
+    if (isV6 && ironwoodBundle === null) {
+      return DmkResultFactory({
+        error: new InvalidArgumentError(
+          "V6 transaction requires a non-null Ironwood bundle",
+        ),
+      });
+    }
+
+    if (!isV6 && ironwoodBundle !== null) {
+      return DmkResultFactory({
+        error: new InvalidArgumentError(
+          "V5 transaction does not support an Ironwood bundle",
+        ),
+      });
+    }
+
+    const hasIronwood = isV6 && ironwoodBundle !== null;
 
     // 1. Stream the PCZT bundle, in order.
     const headerResult = await this.api.sendCommand(
@@ -118,18 +159,36 @@ export class SignPcztTransactionTask {
         new PcztOrchardActionCommand({
           data: orchardPackets[i]!,
           p1: pcztP1(i, orchardPackets.length),
-          // `finished: true` here is correct for every flow, including the
-          // transparent-only one where the Orchard section is a single count-0
-          // packet: `pcztP2` only sets `FINISHED` on the *last* Orchard packet,
-          // and `ORCHARD_ACTION` is always the final bundle command, so the
-          // marker lands exactly where the device expects it. The device
-          // accepts signing commands only after seeing `FINISHED`
-          // (`app-zcash` `src/handlers/pczt.rs::finish_pczt_if_requested`).
-          p2: pcztP2(i, orchardPackets.length, true),
+          // For V5 the last Orchard packet carries FINISHED; for V6 it stays
+          // CONTINUE because FINISHED moves to the last Ironwood packet.
+          p2: pcztP2(i, orchardPackets.length, !isV6),
         }),
       );
       if (!isSuccessCommandResult(result)) {
         return DmkResultFactory({ error: result.error });
+      }
+    }
+
+    // Stream the Ironwood bundle only for V6 transactions. V5 transactions must
+    // never send INS_PCZT_IRONWOOD_ACTION — the device rejects unexpected APDUs
+    // after PCZT_P2.FINISHED.
+    // Note: requires firmware compiled with the `zcash_unstable` feature flag
+    // (NU6.3 Ironwood support). Without it the device returns InsNotSupportedError
+    // (6d00) on the first INS_PCZT_IRONWOOD_ACTION APDU, after Orchard streaming
+    // has already sent P2=CONTINUE — leaving the device waiting for more data.
+    if (hasIronwood) {
+      const ironwoodPackets = serializeIronwoodActions(ironwoodBundle!);
+      for (let i = 0; i < ironwoodPackets.length; i += 1) {
+        const result = await this.api.sendCommand(
+          new PcztIronwoodActionCommand({
+            data: ironwoodPackets[i]!,
+            p1: pcztP1(i, ironwoodPackets.length),
+            p2: pcztP2(i, ironwoodPackets.length, true),
+          }),
+        );
+        if (!isSuccessCommandResult(result)) {
+          return DmkResultFactory({ error: result.error });
+        }
       }
     }
 
@@ -158,7 +217,26 @@ export class SignPcztTransactionTask {
       orchard.push(result.data);
     }
 
-    // 3. Collect one signature per transparent input.
+    // 3. Collect one spendAuthSig per Ironwood action the device must sign.
+    //    Same dummy-spend skip as Orchard: spendValue === 0n means a padding
+    //    spend self-signed host-side by the PCZT IoFinalizer.
+    const ironwood: IronwoodActionSignature[] = [];
+    if (hasIronwood) {
+      for (let i = 0; i < ironwoodBundle!.actions.length; i += 1) {
+        if (ironwoodBundle!.actions[i]!.spendValue === 0n) {
+          continue;
+        }
+        const result = await this.api.sendCommand(
+          new SignPcztIronwoodCommand({ actionIndex: i }),
+        );
+        if (!isSuccessCommandResult(result)) {
+          return DmkResultFactory({ error: result.error });
+        }
+        ironwood.push(result.data);
+      }
+    }
+
+    // 4. Collect one signature per transparent input.
     const transparentInputSigs: Uint8Array[] = [];
     for (let i = 0; i < transparentInputs.length; i += 1) {
       const result = await this.api.sendCommand(
@@ -170,6 +248,8 @@ export class SignPcztTransactionTask {
       transparentInputSigs.push(result.data.signature);
     }
 
-    return DmkResultFactory({ data: { orchard, transparentInputSigs } });
+    return DmkResultFactory({
+      data: { orchard, transparentInputSigs, ironwood },
+    });
   }
 }

@@ -4,6 +4,7 @@ import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import {
   type PcztBip32Derivation,
   type PcztGlobal,
+  type PcztIronwoodBundle,
   type PcztOrchardBundle,
   type PcztTransparentInput,
   type PcztTransparentOutput,
@@ -111,7 +112,9 @@ const splitIntoPackets = (payload: Uint8Array): Uint8Array[] => {
 export const serializePcztHeader = (global: PcztGlobal): Uint8Array => {
   const builder = new ByteArrayBuilder();
   builder.addBufferToData(Uint8Array.of(0x50, 0x43, 0x5a, 0x54)); // "PCZT"
-  builder.add32BitUIntToData(1, false); // PCZT version
+  // PCZT version: 2 for V6 (Ironwood), 1 for V5. The device rejects mismatches
+  // in `parse_pczt_header` (app-zcash `src/parser/pczt.rs`).
+  builder.add32BitUIntToData(global.txVersion >= 6 ? 2 : 1, false);
   builder.add32BitUIntToData(global.txVersion, false);
   builder.add32BitUIntToData(global.versionGroupId, false);
   builder.add32BitUIntToData(global.consensusBranchId, false);
@@ -168,20 +171,26 @@ export const serializeTransparentOutputs = (
   return packets;
 };
 
-/** `PCZT_ORCHARD_ACTION` packet sequence (including the trailer). */
-export const serializeOrchardActions = (
-  bundle: PcztOrchardBundle,
+// Shared serializer for Orchard/Ironwood bundles. Both pools share a common
+// base wire layout per `docs/PCZT_APDU.md`; only the INS code at the call site
+// differs. The trailer is only emitted when action count > 0.
+//
+// Structural-identity invariant (ZIP 229 §3.2): `PcztIronwoodAction` and
+// `PcztOrchardAction` share the same base wire layout. TypeScript's structural
+// typing makes the shared fields mutually assignable, so the compiler will NOT
+// warn if one type is accidentally used in place of the other. Ironwood-only
+// additions (e.g. `notePlaintextVersion`, added for PCZT v2) are serialized
+// via `'<field>' in action` guards below — any future Ironwood-only field
+// requires the same treatment or the omission will be silent.
+const serializeShieldedActions = (
+  bundle: PcztOrchardBundle | PcztIronwoodBundle,
 ): Uint8Array[] => {
   const packets: Uint8Array[] = [createVarint(bundle.actions.length)];
 
   // No trailer when there are zero actions: this is *not* a missing field. The
-  // device parser finalizes the Orchard bundle the moment it reads a count of 0
-  // (`app-zcash` `src/parser/pczt/orchard.rs`: `if action_count == 0 {
-  // finalize_orchard_actions(..) }`) and never reads flags/value_sum/anchor.
-  // The contract spells this out in `docs/PCZT_APDU.md`: "Bundle trailer
-  // packet, only when Orchard action count is greater than 0." Emitting a
-  // trailer here would leave unexpected bytes and fail the parser's group-end
-  // check on the transparent-only flow.
+  // device parser finalizes the bundle the moment it reads a count of 0 and
+  // never reads flags/value_sum/anchor. Emitting a trailer here would leave
+  // unexpected bytes and fail the parser's group-end check.
   if (bundle.actions.length === 0) {
     return packets;
   }
@@ -212,6 +221,12 @@ export const serializeOrchardActions = (
     metadata.add64BitUIntToData(action.value, false);
     metadata.addBufferToData(action.rseed);
     metadata.addBufferToData(action.rcv);
+    // PCZT v2 addition: present on Ironwood actions, absent on Orchard actions.
+    if ("notePlaintextVersion" in action) {
+      metadata.add8BitUIntToData(
+        (action as { notePlaintextVersion: number }).notePlaintextVersion,
+      );
+    }
     packets.push(metadata.build());
   }
 
@@ -228,6 +243,22 @@ export const serializeOrchardActions = (
 
   return packets;
 };
+
+/** `PCZT_ORCHARD_ACTION` packet sequence (including the trailer when action count > 0). */
+export const serializeOrchardActions = (
+  bundle: PcztOrchardBundle,
+): Uint8Array[] => serializeShieldedActions(bundle);
+
+/**
+ * `PCZT_IRONWOOD_ACTION` packet sequence (including the trailer when action count > 0).
+ *
+ * The wire format is byte-identical to Orchard; only the INS code differs.
+ * Mirrors `LedgerHQ/app-zcash` `src/parser/pczt/orchard.rs` on the
+ * `feat/zcash-integration/ironwood` branch.
+ */
+export const serializeIronwoodActions = (
+  bundle: PcztIronwoodBundle,
+): Uint8Array[] => serializeShieldedActions(bundle);
 
 /**
  * P1 framing for packet `index` of a `total`-packet command:
@@ -252,8 +283,8 @@ export const pcztP1 = (index: number, total: number): number => {
 };
 
 /**
- * P2 framing: `FINISHED` only on the last packet of the final bundle command
- * (`ORCHARD_ACTION`), otherwise `CONTINUE`.
+ * P2 framing: `FINISHED` only on the last packet of the final bundle command,
+ * otherwise `CONTINUE`.
  */
 export const pcztP2 = (
   index: number,

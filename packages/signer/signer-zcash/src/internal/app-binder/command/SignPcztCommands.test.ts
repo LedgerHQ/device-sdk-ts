@@ -4,6 +4,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
+import { SignPcztIronwoodCommand } from "@internal/app-binder/command/SignPcztIronwoodCommand";
 import { SignPcztOrchardCommand } from "@internal/app-binder/command/SignPcztOrchardCommand";
 import { SignPcztTransparentCommand } from "@internal/app-binder/command/SignPcztTransparentCommand";
 
@@ -44,6 +45,41 @@ describe("SignPcztOrchardCommand", () => {
     const result = new SignPcztOrchardCommand({ actionIndex: 0 }).parseResponse(
       response(REJECTED, new Uint8Array()),
     );
+    expect(isSuccessCommandResult(result)).toBe(false);
+  });
+});
+
+describe("SignPcztIronwoodCommand", () => {
+  it("builds INS 0x59 with empty data and the action index in P2", () => {
+    // actionIndex: 3 → P2 = 0x03; INS = 0x59; P1 = 0x00 (FIRST); no data → Lc = 0x00
+    const apdu = new SignPcztIronwoodCommand({ actionIndex: 3 })
+      .getApdu()
+      .getRawApdu();
+    expect(apduHex(apdu)).toBe("e059000300");
+  });
+
+  it("parses a 64-byte spendAuthSig correctly", () => {
+    const sig = new Uint8Array(64).fill(0xcd);
+    const result = new SignPcztIronwoodCommand({
+      actionIndex: 0,
+    }).parseResponse(response(OK, sig));
+    expect(isSuccessCommandResult(result)).toBe(true);
+    if (isSuccessCommandResult(result)) {
+      expect(result.data.spendAuthSig).toEqual(sig);
+    }
+  });
+
+  it("rejects a spendAuthSig of the wrong length (63 bytes)", () => {
+    const result = new SignPcztIronwoodCommand({
+      actionIndex: 0,
+    }).parseResponse(response(OK, new Uint8Array(63).fill(0xcd)));
+    expect(isSuccessCommandResult(result)).toBe(false);
+  });
+
+  it("surfaces a device rejection status word", () => {
+    const result = new SignPcztIronwoodCommand({
+      actionIndex: 0,
+    }).parseResponse(response(REJECTED, new Uint8Array()));
     expect(isSuccessCommandResult(result)).toBe(false);
   });
 });

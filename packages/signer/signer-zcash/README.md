@@ -6,7 +6,7 @@ This module provides the implementation of the Ledger Zcash signer of the Device
 - Retrieving a unified shielded address (Orchard receiver) for a given transparent derivation path;
 - Retrieving a unified or Orchard full viewing key (ZIP-32 account path);
 - Signing a transparent Zcash payment transaction (Ledger Wallet / `hw-app-btc` compatible shape);
-- Signing an Orchard shielded (PCZT) transaction, returning per-action Orchard spend-authorization signatures and per-input transparent signatures;
+- Signing a shielded (PCZT) transaction — V5 (Orchard) or V6 (Orchard + Ironwood/NU6.3) — returning per-action spend-authorization signatures and per-input transparent signatures;
 - Signing a message displayed on the device;
 - Fetching trusted inputs for previous transactions;
 - Retrieving the app configuration;
@@ -269,12 +269,25 @@ On **Pending**, `requiredUserInteraction` is `UserInteractionRequired.SignTransa
 
 ### Use Case 4: Sign PCZT Transaction
 
-Sign an Orchard **shielded** transaction expressed as a PCZT (Partially Constructed Zcash Transaction). The host (zcash-utils) builds the PCZT and passes the structured `PcztTransaction` to the signer, which streams the header, transparent inputs/outputs, and Orchard actions to the device as the `PCZT_*` APDU sequence. The device returns the raw per-action Orchard `spendAuthSig`s and per-input transparent signatures; the **binding signature and final transaction assembly are host-side** (never involve the device). The legacy transparent [`signTransaction`](#use-case-3-sign-transaction) path is unchanged.
+Sign a shielded transaction expressed as a PCZT (Partially Constructed Zcash Transaction).
+Supports both **V5** (Orchard-only) and **V6** (Orchard + Ironwood, NU6.3) transactions.
+
+The host (zcash-utils) builds the PCZT and passes the structured `PcztTransaction` to the
+signer, which streams the header, transparent inputs/outputs, Orchard actions, and — for
+V6 — Ironwood actions to the device as the `PCZT_*` APDU sequence. The device returns
+per-action `spendAuthSig`s (Orchard and Ironwood) and per-input transparent signatures;
+**binding signatures and final transaction assembly are host-side** (never involve the device).
+The legacy transparent [`signTransaction`](#use-case-3-sign-transaction) path is unchanged.
+
+> **V6 firmware requirement:** Ironwood signing requires `app-zcash` compiled with the
+> `zcash_unstable` feature flag. Without it the device returns an error on the first
+> Ironwood APDU. Pass `txVersion: 5` for standard V5 transactions.
 
 ```typescript
 import { type PcztTransaction } from "@ledgerhq/device-signer-kit-zcash";
 
-const transaction: PcztTransaction = {
+// V5 (Orchard-only)
+const v5Transaction: PcztTransaction = {
   global: {
     txVersion: 5,
     versionGroupId: 0x26a7270a,
@@ -296,8 +309,39 @@ const transaction: PcztTransaction = {
   },
 };
 
+// V6 (Orchard + Ironwood, NU6.3) — requires zcash_unstable firmware
+const v6Transaction: PcztTransaction = {
+  global: {
+    txVersion: 6,
+    versionGroupId: 0xd884b698,
+    consensusBranchId: 0x37a5165b, // Nu6_3
+    fallbackLockTime: null,
+    expiryHeight: 0,
+    coinType: 133,
+    txModifiable: 0,
+  },
+  transparentInputs: [],
+  transparentOutputs: [],
+  orchardBundle: {
+    actions: [
+      /* PcztOrchardAction[] */
+    ],
+    flags: 0x03,
+    valueBalance: 0n,
+    anchor: orchardAnchor,
+  },
+  ironwoodBundle: {
+    actions: [
+      /* PcztIronwoodAction[] */
+    ],
+    flags: 0x03,
+    valueBalance: -1000n, // net zatoshis flowing into Ironwood
+    anchor: ironwoodAnchor, // 32 bytes, Ironwood commitment-tree root
+  },
+};
+
 const { observable, cancel } = signerZcash.signPcztTransaction(
-  transaction,
+  v5Transaction, // or v6Transaction
   options,
 );
 ```
@@ -312,10 +356,11 @@ type PcztTransaction = {
   transparentInputs: PcztTransparentInput[]; // count 0 when empty
   transparentOutputs: PcztTransparentOutput[]; // count 0 when empty
   orchardBundle: PcztOrchardBundle | null; // null = empty Orchard bundle
+  ironwoodBundle?: PcztIronwoodBundle | null; // V6 only; absent or null for V5
 };
 
 type PcztGlobal = {
-  txVersion: number; // V5 = 5
+  txVersion: number; // V5 = 5, V6 = 6
   versionGroupId: number;
   consensusBranchId: number;
   fallbackLockTime: number | null; // Option<u32>; null = absent
@@ -373,6 +418,35 @@ type PcztOrchardBundle = {
   valueBalance: bigint; // net value balance, zatoshis (signed)
   anchor: Uint8Array; // Orchard commitment-tree anchor, 32 bytes
 };
+
+// V6 only — wire format identical to PcztOrchardAction (820-byte OrchardAction encoding)
+type PcztIronwoodAction = {
+  cvNet: Uint8Array; // value commitment, 32 bytes
+  nullifier: Uint8Array; // spend nullifier, 32 bytes
+  rk: Uint8Array; // randomized verification key, 32 bytes
+  spendRecipient: Uint8Array; // raw Orchard address of spent note, 43 bytes
+  spendValue: bigint; // zatoshis (0n = dummy/padding spend, signed host-side)
+  spendRho: Uint8Array; // 32 bytes
+  spendRseed: Uint8Array; // 32 bytes
+  alpha: Uint8Array; // spend-auth randomizer (Pallas scalar), 32 bytes; host→device only
+  signingPath: string; // ZIP-32 derivation path of the signing key
+  seedFingerprint?: Uint8Array; // 32 bytes (default 32 zero bytes)
+  cmx: Uint8Array; // note commitment x-coord, 32 bytes
+  ephemeralKey: Uint8Array; // 32 bytes
+  encCiphertext: Uint8Array;
+  outCiphertext: Uint8Array;
+  recipient: Uint8Array; // raw Orchard address of output note, 43 bytes
+  value: bigint; // output-note value, zatoshis
+  rseed: Uint8Array; // 32 bytes
+  rcv: Uint8Array; // randomized commitment value, 32 bytes (required)
+};
+
+type PcztIronwoodBundle = {
+  actions: PcztIronwoodAction[];
+  flags: number;
+  valueBalance: bigint; // net value balance, zatoshis (signed)
+  anchor: Uint8Array; // Ironwood commitment-tree anchor, 32 bytes
+};
 ```
 
 #### Parameters (options)
@@ -389,13 +463,24 @@ type TransactionOptions = {
 type SignPcztTransactionResult = {
   // one spendAuthSig per Orchard action, in action order
   orchard: Array<{ spendAuthSig: Uint8Array }>; // RedPallas sig, 64 bytes each
+  // one spendAuthSig per non-dummy Ironwood action, ascending action-index order
+  // (actions with spendValue === 0n are dummy spends signed host-side; empty for V5)
+  ironwood: Array<{ spendAuthSig: Uint8Array }>; // RedPallas sig, 64 bytes each
   // one signature per transparent input, in input order:
   // DER-encoded secp256k1 signature + trailing sighash_type byte (0x01)
   transparentInputSigs: Uint8Array[];
 };
 ```
 
-There is **no `bindingSig`** in the result: the binding signature is computed host-side from `bsk = Σ rcv`. On **Pending**, `requiredUserInteraction` is `UserInteractionRequired.SignTransaction` (user must approve on device).
+There is **no `bindingSig`** in the result — binding signatures are always computed
+host-side:
+
+- **V5:** `bindingSig = bsk.sign(sighash)` where `bsk = Σ rcv` over Orchard actions.
+- **V6:** two independent binding signatures — `bindingSig_orchard` and
+  `bindingSig_ironwood` — computed from their respective `Σ rcv` sums (ZIP 229).
+
+On **Pending**, `requiredUserInteraction` is `UserInteractionRequired.SignTransaction`
+(user must approve on device).
 
 ---
 

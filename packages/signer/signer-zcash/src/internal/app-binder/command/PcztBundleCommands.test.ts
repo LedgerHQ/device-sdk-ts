@@ -5,6 +5,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { PcztHeaderCommand } from "@internal/app-binder/command/PcztHeaderCommand";
+import { PcztIronwoodActionCommand } from "@internal/app-binder/command/PcztIronwoodActionCommand";
 import { PcztOrchardActionCommand } from "@internal/app-binder/command/PcztOrchardActionCommand";
 import { PcztTransparentInputCommand } from "@internal/app-binder/command/PcztTransparentInputCommand";
 import { PcztTransparentOutputCommand } from "@internal/app-binder/command/PcztTransparentOutputCommand";
@@ -12,6 +13,7 @@ import {
   PCZT_P1,
   PCZT_P2,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { ZcashAppCommandError } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 
 const DATA = Uint8Array.of(0x01, 0x02);
 const apduHex = (raw: Uint8Array): string => Buffer.from(raw).toString("hex");
@@ -128,6 +130,42 @@ describe("PCZT bundle commands", () => {
         p2: PCZT_P2.CONTINUE,
       }).parseResponse(rejected);
       expect(isSuccessCommandResult(result)).toBe(false);
+    });
+  });
+
+  describe("PcztIronwoodActionCommand", () => {
+    it("builds INS 0x58 with the supplied P1/P2 framing and data", () => {
+      // p1=0x01 (LAST), p2=0x01 (FINISHED), data=[0x02]
+      const apdu = new PcztIronwoodActionCommand({
+        data: Uint8Array.of(0x02),
+        p1: PCZT_P1.LAST,
+        p2: PCZT_P2.FINISHED,
+      })
+        .getApdu()
+        .getRawApdu();
+      expect(apduHex(apdu)).toBe("e05801010102");
+    });
+
+    it("maps the success status word to a successful result", () => {
+      const result = new PcztIronwoodActionCommand({
+        data: DATA,
+        p1: PCZT_P1.FIRST,
+        p2: PCZT_P2.CONTINUE,
+      }).parseResponse(success);
+      expect(isSuccessCommandResult(result)).toBe(true);
+    });
+
+    it("surfaces a device error status word", () => {
+      const result = new PcztIronwoodActionCommand({
+        data: DATA,
+        p1: PCZT_P1.FIRST,
+        p2: PCZT_P2.CONTINUE,
+      }).parseResponse(rejected);
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toBeInstanceOf(ZcashAppCommandError);
+        expect((result.error as ZcashAppCommandError).errorCode).toBe("6985");
+      }
     });
   });
 });

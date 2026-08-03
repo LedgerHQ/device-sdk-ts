@@ -53,12 +53,15 @@ export type {
   ZcashFullViewingKeyMode,
 } from "@api/model/FullViewingKeyOptions";
 export type {
+  IronwoodActionSignature,
   OrchardActionSignature,
   SignPcztTransactionResult,
 } from "@api/model/PcztSignature";
 export type {
   PcztBip32Derivation,
   PcztGlobal,
+  PcztIronwoodAction,
+  PcztIronwoodBundle,
   PcztOrchardAction,
   PcztOrchardBundle,
   PcztTransaction,
