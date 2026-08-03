@@ -39,13 +39,6 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.SOLANA_TRANSACTION_CHECK,
 ];
 
-const SOLANA_SIGNATURE_LENGTH = 64;
-const SOLANA_MAX_SIGNATURES = 64;
-const VERSIONED_MESSAGE_PREFIX_MASK = 0x80;
-const SHORTVEC_CONTINUATION_BIT = 0x80;
-const SHORTVEC_DATA_MASK = 0x7f;
-const SHORTVEC_DATA_BITS = 7;
-
 const solanaTransactionCheckInputCodec = Codec.interface({
   deviceModelId: deviceModelIdCodec,
   transactionCheck: Codec.interface({
@@ -91,21 +84,7 @@ export class SolanaTransactionCheckLoader
   ): Promise<ClearSignContext[]> {
     const { from, transactionBytes, chain } = ctx.transactionCheck;
 
-    let rawTx: string;
-    try {
-      rawTx = this.bs58Encoder.encode(
-        this.wrapMessageAsTransaction(transactionBytes),
-      );
-    } catch (error) {
-      const result: ClearSignContext[] = [
-        {
-          type: ClearSignContextType.ERROR,
-          error: error instanceof Error ? error : new Error(String(error)),
-        },
-      ];
-      this.logger.debug("load result", { data: { result } });
-      return result;
-    }
+    const rawTx = this.bs58Encoder.encode(transactionBytes);
 
     const txCheck = await this.transactionCheckDataSource.check({
       path: TransactionCheckPaths.SOLANA_TRANSACTION,
@@ -136,65 +115,5 @@ export class SolanaTransactionCheckLoader
     const result = [context];
     this.logger.debug("load result", { data: { result } });
     return result;
-  }
-
-  /**
-   * Wrap a serialized Solana Message into a serialized Transaction expected
-   * by the web3checks endpoint, by prepending a compact-u16 signature count
-   * and the matching number of zero-filled signature placeholders.
-   *
-   * Supports legacy and versioned messages: versioned messages start with a
-   * version prefix byte (high bit set), shifting `numRequiredSignatures` by
-   * one position.
-   */
-  private wrapMessageAsTransaction(message: Uint8Array): Uint8Array {
-    const numRequiredSignatures = this.readNumRequiredSignatures(message);
-    const sigCount = this.encodeShortVec(numRequiredSignatures);
-    const placeholdersLength = numRequiredSignatures * SOLANA_SIGNATURE_LENGTH;
-
-    const wrapped = new Uint8Array(
-      sigCount.length + placeholdersLength + message.length,
-    );
-    wrapped.set(sigCount, 0);
-    wrapped.set(message, sigCount.length + placeholdersLength);
-    return wrapped;
-  }
-
-  private readNumRequiredSignatures(message: Uint8Array): number {
-    const firstByte = message[0];
-    if (firstByte === undefined) {
-      throw new Error(
-        "[ContextModule] SolanaTransactionCheckLoader: empty transaction bytes",
-      );
-    }
-    const isVersioned = (firstByte & VERSIONED_MESSAGE_PREFIX_MASK) !== 0;
-    const headerOffset = isVersioned ? 1 : 0;
-    const numRequiredSignatures = message[headerOffset];
-    if (numRequiredSignatures === undefined) {
-      throw new Error(
-        "[ContextModule] SolanaTransactionCheckLoader: malformed message header",
-      );
-    }
-    if (numRequiredSignatures > SOLANA_MAX_SIGNATURES) {
-      throw new Error(
-        `[ContextModule] SolanaTransactionCheckLoader: numRequiredSignatures (${numRequiredSignatures}) exceeds SOLANA_MAX_SIGNATURES (${SOLANA_MAX_SIGNATURES})`,
-      );
-    }
-    return numRequiredSignatures;
-  }
-
-  private encodeShortVec(value: number): Uint8Array {
-    const bytes: number[] = [];
-    let remaining = value;
-    while (true) {
-      const lowBits = remaining & SHORTVEC_DATA_MASK;
-      remaining >>>= SHORTVEC_DATA_BITS;
-      if (remaining === 0) {
-        bytes.push(lowBits);
-        break;
-      }
-      bytes.push(lowBits | SHORTVEC_CONTINUATION_BIT);
-    }
-    return Uint8Array.from(bytes);
   }
 }

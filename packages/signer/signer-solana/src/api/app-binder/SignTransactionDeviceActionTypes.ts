@@ -95,6 +95,11 @@ export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
   readonly signature: Signature | null;
   readonly appConfig: AppConfiguration | null;
+  // Updated by NormalizeTransaction; starts as the raw input and is replaced
+  // with the extracted message bytes once the actor completes. serializedForTxCheck
+  // is only set when the input was tx.serialize().
+  readonly messageBytes: Uint8Array;
+  readonly serializedForTxCheck: Uint8Array | undefined;
   // Set when the generic clear-sign path streamed + FINALIZE-validated the
   // descriptors, so the terminal sign runs the generic PROMPT UI DISPLAY flow
   // instead of the legacy preview.

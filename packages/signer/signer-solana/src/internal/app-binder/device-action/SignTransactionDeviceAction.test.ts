@@ -153,6 +153,10 @@ function run(
 ) {
   const action = new SignTransactionDeviceAction({ input });
   parentSpy = vi.spyOn(action, "extractDependencies").mockReturnValue({
+    normalizeTransaction: vi.fn().mockResolvedValue({
+      messageBytes: exampleTx,
+      serializedForTxCheck: undefined,
+    }),
     getAppConfig: getAppConfigMock,
     transactionCheckOptIn: transactionCheckOptInMock,
     provideTransactionCheck: provideTransactionCheckMock,
