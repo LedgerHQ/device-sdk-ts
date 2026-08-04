@@ -1423,6 +1423,9 @@ importers:
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
       xstate:
         specifier: 'catalog:'
         version: 5.19.2
@@ -1448,6 +1451,9 @@ importers:
       '@types/pako':
         specifier: ^2.0.3
         version: 2.0.4
+      '@types/semver':
+        specifier: 'catalog:'
+        version: 7.7.0
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@24.13.2)(typescript@5.9.2)
