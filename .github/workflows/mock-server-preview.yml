@@ -58,16 +58,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          body=$(cat <<EOF
-🚀 **Preview environment**
-
-**URL:** https://${PREVIEW_HOST}
-**Image:** \`${REGISTRY}/${IMAGE}:pr-${PR}\`
-**Commit:** \`${{ github.event.pull_request.head.sha }}\`
-
-ArgoCD syncs the env within ~30-60s after this image is pushed.
-EOF
-          )
+          body=$(printf '%s\n' \
+            "🚀 **Preview environment**" \
+            "" \
+            "**URL:** https://${PREVIEW_HOST}" \
+            "**Image:** \`${REGISTRY}/${IMAGE}:pr-${PR}\`" \
+            "**Commit:** \`${HEAD_SHA}\`" \
+            "" \
+            "ArgoCD syncs the env within ~30-60s after this image is pushed.")
           # Upsert: edit our last comment if present, else create a new one.
           gh pr comment "$PR" --edit-last --body "$body" || gh pr comment "$PR" --body "$body"
