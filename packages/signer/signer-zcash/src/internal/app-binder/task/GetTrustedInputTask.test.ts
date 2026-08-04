@@ -191,7 +191,7 @@ const serializeOrchardAction = (action: OrchardActionFields): Uint8Array =>
   );
 
 /**
- * Serializes an action bundle the way ZIP-230 lays it out on chain: the count, the
+ * Serializes an action bundle the way ZIP-229 lays it out on chain: the count, the
  * actions, then a trailer of flags, value balance and anchor followed by the proofs
  * and signatures. Only the flags and the value balance belong to the v6 txid digest.
  */
@@ -230,6 +230,45 @@ const buildV6TxWithActionBundles = (
     serializeV6ActionBundle(orchardActions),
     serializeV6ActionBundle(ironwoodActions),
   );
+
+/**
+ * The v6 counterpart of `buildV5TxWithSaplingBundle`. The Sapling bundle keeps the
+ * same on-chain layout in v6 — the anchor is still written after the value balance —
+ * so this differs from the v5 builder only by the header and by the Ironwood action
+ * count that follows the Orchard one.
+ */
+const buildV6TxWithSaplingBundle = (
+  spendCount: number,
+  outputs: SaplingOutputFields[],
+): Uint8Array => {
+  const hasBundle = spendCount > 0 || outputs.length > 0;
+
+  return concatBytes(
+    hexToBytes(V6_HEADER_HEX),
+    hexToBytes(V5_LOCK_TIME_HEX),
+    hexToBytes(V5_EXPIRY_HEX),
+    hexToBytes(TRANSPARENT_BODY_HEX),
+    new Uint8Array([spendCount]),
+    ...Array.from({ length: spendCount }, () =>
+      concatBytes(
+        byteRun(SPEND_CV_MARKER, 32),
+        byteRun(SPEND_NULLIFIER_MARKER, 32),
+        byteRun(SPEND_RK_MARKER, 32),
+      ),
+    ),
+    new Uint8Array([outputs.length]),
+    ...outputs.map(serializeSaplingOutput),
+    hasBundle ? byteRun(VALUE_BALANCE_MARKER, 8) : new Uint8Array(),
+    spendCount > 0 ? byteRun(ANCHOR_MARKER, 32) : new Uint8Array(),
+    byteRun(
+      AUTHORIZING_MARKER,
+      spendCount * SAPLING_SPEND_PROOF_AND_SIG_SIZE +
+        outputs.length * SAPLING_OUTPUT_PROOF_SIZE +
+        (hasBundle ? SAPLING_BINDING_SIG_SIZE : 0),
+    ),
+    new Uint8Array([0x00, 0x00]), // no Orchard action, no Ironwood action
+  );
+};
 
 const memoChunksHex = (memo: Uint8Array): string[] =>
   Array.from({ length: memo.length / MEMO_CHUNK_SIZE }, () =>
@@ -514,6 +553,73 @@ describe("GetTrustedInputTask", () => {
     ]);
   });
 
+  it("omits the Sapling anchor of a v6, which ZIP-229 moved to the authorizing digest", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+    const output = saplingOutputFields(0x20);
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: buildV6TxWithSaplingBundle(1, [output]),
+      indexLookup: 0,
+    }).run();
+
+    // The anchor is still on the wire in a v6 — ZIP-225 writes it after the value
+    // balance whatever the version — but sapling_spends_noncompact_digest_v6 hashes
+    // cv ‖ rk alone, so the device must not receive it. The value balance therefore
+    // travels on its own where a v5 sends it followed by 32 anchor bytes.
+    expect(sentApduData().slice(5)).toEqual([
+      "01010000", // one spend, one output, no Orchard action, no Ironwood action
+      runHex(VALUE_BALANCE_MARKER, 8),
+      runHex(SPEND_CV_MARKER, 32) +
+        runHex(SPEND_NULLIFIER_MARKER, 32) +
+        runHex(SPEND_RK_MARKER, 32),
+      compactHex(output),
+      ...memoChunksHex(output.memo),
+      nonCompactHex(output),
+      `${V5_LOCK_TIME_HEX}04${V5_EXPIRY_HEX}`,
+    ]);
+
+    const streamed = concatBytes(...sentApduData().map(hexToBytes));
+    expect(streamed).not.toContain(ANCHOR_MARKER);
+    expect(streamed).not.toContain(AUTHORIZING_MARKER);
+  });
+
+  it("still sends the Sapling anchor of a v5, whose digest keeps it", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+    const output = saplingOutputFields(0x20);
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: buildV5TxWithSaplingBundle(1, [output]),
+      indexLookup: 0,
+    }).run();
+
+    // Same bundle, one version down: the anchor rides along with the value balance.
+    expect(sentApduData()[6]).toBe(
+      runHex(VALUE_BALANCE_MARKER, 8) + runHex(ANCHOR_MARKER, 32),
+    );
+  });
+
+  it("rejects a transaction with bytes left over after the shielded bundles", async () => {
+    const withTrailingByte = concatBytes(
+      buildV6TxWithSaplingBundle(1, [saplingOutputFields(0x20)]),
+      new Uint8Array([0x00]),
+    );
+
+    await expect(
+      new GetTrustedInputTask(apiMock, {
+        transaction: withTrailingByte,
+        indexLookup: 0,
+      }).run(),
+    ).rejects.toThrow(
+      "Malformed transaction while splitting trusted input chunks",
+    );
+
+    expect(apiMock.sendCommand).not.toHaveBeenCalled();
+  });
+
   it("streams a v6 Ironwood previous transaction the way the device app was validated against", async () => {
     vi.mocked(apiMock.sendCommand).mockResolvedValue(
       CommandResultFactory({ data: makeSuccessResponse(0x01) }),
@@ -560,7 +666,7 @@ describe("GetTrustedInputTask", () => {
       compactActionHex(orchardAction),
       ...memoChunksHex(orchardAction.memo),
       nonCompactActionHex(orchardAction),
-      // ZIP-230 moved the anchor to the authorizing digest, so a v6 bundle commits
+      // ZIP-229 moved the anchor to the authorizing digest, so a v6 bundle commits
       // to its flags and value balance alone — 9 bytes where a v5 one sends 41.
       runHex(FLAGS_MARKER, 1) + runHex(VALUE_BALANCE_MARKER, 8),
       compactActionHex(ironwoodAction),
@@ -587,7 +693,7 @@ describe("GetTrustedInputTask", () => {
         indexLookup: 0,
       }).run(),
     ).rejects.toThrow(
-      "Unexpected version group id for a v6 transaction while splitting trusted input chunks",
+      "Unexpected version group id for a v6 transaction while splitting trusted input chunks: expected 0xd884b698, got 0x26a7270a",
     );
 
     expect(apiMock.sendCommand).not.toHaveBeenCalled();

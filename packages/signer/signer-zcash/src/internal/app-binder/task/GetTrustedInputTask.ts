@@ -118,6 +118,9 @@ const readUInt64LEAsNumber = (buffer: Uint8Array, offset: number): number => {
   return high * 2 ** 32 + low;
 };
 
+const toHexWord = (value: number): string =>
+  `0x${value.toString(16).padStart(8, "0")}`;
+
 const ensureRange = (buffer: Uint8Array, start: number, end: number): void => {
   if (start < 0 || end < start || end > buffer.length) {
     throw new Error(
@@ -212,6 +215,7 @@ type ShieldedBundles = {
   saplingSpends: Uint8Array[];
   saplingOutputs: Uint8Array[];
   saplingValueBalance: Uint8Array;
+  /** Empty for a v6, whose spends non-compact digest omits the anchor (ZIP-229). */
   saplingAnchor: Uint8Array;
   orchard: ActionBundle;
   /** Present for v6 transactions (Ironwood pool exists); absent for v5 (no Ironwood pool). */
@@ -248,6 +252,7 @@ const createFieldReader = (buffer: Uint8Array, startOffset: number) => {
       offset = nextOffset;
       return value;
     },
+    consumed: (): number => offset,
   };
 };
 
@@ -290,7 +295,8 @@ const readActionBundle = (
 /**
  * Steps over the proofs and signatures trailing an action bundle. They are
  * authorizing data, which the txid does not commit to, but a v6 transaction can
- * carry an Ironwood bundle behind them.
+ * carry an Ironwood bundle behind them, and the whole-transaction length check
+ * needs them accounted for either way.
  */
 const skipActionBundleAuthorizingData = (
   reader: FieldReader,
@@ -305,7 +311,7 @@ const skipActionBundleAuthorizingData = (
 };
 
 /**
- * Reads the shielded bundles as they are laid out on chain (ZIP-225, and ZIP-230
+ * Reads the shielded bundles as they are laid out on chain (ZIP-225, and ZIP-229
  * for the v6 Ironwood pool): each description keeps its own fields together, and
  * the proofs and signatures trail the descriptions. Proofs and signatures are
  * skipped, as they belong to the authorizing data commitment rather than to the
@@ -334,7 +340,14 @@ const readShieldedBundles = (
   if (spendCount > 0 || outputCount > 0) {
     saplingValueBalance = reader.take(VALUE_BALANCE_SIZE);
     if (spendCount > 0) {
-      saplingAnchor = reader.take(HASH_SIZE);
+      // On chain the anchor sits here whatever the version, but ZIP-229 moves it
+      // into the authorizing data for a v6, where sapling_spends_noncompact_digest_v6
+      // hashes cv ‖ rk alone. So a v6 reads past it and streams nothing.
+      if (isTxV6) {
+        reader.skip(HASH_SIZE);
+      } else {
+        saplingAnchor = reader.take(HASH_SIZE);
+      }
     }
     reader.skip(
       spendCount * (SAPLING_PROOF_SIZE + SIGNATURE_SIZE) +
@@ -344,11 +357,24 @@ const readShieldedBundles = (
   }
 
   const orchard = readActionBundle(reader, /* anchorInDigest */ !isTxV6);
+  skipActionBundleAuthorizingData(reader, orchard.actions.length);
+
   let ironwood: ActionBundle | undefined;
 
   if (isTxV6) {
-    skipActionBundleAuthorizingData(reader, orchard.actions.length);
     ironwood = readActionBundle(reader, /* anchorInDigest */ false);
+    skipActionBundleAuthorizingData(reader, ironwood.actions.length);
+  }
+
+  // The shielded bundles end the transaction, and the walk above steps over every
+  // field including the authorizing data it does not stream. So the reader must land
+  // exactly on the end. Anything else means the layout assumed here is not the layout
+  // received — a header grown by a later field, an inserted field, a truncated tail —
+  // and streaming it would misframe the whole shielded section silently.
+  if (reader.consumed() !== transaction.length) {
+    throw new Error(
+      "Malformed transaction while splitting trusted input chunks",
+    );
   }
 
   return {
@@ -521,13 +547,13 @@ const splitTransactionToTrustedInputChunks = (
 
   // The app recognizes a v6 by its version group id as much as by its version, and
   // parses anything else as a v5. Streaming a mismatch would silently misframe it.
-  if (
-    isTxV6 &&
-    readUInt32LE(transaction, UINT32_SIZE) !== V6_VERSION_GROUP_ID
-  ) {
-    throw new Error(
-      "Unexpected version group id for a v6 transaction while splitting trusted input chunks",
-    );
+  if (isTxV6) {
+    const versionGroupId = readUInt32LE(transaction, UINT32_SIZE);
+    if (versionGroupId !== V6_VERSION_GROUP_ID) {
+      throw new Error(
+        `Unexpected version group id for a v6 transaction while splitting trusted input chunks: expected ${toHexWord(V6_VERSION_GROUP_ID)}, got ${toHexWord(versionGroupId)}`,
+      );
+    }
   }
 
   let offset = 0;

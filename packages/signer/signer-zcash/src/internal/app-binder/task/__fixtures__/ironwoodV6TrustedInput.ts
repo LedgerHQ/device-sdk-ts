@@ -1,6 +1,6 @@
 /**
  * Mainnet transaction 1facde4c098e686a8945bdfbb609e4cc4ebed610194117e7dd7cf2a2d9979a2f,
- * block 3429153: a v6 deshielding (ZIP-230) whose Orchard bundle is empty and whose two
+ * block 3429153: a v6 deshielding (ZIP-229) whose Orchard bundle is empty and whose two
  * shielded actions live in the Ironwood bundle.
  *
  * The two expectations below come from the app-zcash test
