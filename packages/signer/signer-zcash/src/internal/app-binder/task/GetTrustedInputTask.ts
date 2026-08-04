@@ -10,8 +10,10 @@ import {
   GetTrustedInputCommand,
   type GetTrustedInputCommandResponse,
 } from "@internal/app-binder/command/GetTrustedInputCommand";
+import { UnsupportedV6TransactionError } from "@internal/app-binder/command/utils/UnsupportedV6TransactionError";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import { createVarint } from "@internal/app-binder/task/utils/legacyTransactionUtils";
+import { appVersionWithoutV6Support } from "@internal/app-binder/ZcashApplicationResolver";
 import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 
 const MAX_APDU_DATA_LENGTH = 0xff;
@@ -529,11 +531,16 @@ const pushShieldedChunks = (
   });
 };
 
+const readTransactionVersion = (transaction: Uint8Array): number =>
+  readUInt32LE(transaction, 0) & TX_VERSION_MASK;
+
+const isTransactionV6 = (transaction: Uint8Array): boolean =>
+  readTransactionVersion(transaction) === TX_VERSION_V6;
+
 const splitTransactionToTrustedInputChunks = (
   transaction: Uint8Array,
 ): Uint8Array[] => {
-  const rawVersion = readUInt32LE(transaction, 0);
-  const txVersion = rawVersion & TX_VERSION_MASK;
+  const txVersion = readTransactionVersion(transaction);
   const isTxV4 = txVersion === TX_VERSION_V4;
   const isTxV6 = txVersion === TX_VERSION_V6;
 
@@ -651,6 +658,21 @@ export class GetTrustedInputTask {
   async run(): Promise<GetTrustedInputTaskResult> {
     const trustedInputIndex = this.args.indexLookup ?? 0;
     const chunks = splitTransactionToTrustedInputChunks(this.args.transaction);
+
+    // An app that predates ZIP-229 stops at the version word of a v6 previous
+    // transaction and answers 6a80, which reads like any other malformed input.
+    // Failing here instead, once the transaction is known to be framed as a v6,
+    // names the cause and the version that carries it, so the caller reports a
+    // condition rather than a bare status word.
+    if (isTransactionV6(this.args.transaction)) {
+      const appVersion = appVersionWithoutV6Support(this.api);
+
+      if (appVersion !== undefined) {
+        return DmkResultFactory({
+          error: new UnsupportedV6TransactionError(appVersion),
+        });
+      }
+    }
 
     const firstChunk = chunks[0];
     if (!firstChunk) {

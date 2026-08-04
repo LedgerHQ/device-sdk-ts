@@ -1,5 +1,9 @@
 import {
   CommandResultFactory,
+  DeviceModelId,
+  type DeviceSessionState,
+  DeviceSessionStateType,
+  DeviceStatus,
   DmkResultFactory,
   type InternalApi,
   InvalidStatusWordError,
@@ -7,6 +11,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { GetTrustedInputCommand } from "@internal/app-binder/command/GetTrustedInputCommand";
+import { UnsupportedV6TransactionError } from "@internal/app-binder/command/utils/UnsupportedV6TransactionError";
 import {
   ironwoodV6OnChainTxHex,
   ironwoodV6ShieldedChunksHex,
@@ -22,6 +27,7 @@ import {
   serializeTransaction,
   toInternalTransaction,
 } from "@internal/app-binder/task/utils/legacyTransactionUtils";
+import { MIN_APP_VERSION_FOR_V6_TRANSACTIONS } from "@internal/app-binder/ZcashApplicationResolver";
 
 import { GetTrustedInputTask } from "./GetTrustedInputTask";
 
@@ -322,14 +328,35 @@ const trustedInputApduCallsFromLogs = (): string[][] => {
   return calls;
 };
 
+/** The Zcash app the device session reports, at the version passed. */
+const appSessionState = (appVersion: string): DeviceSessionState =>
+  ({
+    sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+    deviceStatus: DeviceStatus.CONNECTED,
+    installedApps: [],
+    currentApp: { name: "Zcash", version: appVersion },
+    deviceModelId: DeviceModelId.FLEX,
+    isSecureConnectionAllowed: false,
+  }) as DeviceSessionState;
+
 describe("GetTrustedInputTask", () => {
   let apiMock: InternalApi;
 
   beforeEach(() => {
     apiMock = {
       sendCommand: vi.fn(),
+      // An app supporting v6, which every case but the version gate below assumes.
+      getDeviceSessionState: vi.fn(() =>
+        appSessionState(MIN_APP_VERSION_FOR_V6_TRANSACTIONS),
+      ),
     } as unknown as InternalApi;
   });
+
+  const withAppVersion = (appVersion: string): void => {
+    vi.mocked(apiMock.getDeviceSessionState).mockReturnValue(
+      appSessionState(appVersion),
+    );
+  };
 
   /** Data sent per APDU, the 5-byte APDU header aside. */
   const sentApduData = (): string[] =>
@@ -724,5 +751,97 @@ describe("GetTrustedInputTask", () => {
     );
 
     expect(apiMock.sendCommand).not.toHaveBeenCalled();
+  });
+  describe("app version gate on a v6 previous transaction", () => {
+    it("reports the installed version instead of streaming a v6 to an app that predates it", async () => {
+      // App 3.0.2 stops at the v6 version word and answers 6a80, a status word it
+      // also answers to a dozen unrelated causes.
+      withAppVersion("3.0.2");
+
+      const result = await new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(ironwoodV6OnChainTxHex),
+        indexLookup: 0,
+      }).run();
+
+      expect(apiMock.sendCommand).not.toHaveBeenCalled();
+      expect(result).toEqual(
+        DmkResultFactory({ error: new UnsupportedV6TransactionError("3.0.2") }),
+      );
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(UnsupportedV6TransactionError);
+        const error = result.error as UnsupportedV6TransactionError;
+        expect(error.errorCode).toBe("unsupported_v6_transaction");
+        expect(error.appVersion).toBe("3.0.2");
+        expect(error.message).toContain("3.0.2");
+        expect(error.message).toContain("V6 (Ironwood)");
+        // No release is promised: the version carrying v6 support to users is not
+        // settled, so the message names the installed app and nothing to install.
+        expect(error.message).not.toContain(
+          MIN_APP_VERSION_FOR_V6_TRANSACTIONS,
+        );
+      }
+    });
+
+    it.each([
+      ["the first version supporting v6", MIN_APP_VERSION_FOR_V6_TRANSACTIONS],
+      ["a later patch of that line", "3.8.10"],
+      ["a later minor, which sorts below the floor as a string", "3.10.0"],
+    ])("streams a v6 to %s", async (_label, appVersion) => {
+      withAppVersion(appVersion);
+      vi.mocked(apiMock.sendCommand).mockResolvedValue(
+        CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+      );
+
+      const result = await new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(ironwoodV6OnChainTxHex),
+        indexLookup: 0,
+      }).run();
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+      expect(sentApduData().join("")).toBe(`00000000${ironwoodV6StreamedHex}`);
+    });
+
+    it.each([
+      ["v5", TRANSPARENT_V5_TX_HEX],
+      ["v4", V4_NU6_TX_HEX],
+    ])(
+      "streams a %s previous transaction whatever the app version",
+      async (_version, transactionHex) => {
+        // Only a v6 header is at stake: every earlier version parses on any app.
+        withAppVersion("3.0.2");
+        vi.mocked(apiMock.sendCommand).mockResolvedValue(
+          CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+        );
+
+        const result = await new GetTrustedInputTask(apiMock, {
+          transaction: hexToBytes(transactionHex),
+          indexLookup: 1,
+        }).run();
+
+        expect(isSuccessDmkResult(result)).toBe(true);
+        expect(apiMock.sendCommand).toHaveBeenCalled();
+      },
+    );
+
+    it("streams a v6 when the session state reports no app version", async () => {
+      // Nothing to hold against the app, so the device answers as it did before.
+      vi.mocked(apiMock.getDeviceSessionState).mockReturnValue({
+        sessionStateType: DeviceSessionStateType.Connected,
+        deviceStatus: DeviceStatus.CONNECTED,
+        deviceModelId: DeviceModelId.FLEX,
+      } as DeviceSessionState);
+      vi.mocked(apiMock.sendCommand).mockResolvedValue(
+        CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+      );
+
+      const result = await new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(ironwoodV6OnChainTxHex),
+        indexLookup: 0,
+      }).run();
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+      expect(sentApduData().join("")).toBe(`00000000${ironwoodV6StreamedHex}`);
+    });
   });
 });
