@@ -292,7 +292,7 @@ describe("applyTokenRule", () => {
       expect(result.tokenInfos).toEqual([DefaultBs58Encoder.encode(mint)]);
     });
 
-    it("treats an unbound ACCOUNT_PATH token as the mint", () => {
+    it("adds an unbound ACCOUNT_PATH token ref as a tokenAmountRef (try TOKEN_INFO first, fallback TOKEN_ACCOUNT_STATE)", () => {
       const result = run(
         parsed({
           displayFields: [
@@ -304,8 +304,9 @@ describe("applyTokenRule", () => {
         }),
         makeInstruction(["someMint"]),
       );
-      expect(result.tokenInfos).toEqual(["someMint"]);
+      expect(result.tokenInfos).toEqual([]);
       expect(result.tokenAccountStates).toEqual([]);
+      expect(result.tokenAmountRefs).toEqual(["someMint"]);
     });
 
     it("redirects a bound token-account reference to its mint", () => {

@@ -89,6 +89,7 @@ export class HttpAltResolutionDataSource implements AltResolutionDataSource {
             altAddress,
             entryIndex,
             descriptor,
+            resolvedAddress: dto.resolvedAddress,
             keyId: validated.keyId,
             keyUsage: validated.keyUsage,
           });

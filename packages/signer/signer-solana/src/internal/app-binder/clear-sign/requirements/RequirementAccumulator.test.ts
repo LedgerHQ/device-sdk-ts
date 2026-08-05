@@ -46,6 +46,35 @@ describe("RequirementAccumulator", () => {
     expect(accumulator.build().enumVariants).toHaveLength(2);
   });
 
+  it("build() applies cross-bucket priority dedup: tokenAmountAltRefs > mintAltRefs > altResolutions", () => {
+    const accumulator = new RequirementAccumulator();
+
+    // (ALT, 1) added to all three buckets.
+    accumulator.addAltResolution("ALT", 1);
+    accumulator.addMintAltRef("ALT", 1);
+    accumulator.addTokenAmountAltRef("ALT", 1);
+
+    // (ALT, 2) added to mintAltRefs and altResolutions.
+    accumulator.addAltResolution("ALT", 2);
+    accumulator.addMintAltRef("ALT", 2);
+
+    // (ALT, 3) only in altResolutions.
+    accumulator.addAltResolution("ALT", 3);
+
+    const result = accumulator.build();
+
+    // tokenAmountAltRefs wins for (ALT,1) → stripped from altResolutions and mintAltRefs.
+    // mintAltRefs wins for (ALT,2) → stripped from altResolutions.
+    // (ALT,3) has no higher-priority entry → stays in altResolutions.
+    expect(result.tokenAmountAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 1 },
+    ]);
+    expect(result.mintAltRefs).toEqual([{ altAddress: "ALT", entryIndex: 2 }]);
+    expect(result.altResolutions).toEqual([
+      { altAddress: "ALT", entryIndex: 3 },
+    ]);
+  });
+
   it("returns an empty set when nothing was added", () => {
     expect(new RequirementAccumulator().build()).toEqual({
       instructionInfos: [],
@@ -54,6 +83,9 @@ describe("RequirementAccumulator", () => {
       tokenAccountStates: [],
       altResolutions: [],
       trustedNames: [],
+      tokenAmountRefs: [],
+      tokenAmountAltRefs: [],
+      mintAltRefs: [],
     });
   });
 });

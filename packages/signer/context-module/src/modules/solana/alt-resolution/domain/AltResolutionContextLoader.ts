@@ -91,6 +91,7 @@ export class AltResolutionContextLoader
       toContext: (value, certificate) => {
         const payload: SolanaAltResolutionPayload = {
           descriptor: value.descriptor,
+          resolvedAddress: value.resolvedAddress,
         };
         return {
           type: ClearSignContextType.SOLANA_ALT_RESOLUTION,
