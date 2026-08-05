@@ -29,8 +29,8 @@ export const CHAIN_CODE_LENGTH = 32;
  * P1 "start byte" values for the SIGN_TRANSACTION instruction.
  *
  * The Tron app frames a transaction across several APDUs and encodes the frame
- * position (and token-signature slots) in P1. The multi-frame chunking and
- * token-signature handling are orchestrated by `SignTransactionTask`.
+ * position in P1. The multi-frame chunking is orchestrated by
+ * `SignTransactionTask`.
  */
 export const SIGN_TRANSACTION_P1 = {
   // First and only frame (transaction fits in a single APDU).
@@ -39,12 +39,8 @@ export const SIGN_TRANSACTION_P1 = {
   FIRST: 0x00,
   // Continuation frame.
   SUBSEQUENT: 0x80,
-  // Last continuation frame when there are no token-signature frames.
+  // Last continuation frame.
   LAST: 0x90,
-  // Token-signature frame; lower nibble carries the token index.
-  TOKEN: 0xa0,
-  // OR'd into the P1 of the final token-signature frame.
-  TOKEN_LAST_FLAG: 0x08,
 } as const;
 
 /**

@@ -117,6 +117,46 @@ observable.subscribe((state) => {
 });
 ```
 
+### Sign transaction
+
+Signs a raw Tron transaction. The transaction is the protobuf-serialized
+`raw_data` bytes of the transaction; it is framed across APDUs, reviewed and
+blind-signed on the device (no clear-signing context is resolved). Requires
+the user to approve the transaction on the device screen.
+
+```typescript
+signer.signTransaction(
+  derivationPath: string,
+  // protobuf-serialized `raw_data` bytes of the transaction
+  transaction: Uint8Array,
+  options?: {
+    // Skip the "open app" step if the Tron app is already open (default: false).
+    skipOpenApp?: boolean;
+  },
+): SignTransactionDAReturnType;
+```
+
+The returned device action resolves to the 65-byte signature
+(`r[32] + s[32] + v[1]`) as a `Uint8Array`.
+
+```typescript
+const { observable, cancel } = signer.signTransaction(
+  "44'/195'/0'/0/0",
+  rawTransaction,
+);
+
+observable.subscribe((state) => {
+  switch (state.status) {
+    case "completed":
+      console.log(state.output); // Uint8Array(65) signature
+      break;
+    case "error":
+      console.error(state.error);
+      break;
+  }
+});
+```
+
 ## Development
 
 ```bash
