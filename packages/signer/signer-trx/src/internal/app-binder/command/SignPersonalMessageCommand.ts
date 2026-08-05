@@ -6,12 +6,18 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
-import { INS, LEDGER_CLA, P2_NONE } from "@internal/app-binder/constants";
+import {
+  INS,
+  LEDGER_CLA,
+  P2_NONE,
+  SIGNATURE_LENGTH,
+} from "@internal/app-binder/constants";
 
 import {
   TRON_APP_ERRORS,
@@ -43,7 +49,7 @@ export class SignPersonalMessageCommand
       TronAppErrorCodes
     >
 {
-  readonly name = "SignPersonalMessage";
+  readonly name = "signPersonalMessage";
 
   private readonly _args: SignPersonalMessageCommandArgs;
 
@@ -83,6 +89,17 @@ export class SignPersonalMessageCommand
       const remaining = parser.getUnparsedRemainingLength();
       const signature =
         parser.extractFieldByLength(remaining) ?? new Uint8Array();
+
+      // Intermediate frames carry no signature; the final frame must return a
+      // full SIGNATURE_LENGTH-byte signature. Any other length means the
+      // response was truncated or malformed.
+      if (signature.length !== 0 && signature.length !== SIGNATURE_LENGTH) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            `Invalid signature length: expected ${SIGNATURE_LENGTH}, got ${signature.length}`,
+          ),
+        });
+      }
 
       return CommandResultFactory({ data: signature });
     });

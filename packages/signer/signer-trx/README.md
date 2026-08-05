@@ -157,6 +157,46 @@ observable.subscribe((state) => {
 });
 ```
 
+### Sign personal message
+
+Signs a personal (TIP-191-style) message. A `string` message is UTF-8 encoded;
+raw bytes can be passed as a `Uint8Array`. The length-prefixed message is
+framed across APDUs and reviewed on the device. Requires the user to approve
+the message on the device screen.
+
+```typescript
+signer.signPersonalMessage(
+  derivationPath: string,
+  // the message to sign: a text string (UTF-8 encoded) or raw bytes
+  message: string | Uint8Array,
+  options?: {
+    // Skip the "open app" step if the Tron app is already open (default: false).
+    skipOpenApp?: boolean;
+  },
+): SignPersonalMessageDAReturnType;
+```
+
+The returned device action resolves to the 65-byte signature
+(`r[32] + s[32] + v[1]`) as a `Uint8Array`.
+
+```typescript
+const { observable, cancel } = signer.signPersonalMessage(
+  "44'/195'/0'/0/0",
+  "Hello Tron",
+);
+
+observable.subscribe((state) => {
+  switch (state.status) {
+    case "completed":
+      console.log(state.output); // Uint8Array(65) signature
+      break;
+    case "error":
+      console.error(state.error);
+      break;
+  }
+});
+```
+
 ## Development
 
 ```bash

@@ -69,6 +69,25 @@ export class TrxSignerDriver {
   }
 
   /**
+   * Open the Sign personal message action, fill the message (plain text) and
+   * Execute it. The action stays pending until the message is reviewed and
+   * signed on Speculos.
+   */
+  async signPersonalMessage(
+    message: string,
+    { skipOpenApp = false }: { skipOpenApp?: boolean } = {},
+  ): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign personal message").click();
+    const input = this.page.getByTestId("input-text_message");
+    await input.waitFor({ state: "visible" });
+    await input.fill(message);
+    if (skipOpenApp) {
+      await this.page.getByTestId("input-switch_skipOpenApp").click();
+    }
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
    * Wait for the last emitted device-action state to be terminal and return it
    * parsed.
    */

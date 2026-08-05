@@ -20,7 +20,7 @@ function concat(a: Uint8Array, b: Uint8Array): Uint8Array {
  * Frame a raw (already protobuf-serialized) Tron transaction into the ordered
  * list of APDU frames expected by the Tron app's SIGN_TRANSACTION instruction.
  *
- * Mirrors `@ledgerhq/hw-app-trx` `signTransaction`:
+ * The framing rules:
  *  - the first frame starts with the encoded derivation path, then transaction
  *    fields are packed onto frames without ever splitting a protobuf field,
  *  - each frame's P1 "start byte" encodes its position.

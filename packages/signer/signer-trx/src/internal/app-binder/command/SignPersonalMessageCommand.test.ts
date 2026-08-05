@@ -1,6 +1,7 @@
 import {
   ApduBuilder,
   ApduResponse,
+  type InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -13,9 +14,9 @@ describe("SignPersonalMessageCommand", () => {
   const payload = Uint8Array.from({ length: 10 }, (_, i) => i);
 
   describe("name", () => {
-    it("should be 'SignPersonalMessage'", () => {
+    it("should be 'signPersonalMessage'", () => {
       expect(new SignPersonalMessageCommand({ payload, p1: 0x00 }).name).toBe(
-        "SignPersonalMessage",
+        "signPersonalMessage",
       );
     });
   });
@@ -53,6 +54,41 @@ describe("SignPersonalMessageCommand", () => {
       expect(isSuccessCommandResult(result)).toBe(true);
       if (isSuccessCommandResult(result)) {
         expect(result.data).toStrictEqual(signature);
+      }
+    });
+
+    it("should accept an empty payload on an intermediate frame", () => {
+      const response = new ApduResponse({
+        statusCode: new Uint8Array([0x90, 0x00]),
+        data: new Uint8Array(0),
+      });
+      const result = new SignPersonalMessageCommand({
+        payload,
+        p1: 0x00,
+      }).parseResponse(response);
+
+      expect(isSuccessCommandResult(result)).toBe(true);
+      if (isSuccessCommandResult(result)) {
+        expect(result.data).toStrictEqual(new Uint8Array());
+      }
+    });
+
+    it("should return an InvalidStatusWordError when the signature length is invalid", () => {
+      const response = new ApduResponse({
+        statusCode: new Uint8Array([0x90, 0x00]),
+        data: Uint8Array.from({ length: 64 }, () => 0),
+      });
+      const result = new SignPersonalMessageCommand({
+        payload,
+        p1: 0x00,
+      }).parseResponse(response);
+
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        const err = result.error as InvalidStatusWordError;
+        expect((err.originalError as { message: string }).message).toBe(
+          "Invalid signature length: expected 65, got 64",
+        );
       }
     });
 

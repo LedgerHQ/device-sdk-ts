@@ -7,6 +7,15 @@
  * transaction field by field to find safe chunk boundaries.
  */
 
+// Base-128 varint bit layout (protobuf).
+const VARINT_CONTINUATION_BIT = 0x80; // high bit set => more bytes follow
+const VARINT_VALUE_MASK = 0x7f; // low 7 bits carry the value
+const VARINT_BITS_PER_BYTE = 7; // value bits contributed by each byte
+const MAX_VARINT_BITS = 64; // guard against a non-terminating varint
+const UINT32_MASK = 0xffffffff; // clamp the decoded value to 32 bits
+const WIRE_TYPE_MASK = 0x07; // low 3 bits of a field key hold the wire type
+const WIRE_TYPE_VARINT = 0; // wire type 0 => varint field (no payload length)
+
 type DecodeResult = {
   value: number;
   pos: number;
@@ -22,17 +31,17 @@ export function decodeVarint(stream: Uint8Array, index: number): DecodeResult {
   let shift = 0;
   let pos = index;
 
-  while (shift < 64) {
+  while (shift < MAX_VARINT_BITS) {
     const b = stream[pos]!;
-    result |= (b & 0x7f) << shift;
+    result |= (b & VARINT_VALUE_MASK) << shift;
     pos += 1;
 
-    if (!(b & 0x80)) {
-      result &= 0xffffffff;
+    if (!(b & VARINT_CONTINUATION_BIT)) {
+      result &= UINT32_MASK;
       return { value: result, pos };
     }
 
-    shift += 7;
+    shift += VARINT_BITS_PER_BYTE;
   }
 
   throw new Error("Too many bytes when decoding varint.");
@@ -47,7 +56,7 @@ export function decodeVarint(stream: Uint8Array, index: number): DecodeResult {
 export function getNextLength(tx: Uint8Array): number {
   const field = decodeVarint(tx, 0);
   const data = decodeVarint(tx, field.pos);
-  if ((field.value & 0x07) === 0) {
+  if ((field.value & WIRE_TYPE_MASK) === WIRE_TYPE_VARINT) {
     return data.pos;
   }
   return data.value + data.pos;
