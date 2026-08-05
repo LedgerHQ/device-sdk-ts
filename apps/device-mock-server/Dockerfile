@@ -2,6 +2,7 @@
 # Build context: monorepo root
 # Standalone:  docker build -f apps/device-mock-server/Dockerfile -t device-mock-server .
 # Compose:     docker compose -f apps/device-mock-server/docker-compose.yml up
+# CI: built + pushed to infra-oci-web-apps-*-green/device-mock-server by the mock-server-* workflows.
 
 # ── install ───────────────────────────────────────────────────────────────────
 FROM node:24-alpine AS install
