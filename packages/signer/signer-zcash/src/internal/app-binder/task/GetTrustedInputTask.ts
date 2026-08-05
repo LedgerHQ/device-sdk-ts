@@ -10,8 +10,10 @@ import {
   GetTrustedInputCommand,
   type GetTrustedInputCommandResponse,
 } from "@internal/app-binder/command/GetTrustedInputCommand";
+import { UnsupportedV6TransactionError } from "@internal/app-binder/command/utils/UnsupportedV6TransactionError";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import { createVarint } from "@internal/app-binder/task/utils/legacyTransactionUtils";
+import { appVersionWithoutV6Support } from "@internal/app-binder/ZcashApplicationResolver";
 import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 
 const MAX_APDU_DATA_LENGTH = 0xff;
@@ -19,7 +21,11 @@ const INDEX_LOOKUP_LENGTH = 4;
 const FIRST_CHUNK_MAX_LENGTH = MAX_APDU_DATA_LENGTH - INDEX_LOOKUP_LENGTH;
 const NEXT_CHUNK_MAX_LENGTH = MAX_APDU_DATA_LENGTH;
 const UINT32_SIZE = 4;
-// version | versionGroupId | consensusBranchId | lockTime | expiryHeight
+// version | versionGroupId | consensusBranchId | lockTime | expiryHeight. A v6
+// transaction reuses this header, and only its shielded section differs.
+// ZIP-233 (zcash_unstable="nu7" + feature="zip-233") would append 8 bytes of
+// zip233Amount here; if that activates, a v6 header no longer fits in 20 bytes and
+// the shielded section lands at the wrong offset, silently misframing everything.
 const HEADER_V5_SIZE = 5 * UINT32_SIZE;
 // version | versionGroupId | consensusBranchId
 const HEADER_V4_SIZE = 3 * UINT32_SIZE;
@@ -56,12 +62,19 @@ const ORCHARD_ACTION_ENC_OFFSET =
   ORCHARD_ACTION_EPHEMERAL_KEY_OFFSET + HASH_SIZE;
 const ORCHARD_ACTION_SIZE =
   ORCHARD_ACTION_ENC_OFFSET + ENC_CIPHERTEXT_SIZE + OUT_CIPHERTEXT_SIZE;
-const ORCHARD_DIGEST_DATA_SIZE = FLAGS_SIZE + VALUE_BALANCE_SIZE + HASH_SIZE;
+// The txid digest of a v5 Orchard bundle ends with the anchor. In a v6 transaction both
+// action bundles commit to it in the authorizing digest instead, which a trusted input
+// never computes, so only the flags and the value balance are streamed.
+const ACTION_DIGEST_DATA_SIZE_WITHOUT_ANCHOR = FLAGS_SIZE + VALUE_BALANCE_SIZE;
+const ACTION_DIGEST_DATA_SIZE_WITH_ANCHOR =
+  ACTION_DIGEST_DATA_SIZE_WITHOUT_ANCHOR + HASH_SIZE;
 const MEMO_CHUNK_SIZE = 128;
 const SCRIPT_SIG_SEQUENCE_CHUNK_SIZE = 50;
 const TX_VERSION_MASK = 0x7fffffff;
 const TX_VERSION_V4 = 4;
 const TX_VERSION_V5 = 5;
+const TX_VERSION_V6 = 6;
+const V6_VERSION_GROUP_ID = 0xd884b698;
 
 type GetTrustedInputTaskArgs = {
   transaction: Uint8Array;
@@ -106,6 +119,9 @@ const readUInt64LEAsNumber = (buffer: Uint8Array, offset: number): number => {
 
   return high * 2 ** 32 + low;
 };
+
+const toHexWord = (value: number): string =>
+  `0x${value.toString(16).padStart(8, "0")}`;
 
 const ensureRange = (buffer: Uint8Array, start: number, end: number): void => {
   if (start < 0 || end < start || end > buffer.length) {
@@ -186,18 +202,31 @@ const splitForApduData = (chunks: Uint8Array[]): Uint8Array[] => {
   return apduChunks;
 };
 
-const splitV5ExtraData = (
+const splitTrailingExtraData = (
   locktime: Uint8Array,
   expiry: Uint8Array,
 ): Uint8Array => concatUint8Arrays(locktime, new Uint8Array([0x04]), expiry);
+
+/** An Orchard or Ironwood bundle: the two share their layout and their digest grouping. */
+type ActionBundle = {
+  actions: Uint8Array[];
+  digestData: Uint8Array;
+};
 
 type ShieldedBundles = {
   saplingSpends: Uint8Array[];
   saplingOutputs: Uint8Array[];
   saplingValueBalance: Uint8Array;
+  /** Empty for a v6, whose spends non-compact digest omits the anchor (ZIP-229). */
   saplingAnchor: Uint8Array;
-  orchardActions: Uint8Array[];
-  orchardDigestData: Uint8Array;
+  orchard: ActionBundle;
+  /** Present for v6 transactions (Ironwood pool exists); absent for v5 (no Ironwood pool). */
+  ironwood?: ActionBundle;
+};
+
+const EMPTY_ACTION_BUNDLE: ActionBundle = {
+  actions: [],
+  digestData: new Uint8Array(),
 };
 
 type DigestParts = {
@@ -225,19 +254,75 @@ const createFieldReader = (buffer: Uint8Array, startOffset: number) => {
       offset = nextOffset;
       return value;
     },
+    consumed: (): number => offset,
   };
 };
 
+type FieldReader = ReturnType<typeof createFieldReader>;
+
 /**
- * Reads the shielded bundles of a v5 transaction as they are laid out on chain
- * (ZIP-225): each description keeps its own fields together, and the proofs and
- * signatures trail the descriptions. Proofs and signatures are skipped, as they
- * belong to the authorizing data commitment rather than to the txid, but the
- * Sapling ones still have to be stepped over to reach the Orchard action count.
+ * Reads one action bundle: its count, its actions, then the leading part of its
+ * trailer. A v5 Orchard trailer contributes flags, value balance and anchor to the
+ * txid digest; a v6 one keeps the anchor out of it, so the anchor is read past.
+ *
+ * @param anchorInDigest - true when the anchor belongs to the txid digest (v5
+ *   Orchard); false when it has moved to the authorizing digest and must be skipped.
+ */
+const readActionBundle = (
+  reader: FieldReader,
+  anchorInDigest: boolean,
+): ActionBundle => {
+  const actionCount = reader.takeCount();
+
+  if (actionCount === 0) {
+    return EMPTY_ACTION_BUNDLE;
+  }
+
+  const actions = Array.from({ length: actionCount }, () =>
+    reader.take(ORCHARD_ACTION_SIZE),
+  );
+  const digestData = reader.take(
+    anchorInDigest
+      ? ACTION_DIGEST_DATA_SIZE_WITH_ANCHOR
+      : ACTION_DIGEST_DATA_SIZE_WITHOUT_ANCHOR,
+  );
+
+  if (!anchorInDigest) {
+    reader.skip(HASH_SIZE); // anchor (moved to the authorizing digest in v6)
+  }
+
+  return { actions, digestData };
+};
+
+/**
+ * Steps over the proofs and signatures trailing an action bundle. They are
+ * authorizing data, which the txid does not commit to, but a v6 transaction can
+ * carry an Ironwood bundle behind them, and the whole-transaction length check
+ * needs them accounted for either way.
+ */
+const skipActionBundleAuthorizingData = (
+  reader: FieldReader,
+  actionCount: number,
+): void => {
+  if (actionCount === 0) {
+    return;
+  }
+
+  const proofsSize = reader.takeCount();
+  reader.skip(proofsSize + actionCount * SIGNATURE_SIZE + SIGNATURE_SIZE);
+};
+
+/**
+ * Reads the shielded bundles as they are laid out on chain (ZIP-225, and ZIP-229
+ * for the v6 Ironwood pool): each description keeps its own fields together, and
+ * the proofs and signatures trail the descriptions. Proofs and signatures are
+ * skipped, as they belong to the authorizing data commitment rather than to the
+ * txid, but they still have to be stepped over to reach the next bundle.
  */
 const readShieldedBundles = (
   transaction: Uint8Array,
   offset: number,
+  isTxV6: boolean,
 ): ShieldedBundles => {
   const reader = createFieldReader(transaction, offset);
 
@@ -257,7 +342,14 @@ const readShieldedBundles = (
   if (spendCount > 0 || outputCount > 0) {
     saplingValueBalance = reader.take(VALUE_BALANCE_SIZE);
     if (spendCount > 0) {
-      saplingAnchor = reader.take(HASH_SIZE);
+      // On chain the anchor sits here whatever the version, but ZIP-229 moves it
+      // into the authorizing data for a v6, where sapling_spends_noncompact_digest_v6
+      // hashes cv ‖ rk alone. So a v6 reads past it and streams nothing.
+      if (isTxV6) {
+        reader.skip(HASH_SIZE);
+      } else {
+        saplingAnchor = reader.take(HASH_SIZE);
+      }
     }
     reader.skip(
       spendCount * (SAPLING_PROOF_SIZE + SIGNATURE_SIZE) +
@@ -266,21 +358,34 @@ const readShieldedBundles = (
     );
   }
 
-  const actionCount = reader.takeCount();
-  const orchardActions = Array.from({ length: actionCount }, () =>
-    reader.take(ORCHARD_ACTION_SIZE),
-  );
+  const orchard = readActionBundle(reader, /* anchorInDigest */ !isTxV6);
+  skipActionBundleAuthorizingData(reader, orchard.actions.length);
+
+  let ironwood: ActionBundle | undefined;
+
+  if (isTxV6) {
+    ironwood = readActionBundle(reader, /* anchorInDigest */ false);
+    skipActionBundleAuthorizingData(reader, ironwood.actions.length);
+  }
+
+  // The shielded bundles end the transaction, and the walk above steps over every
+  // field including the authorizing data it does not stream. So the reader must land
+  // exactly on the end. Anything else means the layout assumed here is not the layout
+  // received — a header grown by a later field, an inserted field, a truncated tail —
+  // and streaming it would misframe the whole shielded section silently.
+  if (reader.consumed() !== transaction.length) {
+    throw new Error(
+      "Malformed transaction while splitting trusted input chunks",
+    );
+  }
 
   return {
     saplingSpends,
     saplingOutputs,
     saplingValueBalance,
     saplingAnchor,
-    orchardActions,
-    orchardDigestData:
-      actionCount > 0
-        ? reader.take(ORCHARD_DIGEST_DATA_SIZE)
-        : new Uint8Array(),
+    orchard,
+    ironwood,
   };
 };
 
@@ -379,7 +484,12 @@ const pushShieldedChunks = (
     concatUint8Arrays(
       createVarint(bundles.saplingSpends.length),
       createVarint(bundles.saplingOutputs.length),
-      createVarint(bundles.orchardActions.length),
+      createVarint(bundles.orchard.actions.length),
+      // A v6 transaction announces a fourth pool (Ironwood), even when Orchard is empty.
+      // The ironwood field being present is what distinguishes a v6 from a v5 here.
+      ...(bundles.ironwood !== undefined
+        ? [createVarint(bundles.ironwood.actions.length)]
+        : []),
     ),
   );
 
@@ -399,32 +509,58 @@ const pushShieldedChunks = (
     outputParts.forEach(({ nonCompact }) => chunks.push(nonCompact));
   }
 
-  if (bundles.orchardActions.length > 0) {
-    const actionParts = bundles.orchardActions.map(orchardActionDigestParts);
+  // The app streams the action bundles one after the other, each regrouped the same way.
+  const actionBundles =
+    bundles.ironwood !== undefined
+      ? [bundles.orchard, bundles.ironwood]
+      : [bundles.orchard];
+
+  actionBundles.forEach((bundle) => {
+    if (bundle.actions.length === 0) {
+      return;
+    }
+
+    const actionParts = bundle.actions.map(orchardActionDigestParts);
     actionParts.forEach(({ compact }) => chunks.push(compact));
     pushMemoChunks(
       chunks,
       actionParts.map(({ memo }) => memo),
     );
     actionParts.forEach(({ nonCompact }) => chunks.push(nonCompact));
-    chunks.push(bundles.orchardDigestData);
-  }
+    chunks.push(bundle.digestData);
+  });
 };
+
+const readTransactionVersion = (transaction: Uint8Array): number =>
+  readUInt32LE(transaction, 0) & TX_VERSION_MASK;
+
+const isTransactionV6 = (transaction: Uint8Array): boolean =>
+  readTransactionVersion(transaction) === TX_VERSION_V6;
 
 const splitTransactionToTrustedInputChunks = (
   transaction: Uint8Array,
 ): Uint8Array[] => {
-  const rawVersion = readUInt32LE(transaction, 0);
-  const txVersion = rawVersion & TX_VERSION_MASK;
+  const txVersion = readTransactionVersion(transaction);
   const isTxV4 = txVersion === TX_VERSION_V4;
+  const isTxV6 = txVersion === TX_VERSION_V6;
 
-  // The device app computes a txid for v4 and v5 only in this flow, and turns
-  // anything newer away with "V6 transaction in legacy path". Naming the version
-  // here beats streaming, say, a v6 as though its bundles followed ZIP-225.
-  if (!isTxV4 && txVersion !== TX_VERSION_V5) {
+  // The device app computes a txid for v4, v5 and v6 in this flow. Naming the
+  // version here beats streaming, say, a v7 as though its bundles followed ZIP-225.
+  if (!isTxV4 && !isTxV6 && txVersion !== TX_VERSION_V5) {
     throw new Error(
       `Unsupported transaction version ${txVersion} while splitting trusted input chunks`,
     );
+  }
+
+  // The app recognizes a v6 by its version group id as much as by its version, and
+  // parses anything else as a v5. Streaming a mismatch would silently misframe it.
+  if (isTxV6) {
+    const versionGroupId = readUInt32LE(transaction, UINT32_SIZE);
+    if (versionGroupId !== V6_VERSION_GROUP_ID) {
+      throw new Error(
+        `Unexpected version group id for a v6 transaction while splitting trusted input chunks: expected ${toHexWord(V6_VERSION_GROUP_ID)}, got ${toHexWord(versionGroupId)}`,
+      );
+    }
   }
 
   let offset = 0;
@@ -507,8 +643,8 @@ const splitTransactionToTrustedInputChunks = (
     return splitForApduData(chunks);
   }
 
-  pushShieldedChunks(chunks, readShieldedBundles(transaction, offset));
-  chunks.push(splitV5ExtraData(locktime, expiry));
+  pushShieldedChunks(chunks, readShieldedBundles(transaction, offset, isTxV6));
+  chunks.push(splitTrailingExtraData(locktime, expiry));
 
   return splitForApduData(chunks);
 };
@@ -522,6 +658,21 @@ export class GetTrustedInputTask {
   async run(): Promise<GetTrustedInputTaskResult> {
     const trustedInputIndex = this.args.indexLookup ?? 0;
     const chunks = splitTransactionToTrustedInputChunks(this.args.transaction);
+
+    // An app that predates ZIP-229 stops at the version word of a v6 previous
+    // transaction and answers 6a80, which reads like any other malformed input.
+    // Failing here instead, once the transaction is known to be framed as a v6,
+    // names the cause and the version that carries it, so the caller reports a
+    // condition rather than a bare status word.
+    if (isTransactionV6(this.args.transaction)) {
+      const appVersion = appVersionWithoutV6Support(this.api);
+
+      if (appVersion !== undefined) {
+        return DmkResultFactory({
+          error: new UnsupportedV6TransactionError(appVersion),
+        });
+      }
+    }
 
     const firstChunk = chunks[0];
     if (!firstChunk) {

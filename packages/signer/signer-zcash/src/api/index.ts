@@ -70,3 +70,4 @@ export type {
 } from "@api/model/PcztTransaction";
 export * from "@api/SignerZcash";
 export * from "@api/SignerZcashBuilder";
+export type { ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
