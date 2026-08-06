@@ -1,7 +1,9 @@
 import { MockClient } from "@ledgerhq/device-mockserver-client";
 import { type Page } from "@playwright/test";
 
-const MOCK_SERVER_URL = "http://127.0.0.1:9752";
+const MOCK_SERVER_URL =
+  process.env["MOCK_SERVER_URL"] ||
+  "http://device-mock-server.aws.ldg-ps-default.ldg-tech.com";
 const SETTINGS_STORAGE_KEY = "dmk-sample-settings";
 
 /**
