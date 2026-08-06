@@ -9,10 +9,10 @@ import {
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
+import { getOsVersion } from "@api/device-action/OsUpdate/Shared/Substeps/GetOsVersion";
 import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
 import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion";
 
-import { getOsVersion } from "./Substeps/GetOsVersion";
 import { resolveOsUpdatePath } from "./Substeps/ResolveOsUpdatePath";
 import {
   type ResolveOsUpdatePathDAError,

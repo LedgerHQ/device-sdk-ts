@@ -20,4 +20,5 @@ export enum UserInteractionRequired {
   ConfirmCommitImage = "confirm-commit-image",
   ConfirmRemoveImage = "confirm-remove-image",
   GrantConsent = "grant-consent",
+  AllowInstallFirmware = "allow-install-firmware",
 }

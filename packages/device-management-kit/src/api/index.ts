@@ -153,6 +153,8 @@ export { InstallAppDeviceAction } from "@api/secure-channel/device-action/Instal
 export { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
 export type { InstalledApp } from "@api/secure-channel/device-action/ListInstalledApps/types";
 export { UninstallAppDeviceAction } from "@api/secure-channel/device-action/UninstallApp/UninstallAppDeviceAction";
+export { ConnectToSecureChannelTask } from "@api/secure-channel/task/ConnectToSecureChannelTask";
+export { SecureChannelEventType } from "@api/secure-channel/task/types";
 export { SecureChannelError } from "@internal/secure-channel/model/Errors";
 // TODO: remove from exported
 export { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
