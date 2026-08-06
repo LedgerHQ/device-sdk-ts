@@ -42,6 +42,7 @@
     "@ledgerhq/signer-utils": "workspace:^",
     "pako": "^2.1.0",
     "purify-ts": "catalog:",
+    "rxjs": "catalog:",
     "semver": "catalog:",
     "xstate": "catalog:"
   },
