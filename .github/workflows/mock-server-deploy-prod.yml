@@ -19,7 +19,7 @@ permissions:
 
 env:
   # Apps are split by label proj=device-mock-server.
-  ARGOCD_APP: device-mock-server-prod
+  ARGOCD_APP: device-mock-server
 
 jobs:
   deploy:
@@ -28,9 +28,11 @@ jobs:
     steps:
       - name: Install ArgoCD CLI
         run: |
-          curl -fsSL -o /usr/local/bin/argocd \
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o "$HOME/.local/bin/argocd" \
             https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-          chmod +x /usr/local/bin/argocd
+          chmod +x "$HOME/.local/bin/argocd"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Deploy
         env:
@@ -40,6 +42,7 @@ jobs:
           CHART_VERSION: ${{ inputs.chart_version }}
         run: |
           argocd app set "$ARGOCD_APP" \
+            --source-position 1 \
             --revision "$CHART_VERSION" \
             -p image.tag="$APP_VERSION" \
             --grpc-web
