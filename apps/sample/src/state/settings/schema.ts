@@ -9,7 +9,11 @@ import {
 } from "@ledgerhq/context-module";
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 
-import { DEFAULT_SPECULOS_URL, DEFAULT_SPECULOS_VNC_URL } from "@/utils/const";
+import {
+  DEFAULT_MOCK_SERVER_URL_REMOTE,
+  DEFAULT_SPECULOS_URL,
+  DEFAULT_SPECULOS_VNC_URL,
+} from "@/utils/const";
 
 export type CalMode = ContextModuleCalMode;
 export type CalBranch = ContextModuleCalBranch;
@@ -58,7 +62,7 @@ export type SettingsState = {
 export const initialState: SettingsState = {
   // Transport settings
   transportType: getInitialTransportType(),
-  mockServerUrl: "http://device-mock-server.aws.ldg-ps-default.ldg-tech.com/",
+  mockServerUrl: DEFAULT_MOCK_SERVER_URL_REMOTE,
   mockServerSessionToken: "",
   speculosUrl: DEFAULT_SPECULOS_URL,
   speculosVncUrl: DEFAULT_SPECULOS_VNC_URL,
