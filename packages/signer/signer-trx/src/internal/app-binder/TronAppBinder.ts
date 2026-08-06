@@ -12,8 +12,10 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignTransactionHashDAReturnType } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
+import { SignTransactionHashCommand } from "@internal/app-binder/command/SignTransactionHashCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { SignPersonalMessageTask } from "@internal/app-binder/task/SignPersonalMessageTask";
 import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
@@ -71,6 +73,28 @@ export class TronAppBinder {
           skipOpenApp: args.skipOpenApp ?? false,
         },
         logger: this.dmkLoggerFactory("SignTransactionTask"),
+      }),
+    });
+  }
+
+  signTransactionHash(args: {
+    derivationPath: string;
+    transactionHash: Uint8Array;
+    skipOpenApp?: boolean;
+  }): SignTransactionHashDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new SignTransactionHashCommand({
+            derivationPath: args.derivationPath,
+            transactionHash: args.transactionHash,
+          }),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          skipOpenApp: args.skipOpenApp ?? false,
+        },
+        logger: this.dmkLoggerFactory("SignTransactionHashCommand"),
       }),
     });
   }
