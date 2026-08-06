@@ -23,7 +23,7 @@ env:
 
 jobs:
   deploy:
-    runs-on: ledgerhq-shared-small
+    runs-on: ledgerhq-device-sdk
     timeout-minutes: 15
     steps:
       - name: Install ArgoCD CLI
