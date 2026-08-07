@@ -44,6 +44,11 @@ export type SecureChannelUpdateFirmwareDAErrors =
   | RefusedByUserDAError
   | UnknownDAError;
 
+export type SecureChannelFlashMcuDAErrors =
+  | SecureChannelError
+  | DeviceLockedError
+  | UnknownDAError;
+
 export class WebSocketConnectionError implements DmkError {
   _tag = "WebSocketConnectionError";
   originalError?: unknown;
@@ -98,6 +103,17 @@ export class SecureChannelError implements DmkError {
         return new DeviceLockedError();
       case SecureChannelErrorType.RefusedByUser:
         return new RefusedByUserDAError();
+      case SecureChannelErrorType.Unknown:
+        return new UnknownDAError();
+      default:
+        return this;
+    }
+  }
+
+  mapFlashMcuDAErrors(): SecureChannelFlashMcuDAErrors {
+    switch (this.errorType) {
+      case SecureChannelErrorType.DeviceLocked:
+        return new DeviceLockedError();
       case SecureChannelErrorType.Unknown:
         return new UnknownDAError();
       default:

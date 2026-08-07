@@ -12,11 +12,11 @@ import { assign, createMachine } from "xstate";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
-import { type OsUpdate } from "@api/device-action/OsUpdate/Resolve/types";
-import { GetOsVersionError } from "@api/device-action/OsUpdate/Shared/SharedDeviceActionErrors";
+import { GetOsVersionError } from "@api/device-action/OsUpdate/Shared/OsUpdateDeviceActionErrors";
 import { getOsVersion } from "@api/device-action/OsUpdate/Shared/Substeps/GetOsVersion";
 import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
 import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion";
+import { type OsUpdate } from "@api/device-action/OsUpdate/Shared/types";
 import { InstallOsUpdateDeviceAction } from "@api/device-action/OsUpdate/Update/InstallOsUpdate/InstallOsUpdateDeviceAction";
 import { installFirmware } from "@api/device-action/OsUpdate/Update/InstallOsUpdate/Substeps/InstallFirmware";
 import {

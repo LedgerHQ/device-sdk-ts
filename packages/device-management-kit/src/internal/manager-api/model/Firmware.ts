@@ -23,4 +23,5 @@ export type McuFirmware = {
   id: number;
   name: string;
   fromBootloaderVersion: string;
+  providers: number[];
 };

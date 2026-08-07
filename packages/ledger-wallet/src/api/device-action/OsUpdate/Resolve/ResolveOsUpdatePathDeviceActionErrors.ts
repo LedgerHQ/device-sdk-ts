@@ -1,6 +1,6 @@
 import { type DmkError } from "@ledgerhq/device-management-kit";
 
-import { type GetOsVersionError } from "@api/device-action/OsUpdate/Shared/SharedDeviceActionErrors";
+import { type GetOsVersionError } from "@api/device-action/OsUpdate/Shared/OsUpdateDeviceActionErrors";
 
 export class ResolveOsUpdatePathError implements DmkError {
   readonly _tag = "ResolveOsUpdatePathError";
