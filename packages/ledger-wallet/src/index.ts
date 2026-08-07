@@ -160,6 +160,13 @@ export type {
   RestoreBackupDAState,
   RestoreBackupSteps,
 } from "./api/device-action/OsUpdate/Restore/RestoreBackup/types";
+export type {
+  BaseFirmware,
+  FinalFirmware,
+  McuFirmware,
+  OsuFirmware,
+  OsUpdate,
+} from "./api/device-action/OsUpdate/Shared/types";
 export { FlashMcuDeviceAction } from "./api/device-action/OsUpdate/Update/FlashMcu/FlashMcuDeviceAction";
 export type {
   FlashMcuDAError,
