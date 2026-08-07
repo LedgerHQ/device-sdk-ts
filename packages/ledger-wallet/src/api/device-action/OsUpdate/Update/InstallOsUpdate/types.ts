@@ -13,8 +13,8 @@ import {
   type WaitForAppAndVersionDARequiredInteraction,
 } from "@ledgerhq/device-management-kit";
 
-import { type OsUpdate } from "@api/device-action/OsUpdate/Resolve/types";
-import { type GetOsVersionError } from "@api/device-action/OsUpdate/Shared/SharedDeviceActionErrors";
+import { type GetOsVersionError } from "@api/device-action/OsUpdate/Shared/OsUpdateDeviceActionErrors";
+import { type OsUpdate } from "@api/device-action/OsUpdate/Shared/types";
 
 export type InstallOsUpdateDAInput = {
   osUpdate: OsUpdate;

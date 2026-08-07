@@ -8,7 +8,7 @@ import {
   type FinalFirmware,
   type McuFirmware,
   type OsuFirmware,
-} from "@api/device-action/OsUpdate/Resolve/types";
+} from "@api/device-action/OsUpdate/Shared/types";
 
 const rightAsync = <T>(value: T) =>
   EitherAsync<unknown, T>(() => Promise.resolve(value));
@@ -100,11 +100,13 @@ describe("ResolveOsUpdatePath", () => {
       id: 1,
       name: "1.0.0",
       fromBootloaderVersion: "0.0",
+      providers: [1],
     },
     {
       id: 3,
       name: "3.0.0",
       fromBootloaderVersion: "0.0",
+      providers: [1, 2],
     },
   ] satisfies McuFirmware[];
 
@@ -245,16 +247,19 @@ describe("ResolveOsUpdatePath", () => {
           id: 1,
           name: "1.0",
           fromBootloaderVersion: "0.0",
+          providers: [1],
         },
         {
           id: 2,
           name: "1.1",
           fromBootloaderVersion: "0.0",
+          providers: [1, 2],
         },
         {
           id: 3,
           name: "1.2",
           fromBootloaderVersion: "0.0",
+          providers: [1, 2, 3],
         },
       ] satisfies McuFirmware[];
       const finalFirmwareRequiringMcuFlash = {
