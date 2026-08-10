@@ -1617,6 +1617,9 @@ importers:
 
   packages/signer/signer-btc:
     dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
       '@types/crypto-js':
         specifier: 'catalog:'
         version: 4.2.2
@@ -1648,9 +1651,6 @@ importers:
       '@ledgerhq/prettier-config-dsdk':
         specifier: workspace:^
         version: link:../../config/prettier
-      '@ledgerhq/signer-utils':
-        specifier: workspace:^
-        version: link:../signer-utils
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:^
         version: link:../../config/typescript
