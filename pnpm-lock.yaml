@@ -1577,6 +1577,9 @@ importers:
 
   packages/signer/signer-btc:
     dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
       '@types/crypto-js':
         specifier: 'catalog:'
         version: 4.2.2
@@ -1608,9 +1611,6 @@ importers:
       '@ledgerhq/prettier-config-dsdk':
         specifier: workspace:^
         version: link:../../config/prettier
-      '@ledgerhq/signer-utils':
-        specifier: workspace:^
-        version: link:../signer-utils
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:^
         version: link:../../config/typescript
@@ -18018,14 +18018,6 @@ snapshots:
       chai: 5.2.0
       tinyrainbow: 2.0.0
 
-  '@vitest/mocker@3.2.6(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0))':
-    dependencies:
-      '@vitest/spy': 3.2.6
-      estree-walker: 3.0.3
-      magic-string: 0.30.17
-    optionalDependencies:
-      vite: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
-
   '@vitest/mocker@3.2.6(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
     dependencies:
       '@vitest/spy': 3.2.6
@@ -26173,7 +26165,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.6
-      '@vitest/mocker': 3.2.6(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0))
+      '@vitest/mocker': 3.2.6(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       '@vitest/pretty-format': 3.2.7
       '@vitest/runner': 3.2.6
       '@vitest/snapshot': 3.2.6

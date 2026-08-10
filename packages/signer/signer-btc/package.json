@@ -41,6 +41,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ledgerhq/signer-utils": "workspace:^",
     "@types/crypto-js": "catalog:",
     "crypto-js": "catalog:",
     "inversify": "catalog:",
@@ -53,7 +54,6 @@
     "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
-    "@ledgerhq/signer-utils": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",
     "bitcoinjs-lib": "catalog:",
