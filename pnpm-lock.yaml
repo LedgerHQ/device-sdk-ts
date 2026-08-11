@@ -1130,6 +1130,9 @@ importers:
       reflect-metadata:
         specifier: 'catalog:'
         version: 0.2.2
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
       xstate:
         specifier: 'catalog:'
         version: 5.19.2
@@ -1152,6 +1155,9 @@ importers:
       '@ledgerhq/vitest-config-dmk':
         specifier: workspace:^
         version: link:../config/vitest
+      '@types/semver':
+        specifier: 'catalog:'
+        version: 7.7.0
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2

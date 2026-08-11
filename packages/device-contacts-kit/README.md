@@ -29,3 +29,35 @@ const contactsManager = new ContactsManagerBuilder({
 
 Concrete Contacts operations (Register Identity, Edit Contact Name, Edit Identifier, Edit Scope,
 Register Ledger Account, Edit Ledger Account) are added by their dedicated implementation tickets.
+
+## Version requirements
+
+Contacts APDUs are only supported on some device models, and have minimum embedded-app and device
+OS version requirements. The requirements are exposed as plain, serializable data so hosts can
+consume them without duplicating the values:
+
+```ts
+import {
+  CONTACTS_VERSION_REQUIREMENTS,
+  isContactsSupported,
+  resolveContactsVersionRequirements,
+} from "@ledgerhq/device-contacts-kit";
+
+// Look up the minimum OS / app versions for a device model.
+const requirement = resolveContactsVersionRequirements(deviceModelId);
+// { supported: true, minOsVersion, minAppVersion: { Ethereum } } | { supported: false }
+
+// Or evaluate support directly.
+const supported = isContactsSupported({
+  deviceModelId,
+  osVersion,
+  appName,
+  appVersion,
+});
+```
+
+There are two independent axes: `minOsVersion` gates OS-owned operations (served by the device OS,
+e.g. renaming a contact from the dashboard) and `minAppVersion` gates app-owned operations (served
+by the embedded app, keyed by app name — v1 ships Ethereum only). The `isContactsSupported` helper
+and the raw `CONTACTS_VERSION_REQUIREMENTS` table are pure and dependency-light, so a host such as
+Ledger Wallet can import either to compose its own app-readiness checks.
