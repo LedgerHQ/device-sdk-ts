@@ -38,12 +38,6 @@ const INS_GET_CERTIFICATE = 0x52;
 const INS_MUTUAL_AUTHENTICATE = 0x53;
 
 // Secure channel loader instruction codes
-const SECURE_INS_SET_LOAD_OFFSET = 0x05;
-const SECURE_INS_LOAD = 0x06;
-const SECURE_INS_FLUSH = 0x07;
-const SECURE_INS_CRC = 0x08;
-const SECURE_INS_COMMIT = 0x09;
-const SECURE_INS_CREATE_APP = 0x0b;
 const SECURE_INS_DELETE_APP = 0x0c;
 
 export type ApduSender = (apdu: Uint8Array) => Promise<Uint8Array>;
@@ -72,14 +66,154 @@ function buildApdu(ins: number, data: Uint8Array, p1 = 0, p2 = 0): Uint8Array {
   return concat(new Uint8Array([CLA, ins, p1, p2, data.length]), data);
 }
 
+// Status words documented for the clear/secure commands used during
+// sideloading: https://ledgerhq.atlassian.net/wiki/spaces/FW/pages/4455596105
+const STATUS_WORD_MESSAGES: Record<number, string> = {
+  // Generic APDU parsing errors (any command)
+  0x6e01: "Unknown CLA",
+  0x6d01: "Unknown INS",
+  0x650e: "Unexpected P1 value",
+  0x650f: "Unexpected P2 value",
+  0x6510: "Lc does not match the actual APDU data length",
+  0x6511: "Lc does not match the expected fixed length for this instruction",
+  0x6512:
+    "Lc does not match the expected fixed length for this secure instruction",
+
+  // VALIDATE_TARGET_ID
+  0x662e: "No background image loaded on the device",
+  0x6814: "Target ID does not match the connected device",
+
+  // INITIALIZE_AUTHENTICATION
+  0x5414: "Device failed to generate a key pair",
+  0x5523: "Invalid factory settings CRC",
+  0x550b: "Device is not personalized",
+  0x6602: "Target ID has not been validated yet",
+
+  // VALIDATE_CERTIFICATE
+  0x5327: "Internal hashing error",
+  0x5328: "Internal hashing error",
+  0x5329: "Internal hashing error",
+  0x5704: "Host public key does not match personalized certificate 0",
+  0x5705: "Host public key does not match personalized certificate 1",
+  0x5706: "Host public key does not match the installed custom CA",
+  0x5707: "Self-signed certificate signature verification failed",
+  0x5708: "Signature verification with the previous host public key failed",
+  0x6704: "Invalid host public key length",
+  0x6804: "Self-signed certificate cannot be ephemeral",
+  0x6805: "Self-signed certificates are not allowed",
+  0x6816: "Cannot validate a personalized certificate while a custom CA is set",
+
+  // GET_CERTIFICATE
+  0x4216: "Internal error (wrong factory instance)",
+  0x520d: "Invalid factory CRC",
+  0x532a: "Internal error hashing the device certificate",
+  0x5402: "Failed to compute the shared key",
+  0x5410: "Failed to initialize the private key",
+  0x540a: "Failed to initialize signature encryption",
+  0x540b: "Failed to set the signature encryption key",
+  0x540c: "Failed to encrypt the signature",
+  0x550e: "Device is not personalized",
+  0x5718: "Internal error signing the device public key",
+  0x5904: "Certificate has not been validated",
+  0x5905: "Certificate chain has not been fully retrieved",
+  0x6502: "Invalid factory setting zone",
+  0x6503: "Invalid root certificate number",
+
+  // MUTUAL_AUTHENTICATE
+  0x5211: "Device is not personalized",
+  0x5601: "Failed to hash the secret prefix",
+  0x5602: "Failed to hash the secret",
+  0x5709: "Internal ECDH error",
+  0x5906: "Certificate chain has not been fully retrieved",
+
+  // SET_LOAD_OFFSET / LOAD / FLUSH / CRC / COMMIT — "not created yet" guards
+  0x5105: "Create App has not been called yet",
+  0x5106: "Create App has not been called yet",
+  0x5107: "Create App has not been called yet",
+  0x5108: "Create App has not been called yet",
+  0x5109: "Create App has not been called yet",
+
+  // LOAD
+  0x6612: "Secure channel session is closed",
+  0x670d: "Malformed load data",
+  0x670e: "Malformed load data",
+  0x670f: "Load APDU is too small",
+  0x680b: "Load offset/length falls outside the app's reserved memory area",
+  0x6837: "Internal error hashing the loaded data",
+  0x6838: "Internal error hashing the loaded data",
+
+  // CRC
+  0x680c: "CRC check offset/length is outside the app's memory area",
+  0x6817: "CRC check offset/length is outside the app's memory area",
+  0x5217: "CRC mismatch — loaded data is corrupted",
+
+  // COMMIT
+  0x510a: "Invalid app dependency signer",
+  0x510b: "Invalid app dependency signer",
+  0x532b: "Invalid application hash",
+  0x570a: "Invalid application signature",
+  0x570b: "Unable to verify the application signature",
+  0x6613: "Secure channel session is closed",
+  0x661a: "OSU app requires a signature",
+  0x661b: "Signature is missing",
+  0x661c: "OSU app has invalid flags",
+  0x6711: "Invalid APDU command size",
+  0x6712: "Application name is too long",
+  0x680d: "Application name is missing",
+  0x680e: "An app with the same hash is already installed",
+  0x680f: "An app with the same name is already installed",
+  0x6810: "Invalid app dependency flags",
+  0x6811: "A required app dependency is not installed",
+
+  // CREATE_APP
+  0x5102: "No free app slot on the device (not enough memory)",
+  0x5104: "Invalid application main address",
+  0x511f: "Invalid application API level",
+  0x5120: "Sideloading is not authorized on this device",
+  0x6617: "OSU app must be signed by the issuer",
+  0x6808: "Invalid app code length, data length, or install params length",
+  0x6809: "Application code length must be page-aligned",
+  0x680a: "Application data length must be page-aligned",
+  0x6834: "Internal error hashing the target ID",
+  0x6835: "Internal error hashing the version",
+  0x6836: "Internal error hashing the application parameters",
+  0x6d06: "Device must be onboarded before installing an app",
+
+  // DELETE_APP
+  0x6621: "Internal registry error",
+  0x6719: "Delete APDU is too small",
+
+  // Shared across most commands
+  0x5501: "User rejected the operation on the device",
+  0x5502: "PIN is not validated on the device",
+
+  // Generic ISO7816-style codes from blue-loader-python's comm.py, kept as a
+  // fallback since some devices/bootloader states surface these instead of
+  // the Ledger-OS-specific codes above.
+  0x6982: "A custom certificate authority is already installed",
+  0x6985: "Condition of use not satisfied (denied by the user)",
+  0x6a83: "A required library dependency is missing",
+  0x6a84: "Not enough space on the device",
+  0x6a85: "Not enough space on the device",
+  0x6484: "Wrong target ID",
+  0x6d00: "Unexpected device state",
+  0x6e00: "Unexpected device state",
+  0x5515: "Device is locked",
+  0x6f00: "Unknown error",
+};
+
+function formatSw(sw: number): string {
+  const hex = `0x${sw.toString(16).padStart(4, "0")}`;
+  const message = STATUS_WORD_MESSAGES[sw];
+  return message ? `${hex} (${message})` : hex;
+}
+
 function checkSw(resp: Uint8Array, context: string): Uint8Array {
   if (resp.length < 2)
     throw new Error(`${context}: empty response (len=${resp.length})`);
   const sw = (resp[resp.length - 2]! << 8) | resp[resp.length - 1]!;
   if (sw !== 0x9000) {
-    throw new Error(
-      `${context}: device returned 0x${sw.toString(16).padStart(4, "0")}`,
-    );
+    throw new Error(`${context}: ${formatSw(sw)}`);
   }
   return resp.slice(0, resp.length - 2);
 }
@@ -98,12 +232,6 @@ function randomBytes(n: number): Uint8Array {
 function uint32BE(n: number): Uint8Array {
   const buf = new Uint8Array(4);
   new DataView(buf.buffer).setUint32(0, n, false);
-  return buf;
-}
-
-function uint16BE(n: number): Uint8Array {
-  const buf = new Uint8Array(2);
-  new DataView(buf.buffer).setUint16(0, n, false);
   return buf;
 }
 
@@ -327,33 +455,60 @@ class ScpSession {
 const CERT_ROLE_SIGNER = 0x01;
 const CERT_ROLE_SIGNER_EPHEMERAL = 0x11;
 
-export type SideloadAppParams = {
-  appName: string;
-  targetId: number;
-  apiLevel: number;
-  dataLength: number;
-  installParamsSize: number;
-  flags: number;
-  mainAddress: number;
-  /** NVRAM code region size. Auto-derived from the hex file's address span when omitted. */
-  codeLength?: number;
+function hexStringToBytes(hex: string): Uint8Array {
+  const clean = hex.trim();
+  const bytes = new Uint8Array(clean.length / 2);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(clean.substring(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
+}
+
+type ApduScriptCommand = {
+  ins: number;
+  payload: Uint8Array;
 };
 
 /**
- * Sideload an app onto a connected Ledger device from raw Intel HEX content,
- * over the SCP v2 secure channel (mirrors ledgerblue's `loadApp`).
+ * Parses a ".apdu" script — one hex-encoded clear-form APDU per line, as
+ * produced by an app's build/deploy tooling for `ledgerblue.runScript --scp`
+ * — into the secure sub-instruction + payload to replay for each line. Each
+ * line's own CLA/INS/P1/P2 header (always 0xE0/0x00/0x00/0x00) is discarded:
+ * `secureExchange` reconstructs it when wrapping the payload for replay.
+ */
+function parseApduScript(content: string): ApduScriptCommand[] {
+  return content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      const bytes = hexStringToBytes(line);
+      if (bytes.length < 6) {
+        throw new Error(`Malformed APDU script line: ${line}`);
+      }
+      const data = bytes.slice(5);
+      return { ins: data[0]!, payload: data.slice(1) };
+    });
+}
+
+/**
+ * Sideload an app onto a connected Ledger device by replaying a ".apdu"
+ * script over the SCP v2 secure channel. The script (produced by the app's
+ * own build/deploy tooling, e.g. `ledgerblue.runScript --scp`) already
+ * contains the correct DELETE_APP/CREATE_APP/LOAD/COMMIT calls for that
+ * specific app, so no install parameters need to be guessed or supplied
+ * separately — only the connected device's target ID is needed.
  */
 export async function sideloadApp(
   sendApdu: ApduSender,
-  hexFileContent: string,
-  appParams: SideloadAppParams,
+  scriptContent: string,
+  targetId: number,
   onProgress?: (phase: string, pct: number) => void,
 ): Promise<void> {
-  const segments = parseHexFile(hexFileContent);
-  if (segments.length === 0) {
-    throw new Error("No data records found in the hex file");
+  const commands = parseApduScript(scriptContent);
+  if (commands.length === 0) {
+    throw new Error("No APDU commands found in the script");
   }
-  const codeLength = appParams.codeLength ?? computeCodeLength(segments);
 
   const masterPrivKey = generatePrivateKey();
   const masterPubKey = getPublicKeyUncompressed(masterPrivKey);
@@ -362,9 +517,7 @@ export async function sideloadApp(
 
   // Step 0: Validate Target ID (required before authentication)
   checkSw(
-    await sendApdu(
-      buildApdu(INS_VALIDATE_TARGET_ID, uint32BE(appParams.targetId)),
-    ),
+    await sendApdu(buildApdu(INS_VALIDATE_TARGET_ID, uint32BE(targetId))),
     "VALIDATE_TARGET_ID",
   );
 
@@ -434,7 +587,7 @@ export async function sideloadApp(
 
   async function secureExchange(
     ins: number,
-    data: Uint8Array = new Uint8Array(0),
+    data: Uint8Array,
   ): Promise<Uint8Array> {
     const wrapped = await scp.wrap(concat(new Uint8Array([ins]), data));
     const resp = checkSw(
@@ -444,188 +597,21 @@ export async function sideloadApp(
     return resp.length === 0 ? resp : scp.unwrap(resp);
   }
 
-  onProgress?.("Removing old version...", 8);
-  try {
-    await secureExchange(
-      SECURE_INS_DELETE_APP,
-      serializeTlv(new TextEncoder().encode(appParams.appName)),
-    );
-  } catch {
-    // App might not exist yet
-  }
-
-  const createData = concat(
-    new Uint8Array([appParams.apiLevel]),
-    uint32BE(codeLength),
-    uint32BE(appParams.dataLength),
-    uint32BE(appParams.installParamsSize),
-    uint32BE(appParams.flags),
-    uint32BE(appParams.mainAddress),
-  );
-  await secureExchange(SECURE_INS_CREATE_APP, createData);
-
-  const totalBytes = segments.reduce((sum, seg) => sum + seg.data.length, 0);
-  let loadedBytes = 0;
-
-  const MAX_MTU = 0xf0;
-  const HEADER_LEN = 3;
-  const MAC_LEN = 14;
-  const PAD_LEN = 1;
-  let maxChunk = MAX_MTU - HEADER_LEN - PAD_LEN - MAC_LEN;
-  maxChunk -= maxChunk % 16;
-
-  for (const seg of segments) {
-    await secureExchange(SECURE_INS_SET_LOAD_OFFSET, uint32BE(seg.loadAddress));
-
-    let offset = 0;
-    while (offset < seg.data.length) {
-      const chunkSize = Math.min(seg.data.length - offset, maxChunk);
-      const chunkData = concat(
-        uint16BE(offset),
-        seg.data.slice(offset, offset + chunkSize),
-      );
-      await secureExchange(SECURE_INS_LOAD, chunkData);
-      offset += chunkSize;
-      loadedBytes += chunkSize;
-      onProgress?.(
-        "Loading firmware...",
-        10 + Math.round((loadedBytes / totalBytes) * 85),
-      );
+  for (let i = 0; i < commands.length; i++) {
+    const { ins, payload } = commands[i]!;
+    try {
+      await secureExchange(ins, payload);
+    } catch (e) {
+      // A leading "delete app" command commonly fails when the app isn't
+      // already installed — expected on a first install, so don't abort.
+      if (ins === SECURE_INS_DELETE_APP) continue;
+      throw e;
     }
-
-    await secureExchange(SECURE_INS_FLUSH);
-    const crc = crc16ccitt(seg.data);
-    await secureExchange(
-      SECURE_INS_CRC,
-      concat(uint16BE(0), uint32BE(seg.data.length), uint16BE(crc)),
+    onProgress?.(
+      "Replaying install script...",
+      5 + Math.round(((i + 1) / commands.length) * 93),
     );
   }
 
-  onProgress?.("Finalizing...", 98);
-  await secureExchange(SECURE_INS_COMMIT);
   onProgress?.("Installation complete", 100);
-}
-
-// --- CRC16-CCITT (matching ledgerblue's crc16) ---
-
-const CRC16_TABLE = [
-  0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108,
-  0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210,
-  0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7, 0x62d6, 0x9339, 0x8318, 0xb37b,
-  0xa35a, 0xd3bd, 0xc39c, 0xf3ff, 0xe3de, 0x2462, 0x3443, 0x0420, 0x1401,
-  0x64e6, 0x74c7, 0x44a4, 0x5485, 0xa56a, 0xb54b, 0x8528, 0x9509, 0xe5ee,
-  0xf5cf, 0xc5ac, 0xd58d, 0x3653, 0x2672, 0x1611, 0x0630, 0x76d7, 0x66f6,
-  0x5695, 0x46b4, 0xb75b, 0xa77a, 0x9719, 0x8738, 0xf7df, 0xe7fe, 0xd79d,
-  0xc7bc, 0x48c4, 0x58e5, 0x6886, 0x78a7, 0x0840, 0x1861, 0x2802, 0x3823,
-  0xc9cc, 0xd9ed, 0xe98e, 0xf9af, 0x8948, 0x9969, 0xa90a, 0xb92b, 0x5af5,
-  0x4ad4, 0x7ab7, 0x6a96, 0x1a71, 0x0a50, 0x3a33, 0x2a12, 0xdbfd, 0xcbdc,
-  0xfbbf, 0xeb9e, 0x9b79, 0x8b58, 0xbb3b, 0xab1a, 0x6ca6, 0x7c87, 0x4ce4,
-  0x5cc5, 0x2c22, 0x3c03, 0x0c60, 0x1c41, 0xedae, 0xfd8f, 0xcdec, 0xddcd,
-  0xad2a, 0xbd0b, 0x8d68, 0x9d49, 0x7e97, 0x6eb6, 0x5ed5, 0x4ef4, 0x3e13,
-  0x2e32, 0x1e51, 0x0e70, 0xff9f, 0xefbe, 0xdfdd, 0xcffc, 0xbf1b, 0xaf3a,
-  0x9f59, 0x8f78, 0x9188, 0x81a9, 0xb1ca, 0xa1eb, 0xd10c, 0xc12d, 0xf14e,
-  0xe16f, 0x1080, 0x00a1, 0x30c2, 0x20e3, 0x5004, 0x4025, 0x7046, 0x6067,
-  0x83b9, 0x9398, 0xa3fb, 0xb3da, 0xc33d, 0xd31c, 0xe37f, 0xf35e, 0x02b1,
-  0x1290, 0x22f3, 0x32d2, 0x4235, 0x5214, 0x6277, 0x7256, 0xb5ea, 0xa5cb,
-  0x95a8, 0x8589, 0xf56e, 0xe54f, 0xd52c, 0xc50d, 0x34e2, 0x24c3, 0x14a0,
-  0x0481, 0x7466, 0x6447, 0x5424, 0x4405, 0xa7db, 0xb7fa, 0x8799, 0x97b8,
-  0xe75f, 0xf77e, 0xc71d, 0xd73c, 0x26d3, 0x36f2, 0x0691, 0x16b0, 0x6657,
-  0x7676, 0x4615, 0x5634, 0xd94c, 0xc96d, 0xf90e, 0xe92f, 0x99c8, 0x89e9,
-  0xb98a, 0xa9ab, 0x5844, 0x4865, 0x7806, 0x6827, 0x18c0, 0x08e1, 0x3882,
-  0x28a3, 0xcb7d, 0xdb5c, 0xeb3f, 0xfb1e, 0x8bf9, 0x9bd8, 0xabbb, 0xbb9a,
-  0x4a75, 0x5a54, 0x6a37, 0x7a16, 0x0af1, 0x1ad0, 0x2ab3, 0x3a92, 0xfd2e,
-  0xed0f, 0xdd6c, 0xcd4d, 0xbdaa, 0xad8b, 0x9de8, 0x8dc9, 0x7c26, 0x6c07,
-  0x5c64, 0x4c45, 0x3ca2, 0x2c83, 0x1ce0, 0x0cc1, 0xef1f, 0xff3e, 0xcf5d,
-  0xdf7c, 0xaf9b, 0xbfba, 0x8fd9, 0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74,
-  0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
-];
-
-function crc16ccitt(data: Uint8Array): number {
-  let crc = 0xffff;
-  for (let i = 0; i < data.length; i++) {
-    crc = ((crc << 8) & 0xffff) ^ CRC16_TABLE[((crc >> 8) ^ data[i]!) & 0xff]!;
-  }
-  return crc;
-}
-
-// --- Intel HEX parser ---
-
-type Segment = {
-  startAddress: number;
-  loadAddress: number;
-  data: Uint8Array;
-};
-
-function computeCodeLength(segments: Segment[]): number {
-  return segments.reduce(
-    (max, seg) => Math.max(max, seg.loadAddress + seg.data.length),
-    0,
-  );
-}
-
-function parseHexFile(content: string): Segment[] {
-  const lines = content.split("\n").filter((l) => l.startsWith(":"));
-  let baseAddress = 0;
-  let minAddr = Infinity;
-
-  // Group data records by their extended-address area, matching ledgerblue's
-  // IntelHexParser: every extended linear/segment address record starts a new area.
-  const areas: {
-    base: number;
-    records: { addr: number; data: Uint8Array }[];
-  }[] = [];
-  let currentArea: {
-    base: number;
-    records: { addr: number; data: Uint8Array }[];
-  } | null = null;
-
-  for (const line of lines) {
-    const hex = line.slice(1).trim();
-    const byteCount = parseInt(hex.substring(0, 2), 16);
-    const address = parseInt(hex.substring(2, 6), 16);
-    const recordType = parseInt(hex.substring(6, 8), 16);
-    const dataHex = hex.substring(8, 8 + byteCount * 2);
-
-    if (recordType === 0x04) {
-      baseAddress = parseInt(dataHex, 16) << 16;
-      currentArea = { base: baseAddress, records: [] };
-      areas.push(currentArea);
-    } else if (recordType === 0x02) {
-      baseAddress = parseInt(dataHex, 16) << 4;
-      currentArea = { base: baseAddress, records: [] };
-      areas.push(currentArea);
-    } else if (recordType === 0x00) {
-      const fullAddr = baseAddress + address;
-      if (fullAddr < minAddr) minAddr = fullAddr;
-      const data = new Uint8Array(byteCount);
-      for (let i = 0; i < byteCount; i++) {
-        data[i] = parseInt(dataHex.substring(i * 2, i * 2 + 2), 16);
-      }
-      if (!currentArea) {
-        currentArea = { base: baseAddress, records: [] };
-        areas.push(currentArea);
-      }
-      currentArea.records.push({ addr: fullAddr, data });
-    }
-  }
-
-  const segments: Segment[] = [];
-  for (const area of areas) {
-    if (area.records.length === 0) continue;
-    area.records.sort((a, b) => a.addr - b.addr);
-    const areaStart = area.records[0]!.addr;
-    const lastRecord = area.records[area.records.length - 1]!;
-    const areaEnd = lastRecord.addr + lastRecord.data.length;
-    const areaData = new Uint8Array(areaEnd - areaStart);
-    for (const rec of area.records) {
-      areaData.set(rec.data, rec.addr - areaStart);
-    }
-    segments.push({
-      startAddress: areaStart,
-      loadAddress: areaStart - minAddr,
-      data: areaData,
-    });
-  }
-
-  return segments;
 }

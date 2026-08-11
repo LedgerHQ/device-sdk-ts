@@ -92,10 +92,10 @@ export const Menu: React.FC = () => {
       <MenuItem>
         <Icons.CloudUpload />
         <MenuTitle
-          data-testid="CTA_route-to-/sideload-app"
-          onClick={() => router.push("/sideload-app")}
+          data-testid="CTA_route-to-/internal-tools"
+          onClick={() => router.push("/internal-tools")}
         >
-          Sideload App
+          Ledger Internal Tools
         </MenuTitle>
       </MenuItem>
       <MenuItem>

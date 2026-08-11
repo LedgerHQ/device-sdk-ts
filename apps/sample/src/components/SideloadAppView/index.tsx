@@ -6,6 +6,7 @@ import {
 import { Button, Flex, Icons, InfiniteLoader, Text } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
+import { type LogEntry, LogPanel } from "@/components/LogPanel";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { type ApduSender, sideloadApp } from "@/utils/sideloadApp";
 
@@ -25,16 +26,16 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<SideloadProgress | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectFile = useCallback((file: File | null) => {
-    setError(null);
-    setSuccess(false);
+    setFileError(null);
     setProgress(null);
-    if (file && !file.name.toLowerCase().endsWith(".hex")) {
-      setError("Please select a .hex file");
+    setLogs([]);
+    if (file && !file.name.toLowerCase().endsWith(".apdu")) {
+      setFileError("Please select a .apdu file");
       setSelectedFile(null);
       return;
     }
@@ -78,13 +79,13 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
   const handleSideload = useCallback(async () => {
     if (!selectedFile) return;
 
+    setFileError(null);
     setLoading(true);
-    setError(null);
-    setSuccess(false);
     setProgress(null);
+    setLogs([]);
 
     try {
-      const hexContent = await selectedFile.text();
+      const scriptContent = await selectedFile.text();
 
       const osResult = await dmk.sendCommand({
         sessionId,
@@ -107,22 +108,35 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
 
       await sideloadApp(
         sendApdu,
-        hexContent,
-        {
-          appName: selectedFile.name.replace(/\.hex$/i, ""),
-          targetId: osResult.data.targetId,
-          apiLevel: 0,
-          dataLength: 0,
-          installParamsSize: 0,
-          flags: 0,
-          mainAddress: 0,
+        scriptContent,
+        osResult.data.targetId,
+        (phase, pct) => {
+          setProgress({ phase, pct });
+          setLogs((prev) => [
+            ...prev,
+            {
+              date: new Date(),
+              message: `${phase} (${Math.round(pct)}%)`,
+              type: "info",
+            },
+          ]);
         },
-        (phase, pct) => setProgress({ phase, pct }),
       );
 
-      setSuccess(true);
+      setLogs((prev) => [
+        ...prev,
+        {
+          date: new Date(),
+          message: "App sideloaded successfully.",
+          type: "success",
+        },
+      ]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const message = e instanceof Error ? e.message : String(e);
+      setLogs((prev) => [
+        ...prev,
+        { date: new Date(), message, type: "error" },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -132,8 +146,8 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
     <Flex flexDirection="column" rowGap={4} p={6} maxWidth={600}>
       <Text variant="h4">Sideload App</Text>
       <Text variant="body" color="neutral.c70">
-        Select a .hex file and sideload it onto the connected device over the
-        secure channel.
+        Select a .apdu install script and replay it onto the connected device
+        over the secure channel.
       </Text>
       <Block>
         <DropZone
@@ -148,7 +162,7 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
           <HiddenInput
             ref={fileInputRef}
             type="file"
-            accept=".hex"
+            accept=".apdu"
             onChange={handleFileChange}
             disabled={loading}
           />
@@ -157,7 +171,7 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
             <Text variant="body">
               {selectedFile
                 ? selectedFile.name
-                : "Drop a .hex file here or click to select"}
+                : "Drop a .apdu file here or click to select"}
             </Text>
           </Flex>
         </DropZone>
@@ -174,6 +188,12 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
           Sideload Application
         </Button>
 
+        {fileError && (
+          <Text color="error.c80" data-testid="text_sideload-file-error">
+            {fileError}
+          </Text>
+        )}
+
         {progress && (
           <Flex flexDirection="column" rowGap={2}>
             <ProgressTrack>
@@ -185,17 +205,7 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
           </Flex>
         )}
 
-        {error && (
-          <Text color="error.c80" data-testid="text_sideload-error">
-            {error}
-          </Text>
-        )}
-
-        {success && (
-          <Text color="success.c80" data-testid="text_sideload-success">
-            App sideloaded successfully.
-          </Text>
-        )}
+        <LogPanel logs={logs} />
       </Block>
     </Flex>
   );
