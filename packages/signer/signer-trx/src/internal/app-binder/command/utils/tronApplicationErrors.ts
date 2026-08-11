@@ -15,10 +15,14 @@ import {
 export type TronAppErrorCodes =
   | "6700"
   | "6800"
+  | "6981"
   | "6982"
-  | "6983"
   | "6985"
   | "6a80"
+  | "6a84"
+  | "6a87"
+  | "6a88"
+  | "6a89"
   | "6a8a"
   | "6a8b"
   | "6a8c"
@@ -34,10 +38,14 @@ export type TronAppErrorCodes =
 export const TRON_APP_ERRORS: CommandErrors<TronAppErrorCodes> = {
   "6700": { message: "Incorrect length" },
   "6800": { message: "Missing critical parameter" },
+  "6981": { message: "Command incompatible with file structure" },
   "6982": { message: "Security status not satisfied (canceled by user)" },
-  "6983": { message: "Wrong data length" },
   "6985": { message: "Condition of use not satisfied (rejected by user)" },
   "6a80": { message: "Incorrect data" },
+  "6a84": { message: "Not enough memory space" },
+  "6a87": { message: "Wrong data length" },
+  "6a88": { message: "Referenced data not found" },
+  "6a89": { message: "File already exists" },
   "6a8a": { message: "Incorrect BIP32 path" },
   "6a8b": {
     message: "The 'sign data' setting is required (enable it in the Tron app)",

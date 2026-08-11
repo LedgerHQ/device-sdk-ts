@@ -1,0 +1,50 @@
+name: "[mock-server] deploy-prod"
+
+# Manual prod deploy. Sets the image tag + chart version on the prod ArgoCD app
+# and syncs it. Auth uses an ArgoCD project token (create it + store as secrets
+# ARGOCD_TOKEN / var ARGOCD_SERVER — done outside this repo).
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: "Image tag to deploy (version pushed by build-prod, e.g. 0.1.0)"
+        required: true
+      chart_version:
+        description: "web-app chart version (targetRevision)"
+        required: true
+        default: "0.1.3"
+
+permissions:
+  contents: read
+
+env:
+  # Apps are split by label proj=device-mock-server.
+  ARGOCD_APP: device-mock-server
+
+jobs:
+  deploy:
+    runs-on: ledgerhq-device-sdk
+    timeout-minutes: 15
+    steps:
+      - name: Install ArgoCD CLI
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o "$HOME/.local/bin/argocd" \
+            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x "$HOME/.local/bin/argocd"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy
+        env:
+          ARGOCD_SERVER: ${{ vars.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
+          APP_VERSION: ${{ inputs.app_version }}
+          CHART_VERSION: ${{ inputs.chart_version }}
+        run: |
+          argocd app set "$ARGOCD_APP" \
+            --source-position 1 \
+            --revision "$CHART_VERSION" \
+            -p image.tag="$APP_VERSION" \
+            --grpc-web
+          argocd app sync "$ARGOCD_APP" --grpc-web
+          argocd app wait "$ARGOCD_APP" --health --timeout 300 --grpc-web

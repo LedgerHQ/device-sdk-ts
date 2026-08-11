@@ -1,5 +1,9 @@
 import {
   CommandResultFactory,
+  DeviceModelId,
+  type DeviceSessionState,
+  DeviceSessionStateType,
+  DeviceStatus,
   DmkResultFactory,
   type InternalApi,
   InvalidStatusWordError,
@@ -7,6 +11,12 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { GetTrustedInputCommand } from "@internal/app-binder/command/GetTrustedInputCommand";
+import { UnsupportedV6TransactionError } from "@internal/app-binder/command/utils/UnsupportedV6TransactionError";
+import {
+  ironwoodV6OnChainTxHex,
+  ironwoodV6ShieldedChunksHex,
+  ironwoodV6StreamedHex,
+} from "@internal/app-binder/task/__fixtures__/ironwoodV6TrustedInput";
 import {
   apduRecordStoreFromLogs,
   splitTransactionArgsFromLogsSecond,
@@ -17,6 +27,7 @@ import {
   serializeTransaction,
   toInternalTransaction,
 } from "@internal/app-binder/task/utils/legacyTransactionUtils";
+import { MIN_APP_VERSION_FOR_V6_TRANSACTIONS } from "@internal/app-binder/ZcashApplicationResolver";
 
 import { GetTrustedInputTask } from "./GetTrustedInputTask";
 
@@ -54,8 +65,11 @@ const runHex = (marker: number, length: number): string =>
 // the assertion instead of showing up as an opaque hex mismatch. AUTHORIZING
 // fills the proofs and signatures, which the txid does not commit to: it must
 // appear nowhere in the stream.
-const VALUE_BALANCE_MARKER = 0x41;
-const ANCHOR_MARKER = 0x42;
+// Kept clear of every other byte in these transactions — including the transparent
+// ones — so that finding one of them in the stream can only mean the trailer leaked.
+const VALUE_BALANCE_MARKER = 0xb1;
+const ANCHOR_MARKER = 0xb2;
+const FLAGS_MARKER = 0xb3;
 const AUTHORIZING_MARKER = 0xee;
 const SPEND_CV_MARKER = 0x11;
 const SPEND_NULLIFIER_MARKER = 0x12;
@@ -152,6 +166,116 @@ const buildV5TxWithSaplingBundle = (
   );
 };
 
+const V6_HEADER_HEX = "0600008098b684d85b16a537"; // version | versionGroupId | branchId
+const ORCHARD_PROOF_SIZE = 2720;
+
+/** OrchardAction on chain: cv | nullifier | rk | cmx | ephemeralKey | encCiphertext | outCiphertext. */
+const orchardActionFields = (base: number) => ({
+  cv: byteRun(base + 0x01, 32),
+  nullifier: byteRun(base + 0x02, 32),
+  rk: byteRun(base + 0x03, 32),
+  cmx: byteRun(base + 0x04, 32),
+  ephemeralKey: byteRun(base + 0x05, 32),
+  encCompact: byteRun(base + 0x06, 52),
+  memo: byteRun(base + 0x07, SAPLING_MEMO_SIZE),
+  encTag: byteRun(base + 0x08, 16),
+  outCiphertext: byteRun(base + 0x09, 80),
+});
+type OrchardActionFields = ReturnType<typeof orchardActionFields>;
+
+const serializeOrchardAction = (action: OrchardActionFields): Uint8Array =>
+  concatBytes(
+    action.cv,
+    action.nullifier,
+    action.rk,
+    action.cmx,
+    action.ephemeralKey,
+    action.encCompact,
+    action.memo,
+    action.encTag,
+    action.outCiphertext,
+  );
+
+/**
+ * Serializes an action bundle the way ZIP-229 lays it out on chain: the count, the
+ * actions, then a trailer of flags, value balance and anchor followed by the proofs
+ * and signatures. Only the flags and the value balance belong to the v6 txid digest.
+ */
+const serializeV6ActionBundle = (actions: OrchardActionFields[]): Uint8Array =>
+  concatBytes(
+    new Uint8Array([actions.length]),
+    ...actions.map(serializeOrchardAction),
+    ...(actions.length === 0
+      ? []
+      : [
+          byteRun(FLAGS_MARKER, 1),
+          byteRun(VALUE_BALANCE_MARKER, 8),
+          byteRun(ANCHOR_MARKER, 32),
+          new Uint8Array([
+            0xfd,
+            ORCHARD_PROOF_SIZE & 0xff,
+            ORCHARD_PROOF_SIZE >> 8,
+          ]),
+          byteRun(AUTHORIZING_MARKER, ORCHARD_PROOF_SIZE),
+          byteRun(AUTHORIZING_MARKER, actions.length * 64), // spendAuthSigs
+          byteRun(AUTHORIZING_MARKER, 64), // bindingSig
+        ]),
+  );
+
+/** A v6 transaction carrying both action pools, with no Sapling bundle. */
+const buildV6TxWithActionBundles = (
+  orchardActions: OrchardActionFields[],
+  ironwoodActions: OrchardActionFields[],
+): Uint8Array =>
+  concatBytes(
+    hexToBytes(V6_HEADER_HEX),
+    hexToBytes(V5_LOCK_TIME_HEX),
+    hexToBytes(V5_EXPIRY_HEX),
+    hexToBytes(TRANSPARENT_BODY_HEX),
+    new Uint8Array([0x00, 0x00]), // no Sapling spend, no Sapling output
+    serializeV6ActionBundle(orchardActions),
+    serializeV6ActionBundle(ironwoodActions),
+  );
+
+/**
+ * The v6 counterpart of `buildV5TxWithSaplingBundle`. The Sapling bundle keeps the
+ * same on-chain layout in v6 — the anchor is still written after the value balance —
+ * so this differs from the v5 builder only by the header and by the Ironwood action
+ * count that follows the Orchard one.
+ */
+const buildV6TxWithSaplingBundle = (
+  spendCount: number,
+  outputs: SaplingOutputFields[],
+): Uint8Array => {
+  const hasBundle = spendCount > 0 || outputs.length > 0;
+
+  return concatBytes(
+    hexToBytes(V6_HEADER_HEX),
+    hexToBytes(V5_LOCK_TIME_HEX),
+    hexToBytes(V5_EXPIRY_HEX),
+    hexToBytes(TRANSPARENT_BODY_HEX),
+    new Uint8Array([spendCount]),
+    ...Array.from({ length: spendCount }, () =>
+      concatBytes(
+        byteRun(SPEND_CV_MARKER, 32),
+        byteRun(SPEND_NULLIFIER_MARKER, 32),
+        byteRun(SPEND_RK_MARKER, 32),
+      ),
+    ),
+    new Uint8Array([outputs.length]),
+    ...outputs.map(serializeSaplingOutput),
+    hasBundle ? byteRun(VALUE_BALANCE_MARKER, 8) : new Uint8Array(),
+    spendCount > 0 ? byteRun(ANCHOR_MARKER, 32) : new Uint8Array(),
+    byteRun(
+      AUTHORIZING_MARKER,
+      spendCount * SAPLING_SPEND_PROOF_AND_SIG_SIZE +
+        outputs.length * SAPLING_OUTPUT_PROOF_SIZE +
+        (hasBundle ? SAPLING_BINDING_SIG_SIZE : 0),
+    ),
+    new Uint8Array([0x00, 0x00]), // no Orchard action, no Ironwood action
+  );
+};
+
 const memoChunksHex = (memo: Uint8Array): string[] =>
   Array.from({ length: memo.length / MEMO_CHUNK_SIZE }, () =>
     runHex(memo[0] ?? 0, MEMO_CHUNK_SIZE),
@@ -160,6 +284,19 @@ const compactHex = (output: SaplingOutputFields): string =>
   bytesToHex(concatBytes(output.cmu, output.ephemeralKey, output.encCompact));
 const nonCompactHex = (output: SaplingOutputFields): string =>
   bytesToHex(concatBytes(output.cv, output.encTag, output.outCiphertext));
+const compactActionHex = (action: OrchardActionFields): string =>
+  bytesToHex(
+    concatBytes(
+      action.nullifier,
+      action.cmx,
+      action.ephemeralKey,
+      action.encCompact,
+    ),
+  );
+const nonCompactActionHex = (action: OrchardActionFields): string =>
+  bytesToHex(
+    concatBytes(action.cv, action.rk, action.encTag, action.outCiphertext),
+  );
 
 const makeSuccessResponse = (byte: number) => ({
   statusCode: new Uint8Array([0x90, 0x00]),
@@ -191,14 +328,35 @@ const trustedInputApduCallsFromLogs = (): string[][] => {
   return calls;
 };
 
+/** The Zcash app the device session reports, at the version passed. */
+const appSessionState = (appVersion: string): DeviceSessionState =>
+  ({
+    sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+    deviceStatus: DeviceStatus.CONNECTED,
+    installedApps: [],
+    currentApp: { name: "Zcash", version: appVersion },
+    deviceModelId: DeviceModelId.FLEX,
+    isSecureConnectionAllowed: false,
+  }) as DeviceSessionState;
+
 describe("GetTrustedInputTask", () => {
   let apiMock: InternalApi;
 
   beforeEach(() => {
     apiMock = {
       sendCommand: vi.fn(),
+      // An app supporting v6, which every case but the version gate below assumes.
+      getDeviceSessionState: vi.fn(() =>
+        appSessionState(MIN_APP_VERSION_FOR_V6_TRANSACTIONS),
+      ),
     } as unknown as InternalApi;
   });
+
+  const withAppVersion = (appVersion: string): void => {
+    vi.mocked(apiMock.getDeviceSessionState).mockReturnValue(
+      appSessionState(appVersion),
+    );
+  };
 
   /** Data sent per APDU, the 5-byte APDU header aside. */
   const sentApduData = (): string[] =>
@@ -422,19 +580,162 @@ describe("GetTrustedInputTask", () => {
     ]);
   });
 
-  it("rejects a transaction version the device app does not handle in this flow", async () => {
-    // v6 header (Ironwood): version | nVersionGroupId | branchId | locktime | expiry.
-    // The app turns v6 away with "V6 transaction in legacy path", so the stream
-    // must not be built as if the bundles followed the v5 layout.
-    const v6Header = "060000800a27a726f04dec4d00000000a6233300";
+  it("omits the Sapling anchor of a v6, which ZIP-229 moved to the authorizing digest", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+    const output = saplingOutputFields(0x20);
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: buildV6TxWithSaplingBundle(1, [output]),
+      indexLookup: 0,
+    }).run();
+
+    // The anchor is still on the wire in a v6 — ZIP-225 writes it after the value
+    // balance whatever the version — but sapling_spends_noncompact_digest_v6 hashes
+    // cv ‖ rk alone, so the device must not receive it. The value balance therefore
+    // travels on its own where a v5 sends it followed by 32 anchor bytes.
+    expect(sentApduData().slice(5)).toEqual([
+      "01010000", // one spend, one output, no Orchard action, no Ironwood action
+      runHex(VALUE_BALANCE_MARKER, 8),
+      runHex(SPEND_CV_MARKER, 32) +
+        runHex(SPEND_NULLIFIER_MARKER, 32) +
+        runHex(SPEND_RK_MARKER, 32),
+      compactHex(output),
+      ...memoChunksHex(output.memo),
+      nonCompactHex(output),
+      `${V5_LOCK_TIME_HEX}04${V5_EXPIRY_HEX}`,
+    ]);
+
+    const streamed = concatBytes(...sentApduData().map(hexToBytes));
+    expect(streamed).not.toContain(ANCHOR_MARKER);
+    expect(streamed).not.toContain(AUTHORIZING_MARKER);
+  });
+
+  it("still sends the Sapling anchor of a v5, whose digest keeps it", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+    const output = saplingOutputFields(0x20);
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: buildV5TxWithSaplingBundle(1, [output]),
+      indexLookup: 0,
+    }).run();
+
+    // Same bundle, one version down: the anchor rides along with the value balance.
+    expect(sentApduData()[6]).toBe(
+      runHex(VALUE_BALANCE_MARKER, 8) + runHex(ANCHOR_MARKER, 32),
+    );
+  });
+
+  it("rejects a transaction with bytes left over after the shielded bundles", async () => {
+    const withTrailingByte = concatBytes(
+      buildV6TxWithSaplingBundle(1, [saplingOutputFields(0x20)]),
+      new Uint8Array([0x00]),
+    );
 
     await expect(
       new GetTrustedInputTask(apiMock, {
-        transaction: hexToBytes(v6Header),
+        transaction: withTrailingByte,
         indexLookup: 0,
       }).run(),
     ).rejects.toThrow(
-      "Unsupported transaction version 6 while splitting trusted input chunks",
+      "Malformed transaction while splitting trusted input chunks",
+    );
+
+    expect(apiMock.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("streams a v6 Ironwood previous transaction the way the device app was validated against", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: hexToBytes(ironwoodV6OnChainTxHex),
+      indexLookup: 0,
+    }).run();
+
+    // Fed these bytes, the device app answered with the txid this transaction has on
+    // chain. Spending a UTXO it created depends on that match: a trusted input built on
+    // any other stream commits to a txid no output carries.
+    const sent = sentApduData();
+    expect(sent.join("")).toBe(`00000000${ironwoodV6StreamedHex}`);
+
+    // Within the shielded section the boundaries matter too, since the app reads each
+    // action block with `hash_reader_exact` and rejects one split across two APDUs.
+    expect(sent.slice(-ironwoodV6ShieldedChunksHex.length)).toEqual(
+      ironwoodV6ShieldedChunksHex,
+    );
+  });
+
+  it("regroups a v6 Orchard bundle and the Ironwood bundle behind it, anchors excluded", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+    // Bases chosen clear of the bundle-trailer markers, so that finding one of those in
+    // the stream can only mean the trailer leaked.
+    const orchardAction = orchardActionFields(0x20);
+    const ironwoodAction = orchardActionFields(0x60);
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: buildV6TxWithActionBundles(
+        [orchardAction],
+        [ironwoodAction],
+      ),
+      indexLookup: 0,
+    }).run();
+
+    expect(sentApduData().slice(5)).toEqual([
+      "00000101", // no Sapling, one Orchard action, one Ironwood action
+      // Each bundle is streamed in turn, regrouped per ZIP-244 digest.
+      compactActionHex(orchardAction),
+      ...memoChunksHex(orchardAction.memo),
+      nonCompactActionHex(orchardAction),
+      // ZIP-229 moved the anchor to the authorizing digest, so a v6 bundle commits
+      // to its flags and value balance alone — 9 bytes where a v5 one sends 41.
+      runHex(FLAGS_MARKER, 1) + runHex(VALUE_BALANCE_MARKER, 8),
+      compactActionHex(ironwoodAction),
+      ...memoChunksHex(ironwoodAction.memo),
+      nonCompactActionHex(ironwoodAction),
+      runHex(FLAGS_MARKER, 1) + runHex(VALUE_BALANCE_MARKER, 8),
+      `${V5_LOCK_TIME_HEX}04${V5_EXPIRY_HEX}`,
+    ]);
+
+    // Anchors, proofs and signatures are authorizing data: the txid does not commit
+    // to them, so not one of their bytes may reach the device.
+    const streamed = concatBytes(...sentApduData().map(hexToBytes));
+    expect(streamed).not.toContain(ANCHOR_MARKER);
+    expect(streamed).not.toContain(AUTHORIZING_MARKER);
+  });
+
+  it("rejects a v6 transaction whose version group id is not the one the app expects", async () => {
+    // The app keys its v6 detection on both words and would parse this as a v5.
+    const wrongGroupId = `06000080${"0a27a726"}5b16a53700000000a6233300`;
+
+    await expect(
+      new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(wrongGroupId),
+        indexLookup: 0,
+      }).run(),
+    ).rejects.toThrow(
+      "Unexpected version group id for a v6 transaction while splitting trusted input chunks: expected 0xd884b698, got 0x26a7270a",
+    );
+
+    expect(apiMock.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("rejects a transaction version the device app does not handle in this flow", async () => {
+    const v7Header = "070000800a27a726f04dec4d00000000a6233300";
+
+    await expect(
+      new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(v7Header),
+        indexLookup: 0,
+      }).run(),
+    ).rejects.toThrow(
+      "Unsupported transaction version 7 while splitting trusted input chunks",
     );
 
     expect(apiMock.sendCommand).not.toHaveBeenCalled();
@@ -450,5 +751,97 @@ describe("GetTrustedInputTask", () => {
     );
 
     expect(apiMock.sendCommand).not.toHaveBeenCalled();
+  });
+  describe("app version gate on a v6 previous transaction", () => {
+    it("reports the installed version instead of streaming a v6 to an app that predates it", async () => {
+      // App 3.0.2 stops at the v6 version word and answers 6a80, a status word it
+      // also answers to a dozen unrelated causes.
+      withAppVersion("3.0.2");
+
+      const result = await new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(ironwoodV6OnChainTxHex),
+        indexLookup: 0,
+      }).run();
+
+      expect(apiMock.sendCommand).not.toHaveBeenCalled();
+      expect(result).toEqual(
+        DmkResultFactory({ error: new UnsupportedV6TransactionError("3.0.2") }),
+      );
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(UnsupportedV6TransactionError);
+        const error = result.error as UnsupportedV6TransactionError;
+        expect(error.errorCode).toBe("unsupported_v6_transaction");
+        expect(error.appVersion).toBe("3.0.2");
+        expect(error.message).toContain("3.0.2");
+        expect(error.message).toContain("V6 (Ironwood)");
+        // No release is promised: the version carrying v6 support to users is not
+        // settled, so the message names the installed app and nothing to install.
+        expect(error.message).not.toContain(
+          MIN_APP_VERSION_FOR_V6_TRANSACTIONS,
+        );
+      }
+    });
+
+    it.each([
+      ["the first version supporting v6", MIN_APP_VERSION_FOR_V6_TRANSACTIONS],
+      ["a later patch of that line", "3.8.10"],
+      ["a later minor, which sorts below the floor as a string", "3.10.0"],
+    ])("streams a v6 to %s", async (_label, appVersion) => {
+      withAppVersion(appVersion);
+      vi.mocked(apiMock.sendCommand).mockResolvedValue(
+        CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+      );
+
+      const result = await new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(ironwoodV6OnChainTxHex),
+        indexLookup: 0,
+      }).run();
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+      expect(sentApduData().join("")).toBe(`00000000${ironwoodV6StreamedHex}`);
+    });
+
+    it.each([
+      ["v5", TRANSPARENT_V5_TX_HEX],
+      ["v4", V4_NU6_TX_HEX],
+    ])(
+      "streams a %s previous transaction whatever the app version",
+      async (_version, transactionHex) => {
+        // Only a v6 header is at stake: every earlier version parses on any app.
+        withAppVersion("3.0.2");
+        vi.mocked(apiMock.sendCommand).mockResolvedValue(
+          CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+        );
+
+        const result = await new GetTrustedInputTask(apiMock, {
+          transaction: hexToBytes(transactionHex),
+          indexLookup: 1,
+        }).run();
+
+        expect(isSuccessDmkResult(result)).toBe(true);
+        expect(apiMock.sendCommand).toHaveBeenCalled();
+      },
+    );
+
+    it("streams a v6 when the session state reports no app version", async () => {
+      // Nothing to hold against the app, so the device answers as it did before.
+      vi.mocked(apiMock.getDeviceSessionState).mockReturnValue({
+        sessionStateType: DeviceSessionStateType.Connected,
+        deviceStatus: DeviceStatus.CONNECTED,
+        deviceModelId: DeviceModelId.FLEX,
+      } as DeviceSessionState);
+      vi.mocked(apiMock.sendCommand).mockResolvedValue(
+        CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+      );
+
+      const result = await new GetTrustedInputTask(apiMock, {
+        transaction: hexToBytes(ironwoodV6OnChainTxHex),
+        indexLookup: 0,
+      }).run();
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+      expect(sentApduData().join("")).toBe(`00000000${ironwoodV6StreamedHex}`);
+    });
   });
 });

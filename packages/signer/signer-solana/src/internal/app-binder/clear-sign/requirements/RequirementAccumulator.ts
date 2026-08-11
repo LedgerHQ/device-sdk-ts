@@ -16,6 +16,9 @@ export class RequirementAccumulator {
   private readonly tokenAccountStates = new OrderedSet<string>();
   private readonly altResolutions = new OrderedSet<AltEntryKey>();
   private readonly trustedNames = new OrderedSet<string>();
+  private readonly tokenAmountRefs = new OrderedSet<string>();
+  private readonly tokenAmountAltRefs = new OrderedSet<AltEntryKey>();
+  private readonly mintAltRefs = new OrderedSet<AltEntryKey>();
 
   addInstructionInfo(programId: string, discriminator: string): void {
     this.instructionInfos.add(`${programId}:${discriminator}`, {
@@ -55,14 +58,53 @@ export class RequirementAccumulator {
     this.trustedNames.add(address, address);
   }
 
+  addTokenAmountRef(address: string): void {
+    this.tokenAmountRefs.add(address, address);
+  }
+
+  addTokenAmountAltRef(altAddress: string, entryIndex: number): void {
+    this.tokenAmountAltRefs.add(`${altAddress}:${entryIndex}`, {
+      altAddress,
+      entryIndex,
+    });
+  }
+
+  addMintAltRef(altAddress: string, entryIndex: number): void {
+    this.mintAltRefs.add(`${altAddress}:${entryIndex}`, {
+      altAddress,
+      entryIndex,
+    });
+  }
+
   build(): DescriptorRequirements {
+    // Priority across the three ALT loops: tokenAmountAltRefs > mintAltRefs >
+    // altResolutions. Each higher-priority bucket does everything the lower one
+    // does plus more (TOKEN_INFO / TOKEN_ACCOUNT_STATE fallback). Strip
+    // lower-priority entries here so the provide phase never sees duplicates and
+    // always runs the most complete behaviour for each (altAddress, entryIndex).
+    const altKey = ({ altAddress, entryIndex }: AltEntryKey) =>
+      `${altAddress}:${entryIndex}`;
+    const tokenAmountKeys = new Set(
+      this.tokenAmountAltRefs.values().map(altKey),
+    );
+    const mintKeys = new Set(this.mintAltRefs.values().map(altKey));
+
     return {
       instructionInfos: this.instructionInfos.values(),
       enumVariants: this.enumVariants.values(),
       tokenInfos: this.tokenInfos.values(),
       tokenAccountStates: this.tokenAccountStates.values(),
-      altResolutions: this.altResolutions.values(),
+      altResolutions: this.altResolutions
+        .values()
+        .filter(
+          (k) => !mintKeys.has(altKey(k)) && !tokenAmountKeys.has(altKey(k)),
+        ),
       trustedNames: this.trustedNames.values(),
+      tokenAmountRefs: this.tokenAmountRefs.values(),
+      tokenAmountAltRefs: this.tokenAmountAltRefs.values(),
+      mintAltRefs: this.mintAltRefs
+        .values()
+        .filter((k) => !tokenAmountKeys.has(altKey(k))),
     };
   }
 }

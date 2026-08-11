@@ -12,6 +12,7 @@ import { type SolanaTransactionData } from "@root/src/domain/models/SolanaTransa
 const DEFAULT_SCAN_LIMIT = 500;
 const BATCH_SIZE = 20;
 const METADATA_SERVICE_URL = "https://nft.api.live.ledger.com";
+const RPC_ERROR_INVALID_PARAMS = -32602;
 
 type InstructionInfo = {
   programId: string;
@@ -264,7 +265,25 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
       `Fetching up to ${limit} signatures for address ${address}`,
     );
 
-    const signatures = await this.getSignaturesForAddress(address, limit);
+    let signatures: SignatureInfo[];
+    try {
+      signatures = await this.getSignaturesForAddress(address, limit);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const match = msg.match(/\(code\s+(-?\d+)\)/);
+      const code = match ? Number(match[1]) : undefined;
+      if (code === RPC_ERROR_INVALID_PARAMS) {
+        // Some RPC providers reject getSignaturesForAddress for high-traffic
+        // system addresses (e.g. Stake Program). Return empty so the caller
+        // reports 0 results rather than crashing the test job.
+        this.logger.warn(
+          `RPC rejected getSignaturesForAddress for ${address} (code ${RPC_ERROR_INVALID_PARAMS}). No transactions can be sampled — skipping this program.`,
+          { data: { error: msg } },
+        );
+        return [];
+      }
+      throw err;
+    }
     const successfulSigs = signatures.filter((s) => s.err === null);
 
     this.logger.info(

@@ -1,0 +1,72 @@
+name: "[mock-server] preview"
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - apps/device-mock-server/**
+      - packages/mockserver-client/**
+      - pnpm-lock.yaml
+
+concurrency:
+  group: mock-server-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write # GitHub OIDC -> JFrog
+  contents: read
+  pull-requests: write # label + comment
+
+env:
+  REGISTRY: jfrog.ledgerlabs.net
+  IMAGE: infra-oci-web-apps-sandbox-green/device-mock-server/dev
+  PREVIEW_HOST: device-mock-server-pr-${{ github.event.pull_request.number }}.aws.sbx.ldg-tech.com
+
+jobs:
+  build:
+    if: contains(github.event.pull_request.labels.*.name, 'preview')
+    runs-on: ledgerhq-device-sdk
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+      - name: Get token from JFrog (OIDC)
+        id: jfrog-login
+        uses: LedgerHQ/actions-security/actions/jfrog-login@3868be0ef1ec8722fbdb2c6cda90f739cbfc742d # actions/jfrog-login-1
+
+      - name: Login to JFrog OCI registry
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ steps.jfrog-login.outputs.oidc-user }}
+          password: ${{ steps.jfrog-login.outputs.oidc-token }}
+
+      - name: Build and push
+        run: |
+          docker buildx build --push \
+            --platform linux/amd64 \
+            -f apps/device-mock-server/Dockerfile \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:pr-${{ github.event.pull_request.number }} \
+            .
+
+      - name: Comment preview URL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          body=$(printf '%s\n' \
+            "🚀 **Preview environment**" \
+            "" \
+            "**URL:** https://${PREVIEW_HOST}" \
+            "**Image:** \`${REGISTRY}/${IMAGE}:pr-${PR}\`" \
+            "**Commit:** \`${HEAD_SHA}\`" \
+            "" \
+            "ArgoCD syncs the env within ~30-60s after this image is pushed.")
+          # Upsert: edit our last comment if present, else create a new one.
+          gh pr comment "$PR" --edit-last --body "$body" || gh pr comment "$PR" --body "$body"

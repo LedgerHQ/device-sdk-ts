@@ -135,7 +135,10 @@ describe("BuildGenericClearSignContextTask", () => {
     );
   });
 
-  it("returns mode `srfc39-only` when some instructions are unrecognized", async () => {
+  it("returns mode `none` when some instructions are unrecognized", async () => {
+    // Any unrecognized instruction causes FINALIZE to fail on the device
+    // (cs_transaction_finalize walks all instructions), so we bail to legacy
+    // basic sign from a clean state rather than attempting generic clear-signing.
     const tx = makeRawTx([
       makeIx(KNOWN_PROGRAM, [0x01, 0x02]),
       makeIx(UNKNOWN_PROGRAM, [0x09]),
@@ -146,8 +149,8 @@ describe("BuildGenericClearSignContextTask", () => {
 
     const result = await task.run();
 
-    expect(result.mode).toBe("srfc39-only");
-    expect(result.instructionInfoContexts).toHaveLength(1);
+    expect(result.mode).toBe("none");
+    expect(result.instructionInfoContexts).toHaveLength(0);
   });
 
   it("returns mode `none` when nothing is recognized", async () => {

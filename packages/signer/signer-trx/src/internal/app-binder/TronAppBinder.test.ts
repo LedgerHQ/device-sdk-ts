@@ -1,4 +1,5 @@
 import {
+  CallTaskInAppDeviceAction,
   type DeviceActionState,
   DeviceActionStatus,
   type DeviceManagementKit,
@@ -19,8 +20,25 @@ import {
   type GetAppConfigurationDAIntermediateValue,
   type GetAppConfigurationDAOutput,
 } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
+import {
+  type SignPersonalMessageDAError,
+  type SignPersonalMessageDAIntermediateValue,
+  type SignPersonalMessageDAOutput,
+} from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
+import {
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
+} from "@api/app-binder/SignTransactionDeviceActionTypes";
+import {
+  type SignTransactionHashDAError,
+  type SignTransactionHashDAIntermediateValue,
+  type SignTransactionHashDAOutput,
+} from "@api/app-binder/SignTransactionHashDeviceActionTypes";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
+import { SignTransactionHashCommand } from "@internal/app-binder/command/SignTransactionHashCommand";
+import { type TronAppCommandError } from "@internal/app-binder/command/utils/tronApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
 
 import { TronAppBinder } from "./TronAppBinder";
@@ -173,6 +191,348 @@ describe("TronAppBinder", () => {
             }),
           }),
         );
+      });
+    });
+  });
+
+  describe("signTransaction", () => {
+    const derivationPath = "44'/195'/0'/0/0";
+    const transaction = Uint8Array.from([0x0a, 0x01, 0x00]);
+
+    it("should return the signature", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const output: SignTransactionDAOutput = new Uint8Array(65).fill(0xab);
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output,
+            } as DeviceActionState<
+              SignTransactionDAOutput,
+              SignTransactionDAError,
+              SignTransactionDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const binder = new TronAppBinder(
+          mockedDmk,
+          "sessionId",
+          loggerFactoryMock,
+        );
+        const { observable } = binder.signTransaction({
+          derivationPath,
+          transaction,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          SignTransactionDAOutput,
+          SignTransactionDAError,
+          SignTransactionDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: reject,
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                { status: DeviceActionStatus.Completed, output },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    describe("calls executeDeviceAction with the correct params", () => {
+      // The task closure breaks reference equality, so the device action is
+      // asserted field by field instead of with toHaveBeenCalledWith.
+      const executedDeviceAction = () => {
+        const args = vi.mocked(mockedDmk.executeDeviceAction).mock
+          .calls[0]![0]!;
+        expect(args.sessionId).toBe("sessionId");
+        expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+        return args.deviceAction as CallTaskInAppDeviceAction<
+          SignTransactionDAOutput,
+          TronAppCommandError,
+          UserInteractionRequired.SignTransaction
+        >;
+      };
+
+      it("requires the SignTransaction interaction", () => {
+        // WHEN
+        const binder = new TronAppBinder(
+          mockedDmk,
+          "sessionId",
+          loggerFactoryMock,
+        );
+        binder.signTransaction({
+          derivationPath,
+          transaction,
+          skipOpenApp: true,
+        });
+
+        // THEN
+        const deviceAction = executedDeviceAction();
+        expect(deviceAction.input.appName).toBe(APP_NAME);
+        expect(deviceAction.input.requiredUserInteraction).toBe(
+          UserInteractionRequired.SignTransaction,
+        );
+        expect(deviceAction.input.skipOpenApp).toBe(true);
+      });
+
+      it("defaults skipOpenApp to false", () => {
+        // WHEN
+        const binder = new TronAppBinder(
+          mockedDmk,
+          "sessionId",
+          loggerFactoryMock,
+        );
+        binder.signTransaction({ derivationPath, transaction });
+
+        // THEN
+        expect(executedDeviceAction().input.skipOpenApp).toBe(false);
+      });
+    });
+  });
+
+  describe("signTransactionHash", () => {
+    const derivationPath = "44'/195'/0'/0/0";
+    const transactionHash = new Uint8Array(32).fill(0x25);
+
+    it("should return the signature", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const output: SignTransactionHashDAOutput = new Uint8Array(65).fill(
+          0xab,
+        );
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output,
+            } as DeviceActionState<
+              SignTransactionHashDAOutput,
+              SignTransactionHashDAError,
+              SignTransactionHashDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const binder = new TronAppBinder(
+          mockedDmk,
+          "sessionId",
+          loggerFactoryMock,
+        );
+        const { observable } = binder.signTransactionHash({
+          derivationPath,
+          transactionHash,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          SignTransactionHashDAOutput,
+          SignTransactionHashDAError,
+          SignTransactionHashDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: reject,
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                { status: DeviceActionStatus.Completed, output },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    describe("calls executeDeviceAction with the correct params", () => {
+      it("requires the SignTransaction interaction", () => {
+        // WHEN
+        const binder = new TronAppBinder(
+          mockedDmk,
+          "sessionId",
+          loggerFactoryMock,
+        );
+        binder.signTransactionHash({
+          derivationPath,
+          transactionHash,
+          skipOpenApp: true,
+        });
+
+        // THEN
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sessionId: "sessionId",
+            deviceAction: new SendCommandInAppDeviceAction({
+              input: {
+                command: new SignTransactionHashCommand({
+                  derivationPath,
+                  transactionHash,
+                }),
+                appName: APP_NAME,
+                requiredUserInteraction:
+                  UserInteractionRequired.SignTransaction,
+                skipOpenApp: true,
+              },
+              logger: loggerMock,
+            }),
+          }),
+        );
+      });
+
+      it("defaults skipOpenApp to false", () => {
+        // WHEN
+        const binder = new TronAppBinder(
+          mockedDmk,
+          "sessionId",
+          loggerFactoryMock,
+        );
+        binder.signTransactionHash({ derivationPath, transactionHash });
+
+        // THEN
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            deviceAction: new SendCommandInAppDeviceAction({
+              input: {
+                command: new SignTransactionHashCommand({
+                  derivationPath,
+                  transactionHash,
+                }),
+                appName: APP_NAME,
+                requiredUserInteraction:
+                  UserInteractionRequired.SignTransaction,
+                skipOpenApp: false,
+              },
+              logger: loggerMock,
+            }),
+          }),
+        );
+      });
+    });
+  });
+
+  describe("signPersonalMessage", () => {
+    const derivationPath = "44'/195'/0'/0/0";
+    const message = Uint8Array.from([0x68, 0x65, 0x6c, 0x6c, 0x6f]);
+
+    it("should return the signature", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const output: SignPersonalMessageDAOutput = new Uint8Array(65).fill(
+          0xab,
+        );
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output,
+            } as DeviceActionState<
+              SignPersonalMessageDAOutput,
+              SignPersonalMessageDAError,
+              SignPersonalMessageDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const binder = new TronAppBinder(
+          mockedDmk,
+          "sessionId",
+          loggerFactoryMock,
+        );
+        const { observable } = binder.signPersonalMessage({
+          derivationPath,
+          message,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          SignPersonalMessageDAOutput,
+          SignPersonalMessageDAError,
+          SignPersonalMessageDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: reject,
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                { status: DeviceActionStatus.Completed, output },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    describe("calls executeDeviceAction with the correct params", () => {
+      // The task closure breaks reference equality, so the device action is
+      // asserted field by field instead of with toHaveBeenCalledWith.
+      const executedDeviceAction = () => {
+        const args = vi.mocked(mockedDmk.executeDeviceAction).mock
+          .calls[0]![0]!;
+        expect(args.sessionId).toBe("sessionId");
+        expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+        return args.deviceAction as CallTaskInAppDeviceAction<
+          SignPersonalMessageDAOutput,
+          TronAppCommandError,
+          UserInteractionRequired.SignPersonalMessage
+        >;
+      };
+
+      it("requires the SignPersonalMessage interaction", () => {
+        // WHEN
+        const binder = new TronAppBinder(
+          mockedDmk,
+          "sessionId",
+          loggerFactoryMock,
+        );
+        binder.signPersonalMessage({
+          derivationPath,
+          message,
+          skipOpenApp: true,
+        });
+
+        // THEN
+        const deviceAction = executedDeviceAction();
+        expect(deviceAction.input.appName).toBe(APP_NAME);
+        expect(deviceAction.input.requiredUserInteraction).toBe(
+          UserInteractionRequired.SignPersonalMessage,
+        );
+        expect(deviceAction.input.skipOpenApp).toBe(true);
+      });
+
+      it("defaults skipOpenApp to false", () => {
+        // WHEN
+        const binder = new TronAppBinder(
+          mockedDmk,
+          "sessionId",
+          loggerFactoryMock,
+        );
+        binder.signPersonalMessage({ derivationPath, message });
+
+        // THEN
+        expect(executedDeviceAction().input.skipOpenApp).toBe(false);
       });
     });
   });
