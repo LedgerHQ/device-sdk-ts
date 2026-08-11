@@ -187,8 +187,8 @@ catalogs:
       specifier: 13.0.4
       version: 13.0.4
     electron:
-      specifier: 38.1.2
-      version: 38.1.2
+      specifier: 39.8.10
+      version: 39.8.10
     electron-builder:
       specifier: 26.15.3
       version: 26.15.3
@@ -582,10 +582,10 @@ importers:
     dependencies:
       '@electron-toolkit/preload':
         specifier: ^3.0.2
-        version: 3.0.2(electron@38.1.2)
+        version: 3.0.2(electron@39.8.10)
       '@electron-toolkit/utils':
         specifier: ^4.0.0
-        version: 4.0.0(electron@38.1.2)
+        version: 4.0.0(electron@39.8.10)
       '@ledgerhq/device-management-kit-devtools-core':
         specifier: workspace:^
         version: link:../../packages/devtools/core
@@ -628,7 +628,7 @@ importers:
         version: 5.0.1(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       electron:
         specifier: 'catalog:'
-        version: 38.1.2
+        version: 39.8.10
       electron-builder:
         specifier: 'catalog:'
         version: 26.15.3(electron-builder-squirrel-windows@26.15.3)
@@ -877,7 +877,7 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -7786,6 +7786,7 @@ packages:
 
   crypto-js@4.2.0:
     resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+    deprecated: Active development of CryptoJS has been discontinued. This library is no longer maintained.
 
   css-color-keywords@1.0.0:
     resolution: {integrity: sha512-FyyrDHZKEjXDpNJYvVsV960FiqQyXc/LlYmsxl2BcdMb2WPx0OGRVgTg55rPSyLSNMqP52R9r8geSp7apN3Ofg==}
@@ -8240,8 +8241,8 @@ packages:
     resolution: {integrity: sha512-bO3y10YikuUwUuDUQRM4KfwNkKhnpVO7IPdbsrejwN9/AABJzzTQ4GeHwyzNSrVO+tEH3/Np255a3sVZpZDjvg==}
     engines: {node: '>=8.0.0'}
 
-  electron@38.1.2:
-    resolution: {integrity: sha512-WXUcN3W8h8NTTZViA3KNX0rV2YBU0X0mEUM3ubupXTDY4QtIN7tmiqYVOKSKpR2LckTmBWGuEeY4D6xVoffwKQ==}
+  electron@39.8.10:
+    resolution: {integrity: sha512-zbYtGPYUI7PzqLAzkk21Rk6j67WN0hxn0Mq/njErZo1d0HSf33is4f8ICI5fMLy5vYe0JtCtM5sYunNOaochSQ==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
 
@@ -14591,17 +14592,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron-toolkit/preload@3.0.2(electron@38.1.2)':
+  '@electron-toolkit/preload@3.0.2(electron@39.8.10)':
     dependencies:
-      electron: 38.1.2
+      electron: 39.8.10
 
   '@electron-toolkit/tsconfig@2.0.0(@types/node@24.13.2)':
     dependencies:
       '@types/node': 24.13.2
 
-  '@electron-toolkit/utils@4.0.0(electron@38.1.2)':
+  '@electron-toolkit/utils@4.0.0(electron@39.8.10)':
     dependencies:
-      electron: 38.1.2
+      electron: 39.8.10
 
   '@electron/asar@3.4.1':
     dependencies:
@@ -16655,7 +16656,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
@@ -16664,9 +16665,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -19967,7 +19966,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron@38.1.2:
+  electron@39.8.10:
     dependencies:
       '@electron/get': 2.0.3
       '@types/node': 22.20.0
