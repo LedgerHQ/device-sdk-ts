@@ -1,5 +1,11 @@
 # @ledgerhq/device-signer-kit-bitcoin
 
+## 1.3.3
+
+### Patch Changes
+
+- [#1726](https://github.com/LedgerHQ/device-sdk-ts/pull/1726) [`ee44e2a`](https://github.com/LedgerHQ/device-sdk-ts/commit/ee44e2a3f09805ad102190bd501fd18d5b47b00c) Thanks [@koda-apps[bot]](https://github.com/koda-apps[bot])! - Declare `@ledgerhq/signer-utils` as a runtime dependency so Bitcoin signer consumers can resolve its imports.
+
 ## 1.3.2
 
 ### Patch Changes
