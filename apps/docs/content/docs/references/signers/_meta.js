@@ -9,4 +9,5 @@ export default {
   zcash: "Signer Zcash",
   polkadot: "Signer Polkadot",
   icp: "Signer Internet Computer",
+  trx: "Signer Tron",
 };
