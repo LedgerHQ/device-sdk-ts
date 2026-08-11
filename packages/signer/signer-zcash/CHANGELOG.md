@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0
+
+### Minor Changes
+
+- [#1709](https://github.com/LedgerHQ/device-sdk-ts/pull/1709) [`5c07d01`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c07d011d45669d8fbd489cbab201833f09e8c29) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Stream a v6 (ZIP-229 / Ironwood) previous transaction for GET_TRUSTED_INPUT, so a UTXO created by one can be spent: read the fourth Ironwood action count, regroup that bundle per the ZIP-244 txid digest as the Orchard one already was, and leave out every shielded pool's anchor — Sapling included — which v6 moved to the authorizing digest.
+
+- [#1709](https://github.com/LedgerHQ/device-sdk-ts/pull/1709) [`1020cb2`](https://github.com/LedgerHQ/device-sdk-ts/commit/1020cb2d7fc2dac3dd683fbf6c3ca78bea3bca30) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Fail with `UnsupportedV6TransactionError`, carrying the installed app version, when a v6 (ZIP-229) previous transaction is about to be streamed to a Zcash app that predates v6 support — instead of letting that app answer a bare 6a80. The app version the device session reports is compared against the first version shipping v6, before any APDU is sent. `ZcashErrorCodes` is now exported so callers can match the error code without hardcoding it.
+
 ## 0.5.0
 
 ### Minor Changes
