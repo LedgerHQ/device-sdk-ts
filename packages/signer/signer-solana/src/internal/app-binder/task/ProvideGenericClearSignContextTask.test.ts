@@ -146,10 +146,10 @@ describe("ProvideGenericClearSignContextTask", () => {
     const challengeCalls = api.sendCommand.mock.calls.filter(
       (c) => c[0] instanceof GetChallengeCommand,
     );
-    expect(challengeCalls).toHaveLength(4);
+    expect(challengeCalls).toHaveLength(3);
 
     // Each fetch carries that fresh challenge and targets the right type.
-    expect(made.getContexts).toHaveBeenCalledTimes(4);
+    expect(made.getContexts).toHaveBeenCalledTimes(3);
     expect(made.getContexts).toHaveBeenCalledWith(
       expect.objectContaining({
         requests: [{ tokenAccount: "ACC1", challenge: "deadbeef" }],
@@ -162,19 +162,20 @@ describe("ProvideGenericClearSignContextTask", () => {
       }),
       [ClearSignContextType.SOLANA_ALT_RESOLUTION],
     );
-    expect(made.getContexts).toHaveBeenCalledWith(
-      expect.objectContaining({
-        requests: [
-          {
-            address: "NAME",
-            challenge: "deadbeef",
-            types: ["token", "smart_contract"],
-            sources: ["crypto_asset_list"],
-          },
-        ],
-      }),
-      [ClearSignContextType.SOLANA_TRUSTED_NAME],
-    );
+    // FIXME: restore once trusted name APDUs are re-enabled on the device side.
+    // expect(made.getContexts).toHaveBeenCalledWith(
+    //   expect.objectContaining({
+    //     requests: [
+    //       {
+    //         address: "NAME",
+    //         challenge: "deadbeef",
+    //         types: ["token", "smart_contract"],
+    //         sources: ["crypto_asset_list"],
+    //       },
+    //     ],
+    //   }),
+    //   [ClearSignContextType.SOLANA_TRUSTED_NAME],
+    // );
 
     // Ordering: every GET CHALLENGE precedes the Phase B template stream.
     const sent = api.sendCommand.mock.calls.map((c) => c[0]);

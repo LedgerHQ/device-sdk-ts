@@ -279,25 +279,29 @@ export class ProvideGenericClearSignContextTask {
       }
     }
 
-    for (const address of trustedNames) {
-      await this.provideChallengeBoundDescriptor(
-        (challenge) => ({
-          deviceModelId,
-          network: this.network,
-          // Only the TOKEN / SMART_CONTRACT types and the CRYPTO_ASSET_LIST
-          // source are supported for now.
-          requests: [
-            {
-              address,
-              challenge,
-              types: ["token", "smart_contract"],
-              sources: ["crypto_asset_list"],
-            },
-          ],
-        }),
-        ClearSignContextType.SOLANA_TRUSTED_NAME,
-      );
-    }
+    // FIXME: Trusted name APDUs are not correctly handled by the device yet and
+    // break the generic clear-signing flow. Skip sending them for now; restore
+    // this loop once the device firmware correctly processes INS 0x29.
+    // for (const address of trustedNames) {
+    //   await this.provideChallengeBoundDescriptor(
+    //     (challenge) => ({
+    //       deviceModelId,
+    //       network: this.network,
+    //       // Only the TOKEN / SMART_CONTRACT types and the CRYPTO_ASSET_LIST
+    //       // source are supported for now.
+    //       requests: [
+    //         {
+    //           address,
+    //           challenge,
+    //           types: ["token", "smart_contract"],
+    //           sources: ["crypto_asset_list"],
+    //         },
+    //       ],
+    //     }),
+    //     ClearSignContextType.SOLANA_TRUSTED_NAME,
+    //   );
+    // }
+    void trustedNames; // suppress unused-variable warning while the loop is disabled
   }
 
   /**
