@@ -39,9 +39,9 @@ jobs:
       should-run-ethereum-cs-tester: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.cs-tester == 'true' }}
       should-run-solana-cs-tester: ${{ steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.cs-tester == 'true' || steps.filter.outputs.solana-tools == 'true' }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         id: filter
         with:
           filters: |
@@ -63,18 +63,18 @@ jobs:
     name: Setup toolchain and dependencies
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@f6703cf44126694c91ca3bc1f41e6b79c3ac01ce
 
   danger:
     name: Run Danger check
     needs: [setup]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@f6703cf44126694c91ca3bc1f41e6b79c3ac01ce
 
       - name: Danger
         env:
@@ -96,7 +96,7 @@ jobs:
       # Base reference used by `turbo run --affected` to detect changed packages.
       TURBO_SCM_BASE: origin/${{ github.event.pull_request.base.ref }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Full history + the base branch are required so Turbo can compute the
           # merge-base for `--affected`.
@@ -105,7 +105,7 @@ jobs:
       - name: Fetch base branch for --affected
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@f6703cf44126694c91ca3bc1f41e6b79c3ac01ce
 
       - name: Build
         id: build
@@ -135,7 +135,7 @@ jobs:
         continue-on-error: true
         run: pnpm turbo run test:coverage --affected
 
-      - uses: sonarsource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8
+      - uses: sonarsource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8
         if: ${{ steps.test.outcome == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -250,7 +250,7 @@ jobs:
           - test:raw:multisig
           - test:typed-data:multisig
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/cs-tester-composite
         with:
           runner: cs-tester
@@ -281,7 +281,7 @@ jobs:
           - test:solana:spl-token2022
           - test:solana:stake
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/cs-tester-composite
         with:
           runner: cs-tester:solana
