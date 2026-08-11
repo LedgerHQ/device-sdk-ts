@@ -90,6 +90,15 @@ export const Menu: React.FC = () => {
         </MenuTitle>
       </MenuItem>
       <MenuItem>
+        <Icons.CloudUpload />
+        <MenuTitle
+          data-testid="CTA_route-to-/sideload-app"
+          onClick={() => router.push("/sideload-app")}
+        >
+          Sideload App
+        </MenuTitle>
+      </MenuItem>
+      <MenuItem>
         <Icons.SettingsAlt2 />
         <MenuTitle onClick={() => router.push("/settings")}>Settings</MenuTitle>
       </MenuItem>
