@@ -9,6 +9,7 @@ describe("deviceModelIdCodec", () => {
     DeviceModelId.NANO_SP,
     DeviceModelId.STAX,
     DeviceModelId.FLEX,
+    DeviceModelId.APEX,
   ])("decodes %s as Right", (model) => {
     expect(deviceModelIdCodec.decode(model)).toEqual(Right(model));
   });
