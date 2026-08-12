@@ -27,8 +27,36 @@ const contactsManager = new ContactsManagerBuilder({
 }).build();
 ```
 
-Concrete Contacts operations (Register Identity, Edit Contact Name, Edit Identifier, Edit Scope,
-Register Ledger Account, Edit Ledger Account) are added by their dedicated implementation tickets.
+## Registering an external address
+
+`registerExternalAddress` runs the device's REGISTER IDENTITY operation. It opens the embedded app
+by default, checks the [Contacts version requirements](#version-requirements), then frames the
+request to the device and returns the device-issued proof material for the host to persist.
+
+```ts
+const { observable } = contactsManager.registerExternalAddress({
+  contactName: "Alice",
+  scope: "Eth main",
+  identifier: addressBytes, // 20-byte Ethereum address
+  blockchainFamily: "ethereum",
+  chainId: 1n,
+  // existingContactGroup: { groupHandle, hmacProof }, // to extend an existing contact
+  // skipOpenApp: true, // skip only the open-app step; the version guard still runs
+});
+
+observable.subscribe((state) => {
+  // state.intermediateValue.requiredUserInteraction surfaces open-app confirmation
+  // and the on-device Register Wallet validation.
+  if (state.status === DeviceActionStatus.Completed) {
+    const { mode, groupHandle, hmacProof, hmacRest } = state.output;
+    // persist mode ("newContactGroup" | "existingContactGroup"), the echoed
+    // input, and the proof material.
+  }
+});
+```
+
+Concrete Contacts operations (Edit Contact Name, Edit Identifier, Edit Scope, Register Ledger
+Account, Edit Ledger Account) are added by their dedicated implementation tickets.
 
 ## Version requirements
 
