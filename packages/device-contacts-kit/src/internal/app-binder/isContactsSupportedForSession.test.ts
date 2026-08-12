@@ -1,5 +1,4 @@
 import {
-  type AppConfig,
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
@@ -11,7 +10,10 @@ import {
   resolveContactsVersionRequirements,
 } from "@api/model/ContactsVersionRequirements";
 
-import { isContactsSupportedForSession } from "./isContactsSupportedForSession";
+import {
+  isContactsSupportedForSession,
+  type RunningApp,
+} from "./isContactsSupportedForSession";
 
 const flexSupport = (() => {
   const requirement = resolveContactsVersionRequirements(DeviceModelId.FLEX);
@@ -28,13 +30,11 @@ const MIN_APP_VERSION = (() => {
 const BELOW_ANY_VERSION = "0.0.1";
 
 type ReadyStateOptions = {
-  appName?: string;
   osVersion?: string;
   modelId?: DeviceModelId;
 };
 
 function createReadyState({
-  appName = ETHEREUM_APP_NAME,
   osVersion = MIN_OS_VERSION,
   modelId = DeviceModelId.FLEX,
 }: ReadyStateOptions = {}) {
@@ -42,7 +42,7 @@ function createReadyState({
     sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
     deviceStatus: DeviceStatus.CONNECTED,
     installedApps: [],
-    currentApp: { name: appName, version: "0.0.0" },
+    currentApp: { name: ETHEREUM_APP_NAME, version: "0.0.0" },
     deviceModelId: modelId,
     firmwareVersion: { mcu: "1.0.0", bootloader: "1.0.0", os: osVersion },
     isSecureConnectionAllowed: false,
@@ -55,38 +55,42 @@ function createInternalApi(deviceState: object): InternalApi {
   } as unknown as InternalApi;
 }
 
-function appConfig(version: string): AppConfig {
-  return { version };
+// The running app identity now comes from the caller (a fresh
+// WaitForAppAndVersion result), not the device session state.
+function runningApp(
+  name = ETHEREUM_APP_NAME,
+  version = MIN_APP_VERSION,
+): RunningApp {
+  return { name, version };
 }
 
 describe("isContactsSupportedForSession", () => {
   it("returns true when model, app version and OS version all meet the minimums", () => {
     const api = createInternalApi(createReadyState());
-    expect(isContactsSupportedForSession(api, appConfig(MIN_APP_VERSION))).toBe(
-      true,
-    );
+    expect(isContactsSupportedForSession(api, runningApp())).toBe(true);
   });
 
   it("returns false on an unsupported device model", () => {
     const api = createInternalApi(
       createReadyState({ modelId: DeviceModelId.NANO_X }),
     );
-    expect(isContactsSupportedForSession(api, appConfig(MIN_APP_VERSION))).toBe(
-      false,
-    );
+    expect(isContactsSupportedForSession(api, runningApp())).toBe(false);
   });
 
-  // App-version requirement.
+  // App-version requirement (evaluated from the fresh app version).
   it("returns false when the app version is below the minimum", () => {
     const api = createInternalApi(createReadyState());
     expect(
-      isContactsSupportedForSession(api, appConfig(BELOW_ANY_VERSION)),
+      isContactsSupportedForSession(
+        api,
+        runningApp(ETHEREUM_APP_NAME, BELOW_ANY_VERSION),
+      ),
     ).toBe(false);
   });
 
   it("returns false when the running app is unknown to Contacts", () => {
-    const api = createInternalApi(createReadyState({ appName: "Bitcoin" }));
-    expect(isContactsSupportedForSession(api, appConfig(MIN_APP_VERSION))).toBe(
+    const api = createInternalApi(createReadyState());
+    expect(isContactsSupportedForSession(api, runningApp("Bitcoin"))).toBe(
       false,
     );
   });
@@ -96,9 +100,7 @@ describe("isContactsSupportedForSession", () => {
     const api = createInternalApi(
       createReadyState({ osVersion: BELOW_ANY_VERSION }),
     );
-    expect(isContactsSupportedForSession(api, appConfig(MIN_APP_VERSION))).toBe(
-      false,
-    );
+    expect(isContactsSupportedForSession(api, runningApp())).toBe(false);
   });
 
   it("returns false when the device session has no running app", () => {
@@ -107,8 +109,6 @@ describe("isContactsSupportedForSession", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       deviceModelId: DeviceModelId.FLEX,
     });
-    expect(isContactsSupportedForSession(api, appConfig(MIN_APP_VERSION))).toBe(
-      false,
-    );
+    expect(isContactsSupportedForSession(api, runningApp())).toBe(false);
   });
 });

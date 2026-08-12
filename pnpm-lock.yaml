@@ -1124,6 +1124,9 @@ importers:
 
   packages/device-contacts-kit:
     dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer/signer-utils
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
