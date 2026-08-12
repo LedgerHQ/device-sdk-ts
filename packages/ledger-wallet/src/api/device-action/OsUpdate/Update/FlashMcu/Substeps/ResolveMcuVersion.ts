@@ -68,7 +68,8 @@ export const resolveMcuVersion =
     return EitherAsync<ResolveMcuVersionError, string>(
       async ({ fromPromise, throwE }) => {
         const mcuList = await fromPromise(getMcuList(internalApi));
-        const mcu = bestCompatibleMcu(mcuList, finalFirmware);
+        const provider = internalApi.getManagerApiService().getProvider();
+        const mcu = bestCompatibleMcu(mcuList, finalFirmware, provider);
 
         if (!mcu) {
           return throwE(

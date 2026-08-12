@@ -5,7 +5,7 @@ import {
   type McuFirmware,
 } from "@api/device-action/OsUpdate/Shared/types";
 
-const LEDGER_PROVIDER = 1;
+const DEFAULT_MANAGER_API_PROVIDER = 1;
 
 /*
  * List of from_bootloader_versions that are excluded.
@@ -20,12 +20,13 @@ const EXCLUDED_FROM_BOOTLOADER_VERSIONS = new Set([
 export const bestCompatibleMcu = (
   mcuList: McuFirmware[],
   finalFirmware: FinalFirmware,
+  provider: number = DEFAULT_MANAGER_API_PROVIDER,
 ): McuFirmware | null =>
   mcuList
     .filter(
       (mcu) =>
         finalFirmware.mcuVersions.includes(mcu.id) &&
-        mcu.providers.includes(LEDGER_PROVIDER) &&
+        mcu.providers.includes(provider) &&
         !EXCLUDED_FROM_BOOTLOADER_VERSIONS.has(mcu.fromBootloaderVersion),
     )
     .reduce<(McuFirmware & { version: string }) | null>((latestMcu, mcu) => {

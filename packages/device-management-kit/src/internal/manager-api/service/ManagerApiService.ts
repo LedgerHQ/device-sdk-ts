@@ -109,4 +109,11 @@ export interface ManagerApiService {
    * @returns An `EitherAsync` containing either an `HttpFetchApiError` or an array of `McuFirmware` objects.
    */
   getMcuList(): EitherAsync<HttpFetchApiError, Array<McuFirmware>>;
+
+  /**
+   * Retrieves the provider for the Manager API.
+   *
+   * @returns The provider for the Manager API.
+   */
+  getProvider(): number;
 }

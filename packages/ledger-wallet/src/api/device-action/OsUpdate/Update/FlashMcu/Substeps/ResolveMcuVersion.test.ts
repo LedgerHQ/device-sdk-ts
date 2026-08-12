@@ -10,6 +10,7 @@ import { ResolveMcuVersionError } from "@api/device-action/OsUpdate/Update/Flash
 import { resolveMcuVersion } from "@api/device-action/OsUpdate/Update/FlashMcu/Substeps/ResolveMcuVersion";
 
 describe("ResolveMcuVersion", () => {
+  const DEFAULT_MANAGER_API_PROVIDER = 1;
   const apiMock = makeDeviceActionInternalApiMock();
   const { getManagerApiService: getManagerApiServiceMock } = apiMock;
 
@@ -50,11 +51,14 @@ describe("ResolveMcuVersion", () => {
   } satisfies FinalFirmware;
 
   const getMcuListMock = vi.fn();
+  const getProviderMock = vi.fn();
 
   beforeEach(() => {
     vi.resetAllMocks();
+    getProviderMock.mockReturnValue(DEFAULT_MANAGER_API_PROVIDER);
     getManagerApiServiceMock.mockReturnValue({
       getMcuList: getMcuListMock,
+      getProvider: getProviderMock,
     } as unknown as ReturnType<InternalApi["getManagerApiService"]>);
   });
 
@@ -89,12 +93,13 @@ describe("ResolveMcuVersion", () => {
     );
 
     it("Should return the MCU name when the device is already at its starting bootloader version", async () => {
+      getProviderMock.mockReturnValue(12);
       setupMcuList([
         {
           id: 1,
           name: "1.12",
           fromBootloaderVersion: "1.16",
-          providers: [1],
+          providers: [12],
         },
       ]);
 
