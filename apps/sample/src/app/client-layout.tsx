@@ -20,6 +20,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useUpdateConnectionsRefresherOptions } from "@/hooks/useUpdateConnectionsRefresherOptions";
 import { useUpdateDeviceSessions } from "@/hooks/useUpdateDeviceSessions";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
+import { ContactsProvider } from "@/providers/ContactsProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SettingsGate } from "@/providers/SettingsGate";
@@ -83,18 +84,20 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                       <SignerZcashProvider>
                         <SignerAleoProvider>
                           <SignerCosmosProvider>
-                            <CalInterceptorProvider>
-                              <GlobalStyle />
-                              <head>
-                                <link
-                                  rel="shortcut icon"
-                                  href="../favicon.png"
-                                />
-                              </head>
-                              <body>
-                                <RootApp>{children}</RootApp>
-                              </body>
-                            </CalInterceptorProvider>
+                            <ContactsProvider>
+                              <CalInterceptorProvider>
+                                <GlobalStyle />
+                                <head>
+                                  <link
+                                    rel="shortcut icon"
+                                    href="../favicon.png"
+                                  />
+                                </head>
+                                <body>
+                                  <RootApp>{children}</RootApp>
+                                </body>
+                              </CalInterceptorProvider>
+                            </ContactsProvider>
                           </SignerCosmosProvider>
                         </SignerAleoProvider>
                       </SignerZcashProvider>
