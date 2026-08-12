@@ -90,6 +90,15 @@ export const Menu: React.FC = () => {
         </MenuTitle>
       </MenuItem>
       <MenuItem>
+        <Icons.CloudUpload />
+        <MenuTitle
+          data-testid="CTA_route-to-/internal-tools"
+          onClick={() => router.push("/internal-tools")}
+        >
+          Ledger Internal Tools
+        </MenuTitle>
+      </MenuItem>
+      <MenuItem>
         <Icons.SettingsAlt2 />
         <MenuTitle onClick={() => router.push("/settings")}>Settings</MenuTitle>
       </MenuItem>
