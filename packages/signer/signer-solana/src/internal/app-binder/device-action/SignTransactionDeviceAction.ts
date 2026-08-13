@@ -30,6 +30,10 @@ import {
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
 import {
+  type NormalizedTransactionInput,
+  TransactionInputNormaliser,
+} from "@internal/app-binder/services/TransactionInputNormaliser";
+import {
   isSolanaFeatureSupported,
   type SOLANA_FEATURES,
 } from "@internal/app-binder/SolanaApplicationResolver";
@@ -51,6 +55,7 @@ function resolveSolanaRpcUrl(
 }
 
 export type MachineDependencies = {
+  readonly normalizeTransaction: () => Promise<NormalizedTransactionInput>;
   readonly getAppConfig: () => Promise<
     CommandResult<AppConfiguration, SolanaAppErrorCodes>
   >;
@@ -63,6 +68,7 @@ export type MachineDependencies = {
       transaction: Uint8Array;
       contextModule: ContextModule;
       isBlockhashRefreshNeeded: boolean;
+      serializedForTxCheck?: Uint8Array;
     };
   }) => Promise<void>;
 };
@@ -91,8 +97,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       SignTransactionDAInternalState
     >;
 
-    const { getAppConfig, transactionCheckOptIn, provideTransactionCheck } =
-      this.extractDependencies(internalApi);
+    const {
+      normalizeTransaction,
+      getAppConfig,
+      transactionCheckOptIn,
+      provideTransactionCheck,
+    } = this.extractDependencies(internalApi);
 
     const logger = this.getLoggerFactory(internalApi)(
       "SignTransactionDeviceAction",
@@ -141,6 +151,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         output: {} as types["output"],
       },
       actors: {
+        normalizeTransaction: fromPromise(normalizeTransaction),
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
@@ -225,7 +236,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOAJzSAbAYAsOgKymdN08YA0IAJ67LxjnbvWxjoW-kGGxgC+Ee5omLgERGxUtAxMrORU3Lz8QiJiUjrySCDKqhkYGtoI+kZmljb2js5unojmRgbS1haG0o5OllEx6Nj4hCTlKYwsSZwA8opgGMyKilNps+IQVGAcqBh0FADWuxSLy6vComAAsiQAFvtgMkVKKmpUlYh6dgBMHL8bJ0LKY7AZOr87O4vAhjHpTCZfkEDHo+nprL8ekMQLFRgkJux1jNyhwFksVooAEpwACuAlIAGF7mBiEcpHINKUPhVilUdL9gn5TCjfr9rNJ+X8WjDzAi9AKDGLwb94RZrNjcfFxrMiel2KTzhTqbA6YzmayCq8Su9yl9qgKLEKRWKJZCkdDEEE-NIffLAX8LPUNSMtYlJvRpnrMgBxMCkCkMqgAM3QWx2ewOx12MHjq0TGBTUBenJt6l5uj9JmsBjhxjhdn0pg91S61gB1kCPT0aosxiRwbiYzDhIjGxJsdzinzhfEYBwOAoOA4igEoiTi4Athwcwnk+hi8Uubby9VK8Zq7X643m78fRwfT7+fCxQ2B3jteHUsT9RPdwX0MappMiybIHm8ZRlqAVQCuYHAWJClj8qYSpQq0LZ6HoHA2D2PpwuCphvqGBLJKO34xnGf6FoB9LARakiFCWEGfCeMHSHBCEWEhKHNt2dj3ghdh9FYgLGHYhFDsRNCkVGnC-nme5QNRZogVIvxWkekFaIgrHsYJnG-Mh1aoTCDQcKYvG9sYaIuJE0Q4iGEk6tJswcAA6mAABGBi0UcsALKQPBphguz7IcJwcAA7p53nmkc-k8GB1pMTyUHaRh-zdHCpjVtInSic2dZGH8gmoi4lmQuJ+JOV+MludFPl+YoAUYLO86Lsuq6kOuOBblFXk+fFGCJRpzGpQgKryhwmXwjleXGd4k3WGCOhWd29g-BYlUfiONUue5-WxY1zVKeImiwHkux4EmYg4AAFNIACU4iao5n6Rnt9WHYNSnDaWo1aQgiqQhwqqmNlxUqrlzaOAi1h6H2KLLZCK1bcOJG7SSPmxsFOCMAyAhgHgOC4sgNKrIuYgQOy6l-SlAMGBYgYg6YjM-NYoLSGC80IMh-yBgYwTwqJ5l2HoqOSbqLlY0sc54wTRMk2Tyg4JTlqMdydoM0zqo9AEHNc82elTd28F1qtnTouL1XvZjsXY7LxD44TxMjKT5Mq5Aqk08lmuM2xOts-rBjc90bFwyEZvgh2KpiXZL1VW9Y4-jLuOO-LLuYEFIWZuFMA43LzskxddzEI8wW-T7J4YmDJjooYir2DY0OdMbjNiuiGIqgRccOQnO028n+dp4XIxZxmYXZinBcK67xcPE89HexrVcGQicJw8qjfWM28FtuZjOBOY1borZwyDn36MD+RQ9OzPmfbMF49ZtuU-D3fGBXGIJdl88anq8eY1q5rzrpvME280J1n+PvUWDgVril+FbROZFZKv1vhnFqc4FxLhXGuTcL8b7pyLtcb+C8OSHlpnaIBtcN4NzATxeGAJMRWF7EqCUBhEH9yTpkZA9xBACAoBFNBuIx6hWfrAXhAh+GCMIbPYh89y5kPAsvMaxUdB+G6I4eEAtpB1m5kEXwDMXDaN7HoHQwQOGXy4ZwHhfCBFCNHpg9qOCup4PEbY6RI9MCf1uPI54iikrKIBqo9RIJGzaN0fQtixgQTw1FBiXRYse7n22pY5BHAsBzg3PsQQwiH7ZwnhwVQmB9hQDJPgcosBvEkIUUvABQTsqYWkBhdENhzxql+DxUEcFqyr26Bibs3cz7vjRlJDG+p44pIwEpHy1N-6aSqCEQUQIGbymMOCMEBVgZgjVNEkELNuixyGURa2ViOATJGdM2KatyGVzGosx0yyehInWQYehCJtkdkZn8YO0Soh2QwBQCAcANDnIls5OpI06ZVAALQWGbLC+8D4kXIrVBY0ZV9OA8DUDki6cz-pVAxM2HQlg2I1hmtIES61Bn2WSSMyWJIyQXDWOCzSkLNZ2EdICasAs-imIMKCAq-g-ABHgv0Wwok0X0v1Iyo0tIaKxTxVC7wFL7z2EEsEUWcNuzQwlMKjewozDNJ0JKll5FJzTnQIqu0OhxSYQbKLLogJ4agleWhYlxKTB1iaYZDsARDk0uGWCsZZrKIATlcpVkVqTw6GFP7FmoIBQrTWToIllg+LmRtaiTmqJlQmuDZwfaMUQJHR4FGsaYonAg1yhCBs2VGapv5feFm-K4lOA3nmjFdUDrFu+uGstAMDJmA4MS8GQRRSKnMgVbKZl4Z9H5KKJEgQO2nOlgQzxH8lYU0gP2qoUc+JjvZhKZC8E4VoX6Iw5EfY4nVmNUkwNJy0n21TvYzAO7EA1jWdQn4GEzD6HlAVOEJgwS3lwvG9hd7jlINqjYyRdiZGvpuYEglok+Iit3lYfoKa0ImzMsBroyF9BxOXWkjJPVslCBGG+hA-gGz3lncLMUBlXUwnhm2Qx0SNrBHMtS0FD7oO90mZckCVH4J-DMgKeUIQwHswKvoLCeyJQbXgvKYj0GaTECYLAeAiG6kLPlJhTEgR5QNxVMxz0oo-AM26PBYI-KzGqZcgAUTajgET+mAQ7OMwKUzzYlqYXDhytZ6q8Lqj+UAA */
       id: "SignTransactionDeviceAction",
-      initial: "InitialState",
+      initial: "NormalizeTransaction",
       context: ({ input }) => ({
         input,
         intermediateValue: {
@@ -236,15 +247,50 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           error: null,
           signature: null,
           appConfig: null,
+          messageBytes: this.input.transaction,
+          serializedForTxCheck: undefined,
           clearSignPrepared: false,
         },
       }),
       states: {
-        InitialState: {
-          always: [
-            { target: "GetAppConfig", guard: "skipOpenApp" },
-            { target: "OpenAppDeviceAction" },
-          ],
+        NormalizeTransaction: {
+          // Emit the correct first step immediately so the snapshot produced
+          // while the actor runs already reflects where we are headed.
+          entry: assign({
+            intermediateValue: ({ context }) => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: context.input.transactionOptions?.skipOpenApp
+                ? signTransactionDAStateSteps.GET_APP_CONFIG
+                : signTransactionDAStateSteps.OPEN_APP,
+            }),
+          }),
+          invoke: {
+            id: "normalizeTransaction",
+            src: "normalizeTransaction",
+            onDone: [
+              {
+                target: "GetAppConfig",
+                guard: "skipOpenApp",
+                actions: assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    messageBytes: event.output.messageBytes,
+                    serializedForTxCheck: event.output.serializedForTxCheck,
+                  }),
+                }),
+              },
+              {
+                target: "OpenAppDeviceAction",
+                actions: assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    messageBytes: event.output.messageBytes,
+                    serializedForTxCheck: event.output.serializedForTxCheck,
+                  }),
+                }),
+              },
+            ],
+          },
         },
         OpenAppDeviceAction: {
           entry: assign({
@@ -429,10 +475,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
               return {
                 derivationPath: context.input.derivationPath,
-                transaction: context.input.transaction,
+                transaction: context._internalState.messageBytes,
                 contextModule: context.input.contextModule,
                 isBlockhashRefreshNeeded:
                   rpcUrl !== undefined || fetchBlockhash !== undefined,
+                serializedForTxCheck:
+                  context._internalState.serializedForTxCheck,
               };
             },
             // Best-effort: a failed scan-descriptor stream never blocks signing.
@@ -468,7 +516,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "provisionGenericClearSignStateMachine",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              transaction: context.input.transaction,
+              transaction: context._internalState.messageBytes,
               contextModule: context.input.contextModule,
             }),
             onSnapshot: {
@@ -532,7 +580,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
               return {
                 derivationPath: context.input.derivationPath,
-                transaction: context.input.transaction,
+                transaction: context._internalState.messageBytes,
                 rpcUrl,
                 fetchBlockhash,
                 userInputType:
@@ -588,7 +636,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "provisionBasicClearSignStateMachine",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              transaction: context.input.transaction,
+              transaction: context._internalState.messageBytes,
               contextModule: context.input.contextModule,
               appConfig: context._internalState.appConfig!,
               rpcUrl: resolveSolanaRpcUrl(context.input),
@@ -615,7 +663,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
               return {
                 derivationPath: context.input.derivationPath,
-                transaction: context.input.transaction,
+                transaction: context._internalState.messageBytes,
                 rpcUrl,
                 fetchBlockhash,
                 userInputType:
@@ -665,6 +713,23 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
+    const normalizeTransaction = async () => {
+      try {
+        return new TransactionInputNormaliser().normalize(
+          this.input.transaction,
+        );
+      } catch (error) {
+        this.getLoggerFactory(internalApi)("NormalizeTransaction").warn(
+          "[normalizeTransaction] format detection failed; treating input as message bytes",
+          { data: { error } },
+        );
+        return {
+          messageBytes: this.input.transaction,
+          serializedForTxCheck: undefined,
+        };
+      }
+    };
+
     const getAppConfig = async () =>
       internalApi.sendCommand(new GetAppConfigurationCommand());
 
@@ -677,6 +742,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         transaction: Uint8Array;
         contextModule: ContextModule;
         isBlockhashRefreshNeeded: boolean;
+        serializedForTxCheck?: Uint8Array;
       };
     }) =>
       new ProvideTransactionCheckTask(internalApi, {
@@ -684,10 +750,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         transactionBytes: arg0.input.transaction,
         contextModule: arg0.input.contextModule,
         isBlockhashRefreshNeeded: arg0.input.isBlockhashRefreshNeeded,
+        serializedTransactionForTransactionCheck:
+          arg0.input.serializedForTxCheck,
         loggerFactory: this.getLoggerFactory(internalApi),
       }).run();
 
     return {
+      normalizeTransaction,
       getAppConfig,
       transactionCheckOptIn,
       provideTransactionCheck,

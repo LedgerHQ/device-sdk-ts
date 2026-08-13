@@ -292,6 +292,10 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
           createATAAddress: "",
           createATAMintAddress: "",
         },
+        labelSelector: {
+          transaction:
+            "Transaction, base64(tx.serialize() or tx.serializeMessage())",
+        },
         InputValuesComponent: SignTransactionForm,
         validateValues: ({ transaction }) =>
           isBase64String(transaction) && transaction.length > 0,

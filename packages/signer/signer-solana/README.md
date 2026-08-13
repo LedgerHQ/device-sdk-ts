@@ -118,7 +118,7 @@ const { observable, cancel } = signerSolana.signTransaction(
   See [Ledger’s guide](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - **transaction** `Uint8Array`  
-  The serialized transaction to sign.
+  Serialized transaction bytes. Accepts both raw message bytes (`tx.serializeMessage()`) and the full wire-format transaction (`tx.serialize()`). When the full wire-format is provided, co-signer signatures are forwarded to Transaction Check automatically.
 
 **Optional**
 

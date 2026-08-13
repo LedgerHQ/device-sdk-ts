@@ -56,7 +56,10 @@ export class DefaultSignerSolana implements SignerSolana {
    *   The derivation path used in the transaction (e.g. `"44'/501'/0'/0'"`).
    *
    * - **transaction** `Uint8Array`
-   *   The serialised transaction to sign.
+   *   The serialised transaction to sign. Accepts both raw message bytes
+   *   (`tx.serializeMessage()`) and the full wire-format transaction
+   *   (`tx.serialize()`). When the full wire-format is provided, co-signer
+   *   signatures are forwarded to Transaction Check automatically.
    *
    * **Optional**
    * - **solanaTransactionOptionalConfig** `SolanaTransactionOptionalConfig`

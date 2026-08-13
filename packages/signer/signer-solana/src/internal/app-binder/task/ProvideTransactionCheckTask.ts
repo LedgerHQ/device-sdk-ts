@@ -13,6 +13,8 @@ import {
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { GetPubKeyCommand } from "@internal/app-binder/command/GetPubKeyCommand";
 import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
+import { DefaultSolanaTransactionSerializer } from "@internal/app-binder/services/DefaultSolanaTransactionSerializer";
+import { type SolanaTransactionSerializer } from "@internal/app-binder/services/SolanaTransactionSerializer";
 import { DefaultSolanaMessageNormaliser } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
 import { dispatchProvideContext } from "@internal/app-binder/task/context-providers/provideContextRegistry";
 import { type ProvideContextDeps } from "@internal/app-binder/task/context-providers/provideContextTypes";
@@ -31,6 +33,8 @@ export type ProvideTransactionCheckTaskArgs = {
    */
   readonly isBlockhashRefreshNeeded: boolean;
   readonly blockhashService?: BlockhashService;
+  readonly serializedTransactionForTransactionCheck?: Uint8Array;
+  readonly transactionSerializer?: SolanaTransactionSerializer;
 };
 
 /**
@@ -41,6 +45,7 @@ export type ProvideTransactionCheckTaskArgs = {
 export class ProvideTransactionCheckTask {
   private readonly logger: LoggerPublisherService;
   private readonly blockhashService: BlockhashService;
+  private readonly transactionSerializer: SolanaTransactionSerializer;
 
   constructor(
     private readonly api: InternalApi,
@@ -48,6 +53,8 @@ export class ProvideTransactionCheckTask {
   ) {
     this.logger = args.loggerFactory("ProvideTransactionCheckTask");
     this.blockhashService = args.blockhashService ?? new BlockhashService();
+    this.transactionSerializer =
+      args.transactionSerializer ?? new DefaultSolanaTransactionSerializer();
   }
 
   async run(): Promise<void> {
@@ -93,13 +100,19 @@ export class ProvideTransactionCheckTask {
       }
     }
 
+    const wrappedTransactionBytes =
+      this.transactionSerializer.wrapMessageAsTransaction(
+        transactionBytes,
+        this.args.serializedTransactionForTransactionCheck,
+      );
+
     const contexts = await this.args.contextModule.getContexts(
       {
         deviceModelId: this.api.getDeviceSessionState().deviceModelId,
         challenge: challengeResult.data.challenge,
         transactionCheck: {
           from: pubKeyResult.data,
-          transactionBytes,
+          transactionBytes: wrappedTransactionBytes,
           chain: SolanaTransactionScanChainId.MAINNET,
         },
       },
