@@ -707,6 +707,39 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       );
     }));
 
+  it("skips transaction-checks when transactionChecks is in disabledFeatures", () =>
+    new Promise<void>((resolve, reject) => {
+      // App supports TXC on Flex, but the caller force-disables it.
+      apiMock.getDeviceSessionState.mockReturnValue(
+        session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
+      );
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
+            transactionChecksEnabled: false,
+            transactionChecksOptIn: false,
+          },
+        }),
+      );
+      run(
+        { ...baseInput, disabledFeatures: ["transactionChecks"] },
+        (states) => {
+          try {
+            expect(transactionCheckOptInMock).not.toHaveBeenCalled();
+            expect(provideTransactionCheckMock).not.toHaveBeenCalled();
+            expect(states[states.length - 1]!.status).toBe(
+              DeviceActionStatus.Completed,
+            );
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        },
+        reject,
+      );
+    }));
+
   // End-to-end emitted-step-sequence contracts (the progression a consumer sees).
   it("e2e sequence: legacy SPL path with RPC then basic provisioning then delayed terminal", () =>
     new Promise<void>((resolve, reject) => {

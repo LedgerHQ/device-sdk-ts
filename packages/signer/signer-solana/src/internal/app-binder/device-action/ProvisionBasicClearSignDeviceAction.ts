@@ -23,7 +23,7 @@ import {
   TransactionInspector,
   type TxInspectorResult,
 } from "@internal/app-binder/services/TransactionInspector";
-import { isSolanaFeatureSupported } from "@internal/app-binder/SolanaApplicationResolver";
+import { isSolanaSignerFeatureSupported } from "@internal/app-binder/SolanaApplicationResolver";
 import {
   type BasicClearSignContext,
   BuildBasicClearSignContextTask,
@@ -118,7 +118,11 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
       guards: {
         isSPLSupported: ({ context }) =>
           !!context.input.appConfig &&
-          isSolanaFeatureSupported(internalApi, "spl", context.input.appConfig),
+          isSolanaSignerFeatureSupported(
+            internalApi,
+            "spl",
+            context.input.appConfig,
+          ),
         shouldBuildContext: ({ context }) =>
           context._internalState.inspectorResult?.transactionType ===
             SolanaTransactionTypes.SPL ||

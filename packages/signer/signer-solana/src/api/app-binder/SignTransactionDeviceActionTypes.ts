@@ -13,6 +13,7 @@ import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransacti
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { type BlockhashService } from "@internal/app-binder/services/BlockhashService";
+import { type SolanaSignerFeaturesNames } from "@internal/app-binder/SolanaApplicationResolver";
 
 import { type SignClearSignDAStateStep } from "./SignClearSignDeviceActionTypes";
 
@@ -59,6 +60,7 @@ export type SignTransactionDAInput = {
   readonly transactionOptions?: SolanaTransactionOptionalConfig;
   readonly solanaRPCURL?: string;
   readonly blockhashService?: BlockhashService;
+  readonly disabledFeatures?: ReadonlyArray<SolanaSignerFeaturesNames>;
 };
 
 export type SignTransactionDAError =
