@@ -5,8 +5,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
-import { GetOsVersionError } from "@api/device-action/OsUpdate/Resolve/ResolveOsUpdatePathDeviceActionErrors";
-import { getOsVersion } from "@api/device-action/OsUpdate/Resolve/Substeps/GetOsVersion";
+import { GetOsVersionError } from "@api/device-action/OsUpdate/Shared/SharedDeviceActionErrors";
+import { getOsVersion } from "@api/device-action/OsUpdate/Shared/Substeps/GetOsVersion";
 
 describe("GetOsVersion", () => {
   const apiMock = makeDeviceActionInternalApiMock();
