@@ -81,6 +81,14 @@ import {
   type CreateBackupDAIntermediateValue,
   type CreateBackupDAOutput,
   CreateBackupDeviceAction,
+  type FinalFirmware,
+  type FlashMcuDAError,
+  type FlashMcuDAIntermediateValue,
+  FlashMcuDeviceAction,
+  type InstallOsUpdateDAError,
+  type InstallOsUpdateDAIntermediateValue,
+  InstallOsUpdateDeviceAction,
+  type OsUpdate,
   type ResolveOsUpdatePathDAError,
   type ResolveOsUpdatePathDAInput,
   type ResolveOsUpdatePathDAIntermediateValue,
@@ -354,48 +362,6 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         GetDeviceMetadataDAIntermediateValue
       >,
       {
-        title: "Resolve OS update path",
-        description: "Resolve the OS update path for the given device",
-        executeDeviceAction: ({ unlockTimeout }) => {
-          const deviceAction = new ResolveOsUpdatePathDeviceAction({
-            input: { unlockTimeout },
-          });
-          return dmk.executeDeviceAction({
-            sessionId,
-            deviceAction,
-          });
-        },
-        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
-        deviceModelId,
-      } satisfies DeviceActionProps<
-        ResolveOsUpdatePathDAOutput,
-        ResolveOsUpdatePathDAInput,
-        ResolveOsUpdatePathDAError,
-        ResolveOsUpdatePathDAIntermediateValue
-      >,
-      {
-        title: `${SECURE_CHANNEL_ICON} Genuine Check`,
-        description:
-          "Perform all the actions necessary to check the device's genuineness",
-        executeDeviceAction: ({ unlockTimeout }, inspect) => {
-          const deviceAction = new GenuineCheckDeviceAction({
-            input: { unlockTimeout },
-            inspect,
-          });
-          return dmk.executeDeviceAction({
-            sessionId,
-            deviceAction,
-          });
-        },
-        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
-        deviceModelId,
-      } satisfies DeviceActionProps<
-        GenuineCheckDAOutput,
-        GenuineCheckDAInput,
-        GenuineCheckDAError,
-        GenuineCheckDAIntermediateValue
-      >,
-      {
         title: `${SECURE_CHANNEL_ICON} List Installed App`,
         description:
           "Perform all the actions necessary to list installed apps on the device",
@@ -500,6 +466,48 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         UninstallAppDAIntermediateValue
       >,
       {
+        title: `${SECURE_CHANNEL_ICON} Genuine Check`,
+        description:
+          "Perform all the actions necessary to check the device's genuineness",
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+          const deviceAction = new GenuineCheckDeviceAction({
+            input: { unlockTimeout },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GenuineCheckDAOutput,
+        GenuineCheckDAInput,
+        GenuineCheckDAError,
+        GenuineCheckDAIntermediateValue
+      >,
+      {
+        title: "Resolve OS update path",
+        description: "Resolve the OS update path for the given device",
+        executeDeviceAction: ({ unlockTimeout }) => {
+          const deviceAction = new ResolveOsUpdatePathDeviceAction({
+            input: { unlockTimeout },
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        ResolveOsUpdatePathDAOutput,
+        ResolveOsUpdatePathDAInput,
+        ResolveOsUpdatePathDAError,
+        ResolveOsUpdatePathDAIntermediateValue
+      >,
+      {
         title: `${SECURE_CHANNEL_ICON} Create Backup`,
         description:
           "Perform all the actions necessary to backup the device data before an OS update",
@@ -526,12 +534,14 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         CreateBackupDAIntermediateValue
       >,
       {
-        title: `${SECURE_CHANNEL_ICON} Clean Device`,
+        title: `${SECURE_CHANNEL_ICON} Install OS Update`,
         description:
-          "Uninstall all installed apps, delete the installed language pack, and remove the custom lock screen to prepare the device for an OS update",
-        executeDeviceAction: ({ unlockTimeout }, inspect) => {
-          const deviceAction = new CleanDeviceDeviceAction({
+          "Install one OS update step (as produced by Resolve OS update path) on the device",
+        executeDeviceAction: ({ osUpdateJson, unlockTimeout }, inspect) => {
+          const osUpdate = JSON.parse(osUpdateJson) as OsUpdate;
+          const deviceAction = new InstallOsUpdateDeviceAction({
             input: {
+              osUpdate,
               unlockTimeout,
             },
             inspect,
@@ -542,14 +552,106 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
+          osUpdateJson: JSON.stringify({
+            osuFirmware: {
+              id: 0,
+              perso: "perso_11",
+              hash: null,
+              notes: null,
+              firmware: "",
+              firmwareKey: "",
+              nextFinalFirmware: 0,
+            },
+            finalFirmware: {
+              id: 0,
+              perso: "perso_11",
+              hash: null,
+              version: "",
+              bytes: null,
+              firmware: null,
+              firmwareKey: null,
+              mcuVersions: [],
+            },
+            shouldFlashMcu: false,
+          } satisfies OsUpdate),
           unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        labelSelector: {
+          osUpdateJson:
+            "OS update (JSON: one entry of the Resolve OS update path output)",
+        },
+        validateValues: ({ osUpdateJson }) => {
+          try {
+            const parsed = JSON.parse(osUpdateJson) as Partial<OsUpdate>;
+            return (
+              parsed.osuFirmware !== undefined &&
+              parsed.finalFirmware !== undefined
+            );
+          } catch {
+            return false;
+          }
         },
         deviceModelId,
       } satisfies DeviceActionProps<
-        CleanDeviceDAOutput,
-        CleanDeviceDAInput,
-        CleanDeviceDAError,
-        CleanDeviceDAIntermediateValue
+        void,
+        {
+          osUpdateJson: string;
+          unlockTimeout: number;
+        },
+        InstallOsUpdateDAError,
+        InstallOsUpdateDAIntermediateValue
+      >,
+      {
+        title: `${SECURE_CHANNEL_ICON} Flash MCU`,
+        description:
+          "Wait for the device to reach bootloader mode, then flash the MCU or bootloader matching the given final firmware",
+        executeDeviceAction: ({ finalFirmwareJson }, inspect) => {
+          const finalFirmware = JSON.parse(finalFirmwareJson) as FinalFirmware;
+          const deviceAction = new FlashMcuDeviceAction({
+            input: {
+              finalFirmware,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          finalFirmwareJson: JSON.stringify({
+            id: 0,
+            perso: "perso_11",
+            hash: null,
+            version: "",
+            bytes: null,
+            firmware: null,
+            firmwareKey: null,
+            mcuVersions: [],
+          } satisfies FinalFirmware),
+        },
+        labelSelector: {
+          finalFirmwareJson:
+            "Final firmware (JSON: the finalFirmware of a Resolve OS update path entry)",
+        },
+        validateValues: ({ finalFirmwareJson }) => {
+          try {
+            const parsed = JSON.parse(
+              finalFirmwareJson,
+            ) as Partial<FinalFirmware>;
+            return Array.isArray(parsed.mcuVersions);
+          } catch {
+            return false;
+          }
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        void,
+        {
+          finalFirmwareJson: string;
+        },
+        FlashMcuDAError,
+        FlashMcuDAIntermediateValue
       >,
       {
         title: `${SECURE_CHANNEL_ICON} Restore Apps Storage`,
@@ -664,6 +766,32 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         },
         RestoreBackupDAError,
         RestoreBackupDAIntermediateValue
+      >,
+      {
+        title: `${SECURE_CHANNEL_ICON} Clean Device`,
+        description:
+          "Uninstall all installed apps, delete the installed language pack, and remove the custom lock screen to prepare the device for an OS update",
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+          const deviceAction = new CleanDeviceDeviceAction({
+            input: {
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        CleanDeviceDAOutput,
+        CleanDeviceDAInput,
+        CleanDeviceDAError,
+        CleanDeviceDAIntermediateValue
       >,
     ],
     [deviceModelId, dmk, sessionId],
