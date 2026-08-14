@@ -64,10 +64,12 @@ export const resolveOsUpdatePath =
           const shouldFlashMcu = !finalFirmware.mcuVersions.includes(mcuId);
 
           if (shouldFlashMcu) {
+            const provider = internalApi.getManagerApiService().getProvider();
             mcuId = await liftEither(
               resolveMcuId(
                 mcuList,
-                bestCompatibleMcu(mcuList, finalFirmware)?.name ?? null,
+                bestCompatibleMcu(mcuList, finalFirmware, provider)?.name ??
+                  null,
               ),
             );
           }
