@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@f6703cf44126694c91ca3bc1f41e6b79c3ac01ce
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@131a330511ccc8af0a63548db27237ac029118e3
 
   build-libraries:
     name: Build libraries
@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@f6703cf44126694c91ca3bc1f41e6b79c3ac01ce
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@131a330511ccc8af0a63548db27237ac029118e3
 
   solana-cs-tester:
     needs: [build-libraries]
