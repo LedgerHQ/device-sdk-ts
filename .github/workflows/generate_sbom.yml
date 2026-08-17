@@ -14,6 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@a5a36027178153e02c1b878ac4934981888af9ce
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/generate-sbom-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/generate-sbom-composite@a5a36027178153e02c1b878ac4934981888af9ce

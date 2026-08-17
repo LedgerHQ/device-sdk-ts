@@ -36,7 +36,7 @@ jobs:
         with:
           ref: ${{ env.REF }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@a5a36027178153e02c1b878ac4934981888af9ce
 
       - name: Update workspace syntax to use fixed version
         run: git ls-files | grep 'package\.json$' | xargs sed -i 's/workspace:\^/workspace:*/g'
@@ -84,7 +84,7 @@ jobs:
         with:
           ref: ${{ env.REF }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@a5a36027178153e02c1b878ac4934981888af9ce
 
       - name: Download packages from GitHub Artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -93,7 +93,7 @@ jobs:
           path: dist
 
       - name: Publish snapshot packages to JFrog
-        uses: LedgerHQ/device-sdk-ts/.github/actions/publish-to-jfrog-composite@69b58c7fd3370397e82e73047b1441667bd46386
+        uses: LedgerHQ/device-sdk-ts/.github/actions/publish-to-jfrog-composite@a5a36027178153e02c1b878ac4934981888af9ce
         with:
           npm-registry: ${{ env.NPM_REGISTRY }}
           dist-path: dist
