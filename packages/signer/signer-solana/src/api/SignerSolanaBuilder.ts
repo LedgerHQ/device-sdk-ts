@@ -8,6 +8,7 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 
+import { type SolanaSignerFeaturesNames } from "@internal/app-binder/SolanaApplicationResolver";
 import { DefaultSignerSolana } from "@internal/DefaultSignerSolana";
 
 type SignerSolanaBuilderConstructorArgs = {
@@ -15,6 +16,7 @@ type SignerSolanaBuilderConstructorArgs = {
   sessionId: DeviceSessionId;
   originToken?: string;
   solanaRPCURL?: string;
+  disabledFeatures?: ReadonlyArray<SolanaSignerFeaturesNames>;
 };
 
 /**
@@ -32,17 +34,22 @@ export class SignerSolanaBuilder {
   private _customContextModule: ContextModule | undefined;
   private _originToken: string | undefined;
   private readonly _solanaRPCURL: string | undefined;
+  private readonly _disabledFeatures:
+    | ReadonlyArray<SolanaSignerFeaturesNames>
+    | undefined;
 
   constructor({
     dmk,
     sessionId,
     originToken,
     solanaRPCURL,
+    disabledFeatures,
   }: SignerSolanaBuilderConstructorArgs) {
     this._dmk = dmk;
     this._sessionId = sessionId;
     this._originToken = originToken;
     this._solanaRPCURL = solanaRPCURL;
+    this._disabledFeatures = disabledFeatures;
   }
 
   /**
@@ -66,6 +73,7 @@ export class SignerSolanaBuilder {
       dmk: this._dmk,
       sessionId: this._sessionId,
       solanaRPCURL: this._solanaRPCURL,
+      disabledFeatures: this._disabledFeatures,
       contextModule:
         this._customContextModule ??
         new ContextModuleBuilder({

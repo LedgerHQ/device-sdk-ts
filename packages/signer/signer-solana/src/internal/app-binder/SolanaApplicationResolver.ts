@@ -21,7 +21,7 @@ export const SOLANA_MIN_DELAYED_SIGNING_VERSION = "1.14.0";
 export const SOLANA_MIN_TRANSACTION_CHECKS_VERSION = "1.16.0";
 export const SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION = UNRELEASED_MIN_VERSION;
 
-export const SOLANA_FEATURES = {
+export const SOLANA_SIGNER_FEATURES = {
   spl: {
     minVersion: SOLANA_MIN_SPL_VERSION,
     excludedModels: [DeviceModelId.NANO_S],
@@ -48,16 +48,26 @@ export const SOLANA_FEATURES = {
   },
 } as const;
 
+export type SolanaSignerFeaturesNames = keyof typeof SOLANA_SIGNER_FEATURES;
+
 /**
  * Whether the connected Solana app supports a given feature, applying its
  * minimum version plus device-model / orchestrating-app exclusions.
+ *
+ * Pass `disabledFeatures` to force-disable specific features regardless of
+ * firmware version (e.g. for testing or temporary kill-switches).
  */
-export function isSolanaFeatureSupported(
+export function isSolanaSignerFeatureSupported(
   internalApi: InternalApi,
-  feature: keyof typeof SOLANA_FEATURES,
+  feature: SolanaSignerFeaturesNames,
   appConfig: AppConfiguration,
+  disabledFeatures?: ReadonlySet<SolanaSignerFeaturesNames>,
 ): boolean {
-  const { minVersion, excludedModels, excludedApps } = SOLANA_FEATURES[feature];
+  if (disabledFeatures?.has(feature)) {
+    return false;
+  }
+  const { minVersion, excludedModels, excludedApps } =
+    SOLANA_SIGNER_FEATURES[feature];
   return new ApplicationChecker(
     internalApi.getDeviceSessionState(),
     appConfig,

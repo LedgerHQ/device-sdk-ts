@@ -5,6 +5,7 @@ import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOpt
 import { Transaction } from "@api/model/Transaction";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { SolanaAppBinder } from "@internal/app-binder/SolanaAppBinder";
+import { type SolanaSignerFeaturesNames } from "@internal/app-binder/SolanaApplicationResolver";
 
 @injectable()
 export class SignTransactionUseCase {
@@ -16,11 +17,13 @@ export class SignTransactionUseCase {
     derivationPath: string,
     transaction: Transaction,
     solanaTransactionOptionalConfig?: SolanaTransactionOptionalConfig,
+    disabledFeatures?: ReadonlyArray<SolanaSignerFeaturesNames>,
   ): SignTransactionDAReturnType {
     return this.appBinder.signTransaction({
       derivationPath,
       transaction,
       solanaTransactionOptionalConfig,
+      disabledFeatures,
     });
   }
 }

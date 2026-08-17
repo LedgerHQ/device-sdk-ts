@@ -34,8 +34,8 @@ import {
   TransactionInputNormaliser,
 } from "@internal/app-binder/services/TransactionInputNormaliser";
 import {
-  isSolanaFeatureSupported,
-  type SOLANA_FEATURES,
+  isSolanaSignerFeatureSupported,
+  type SolanaSignerFeaturesNames,
 } from "@internal/app-binder/SolanaApplicationResolver";
 import { ProvideTransactionCheckTask } from "@internal/app-binder/task/ProvideTransactionCheckTask";
 
@@ -108,10 +108,22 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       "SignTransactionDeviceAction",
     );
 
+    const disabledFeaturesSet:
+      | ReadonlySet<SolanaSignerFeaturesNames>
+      | undefined = this.input.disabledFeatures
+      ? new Set(this.input.disabledFeatures)
+      : undefined;
+
     const isSupported = (
-      feature: keyof typeof SOLANA_FEATURES,
+      feature: SolanaSignerFeaturesNames,
       appConfig: AppConfiguration,
-    ): boolean => isSolanaFeatureSupported(internalApi, feature, appConfig);
+    ): boolean =>
+      isSolanaSignerFeatureSupported(
+        internalApi,
+        feature,
+        appConfig,
+        disabledFeaturesSet,
+      );
 
     // Blockhash refresh is opt-in and shared by both terminal-sign machines:
     // only when `delayed: true` is requested, a blockhash source exists, and
@@ -370,10 +382,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 "shouldOptIn",
               ]),
             },
-            // When the opt-in isn't run, jump straight to the transaction-check gate
-            // (the opt-in path rejoins it after TransactionChecksOptInResult).
+            // Feature supported but no opt-in needed: proceed to the provide gate.
             {
               target: "TransactionChecks",
+              guard: and(["noInternalError", "isTransactionChecksSupported"]),
+            },
+            // Feature not supported: skip all four tx-check states entirely.
+            {
+              target: "CheckGenericClearSignSupported",
               guard: "noInternalError",
             },
             { target: "Error" },
