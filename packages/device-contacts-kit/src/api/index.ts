@@ -7,6 +7,15 @@ export {
   type RegisterExternalAddressDAReturnType,
   type RegisterExternalAddressDAState,
 } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+export {
+  type RegisterLedgerAccountDAError,
+  type RegisterLedgerAccountDAInput,
+  type RegisterLedgerAccountDAIntermediateValue,
+  type RegisterLedgerAccountDAOutput,
+  type RegisterLedgerAccountDARequiredInteraction,
+  type RegisterLedgerAccountDAReturnType,
+  type RegisterLedgerAccountDAState,
+} from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 export { type ContactsManager } from "@api/ContactsManager";
 export { ContactsManagerBuilder } from "@api/ContactsManagerBuilder";
 export {
@@ -27,3 +36,7 @@ export {
   type RegisterExternalAddressMode,
   type RegisterExternalAddressOutput,
 } from "@api/model/RegisterExternalAddress";
+export {
+  type RegisterLedgerAccountInput,
+  type RegisterLedgerAccountOutput,
+} from "@api/model/RegisterLedgerAccount";

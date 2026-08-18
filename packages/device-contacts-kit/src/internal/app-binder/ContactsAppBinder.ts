@@ -5,8 +5,11 @@ import {
 import { inject, injectable } from "inversify";
 
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
+import { type RegisterLedgerAccountInput } from "@api/model/RegisterLedgerAccount";
 import { RegisterExternalAddressDeviceAction } from "@internal/app-binder/device-action/RegisterExternalAddress/RegisterExternalAddressDeviceAction";
+import { RegisterLedgerAccountDeviceAction } from "@internal/app-binder/device-action/RegisterLedgerAccount/RegisterLedgerAccountDeviceAction";
 import { externalTypes } from "@internal/externalTypes";
 
 /**
@@ -30,6 +33,17 @@ export class ContactsAppBinder {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new RegisterExternalAddressDeviceAction({
+        input: { ...input, appName: this.appName },
+      }),
+    });
+  }
+
+  registerLedgerAccount(
+    input: RegisterLedgerAccountInput,
+  ): RegisterLedgerAccountDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new RegisterLedgerAccountDeviceAction({
         input: { ...input, appName: this.appName },
       }),
     });

@@ -5,11 +5,14 @@ import {
 import { type Container } from "inversify";
 
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 import { type ContactsManager } from "@api/ContactsManager";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
+import { type RegisterLedgerAccountInput } from "@api/model/RegisterLedgerAccount";
 import { makeContainer } from "@internal/di";
 import { useCaseTypes } from "@internal/use-cases/di/useCaseTypes";
 import { type RegisterExternalAddressUseCase } from "@internal/use-cases/RegisterExternalAddressUseCase";
+import { type RegisterLedgerAccountUseCase } from "@internal/use-cases/RegisterLedgerAccountUseCase";
 
 type DefaultContactsManagerConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -34,6 +37,16 @@ export class DefaultContactsManager implements ContactsManager {
     return this._container
       .get<RegisterExternalAddressUseCase>(
         useCaseTypes.RegisterExternalAddressUseCase,
+      )
+      .execute(input);
+  }
+
+  registerLedgerAccount(
+    input: RegisterLedgerAccountInput,
+  ): RegisterLedgerAccountDAReturnType {
+    return this._container
+      .get<RegisterLedgerAccountUseCase>(
+        useCaseTypes.RegisterLedgerAccountUseCase,
       )
       .execute(input);
   }

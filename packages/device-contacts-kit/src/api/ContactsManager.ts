@@ -1,5 +1,7 @@
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
+import { type RegisterLedgerAccountInput } from "@api/model/RegisterLedgerAccount";
 
 /**
  * Public, stateless Contacts (Address Book) manager.
@@ -21,4 +23,16 @@ export interface ContactsManager {
   registerExternalAddress(
     input: RegisterExternalAddressInput,
   ): RegisterExternalAddressDAReturnType;
+
+  /**
+   * Register a Ledger (signer-controlled) account on the device. The account is
+   * derived on-device from `input.derivationPath`. Opens the embedded app by
+   * default (pass `skipOpenApp: true` to skip only the open-app step; the
+   * version guard still runs), checks the Contacts version requirements, then
+   * runs REGISTER LEDGER ACCOUNT. Returns the device-issued `hmacProof` to
+   * persist.
+   */
+  registerLedgerAccount(
+    input: RegisterLedgerAccountInput,
+  ): RegisterLedgerAccountDAReturnType;
 }

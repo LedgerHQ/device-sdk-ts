@@ -6,6 +6,7 @@ import { makeContainer } from "@internal/di";
 import { externalTypes } from "@internal/externalTypes";
 import { useCaseTypes } from "@internal/use-cases/di/useCaseTypes";
 import { RegisterExternalAddressUseCase } from "@internal/use-cases/RegisterExternalAddressUseCase";
+import { RegisterLedgerAccountUseCase } from "@internal/use-cases/RegisterLedgerAccountUseCase";
 
 describe("makeContainer", () => {
   const dmk = {} as DeviceManagementKit;
@@ -30,5 +31,11 @@ describe("makeContainer", () => {
     expect(
       container.get(useCaseTypes.RegisterExternalAddressUseCase),
     ).toBeInstanceOf(RegisterExternalAddressUseCase);
+  });
+
+  it("binds the RegisterLedgerAccountUseCase", () => {
+    expect(
+      container.get(useCaseTypes.RegisterLedgerAccountUseCase),
+    ).toBeInstanceOf(RegisterLedgerAccountUseCase);
   });
 });
