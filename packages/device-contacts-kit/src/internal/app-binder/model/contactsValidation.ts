@@ -7,6 +7,7 @@
  * pure equality checks against the upstream `#define`s. The byte-level
  * `0x20..0x7E` printable check exactly matches firmware `is_printable_string`.
  */
+import { type DmkError } from "@ledgerhq/device-management-kit";
 
 // ---- SDK-mirrored constants -------------------------------------------------
 // Source of truth: ledger-secure-sdk/app_features/address_book/include/
@@ -20,7 +21,15 @@ export const ETH_ADDRESS_BYTES = 20; // protocol convention, no header
 
 // ---- error type -------------------------------------------------------------
 
-export class ContactsValidationError extends Error {
+/**
+ * Raised when caller input fails a pre-APDU check. Implements `DmkError` (and
+ * stays an `Error` subclass) so a Contacts device action can surface it as a
+ * typed terminal error state on the observable rather than throwing out of the
+ * public, device-action-returning API.
+ */
+export class ContactsValidationError extends Error implements DmkError {
+  readonly _tag = "ContactsValidationError";
+  readonly originalError?: unknown;
   constructor(message: string) {
     super(message);
     this.name = "ContactsValidationError";

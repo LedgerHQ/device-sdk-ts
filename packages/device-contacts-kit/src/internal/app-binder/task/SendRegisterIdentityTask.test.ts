@@ -24,13 +24,13 @@ function hexToBytes(hex: string): Uint8Array {
 // STRUCT_VERSION, CONTACT_NAME, SCOPE, ACCOUNT_IDENTIFIER, CHAIN_ID,
 // BLOCKCHAIN_FAMILY, then optional GROUP_HANDLE + HMAC_PROOF.
 const FRESH_FRAMED_CHUNK = hexToBytes(
-  "003601012d02010181f005416c69636581f108457468206d61696e81f21400000000000000000000000000000000deadbeef230101510101",
+  "003301012d020101f005416c696365f108457468206d61696ef21400000000000000000000000000000000deadbeef230101510101",
 );
 
 const EXTENSION_FRAMED_CHUNK = hexToBytes(
-  "009c01012d02010181f005416c69636581f108417262206d61696e81f2144444444444444444444444444444444444444444" +
+  "009801012d020101f005416c696365f108417262206d61696ef2144444444444444444444444444444444444444444" +
     "2302a4b1510101" +
-    "81f640cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" +
+    "f640cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" +
     "2920dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
 );
 

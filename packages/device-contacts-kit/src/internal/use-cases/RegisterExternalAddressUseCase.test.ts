@@ -1,6 +1,5 @@
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
 import { type ContactsAppBinder } from "@internal/app-binder/ContactsAppBinder";
-import { ContactsValidationError } from "@internal/app-binder/model/contactsValidation";
 
 import { RegisterExternalAddressUseCase } from "./RegisterExternalAddressUseCase";
 
@@ -22,7 +21,7 @@ const VALID_INPUT: RegisterExternalAddressInput = {
 };
 
 describe("RegisterExternalAddressUseCase", () => {
-  it("validates input and delegates to the app binder", () => {
+  it("delegates to the app binder", () => {
     const { useCase, registerExternalAddress } = makeUseCase();
 
     const result = useCase.execute(VALID_INPUT);
@@ -31,68 +30,13 @@ describe("RegisterExternalAddressUseCase", () => {
     expect(result).toBe("DA_RETURN");
   });
 
-  it("accepts an existing contact group with correctly sized proofs", () => {
+  it("does not validate — invalid input is forwarded, not thrown", () => {
+    // Validation now lives in the device action and surfaces as a typed DA
+    // error state; the use case must never throw for bad input.
     const { useCase, registerExternalAddress } = makeUseCase();
 
-    useCase.execute({
-      ...VALID_INPUT,
-      existingContactGroup: {
-        groupHandle: new Uint8Array(64),
-        hmacProof: new Uint8Array(32),
-      },
-    });
-
-    expect(registerExternalAddress).toHaveBeenCalledTimes(1);
-  });
-
-  it("rejects a non-printable contact name before dispatching", () => {
-    const { useCase, registerExternalAddress } = makeUseCase();
-
-    expect(() =>
-      useCase.execute({ ...VALID_INPUT, contactName: "Amélie" }),
-    ).toThrow(ContactsValidationError);
-    expect(registerExternalAddress).not.toHaveBeenCalled();
-  });
-
-  it("rejects an Ethereum identifier of the wrong length", () => {
-    const { useCase, registerExternalAddress } = makeUseCase();
-
-    expect(() =>
-      useCase.execute({ ...VALID_INPUT, identifier: new Uint8Array(19) }),
-    ).toThrow(ContactsValidationError);
-    expect(registerExternalAddress).not.toHaveBeenCalled();
-  });
-
-  it("rejects an unsupported blockchain family", () => {
-    const { useCase, registerExternalAddress } = makeUseCase();
-
-    expect(() =>
-      useCase.execute({ ...VALID_INPUT, blockchainFamily: "dogecoin" }),
-    ).toThrow(ContactsValidationError);
-    expect(registerExternalAddress).not.toHaveBeenCalled();
-  });
-
-  it("requires chainId for the Ethereum family", () => {
-    const { useCase, registerExternalAddress } = makeUseCase();
-
-    expect(() =>
-      useCase.execute({ ...VALID_INPUT, chainId: undefined }),
-    ).toThrow(ContactsValidationError);
-    expect(registerExternalAddress).not.toHaveBeenCalled();
-  });
-
-  it("rejects a wrong-sized existing group handle", () => {
-    const { useCase, registerExternalAddress } = makeUseCase();
-
-    expect(() =>
-      useCase.execute({
-        ...VALID_INPUT,
-        existingContactGroup: {
-          groupHandle: new Uint8Array(32),
-          hmacProof: new Uint8Array(32),
-        },
-      }),
-    ).toThrow(ContactsValidationError);
-    expect(registerExternalAddress).not.toHaveBeenCalled();
+    const invalidInput = { ...VALID_INPUT, contactName: "" };
+    expect(() => useCase.execute(invalidInput)).not.toThrow();
+    expect(registerExternalAddress).toHaveBeenCalledWith(invalidInput);
   });
 });

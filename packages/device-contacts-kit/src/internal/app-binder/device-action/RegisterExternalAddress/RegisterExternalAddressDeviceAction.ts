@@ -6,6 +6,7 @@ import {
   type StateMachineTypes,
   UnknownDAError,
   UserInteractionRequired,
+  WaitForAppAndVersionDeviceAction,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
@@ -18,15 +19,20 @@ import {
   type RegisterExternalAddressDAInternalState,
   type RegisterExternalAddressDAOutput,
 } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
-import { isContactsSupportedForSession } from "@internal/app-binder/isContactsSupportedForSession";
+import {
+  isContactsSupportedForSession,
+  type RunningApp,
+} from "@internal/app-binder/isContactsSupportedForSession";
 import { ContactsVersionRequirementError } from "@internal/app-binder/model/contactsErrors";
 import {
   type RegisterIdentityProofs,
   SendRegisterIdentityTask,
 } from "@internal/app-binder/task/SendRegisterIdentityTask";
 
+import { validateRegisterExternalAddressInput } from "./validateRegisterExternalAddressInput";
+
 export type RegisterExternalAddressMachineDependencies = {
-  readonly isSupported: () => boolean;
+  readonly isSupported: (app: RunningApp) => boolean;
   readonly registerIdentity: (
     input: RegisterExternalAddressDAInput,
   ) => Promise<Awaited<ReturnType<SendRegisterIdentityTask["run"]>>>;
@@ -70,6 +76,9 @@ export class RegisterExternalAddressDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName },
         }).makeStateMachine(internalApi),
+        waitForAppAndVersionStateMachine: new WaitForAppAndVersionDeviceAction({
+          input: {},
+        }).makeStateMachine(internalApi),
         registerIdentity: fromPromise(
           ({ input }: { input: RegisterExternalAddressDAInput }) =>
             registerIdentity(input),
@@ -78,9 +87,20 @@ export class RegisterExternalAddressDeviceAction extends XStateDeviceAction<
       guards: {
         skipOpenApp: ({ context }) => context.input.skipOpenApp === true,
         noInternalError: ({ context }) => context._internalState.error === null,
-        contactsSupported: () => isSupported(),
+        contactsSupported: ({ context }) => {
+          const { appAndVersion } = context._internalState;
+          return appAndVersion !== null && isSupported(appAndVersion);
+        },
       },
       actions: {
+        assignValidationError: assign({
+          _internalState: ({ context }) => {
+            const error = validateRegisterExternalAddressInput(context.input);
+            return error
+              ? { ...context._internalState, error }
+              : context._internalState;
+          },
+        }),
         assignVersionError: assign({
           _internalState: ({ context }) => ({
             ...context._internalState,
@@ -108,13 +128,14 @@ export class RegisterExternalAddressDeviceAction extends XStateDeviceAction<
         },
         _internalState: {
           error: null,
+          appAndVersion: null,
           proofs: null,
         },
       }),
       states: {
         InitialState: {
           always: [
-            { target: "VersionGuard", guard: "skipOpenApp" },
+            { target: "ValidateInput", guard: "skipOpenApp" },
             { target: "OpenAppDeviceAction" },
           ],
         },
@@ -143,11 +164,62 @@ export class RegisterExternalAddressDeviceAction extends XStateDeviceAction<
         },
         CheckOpenAppResult: {
           always: [
+            { target: "ValidateInput", guard: "noInternalError" },
+            { target: "Error" },
+          ],
+        },
+        // Input validation runs inside the device action (after the app is
+        // opened) so invalid caller input surfaces as a typed terminal error
+        // state on the observable instead of a synchronous throw. Runs on both
+        // the open-app and skip-open-app paths.
+        ValidateInput: {
+          entry: "assignValidationError",
+          always: [
+            { target: "WaitForAppAndVersion", guard: "noInternalError" },
+            { target: "Error" },
+          ],
+        },
+        // Read the running app + version freshly from the device (rather than
+        // the possibly-stale session state) so the version guard evaluates the
+        // app that is actually running — e.g. when open-app is skipped and the
+        // app was changed outside DMK. Runs on both paths.
+        WaitForAppAndVersion: {
+          // Silent read — no user interaction required for this step.
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
+          invoke: {
+            id: "waitForAppAndVersion",
+            src: "waitForAppAndVersionStateMachine",
+            input: () => ({}),
+            onDone: {
+              target: "CheckAppAndVersion",
+              actions: assign({
+                _internalState: ({ event, context }) =>
+                  event.output.caseOf<RegisterExternalAddressDAInternalState>({
+                    Right: (appAndVersion) => ({
+                      ...context._internalState,
+                      appAndVersion: {
+                        name: appAndVersion.name,
+                        version: appAndVersion.version,
+                      },
+                    }),
+                    Left: (error) => ({ ...context._internalState, error }),
+                  }),
+              }),
+            },
+          },
+        },
+        CheckAppAndVersion: {
+          always: [
             { target: "VersionGuard", guard: "noInternalError" },
             { target: "Error" },
           ],
         },
-        // Version guard runs on both the open-app and skip-open-app paths.
+        // Version guard evaluates support from the fresh WaitForAppAndVersion
+        // result. Runs on both the open-app and skip-open-app paths.
         VersionGuard: {
           always: [
             { target: "RegisterIdentity", guard: "contactsSupported" },
@@ -222,15 +294,8 @@ export class RegisterExternalAddressDeviceAction extends XStateDeviceAction<
   extractDependencies(
     internalApi: InternalApi,
   ): RegisterExternalAddressMachineDependencies {
-    const isSupported = () => {
-      const deviceState = internalApi.getDeviceSessionState();
-      const version =
-        "currentApp" in deviceState
-          ? deviceState.currentApp?.version
-          : undefined;
-      if (version === undefined) return false;
-      return isContactsSupportedForSession(internalApi, { version });
-    };
+    const isSupported = (app: RunningApp) =>
+      isContactsSupportedForSession(internalApi, app);
 
     const registerIdentity = (
       input: RegisterExternalAddressDAInput,

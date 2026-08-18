@@ -55,12 +55,12 @@ describe("contactsTlvSerializer", () => {
       );
     });
 
-    it("uses the 2-byte long-tag form for tags >= 0x80", () => {
+    it("encodes tags >= 0x80 as a single raw byte", () => {
       const builder = new ByteArrayBuilder();
       encodeTlvAscii(builder, CONTACTS_TLV_TAG.CONTACT_NAME, "AB");
-      // 0x81 0xf0 prefix for tag 0xf0, length 2, ASCII "AB".
+      // Raw tag 0xf0 (no BER multi-byte prefix), length 2, ASCII "AB".
       expect(builder.build()).toStrictEqual(
-        Uint8Array.from([0x81, 0xf0, 0x02, 0x41, 0x42]),
+        Uint8Array.from([0xf0, 0x02, 0x41, 0x42]),
       );
     });
 
@@ -83,9 +83,9 @@ describe("contactsTlvSerializer", () => {
       const value = new Uint8Array(200).fill(0xab);
       encodeTlvBuffer(builder, CONTACTS_TLV_TAG.ACCOUNT_IDENTIFIER, value);
       const out = builder.build();
-      // tag 0xf2 → 0x81 0xf2, then long-form length 0x81 0xc8 (200).
-      expect(Array.from(out.slice(0, 4))).toEqual([0x81, 0xf2, 0x81, 0xc8]);
-      expect(out.length).toBe(4 + 200);
+      // raw tag 0xf2, then long-form length 0x81 0xc8 (200).
+      expect(Array.from(out.slice(0, 3))).toEqual([0xf2, 0x81, 0xc8]);
+      expect(out.length).toBe(3 + 200);
     });
 
     it("rejects a non-positive chainId", () => {

@@ -18,6 +18,7 @@ import {
 } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
+import { setupWaitForAppAndVersionDAMock } from "@internal/app-binder/device-action/__test-utils__/setupWaitForAppAndVersionDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import {
   ContactsCommandError,
@@ -25,6 +26,7 @@ import {
 } from "@internal/app-binder/model/contactsErrors";
 
 import { RegisterExternalAddressDeviceAction } from "./RegisterExternalAddressDeviceAction";
+import { validateRegisterExternalAddressInput } from "./validateRegisterExternalAddressInput";
 
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
@@ -35,8 +37,13 @@ vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
     OpenAppDeviceAction: vi.fn(() => ({
       makeStateMachine: vi.fn(),
     })),
+    WaitForAppAndVersionDeviceAction: vi.fn(() => ({
+      makeStateMachine: vi.fn(),
+    })),
   };
 });
+
+const FRESH_APP = { name: "Ethereum", version: "1.15.0" };
 
 const OK_PROOFS = {
   groupHandle: new Uint8Array(64).fill(0xcc),
@@ -67,6 +74,7 @@ describe("RegisterExternalAddressDeviceAction", () => {
 
   beforeEach(() => {
     apiMock = makeDeviceActionInternalApiMock();
+    setupWaitForAppAndVersionDAMock(FRESH_APP);
     isSupportedMock = vi.fn().mockReturnValue(true);
     registerIdentityMock = vi
       .fn()
@@ -102,6 +110,13 @@ describe("RegisterExternalAddressDeviceAction", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // Silent WaitForAppAndVersion read (no interaction).
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -149,6 +164,13 @@ describe("RegisterExternalAddressDeviceAction", () => {
       });
 
       const expected = [
+        // Silent WaitForAppAndVersion read (no interaction).
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.RegisterWallet,
@@ -186,6 +208,13 @@ describe("RegisterExternalAddressDeviceAction", () => {
       const action = makeAction({ ...BASE_INPUT, skipOpenApp: true });
 
       const expected = [
+        // Silent WaitForAppAndVersion read still runs before the guard.
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
         {
           error: new ContactsVersionRequirementError(),
           status: DeviceActionStatus.Error,
@@ -252,6 +281,13 @@ describe("RegisterExternalAddressDeviceAction", () => {
       const action = makeAction({ ...BASE_INPUT, skipOpenApp: true });
 
       const expected = [
+        // Silent WaitForAppAndVersion read (no interaction).
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.RegisterWallet,
@@ -272,5 +308,165 @@ describe("RegisterExternalAddressDeviceAction", () => {
         onDone: resolve,
         onError: reject,
       });
+    }));
+
+  it("surfaces invalid input as a typed error state on the skip-open-app path", () =>
+    new Promise<void>((resolve, reject) => {
+      setupOpenAppDAMock();
+      const invalidInput = {
+        ...BASE_INPUT,
+        skipOpenApp: true,
+        contactName: "",
+      };
+      const validationError =
+        validateRegisterExternalAddressInput(invalidInput);
+      const action = makeAction(invalidInput);
+
+      const expected = [
+        {
+          error: validationError,
+          status: DeviceActionStatus.Error,
+        },
+      ] as DeviceActionState<
+        RegisterExternalAddressDAOutput,
+        RegisterExternalAddressDAError,
+        RegisterExternalAddressDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: resolve,
+        onError: reject,
+      });
+      // Validation fails before the version guard and before any APDU.
+      expect(isSupportedMock).not.toHaveBeenCalled();
+      expect(registerIdentityMock).not.toHaveBeenCalled();
+    }));
+
+  it("validates only after opening the app on the default path", () =>
+    new Promise<void>((resolve, reject) => {
+      setupOpenAppDAMock();
+      const invalidInput = {
+        ...BASE_INPUT,
+        skipOpenApp: false,
+        contactName: "",
+      };
+      const validationError =
+        validateRegisterExternalAddressInput(invalidInput);
+      const action = makeAction(invalidInput);
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: validationError,
+          status: DeviceActionStatus.Error,
+        },
+      ] as DeviceActionState<
+        RegisterExternalAddressDAOutput,
+        RegisterExternalAddressDAError,
+        RegisterExternalAddressDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: resolve,
+        onError: reject,
+      });
+      expect(registerIdentityMock).not.toHaveBeenCalled();
+    }));
+
+  it("evaluates support from the fresh WaitForAppAndVersion result, not stale session state", () =>
+    new Promise<void>((resolve, reject) => {
+      setupOpenAppDAMock();
+      // Session state (from beforeEach) reports version 1.15.0; the fresh read
+      // reports a different version, which is what the guard must use.
+      const freshApp = { name: "Ethereum", version: "9.9.9" };
+      setupWaitForAppAndVersionDAMock(freshApp);
+      const action = makeAction({ ...BASE_INPUT, skipOpenApp: true });
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.RegisterWallet,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          output: {
+            mode: "newContactGroup",
+            contactName: "Alice",
+            scope: "Eth main",
+            identifier: BASE_INPUT.identifier,
+            blockchainFamily: "ethereum",
+            chainId: 1n,
+            ...OK_PROOFS,
+          },
+          status: DeviceActionStatus.Completed,
+        },
+      ] as DeviceActionState<
+        RegisterExternalAddressDAOutput,
+        RegisterExternalAddressDAError,
+        RegisterExternalAddressDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: () => {
+          try {
+            expect(isSupportedMock).toHaveBeenCalledWith(freshApp);
+            resolve();
+          } catch (e) {
+            reject(e as Error);
+          }
+        },
+        onError: reject,
+      });
+    }));
+
+  it("surfaces a WaitForAppAndVersion failure as the device action error", () =>
+    new Promise<void>((resolve, reject) => {
+      setupOpenAppDAMock();
+      const waitError = new UnknownDAError("could not read app and version");
+      setupWaitForAppAndVersionDAMock({ error: waitError });
+      const action = makeAction({ ...BASE_INPUT, skipOpenApp: true });
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: waitError,
+          status: DeviceActionStatus.Error,
+        },
+      ] as DeviceActionState<
+        RegisterExternalAddressDAOutput,
+        RegisterExternalAddressDAError,
+        RegisterExternalAddressDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: resolve,
+        onError: reject,
+      });
+      // The version guard and the APDU are never reached.
+      expect(isSupportedMock).not.toHaveBeenCalled();
+      expect(registerIdentityMock).not.toHaveBeenCalled();
     }));
 });

@@ -35,8 +35,10 @@ describe("DefaultContactsManager", () => {
     expect(result).toBe("DA_RETURN");
   });
 
-  it("propagates validation errors without dispatching a device action", () => {
-    const executeDeviceAction = vi.fn();
+  it("does not throw on invalid input — it dispatches the device action, which surfaces the error", () => {
+    // The public API returns a device action; invalid caller input must reach
+    // the observable as a typed error state rather than throwing synchronously.
+    const executeDeviceAction = vi.fn().mockReturnValue("DA_RETURN");
     const dmk = { executeDeviceAction } as unknown as DeviceManagementKit;
 
     const manager = new DefaultContactsManager({
@@ -50,7 +52,7 @@ describe("DefaultContactsManager", () => {
         ...VALID_INPUT,
         contactName: "",
       }),
-    ).toThrow();
-    expect(executeDeviceAction).not.toHaveBeenCalled();
+    ).not.toThrow();
+    expect(executeDeviceAction).toHaveBeenCalledTimes(1);
   });
 });

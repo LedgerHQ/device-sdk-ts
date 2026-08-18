@@ -15,6 +15,7 @@ import {
   type ContactsErrorCodes,
   type ContactsVersionRequirementError,
 } from "@internal/app-binder/model/contactsErrors";
+import { type ContactsValidationError } from "@internal/app-binder/model/contactsValidation";
 
 /** Machine input: the public input plus the injected embedded-app name. */
 export type RegisterExternalAddressDAInput = RegisterExternalAddressInput & {
@@ -25,6 +26,7 @@ export type RegisterExternalAddressDAOutput = RegisterExternalAddressOutput;
 
 export type RegisterExternalAddressDAError =
   | OpenAppDAError
+  | ContactsValidationError
   | ContactsVersionRequirementError
   | CommandErrorResult<ContactsErrorCodes>["error"];
 
@@ -44,6 +46,11 @@ export type RegisterExternalAddressDAState = DeviceActionState<
 
 export type RegisterExternalAddressDAInternalState = {
   readonly error: RegisterExternalAddressDAError | null;
+  /** The running app read freshly by WaitForAppAndVersion, for the version guard. */
+  readonly appAndVersion: {
+    readonly name: string;
+    readonly version: string;
+  } | null;
   readonly proofs: {
     readonly groupHandle: Uint8Array;
     readonly hmacProof: Uint8Array;
