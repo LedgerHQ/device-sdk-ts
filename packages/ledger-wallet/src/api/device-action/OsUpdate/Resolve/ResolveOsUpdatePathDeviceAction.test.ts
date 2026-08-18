@@ -10,24 +10,22 @@ import { assign, createMachine } from "xstate";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { ResolveOsUpdatePathDeviceAction } from "@api/device-action/OsUpdate/Resolve/ResolveOsUpdatePathDeviceAction";
-import {
-  GetOsVersionError,
-  ResolveOsUpdatePathError,
-} from "@api/device-action/OsUpdate/Resolve/ResolveOsUpdatePathDeviceActionErrors";
-import { getOsVersion } from "@api/device-action/OsUpdate/Resolve/Substeps/GetOsVersion";
+import { ResolveOsUpdatePathError } from "@api/device-action/OsUpdate/Resolve/ResolveOsUpdatePathDeviceActionErrors";
 import { resolveOsUpdatePath } from "@api/device-action/OsUpdate/Resolve/Substeps/ResolveOsUpdatePath";
 import {
-  type OsUpdate,
   type ResolveOsUpdatePathDAError,
   type ResolveOsUpdatePathDAState,
   ResolveOsUpdatePathSteps,
 } from "@api/device-action/OsUpdate/Resolve/types";
+import { GetOsVersionError } from "@api/device-action/OsUpdate/Shared/OsUpdateDeviceActionErrors";
+import { getOsVersion } from "@api/device-action/OsUpdate/Shared/Substeps/GetOsVersion";
 import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
 import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion";
+import { type OsUpdate } from "@api/device-action/OsUpdate/Shared/types";
 
 vi.mock("@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion");
 vi.mock("@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard");
-vi.mock("@api/device-action/OsUpdate/Resolve/Substeps/GetOsVersion");
+vi.mock("@api/device-action/OsUpdate/Shared/Substeps/GetOsVersion");
 vi.mock("@api/device-action/OsUpdate/Resolve/Substeps/ResolveOsUpdatePath");
 
 const pendingState = (

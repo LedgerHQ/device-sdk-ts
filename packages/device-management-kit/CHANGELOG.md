@@ -1,5 +1,43 @@
 # @ledgerhq/device-management-kit
 
+## 1.8.0
+
+### Minor Changes
+
+- [#1610](https://github.com/LedgerHQ/device-sdk-ts/pull/1610) [`f5b3738`](https://github.com/LedgerHQ/device-sdk-ts/commit/f5b3738b3ffca4d6ced75497f50b494777a9c073) Thanks [@benruseau](https://github.com/benruseau)! - Add `RestoreAppStorageCommand` implementing the `INS_APP_STORAGE_RESTORE` APDU, and a `RestoreAppStorageTask` to restore a previously backed up application storage in chunks that fit within a single APDU.
+
+- [#1634](https://github.com/LedgerHQ/device-sdk-ts/pull/1634) [`911eb1d`](https://github.com/LedgerHQ/device-sdk-ts/commit/911eb1d9945aecd1b0f323a802ad0585e36f8da4) Thanks [@benruseau](https://github.com/benruseau)! - Export `LANGUAGE_ID_TO_LANGUAGE`, a common lookup mapping the numeric `langId` to `Language` type.
+
+- [#1612](https://github.com/LedgerHQ/device-sdk-ts/pull/1612) [`57ddf0b`](https://github.com/LedgerHQ/device-sdk-ts/commit/57ddf0ba8ac2503f92d1bfb9c8f936a7a402da4a) Thanks [@benruseau](https://github.com/benruseau)! - Add `CommitRestoreAppStorageCommand` implementing the `INS_APP_STORAGE_RESTORE_COMMIT` APDU, used to finalize a previously initiated and restored application storage.
+
+- [#1609](https://github.com/LedgerHQ/device-sdk-ts/pull/1609) [`fadb5c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/fadb5c24d1bb7ce588f2d26d6fbc5692f5b29e95) Thanks [@benruseau](https://github.com/benruseau)! - Add `InitRestoreAppStorageCommand` implementing the `INS_APP_STORAGE_RESTORE_INIT` APDU, used to initiate the restore of a previously backed up application storage.
+
+- [#1598](https://github.com/LedgerHQ/device-sdk-ts/pull/1598) [`575457e`](https://github.com/LedgerHQ/device-sdk-ts/commit/575457e53cfd6d59e6a273b897d4262b18d1611b) Thanks [@benruseau](https://github.com/benruseau)! - Remove KeyValueStorage and expose isDashboardName util.
+
+- [#1627](https://github.com/LedgerHQ/device-sdk-ts/pull/1627) [`221cb79`](https://github.com/LedgerHQ/device-sdk-ts/commit/221cb79340eee27b0364e27db2b80e7dfef1b163) Thanks [@benruseau](https://github.com/benruseau)! - Add `UserInteractionRequired.GrantConsent`, signaling that the user must grant consent on the device when restoring data on it after an OS update.
+
+- [#1721](https://github.com/LedgerHQ/device-sdk-ts/pull/1721) [`3f2f0cd`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f2f0cddb28cd4b5fb142e27e983ac59110e17f1) Thanks [@benruseau](https://github.com/benruseau)! - Export `ConnectToSecureChannelTask` and `SecureChannelEventType` so that consumers can drive a secure channel operation from their own device actions
+
+- [#1605](https://github.com/LedgerHQ/device-sdk-ts/pull/1605) [`c7ce54e`](https://github.com/LedgerHQ/device-sdk-ts/commit/c7ce54e5658266d0c1c3d3d76a820f82b6cdcd0a) Thanks [@benruseau](https://github.com/benruseau)! - Adds RequestMasterConsentCommand
+
+### Patch Changes
+
+- [#1583](https://github.com/LedgerHQ/device-sdk-ts/pull/1583) [`e946c4f`](https://github.com/LedgerHQ/device-sdk-ts/commit/e946c4fddcc770b32f9cf95a84cf7047bf14a06f) Thanks [@benruseau](https://github.com/benruseau)! - Attach a structured APDU exchange payload (request + response + session id) to the device session APDU log, enabling consumers such as the DevTools dashboard to reconstruct exchanges without parsing log strings.
+
+- [#1622](https://github.com/LedgerHQ/device-sdk-ts/pull/1622) [`72eb0a4`](https://github.com/LedgerHQ/device-sdk-ts/commit/72eb0a484a43ad9195afe059b406d6941aeb8c10) Thanks [@benruseau](https://github.com/benruseau)! - Remove OS update backup/restore commands and tasks (`BackupAppStorageCommand`, `GetAppStorageInfoCommand`, `CommitRestoreAppStorageCommand`, `InitRestoreAppStorageCommand`, `RequestMasterConsentCommand`, `RestoreAppStorageCommand`, `BackupAppStorageTask`, `RestoreAppStorageTask`) from the public API. This code was unused and has moved to `@ledgerhq/dmk-ledger-wallet`.
+
+- [#1727](https://github.com/LedgerHQ/device-sdk-ts/pull/1727) [`79c2060`](https://github.com/LedgerHQ/device-sdk-ts/commit/79c2060dd9ddf9872a73c24518a7875bf03a3f61) Thanks [@benruseau](https://github.com/benruseau)! - Support OS update flows: map MCU firmware providers, add `AllowInstallFirmware` user interaction, and expose secure-channel error mappers for update firmware and flash MCU
+
+- [#1591](https://github.com/LedgerHQ/device-sdk-ts/pull/1591) [`9552e82`](https://github.com/LedgerHQ/device-sdk-ts/commit/9552e829121e9d428c49084136744152c08c0b1c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Change the default mock server base URL port from `8080` to the less commonly used `9752` to avoid conflicts with other local dev servers
+
+- [#1701](https://github.com/LedgerHQ/device-sdk-ts/pull/1701) [`3c071ba`](https://github.com/LedgerHQ/device-sdk-ts/commit/3c071ba2023b1f35e8dc28e4e9d46a46c582b568) Thanks [@benruseau](https://github.com/benruseau)! - Handle no available update when fetching latest firmware from the Manager API
+
+- [#1540](https://github.com/LedgerHQ/device-sdk-ts/pull/1540) [`37ba2fd`](https://github.com/LedgerHQ/device-sdk-ts/commit/37ba2fd5583ab6477442627f182c2d493858a3b0) Thanks [@benruseau](https://github.com/benruseau)! - use WaitForAppAndVersionDeviceAction in GetDeviceStatusDeviceAction
+
+- [#1613](https://github.com/LedgerHQ/device-sdk-ts/pull/1613) [`95e2ce0`](https://github.com/LedgerHQ/device-sdk-ts/commit/95e2ce06155042764ee2ea8a8a0a9edab4366da5) Thanks [@benruseau](https://github.com/benruseau)! - Rename `BackupStorageCommand` to `BackupAppStorageCommand`, rename `InitRestoreAppStorageCommand`'s `backupLength` field to `appStorageDataLength`, and type `BackupAppStorageCommand`'s `data` response as `HexaString`.
+
+- [#1562](https://github.com/LedgerHQ/device-sdk-ts/pull/1562) [`bbab1db`](https://github.com/LedgerHQ/device-sdk-ts/commit/bbab1dbb4704f89506d0780d2ce0a044992a31d6) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Fix the device session refresher polling interval being applied at twice the configured value. The validated polling interval was multiplied by 2 before being passed to the timer, so a configured interval of 1000ms actually polled every 2000ms (and NANO_S devices every 4000ms). The interval is now used as-is, while the NANO_S minimum interval remains handled in `getValidPollingInterval`.
+
 ## 1.7.1
 
 ### Patch Changes

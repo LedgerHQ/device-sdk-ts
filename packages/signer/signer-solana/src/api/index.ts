@@ -50,3 +50,4 @@ export {
 } from "@internal/app-binder/command/GetPubKeyCommand";
 export type { SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 export { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransactionDeviceAction";
+export type { SolanaSignerFeaturesNames } from "@internal/app-binder/SolanaApplicationResolver";

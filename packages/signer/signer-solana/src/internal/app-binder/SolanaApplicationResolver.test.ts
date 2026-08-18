@@ -3,9 +3,16 @@ import {
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
+  type InternalApi,
 } from "@ledgerhq/device-management-kit";
 
-import { SolanaApplicationResolver } from "./SolanaApplicationResolver";
+import { type AppConfiguration } from "@api/model/AppConfiguration";
+import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
+
+import {
+  isSolanaSignerFeatureSupported,
+  SolanaApplicationResolver,
+} from "./SolanaApplicationResolver";
 
 function createAppConfig(version: string): AppConfig {
   return {
@@ -71,5 +78,25 @@ describe("SolanaApplicationResolver", () => {
       isCompatible: false,
       version: "0.0.1",
     });
+  });
+});
+
+describe("isSolanaSignerFeatureSupported", () => {
+  const appConfig: AppConfiguration = {
+    blindSigningEnabled: false,
+    pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
+    version: "99.0.0",
+  };
+  // getDeviceSessionState is never reached when the feature is force-disabled.
+  const mockApi = {} as unknown as InternalApi;
+
+  it("returns false immediately when the feature is in disabledFeatures", () => {
+    const result = isSolanaSignerFeatureSupported(
+      mockApi,
+      "spl",
+      appConfig,
+      new Set(["spl"]),
+    );
+    expect(result).toBe(false);
   });
 });

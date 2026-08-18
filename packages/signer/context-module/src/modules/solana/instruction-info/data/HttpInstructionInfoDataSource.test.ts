@@ -114,6 +114,39 @@ describe("HttpInstructionInfoDataSource", () => {
     );
   });
 
+  it("keys a descriptor without `discriminator_hex` under the empty string", async () => {
+    // Single-instruction programs (e.g. SPL Memo `addMemo`) genuinely have no
+    // discriminator, so CAL omits the field.
+    httpMock.get.mockResolvedValue([
+      {
+        id: programId,
+        chain_id: SolanaTransactionScanChainId.MAINNET,
+        instructions: [
+          {
+            instruction_name: "addMemo",
+            descriptor: {
+              data: "00010101",
+              signatures: { prod: "prodsig", test: "testsig" },
+            },
+          },
+        ],
+      },
+    ]);
+
+    const result = await datasource.getInstructionInfo({ programId, network });
+
+    expect(result.isRight()).toBe(true);
+    const { descriptors } = result.unsafeCoerce();
+    expect(Object.keys(descriptors)).toEqual([""]);
+    expect(descriptors[""]!.unsafeCoerce()).toEqual(
+      expect.objectContaining({
+        programId,
+        discriminator: "",
+        instructionInfo: { data: "00010101", signature: "prodsig" },
+      }),
+    );
+  });
+
   it("returns Left when the response array is empty", async () => {
     httpMock.get.mockResolvedValue([]);
 

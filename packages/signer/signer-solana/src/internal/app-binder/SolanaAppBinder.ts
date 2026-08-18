@@ -15,6 +15,7 @@ import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDevi
 import { type SignMessageVersion } from "@api/model/MessageOptions";
 import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
+import { type SolanaSignerFeaturesNames } from "@internal/app-binder/SolanaApplicationResolver";
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
@@ -59,6 +60,7 @@ export class SolanaAppBinder {
     derivationPath: string;
     transaction: Transaction;
     solanaTransactionOptionalConfig?: SolanaTransactionOptionalConfig;
+    disabledFeatures?: ReadonlyArray<SolanaSignerFeaturesNames>;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -70,6 +72,7 @@ export class SolanaAppBinder {
           contextModule: this.contextModule,
           solanaRPCURL: this.solanaRPCURL,
           blockhashService: this.blockhashService,
+          disabledFeatures: args.disabledFeatures,
         },
         loggerFactory: this.dmkLoggerFactory,
       }),

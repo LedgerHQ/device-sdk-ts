@@ -124,4 +124,8 @@ export class DefaultManagerApiService implements ManagerApiService {
       },
     );
   }
+
+  getProvider(): number {
+    return this.dataSource.getProvider();
+  }
 }

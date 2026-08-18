@@ -13,6 +13,7 @@ import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransacti
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { type BlockhashService } from "@internal/app-binder/services/BlockhashService";
+import { type SolanaSignerFeaturesNames } from "@internal/app-binder/SolanaApplicationResolver";
 
 import { type SignClearSignDAStateStep } from "./SignClearSignDeviceActionTypes";
 
@@ -59,6 +60,7 @@ export type SignTransactionDAInput = {
   readonly transactionOptions?: SolanaTransactionOptionalConfig;
   readonly solanaRPCURL?: string;
   readonly blockhashService?: BlockhashService;
+  readonly disabledFeatures?: ReadonlyArray<SolanaSignerFeaturesNames>;
 };
 
 export type SignTransactionDAError =
@@ -95,6 +97,11 @@ export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
   readonly signature: Signature | null;
   readonly appConfig: AppConfiguration | null;
+  // Updated by NormalizeTransaction; starts as the raw input and is replaced
+  // with the extracted message bytes once the actor completes. serializedForTxCheck
+  // is only set when the input was tx.serialize().
+  readonly messageBytes: Uint8Array;
+  readonly serializedForTxCheck: Uint8Array | undefined;
   // Set when the generic clear-sign path streamed + FINALIZE-validated the
   // descriptors, so the terminal sign runs the generic PROMPT UI DISPLAY flow
   // instead of the legacy preview.

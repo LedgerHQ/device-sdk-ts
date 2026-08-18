@@ -68,13 +68,14 @@ function makeRawTx(ixs: TransactionInstruction[]): Uint8Array {
 function instructionInfoContext(
   programId: string,
   discriminator: string,
+  infoHex: string = INFO_HEX,
 ): ClearSignContext {
   return {
     type: ClearSignContextType.SOLANA_INSTRUCTION_INFO,
     payload: {
       programId,
       discriminator,
-      instructionInfo: { data: INFO_HEX, signature: "00" },
+      instructionInfo: { data: infoHex, signature: "00" },
       substructures: [],
       enumVariants: [],
       idlDescriptor: MIN_IDL_DESCRIPTOR,
@@ -133,6 +134,36 @@ describe("BuildGenericClearSignContextTask", () => {
       }),
       [ClearSignContextType.SOLANA_INSTRUCTION_INFO],
     );
+  });
+
+  it("matches a descriptor without a discriminator against any instruction data", async () => {
+    // Single-instruction programs (e.g. SPL Memo `addMemo`) have no
+    // discriminator: CAL omits `discriminator_hex` and the whole instruction
+    // data is arguments.
+    const tx = makeRawTx([makeIx(KNOWN_PROGRAM, [0x68, 0x69])]);
+    const { task } = makeTask(tx, [
+      instructionInfoContext(KNOWN_PROGRAM.toBase58(), ""),
+    ]);
+
+    const result = await task.run();
+
+    expect(result.mode).toBe("full");
+    expect(result.instructionInfoContexts).toHaveLength(1);
+  });
+
+  it("prefers the most specific descriptor over a discriminator-less one", async () => {
+    const tx = makeRawTx([makeIx(KNOWN_PROGRAM, [0x01, 0x02, 0xaa])]);
+    const { task } = makeTask(tx, [
+      instructionInfoContext(KNOWN_PROGRAM.toBase58(), "", "aaaa"),
+      instructionInfoContext(KNOWN_PROGRAM.toBase58(), "0102", "bbbb"),
+    ]);
+
+    const result = await task.run();
+
+    expect(result.mode).toBe("full");
+    expect(result.instructionInfoContexts).toEqual([
+      instructionInfoContext(KNOWN_PROGRAM.toBase58(), "0102", "bbbb"),
+    ]);
   });
 
   it("returns mode `none` when some instructions are unrecognized", async () => {

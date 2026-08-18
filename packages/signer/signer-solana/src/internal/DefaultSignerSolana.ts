@@ -15,6 +15,7 @@ import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransacti
 import { type Transaction } from "@api/model/Transaction";
 import { type SignerSolana } from "@api/SignerSolana";
 
+import { type SolanaSignerFeaturesNames } from "./app-binder/SolanaApplicationResolver";
 import { type GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
 import { type GetAppConfigurationUseCase } from "./use-cases/app-configuration/GetAppConfigurationUseCase";
 import { useCasesTypes } from "./use-cases/di/useCasesTypes";
@@ -27,16 +28,21 @@ export type DefaultSignerSolanaConstructorArgs = {
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
   solanaRPCURL?: string;
+  disabledFeatures?: ReadonlyArray<SolanaSignerFeaturesNames>;
 };
 
 export class DefaultSignerSolana implements SignerSolana {
   private _container: Container;
+  private _disabledFeatures:
+    | ReadonlyArray<SolanaSignerFeaturesNames>
+    | undefined;
 
   constructor({
     dmk,
     sessionId,
     contextModule,
     solanaRPCURL,
+    disabledFeatures,
   }: DefaultSignerSolanaConstructorArgs) {
     this._container = makeContainer({
       dmk,
@@ -44,6 +50,7 @@ export class DefaultSignerSolana implements SignerSolana {
       contextModule,
       solanaRPCURL,
     });
+    this._disabledFeatures = disabledFeatures;
   }
 
   /**
@@ -56,7 +63,10 @@ export class DefaultSignerSolana implements SignerSolana {
    *   The derivation path used in the transaction (e.g. `"44'/501'/0'/0'"`).
    *
    * - **transaction** `Uint8Array`
-   *   The serialised transaction to sign.
+   *   The serialised transaction to sign. Accepts both raw message bytes
+   *   (`tx.serializeMessage()`) and the full wire-format transaction
+   *   (`tx.serialize()`). When the full wire-format is provided, co-signer
+   *   signatures are forwarded to Transaction Check automatically.
    *
    * **Optional**
    * - **solanaTransactionOptionalConfig** `SolanaTransactionOptionalConfig`
@@ -126,7 +136,12 @@ export class DefaultSignerSolana implements SignerSolana {
   ): SignTransactionDAReturnType {
     return this._container
       .get<SignTransactionUseCase>(useCasesTypes.SignTransactionUseCase)
-      .execute(derivationPath, transaction, solanaTransactionOptionalConfig);
+      .execute(
+        derivationPath,
+        transaction,
+        solanaTransactionOptionalConfig,
+        this._disabledFeatures,
+      );
   }
 
   /**

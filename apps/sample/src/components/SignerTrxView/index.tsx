@@ -8,6 +8,9 @@ import {
   type GetAppConfigurationDAError,
   type GetAppConfigurationDAIntermediateValue,
   type GetAppConfigurationDAOutput,
+  type GetECDHSecretDAError,
+  type GetECDHSecretDAIntermediateValue,
+  type GetECDHSecretDAOutput,
   SignerTrxBuilder,
   type SignPersonalMessageDAError,
   type SignPersonalMessageDAIntermediateValue,
@@ -168,6 +171,34 @@ export const SignerTrxView: React.FC<{ sessionId: string }> = ({
         Record<string, never>,
         GetAppConfigurationDAError,
         GetAppConfigurationDAIntermediateValue
+      >,
+      {
+        title: "Get ECDH secret",
+        description:
+          "Perform all the actions necessary to compute an ECDH shared secret between the device key and a peer's public key (hex-encoded 65-byte uncompressed secp256k1 key). Requires approval on the device.",
+        executeDeviceAction: ({ derivationPath, publicKey, skipOpenApp }) => {
+          const key = hexaStringToBuffer(publicKey);
+          if (!key || key.length === 0) {
+            throw new Error("Invalid public key format");
+          }
+          return signer.getECDHSecret(derivationPath, key, { skipOpenApp });
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          publicKey:
+            "04ff21f8e64d3a3c0198edfbb7afdc79be959432e92e2f8a1984bb436a414b8edcec0345aad0c1bf7da04fd036dd7f9f617e30669224283d950fab9dd84831dc83",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetECDHSecretDAOutput,
+        {
+          derivationPath: string;
+          publicKey: string;
+          skipOpenApp?: boolean;
+        },
+        GetECDHSecretDAError,
+        GetECDHSecretDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],

@@ -109,14 +109,16 @@ export class HttpInstructionInfoDataSource
           const mode: CalMode = this.config.cal.mode ?? "prod";
           // The codec strips undeclared fields, so we key the original
           // (full) instruction objects by `discriminator_hex` — the cast is
-          // justified now that the shape has been validated.
+          // justified now that the shape has been validated. A descriptor
+          // without a discriminator (single-instruction programs such as SPL
+          // Memo) is keyed under the empty string.
           const instructions = (program as CalInstructionProgramDto)
             .instructions;
           const descriptorsByDiscriminator: Record<
             string,
             CalInstructionDescriptorDto
           > = Object.fromEntries(
-            instructions.map((dto) => [dto.discriminator_hex, dto]),
+            instructions.map((dto) => [dto.discriminator_hex ?? "", dto]),
           );
           const mapped = Object.fromEntries(
             Object.entries(descriptorsByDiscriminator).map(

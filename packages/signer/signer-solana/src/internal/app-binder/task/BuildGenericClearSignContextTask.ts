@@ -158,9 +158,17 @@ export class BuildGenericClearSignContextTask {
     const templateByKey = new Map<string, ClearSignContext>();
     let unrecognized = 0;
     for (const { ix, programId } of remaining) {
-      const candidate = (byProgram.get(programId) ?? []).find(({ payload }) =>
-        this.discriminatorMatches(payload.discriminator, ix.data),
-      );
+      // Prefer the most specific match: a discriminator-less descriptor
+      // matches any data of its program, so it must not shadow a descriptor
+      // that pins actual leading bytes.
+      const candidate = (byProgram.get(programId) ?? [])
+        .filter(({ payload }) =>
+          this.discriminatorMatches(payload.discriminator, ix.data),
+        )
+        .sort(
+          (a, b) =>
+            b.payload.discriminator.length - a.payload.discriminator.length,
+        )[0];
       const descriptor = candidate
         ? this.toInstructionDescriptor(candidate.payload)
         : null;
@@ -349,6 +357,9 @@ export class BuildGenericClearSignContextTask {
     discriminatorHex: string,
     data: Uint8Array,
   ): boolean {
+    // Single-instruction programs (e.g. SPL Memo) carry no discriminator: the
+    // instruction data is all arguments, so the descriptor matches any data.
+    if (discriminatorHex === "") return true;
     const disc = hexaStringToBuffer(discriminatorHex);
     if (!disc || disc.length === 0 || data.length < disc.length) return false;
     for (let i = 0; i < disc.length; i++) {

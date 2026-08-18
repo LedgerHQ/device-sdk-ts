@@ -81,7 +81,7 @@ export type CalDisplayFieldDto = CalSubstructureDto & {
 };
 
 export type CalInstructionDescriptorDto = {
-  discriminator_hex: string;
+  discriminator_hex?: string;
   instruction_name?: string;
   descriptor: CalSignedDescriptorDto;
   idl_descriptor?: {
@@ -131,7 +131,7 @@ const calSubstructureCodec = Codec.interface({
 });
 
 const calInstructionDescriptorCodec = Codec.interface({
-  discriminator_hex: string,
+  discriminator_hex: optional(string),
   descriptor: calSignedDescriptorCodec,
   enum_variants: optional(record(string, record(string, calEnumVariantCodec))),
   display_fields: optional(array(calSubstructureCodec)),

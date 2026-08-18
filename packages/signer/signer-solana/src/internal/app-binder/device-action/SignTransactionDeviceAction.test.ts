@@ -29,6 +29,7 @@ import {
 import { makeDeviceActionInternalApiMock } from "./__test-utils__/makeInternalApi";
 import { ProvisionBasicClearSignDeviceAction } from "./ProvisionBasicClearSignDeviceAction";
 import { ProvisionGenericClearSignDeviceAction } from "./ProvisionGenericClearSignDeviceAction";
+import { ProvisionTransactionCheckDeviceAction } from "./ProvisionTransactionCheckDeviceAction";
 import { SignBasicClearSignDeviceAction } from "./SignBasicClearSignDeviceAction";
 import { SignGenericClearSignDeviceAction } from "./SignGenericClearSignDeviceAction";
 import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
@@ -56,8 +57,6 @@ const contextModuleStub = {
 
 let apiMock: ReturnType<typeof makeDeviceActionInternalApiMock>;
 let getAppConfigMock: ReturnType<typeof vi.fn>;
-let transactionCheckOptInMock: ReturnType<typeof vi.fn>;
-let provideTransactionCheckMock: ReturnType<typeof vi.fn>;
 
 // Generic clear-sign (prepare) child deps
 let buildGenericMock: ReturnType<typeof vi.fn>;
@@ -78,6 +77,7 @@ let zeroBlockhashMock: ReturnType<typeof vi.fn>;
 let parentSpy: ReturnType<typeof vi.spyOn>;
 let genericSpy: ReturnType<typeof vi.spyOn>;
 let basicSpy: ReturnType<typeof vi.spyOn>;
+let txCheckSpy: ReturnType<typeof vi.spyOn>;
 let genericSignSpy: ReturnType<typeof vi.spyOn>;
 let basicSignSpy: ReturnType<typeof vi.spyOn>;
 
@@ -121,6 +121,17 @@ function spyChildren() {
       buildBasicClearSignContext: buildBasicMock,
       provideBasicClearSignContext: provideBasicMock,
     } as any) as any;
+  txCheckSpy = vi
+    .spyOn(
+      ProvisionTransactionCheckDeviceAction.prototype,
+      "extractDependencies",
+    )
+    .mockReturnValue({
+      transactionCheckOptIn: vi
+        .fn()
+        .mockResolvedValue(CommandResultFactory({ data: { enabled: true } })),
+      provideTransactionCheck: vi.fn().mockResolvedValue(undefined),
+    } as any) as any;
   genericSignSpy = vi
     .spyOn(SignGenericClearSignDeviceAction.prototype, "extractDependencies")
     .mockReturnValue({
@@ -153,9 +164,11 @@ function run(
 ) {
   const action = new SignTransactionDeviceAction({ input });
   parentSpy = vi.spyOn(action, "extractDependencies").mockReturnValue({
+    normalizeTransaction: vi.fn().mockResolvedValue({
+      messageBytes: exampleTx,
+      serializedForTxCheck: undefined,
+    }),
     getAppConfig: getAppConfigMock,
-    transactionCheckOptIn: transactionCheckOptInMock,
-    provideTransactionCheck: provideTransactionCheckMock,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any) as unknown as ReturnType<typeof vi.spyOn>;
   const { observable } = action._execute(apiMock);
@@ -216,11 +229,6 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       .mockResolvedValue(
         CommandResultFactory({ data: appConfig(legacyVersion) }),
       );
-    transactionCheckOptInMock = vi
-      .fn()
-      .mockResolvedValue(CommandResultFactory({ data: { enabled: true } }));
-    provideTransactionCheckMock = vi.fn().mockResolvedValue(undefined);
-
     // Generic child: degrades by default (no instruction recognised).
     buildGenericMock = vi.fn().mockResolvedValue({
       mode: "none",
@@ -269,6 +277,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     parentSpy?.mockRestore();
     genericSpy.mockRestore();
     basicSpy.mockRestore();
+    txCheckSpy.mockRestore();
     genericSignSpy.mockRestore();
     basicSignSpy.mockRestore();
   });
@@ -573,97 +582,8 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       );
     }));
 
-  it("runs TransactionChecks opt-in before clear-sign when the app requires it", () =>
+  it("ProvisionTransactionCheckDeviceAction child is invoked when feature is supported", () =>
     new Promise<void>((resolve, reject) => {
-      // Flex on an app version that supports transaction-checks; opt-in not yet done.
-      apiMock.getDeviceSessionState.mockReturnValue(
-        session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
-      );
-      getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
-            transactionChecksEnabled: false,
-            transactionChecksOptIn: false,
-          },
-        }),
-      );
-      run(
-        baseInput,
-        (states) => {
-          try {
-            expect(transactionCheckOptInMock).toHaveBeenCalled();
-            // Opt-in must precede the terminal sign in the emitted sequence.
-            const steps = stepSequence(states);
-            const optInIdx = steps.indexOf(
-              signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN,
-            );
-            const signIdx = steps.indexOf(
-              signClearSignDAStateSteps.SIGN_TRANSACTION,
-            );
-            expect(optInIdx).toBeGreaterThanOrEqual(0);
-            expect(signIdx).toBeGreaterThan(optInIdx);
-            expect(states[states.length - 1]!.status).toBe(
-              DeviceActionStatus.Completed,
-            );
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        },
-        reject,
-      );
-    }));
-
-  it("does not block signing when the transaction-checks opt-in throws (best-effort)", () =>
-    new Promise<void>((resolve, reject) => {
-      // Flex on an app version that supports transaction-checks; opt-in not yet done.
-      apiMock.getDeviceSessionState.mockReturnValue(
-        session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
-      );
-      getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({
-          data: {
-            ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
-            transactionChecksEnabled: false,
-            transactionChecksOptIn: false,
-          },
-        }),
-      );
-      // The opt-in actor throws (not a CommandResult error): must proceed.
-      transactionCheckOptInMock.mockRejectedValue(
-        new Error("opt-in transport error"),
-      );
-      run(
-        baseInput,
-        (states) => {
-          try {
-            expect(transactionCheckOptInMock).toHaveBeenCalled();
-            // It still reaches the terminal sign and completes successfully.
-            const steps = stepSequence(states);
-            const optInIdx = steps.indexOf(
-              signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN,
-            );
-            const signIdx = steps.indexOf(
-              signClearSignDAStateSteps.SIGN_TRANSACTION,
-            );
-            expect(optInIdx).toBeGreaterThanOrEqual(0);
-            expect(signIdx).toBeGreaterThan(optInIdx);
-            expect(states[states.length - 1]!.status).toBe(
-              DeviceActionStatus.Completed,
-            );
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        },
-        reject,
-      );
-    }));
-
-  it("provides transaction-checks before the clear-sign branch, independent of the path taken", () =>
-    new Promise<void>((resolve, reject) => {
-      // Flex on a web3-supported version, already enabled (no opt-in needed).
       apiMock.getDeviceSessionState.mockReturnValue(
         session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
       );
@@ -680,17 +600,48 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         baseInput,
         (states) => {
           try {
-            expect(provideTransactionCheckMock).toHaveBeenCalled();
             const steps = stepSequence(states);
-            const web3Idx = steps.indexOf(
+            expect(steps).toContain(
               signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
             );
-            // It runs, and before any clear-sign / sign step.
-            expect(web3Idx).toBeGreaterThanOrEqual(0);
-            const signIdx = steps.indexOf(
-              signClearSignDAStateSteps.SIGN_TRANSACTION,
+            expect(states[states.length - 1]!.status).toBe(
+              DeviceActionStatus.Completed,
             );
-            expect(signIdx).toBeGreaterThan(web3Idx);
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        },
+        reject,
+      );
+    }));
+
+  it("skips transaction-checks when transactionChecks is in disabledFeatures", () =>
+    new Promise<void>((resolve, reject) => {
+      // App supports TXC on Flex, but the caller force-disables it.
+      apiMock.getDeviceSessionState.mockReturnValue(
+        session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
+      );
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
+            transactionChecksEnabled: false,
+            transactionChecksOptIn: false,
+          },
+        }),
+      );
+      run(
+        { ...baseInput, disabledFeatures: ["transactionChecks"] },
+        (states) => {
+          try {
+            const steps = stepSequence(states);
+            expect(steps).not.toContain(
+              signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN,
+            );
+            expect(steps).not.toContain(
+              signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
+            );
             expect(states[states.length - 1]!.status).toBe(
               DeviceActionStatus.Completed,
             );

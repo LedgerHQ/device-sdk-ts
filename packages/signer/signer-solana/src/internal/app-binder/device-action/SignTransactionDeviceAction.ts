@@ -1,4 +1,3 @@
-import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type CommandResult,
   type DeviceActionStateMachine,
@@ -23,20 +22,20 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
-import {
-  TransactionCheckOptInCommand,
-  type TransactionCheckOptInCommandResponse,
-} from "@internal/app-binder/command/TransactionCheckOptInCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
 import {
-  isSolanaFeatureSupported,
-  type SOLANA_FEATURES,
+  type NormalizedTransactionInput,
+  TransactionInputNormaliser,
+} from "@internal/app-binder/services/TransactionInputNormaliser";
+import {
+  isSolanaSignerFeatureSupported,
+  type SolanaSignerFeaturesNames,
 } from "@internal/app-binder/SolanaApplicationResolver";
-import { ProvideTransactionCheckTask } from "@internal/app-binder/task/ProvideTransactionCheckTask";
 
 import { ProvisionBasicClearSignDeviceAction } from "./ProvisionBasicClearSignDeviceAction";
 import { ProvisionGenericClearSignDeviceAction } from "./ProvisionGenericClearSignDeviceAction";
+import { ProvisionTransactionCheckDeviceAction } from "./ProvisionTransactionCheckDeviceAction";
 import { SignBasicClearSignDeviceAction } from "./SignBasicClearSignDeviceAction";
 import { SignGenericClearSignDeviceAction } from "./SignGenericClearSignDeviceAction";
 
@@ -51,20 +50,10 @@ function resolveSolanaRpcUrl(
 }
 
 export type MachineDependencies = {
+  readonly normalizeTransaction: () => Promise<NormalizedTransactionInput>;
   readonly getAppConfig: () => Promise<
     CommandResult<AppConfiguration, SolanaAppErrorCodes>
   >;
-  readonly transactionCheckOptIn: () => Promise<
-    CommandResult<TransactionCheckOptInCommandResponse, SolanaAppErrorCodes>
-  >;
-  readonly provideTransactionCheck: (arg0: {
-    input: {
-      derivationPath: string;
-      transaction: Uint8Array;
-      contextModule: ContextModule;
-      isBlockhashRefreshNeeded: boolean;
-    };
-  }) => Promise<void>;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -91,17 +80,29 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       SignTransactionDAInternalState
     >;
 
-    const { getAppConfig, transactionCheckOptIn, provideTransactionCheck } =
+    const { normalizeTransaction, getAppConfig } =
       this.extractDependencies(internalApi);
 
     const logger = this.getLoggerFactory(internalApi)(
       "SignTransactionDeviceAction",
     );
 
+    const disabledFeaturesSet:
+      | ReadonlySet<SolanaSignerFeaturesNames>
+      | undefined = this.input.disabledFeatures
+      ? new Set(this.input.disabledFeatures)
+      : undefined;
+
     const isSupported = (
-      feature: keyof typeof SOLANA_FEATURES,
+      feature: SolanaSignerFeaturesNames,
       appConfig: AppConfiguration,
-    ): boolean => isSolanaFeatureSupported(internalApi, feature, appConfig);
+    ): boolean =>
+      isSolanaSignerFeatureSupported(
+        internalApi,
+        feature,
+        appConfig,
+        disabledFeaturesSet,
+      );
 
     // Blockhash refresh is opt-in and shared by both terminal-sign machines:
     // only when `delayed: true` is requested, a blockhash source exists, and
@@ -141,12 +142,21 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         output: {} as types["output"],
       },
       actors: {
+        normalizeTransaction: fromPromise(normalizeTransaction),
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
-        transactionCheckOptIn: fromPromise(transactionCheckOptIn),
-        provideTransactionCheck: fromPromise(provideTransactionCheck),
+        transactionCheckStateMachine: new ProvisionTransactionCheckDeviceAction(
+          {
+            input: {
+              derivationPath: this.input.derivationPath,
+              transaction: this.input.transaction,
+              contextModule: this.input.contextModule,
+            },
+            loggerFactory: this.getLoggerFactory(internalApi),
+          },
+        ).makeStateMachine(internalApi),
         provisionGenericClearSignStateMachine:
           new ProvisionGenericClearSignDeviceAction({
             input: {
@@ -186,22 +196,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         noInternalError: ({ context }) => context._internalState.error === null,
         skipOpenApp: ({ context }) =>
           context.input.transactionOptions?.skipOpenApp || false,
-        isSPLSupported: ({ context }) =>
-          isSupported("spl", context._internalState.appConfig!),
         isTransactionChecksSupported: ({ context }) =>
           isSupported("transactionChecks", context._internalState.appConfig!),
-        // The device only runs the scan when the feature is enabled (fresh
-        // opt-in this run, or already enabled for a returning user).
-        transactionChecksEnabled: ({ context }) =>
-          context._internalState.appConfig!.transactionChecksEnabled === true,
         // Generic clear-signing terminates via SIGN MESSAGE DELAYED (0x09) on
         // the original message, so it only needs the capability bit — no RPC /
         // blockhash prerequisite.
         isGenericClearSignAvailable: ({ context }) =>
           isSupported("genericClearSign", context._internalState.appConfig!),
-        shouldOptIn: ({ context }) =>
-          !context._internalState.appConfig!.transactionChecksEnabled &&
-          !context._internalState.appConfig!.transactionChecksOptIn,
         // Generic clear-sign child streamed + finalized the descriptors (its
         // Right("prepared") outcome was folded into the context by the
         // GenericClearSign onDone).
@@ -225,7 +226,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOAJzSAbAYAsOgKymdN08YA0IAJ67LxjnbvWxjoW-kGGxgC+Ee5omLgERGxUtAxMrORU3Lz8QiJiUjrySCDKqhkYGtoI+kZmljb2js5unojmRgbS1haG0o5OllEx6Nj4hCTlKYwsSZwA8opgGMyKilNps+IQVGAcqBh0FADWuxSLy6vComAAsiQAFvtgMkVKKmpUlYh6dgBMHL8bJ0LKY7AZOr87O4vAhjHpTCZfkEDHo+nprL8ekMQLFRgkJux1jNyhwFksVooAEpwACuAlIAGF7mBiEcpHINKUPhVilUdL9gn5TCjfr9rNJ+X8WjDzAi9AKDGLwb94RZrNjcfFxrMiel2KTzhTqbA6YzmayCq8Su9yl9qgKLEKRWKJZCkdDEEE-NIffLAX8LPUNSMtYlJvRpnrMgBxMCkCkMqgAM3QWx2ewOx12MHjq0TGBTUBenJt6l5uj9JmsBjhxjhdn0pg91S61gB1kCPT0aosxiRwbiYzDhIjGxJsdzinzhfEYBwOAoOA4igEoiTi4Athwcwnk+hi8Uubby9VK8Zq7X643m78fRwfT7+fCxQ2B3jteHUsT9RPdwX0MappMiybIHm8ZRlqAVQCuYHAWJClj8qYSpQq0LZ6HoHA2D2PpwuCphvqGBLJKO34xnGf6FoB9LARakiFCWEGfCeMHSHBCEWEhKHNt2dj3ghdh9FYgLGHYhFDsRNCkVGnC-nme5QNRZogVIvxWkekFaIgrHsYJnG-Mh1aoTCDQcKYvG9sYaIuJE0Q4iGEk6tJswcAA6mAABGBi0UcsALKQPBphguz7IcJwcAA7p53nmkc-k8GB1pMTyUHaRh-zdHCpjVtInSic2dZGH8gmoi4lmQuJ+JOV+MludFPl+YoAUYLO86Lsuq6kOuOBblFXk+fFGCJRpzGpQgKryhwmXwjleXGd4k3WGCOhWd29g-BYlUfiONUue5-WxY1zVKeImiwHkux4EmYg4AAFNIACU4iao5n6Rnt9WHYNSnDaWo1aQgiqQhwqqmNlxUqrlzaOAi1h6H2KLLZCK1bcOJG7SSPmxsFOCMAyAhgHgOC4sgNKrIuYgQOy6l-SlAMGBYgYg6YjM-NYoLSGC80IMh-yBgYwTwqJ5l2HoqOSbqLlY0sc54wTRMk2Tyg4JTlqMdydoM0zqo9AEHNc82elTd28F1qtnTouL1XvZjsXY7LxD44TxMjKT5Mq5Aqk08lmuM2xOts-rBjc90bFwyEZvgh2KpiXZL1VW9Y4-jLuOO-LLuYEFIWZuFMA43LzskxddzEI8wW-T7J4YmDJjooYir2DY0OdMbjNiuiGIqgRccOQnO028n+dp4XIxZxmYXZinBcK67xcPE89HexrVcGQicJw8qjfWM28FtuZjOBOY1borZwyDn36MD+RQ9OzPmfbMF49ZtuU-D3fGBXGIJdl88anq8eY1q5rzrpvME280J1n+PvUWDgVril+FbROZFZKv1vhnFqc4FxLhXGuTcL8b7pyLtcb+C8OSHlpnaIBtcN4NzATxeGAJMRWF7EqCUBhEH9yTpkZA9xBACAoBFNBuIx6hWfrAXhAh+GCMIbPYh89y5kPAsvMaxUdB+G6I4eEAtpB1m5kEXwDMXDaN7HoHQwQOGXy4ZwHhfCBFCNHpg9qOCup4PEbY6RI9MCf1uPI54iikrKIBqo9RIJGzaN0fQtixgQTw1FBiXRYse7n22pY5BHAsBzg3PsQQwiH7ZwnhwVQmB9hQDJPgcosBvEkIUUvABQTsqYWkBhdENhzxql+DxUEcFqyr26Bibs3cz7vjRlJDG+p44pIwEpHy1N-6aSqCEQUQIGbymMOCMEBVgZgjVNEkELNuixyGURa2ViOATJGdM2KatyGVzGosx0yyehInWQYehCJtkdkZn8YO0Soh2QwBQCAcANDnIls5OpI06ZVAALQWGbLC+8D4kXIrVBY0ZV9OA8DUDki6cz-pVAxM2HQlg2I1hmtIES61Bn2WSSMyWJIyQXDWOCzSkLNZ2EdICasAs-imIMKCAq-g-ABHgv0Wwok0X0v1Iyo0tIaKxTxVC7wFL7z2EEsEUWcNuzQwlMKjewozDNJ0JKll5FJzTnQIqu0OhxSYQbKLLogJ4agleWhYlxKTB1iaYZDsARDk0uGWCsZZrKIATlcpVkVqTw6GFP7FmoIBQrTWToIllg+LmRtaiTmqJlQmuDZwfaMUQJHR4FGsaYonAg1yhCBs2VGapv5feFm-K4lOA3nmjFdUDrFu+uGstAMDJmA4MS8GQRRSKnMgVbKZl4Z9H5KKJEgQO2nOlgQzxH8lYU0gP2qoUc+JjvZhKZC8E4VoX6Iw5EfY4nVmNUkwNJy0n21TvYzAO7EA1jWdQn4GEzD6HlAVOEJgwS3lwvG9hd7jlINqjYyRdiZGvpuYEglok+Iit3lYfoKa0ImzMsBroyF9BxOXWkjJPVslCBGG+hA-gGz3lncLMUBlXUwnhm2Qx0SNrBHMtS0FD7oO90mZckCVH4J-DMgKeUIQwHswKvoLCeyJQbXgvKYj0GaTECYLAeAiG6kLPlJhTEgR5QNxVMxz0oo-AM26PBYI-KzGqZcgAUTajgET+mAQ7OMwKUzzYlqYXDhytZ6q8Lqj+UAA */
       id: "SignTransactionDeviceAction",
-      initial: "InitialState",
+      initial: "NormalizeTransaction",
       context: ({ input }) => ({
         input,
         intermediateValue: {
@@ -236,15 +237,50 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           error: null,
           signature: null,
           appConfig: null,
+          messageBytes: this.input.transaction,
+          serializedForTxCheck: undefined,
           clearSignPrepared: false,
         },
       }),
       states: {
-        InitialState: {
-          always: [
-            { target: "GetAppConfig", guard: "skipOpenApp" },
-            { target: "OpenAppDeviceAction" },
-          ],
+        NormalizeTransaction: {
+          // Emit the correct first step immediately so the snapshot produced
+          // while the actor runs already reflects where we are headed.
+          entry: assign({
+            intermediateValue: ({ context }) => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: context.input.transactionOptions?.skipOpenApp
+                ? signTransactionDAStateSteps.GET_APP_CONFIG
+                : signTransactionDAStateSteps.OPEN_APP,
+            }),
+          }),
+          invoke: {
+            id: "normalizeTransaction",
+            src: "normalizeTransaction",
+            onDone: [
+              {
+                target: "GetAppConfig",
+                guard: "skipOpenApp",
+                actions: assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    messageBytes: event.output.messageBytes,
+                    serializedForTxCheck: event.output.serializedForTxCheck,
+                  }),
+                }),
+              },
+              {
+                target: "OpenAppDeviceAction",
+                actions: assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    messageBytes: event.output.messageBytes,
+                    serializedForTxCheck: event.output.serializedForTxCheck,
+                  }),
+                }),
+              },
+            ],
+          },
         },
         OpenAppDeviceAction: {
           entry: assign({
@@ -317,136 +353,53 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         GetAppConfigResultCheck: {
           always: [
             {
-              target: "TransactionChecksOptIn",
-              guard: and([
-                "noInternalError",
-                "isTransactionChecksSupported",
-                "shouldOptIn",
-              ]),
-            },
-            // When the opt-in isn't run, jump straight to the transaction-check gate
-            // (the opt-in path rejoins it after TransactionChecksOptInResult).
-            {
-              target: "TransactionChecks",
+              target: "CheckTransactionCheckSupported",
               guard: "noInternalError",
             },
             { target: "Error" },
           ],
         },
-        TransactionChecksOptIn: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
-              step: signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN,
-            }),
-          }),
-          invoke: {
-            id: "transactionCheckOptIn",
-            src: "transactionCheckOptIn",
-            onDone: {
-              target: "TransactionChecksOptInResult",
-              actions: [
-                ({ event }) => {
-                  if (!isSuccessCommandResult(event.output)) {
-                    logger.warn(
-                      "[TransactionChecksOptIn] opt-in command returned error, proceeding without transaction-checks",
-                      { data: { error: event.output } },
-                    );
-                  }
-                },
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        appConfig: {
-                          ...context._internalState.appConfig!,
-                          transactionChecksEnabled: event.output.data.enabled,
-                        },
-                      };
-                    }
-                    return context._internalState;
-                  },
-                }),
-              ],
-            },
-            onError: {
-              target: "TransactionChecksOptInResult",
-              actions: ({ event }) =>
-                logger.info(
-                  "[TransactionChecksOptIn] opt-in threw; proceeding without transaction-checks",
-                  { data: { error: event.error } },
-                ),
-            },
-          },
-        },
-        TransactionChecksOptInResult: {
-          entry: assign(({ context }) => ({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN_RESULT,
-              result:
-                context._internalState.appConfig!.transactionChecksEnabled!,
-            },
-          })),
-          // Zero-delay transition: ensures the entry assign above is visible to
-          // onSnapshot observers before the machine moves on to the gate.
-          after: {
-            0: {
-              target: "TransactionChecks",
-            },
-          },
-        },
-        // Web3-checks (transaction scan) provisioning runs here — before the
-        // clear-sign branch — so it applies to every sign path (generic,
-        // basic, blind) and never disturbs a generic-armed fingerprint.
-        TransactionChecks: {
+        CheckTransactionCheckSupported: {
           always: [
+            // Feature supported: delegate opt-in + provide to the child machine.
             {
-              target: "TransactionChecksProvide",
-              guard: and([
-                "isTransactionChecksSupported",
-                "transactionChecksEnabled",
-              ]),
+              target: "TxCheck",
+              guard: "isTransactionChecksSupported",
             },
+            // Feature not supported: skip the child machine entirely.
             { target: "CheckGenericClearSignSupported" },
           ],
         },
-        TransactionChecksProvide: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
-            }),
-          }),
+        // Web3-checks child machine: handles opt-in prompt and scan-descriptor
+        // provisioning. Only reached when the feature is supported; opt-in and
+        // provide decisions are made internally.
+        TxCheck: {
           invoke: {
-            id: "provideTransactionCheck",
-            src: "provideTransactionCheck",
+            id: "transactionCheckStateMachine",
+            src: "transactionCheckStateMachine",
             input: ({ context }) => {
               // The scan descriptor must hash the same message the device will
               // sign. The terminal sign only zeroes the blockhash when it
               // refreshes it (delayed signing); otherwise it signs the original.
               const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
               return {
+                appConfig: context._internalState.appConfig!,
                 derivationPath: context.input.derivationPath,
-                transaction: context.input.transaction,
+                transaction: context._internalState.messageBytes,
                 contextModule: context.input.contextModule,
                 isBlockhashRefreshNeeded:
                   rpcUrl !== undefined || fetchBlockhash !== undefined,
+                serializedForTxCheck:
+                  context._internalState.serializedForTxCheck,
               };
             },
-            // Best-effort: a failed scan-descriptor stream never blocks signing.
-            onDone: { target: "CheckGenericClearSignSupported" },
-            onError: {
-              target: "CheckGenericClearSignSupported",
-              actions: ({ event }) =>
-                logger.info(
-                  "[TransactionChecks] provisioning failed; proceeding",
-                  {
-                    data: { error: event.error },
-                  },
-                ),
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: ({ event }) =>
+                  event.snapshot.context.intermediateValue,
+              }),
             },
+            onDone: { target: "CheckGenericClearSignSupported" },
           },
         },
         CheckGenericClearSignSupported: {
@@ -468,7 +421,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "provisionGenericClearSignStateMachine",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              transaction: context.input.transaction,
+              transaction: context._internalState.messageBytes,
               contextModule: context.input.contextModule,
             }),
             onSnapshot: {
@@ -532,7 +485,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
               return {
                 derivationPath: context.input.derivationPath,
-                transaction: context.input.transaction,
+                transaction: context._internalState.messageBytes,
                 rpcUrl,
                 fetchBlockhash,
                 userInputType:
@@ -588,7 +541,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "provisionBasicClearSignStateMachine",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              transaction: context.input.transaction,
+              transaction: context._internalState.messageBytes,
               contextModule: context.input.contextModule,
               appConfig: context._internalState.appConfig!,
               rpcUrl: resolveSolanaRpcUrl(context.input),
@@ -615,7 +568,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
               return {
                 derivationPath: context.input.derivationPath,
-                transaction: context.input.transaction,
+                transaction: context._internalState.messageBytes,
                 rpcUrl,
                 fetchBlockhash,
                 userInputType:
@@ -665,32 +618,29 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
+    const normalizeTransaction = async () => {
+      try {
+        return new TransactionInputNormaliser().normalize(
+          this.input.transaction,
+        );
+      } catch (error) {
+        this.getLoggerFactory(internalApi)("NormalizeTransaction").warn(
+          "[normalizeTransaction] format detection failed; treating input as message bytes",
+          { data: { error } },
+        );
+        return {
+          messageBytes: this.input.transaction,
+          serializedForTxCheck: undefined,
+        };
+      }
+    };
+
     const getAppConfig = async () =>
       internalApi.sendCommand(new GetAppConfigurationCommand());
 
-    const transactionCheckOptIn = async () =>
-      internalApi.sendCommand(new TransactionCheckOptInCommand());
-
-    const provideTransactionCheck = async (arg0: {
-      input: {
-        derivationPath: string;
-        transaction: Uint8Array;
-        contextModule: ContextModule;
-        isBlockhashRefreshNeeded: boolean;
-      };
-    }) =>
-      new ProvideTransactionCheckTask(internalApi, {
-        derivationPath: arg0.input.derivationPath,
-        transactionBytes: arg0.input.transaction,
-        contextModule: arg0.input.contextModule,
-        isBlockhashRefreshNeeded: arg0.input.isBlockhashRefreshNeeded,
-        loggerFactory: this.getLoggerFactory(internalApi),
-      }).run();
-
     return {
+      normalizeTransaction,
       getAppConfig,
-      transactionCheckOptIn,
-      provideTransactionCheck,
     };
   }
 }

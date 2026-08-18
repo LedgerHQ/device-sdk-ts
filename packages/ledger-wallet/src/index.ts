@@ -160,6 +160,31 @@ export type {
   RestoreBackupDAState,
   RestoreBackupSteps,
 } from "./api/device-action/OsUpdate/Restore/RestoreBackup/types";
+export type {
+  BaseFirmware,
+  FinalFirmware,
+  McuFirmware,
+  OsuFirmware,
+  OsUpdate,
+} from "./api/device-action/OsUpdate/Shared/types";
+export { FlashMcuDeviceAction } from "./api/device-action/OsUpdate/Update/FlashMcu/FlashMcuDeviceAction";
+export type {
+  FlashMcuDAError,
+  FlashMcuDAInput,
+  FlashMcuDAIntermediateValue,
+  FlashMcuDARequiredInteraction,
+  FlashMcuDAState,
+  FlashMcuSteps,
+} from "./api/device-action/OsUpdate/Update/FlashMcu/types";
+export { InstallOsUpdateDeviceAction } from "./api/device-action/OsUpdate/Update/InstallOsUpdate/InstallOsUpdateDeviceAction";
+export type {
+  InstallOsUpdateDAError,
+  InstallOsUpdateDAInput,
+  InstallOsUpdateDAIntermediateValue,
+  InstallOsUpdateDARequiredInteraction,
+  InstallOsUpdateDAState,
+  InstallOsUpdateSteps,
+} from "./api/device-action/OsUpdate/Update/InstallOsUpdate/types";
 export { RemoveCustomLockScreenDeviceAction } from "./api/device-action/RemoveCustomLockScreen/RemoveCustomLockScreenDeviceAction";
 export type {
   RemoveCustomLockScreenDAError,

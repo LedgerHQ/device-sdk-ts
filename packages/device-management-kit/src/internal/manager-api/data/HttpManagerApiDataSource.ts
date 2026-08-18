@@ -339,6 +339,7 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
             id: mcu.id,
             name: mcu.name,
             fromBootloaderVersion: mcu.from_bootloader_version,
+            providers: mcu.providers,
           };
           return ret;
         }),

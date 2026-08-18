@@ -218,4 +218,15 @@ describe("ManagerApiService", () => {
       expect(dataSource.getMcuList).toHaveBeenCalled();
     });
   });
+
+  describe("getProvider", () => {
+    it("should return the provider", () => {
+      // given
+      dataSource.getProvider.mockReturnValue(1);
+      // when
+      const provider = service.getProvider();
+      // then
+      expect(provider).toEqual(1);
+    });
+  });
 });

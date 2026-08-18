@@ -3,15 +3,15 @@ import {
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
 import { type Either, EitherAsync, Just, Maybe } from "purify-ts";
-import { coerce, compare } from "semver";
 
 import { ResolveOsUpdatePathError } from "@api/device-action/OsUpdate/Resolve/ResolveOsUpdatePathDeviceActionErrors";
+import { bestCompatibleMcu } from "@api/device-action/OsUpdate/Shared/OsUpdateUtils";
 import {
   type FinalFirmware,
   type McuFirmware,
   type OsuFirmware,
   type OsUpdate,
-} from "@api/device-action/OsUpdate/Resolve/types";
+} from "@api/device-action/OsUpdate/Shared/types";
 
 type ResolveOsUpdatePathHandlerInput = {
   getOsVersionResponse: GetOsVersionResponse;
@@ -64,10 +64,12 @@ export const resolveOsUpdatePath =
           const shouldFlashMcu = !finalFirmware.mcuVersions.includes(mcuId);
 
           if (shouldFlashMcu) {
+            const provider = internalApi.getManagerApiService().getProvider();
             mcuId = await liftEither(
               resolveMcuId(
                 mcuList,
-                latestCompatibleMcuName(mcuList, finalFirmware),
+                bestCompatibleMcu(mcuList, finalFirmware, provider)?.name ??
+                  null,
               ),
             );
           }
@@ -99,6 +101,7 @@ const getMcuList = (
         id: mcu.id,
         name: mcu.name,
         fromBootloaderVersion: mcu.fromBootloaderVersion,
+        providers: mcu.providers,
       })),
     )
     .mapLeft(toResolveOsUpdatePathError);
@@ -114,26 +117,6 @@ const resolveMcuId = (
         `No MCU firmware found for version ${mcuName}`,
       ),
     );
-
-const latestCompatibleMcuName = (
-  mcuList: McuFirmware[],
-  finalFirmware: FinalFirmware,
-): string | null =>
-  mcuList
-    .filter((mcu) => finalFirmware.mcuVersions.includes(mcu.id))
-    .reduce<{ name: string; version: string } | null>((latestMcu, mcu) => {
-      const version = coerce(mcu.name)?.version;
-
-      if (!version) {
-        return latestMcu;
-      }
-
-      if (!latestMcu || compare(version, latestMcu.version) > 0) {
-        return { name: mcu.name, version };
-      }
-
-      return latestMcu;
-    }, null)?.name ?? null;
 
 const getDeviceVersion = (
   internalApi: InternalApi,

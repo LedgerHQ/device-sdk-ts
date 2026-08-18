@@ -1,5 +1,3 @@
 export type AppConfig = {
-  major: number;
-  minor: number;
-  patch: number;
+  readonly version: string;
 };
