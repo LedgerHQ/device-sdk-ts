@@ -1,5 +1,22 @@
 # @ledgerhq/context-module
 
+## 2.4.0
+
+### Minor Changes
+
+- [#1679](https://github.com/LedgerHQ/device-sdk-ts/pull/1679) [`5cea7e4`](https://github.com/LedgerHQ/device-sdk-ts/commit/5cea7e4f958a6cabb5604d7b03ec89245ca5b4a9) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add mintToId datasource for Solana token loader
+
+- [#1736](https://github.com/LedgerHQ/device-sdk-ts/pull/1736) [`f69cebd`](https://github.com/LedgerHQ/device-sdk-ts/commit/f69cebdc2ec7ec76a231cb0f176625b39cbc8943) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add `APEX` device model support to the clear-signing and transaction-check codec
+
+### Patch Changes
+
+- [#1736](https://github.com/LedgerHQ/device-sdk-ts/pull/1736) [`e6bbdd5`](https://github.com/LedgerHQ/device-sdk-ts/commit/e6bbdd55fbb96c2d9a45a2afbd64dd496eae439d) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Accept Solana instruction descriptors without `discriminator_hex`.
+
+- [#1712](https://github.com/LedgerHQ/device-sdk-ts/pull/1712) [`0e942f4`](https://github.com/LedgerHQ/device-sdk-ts/commit/0e942f43b2a14f7eb482da5d418696dc493d17f7) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Forward cosigners for Solana txc
+
+- Updated dependencies [[`f5b3738`](https://github.com/LedgerHQ/device-sdk-ts/commit/f5b3738b3ffca4d6ced75497f50b494777a9c073), [`e946c4f`](https://github.com/LedgerHQ/device-sdk-ts/commit/e946c4fddcc770b32f9cf95a84cf7047bf14a06f), [`72eb0a4`](https://github.com/LedgerHQ/device-sdk-ts/commit/72eb0a484a43ad9195afe059b406d6941aeb8c10), [`911eb1d`](https://github.com/LedgerHQ/device-sdk-ts/commit/911eb1d9945aecd1b0f323a802ad0585e36f8da4), [`79c2060`](https://github.com/LedgerHQ/device-sdk-ts/commit/79c2060dd9ddf9872a73c24518a7875bf03a3f61), [`9552e82`](https://github.com/LedgerHQ/device-sdk-ts/commit/9552e829121e9d428c49084136744152c08c0b1c), [`3c071ba`](https://github.com/LedgerHQ/device-sdk-ts/commit/3c071ba2023b1f35e8dc28e4e9d46a46c582b568), [`57ddf0b`](https://github.com/LedgerHQ/device-sdk-ts/commit/57ddf0ba8ac2503f92d1bfb9c8f936a7a402da4a), [`fadb5c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/fadb5c24d1bb7ce588f2d26d6fbc5692f5b29e95), [`575457e`](https://github.com/LedgerHQ/device-sdk-ts/commit/575457e53cfd6d59e6a273b897d4262b18d1611b), [`37ba2fd`](https://github.com/LedgerHQ/device-sdk-ts/commit/37ba2fd5583ab6477442627f182c2d493858a3b0), [`221cb79`](https://github.com/LedgerHQ/device-sdk-ts/commit/221cb79340eee27b0364e27db2b80e7dfef1b163), [`3f2f0cd`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f2f0cddb28cd4b5fb142e27e983ac59110e17f1), [`c7ce54e`](https://github.com/LedgerHQ/device-sdk-ts/commit/c7ce54e5658266d0c1c3d3d76a820f82b6cdcd0a), [`95e2ce0`](https://github.com/LedgerHQ/device-sdk-ts/commit/95e2ce06155042764ee2ea8a8a0a9edab4366da5), [`bbab1db`](https://github.com/LedgerHQ/device-sdk-ts/commit/bbab1dbb4704f89506d0780d2ce0a044992a31d6)]:
+  - @ledgerhq/device-management-kit@1.8.0
+
 ## 2.3.1
 
 ### Patch Changes

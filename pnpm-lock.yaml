@@ -16658,7 +16658,7 @@ snapshots:
       mime: 2.6.0
       ora: 5.4.1
       prompts: 2.4.2
-      semver: 7.7.2
+      semver: 7.7.3
 
   '@react-native-community/cli-types@15.0.1':
     dependencies:

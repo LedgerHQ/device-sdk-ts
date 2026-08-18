@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.0
+
+### Minor Changes
+
+- [#1743](https://github.com/LedgerHQ/device-sdk-ts/pull/1743) [`29a13b0`](https://github.com/LedgerHQ/device-sdk-ts/commit/29a13b08b878469508a58b957b0bbb1611c8f943) Thanks [@vladyslavchupovskiy-ext-art](https://github.com/vladyslavchupovskiy-ext-art)! - Implement GetAppConfigCommand — getAppConfig() now returns the Zcash app version (major, minor, patch) instead of throwing
+
+### Patch Changes
+
+- Updated dependencies [[`f5b3738`](https://github.com/LedgerHQ/device-sdk-ts/commit/f5b3738b3ffca4d6ced75497f50b494777a9c073), [`e946c4f`](https://github.com/LedgerHQ/device-sdk-ts/commit/e946c4fddcc770b32f9cf95a84cf7047bf14a06f), [`72eb0a4`](https://github.com/LedgerHQ/device-sdk-ts/commit/72eb0a484a43ad9195afe059b406d6941aeb8c10), [`911eb1d`](https://github.com/LedgerHQ/device-sdk-ts/commit/911eb1d9945aecd1b0f323a802ad0585e36f8da4), [`79c2060`](https://github.com/LedgerHQ/device-sdk-ts/commit/79c2060dd9ddf9872a73c24518a7875bf03a3f61), [`9552e82`](https://github.com/LedgerHQ/device-sdk-ts/commit/9552e829121e9d428c49084136744152c08c0b1c), [`3c071ba`](https://github.com/LedgerHQ/device-sdk-ts/commit/3c071ba2023b1f35e8dc28e4e9d46a46c582b568), [`57ddf0b`](https://github.com/LedgerHQ/device-sdk-ts/commit/57ddf0ba8ac2503f92d1bfb9c8f936a7a402da4a), [`fadb5c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/fadb5c24d1bb7ce588f2d26d6fbc5692f5b29e95), [`575457e`](https://github.com/LedgerHQ/device-sdk-ts/commit/575457e53cfd6d59e6a273b897d4262b18d1611b), [`37ba2fd`](https://github.com/LedgerHQ/device-sdk-ts/commit/37ba2fd5583ab6477442627f182c2d493858a3b0), [`221cb79`](https://github.com/LedgerHQ/device-sdk-ts/commit/221cb79340eee27b0364e27db2b80e7dfef1b163), [`3f2f0cd`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f2f0cddb28cd4b5fb142e27e983ac59110e17f1), [`c7ce54e`](https://github.com/LedgerHQ/device-sdk-ts/commit/c7ce54e5658266d0c1c3d3d76a820f82b6cdcd0a), [`95e2ce0`](https://github.com/LedgerHQ/device-sdk-ts/commit/95e2ce06155042764ee2ea8a8a0a9edab4366da5), [`bbab1db`](https://github.com/LedgerHQ/device-sdk-ts/commit/bbab1dbb4704f89506d0780d2ce0a044992a31d6)]:
+  - @ledgerhq/device-management-kit@1.8.0
+
 ## 0.6.0
 
 ### Minor Changes
