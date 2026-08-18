@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import {
-  type RegisterExternalAddressDAError,
-  type RegisterExternalAddressDAIntermediateValue,
   type RegisterExternalAddressDAOutput,
+  type RegisterLedgerAccountDAOutput,
 } from "@ledgerhq/device-contacts-kit";
 import { Flex, Tag, Text } from "@ledgerhq/react-ui";
 
@@ -34,7 +33,8 @@ function bytesToHex(bytes: Uint8Array): string {
     .join("");
 }
 
-type PersistedContactEntry = {
+type PersistedExternalAddressEntry = {
+  kind: "externalAddress";
   mode: RegisterExternalAddressDAOutput["mode"];
   contactName: string;
   scope: string;
@@ -47,9 +47,35 @@ type PersistedContactEntry = {
   registeredAt: string;
 };
 
-function persistProofs(output: RegisterExternalAddressDAOutput): void {
+type PersistedLedgerAccountEntry = {
+  kind: "ledgerAccount";
+  accountName: string;
+  derivationPath: string;
+  blockchainFamily: string;
+  chainId?: string;
+  hmacProofHex: string;
+  registeredAt: string;
+};
+
+type PersistedContactEntry =
+  | PersistedExternalAddressEntry
+  | PersistedLedgerAccountEntry;
+
+function persistEntry(entry: PersistedContactEntry): void {
   if (typeof window === "undefined") return;
-  const entry: PersistedContactEntry = {
+  const raw = window.localStorage.getItem(CONTACTS_STORAGE_KEY);
+  const existing: PersistedContactEntry[] = raw
+    ? (JSON.parse(raw) as PersistedContactEntry[])
+    : [];
+  window.localStorage.setItem(
+    CONTACTS_STORAGE_KEY,
+    JSON.stringify([...existing, entry]),
+  );
+}
+
+function persistProofs(output: RegisterExternalAddressDAOutput): void {
+  persistEntry({
+    kind: "externalAddress",
     mode: output.mode,
     contactName: output.contactName,
     scope: output.scope,
@@ -60,15 +86,19 @@ function persistProofs(output: RegisterExternalAddressDAOutput): void {
     hmacProofHex: bytesToHex(output.hmacProof),
     hmacRestHex: bytesToHex(output.hmacRest),
     registeredAt: new Date().toISOString(),
-  };
-  const raw = window.localStorage.getItem(CONTACTS_STORAGE_KEY);
-  const existing: PersistedContactEntry[] = raw
-    ? (JSON.parse(raw) as PersistedContactEntry[])
-    : [];
-  window.localStorage.setItem(
-    CONTACTS_STORAGE_KEY,
-    JSON.stringify([...existing, entry]),
-  );
+  });
+}
+
+function persistLedgerAccount(output: RegisterLedgerAccountDAOutput): void {
+  persistEntry({
+    kind: "ledgerAccount",
+    accountName: output.accountName,
+    derivationPath: output.derivationPath,
+    blockchainFamily: output.blockchainFamily,
+    chainId: output.chainId?.toString(),
+    hmacProofHex: bytesToHex(output.hmacProof),
+    registeredAt: new Date().toISOString(),
+  });
 }
 
 const RegisterExternalAddressOutputView: React.FC<{
@@ -91,28 +121,51 @@ const RegisterExternalAddressOutputView: React.FC<{
     ["hmacRest", bytesToHex(output.hmacRest)],
   ];
 
-  return (
-    <Flex flexDirection="column" rowGap={3}>
-      <Flex columnGap={2} alignItems="center">
-        <Tag active type="opacity">
-          Persisted to localStorage
-        </Tag>
-        <Text variant="small" color="neutral.c70">
-          key: {CONTACTS_STORAGE_KEY}
+  return <PersistedProofRows rows={rows} />;
+};
+
+const PersistedProofRows: React.FC<{ rows: Array<[string, string]> }> = ({
+  rows,
+}) => (
+  <Flex flexDirection="column" rowGap={3}>
+    <Flex columnGap={2} alignItems="center">
+      <Tag active type="opacity">
+        Persisted to localStorage
+      </Tag>
+      <Text variant="small" color="neutral.c70">
+        key: {CONTACTS_STORAGE_KEY}
+      </Text>
+    </Flex>
+    {rows.map(([label, value]) => (
+      <Flex key={label} flexDirection="column">
+        <Text variant="tiny" color="neutral.c70">
+          {label}
+        </Text>
+        <Text variant="paragraph" style={{ wordBreak: "break-all" }}>
+          {value}
         </Text>
       </Flex>
-      {rows.map(([label, value]) => (
-        <Flex key={label} flexDirection="column">
-          <Text variant="tiny" color="neutral.c70">
-            {label}
-          </Text>
-          <Text variant="paragraph" style={{ wordBreak: "break-all" }}>
-            {value}
-          </Text>
-        </Flex>
-      ))}
-    </Flex>
-  );
+    ))}
+  </Flex>
+);
+
+const RegisterLedgerAccountOutputView: React.FC<{
+  output: RegisterLedgerAccountDAOutput;
+}> = ({ output }) => {
+  // Persist the returned proof locally as soon as it is available.
+  useEffect(() => {
+    persistLedgerAccount(output);
+  }, [output]);
+
+  const rows: Array<[string, string]> = [
+    ["accountName", output.accountName],
+    ["derivationPath", output.derivationPath],
+    ["blockchainFamily", output.blockchainFamily],
+    ["chainId", output.chainId?.toString() ?? "—"],
+    ["hmacProof", bytesToHex(output.hmacProof)],
+  ];
+
+  return <PersistedProofRows rows={rows} />;
 };
 
 type RegisterInput = {
@@ -126,6 +179,14 @@ type RegisterInput = {
   skipOpenApp: boolean;
 };
 
+type RegisterLedgerAccountInputForm = {
+  accountName: string;
+  derivationPath: string;
+  blockchainFamily: string;
+  chainId: string;
+  skipOpenApp: boolean;
+};
+
 export const ContactsView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
@@ -134,12 +195,10 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
 
   const deviceModelId = dmk.getConnectedDevice({ sessionId }).modelId;
 
-  const deviceActions: DeviceActionProps<
-    RegisterExternalAddressDAOutput,
-    RegisterInput,
-    RegisterExternalAddressDAError,
-    RegisterExternalAddressDAIntermediateValue
-  >[] = useMemo(
+  // The Contacts view lists actions with different input/output shapes, so the
+  // list is typed loosely (mirroring the signer sample views).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
     () => [
       {
         title: "Register External Address",
@@ -154,7 +213,7 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           existingGroupHandle,
           existingHmacProof,
           skipOpenApp,
-        }) => {
+        }: RegisterInput) => {
           if (!contactsManager) {
             throw new Error("Contacts manager not initialized");
           }
@@ -177,7 +236,7 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
             skipOpenApp,
           });
         },
-        validateValues: ({ contactName, scope, identifier }) =>
+        validateValues: ({ contactName, scope, identifier }: RegisterInput) =>
           contactName.trim().length > 0 &&
           scope.trim().length > 0 &&
           identifier.trim().length > 0,
@@ -192,6 +251,44 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           skipOpenApp: false,
         },
         OutputComponent: RegisterExternalAddressOutputView,
+        deviceModelId,
+      },
+      {
+        title: "Register Ledger Account",
+        description:
+          "Register a Ledger (signer-controlled) account on the device. The account is derived on-device from the derivation path; the device returns an HMAC proof to persist.",
+        executeDeviceAction: ({
+          accountName,
+          derivationPath,
+          blockchainFamily,
+          chainId,
+          skipOpenApp,
+        }: RegisterLedgerAccountInputForm) => {
+          if (!contactsManager) {
+            throw new Error("Contacts manager not initialized");
+          }
+
+          return contactsManager.registerLedgerAccount({
+            accountName,
+            derivationPath: derivationPath.trim(),
+            blockchainFamily,
+            chainId: chainId.trim().length > 0 ? BigInt(chainId) : undefined,
+            skipOpenApp,
+          });
+        },
+        validateValues: ({
+          accountName,
+          derivationPath,
+        }: RegisterLedgerAccountInputForm) =>
+          accountName.trim().length > 0 && derivationPath.trim().length > 0,
+        initialValues: {
+          accountName: "Alice",
+          derivationPath: "m/44'/60'/0'/0/0",
+          blockchainFamily: "ethereum",
+          chainId: "1",
+          skipOpenApp: false,
+        },
+        OutputComponent: RegisterLedgerAccountOutputView,
         deviceModelId,
       },
     ],
