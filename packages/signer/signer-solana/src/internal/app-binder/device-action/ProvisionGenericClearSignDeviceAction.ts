@@ -171,7 +171,12 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
                 logger.info(
                   "[ClearSign] build failed; falling back to legacy",
                   {
-                    data: { error: event.error },
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? event.error.stack
+                          : String(event.error),
+                    },
                   },
                 ),
             },
@@ -215,7 +220,14 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] descriptor streaming failed; falling back to legacy",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? event.error.stack
+                          : String(event.error),
+                    },
+                  },
                 ),
             },
           },
@@ -261,7 +273,14 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] FINALIZE threw; falling back to legacy",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? event.error.stack
+                          : String(event.error),
+                    },
+                  },
                 ),
             },
           },

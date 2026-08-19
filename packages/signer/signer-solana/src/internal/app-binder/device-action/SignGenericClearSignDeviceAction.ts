@@ -220,7 +220,14 @@ export class SignGenericClearSignDeviceAction extends XStateDeviceAction<
                 ({ event }) =>
                   logger.info(
                     "[ClearSign] PROMPT UI DISPLAY threw; falling back to legacy",
-                    { data: { error: event.error } },
+                    {
+                      data: {
+                        error:
+                          event.error instanceof Error
+                            ? event.error.stack
+                            : String(event.error),
+                      },
+                    },
                   ),
               ],
             },

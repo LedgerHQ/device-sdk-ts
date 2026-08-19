@@ -254,7 +254,14 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
               actions: ({ event }) => {
                 logger.error(
                   "[ProvideBasicClearSignContext] Failed to provide transaction context, falling back to blind signing",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? event.error.stack
+                          : String(event.error),
+                    },
+                  },
                 );
               },
             },

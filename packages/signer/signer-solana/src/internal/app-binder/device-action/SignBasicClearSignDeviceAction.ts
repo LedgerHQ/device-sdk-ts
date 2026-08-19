@@ -216,7 +216,14 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[SigningOps] blockhash zeroing failed, signing original transaction",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? event.error.stack
+                          : String(event.error),
+                    },
+                  },
                 ),
             },
           },
@@ -272,7 +279,14 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[SigningOps] preview threw, signing original transaction",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? event.error.stack
+                          : String(event.error),
+                    },
+                  },
                 ),
             },
           },

@@ -454,7 +454,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] generic clear-sign threw; falling back to legacy",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? event.error.stack
+                          : String(event.error),
+                    },
+                  },
                 ),
             },
           },

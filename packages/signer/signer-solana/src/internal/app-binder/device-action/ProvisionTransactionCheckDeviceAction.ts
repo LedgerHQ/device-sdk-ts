@@ -151,7 +151,14 @@ export class ProvisionTransactionCheckDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[TransactionCheck] opt-in threw; proceeding without transaction-checks",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? event.error.stack
+                          : String(event.error),
+                    },
+                  },
                 ),
             },
           },
@@ -201,7 +208,12 @@ export class ProvisionTransactionCheckDeviceAction extends XStateDeviceAction<
               target: "Done",
               actions: ({ event }) =>
                 logger.info("[TransactionCheck] provide threw; proceeding", {
-                  data: { error: event.error },
+                  data: {
+                    error:
+                      event.error instanceof Error
+                        ? event.error.stack
+                        : String(event.error),
+                  },
                 }),
             },
           },
