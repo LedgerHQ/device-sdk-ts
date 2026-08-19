@@ -95,7 +95,18 @@ export class ProvideTransactionCheckTask {
       } catch (error) {
         this.logger.debug(
           "[run] could not zero blockhash; using original transaction",
-          { data: { error } },
+          {
+            data: {
+              error:
+                error instanceof Error
+                  ? {
+                      name: error.name,
+                      message: error.message,
+                      stack: error.stack,
+                    }
+                  : String(error),
+            },
+          },
         );
       }
     }

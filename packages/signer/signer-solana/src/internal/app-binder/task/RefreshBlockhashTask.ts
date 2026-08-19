@@ -42,7 +42,18 @@ export class RefreshBlockhashTask {
     } catch (error) {
       this.logger.info(
         "[RefreshBlockhash] fetch failed, signing original blockhash",
-        { data: { error } },
+        {
+          data: {
+            error:
+              error instanceof Error
+                ? {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack,
+                  }
+                : String(error),
+          },
+        },
       );
       return transaction;
     }
@@ -52,7 +63,18 @@ export class RefreshBlockhashTask {
     } catch (error) {
       this.logger.info(
         "[RefreshBlockhash] patch failed, signing original blockhash",
-        { data: { error } },
+        {
+          data: {
+            error:
+              error instanceof Error
+                ? {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack,
+                  }
+                : String(error),
+          },
+        },
       );
       return transaction;
     }

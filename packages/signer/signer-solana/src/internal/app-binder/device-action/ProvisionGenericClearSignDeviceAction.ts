@@ -171,7 +171,16 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
                 logger.info(
                   "[ClearSign] build failed; falling back to legacy",
                   {
-                    data: { error: event.error },
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? {
+                              name: event.error.name,
+                              message: event.error.message,
+                              stack: event.error.stack,
+                            }
+                          : String(event.error),
+                    },
                   },
                 ),
             },
@@ -215,7 +224,18 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] descriptor streaming failed; falling back to legacy",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? {
+                              name: event.error.name,
+                              message: event.error.message,
+                              stack: event.error.stack,
+                            }
+                          : String(event.error),
+                    },
+                  },
                 ),
             },
           },
@@ -261,7 +281,18 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] FINALIZE threw; falling back to legacy",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? {
+                              name: event.error.name,
+                              message: event.error.message,
+                              stack: event.error.stack,
+                            }
+                          : String(event.error),
+                    },
+                  },
                 ),
             },
           },

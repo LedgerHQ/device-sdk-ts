@@ -454,7 +454,18 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] generic clear-sign threw; falling back to legacy",
-                  { data: { error: event.error } },
+                  {
+                    data: {
+                      error:
+                        event.error instanceof Error
+                          ? {
+                              name: event.error.name,
+                              message: event.error.message,
+                              stack: event.error.stack,
+                            }
+                          : String(event.error),
+                    },
+                  },
                 ),
             },
           },
@@ -626,7 +637,18 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       } catch (error) {
         this.getLoggerFactory(internalApi)("NormalizeTransaction").warn(
           "[normalizeTransaction] format detection failed; treating input as message bytes",
-          { data: { error } },
+          {
+            data: {
+              error:
+                error instanceof Error
+                  ? {
+                      name: error.name,
+                      message: error.message,
+                      stack: error.stack,
+                    }
+                  : String(error),
+            },
+          },
         );
         return {
           messageBytes: this.input.transaction,

@@ -124,7 +124,19 @@ export class ProvideGenericClearSignContextTask {
     } catch (error) {
       this.logger.warn(
         "[run] optional descriptor provisioning failed; continuing with degraded clear-signing",
-        { data: { type: context.type, error } },
+        {
+          data: {
+            type: context.type,
+            error:
+              error instanceof Error
+                ? {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack,
+                  }
+                : String(error),
+          },
+        },
       );
     }
   }
@@ -395,7 +407,18 @@ export class ProvideGenericClearSignContextTask {
     } catch (error) {
       this.logger.debug(
         "[streamGenericPreview] could not zero blockhash; streaming original",
-        { data: { error } },
+        {
+          data: {
+            error:
+              error instanceof Error
+                ? {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack,
+                  }
+                : String(error),
+          },
+        },
       );
     }
 
