@@ -6,6 +6,7 @@ import { Container } from "inversify";
 
 import { appBinderModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { externalTypes } from "@internal/externalTypes";
+import { useCaseModuleFactory } from "@internal/use-cases/di/useCaseModule";
 
 type MakeContainerProps = {
   dmk: DeviceManagementKit;
@@ -27,6 +28,7 @@ export const makeContainer = ({
   container.bind<string>(externalTypes.AppName).toConstantValue(appName);
 
   container.loadSync(appBinderModuleFactory());
+  container.loadSync(useCaseModuleFactory());
 
   return container;
 };
