@@ -99,6 +99,7 @@ describe("HttpInstructionInfoDataSource", () => {
           "00000000": Right({
             programId,
             discriminator: "00000000",
+            instructionName: "createAccount",
             instructionInfo: { data: "00010101", signature: "prodsig" },
             substructures: [],
             enumVariants: [],
