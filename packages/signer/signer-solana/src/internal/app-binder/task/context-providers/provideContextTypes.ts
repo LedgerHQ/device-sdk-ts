@@ -3,10 +3,13 @@ import {
   type SolanaContextSuccessType,
 } from "@ledgerhq/context-module";
 import {
+  type CommandResult,
   type InternalApi,
+  type LoadCertificateErrorCodes,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { type SolanaMessageNormaliser } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
 
 export type ProvideContextDeps = {
@@ -16,7 +19,11 @@ export type ProvideContextDeps = {
   readonly transactionBytes: Uint8Array;
 };
 
+export type ProvideContextErrorCodes =
+  | SolanaAppErrorCodes
+  | LoadCertificateErrorCodes;
+
 export type ProvideContextHandler<T extends SolanaContextSuccessType> = (
   result: SolanaContextSuccess<T>,
   deps: ProvideContextDeps,
-) => Promise<void>;
+) => Promise<CommandResult<void, ProvideContextErrorCodes>>;

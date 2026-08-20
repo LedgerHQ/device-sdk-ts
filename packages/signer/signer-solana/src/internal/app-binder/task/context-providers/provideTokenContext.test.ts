@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -100,8 +101,8 @@ describe("provideTokenContext", () => {
     expect(api.sendCommand).not.toHaveBeenCalled();
   });
 
-  // test 4: throws when cert load fails
-  it("throws when certificate load returns error", async () => {
+  // test 4: returns failed CommandResult when cert load fails
+  it("returns a failed CommandResult when certificate load fails", async () => {
     const errorResult = CommandResultFactory({
       error: { _tag: "SomeError", errorCode: 0x6a80, message: "bad" },
     });
@@ -113,10 +114,8 @@ describe("provideTokenContext", () => {
       certificate: tokenCert,
     };
 
-    await expect(provideTokenContext(result, deps)).rejects.toThrow(
-      "Failed to send tokenMetadataCertificate to device",
-    );
-
+    const out = await provideTokenContext(result, deps);
+    expect(isSuccessCommandResult(out)).toBe(false);
     expect(api.sendCommand).toHaveBeenCalledTimes(1);
   });
 });

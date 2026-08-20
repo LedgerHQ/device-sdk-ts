@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -65,48 +66,49 @@ describe("provideEnumVariantContext", () => {
     );
   });
 
-  it("throws when the device rejects the ENUM_VARIANT", async () => {
+  it("returns a failed CommandResult when the device rejects the ENUM_VARIANT", async () => {
     api.sendCommand.mockResolvedValueOnce(success).mockResolvedValueOnce(
       CommandResultFactory({
         error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
       }),
     );
 
-    await expect(
-      provideEnumVariantContext(
-        {
-          type: ClearSignContextType.SOLANA_ENUM_VARIANT as const,
-          payload: {
-            programId: "P",
-            enumId: "swap",
-            variantIndex: 46,
-            descriptor: { data: "aabb", signature: "abcd" },
-          },
-          certificate: cert,
-        } as any,
-        deps,
-      ),
-    ).rejects.toThrow("device rejected ENUM_VARIANT");
+    const result = await provideEnumVariantContext(
+      {
+        type: ClearSignContextType.SOLANA_ENUM_VARIANT as const,
+        payload: {
+          programId: "P",
+          enumId: "swap",
+          variantIndex: 46,
+          descriptor: { data: "aabb", signature: "abcd" },
+        },
+        certificate: cert,
+      } as any,
+      deps,
+    );
+    expect(isSuccessCommandResult(result)).toBe(false);
   });
 
-  it("throws when the ENUM_VARIANT signature is missing", async () => {
+  it("logs a warning and returns success when the ENUM_VARIANT signature is missing", async () => {
     api.sendCommand.mockResolvedValue(success);
 
-    await expect(
-      provideEnumVariantContext(
-        {
-          type: ClearSignContextType.SOLANA_ENUM_VARIANT as const,
-          payload: {
-            programId: "P",
-            enumId: "swap",
-            variantIndex: 46,
-            descriptor: { data: "aabb", signature: "" },
-          },
-          certificate: cert,
-        } as any,
-        deps,
-      ),
-    ).rejects.toThrow("missing ENUM_VARIANT signature");
+    const result = await provideEnumVariantContext(
+      {
+        type: ClearSignContextType.SOLANA_ENUM_VARIANT as const,
+        payload: {
+          programId: "P",
+          enumId: "swap",
+          variantIndex: 46,
+          descriptor: { data: "aabb", signature: "" },
+        },
+        certificate: cert,
+      } as any,
+      deps,
+    );
+    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("missing ENUM_VARIANT signature"),
+    );
     expect(api.sendCommand).not.toHaveBeenCalledWith(
       expect.any(ProvideEnumVariantCommand),
     );

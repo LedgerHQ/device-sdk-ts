@@ -5,12 +5,20 @@ import {
   type SolanaTransactionDescriptor,
   type SolanaTransactionDescriptorList,
 } from "@ledgerhq/context-module";
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  type CommandResult,
+  CommandResultFactory,
+  isSuccessCommandResult,
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 
 import { ProvideInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideInstructionDescriptorCommand";
 
 import { loadCertificate } from "./loadCertificate";
-import { type ProvideContextHandler } from "./provideContextTypes";
+import {
+  type ProvideContextErrorCodes,
+  type ProvideContextHandler,
+} from "./provideContextTypes";
 
 const HEX_RADIX = 16;
 
@@ -19,19 +27,24 @@ export const provideLifiContext: ProvideContextHandler<
 > = async (
   result: SolanaLifiContextSuccess,
   { api, logger, normaliser, transactionBytes },
-) => {
+): Promise<CommandResult<void, ProvideContextErrorCodes>> => {
   const { descriptors: lifiDescriptors, instructions: instructionsMeta } =
     result.payload;
   const { certificate: swapTemplateCertificate } = result;
 
-  if (!lifiDescriptors) return;
+  if (!lifiDescriptors) {
+    return CommandResultFactory({ data: undefined });
+  }
 
   if (swapTemplateCertificate) {
-    await loadCertificate(
+    const certResult = await loadCertificate(
       api,
       swapTemplateCertificate,
-      "[SignerSolana] provideLifiContext: Failed to send swapTemplateCertificate to device",
+      logger,
     );
+    if (!isSuccessCommandResult(certResult)) {
+      return certResult;
+    }
   }
 
   const message = await normaliser.normaliseMessage(transactionBytes);
@@ -87,14 +100,23 @@ export const provideLifiContext: ProvideContextHandler<
     );
 
     if (descriptor?.signature) {
-      await api.sendCommand(
+      const res = await api.sendCommand(
         new ProvideInstructionDescriptorCommand({
           dataHex: descriptor.data,
           signatureHex: descriptor.signature,
         }),
       );
+      if (!isSuccessCommandResult(res)) {
+        logger.error(
+          `[provideLifiContext] device rejected instruction descriptor at index ${index}`,
+          { data: { index, programId: programIdStr, error: res.error } },
+        );
+        return res;
+      }
     }
   }
+
+  return CommandResultFactory({ data: undefined });
 };
 
 // For each compiled instruction, finds the right descriptor by:

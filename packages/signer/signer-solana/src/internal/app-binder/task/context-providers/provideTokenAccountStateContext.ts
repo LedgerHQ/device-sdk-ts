@@ -2,14 +2,21 @@ import {
   type ClearSignContextType,
   type SolanaTokenAccountStateContextSuccess,
 } from "@ledgerhq/context-module";
-import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
+import {
+  type CommandResult,
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-management-kit";
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
 import { ProvideTokenAccountStateCommand } from "@internal/app-binder/command/ProvideTokenAccountStateCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import { loadCertificate } from "./loadCertificate";
-import { type ProvideContextHandler } from "./provideContextTypes";
+import {
+  type ProvideContextErrorCodes,
+  type ProvideContextHandler,
+} from "./provideContextTypes";
 
 /**
  * Streams a challenge-bound `TOKEN_ACCOUNT_STATE` (0x27) descriptor. The caller
@@ -18,16 +25,20 @@ import { type ProvideContextHandler } from "./provideContextTypes";
  */
 export const provideTokenAccountStateContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE
-> = async (result: SolanaTokenAccountStateContextSuccess, { api, logger }) => {
+> = async (
+  result: SolanaTokenAccountStateContextSuccess,
+  { api, logger },
+): Promise<CommandResult<void, ProvideContextErrorCodes>> => {
   const { payload, certificate } = result;
-  if (!payload) return;
+  if (!payload) {
+    return CommandResultFactory({ data: undefined });
+  }
 
   if (certificate) {
-    await loadCertificate(
-      api,
-      certificate,
-      "[SignerSolana] provideTokenAccountStateContext: failed to load TOKEN_ACCOUNT_STATE certificate",
-    );
+    const certResult = await loadCertificate(api, certificate, logger);
+    if (!isSuccessCommandResult(certResult)) {
+      return certResult;
+    }
   }
 
   logger.debug("[provideTokenAccountStateContext] Sending TOKEN_ACCOUNT_STATE");
@@ -45,8 +56,12 @@ export const provideTokenAccountStateContext: ProvideContextHandler<
     },
   ).run();
   if (!isSuccessCommandResult(res)) {
-    throw new Error(
-      "[SignerSolana] provideTokenAccountStateContext: device rejected TOKEN_ACCOUNT_STATE",
+    logger.error(
+      "[provideTokenAccountStateContext] device rejected TOKEN_ACCOUNT_STATE",
+      { data: { error: res.error } },
     );
+    return res;
   }
+
+  return CommandResultFactory({ data: undefined });
 };

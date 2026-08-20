@@ -3,11 +3,13 @@ import {
   type SolanaContextSuccess,
   type SolanaContextSuccessType,
 } from "@ledgerhq/context-module";
+import { type CommandResult } from "@ledgerhq/device-management-kit";
 
 import { provideAltResolutionContext } from "./provideAltResolutionContext";
 import { provideBasicTrustedNameContext } from "./provideBasicTrustedNameContext";
 import {
   type ProvideContextDeps,
+  type ProvideContextErrorCodes,
   type ProvideContextHandler,
 } from "./provideContextTypes";
 import { provideEnumVariantContext } from "./provideEnumVariantContext";
@@ -49,10 +51,10 @@ type DiscriminatedSolanaContextSuccess = {
 export function dispatchProvideContext(
   result: DiscriminatedSolanaContextSuccess,
   deps: ProvideContextDeps,
-): Promise<void> {
+): Promise<CommandResult<void, ProvideContextErrorCodes>> {
   const handler = PROVIDE_CONTEXT_REGISTRY[result.type] as (
     result: DiscriminatedSolanaContextSuccess,
     deps: ProvideContextDeps,
-  ) => Promise<void>;
+  ) => Promise<CommandResult<void, ProvideContextErrorCodes>>;
   return handler(result, deps);
 }

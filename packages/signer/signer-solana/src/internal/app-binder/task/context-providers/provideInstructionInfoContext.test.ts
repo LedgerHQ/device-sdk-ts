@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -83,7 +84,7 @@ describe("provideInstructionInfoContext", () => {
     expect(sub1.args.payload).toStrictEqual(new Uint8Array([0x01, 0xee]));
   });
 
-  it("throws when the device rejects the INSTRUCTION_INFO", async () => {
+  it("returns a failed CommandResult when the device rejects INSTRUCTION_INFO", async () => {
     api.sendCommand
       .mockResolvedValueOnce(success) // cert
       .mockResolvedValueOnce(
@@ -92,20 +93,23 @@ describe("provideInstructionInfoContext", () => {
         }),
       );
 
-    await expect(
-      provideInstructionInfoContext(makeResult() as any, deps),
-    ).rejects.toThrow("device rejected INSTRUCTION_INFO");
+    const result = await provideInstructionInfoContext(
+      makeResult() as any,
+      deps,
+    );
+    expect(isSuccessCommandResult(result)).toBe(false);
   });
 
-  it("throws when the INSTRUCTION_INFO signature is missing", async () => {
+  it("logs a warning and returns success when the INSTRUCTION_INFO signature is missing", async () => {
     api.sendCommand.mockResolvedValue(success);
     const result = makeResult();
     result.payload.instructionInfo.signature = "";
 
-    await expect(
-      provideInstructionInfoContext(result as any, deps),
-    ).rejects.toThrow("missing INSTRUCTION_INFO signature");
-    // never reaches the device with the descriptor (only the cert load, if any)
+    const out = await provideInstructionInfoContext(result as any, deps);
+    expect(isSuccessCommandResult(out)).toBe(true);
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("missing INSTRUCTION_INFO signature"),
+    );
     expect(api.sendCommand).not.toHaveBeenCalledWith(
       expect.any(ProvideInstructionInfoCommand),
     );

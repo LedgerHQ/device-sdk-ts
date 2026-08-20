@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -95,7 +96,7 @@ describe("provideLifiContext", () => {
     );
   });
 
-  it("throws when swap certificate load fails", async () => {
+  it("returns a failed CommandResult when swap certificate load fails", async () => {
     const errorResult = CommandResultFactory({
       error: { _tag: "Err", errorCode: 0x6a80, message: "bad" },
     });
@@ -117,9 +118,11 @@ describe("provideLifiContext", () => {
       certificate: swapCert,
     };
 
-    await expect(
-      provideLifiContext(result as any, makeDeps(buildNormaliser(message))),
-    ).rejects.toThrow("Failed to send swapTemplateCertificate to device");
+    const out = await provideLifiContext(
+      result as any,
+      makeDeps(buildNormaliser(message)),
+    );
+    expect(isSuccessCommandResult(out)).toBe(false);
   });
 
   it("skips entirely when descriptors is falsy", async () => {
