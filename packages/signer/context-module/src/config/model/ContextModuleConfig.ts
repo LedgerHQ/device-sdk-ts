@@ -1,5 +1,6 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
+import { type ContactsDataSource } from "@/modules/ethereum/contacts/domain/ContactsDataSource";
 import { type TrustedNameDataSource } from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
@@ -55,4 +56,5 @@ export type ContextModuleLoaderConfig = {
   customTypedDataLoader?: TypedDataContextLoader;
   customBlindSigningReporter?: BlindSigningReporter;
   customTrustedNameDataSource?: TrustedNameDataSource;
+  customContactsDataSource?: ContactsDataSource;
 };

@@ -1,4 +1,8 @@
 import {
+  type ContactExternalDecoration,
+  type ContactLedgerAccountDecoration,
+} from "@/modules/ethereum/contacts/domain/ContactsDataSource";
+import {
   type ClearSignContext,
   type ClearSignContextSuccess,
   type ClearSignContextSuccessBase,
@@ -72,6 +76,20 @@ export type EthereumPayloadOverrides = {
   [ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION]: ClearSignContextSuccessBase & {
     reference?: ClearSignContextReference;
   };
+  // Contacts dispatch off structured fields, not opaque TLV bytes:
+  // `payload` stays on the base for shape compatibility with the
+  // generic dispatch path but is unused (loader sets it to "").
+  // `address` carries the SDK-side address the decoration covers
+  // (used by signer-eth to dedup ETHEREUM_TRUSTED_NAME contexts on the
+  // same recipient — Contacts wins). Never sent on the wire.
+  [ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL]: ClearSignContextSuccessBase & {
+    decoration: ContactExternalDecoration;
+    address: string;
+  };
+  [ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT]: ClearSignContextSuccessBase & {
+    decoration: ContactLedgerAccountDecoration;
+    address: string;
+  };
 };
 
 export const EthereumClearSignContextType = {
@@ -91,6 +109,8 @@ export const EthereumClearSignContextType = {
   SAFE: ClearSignContextType.ETHEREUM_SAFE,
   SIGNER: ClearSignContextType.ETHEREUM_SIGNER,
   GATED_SIGNING: ClearSignContextType.ETHEREUM_GATED_SIGNING,
+  CONTACT_EXTERNAL: ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL,
+  CONTACT_LEDGER_ACCOUNT: ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT,
 } as const;
 
 /**

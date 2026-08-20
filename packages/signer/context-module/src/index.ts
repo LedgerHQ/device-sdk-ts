@@ -18,6 +18,7 @@ export * from "./modules/concordium/account-ownership/domain/AccountOwnershipCon
 export * from "./modules/ethereum/calldata/data/CalldataDescriptorDataSource";
 export * from "./modules/ethereum/calldata/data/HttpCalldataDescriptorDataSource";
 export * from "./modules/ethereum/calldata/domain/CalldataContextLoader";
+export * from "./modules/ethereum/contacts/domain/ContactsDataSource";
 export * from "./modules/ethereum/dynamic-network/data/DynamicNetworkDataSource";
 export * from "./modules/ethereum/dynamic-network/data/HttpDynamicNetworkDataSource";
 export * from "./modules/ethereum/dynamic-network/domain/DynamicNetworkContextLoader";

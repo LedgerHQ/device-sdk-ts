@@ -47,6 +47,8 @@ export const BASE_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.ETHEREUM_PLUGIN,
   ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN,
   ClearSignContextType.ETHEREUM_GATED_SIGNING,
+  ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL,
+  ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT,
 ];
 
 export type BuildBaseContextsResult = {
@@ -202,6 +204,8 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_NFT:
       case ClearSignContextType.ETHEREUM_GATED_SIGNING:
       case ClearSignContextType.ETHEREUM_PROXY_INFO:
+      case ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL:
+      case ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT:
         return true;
       case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
       case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
@@ -227,6 +231,8 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
       case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
       case ClearSignContextType.ETHEREUM_GATED_SIGNING:
+      case ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL:
+      case ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT:
         return true;
       case ClearSignContextType.ETHEREUM_ENUM:
       case ClearSignContextType.ETHEREUM_TRUSTED_NAME:
@@ -290,6 +296,13 @@ export class BuildBaseContexts {
         return 30;
       case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
         return 50;
+      // Contacts run before TRUSTED_NAME so the friendly name is
+      // already in place when the device renders the recipient field.
+      // BuildFullContextsTask also drops ETHEREUM_TRUSTED_NAME entries
+      // whose address is covered by a contact entry (Contacts wins).
+      case ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT:
+      case ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL:
+        return 60;
       case ClearSignContextType.ETHEREUM_PLUGIN:
       case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
       case ClearSignContextType.ETHEREUM_TOKEN:

@@ -60,10 +60,18 @@ export class GetAddressCommand
       builder.add32BitUIntToData(element);
     });
 
-    // Chain ID is only sent when checkOnDevice is true; default to 1 (Ethereum mainnet) when omitted.
+    // Chain ID framing rules:
+    // - checkOnDevice=true: always sent (defaults to 1 / Ethereum mainnet).
+    // - checkOnDevice=false: sent only when an explicit chainId is provided,
+    //   to match the python client's `get_public_addr(display=False, chain_id=X)`
+    //   (no on-device prompt, but the chainId is still framed). The default-1
+    //   fallback intentionally does NOT apply here so existing callers that
+    //   omit chainId in silent mode keep their 21-byte data length.
     if (this.args.checkOnDevice) {
       const chainId = this.args.chainId ?? 1;
       builder.add64BitUIntToData(chainId);
+    } else if (this.args.chainId !== undefined) {
+      builder.add64BitUIntToData(this.args.chainId);
     }
 
     return builder.build();

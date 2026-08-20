@@ -6,6 +6,7 @@ import {
 import { type Container } from "inversify";
 
 import { addressTypes } from "./address/di/addressTypes";
+import { contactsTypes } from "./contacts/di/contactsTypes";
 import { eip7702Types } from "./eip7702/di/eip7702Types";
 import { messageTypes } from "./message/di/messageTypes";
 import { transactionTypes } from "./transaction/di/transactionTypes";
@@ -28,6 +29,8 @@ describe("DefaultSignerEth", () => {
           return "typed-data-result";
         } else if (id === addressTypes.GetAddressUseCase) {
           return "address-result";
+        } else if (id === contactsTypes.RegisterExternalAddressUseCase) {
+          return "register-external-address-result";
         }
 
         return "undefined-result";
@@ -134,6 +137,29 @@ describe("DefaultSignerEth", () => {
       expect(result).toBeDefined();
       expect(result).toBe("address-result");
       expect(mock.get).toHaveBeenCalledWith(addressTypes.GetAddressUseCase);
+    });
+  });
+
+  describe("registerExternalAddress", () => {
+    it("should delegate to RegisterExternalAddressUseCase", async () => {
+      // GIVEN
+      const args = {
+        name: "Alice",
+        addressHex: "00000000000000000000000000000000deadbeef",
+        scope: "Eth main",
+        derivationPath: "44'/60'/0'/0/0",
+        chainId: 1,
+      };
+
+      // WHEN
+      const result = await signer.registerExternalAddress(args);
+
+      // THEN
+      expect(result).toBeDefined();
+      expect(result).toBe("register-external-address-result");
+      expect(mock.get).toHaveBeenCalledWith(
+        contactsTypes.RegisterExternalAddressUseCase,
+      );
     });
   });
 });

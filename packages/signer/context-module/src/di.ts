@@ -9,6 +9,7 @@ import {
 } from "@/config/model/ContextModuleConfig";
 import { accountOwnershipModuleFactory } from "@/modules/concordium/account-ownership/di/accountOwnershipModuleFactory";
 import { calldataModuleFactory } from "@/modules/ethereum/calldata/di/calldataModuleFactory";
+import { contactsModuleFactory } from "@/modules/ethereum/contacts/di/contactsModuleFactory";
 import { dynamicNetworkModuleFactory } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkModuleFactory";
 import { externalPluginModuleFactory } from "@/modules/ethereum/external-plugin/di/externalPluginModuleFactory";
 import { gatedSigningModuleFactory } from "@/modules/ethereum/gated-signing/di/gatedSigningModuleFactory";
@@ -58,6 +59,9 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
       container.loadSync(
         nanoPkiModuleFactory(),
         reporterModuleFactory(),
+        // Contacts registered ahead of TrustedName so the friendly
+        // name lands first (Contacts wins on collision).
+        contactsModuleFactory(config.customContactsDataSource),
         trustedNameModuleFactory(config.customTrustedNameDataSource),
         externalPluginModuleFactory(),
         dynamicNetworkModuleFactory(),
