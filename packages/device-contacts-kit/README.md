@@ -55,8 +55,34 @@ observable.subscribe((state) => {
 });
 ```
 
-Concrete Contacts operations (Edit Contact Name, Edit Identifier, Edit Scope, Register Ledger
-Account, Edit Ledger Account) are added by their dedicated implementation tickets.
+## Registering a Ledger account
+
+`registerLedgerAccount` runs the device's REGISTER LEDGER ACCOUNT operation. The account is derived
+on-device from `derivationPath`; the op opens the embedded app by default, checks the
+[Contacts version requirements](#version-requirements), then frames the request and returns the
+device-issued `hmacProof` for the host to persist.
+
+```ts
+const { observable } = contactsManager.registerLedgerAccount({
+  accountName: "Alice",
+  derivationPath: "m/44'/60'/0'/0/0",
+  blockchainFamily: "ethereum",
+  chainId: 1n,
+  // skipOpenApp: true, // skip only the open-app step; the version guard still runs
+});
+
+observable.subscribe((state) => {
+  // state.intermediateValue.requiredUserInteraction surfaces open-app confirmation
+  // and the on-device Register Wallet validation.
+  if (state.status === DeviceActionStatus.Completed) {
+    const { hmacProof } = state.output;
+    // persist the echoed input and the hmacProof.
+  }
+});
+```
+
+Concrete Contacts operations (Edit Contact Name, Edit Identifier, Edit Scope, Edit Ledger Account)
+are added by their dedicated implementation tickets.
 
 ## Version requirements
 

@@ -14,6 +14,9 @@ export const CONTACTS_APDU_INS = 0x10;
 /** P1 sub-command selector for REGISTER IDENTITY (register external address). */
 export const SUB_CMD_REGISTER_IDENTITY = 0x01;
 
+/** P1 sub-command selector for REGISTER LEDGER ACCOUNT. */
+export const SUB_CMD_REGISTER_LEDGER_ACCOUNT = 0x11;
+
 /** Sizes (bytes) of the fields in the REGISTER IDENTITY final-chunk response. */
 export const GROUP_HANDLE_BYTES = 64;
 export const HMAC_PROOF_BYTES = 32;
