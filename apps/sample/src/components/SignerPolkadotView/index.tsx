@@ -45,7 +45,7 @@ export const SignerPolkadotView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/354'/0'/0'/0'",
           ss58Prefix: "0",
           checkOnDevice: false,
           skipOpenApp: false,
@@ -82,7 +82,7 @@ export const SignerPolkadotView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/354'/0'/0'/0'",
           transaction: "",
           metadata: "",
           skipOpenApp: false,
