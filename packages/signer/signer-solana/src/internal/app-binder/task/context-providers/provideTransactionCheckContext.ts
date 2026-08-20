@@ -3,6 +3,8 @@ import {
   type SolanaTransactionCheckContextSuccess,
 } from "@ledgerhq/context-module";
 import {
+  type CommandResult,
+  CommandResultFactory,
   hexaStringToBuffer,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -11,20 +13,28 @@ import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 import { ProvideTransactionCheckCommand } from "@internal/app-binder/command/ProvideTransactionCheckCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
-import { loadCertificate } from "./loadCertificate";
-import { type ProvideContextHandler } from "./provideContextTypes";
+import { loadCertificateIfPresent } from "./loadCertificate";
+import {
+  type ProvideContextErrorCodes,
+  type ProvideContextHandler,
+} from "./provideContextTypes";
 
 export const provideTransactionCheckContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_TRANSACTION_CHECK
-> = async (result: SolanaTransactionCheckContextSuccess, { api, logger }) => {
+> = async (
+  result: SolanaTransactionCheckContextSuccess,
+  { api, logger },
+): Promise<CommandResult<void, ProvideContextErrorCodes>> => {
   const { payload, certificate: transactionCheckCertificate } = result;
 
-  if (transactionCheckCertificate) {
-    await loadCertificate(
-      api,
-      transactionCheckCertificate,
-      "[SignerSolana] provideTransactionCheckContext: Failed to send transaction-check certificate to device",
-    );
+  const certResult = await loadCertificateIfPresent(
+    api,
+    transactionCheckCertificate,
+    logger,
+    "provideTransactionCheckContext",
+  );
+  if (!isSuccessCommandResult(certResult)) {
+    return certResult;
   }
 
   const descriptorBytes = hexaStringToBuffer(payload.descriptor);
@@ -32,7 +42,7 @@ export const provideTransactionCheckContext: ProvideContextHandler<
     logger.warn(
       "[provideTransactionCheckContext] descriptor could not be parsed, skipping",
     );
-    return;
+    return CommandResultFactory({ data: undefined });
   }
 
   const chunkResult = await new SendCommandInChunksTask<
@@ -49,8 +59,12 @@ export const provideTransactionCheckContext: ProvideContextHandler<
   }).run();
 
   if (!isSuccessCommandResult(chunkResult)) {
-    throw new Error(
-      "[SignerSolana] provideTransactionCheckContext: Failed to send transaction-check descriptor to device",
+    logger.error(
+      "[provideTransactionCheckContext] device rejected transaction-check descriptor",
+      { data: { error: chunkResult.error } },
     );
+    return chunkResult;
   }
+
+  return CommandResultFactory({ data: undefined });
 };

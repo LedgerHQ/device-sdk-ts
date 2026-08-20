@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -95,7 +96,7 @@ describe("provideLifiContext", () => {
     );
   });
 
-  it("throws when swap certificate load fails", async () => {
+  it("returns a failed CommandResult when swap certificate load fails", async () => {
     const errorResult = CommandResultFactory({
       error: { _tag: "Err", errorCode: 0x6a80, message: "bad" },
     });
@@ -117,9 +118,156 @@ describe("provideLifiContext", () => {
       certificate: swapCert,
     };
 
-    await expect(
-      provideLifiContext(result as any, makeDeps(buildNormaliser(message))),
-    ).rejects.toThrow("Failed to send swapTemplateCertificate to device");
+    const out = await provideLifiContext(
+      result as any,
+      makeDeps(buildNormaliser(message)),
+    );
+    expect(isSuccessCommandResult(out)).toBe(false);
+  });
+
+  it("returns a failed CommandResult when the device rejects an instruction descriptor", async () => {
+    api.sendCommand.mockResolvedValue(
+      CommandResultFactory({
+        error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+      }),
+    );
+
+    const message = {
+      compiledInstructions: [
+        { programIdIndex: 0, data: new Uint8Array([0x01]) },
+      ],
+      allKeys: [makeKey("A")],
+    };
+
+    const result = {
+      type: ClearSignContextType.SOLANA_LIFI as const,
+      payload: {
+        descriptors: { "A:1": [{ data: SIG, signature: SIG }] },
+        instructions: [{ program_id: "A", discriminator_hex: "1" }],
+      },
+      certificate: undefined,
+    };
+
+    const out = await provideLifiContext(
+      result as any,
+      makeDeps(buildNormaliser(message)),
+    );
+    expect(isSuccessCommandResult(out)).toBe(false);
+  });
+
+  it("skips instruction when discriminator hex contains non-hex characters", async () => {
+    const message = {
+      compiledInstructions: [
+        { programIdIndex: 0, data: new Uint8Array([0xff, 0xee]) },
+      ],
+      allKeys: [makeKey("ZZ")],
+    };
+
+    const result = {
+      type: ClearSignContextType.SOLANA_LIFI as const,
+      payload: {
+        descriptors: { "ZZ:zz": [{ data: SIG, signature: SIG }] },
+        instructions: [{ program_id: "ZZ", discriminator_hex: "zz" }],
+      },
+    };
+
+    await provideLifiContext(result as any, makeDeps(buildNormaliser(message)));
+
+    expect(api.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("skips instruction when the matching key's descriptor queue is already empty", async () => {
+    const message = {
+      compiledInstructions: [
+        { programIdIndex: 0, data: new Uint8Array([0x02, 0x00, 0x00, 0x00]) },
+      ],
+      allKeys: [makeKey("EMPTY")],
+    };
+
+    const result = {
+      type: ClearSignContextType.SOLANA_LIFI as const,
+      payload: {
+        // Key matches prefix + discriminator but its queue is already empty.
+        descriptors: { "EMPTY:02": [] },
+        instructions: [{ program_id: "EMPTY", discriminator_hex: "02" }],
+      },
+    };
+
+    await provideLifiContext(result as any, makeDeps(buildNormaliser(message)));
+
+    expect(api.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("uses the sole remaining meta entry (without shifting) when only one is left", async () => {
+    // A single compiled instruction with 2 remaining descriptors but only 1
+    // remaining meta entry exercises the metaQueue.length === 1 branch (peek
+    // via metaQueue[0], not shift).
+    api.sendCommand.mockResolvedValue(success);
+
+    const message = {
+      compiledInstructions: [
+        { programIdIndex: 0, data: new Uint8Array([0x02, 0x00, 0x00, 0x00]) },
+      ],
+      allKeys: [makeKey("SOLE")],
+    };
+
+    const result = {
+      type: ClearSignContextType.SOLANA_LIFI as const,
+      payload: {
+        descriptors: {
+          "SOLE:02": [
+            { data: "normal_data", signature: "sig_n", has_basis_point: false },
+            { data: "fee_data", signature: "sig_f", has_basis_point: true },
+          ],
+        },
+        instructions: [
+          {
+            program_id: "SOLE",
+            discriminator_hex: "02",
+            has_basis_point: true,
+          },
+        ],
+      },
+      certificate: undefined,
+    };
+
+    await provideLifiContext(result as any, makeDeps(buildNormaliser(message)));
+
+    expect(api.sendCommand).toHaveBeenCalledTimes(1);
+    expect(api.sendCommand.mock.calls[0]![0].args.dataHex).toBe("fee_data");
+  });
+
+  it("falls back to FIFO when no meta entry exists at all for the matching key", async () => {
+    // The descriptor key has no corresponding entry in `instructions` (meta),
+    // e.g. CAL sent a descriptor for a key the template never declared.
+    api.sendCommand.mockResolvedValue(success);
+
+    const message = {
+      compiledInstructions: [
+        { programIdIndex: 0, data: new Uint8Array([0x02, 0x00, 0x00, 0x00]) },
+      ],
+      allKeys: [makeKey("NOMETA")],
+    };
+
+    const result = {
+      type: ClearSignContextType.SOLANA_LIFI as const,
+      payload: {
+        descriptors: {
+          "NOMETA:02": [
+            { data: "first_data", signature: "sig1" },
+            { data: "second_data", signature: "sig2" },
+          ],
+        },
+        // No meta entry references "NOMETA:02" at all.
+        instructions: [],
+      },
+      certificate: undefined,
+    };
+
+    await provideLifiContext(result as any, makeDeps(buildNormaliser(message)));
+
+    expect(api.sendCommand).toHaveBeenCalledTimes(1);
+    expect(api.sendCommand.mock.calls[0]![0].args.dataHex).toBe("first_data");
   });
 
   it("skips entirely when descriptors is falsy", async () => {

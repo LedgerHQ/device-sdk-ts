@@ -2,14 +2,21 @@ import {
   type ClearSignContextType,
   type SolanaTrustedNameContextSuccess,
 } from "@ledgerhq/context-module";
-import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
+import {
+  type CommandResult,
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-management-kit";
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
-import { loadCertificate } from "./loadCertificate";
-import { type ProvideContextHandler } from "./provideContextTypes";
+import { loadCertificateIfPresent } from "./loadCertificate";
+import {
+  type ProvideContextErrorCodes,
+  type ProvideContextHandler,
+} from "./provideContextTypes";
 
 /**
  * Streams a challenge-bound `TRUSTED_NAME` (0x29) descriptor via the dedicated
@@ -21,16 +28,23 @@ import { type ProvideContextHandler } from "./provideContextTypes";
  */
 export const provideTrustedNameContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_TRUSTED_NAME
-> = async (result: SolanaTrustedNameContextSuccess, { api, logger }) => {
+> = async (
+  result: SolanaTrustedNameContextSuccess,
+  { api, logger },
+): Promise<CommandResult<void, ProvideContextErrorCodes>> => {
   const { payload, certificate } = result;
-  if (!payload || payload.length === 0) return;
+  if (!payload || payload.length === 0) {
+    return CommandResultFactory({ data: undefined });
+  }
 
-  if (certificate) {
-    await loadCertificate(
-      api,
-      certificate,
-      "[SignerSolana] provideTrustedNameContext: failed to load TRUSTED_NAME certificate",
-    );
+  const certResult = await loadCertificateIfPresent(
+    api,
+    certificate,
+    logger,
+    "provideTrustedNameContext",
+  );
+  if (!isSuccessCommandResult(certResult)) {
+    return certResult;
   }
 
   logger.debug("[provideTrustedNameContext] Sending TRUSTED_NAME");
@@ -48,8 +62,11 @@ export const provideTrustedNameContext: ProvideContextHandler<
     },
   ).run();
   if (!isSuccessCommandResult(res)) {
-    throw new Error(
-      "[SignerSolana] provideTrustedNameContext: device rejected TRUSTED_NAME",
-    );
+    logger.error("[provideTrustedNameContext] device rejected TRUSTED_NAME", {
+      data: { error: res.error },
+    });
+    return res;
   }
+
+  return CommandResultFactory({ data: undefined });
 };

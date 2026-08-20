@@ -3,6 +3,8 @@ import {
   type SolanaEnumVariantContextSuccess,
 } from "@ledgerhq/context-module";
 import {
+  type CommandResult,
+  CommandResultFactory,
   hexaStringToBuffer,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -12,37 +14,49 @@ import { ProvideEnumVariantCommand } from "@internal/app-binder/command/ProvideE
 import { appendSignatureTlv } from "@internal/app-binder/command/utils/apduChunking";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
-import { loadCertificate } from "./loadCertificate";
-import { type ProvideContextHandler } from "./provideContextTypes";
+import { loadCertificateIfPresent } from "./loadCertificate";
+import {
+  type ProvideContextErrorCodes,
+  type ProvideContextHandler,
+} from "./provideContextTypes";
 
 /** Streams the selected `ENUM_VARIANT` (0x26) descriptor. */
 export const provideEnumVariantContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_ENUM_VARIANT
-> = async (result: SolanaEnumVariantContextSuccess, { api, logger }) => {
+> = async (
+  result: SolanaEnumVariantContextSuccess,
+  { api, logger },
+): Promise<CommandResult<void, ProvideContextErrorCodes>> => {
   const { payload, certificate } = result;
-  if (!payload) return;
+  if (!payload) {
+    return CommandResultFactory({ data: undefined });
+  }
 
-  if (certificate) {
-    await loadCertificate(
-      api,
-      certificate,
-      "[SignerSolana] provideEnumVariantContext: failed to load ENUM_VARIANT certificate",
-    );
+  const certResult = await loadCertificateIfPresent(
+    api,
+    certificate,
+    logger,
+    "provideEnumVariantContext",
+  );
+  if (!isSuccessCommandResult(certResult)) {
+    return certResult;
   }
 
   const tlv = hexaStringToBuffer(payload.descriptor.data);
   if (!tlv) {
-    throw new Error(
-      `[SignerSolana] provideEnumVariantContext: malformed ENUM_VARIANT for ${payload.programId}:${payload.enumId}:${payload.variantIndex}`,
+    logger.warn(
+      `[provideEnumVariantContext] malformed ENUM_VARIANT for ${payload.programId}:${payload.enumId}:${payload.variantIndex}, skipping`,
     );
+    return CommandResultFactory({ data: undefined });
   }
   // Each ENUM_VARIANT is individually signed, CAL serves the descriptor
   // unsigned, so append the signature as the trailing SIGNATURE (0x15) TLV.
   const signature = hexaStringToBuffer(payload.descriptor.signature);
   if (!signature || signature.length === 0) {
-    throw new Error(
-      `[SignerSolana] provideEnumVariantContext: missing ENUM_VARIANT signature for ${payload.programId}:${payload.enumId}:${payload.variantIndex}`,
+    logger.warn(
+      `[provideEnumVariantContext] missing ENUM_VARIANT signature for ${payload.programId}:${payload.enumId}:${payload.variantIndex}, skipping`,
     );
+    return CommandResultFactory({ data: undefined });
   }
 
   logger.debug("[provideEnumVariantContext] Sending ENUM_VARIANT", {
@@ -66,8 +80,12 @@ export const provideEnumVariantContext: ProvideContextHandler<
     },
   ).run();
   if (!isSuccessCommandResult(res)) {
-    throw new Error(
-      `[SignerSolana] provideEnumVariantContext: device rejected ENUM_VARIANT for ${payload.programId}:${payload.enumId}:${payload.variantIndex}`,
+    logger.error(
+      `[provideEnumVariantContext] device rejected ENUM_VARIANT for ${payload.programId}:${payload.enumId}:${payload.variantIndex}`,
+      { data: { error: res.error } },
     );
+    return res;
   }
+
+  return CommandResultFactory({ data: undefined });
 };

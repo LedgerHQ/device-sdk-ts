@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClearSignContextType } from "@ledgerhq/context-module";
+import {
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ProvideContextDeps } from "./provideContextTypes";
@@ -67,15 +71,21 @@ describe("dispatchProvideContext", () => {
     expect(provideLifiContext).not.toHaveBeenCalled();
   });
 
-  it("propagates rejection from the underlying handler", async () => {
-    const boom = new Error("boom");
-    (provideTokenContext as any).mockRejectedValueOnce(boom);
+  it("propagates a failed CommandResult from the underlying handler", async () => {
+    (provideTokenContext as any).mockResolvedValueOnce(
+      CommandResultFactory({
+        error: {
+          _tag: "SolanaAppCommandError",
+          errorCode: "6a80",
+          message: "boom",
+        } as any,
+      }),
+    );
 
-    await expect(
-      dispatchProvideContext(
-        { type: ClearSignContextType.SOLANA_TOKEN } as any,
-        deps,
-      ),
-    ).rejects.toBe(boom);
+    const result = await dispatchProvideContext(
+      { type: ClearSignContextType.SOLANA_TOKEN } as any,
+      deps,
+    );
+    expect(isSuccessCommandResult(result)).toBe(false);
   });
 });

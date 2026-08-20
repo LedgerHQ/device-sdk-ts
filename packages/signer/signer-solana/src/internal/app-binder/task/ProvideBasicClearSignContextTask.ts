@@ -5,6 +5,7 @@ import {
 } from "@ledgerhq/context-module";
 import {
   type InternalApi,
+  isSuccessCommandResult,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
@@ -61,7 +62,17 @@ export class ProvideBasicClearSignContextTask {
     for (const loaderResult of ordered) {
       if (!isSolanaContextSuccess(loaderResult)) continue;
       this._logger.debug(`[run] Providing ${loaderResult.type}`);
-      await dispatchProvideContext(loaderResult, this._deps);
+      const result = await dispatchProvideContext(loaderResult, this._deps);
+      if (!isSuccessCommandResult(result)) {
+        // run() still resolves (Promise<void>) to preserve existing callers'
+        // best-effort behavior; only stop dispatching further descriptors so we
+        // don't keep sending APDUs after a device rejection.
+        this._logger.error(
+          `[run] device rejected ${loaderResult.type}, stopping basic clear-sign provisioning`,
+          { data: { error: result.error } },
+        );
+        return;
+      }
     }
   }
 }

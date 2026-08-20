@@ -333,6 +333,43 @@ describe("ProvideBasicClearSignContextTask", () => {
       );
     });
 
+    it("stops dispatching further contexts after a device rejection", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success) // trusted-name cert
+        .mockResolvedValueOnce(
+          CommandResultFactory({
+            error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+          }),
+        ); // trusted-name TLV descriptor rejected by the device
+
+      const task = new ProvideBasicClearSignContextTask(
+        api as any,
+        {
+          loadersResults: [
+            {
+              type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME as const,
+              payload: tlvDescriptor,
+              certificate: baseCert,
+            },
+            {
+              type: ClearSignContextType.SOLANA_TOKEN as const,
+              payload: { solanaTokenDescriptor: tokenDescriptor },
+              certificate: tokenCert,
+            },
+          ],
+          transactionBytes: new Uint8Array([0x1a]),
+          loggerFactory: mockLoggerFactory,
+        } as any,
+      );
+
+      const result = await task.run();
+
+      expect(result).toBeUndefined();
+      // Only the trusted-name cert + descriptor were sent; the token loader
+      // result must not be dispatched after the rejection.
+      expect(api.sendCommand).toHaveBeenCalledTimes(2);
+    });
+
     it("ignores ERROR entries while still dispatching subsequent success entries", async () => {
       api.sendCommand
         .mockResolvedValueOnce(success) // tx-check cert

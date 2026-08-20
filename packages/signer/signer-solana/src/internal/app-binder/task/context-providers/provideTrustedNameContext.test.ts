@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -66,5 +67,44 @@ describe("provideTrustedNameContext", () => {
       deps,
     );
     expect(api.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("returns a failed CommandResult when the certificate is rejected", async () => {
+    api.sendCommand.mockResolvedValueOnce(
+      CommandResultFactory({
+        error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+      }),
+    );
+
+    const result = await provideTrustedNameContext(
+      {
+        type: ClearSignContextType.SOLANA_TRUSTED_NAME as const,
+        payload: new Uint8Array([0xaa, 0xbb]),
+        certificate: cert,
+      } as any,
+      deps,
+    );
+
+    expect(isSuccessCommandResult(result)).toBe(false);
+    expect(api.sendCommand).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns a failed CommandResult when the device rejects TRUSTED_NAME", async () => {
+    api.sendCommand.mockResolvedValueOnce(success).mockResolvedValueOnce(
+      CommandResultFactory({
+        error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+      }),
+    );
+
+    const result = await provideTrustedNameContext(
+      {
+        type: ClearSignContextType.SOLANA_TRUSTED_NAME as const,
+        payload: new Uint8Array([0xaa, 0xbb]),
+        certificate: cert,
+      } as any,
+      deps,
+    );
+
+    expect(isSuccessCommandResult(result)).toBe(false);
   });
 });
