@@ -111,6 +111,7 @@ export type {
 } from "./api/device-action/GetCustomLockScreenInfo/types";
 export { CreateBackupDeviceAction } from "./api/device-action/OsUpdate/Backup/CreateBackupDeviceAction";
 export type {
+  Backup,
   CreateBackupDAError,
   CreateBackupDAInput,
   CreateBackupDAIntermediateValue,
