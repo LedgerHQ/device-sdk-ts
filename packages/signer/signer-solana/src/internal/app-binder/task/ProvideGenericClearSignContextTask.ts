@@ -137,29 +137,45 @@ export class ProvideGenericClearSignContextTask {
     try {
       const result = await dispatchProvideContext(context, this.deps);
       if (!isSuccessCommandResult(result)) {
-        if (FATAL_PROVIDE_CONTEXT_TYPES.has(context.type)) {
-          return result;
-        }
-        this.logger.warn(
+        return this.handleOptionalDescriptorFailure(
+          context,
           "[run] optional descriptor provisioning failed; continuing with degraded clear-signing",
-          { data: { type: context.type, error: result.error } },
+          result,
         );
       }
     } catch (error) {
-      // A fatal descriptor throwing (as opposed to returning a failed
-      // CommandResult) must still abort generic clear-signing, matching the
-      // guarantee above for a returned failure — but as a returned
-      // CommandResult, not a rejection, so this method never rejects.
-      if (FATAL_PROVIDE_CONTEXT_TYPES.has(context.type)) {
-        return CommandResultFactory({
-          error: new UnknownDeviceExchangeError(error),
-        });
-      }
-      this.logger.warn(
+      return this.handleOptionalDescriptorFailure(
+        context,
         "[run] optional descriptor provisioning threw; continuing with degraded clear-signing",
-        { data: { type: context.type, error } },
+        CommandResultFactory({
+          error: new UnknownDeviceExchangeError(String(error)),
+        }),
       );
     }
+    return CommandResultFactory({ data: undefined });
+  }
+
+  /**
+   * Shared by both failure sources above: a {@link FATAL_PROVIDE_CONTEXT_TYPES}
+   * descriptor's failure propagates (aborting generic clear-signing); any
+   * other descriptor's failure is logged and swallowed. `result` is expected
+   * to already be a failure, but is typed as the full CommandResult since
+   * CommandResultFactory's return type isn't narrowed by its input shape.
+   */
+  private handleOptionalDescriptorFailure(
+    context: ClearSignContext,
+    message: string,
+    result: CommandResult<void, ProvideContextErrorCodes>,
+  ): CommandResult<void, ProvideContextErrorCodes> {
+    if (
+      isSuccessCommandResult(result) ||
+      FATAL_PROVIDE_CONTEXT_TYPES.has(context.type)
+    ) {
+      return result;
+    }
+    this.logger.warn(message, {
+      data: { type: context.type, error: result.error },
+    });
     return CommandResultFactory({ data: undefined });
   }
 
@@ -445,7 +461,7 @@ export class ProvideGenericClearSignContextTask {
     } catch (error) {
       this.logger.debug(
         "[streamGenericPreview] could not zero blockhash; streaming original",
-        { data: { error } },
+        { data: { error: String(error) } },
       );
     }
 
