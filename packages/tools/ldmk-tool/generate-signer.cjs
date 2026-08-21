@@ -236,7 +236,14 @@ ${constructorAndArgs}
     // Example structure:
     // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
     // Add derivation path and other data to builder
-    // return builder.build();
+    // return builder.build();${
+      hasArgs
+        ? `
+    // \`this.args\` holds the command input; never log it, it carries
+    // derivation paths and transaction data.
+    void this.args;`
+        : ""
+    }
     throw new Error("${commandName}Command.getApdu() not implemented");
   }
 
@@ -283,10 +290,8 @@ function generateCommandResponseType(config) {
   switch (config.name) {
     case "getAppConfig":
       return `export type GetAppConfigCommandResponse = {
-  // Define your app configuration response fields here
-  // Example:
-  // version: string;
-  // flags: number;
+  // Replace with your app configuration response fields
+  readonly version: string;
 };
 `;
     case "getAddress":
@@ -930,8 +935,55 @@ async function generateSigner() {
     });
 
     function writeFile(filePath, content) {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, content);
       console.log(chalk.green(`✅ Created ${filePath}`));
+    }
+
+    // Integration steps patch files that live outside the generated package.
+    // Their paths move as the repo evolves, so a missing target is reported as a
+    // manual follow-up instead of silently skipped or fatal.
+    const manualSteps = [];
+    function requireTarget(filePath, what) {
+      if (fs.existsSync(filePath)) {
+        return true;
+      }
+      const message = `${what}: expected "${filePath}" but it does not exist`;
+      manualSteps.push(message);
+      console.log(chalk.yellow(`⚠️  Skipped ${message}`));
+      return false;
+    }
+    function reportUnpatched(filePath, what) {
+      const message = `${what}: could not find the insertion point in "${filePath}"`;
+      manualSteps.push(message);
+      console.log(chalk.yellow(`⚠️  Skipped ${message}`));
+    }
+
+    /**
+     * Inserts `newLine` among already sorted `lines`, keeping them ordered.
+     * Anchors on the last line sorting before `newKey`, or on the first line
+     * when `newKey` sorts ahead of every existing entry. Returns null when
+     * there is no line to anchor on, so the caller can report a manual step.
+     */
+    function insertSorted(content, lines, keyOf, newKey, newLine) {
+      let after = null;
+      let before = null;
+      for (const line of lines) {
+        const key = keyOf(line);
+        if (!key) continue;
+        if (key < newKey) {
+          after = line;
+        } else if (after === null && before === null) {
+          before = line;
+        }
+      }
+
+      const anchor = after || before;
+      if (!anchor) return null;
+
+      return content.replace(anchor, () =>
+        after ? `${anchor}\n${newLine}` : `${newLine}\n${anchor}`,
+      );
     }
 
     console.log(chalk.gray("\n📦 Generating files..."));
@@ -1048,14 +1100,33 @@ async function generateSigner() {
     // Generate vitest.config.mjs
     writeFile(
       `${baseDir}/vitest.config.mjs`,
-      `import { defineConfig } from "vitest/config";
-import { vitestConfigDmk } from "@ledgerhq/vitest-config-dmk";
+      `import baseConfig from "@ledgerhq/vitest-config-dmk";
+import { defineConfig } from "vitest/config";
+import path from "path";
 
 export default defineConfig({
-  ...vitestConfigDmk,
+  ...baseConfig,
   test: {
-    ...vitestConfigDmk.test,
+    ...baseConfig.test,
     setupFiles: ["./vitest.setup.mjs"],
+    coverage: {
+      reporter: ["lcov", "text"],
+      provider: "istanbul",
+      include: ["src/**/*.ts"],
+      exclude: [
+        "src/**/*.stub.ts",
+        "src/index.ts",
+        "src/api/index.ts",
+        "src/**/__test-utils__/*",
+      ],
+    },
+  },
+  resolve: {
+    alias: {
+      "@root": path.resolve(__dirname),
+      "@api": path.resolve(__dirname, "src/api"),
+      "@internal": path.resolve(__dirname, "src/internal"),
+    },
   },
 });
 `,
@@ -1113,13 +1184,65 @@ export * from "@api/index";
     );
 
     // Generate src/api/index.ts
-    writeFile(
-      `${baseDir}/src/api/index.ts`,
-      `export * from "@api/Signer${pascalCase}";
-export * from "@api/Signer${pascalCase}Builder";
-// Export other types as needed
-`,
+    // The generated sample app view imports the device action types from the
+    // package root, so they have to be re-exported here.
+    const apiExports = [];
+    if (includeGetAddress) {
+      apiExports.push(`export {
+  type GetAddressDAError,
+  type GetAddressDAIntermediateValue,
+  type GetAddressDAOutput,
+  type GetAddressDAReturnType,
+} from "@api/app-binder/GetAddressDeviceActionTypes";`);
+    }
+    if (includeGetAppConfig) {
+      apiExports.push(`export {
+  type GetAppConfigDAError,
+  type GetAppConfigDAIntermediateValue,
+  type GetAppConfigDAOutput,
+  type GetAppConfigDAReturnType,
+} from "@api/app-binder/GetAppConfigDeviceActionTypes";`);
+    }
+    if (includeSignMessage) {
+      apiExports.push(`export {
+  type SignMessageDAError,
+  type SignMessageDAIntermediateValue,
+  type SignMessageDAOutput,
+  type SignMessageDAReturnType,
+} from "@api/app-binder/SignMessageDeviceActionTypes";`);
+    }
+    if (includeSignTransaction) {
+      apiExports.push(`export {
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
+  type SignTransactionDAReturnType,
+} from "@api/app-binder/SignTransactionDeviceActionTypes";`);
+    }
+    if (includeGetAddress) {
+      apiExports.push(
+        `export { type AddressOptions } from "@api/model/AddressOptions";`,
+      );
+    }
+    if (includeGetAppConfig) {
+      apiExports.push(`export { type AppConfig } from "@api/model/AppConfig";`);
+    }
+    if (includeSignTransaction || includeSignMessage) {
+      apiExports.push(`export { type Signature } from "@api/model/Signature";`);
+    }
+    if (includeSignTransaction) {
+      apiExports.push(
+        `export { type TransactionOptions } from "@api/model/TransactionOptions";`,
+      );
+    }
+    apiExports.push(
+      `export { type Signer${pascalCase} } from "@api/Signer${pascalCase}";`,
     );
+    apiExports.push(
+      `export { Signer${pascalCase}Builder } from "@api/Signer${pascalCase}Builder";`,
+    );
+
+    writeFile(`${baseDir}/src/api/index.ts`, `${apiExports.join("\n")}\n`);
 
     // Generate src/api/Signer{pascalCase}.ts - dynamic based on selected APIs
     const signerImports = [];
@@ -1258,10 +1381,8 @@ export class Signer${pascalCase}Builder {
       writeFile(
         `${baseDir}/src/api/model/AppConfig.ts`,
         `export type AppConfig = {
-  // Define your app configuration fields here
-  // Example:
-  // version: string;
-  // flags: number;
+  // Replace with your app configuration fields
+  version: string;
 };
 `,
       );
@@ -1771,7 +1892,7 @@ All notable changes to this project will be documented in this file.
     );
 
     // Generate documentation page dynamically based on selected methods
-    const docsDir = `apps/docs/pages/docs/references/signers`;
+    const docsDir = `apps/docs/content/docs/references/signers`;
     const docFileName = `${kebabCase}.mdx`;
 
     // Build the list of capabilities dynamically
@@ -2161,13 +2282,25 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
 
     // Update _meta.js in docs
     const metaFilePath = `${docsDir}/_meta.js`;
-    let metaContent = fs.readFileSync(metaFilePath, "utf8");
-    // Add new entry before the closing brace
-    metaContent = metaContent.replace(
-      /(\s+)(};)/,
-      `$1  ${kebabCase}: "Signer ${pascalCase}",\n$1$2`,
-    );
-    writeFile(metaFilePath, metaContent);
+    if (requireTarget(metaFilePath, "docs sidebar entry")) {
+      const metaContent = fs.readFileSync(metaFilePath, "utf8");
+      const metaEndRegex = /\n(\s*)\};/;
+      if (new RegExp(`^\\s*${kebabCase}:`, "m").test(metaContent)) {
+        console.log(
+          chalk.yellow(`⚠️  "${kebabCase}" already exists in ${metaFilePath}`),
+        );
+      } else if (metaEndRegex.test(metaContent)) {
+        writeFile(
+          metaFilePath,
+          metaContent.replace(
+            metaEndRegex,
+            `\n  ${kebabCase}: "Signer ${pascalCase}",\n$1};`,
+          ),
+        );
+      } else {
+        reportUnpatched(metaFilePath, "docs sidebar entry");
+      }
+    }
 
     // Generate sample app files
     console.log(chalk.gray("\n📱 Generating sample app files..."));
@@ -2206,7 +2339,7 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
 
     // Update client-layout.tsx to add the new signer provider
     const clientLayoutPath = `${sampleAppDir}/app/client-layout.tsx`;
-    if (fs.existsSync(clientLayoutPath)) {
+    if (requireTarget(clientLayoutPath, "sample app provider registration")) {
       let clientLayoutContent = fs.readFileSync(clientLayoutPath, "utf-8");
 
       const providerImport = `import { Signer${pascalCase}Provider } from "@/providers/Signer${pascalCase}Provider";`;
@@ -2232,6 +2365,7 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
           lastImportMatch = match;
         }
 
+        let importInserted = false;
         if (lastImportMatch) {
           // Insert after the last signer provider import
           const insertPosition =
@@ -2241,62 +2375,76 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
             "\n" +
             providerImport +
             clientLayoutContent.slice(insertPosition);
+          importInserted = true;
         } else {
           // Fallback: add after the store import
-          clientLayoutContent = clientLayoutContent.replace(
-            /(import \{ store \} from "@\/state\/store";)/,
-            `$1\n${providerImport}`,
-          );
+          const storeImportRegex =
+            /(import \{ store \} from "@\/state\/store";)/;
+          if (storeImportRegex.test(clientLayoutContent)) {
+            clientLayoutContent = clientLayoutContent.replace(
+              storeImportRegex,
+              `$1\n${providerImport}`,
+            );
+            importInserted = true;
+          }
         }
 
         // Add provider wrapper - find the innermost provider (before CalInterceptorProvider or GlobalStyle)
-        // Look for pattern like <SignerEthProvider> and wrap inside it
-        const providerWrapperRegex = /(<SignerEthProvider>)/;
-        if (clientLayoutContent.match(providerWrapperRegex)) {
+        // Look for pattern like <SignerEthProvider> and wrap inside it. Both the
+        // opening and closing tag must be present, otherwise the file would end
+        // up with unbalanced JSX.
+        const wrapperCandidates = [
+          [/(<SignerEthProvider>)/, /(<\/SignerEthProvider>)/],
+          [/(<CalInterceptorProvider>)/, /(<\/CalInterceptorProvider>)/],
+        ];
+        const wrapper = wrapperCandidates.find(
+          ([open, close]) =>
+            open.test(clientLayoutContent) && close.test(clientLayoutContent),
+        );
+
+        if (wrapper && importInserted) {
+          const [openRegex, closeRegex] = wrapper;
           clientLayoutContent = clientLayoutContent.replace(
-            providerWrapperRegex,
+            openRegex,
             `$1\n                  <${providerName}>`,
           );
-          // Find the closing tag and add our closing tag before it
           clientLayoutContent = clientLayoutContent.replace(
-            /(<\/SignerEthProvider>)/,
+            closeRegex,
             `</${providerName}>\n                $1`,
           );
-        } else {
-          // Fallback: wrap around CalInterceptorProvider
-          clientLayoutContent = clientLayoutContent.replace(
-            /(<CalInterceptorProvider>)/,
-            `<${providerName}>\n                    $1`,
-          );
-          clientLayoutContent = clientLayoutContent.replace(
-            /(<\/CalInterceptorProvider>)/,
-            `$1\n                  </${providerName}>`,
-          );
-        }
 
-        fs.writeFileSync(clientLayoutPath, clientLayoutContent);
-        console.log(chalk.green(`✅ Updated ${clientLayoutPath}`));
+          fs.writeFileSync(clientLayoutPath, clientLayoutContent);
+          console.log(chalk.green(`✅ Updated ${clientLayoutPath}`));
+        } else {
+          reportUnpatched(clientLayoutPath, "sample app provider registration");
+        }
       }
     }
 
     // Update sample app package.json to add the new signer dependency
     const samplePackageJsonPath = "apps/sample/package.json";
-    if (fs.existsSync(samplePackageJsonPath)) {
+    if (requireTarget(samplePackageJsonPath, "sample app dependency")) {
       const packageJson = JSON.parse(
         fs.readFileSync(samplePackageJsonPath, "utf-8"),
       );
       const depName = `@ledgerhq/device-signer-kit-${kebabCase}`;
+      packageJson.dependencies = packageJson.dependencies || {};
 
-      if (packageJson.dependencies && !packageJson.dependencies[depName]) {
-        packageJson.dependencies[depName] = "workspace:^";
-
-        // Sort dependencies alphabetically
-        packageJson.dependencies = Object.keys(packageJson.dependencies)
-          .sort()
-          .reduce((obj, key) => {
-            obj[key] = packageJson.dependencies[key];
-            return obj;
-          }, {});
+      if (!packageJson.dependencies[depName]) {
+        // Insert in place rather than re-sorting, to avoid churn on entries
+        // that are already ordered differently.
+        const existing = packageJson.dependencies;
+        const insertBefore = Object.keys(existing).find((key) => key > depName);
+        packageJson.dependencies = Object.keys(existing).reduce((obj, key) => {
+          if (key === insertBefore) {
+            obj[depName] = "workspace:^";
+          }
+          obj[key] = existing[key];
+          return obj;
+        }, {});
+        if (!insertBefore) {
+          packageJson.dependencies[depName] = "workspace:^";
+        }
 
         fs.writeFileSync(
           samplePackageJsonPath,
@@ -2305,10 +2453,7 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
         console.log(
           chalk.green(`✅ Added ${depName} to ${samplePackageJsonPath}`),
         );
-      } else if (
-        packageJson.dependencies &&
-        packageJson.dependencies[depName]
-      ) {
+      } else {
         console.log(
           chalk.yellow(
             `⚠️  ${depName} already exists in ${samplePackageJsonPath}`,
@@ -2319,7 +2464,7 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
 
     // Update root package.json to add the signer alias
     const rootPackageJsonPath = "package.json";
-    if (fs.existsSync(rootPackageJsonPath)) {
+    if (requireTarget(rootPackageJsonPath, "root package.json signer alias")) {
       const rootPackageJson = JSON.parse(
         fs.readFileSync(rootPackageJsonPath, "utf-8"),
       );
@@ -2391,7 +2536,7 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
 
     // Update SignerView/index.tsx to add the new signer
     const signerViewPath = `${sampleAppDir}/components/SignerView/index.tsx`;
-    if (fs.existsSync(signerViewPath)) {
+    if (requireTarget(signerViewPath, "sample app signer list entry")) {
       let signerViewContent = fs.readFileSync(signerViewPath, "utf-8");
 
       // Check if this signer already exists
@@ -2422,75 +2567,74 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
           fs.writeFileSync(signerViewPath, signerViewContent);
           console.log(chalk.green(`✅ Updated ${signerViewPath}`));
         } else {
-          console.log(
-            chalk.yellow(
-              `⚠️  Could not update ${signerViewPath} - please add the signer manually`,
-            ),
-          );
+          reportUnpatched(signerViewPath, "sample app signer list entry");
         }
       }
     }
 
-    // Update release config (.cursor/scripts/release/config.cjs)
-    const releaseConfigPath = ".cursor/scripts/release/config.cjs";
-    if (fs.existsSync(releaseConfigPath)) {
+    // Update release config
+    const releaseConfigPath = "agent-files/scripts/release/config.cjs";
+    if (requireTarget(releaseConfigPath, "release config alias")) {
       let releaseConfigContent = fs.readFileSync(releaseConfigPath, "utf-8");
       const aliasKey = `signer-${kebabCase}`;
       const fullPkgName = `@ledgerhq/device-signer-kit-${kebabCase}`;
 
-      if (releaseConfigContent.includes(`"${aliasKey}"`)) {
+      // ALIASES and DISPLAY_NAMES are tracked independently, so a partially
+      // applied previous run can still be completed.
+      if (releaseConfigContent.includes(`  "${aliasKey}":`)) {
         console.log(
           chalk.yellow(
             `⚠️  Alias "${aliasKey}" already exists in ${releaseConfigPath}`,
           ),
         );
       } else {
-        // Insert into ALIASES: find the last "signer-*" line that sorts before ours or before "signer-utils"
-        const aliasLines =
-          releaseConfigContent.match(/^ {2}"signer-[^"]*":.*$/gm) || [];
-        let aliasInsertAfter = null;
-        for (const line of aliasLines) {
-          const key = line.match(/"(signer-[^"]+)"/)?.[1];
-          if (key && key < aliasKey) {
-            aliasInsertAfter = line;
-          }
+        const patched = insertSorted(
+          releaseConfigContent,
+          releaseConfigContent.match(/^ {2}"signer-[^"]*":.*$/gm) || [],
+          (line) => line.match(/"(signer-[^"]+)"/)?.[1],
+          aliasKey,
+          `  "${aliasKey}": "${fullPkgName}",`,
+        );
+        if (patched) {
+          releaseConfigContent = patched;
+        } else {
+          reportUnpatched(releaseConfigPath, "release config ALIASES entry");
         }
-        if (aliasInsertAfter) {
-          const newAliasLine = `  "${aliasKey}": "${fullPkgName}",`;
-          releaseConfigContent = releaseConfigContent.replace(
-            aliasInsertAfter,
-            `${aliasInsertAfter}\n${newAliasLine}`,
-          );
-        }
+      }
 
-        // Insert into DISPLAY_NAMES: find the last "@ledgerhq/device-signer-kit-*" line that sorts before ours
-        const displayLines =
+      if (releaseConfigContent.includes(`  "${fullPkgName}":`)) {
+        console.log(
+          chalk.yellow(
+            `⚠️  Display name for "${fullPkgName}" already exists in ${releaseConfigPath}`,
+          ),
+        );
+      } else {
+        const patched = insertSorted(
+          releaseConfigContent,
           releaseConfigContent.match(
             /^ {2}"@ledgerhq\/device-signer-kit-[^"]*":.*$/gm,
-          ) || [];
-        let displayInsertAfter = null;
-        for (const line of displayLines) {
-          const key = line.match(/"(@ledgerhq\/device-signer-kit-[^"]+)"/)?.[1];
-          if (key && key < fullPkgName) {
-            displayInsertAfter = line;
-          }
-        }
-        if (displayInsertAfter) {
-          const newDisplayLine = `  "${fullPkgName}": "Signer ${pascalCase}",`;
-          releaseConfigContent = releaseConfigContent.replace(
-            displayInsertAfter,
-            `${displayInsertAfter}\n${newDisplayLine}`,
+          ) || [],
+          (line) => line.match(/"(@ledgerhq\/device-signer-kit-[^"]+)"/)?.[1],
+          fullPkgName,
+          `  "${fullPkgName}": "Signer ${pascalCase}",`,
+        );
+        if (patched) {
+          releaseConfigContent = patched;
+        } else {
+          reportUnpatched(
+            releaseConfigPath,
+            "release config DISPLAY_NAMES entry",
           );
         }
-
-        fs.writeFileSync(releaseConfigPath, releaseConfigContent);
-        console.log(chalk.green(`✅ Updated ${releaseConfigPath}`));
       }
+
+      fs.writeFileSync(releaseConfigPath, releaseConfigContent);
+      console.log(chalk.green(`✅ Updated ${releaseConfigPath}`));
     }
 
-    // Update release skill (.cursor/skills/release/SKILL.md)
-    const releaseSkillPath = ".cursor/skills/release/SKILL.md";
-    if (fs.existsSync(releaseSkillPath)) {
+    // Update release skill
+    const releaseSkillPath = "agent-files/skills/release/SKILL.md";
+    if (requireTarget(releaseSkillPath, "release skill alias table row")) {
       let skillContent = fs.readFileSync(releaseSkillPath, "utf-8");
       const aliasKey = `signer-${kebabCase}`;
       const fullPkgName = `@ledgerhq/device-signer-kit-${kebabCase}`;
@@ -2503,32 +2647,21 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
         );
       } else {
         // Find all signer-* rows in the markdown table and insert in alphabetical order
-        const signerRowRegex = /^\| `signer-[^`]+`\s*\|.*\|$/gm;
-        const signerRows = skillContent.match(signerRowRegex) || [];
-        let insertAfterRow = null;
-        for (const row of signerRows) {
-          const key = row.match(/`(signer-[^`]+)`/)?.[1];
-          if (key && key < aliasKey) {
-            insertAfterRow = row;
-          }
-        }
+        const aliasPadded = `\`${aliasKey}\``.padEnd(24);
+        const pkgPadded = `\`${fullPkgName}\``.padEnd(63);
+        const patched = insertSorted(
+          skillContent,
+          skillContent.match(/^\| `signer-[^`]+`\s*\|.*\|$/gm) || [],
+          (row) => row.match(/`(signer-[^`]+)`/)?.[1],
+          aliasKey,
+          `| ${aliasPadded}| ${pkgPadded}|`,
+        );
 
-        if (insertAfterRow) {
-          const aliasPadded = `\`${aliasKey}\``.padEnd(24);
-          const pkgPadded = `\`${fullPkgName}\``.padEnd(63);
-          const newRow = `| ${aliasPadded}| ${pkgPadded}|`;
-          skillContent = skillContent.replace(
-            insertAfterRow,
-            `${insertAfterRow}\n${newRow}`,
-          );
-          fs.writeFileSync(releaseSkillPath, skillContent);
+        if (patched) {
+          fs.writeFileSync(releaseSkillPath, patched);
           console.log(chalk.green(`✅ Updated ${releaseSkillPath}`));
         } else {
-          console.log(
-            chalk.yellow(
-              `⚠️  Could not update ${releaseSkillPath} - please add the signer alias manually`,
-            ),
-          );
+          reportUnpatched(releaseSkillPath, "release skill alias table row");
         }
       }
     }
@@ -2538,41 +2671,43 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
     console.log(
       chalk.cyan(`   ✓ Signer package: packages/signer/signer-${kebabCase}`),
     );
+    console.log(chalk.cyan(`   ✓ Documentation: ${docsDir}/${docFileName}`));
     console.log(
       chalk.cyan(
-        `   ✓ Documentation: apps/docs/pages/docs/references/signers/${kebabCase}.mdx`,
+        `   ✓ Sample provider: ${sampleAppDir}/providers/Signer${pascalCase}Provider/index.tsx`,
       ),
     );
     console.log(
       chalk.cyan(
-        `   ✓ Sample component: apps/sample/src/components/Signer${pascalCase}View/index.tsx`,
+        `   ✓ Sample component: ${sampleAppDir}/components/Signer${pascalCase}View/index.tsx`,
       ),
     );
     console.log(
       chalk.cyan(
-        `   ✓ Sample page: apps/sample/src/app/signers/${kebabCase}/page.tsx`,
+        `   ✓ Sample page: ${sampleAppDir}/app/signers/${kebabCase}/page.tsx`,
       ),
     );
-    console.log(
-      chalk.cyan(`   ✓ Release config: .cursor/scripts/release/config.cjs`),
-    );
-    console.log(
-      chalk.cyan(`   ✓ Release skill: .cursor/skills/release/SKILL.md`),
-    );
+    console.log(chalk.cyan(`   ✓ Release config: ${releaseConfigPath}`));
+    console.log(chalk.cyan(`   ✓ Release skill: ${releaseSkillPath}`));
     console.log(chalk.gray("\nNext steps:"));
     console.log(chalk.gray("1. Install dependencies from the root:"));
     console.log(chalk.cyan("   pnpm install"));
-    console.log(chalk.gray("2. Build the package:"));
+    console.log(
+      chalk.gray("2. Format and sort the generated code (expected to report"),
+    );
+    console.log(chalk.gray("   fixes, the templates are not lint-clean):"));
+    console.log(chalk.cyan("   pnpm lint:fix && pnpm prettier:fix"));
+    console.log(chalk.gray("3. Build the package:"));
     console.log(
       chalk.cyan(
         `   pnpm --filter @ledgerhq/device-signer-kit-${kebabCase} build`,
       ),
     );
-    console.log(chalk.gray("3. Run the sample app to test:"));
+    console.log(chalk.gray("4. Run the sample app to test:"));
     console.log(chalk.cyan("   pnpm sample dev"));
     console.log(
       chalk.gray(
-        `4. Start developing your ${cryptoName} signer implementation!`,
+        `5. Start developing your ${cryptoName} signer implementation!`,
       ),
     );
     console.log(chalk.yellow("\n⚠️  Remember to implement:"));
@@ -2588,26 +2723,28 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
     if (includeSignTransaction) {
       console.log(chalk.yellow("   - SignTransactionTask implementation"));
     }
-    console.log(chalk.gray("\nGenerated files:"));
-    console.log(
-      chalk.gray("  Signer package: ") +
-        chalk.cyan(`packages/signer/signer-${kebabCase}/`),
-    );
-    console.log(
-      chalk.gray("  Sample app provider: ") +
-        chalk.cyan(`apps/sample/src/providers/Signer${pascalCase}Provider/`),
-    );
-    console.log(
-      chalk.gray("  Sample app view: ") +
-        chalk.cyan(`apps/sample/src/components/Signer${pascalCase}View/`),
-    );
-    console.log(
-      chalk.gray("  Sample app page: ") +
-        chalk.cyan(`apps/sample/src/app/signers/${kebabCase}/`),
-    );
     console.log(
       chalk.gray("\nGenerated APIs: ") + chalk.cyan(selectedApis.join(", ")),
     );
+
+    if (manualSteps.length > 0) {
+      console.log(
+        chalk.red(
+          `\n⚠️  ${manualSteps.length} integration step(s) could not be applied automatically.`,
+        ),
+      );
+      console.log(
+        chalk.red(
+          "The repository layout probably changed since this generator was written.",
+        ),
+      );
+      manualSteps.forEach((step) => console.log(chalk.red(`   - ${step}`)));
+      console.log(
+        chalk.red(
+          "Apply them by hand, then update packages/tools/ldmk-tool/generate-signer.cjs.",
+        ),
+      );
+    }
   } catch (error) {
     if (error.name === "ExitPromptError") {
       console.log(chalk.yellow("\n❌ Generation cancelled by user"));
