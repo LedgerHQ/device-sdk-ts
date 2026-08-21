@@ -9,15 +9,21 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { type ConcordiumErrorCodes } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
 import { InvalidMaxFeeError } from "@internal/app-binder/command/utils/InvalidMaxFeeError";
+import { UnsupportedAppVersionError } from "@internal/app-binder/command/utils/UnsupportedAppVersionError";
 import { UnsupportedTransactionTypeError } from "@internal/app-binder/command/utils/UnsupportedTransactionTypeError";
 import { ConcordiumApplicationResolver } from "@internal/app-binder/ConcordiumApplicationResolver";
+import { SendPltTask } from "@internal/app-binder/task/SendPltTask";
 import { SendTransferTask } from "@internal/app-binder/task/SendTransferTask";
 import { SendTransferWithMemoTask } from "@internal/app-binder/task/SendTransferWithMemoTask";
-import { MIN_APP_VERSION_FOR_FEE_DISPLAY } from "@internal/shared/ConcordiumAppVersions";
+import {
+  MIN_APP_VERSION_FOR_FEE_DISPLAY,
+  MIN_APP_VERSION_FOR_PLT,
+} from "@internal/shared/ConcordiumAppVersions";
 
 const TYPE_OFFSET = 60;
 const TRANSACTION_TYPE_TRANSFER = 3;
 const TRANSACTION_TYPE_TRANSFER_WITH_MEMO = 22;
+const TRANSACTION_TYPE_PLT = 0x1b;
 const UINT64_MAX = 0xffffffffffffffffn;
 
 type TaskArgs = {
@@ -55,7 +61,35 @@ export function createSignTransactionTask(
       );
   }
 
-  const supportsFeeDisplay = checkFeeDisplaySupport(internalApi);
+  if (txType === TRANSACTION_TYPE_PLT) {
+    if (!checkMinVersion(internalApi, MIN_APP_VERSION_FOR_PLT)) {
+      return () =>
+        Promise.resolve(
+          CommandResultFactory({
+            error: new UnsupportedAppVersionError(
+              "PLT transactions",
+              MIN_APP_VERSION_FOR_PLT,
+            ),
+          }),
+        );
+    }
+
+    const logger = loggerFactory("SendPltTask");
+    return () =>
+      new SendPltTask(
+        internalApi,
+        {
+          derivationPath: args.derivationPath,
+          transaction: args.transaction,
+        },
+        logger,
+      ).run();
+  }
+
+  const supportsFeeDisplay = checkMinVersion(
+    internalApi,
+    MIN_APP_VERSION_FOR_FEE_DISPLAY,
+  );
   const taskArgs = { ...args, supportsFeeDisplay };
 
   if (txType === TRANSACTION_TYPE_TRANSFER_WITH_MEMO) {
@@ -79,21 +113,25 @@ function getTransactionType(transaction: Uint8Array): number | undefined {
   const type = transaction[TYPE_OFFSET];
   if (
     type === TRANSACTION_TYPE_TRANSFER ||
-    type === TRANSACTION_TYPE_TRANSFER_WITH_MEMO
+    type === TRANSACTION_TYPE_TRANSFER_WITH_MEMO ||
+    type === TRANSACTION_TYPE_PLT
   ) {
     return type;
   }
   return undefined;
 }
 
-function checkFeeDisplaySupport(internalApi: InternalApi): boolean {
+function checkMinVersion(
+  internalApi: InternalApi,
+  minVersion: string,
+): boolean {
   try {
     return new ApplicationChecker(
       internalApi.getDeviceSessionState(),
       { version: "" },
       new ConcordiumApplicationResolver(),
     )
-      .withMinVersionInclusive(MIN_APP_VERSION_FOR_FEE_DISPLAY)
+      .withMinVersionInclusive(minVersion)
       .check();
   } catch {
     return false;
