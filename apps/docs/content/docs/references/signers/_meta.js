@@ -10,4 +10,5 @@ export default {
   polkadot: "Signer Polkadot",
   icp: "Signer Internet Computer",
   trx: "Signer Tron",
+  xrp: "Signer Xrp",
 };
