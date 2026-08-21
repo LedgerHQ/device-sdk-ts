@@ -35,6 +35,7 @@ Use these short names in the `--packages` flag. The user may use either aliases 
 | `signer-polkadot`       | `@ledgerhq/device-signer-kit-polkadot`                         |
 | `signer-zcash`          | `@ledgerhq/device-signer-kit-zcash`                            |
 | `signer-utils`          | `@ledgerhq/signer-utils`                                       |
+| `signer-xrp`            | `@ledgerhq/device-signer-kit-xrp`                              |
 | `context-module`        | `@ledgerhq/context-module`                                     |
 | `transport-web-hid`     | `@ledgerhq/device-transport-kit-web-hid`                       |
 | `transport-web-ble`     | `@ledgerhq/device-transport-kit-web-ble`                       |

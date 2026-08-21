@@ -27,6 +27,7 @@ import { SignerAleoProvider } from "@/providers/SignerAleoProvider";
 import { SignerCosmosProvider } from "@/providers/SignerCosmosProvider";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { SignerPolkadotProvider } from "@/providers/SignerPolkadotProvider";
+import { SignerXrpProvider } from "@/providers/SignerXrpProvider";
 import { SignerZcashProvider } from "@/providers/SignerZcashProvider";
 import { store } from "@/state/store";
 import { GlobalStyle } from "@/styles/globalstyles";
@@ -77,23 +78,28 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
             <DmkProvider>
               <LedgerKeyringProtocolProvider>
                 <SignerEthProvider>
-                  <SignerPolkadotProvider>
-                    <SignerZcashProvider>
-                      <SignerAleoProvider>
-                        <SignerCosmosProvider>
-                          <CalInterceptorProvider>
-                            <GlobalStyle />
-                            <head>
-                              <link rel="shortcut icon" href="../favicon.png" />
-                            </head>
-                            <body>
-                              <RootApp>{children}</RootApp>
-                            </body>
-                          </CalInterceptorProvider>
-                        </SignerCosmosProvider>
-                      </SignerAleoProvider>
-                    </SignerZcashProvider>
-                  </SignerPolkadotProvider>
+                  <SignerXrpProvider>
+                    <SignerPolkadotProvider>
+                      <SignerZcashProvider>
+                        <SignerAleoProvider>
+                          <SignerCosmosProvider>
+                            <CalInterceptorProvider>
+                              <GlobalStyle />
+                              <head>
+                                <link
+                                  rel="shortcut icon"
+                                  href="../favicon.png"
+                                />
+                              </head>
+                              <body>
+                                <RootApp>{children}</RootApp>
+                              </body>
+                            </CalInterceptorProvider>
+                          </SignerCosmosProvider>
+                        </SignerAleoProvider>
+                      </SignerZcashProvider>
+                    </SignerPolkadotProvider>
+                  </SignerXrpProvider>
                 </SignerEthProvider>
               </LedgerKeyringProtocolProvider>
             </DmkProvider>

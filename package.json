@@ -57,6 +57,7 @@
     "cli": "pnpm --filter @ledgerhq/ldmk-cli",
     "tool": "node ./packages/tools/ldmk-tool/cli.cjs",
     "ldmk-tool": "node ./packages/tools/ldmk-tool/cli.cjs",
+    "signer-xrp": "pnpm --filter @ledgerhq/device-signer-kit-xrp",
     "signer-zcash": "pnpm --filter @ledgerhq/device-signer-kit-zcash"
   },
   "devDependencies": {
