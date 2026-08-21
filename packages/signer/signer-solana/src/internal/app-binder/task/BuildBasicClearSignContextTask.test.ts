@@ -7,6 +7,8 @@ import {
   CommandResultFactory,
   DeviceModelId,
   type InternalApi,
+  InvalidStatusWordError,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -115,10 +117,13 @@ describe("BuildBasicClearSignContextTask", () => {
     const task = new BuildBasicClearSignContextTask(apiMock, defaultArgs);
     const result = await task.run();
 
-    expect(result).toEqual<BasicClearSignContext>({
-      loadersResults: [trustedNameSuccessContext],
-      contextErrorCount: 0,
-    });
+    expect(isSuccessCommandResult(result)).toBe(true);
+    if (isSuccessCommandResult(result)) {
+      expect(result.data).toEqual<BasicClearSignContext>({
+        loadersResults: [trustedNameSuccessContext],
+        contextErrorCount: 0,
+      });
+    }
   });
 
   it("includes SOLANA_BASIC_TRUSTED_NAME, SOLANA_TOKEN, and SOLANA_LIFI in loadersResults", async () => {
@@ -141,14 +146,17 @@ describe("BuildBasicClearSignContextTask", () => {
     const task = new BuildBasicClearSignContextTask(apiMock, defaultArgs);
     const result = await task.run();
 
-    expect(result.loadersResults).toEqual([
-      trustedNameSuccessContext,
-      tokenContext,
-      lifiContext,
-    ]);
+    expect(isSuccessCommandResult(result)).toBe(true);
+    if (isSuccessCommandResult(result)) {
+      expect(result.data.loadersResults).toEqual([
+        trustedNameSuccessContext,
+        tokenContext,
+        lifiContext,
+      ]);
+    }
   });
 
-  it("throws when challenge command fails", async () => {
+  it("returns error CommandResult when challenge command fails", async () => {
     (apiMock.sendCommand as any).mockResolvedValue(
       CommandResultFactory({
         error: { _tag: "SomeError", errorCode: 0x6a80, message: "bad" } as any,
@@ -156,9 +164,14 @@ describe("BuildBasicClearSignContextTask", () => {
     );
 
     const task = new BuildBasicClearSignContextTask(apiMock, defaultArgs);
+    const result = await task.run();
 
-    await expect(task.run()).rejects.toThrow(
-      "Failed to get challenge from device",
+    expect(result).toStrictEqual(
+      CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "Failed to get challenge from device",
+        ),
+      }),
     );
   });
 
@@ -172,8 +185,11 @@ describe("BuildBasicClearSignContextTask", () => {
     const task = new BuildBasicClearSignContextTask(apiMock, defaultArgs);
     const result = await task.run();
 
-    expect(result.contextErrorCount).toBe(1);
-    expect(result.loadersResults).toEqual([trustedNameSuccessContext]);
+    expect(isSuccessCommandResult(result)).toBe(true);
+    if (isSuccessCommandResult(result)) {
+      expect(result.data.contextErrorCount).toBe(1);
+      expect(result.data.loadersResults).toEqual([trustedNameSuccessContext]);
+    }
   });
 
   it("omits SOLANA_BASIC_TRUSTED_NAME and errors from loadersResults when owner info is not required", async () => {
@@ -192,11 +208,14 @@ describe("BuildBasicClearSignContextTask", () => {
     );
     const result = await task.run();
 
-    expect(result.contextErrorCount).toBe(1);
-    expect(result.loadersResults).toEqual([]);
+    expect(isSuccessCommandResult(result)).toBe(true);
+    if (isSuccessCommandResult(result)) {
+      expect(result.data.contextErrorCount).toBe(1);
+      expect(result.data.loadersResults).toEqual([]);
+    }
   });
 
-  it("throws when owner info is required but no SOLANA_BASIC_TRUSTED_NAME context was returned", async () => {
+  it("returns error CommandResult when owner info is required but no SOLANA_BASIC_TRUSTED_NAME context was returned", async () => {
     (contextModuleMock.getContexts as any).mockResolvedValue([
       {
         type: ClearSignContextType.ERROR,
@@ -205,19 +224,29 @@ describe("BuildBasicClearSignContextTask", () => {
     ]);
 
     const task = new BuildBasicClearSignContextTask(apiMock, defaultArgs);
+    const result = await task.run();
 
-    await expect(task.run()).rejects.toThrow(
-      "[SignerSolana] BuildBasicClearSignContextTask: owner info was required but could not be resolved",
+    expect(result).toStrictEqual(
+      CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "[SignerSolana] BuildBasicClearSignContextTask: owner info was required but could not be resolved",
+        ),
+      }),
     );
   });
 
-  it("throws when owner info is required but contextModule returns an empty array", async () => {
+  it("returns error CommandResult when owner info is required but contextModule returns an empty array", async () => {
     (contextModuleMock.getContexts as any).mockResolvedValue([]);
 
     const task = new BuildBasicClearSignContextTask(apiMock, defaultArgs);
+    const result = await task.run();
 
-    await expect(task.run()).rejects.toThrow(
-      "[SignerSolana] BuildBasicClearSignContextTask: owner info was required but could not be resolved",
+    expect(result).toStrictEqual(
+      CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "[SignerSolana] BuildBasicClearSignContextTask: owner info was required but could not be resolved",
+        ),
+      }),
     );
   });
 });

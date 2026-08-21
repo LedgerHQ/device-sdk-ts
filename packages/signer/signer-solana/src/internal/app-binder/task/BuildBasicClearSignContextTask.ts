@@ -5,7 +5,10 @@ import {
   type SolanaTransactionContextResultSuccess,
 } from "@ledgerhq/context-module";
 import {
+  type CommandResult,
+  CommandResultFactory,
   type InternalApi,
+  InvalidStatusWordError,
   isSuccessCommandResult,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
@@ -31,19 +34,24 @@ export class BuildBasicClearSignContextTask {
     this._logger = args.loggerFactory("BuildBasicClearSignContextTask");
   }
 
-  async run(): Promise<SolanaTransactionContextResultSuccess> {
+  async run(): Promise<CommandResult<SolanaTransactionContextResultSuccess>> {
     this._logger.debug("[run] Starting BuildBasicClearSignContextTask");
     const { contextModule, options } = this.args;
     const deviceState = this.api.getDeviceSessionState();
 
     // get challenge
-    let challenge: string | undefined;
     const challengeRes = await this.api.sendCommand(new GetChallengeCommand());
-    if (isSuccessCommandResult(challengeRes)) {
-      challenge = challengeRes.data.challenge;
-    } else {
-      throw new Error("Failed to get challenge from device");
+    if (!isSuccessCommandResult(challengeRes)) {
+      this._logger.error("[run] GET CHALLENGE failed", {
+        data: { error: challengeRes.error },
+      });
+      return CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "Failed to get challenge from device",
+        ),
+      });
     }
+    const challenge = challengeRes.data.challenge;
 
     const contextModuleGetSolanaContextArgs = {
       deviceModelId: deviceState.deviceModelId,
@@ -95,14 +103,18 @@ export class BuildBasicClearSignContextTask {
         (c) => c.type === ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
       )
     ) {
-      throw new Error(
-        "[SignerSolana] BuildBasicClearSignContextTask: owner info was required but could not be resolved",
-      );
+      return CommandResultFactory({
+        error: new InvalidStatusWordError(
+          "[SignerSolana] BuildBasicClearSignContextTask: owner info was required but could not be resolved",
+        ),
+      });
     }
 
-    return {
-      loadersResults: contexts.filter(isSolanaContextSuccess),
-      contextErrorCount,
-    };
+    return CommandResultFactory({
+      data: {
+        loadersResults: contexts.filter(isSolanaContextSuccess),
+        contextErrorCount,
+      },
+    });
   }
 }

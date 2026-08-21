@@ -235,7 +235,9 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       poolContexts: [],
       instructionInfoContexts: [],
     });
-    provideGenericMock = vi.fn().mockResolvedValue(undefined);
+    provideGenericMock = vi
+      .fn()
+      .mockResolvedValue(CommandResultFactory({ data: undefined }));
     finalizeMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: undefined }));
@@ -247,10 +249,11 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     inspectMock = vi
       .fn()
       .mockResolvedValue({ transactionType: SolanaTransactionTypes.STANDARD });
-    buildBasicMock = vi.fn().mockResolvedValue({
-      loadersResults: [],
-      contextErrorCount: 0,
-    });
+    buildBasicMock = vi.fn().mockResolvedValue(
+      CommandResultFactory({
+        data: { loadersResults: [], contextErrorCount: 0 },
+      }),
+    );
     provideBasicMock = vi.fn().mockResolvedValue(undefined);
 
     // Terminal/delayed child: every path resolves to a signature.

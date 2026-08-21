@@ -85,7 +85,9 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
       poolContexts: [],
       instructionInfoContexts: [],
     });
-    provideMock = vi.fn().mockResolvedValue(undefined);
+    provideMock = vi
+      .fn()
+      .mockResolvedValue(CommandResultFactory({ data: undefined }));
     finalizeMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: undefined }));
@@ -134,6 +136,30 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
 
   it("provide fails then degraded (no finalize)", () =>
     new Promise<void>((resolve, reject) => {
+      provideMock.mockResolvedValue(
+        CommandResultFactory({
+          error: new SolanaAppCommandError({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            ...({ errorCode: "6982", message: "streaming failed" } as any),
+          }),
+        }),
+      );
+      run((states) => {
+        try {
+          expect(finalizeMock).not.toHaveBeenCalled();
+          const last = states[states.length - 1]!;
+          expect(
+            last.status === DeviceActionStatus.Completed && last.output,
+          ).toBe("degraded");
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      }, reject);
+    }));
+
+  it("provide throws then degraded (no finalize)", () =>
+    new Promise<void>((resolve, reject) => {
       provideMock.mockRejectedValue(new Error("stream boom"));
       run((states) => {
         try {
@@ -173,11 +199,13 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
       }, reject);
     }));
 
-  it("finalize throws then degraded", () =>
+  it("build throws then degraded (no provide, no finalize)", () =>
     new Promise<void>((resolve, reject) => {
-      finalizeMock.mockRejectedValue(new Error("finalize boom"));
+      buildMock.mockRejectedValue(new Error("context module error"));
       run((states) => {
         try {
+          expect(provideMock).not.toHaveBeenCalled();
+          expect(finalizeMock).not.toHaveBeenCalled();
           const last = states[states.length - 1]!;
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
@@ -189,11 +217,12 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
       }, reject);
     }));
 
-  it("build throws then degraded", () =>
+  it("finalize throws then degraded", () =>
     new Promise<void>((resolve, reject) => {
-      buildMock.mockRejectedValue(new Error("parse boom"));
+      finalizeMock.mockRejectedValue(new Error("transport error"));
       run((states) => {
         try {
+          expect(finalizeMock).toHaveBeenCalled();
           const last = states[states.length - 1]!;
           expect(
             last.status === DeviceActionStatus.Completed && last.output,

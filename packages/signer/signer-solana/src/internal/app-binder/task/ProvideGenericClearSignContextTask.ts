@@ -8,14 +8,18 @@ import {
   type SolanaTokenInfoContextSuccess,
 } from "@ledgerhq/context-module";
 import {
+  type CommandResult,
+  CommandResultFactory,
   type DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
+  UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { SignMessageGenericPreviewCommand } from "@internal/app-binder/command/SignMessageGenericPreviewCommand";
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
 import {
   DefaultSolanaMessageNormaliser,
@@ -26,7 +30,10 @@ import {
   DEFAULT_NETWORK,
 } from "@internal/app-binder/task/BuildGenericClearSignContextTask";
 import { dispatchProvideContext } from "@internal/app-binder/task/context-providers/provideContextRegistry";
-import { type ProvideContextDeps } from "@internal/app-binder/task/context-providers/provideContextTypes";
+import {
+  type ProvideContextDeps,
+  type ProvideContextErrorCodes,
+} from "@internal/app-binder/task/context-providers/provideContextTypes";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
 
 /**
@@ -92,17 +99,27 @@ export class ProvideGenericClearSignContextTask {
     };
   }
 
-  async run(): Promise<void> {
-    await this.streamGenericPreview();
+  async run(): Promise<CommandResult<void, ProvideContextErrorCodes>> {
+    const previewResult = await this.streamGenericPreview();
+    if (!isSuccessCommandResult(previewResult)) {
+      return previewResult;
+    }
     // Phase A pool, then Phase B templates. Order within Phase A is
     // device-agnostic; templates come last so the device can run the merge.
     for (const context of this.args.poolContexts) {
-      await this.provideDescriptor(context);
+      const result = await this.provideDescriptor(context);
+      if (!isSuccessCommandResult(result)) {
+        return result;
+      }
     }
     await this.streamChallengeBoundDescriptors();
     for (const context of this.args.instructionInfoContexts) {
-      await this.provideDescriptor(context);
+      const result = await this.provideDescriptor(context);
+      if (!isSuccessCommandResult(result)) {
+        return result;
+      }
     }
+    return CommandResultFactory({ data: undefined });
   }
 
   /**
@@ -111,37 +128,39 @@ export class ProvideGenericClearSignContextTask {
    * by throwing; any other descriptor's failure is logged and swallowed so the
    * device can still clear-sign the rest with degraded UX.
    */
-  private async provideDescriptor(context: ClearSignContext): Promise<void> {
+  private async provideDescriptor(
+    context: ClearSignContext,
+  ): Promise<CommandResult<void, ProvideContextErrorCodes>> {
     if (!isSolanaContextSuccess(context)) {
-      return;
-    }
-    if (FATAL_PROVIDE_CONTEXT_TYPES.has(context.type)) {
-      const result = await dispatchProvideContext(context, this.deps);
-      if (!isSuccessCommandResult(result)) {
-        this.logger.error(
-          "[run] fatal descriptor provisioning failed; aborting generic clear-signing",
-          { data: { type: context.type, error: result.error } },
-        );
-        throw new Error(
-          `[ProvideGenericClearSignContextTask] device rejected fatal descriptor ${context.type}`,
-        );
-      }
-      return;
+      return CommandResultFactory({ data: undefined });
     }
     try {
       const result = await dispatchProvideContext(context, this.deps);
       if (!isSuccessCommandResult(result)) {
+        if (FATAL_PROVIDE_CONTEXT_TYPES.has(context.type)) {
+          return result;
+        }
         this.logger.warn(
           "[run] optional descriptor provisioning failed; continuing with degraded clear-signing",
           { data: { type: context.type, error: result.error } },
         );
       }
     } catch (error) {
+      // A fatal descriptor throwing (as opposed to returning a failed
+      // CommandResult) must still abort generic clear-signing, matching the
+      // guarantee above for a returned failure — but as a returned
+      // CommandResult, not a rejection, so this method never rejects.
+      if (FATAL_PROVIDE_CONTEXT_TYPES.has(context.type)) {
+        return CommandResultFactory({
+          error: new UnknownDeviceExchangeError(error),
+        });
+      }
       this.logger.warn(
         "[run] optional descriptor provisioning threw; continuing with degraded clear-signing",
         { data: { type: context.type, error } },
       );
     }
+    return CommandResultFactory({ data: undefined });
   }
 
   /** Challenge-bound Phase A descriptors (token-account-state, ALT, trusted-name). */
@@ -410,7 +429,9 @@ export class ProvideGenericClearSignContextTask {
   }
 
   /** 0x0A — derivation path + serialized TX, chunked. No length prefix. */
-  private async streamGenericPreview(): Promise<void> {
+  private async streamGenericPreview(): Promise<
+    CommandResult<void, SolanaAppErrorCodes>
+  > {
     // The device arms its fingerprint over the message with the blockhash
     // zeroed, so the preview streams a zeroed-blockhash copy; the real (or
     // freshly fetched) blockhash is supplied later at SIGN MESSAGE DELAYED.
@@ -441,9 +462,11 @@ export class ProvideGenericClearSignContextTask {
     }).run();
 
     if (!isSuccessCommandResult(result)) {
-      throw new Error(
-        "[ProvideGenericClearSignContextTask] device rejected SIGN MESSAGE GENERIC PREVIEW",
+      this.logger.error(
+        "[streamGenericPreview] device rejected SIGN MESSAGE GENERIC PREVIEW",
+        { data: { error: result.error } },
       );
     }
+    return result;
   }
 }
