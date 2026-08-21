@@ -24,14 +24,17 @@ const API_CONFIGS = {
   },
   getAddress: {
     name: "getAddress",
-    displayName: "getAddress - Get address from derivation path (SendCommandInApp)",
+    displayName:
+      "getAddress - Get address from derivation path (SendCommandInApp)",
     deviceActionType: "SendCommandInApp",
     useCaseDir: "address",
     useCaseTypesName: "addressTypes",
     useCaseClassName: "GetAddressUseCase",
     commandClassName: "GetAddressCommand",
-    userInteraction: "args.checkOnDevice ? UserInteractionRequired.VerifyAddress : UserInteractionRequired.None",
-    userInteractionTypes: "UserInteractionRequired.None | UserInteractionRequired.VerifyAddress",
+    userInteraction:
+      "args.checkOnDevice ? UserInteractionRequired.VerifyAddress : UserInteractionRequired.None",
+    userInteractionTypes:
+      "UserInteractionRequired.None | UserInteractionRequired.VerifyAddress",
     hasDerivationPath: true,
     hasOptions: true,
     optionsType: "AddressOptions",
@@ -60,7 +63,8 @@ const API_CONFIGS = {
     useCaseClassName: "SignMessageUseCase",
     commandClassName: "SignMessageCommand",
     userInteraction: "UserInteractionRequired.SignPersonalMessage",
-    userInteractionTypes: "UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage",
+    userInteractionTypes:
+      "UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage",
     hasDerivationPath: true,
     hasOptions: false,
   },
@@ -79,7 +83,7 @@ function generateSendCommandInAppDATypes(config, pascalCase, kebabCase) {
   // Use slice to remove "Get" (3 chars) or "Sign" (4 chars) prefix
   const baseName = isGetApi ? pascal.slice(3) : pascal.slice(4);
   const commandName = isGetApi ? `Get${baseName}` : `Sign${baseName}`;
-  
+
   return `import {
   type CommandErrorResult,
   type ExecuteDeviceActionReturnType,
@@ -183,32 +187,37 @@ export const ${config.useCaseDir}ModuleFactory = () =>
 function generateCommand(config, pascalCase, kebabCase) {
   const isGetApi = config.name.startsWith("get");
   const baseName = isGetApi ? config.name.slice(3) : config.name.slice(4); // remove 'get' or 'sign'
-  const commandName = isGetApi ? `Get${baseName.charAt(0).toUpperCase() + baseName.slice(1)}` : `Sign${baseName.charAt(0).toUpperCase() + baseName.slice(1)}`;
-  
+  const commandName = isGetApi
+    ? `Get${baseName.charAt(0).toUpperCase() + baseName.slice(1)}`
+    : `Sign${baseName.charAt(0).toUpperCase() + baseName.slice(1)}`;
+
   const argsType = config.commandArgs || null;
-  const responseType = config.commandResponse || `{ /* Define response fields */ }`;
+  const responseType =
+    config.commandResponse || `{ /* Define response fields */ }`;
   const hasArgs = config.hasDerivationPath || argsType;
-  
+
   const imports = `import {
   type Apdu,
   type ApduResponse,
   type Command,
   type CommandResult,
 } from "@ledgerhq/device-management-kit";
-${config.name === "signMessage" ? '\nimport { type Signature } from "@api/model/Signature";' : ''}
+${config.name === "signMessage" ? '\nimport { type Signature } from "@api/model/Signature";' : ""}
 import { type ${pascalCase}ErrorCodes } from "./utils/${kebabCase}ApplicationErrors";`;
 
-  const argsTypeDefinition = hasArgs ? generateCommandArgsType(config) : '';
+  const argsTypeDefinition = hasArgs ? generateCommandArgsType(config) : "";
   const responseTypeDefinition = generateCommandResponseType(config);
-  
-  const constructorAndArgs = hasArgs ? `
+
+  const constructorAndArgs = hasArgs
+    ? `
   private readonly args: ${commandName}CommandArgs;
 
   constructor(args: ${commandName}CommandArgs) {
     this.args = args;
-  }` : '';
+  }`
+    : "";
 
-  const implementsType = hasArgs 
+  const implementsType = hasArgs
     ? `Command<${commandName}CommandResponse, ${commandName}CommandArgs, ${pascalCase}ErrorCodes>`
     : `Command<${commandName}CommandResponse, void, ${pascalCase}ErrorCodes>`;
 
@@ -266,7 +275,7 @@ function generateCommandArgsType(config) {
 
 `;
     default:
-      return '';
+      return "";
   }
 }
 
@@ -313,16 +322,24 @@ function generateUseCase(config, pascalCase) {
   const isGetApi = config.name.startsWith("get");
   const baseName = isGetApi ? config.name.slice(3) : config.name.slice(4);
   const pascal = config.name.charAt(0).toUpperCase() + config.name.slice(1);
-  
-  const imports = [`import { inject, injectable } from "inversify";`,
+
+  const imports = [
+    `import { inject, injectable } from "inversify";`,
     ``,
-    `import { type ${pascal}DAReturnType } from "@api/app-binder/${pascal}DeviceActionTypes";`];
-  
+    `import { type ${pascal}DAReturnType } from "@api/app-binder/${pascal}DeviceActionTypes";`,
+  ];
+
   if (config.optionsType) {
-    imports.push(`import { type ${config.optionsType} } from "@api/model/${config.optionsType}";`);
+    imports.push(
+      `import { type ${config.optionsType} } from "@api/model/${config.optionsType}";`,
+    );
   }
-  imports.push(`import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";`);
-  imports.push(`import { ${pascalCase}AppBinder } from "@internal/app-binder/${pascalCase}AppBinder";`);
+  imports.push(
+    `import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";`,
+  );
+  imports.push(
+    `import { ${pascalCase}AppBinder } from "@internal/app-binder/${pascalCase}AppBinder";`,
+  );
 
   const executeParams = generateUseCaseExecuteParams(config);
   const appBinderCall = generateAppBinderCall(config);
@@ -397,16 +414,17 @@ function generateAppBinderCall(config) {
  * Generates device action placeholder comment
  */
 function generateDeviceActionPlaceholder(config) {
-  const deviceActionType = config.deviceActionType === "CallTaskInApp" 
-    ? "CallTaskInAppDeviceAction" 
-    : "SendCommandInAppDeviceAction";
-  const taskOrCommand = config.taskClassName 
-    ? `${config.taskClassName}` 
+  const deviceActionType =
+    config.deviceActionType === "CallTaskInApp"
+      ? "CallTaskInAppDeviceAction"
+      : "SendCommandInAppDeviceAction";
+  const taskOrCommand = config.taskClassName
+    ? `${config.taskClassName}`
     : `${config.commandClassName}`;
-  
+
   return `// TODO: Implement ${config.useCaseClassName.replace("UseCase", "")}DeviceAction if needed
 // This is a placeholder - you may not need a custom device action for ${config.name}
-// if ${deviceActionType}${config.taskClassName ? ` with ${taskOrCommand}` : ''} is sufficient
+// if ${deviceActionType}${config.taskClassName ? ` with ${taskOrCommand}` : ""} is sufficient
 `;
 }
 
@@ -416,7 +434,7 @@ function generateDeviceActionPlaceholder(config) {
 function generateTask(config, pascalCase, kebabCase) {
   const pascal = config.name.charAt(0).toUpperCase() + config.name.slice(1);
   const baseName = pascal.replace("sign", "");
-  
+
   return `import {
   type CommandResult,
   CommandResultFactory,
@@ -542,7 +560,11 @@ export const useSigner${pascalCase} = (): Signer${pascalCase} | null => {
 // Sample app device action configurations
 const SAMPLE_APP_DEVICE_ACTIONS = {
   getAppConfig: {
-    typeImports: ["GetAppConfigDAError", "GetAppConfigDAIntermediateValue", "GetAppConfigDAOutput"],
+    typeImports: [
+      "GetAppConfigDAError",
+      "GetAppConfigDAIntermediateValue",
+      "GetAppConfigDAOutput",
+    ],
     action: `{
         title: "Get App Config",
         description: "Get the app configuration from the device",
@@ -562,7 +584,11 @@ const SAMPLE_APP_DEVICE_ACTIONS = {
       >`,
   },
   getAddress: {
-    typeImports: ["GetAddressDAError", "GetAddressDAIntermediateValue", "GetAddressDAOutput"],
+    typeImports: [
+      "GetAddressDAError",
+      "GetAddressDAIntermediateValue",
+      "GetAddressDAOutput",
+    ],
     action: `{
         title: "Get Address",
         description: "Get an address from the device",
@@ -593,7 +619,11 @@ const SAMPLE_APP_DEVICE_ACTIONS = {
       >`,
   },
   signTransaction: {
-    typeImports: ["SignTransactionDAError", "SignTransactionDAIntermediateValue", "SignTransactionDAOutput"],
+    typeImports: [
+      "SignTransactionDAError",
+      "SignTransactionDAIntermediateValue",
+      "SignTransactionDAOutput",
+    ],
     action: `{
         title: "Sign Transaction",
         description: "Sign a transaction with the device",
@@ -636,7 +666,11 @@ const SAMPLE_APP_DEVICE_ACTIONS = {
       >`,
   },
   signMessage: {
-    typeImports: ["SignMessageDAError", "SignMessageDAIntermediateValue", "SignMessageDAOutput"],
+    typeImports: [
+      "SignMessageDAError",
+      "SignMessageDAIntermediateValue",
+      "SignMessageDAOutput",
+    ],
     action: `{
         title: "Sign Message",
         description: "Sign a message with the device",
@@ -670,15 +704,15 @@ function generateSignerView(pascalCase, kebabCase, selectedApis) {
   // Collect type imports and device actions from selected APIs
   const typeImports = [];
   const deviceActions = [];
-  
+
   for (const apiName of selectedApis) {
     const config = SAMPLE_APP_DEVICE_ACTIONS[apiName];
     if (config) {
-      typeImports.push(...config.typeImports.map(t => `type ${t}`));
+      typeImports.push(...config.typeImports.map((t) => `type ${t}`));
       deviceActions.push(config.action);
     }
   }
-  
+
   return `import React, { useMemo } from "react";
 import {
   ${typeImports.join(",\n  ")},
@@ -736,8 +770,14 @@ export default Signer;
 // ============================================================================
 
 async function generateSigner() {
-  console.log(chalk.blue("🚀 Welcome to the Ledger Device SDK Signer Generator"));
-  console.log(chalk.gray("This will create a new signer package skeleton for your cryptocurrency.\n"));
+  console.log(
+    chalk.blue("🚀 Welcome to the Ledger Device SDK Signer Generator"),
+  );
+  console.log(
+    chalk.gray(
+      "This will create a new signer package skeleton for your cryptocurrency.\n",
+    ),
+  );
 
   try {
     const fs = require("fs");
@@ -767,10 +807,26 @@ async function generateSigner() {
     const selectedApis = await checkbox({
       message: "Which APIs do you want to include?",
       choices: [
-        { name: "getAppConfig - Get app configuration (SendCommandInApp)", value: "getAppConfig", checked: true },
-        { name: "getAddress - Get address from derivation path (SendCommandInApp)", value: "getAddress", checked: true },
-        { name: "signTransaction - Sign a transaction (CallTaskInApp)", value: "signTransaction", checked: true },
-        { name: "signMessage - Sign a personal message (SendCommandInApp)", value: "signMessage", checked: true },
+        {
+          name: "getAppConfig - Get app configuration (SendCommandInApp)",
+          value: "getAppConfig",
+          checked: true,
+        },
+        {
+          name: "getAddress - Get address from derivation path (SendCommandInApp)",
+          value: "getAddress",
+          checked: true,
+        },
+        {
+          name: "signTransaction - Sign a transaction (CallTaskInApp)",
+          value: "signTransaction",
+          checked: true,
+        },
+        {
+          name: "signMessage - Sign a personal message (SendCommandInApp)",
+          value: "signMessage",
+          checked: true,
+        },
       ],
       validate: (value) => {
         if (value.length === 0) {
@@ -791,24 +847,35 @@ async function generateSigner() {
       default: false,
     });
 
-    console.log(chalk.green("\n✅ Generating signer package for"), chalk.bold(cryptoName));
+    console.log(
+      chalk.green("\n✅ Generating signer package for"),
+      chalk.bold(cryptoName),
+    );
     console.log(chalk.gray("APIs:"), selectedApis.join(", "));
-    console.log(chalk.gray("Context module:"), useContextModule ? chalk.green("Yes") : chalk.red("No"));
+    console.log(
+      chalk.gray("Context module:"),
+      useContextModule ? chalk.green("Yes") : chalk.red("No"),
+    );
 
     // Normalize to PascalCase for class/interface names (first letter uppercase, rest lowercase)
-    const pascalCase = cryptoName.charAt(0).toUpperCase() + cryptoName.slice(1).toLowerCase();
+    const pascalCase =
+      cryptoName.charAt(0).toUpperCase() + cryptoName.slice(1).toLowerCase();
     const kebabCase = cryptoName.toLowerCase();
     const baseDir = `packages/signer/signer-${kebabCase}`;
-    
+
     // Check if target directory already exists
     if (fs.existsSync(baseDir)) {
       console.error(chalk.red(`\n❌ Directory already exists: ${baseDir}`));
-      console.error(chalk.red("Please remove it first or choose a different cryptocurrency name."));
+      console.error(
+        chalk.red(
+          "Please remove it first or choose a different cryptocurrency name.",
+        ),
+      );
       process.exit(1);
     }
-    
+
     console.log(chalk.gray("\n📦 Creating directory structure..."));
-    
+
     // Create the directory structure
     const dirs = [
       baseDir,
@@ -834,7 +901,9 @@ async function generateSigner() {
     }
     if (includeSignTransaction) {
       dirs.push(`${baseDir}/src/internal/app-binder/device-action`);
-      dirs.push(`${baseDir}/src/internal/app-binder/device-action/SignTransaction`);
+      dirs.push(
+        `${baseDir}/src/internal/app-binder/device-action/SignTransaction`,
+      );
       dirs.push(`${baseDir}/src/internal/app-binder/task`);
       dirs.push(`${baseDir}/src/internal/use-cases/transaction`);
       dirs.push(`${baseDir}/src/internal/use-cases/transaction/di`);
@@ -847,12 +916,14 @@ async function generateSigner() {
     }
     if (includeGetAppConfig) {
       dirs.push(`${baseDir}/src/internal/app-binder/device-action`);
-      dirs.push(`${baseDir}/src/internal/app-binder/device-action/GetAppConfig`);
+      dirs.push(
+        `${baseDir}/src/internal/app-binder/device-action/GetAppConfig`,
+      );
       dirs.push(`${baseDir}/src/internal/use-cases/config`);
       dirs.push(`${baseDir}/src/internal/use-cases/config/di`);
     }
 
-    dirs.forEach(dir => {
+    dirs.forEach((dir) => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
@@ -864,7 +935,7 @@ async function generateSigner() {
     }
 
     console.log(chalk.gray("\n📦 Generating files..."));
-    
+
     // Generate package.json
     const packageJson = {
       name: `@ledgerhq/device-signer-kit-${kebabCase}`,
@@ -873,27 +944,30 @@ async function generateSigner() {
       license: "Apache-2.0",
       repository: {
         type: "git",
-        url: "https://github.com/LedgerHQ/device-sdk-ts.git"
+        url: "https://github.com/LedgerHQ/device-sdk-ts.git",
       },
       exports: {
         ".": {
           types: "./lib/types/index.d.ts",
           import: "./lib/esm/index.js",
-          require: "./lib/cjs/index.js"
+          require: "./lib/cjs/index.js",
         },
         "./*": {
           types: "./lib/types/*",
           import: "./lib/esm/*",
-          require: "./lib/cjs/*"
-        }
+          require: "./lib/cjs/*",
+        },
       },
       files: ["./lib"],
       scripts: {
         prebuild: "rimraf lib",
-        build: "pnpm ldmk-tool build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
-        dev: "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-        "watch:builds": "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
-        "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+        build:
+          "pnpm ldmk-tool build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+        dev: 'concurrently "pnpm watch:builds" "pnpm watch:types"',
+        "watch:builds":
+          "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+        "watch:types":
+          'concurrently "tsc --watch -p tsconfig.prod.json" "tsc-alias --watch -p tsconfig.prod.json"',
         lint: "eslint",
         "lint:fix": "pnpm lint --fix",
         prettier: "prettier . --check",
@@ -901,14 +975,14 @@ async function generateSigner() {
         typecheck: "tsc --noEmit",
         test: "vitest run",
         "test:watch": "vitest",
-        "test:coverage": "vitest run --coverage"
+        "test:coverage": "vitest run --coverage",
       },
       dependencies: {
         "@ledgerhq/signer-utils": "workspace:^",
-        "inversify": "catalog:",
+        inversify: "catalog:",
         "purify-ts": "catalog:",
         "reflect-metadata": "catalog:",
-        "xstate": "catalog:"
+        xstate: "catalog:",
       },
       devDependencies: {
         "@ledgerhq/device-management-kit": "workspace:^",
@@ -917,12 +991,12 @@ async function generateSigner() {
         "@ledgerhq/prettier-config-dsdk": "workspace:^",
         "@ledgerhq/tsconfig-dsdk": "workspace:^",
         "@ledgerhq/vitest-config-dmk": "workspace:^",
-        "rxjs": "catalog:",
-        "ts-node": "catalog:"
+        rxjs: "catalog:",
+        "ts-node": "catalog:",
       },
       peerDependencies: {
-        "@ledgerhq/device-management-kit": "workspace:^"
-      }
+        "@ledgerhq/device-management-kit": "workspace:^",
+      },
     };
 
     if (useContextModule) {
@@ -931,10 +1005,15 @@ async function generateSigner() {
       packageJson.devDependencies["@ledgerhq/context-module"] = "workspace:^";
     }
 
-    writeFile(`${baseDir}/package.json`, JSON.stringify(packageJson, null, 2) + '\n');
+    writeFile(
+      `${baseDir}/package.json`,
+      JSON.stringify(packageJson, null, 2) + "\n",
+    );
 
     // Generate tsconfig.json
-    writeFile(`${baseDir}/tsconfig.json`, `{
+    writeFile(
+      `${baseDir}/tsconfig.json`,
+      `{
   "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
   "compilerOptions": {
     "baseUrl": ".",
@@ -953,17 +1032,23 @@ async function generateSigner() {
   },
   "include": ["src", "vitest.*.mjs"]
 }
-`);
+`,
+    );
 
     // Generate tsconfig.prod.json
-    writeFile(`${baseDir}/tsconfig.prod.json`, `{
+    writeFile(
+      `${baseDir}/tsconfig.prod.json`,
+      `{
   "extends": "./tsconfig.json",
   "include": ["src"]
 }
-`);
+`,
+    );
 
     // Generate vitest.config.mjs
-    writeFile(`${baseDir}/vitest.config.mjs`, `import { defineConfig } from "vitest/config";
+    writeFile(
+      `${baseDir}/vitest.config.mjs`,
+      `import { defineConfig } from "vitest/config";
 import { vitestConfigDmk } from "@ledgerhq/vitest-config-dmk";
 
 export default defineConfig({
@@ -973,23 +1058,35 @@ export default defineConfig({
     setupFiles: ["./vitest.setup.mjs"],
   },
 });
-`);
+`,
+    );
 
     // Generate vitest.setup.mjs
-    writeFile(`${baseDir}/vitest.setup.mjs`, `import "reflect-metadata";
-`);
+    writeFile(
+      `${baseDir}/vitest.setup.mjs`,
+      `import "reflect-metadata";
+`,
+    );
 
     // Generate .prettierrc.js
-    writeFile(`${baseDir}/.prettierrc.js`, `module.exports = require("@ledgerhq/prettier-config-dsdk");
-`);
+    writeFile(
+      `${baseDir}/.prettierrc.js`,
+      `module.exports = require("@ledgerhq/prettier-config-dsdk");
+`,
+    );
 
     // Generate .prettierignore
-    writeFile(`${baseDir}/.prettierignore`, `lib/
+    writeFile(
+      `${baseDir}/.prettierignore`,
+      `lib/
 node_modules/
-`);
+`,
+    );
 
     // Generate eslint.config.mjs
-    writeFile(`${baseDir}/eslint.config.mjs`, `import config from "@ledgerhq/eslint-config-dsdk";
+    writeFile(
+      `${baseDir}/eslint.config.mjs`,
+      `import config from "@ledgerhq/eslint-config-dsdk";
 
 export default [
   ...config,
@@ -1002,40 +1099,57 @@ export default [
     },
   },
 ];
-`);
+`,
+    );
 
     // Generate src/index.ts
-    writeFile(`${baseDir}/src/index.ts`, `// inversify requirement
+    writeFile(
+      `${baseDir}/src/index.ts`,
+      `// inversify requirement
 import "reflect-metadata";
 
 export * from "@api/index";
-`);
+`,
+    );
 
     // Generate src/api/index.ts
-    writeFile(`${baseDir}/src/api/index.ts`, `export * from "@api/Signer${pascalCase}";
+    writeFile(
+      `${baseDir}/src/api/index.ts`,
+      `export * from "@api/Signer${pascalCase}";
 export * from "@api/Signer${pascalCase}Builder";
 // Export other types as needed
-`);
+`,
+    );
 
     // Generate src/api/Signer{pascalCase}.ts - dynamic based on selected APIs
     const signerImports = [];
     const signerMethods = [];
 
     if (includeGetAppConfig) {
-      signerImports.push(`import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";`);
+      signerImports.push(
+        `import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";`,
+      );
       signerMethods.push(`  getAppConfig: () => GetAppConfigDAReturnType;`);
     }
     if (includeGetAddress) {
-      signerImports.push(`import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";`);
-      signerImports.push(`import { type AddressOptions } from "@api/model/AddressOptions";`);
+      signerImports.push(
+        `import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";`,
+      );
+      signerImports.push(
+        `import { type AddressOptions } from "@api/model/AddressOptions";`,
+      );
       signerMethods.push(`  getAddress: (
     derivationPath: string,
     options?: AddressOptions,
   ) => GetAddressDAReturnType;`);
     }
     if (includeSignTransaction) {
-      signerImports.push(`import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";`);
-      signerImports.push(`import { type TransactionOptions } from "@api/model/TransactionOptions";`);
+      signerImports.push(
+        `import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";`,
+      );
+      signerImports.push(
+        `import { type TransactionOptions } from "@api/model/TransactionOptions";`,
+      );
       signerMethods.push(`  signTransaction: (
     derivationPath: string,
     transaction: Uint8Array,
@@ -1043,22 +1157,29 @@ export * from "@api/Signer${pascalCase}Builder";
   ) => SignTransactionDAReturnType;`);
     }
     if (includeSignMessage) {
-      signerImports.push(`import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";`);
+      signerImports.push(
+        `import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";`,
+      );
       signerMethods.push(`  signMessage: (
     derivationPath: string,
     message: string | Uint8Array,
   ) => SignMessageDAReturnType;`);
     }
 
-    writeFile(`${baseDir}/src/api/Signer${pascalCase}.ts`, `${signerImports.join("\n")}
+    writeFile(
+      `${baseDir}/src/api/Signer${pascalCase}.ts`,
+      `${signerImports.join("\n")}
 
 export interface Signer${pascalCase} {
 ${signerMethods.join("\n\n")}
 }
-`);
+`,
+    );
 
     // Generate src/api/Signer{pascalCase}Builder.ts
-    writeFile(`${baseDir}/src/api/Signer${pascalCase}Builder.ts`, `import {
+    writeFile(
+      `${baseDir}/src/api/Signer${pascalCase}Builder.ts`,
+      `import {
   type DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
@@ -1094,62 +1215,82 @@ export class Signer${pascalCase}Builder {
     });
   }
 }
-`);
+`,
+    );
 
     // Generate model files (conditional)
     if (includeGetAddress) {
-      writeFile(`${baseDir}/src/api/model/AddressOptions.ts`, `export type AddressOptions = {
+      writeFile(
+        `${baseDir}/src/api/model/AddressOptions.ts`,
+        `export type AddressOptions = {
   checkOnDevice?: boolean;
   skipOpenApp?: boolean;
 };
-`);
+`,
+      );
     }
 
     if (includeSignTransaction) {
-      writeFile(`${baseDir}/src/api/model/TransactionOptions.ts`, `export type TransactionOptions = {
+      writeFile(
+        `${baseDir}/src/api/model/TransactionOptions.ts`,
+        `export type TransactionOptions = {
   skipOpenApp?: boolean;
   // Add other options as needed
 };
-`);
+`,
+      );
     }
 
     if (includeSignTransaction || includeSignMessage) {
-      writeFile(`${baseDir}/src/api/model/Signature.ts`, `export type Signature = {
+      writeFile(
+        `${baseDir}/src/api/model/Signature.ts`,
+        `export type Signature = {
   r: string;
   s: string;
   v?: number;
   // Adjust based on your blockchain's signature format
 };
-`);
+`,
+      );
     }
 
     if (includeGetAppConfig) {
-      writeFile(`${baseDir}/src/api/model/AppConfig.ts`, `export type AppConfig = {
+      writeFile(
+        `${baseDir}/src/api/model/AppConfig.ts`,
+        `export type AppConfig = {
   // Define your app configuration fields here
   // Example:
   // version: string;
   // flags: number;
 };
-`);
+`,
+      );
     }
 
     // Generate app-binder device action types using helper functions
     for (const apiName of selectedApis) {
       const config = API_CONFIGS[apiName];
       const pascal = apiName.charAt(0).toUpperCase() + apiName.slice(1);
-      const content = config.deviceActionType === "CallTaskInApp"
-        ? generateCallTaskInAppDATypes(config, pascalCase, kebabCase)
-        : generateSendCommandInAppDATypes(config, pascalCase, kebabCase);
-      writeFile(`${baseDir}/src/api/app-binder/${pascal}DeviceActionTypes.ts`, content);
+      const content =
+        config.deviceActionType === "CallTaskInApp"
+          ? generateCallTaskInAppDATypes(config, pascalCase, kebabCase)
+          : generateSendCommandInAppDATypes(config, pascalCase, kebabCase);
+      writeFile(
+        `${baseDir}/src/api/app-binder/${pascal}DeviceActionTypes.ts`,
+        content,
+      );
     }
 
     // Generate internal files
-    writeFile(`${baseDir}/src/internal/externalTypes.ts`, `export const externalTypes = {
+    writeFile(
+      `${baseDir}/src/internal/externalTypes.ts`,
+      `export const externalTypes = {
   Dmk: Symbol.for("Dmk"),
   SessionId: Symbol.for("SessionId"),
   ${useContextModule ? 'ContextModule: Symbol.for("ContextModule"),' : '// Add ContextModule if needed\n  // ContextModule: Symbol.for("ContextModule"),'}
 } as const;
-`);
+`,
+    );
 
     // Generate DefaultSigner - dynamic based on selected APIs
     const defaultSignerImports = [
@@ -1164,9 +1305,15 @@ export class Signer${pascalCase}Builder {
     const defaultSignerMethods = [];
 
     if (includeGetAppConfig) {
-      defaultSignerImports.push(`import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";`);
-      defaultSignerImports.push(`import { configTypes } from "@internal/use-cases/config/di/configTypes";`);
-      defaultSignerImports.push(`import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";`);
+      defaultSignerImports.push(
+        `import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";`,
+      );
+      defaultSignerImports.push(
+        `import { configTypes } from "@internal/use-cases/config/di/configTypes";`,
+      );
+      defaultSignerImports.push(
+        `import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";`,
+      );
       defaultSignerMethods.push(`  getAppConfig(): GetAppConfigDAReturnType {
     return this._container
       .get<GetAppConfigUseCase>(configTypes.GetAppConfigUseCase)
@@ -1174,10 +1321,18 @@ export class Signer${pascalCase}Builder {
   }`);
     }
     if (includeGetAddress) {
-      defaultSignerImports.push(`import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";`);
-      defaultSignerImports.push(`import { type AddressOptions } from "@api/model/AddressOptions";`);
-      defaultSignerImports.push(`import { addressTypes } from "@internal/use-cases/address/di/addressTypes";`);
-      defaultSignerImports.push(`import { type GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";`);
+      defaultSignerImports.push(
+        `import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";`,
+      );
+      defaultSignerImports.push(
+        `import { type AddressOptions } from "@api/model/AddressOptions";`,
+      );
+      defaultSignerImports.push(
+        `import { addressTypes } from "@internal/use-cases/address/di/addressTypes";`,
+      );
+      defaultSignerImports.push(
+        `import { type GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";`,
+      );
       defaultSignerMethods.push(`  getAddress(
     derivationPath: string,
     options?: AddressOptions,
@@ -1188,10 +1343,18 @@ export class Signer${pascalCase}Builder {
   }`);
     }
     if (includeSignTransaction) {
-      defaultSignerImports.push(`import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";`);
-      defaultSignerImports.push(`import { type TransactionOptions } from "@api/model/TransactionOptions";`);
-      defaultSignerImports.push(`import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";`);
-      defaultSignerImports.push(`import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";`);
+      defaultSignerImports.push(
+        `import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";`,
+      );
+      defaultSignerImports.push(
+        `import { type TransactionOptions } from "@api/model/TransactionOptions";`,
+      );
+      defaultSignerImports.push(
+        `import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";`,
+      );
+      defaultSignerImports.push(
+        `import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";`,
+      );
       defaultSignerMethods.push(`  signTransaction(
     derivationPath: string,
     transaction: Uint8Array,
@@ -1203,9 +1366,15 @@ export class Signer${pascalCase}Builder {
   }`);
     }
     if (includeSignMessage) {
-      defaultSignerImports.push(`import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";`);
-      defaultSignerImports.push(`import { messageTypes } from "@internal/use-cases/message/di/messageTypes";`);
-      defaultSignerImports.push(`import { type SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";`);
+      defaultSignerImports.push(
+        `import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";`,
+      );
+      defaultSignerImports.push(
+        `import { messageTypes } from "@internal/use-cases/message/di/messageTypes";`,
+      );
+      defaultSignerImports.push(
+        `import { type SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";`,
+      );
       defaultSignerMethods.push(`  signMessage(
     derivationPath: string,
     message: string | Uint8Array,
@@ -1216,7 +1385,9 @@ export class Signer${pascalCase}Builder {
   }`);
     }
 
-    writeFile(`${baseDir}/src/internal/DefaultSigner${pascalCase}.ts`, `${defaultSignerImports.join("\n")}
+    writeFile(
+      `${baseDir}/src/internal/DefaultSigner${pascalCase}.ts`,
+      `${defaultSignerImports.join("\n")}
 
 type DefaultSigner${pascalCase}ConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -1232,7 +1403,8 @@ export class DefaultSigner${pascalCase} implements Signer${pascalCase} {
 
 ${defaultSignerMethods.join("\n\n")}
 }
-`);
+`,
+    );
 
     // Generate DI container - dynamic based on selected APIs
     const diImports = [
@@ -1247,23 +1419,33 @@ ${defaultSignerMethods.join("\n\n")}
     const diModules = [`appBindingModuleFactory()`];
 
     if (includeGetAppConfig) {
-      diImports.push(`import { configModuleFactory } from "@internal/use-cases/config/di/configModule";`);
+      diImports.push(
+        `import { configModuleFactory } from "@internal/use-cases/config/di/configModule";`,
+      );
       diModules.push(`configModuleFactory()`);
     }
     if (includeGetAddress) {
-      diImports.push(`import { addressModuleFactory } from "@internal/use-cases/address/di/addressModule";`);
+      diImports.push(
+        `import { addressModuleFactory } from "@internal/use-cases/address/di/addressModule";`,
+      );
       diModules.push(`addressModuleFactory()`);
     }
     if (includeSignTransaction) {
-      diImports.push(`import { transactionModuleFactory } from "@internal/use-cases/transaction/di/transactionModule";`);
+      diImports.push(
+        `import { transactionModuleFactory } from "@internal/use-cases/transaction/di/transactionModule";`,
+      );
       diModules.push(`transactionModuleFactory()`);
     }
     if (includeSignMessage) {
-      diImports.push(`import { messageModuleFactory } from "@internal/use-cases/message/di/messageModule";`);
+      diImports.push(
+        `import { messageModuleFactory } from "@internal/use-cases/message/di/messageModule";`,
+      );
       diModules.push(`messageModuleFactory()`);
     }
 
-    writeFile(`${baseDir}/src/internal/di.ts`, `${diImports.join("\n")}
+    writeFile(
+      `${baseDir}/src/internal/di.ts`,
+      `${diImports.join("\n")}
 
 type MakeContainerProps = {
   dmk: DeviceManagementKit;
@@ -1284,15 +1466,21 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
 
   return container;
 };
-`);
+`,
+    );
 
     // Generate app-binder files
-    writeFile(`${baseDir}/src/internal/app-binder/di/appBinderTypes.ts`, `export const appBinderTypes = {
+    writeFile(
+      `${baseDir}/src/internal/app-binder/di/appBinderTypes.ts`,
+      `export const appBinderTypes = {
   AppBinding: Symbol.for("AppBinding"),
 } as const;
-`);
+`,
+    );
 
-    writeFile(`${baseDir}/src/internal/app-binder/di/appBinderModule.ts`, `import { ContainerModule } from "inversify";
+    writeFile(
+      `${baseDir}/src/internal/app-binder/di/appBinderModule.ts`,
+      `import { ContainerModule } from "inversify";
 
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { ${pascalCase}AppBinder } from "@internal/app-binder/${pascalCase}AppBinder";
@@ -1301,10 +1489,14 @@ export const appBindingModuleFactory = () =>
   new ContainerModule(({ bind }) => {
     bind(appBinderTypes.AppBinding).to(${pascalCase}AppBinder);
   });
-`);
+`,
+    );
 
     // Generate AppBinder - dynamic based on selected APIs
-    const appBinderDmkImports = ["type DeviceManagementKit", "type DeviceSessionId"];
+    const appBinderDmkImports = [
+      "type DeviceManagementKit",
+      "type DeviceSessionId",
+    ];
     if (includeGetAppConfig || includeGetAddress || includeSignMessage) {
       appBinderDmkImports.push("SendCommandInAppDeviceAction");
     }
@@ -1325,8 +1517,12 @@ export const appBindingModuleFactory = () =>
     const appBinderMethods = [];
 
     if (includeGetAppConfig) {
-      appBinderImports.push(`import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";`);
-      appBinderCommandImports.push(`import { GetAppConfigCommand } from "./command/GetAppConfigCommand";`);
+      appBinderImports.push(
+        `import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";`,
+      );
+      appBinderCommandImports.push(
+        `import { GetAppConfigCommand } from "./command/GetAppConfigCommand";`,
+      );
       appBinderMethods.push(`  getAppConfig(args: {
     skipOpenApp: boolean;
   }): GetAppConfigDAReturnType {
@@ -1345,8 +1541,12 @@ export const appBindingModuleFactory = () =>
     }
 
     if (includeGetAddress) {
-      appBinderImports.push(`import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";`);
-      appBinderCommandImports.push(`import { GetAddressCommand } from "./command/GetAddressCommand";`);
+      appBinderImports.push(
+        `import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";`,
+      );
+      appBinderCommandImports.push(
+        `import { GetAddressCommand } from "./command/GetAddressCommand";`,
+      );
       appBinderMethods.push(`  getAddress(args: {
     derivationPath: string;
     checkOnDevice: boolean;
@@ -1369,8 +1569,12 @@ export const appBindingModuleFactory = () =>
     }
 
     if (includeSignTransaction) {
-      appBinderImports.push(`import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";`);
-      appBinderCommandImports.push(`import { SignTransactionTask } from "./task/SignTransactionTask";`);
+      appBinderImports.push(
+        `import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";`,
+      );
+      appBinderCommandImports.push(
+        `import { SignTransactionTask } from "./task/SignTransactionTask";`,
+      );
       appBinderMethods.push(`  signTransaction(args: {
     derivationPath: string;
     transaction: Uint8Array;
@@ -1392,8 +1596,12 @@ export const appBindingModuleFactory = () =>
     }
 
     if (includeSignMessage) {
-      appBinderImports.push(`import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";`);
-      appBinderCommandImports.push(`import { SignMessageCommand } from "./command/SignMessageCommand";`);
+      appBinderImports.push(
+        `import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";`,
+      );
+      appBinderCommandImports.push(
+        `import { SignMessageCommand } from "./command/SignMessageCommand";`,
+      );
       appBinderMethods.push(`  signMessage(args: {
     derivationPath: string;
     message: string | Uint8Array;
@@ -1413,9 +1621,14 @@ export const appBindingModuleFactory = () =>
   }`);
     }
 
-    writeFile(`${baseDir}/src/internal/app-binder/constants.ts`, `export const APP_NAME = "${pascalCase}";\n`);
+    writeFile(
+      `${baseDir}/src/internal/app-binder/constants.ts`,
+      `export const APP_NAME = "${pascalCase}";\n`,
+    );
 
-    writeFile(`${baseDir}/src/internal/app-binder/${pascalCase}AppBinder.ts`, `${appBinderImports.join("\n")}
+    writeFile(
+      `${baseDir}/src/internal/app-binder/${pascalCase}AppBinder.ts`,
+      `${appBinderImports.join("\n")}
 
 ${appBinderCommandImports.join("\n")}
 
@@ -1428,23 +1641,27 @@ export class ${pascalCase}AppBinder {
 
 ${appBinderMethods.join("\n\n")}
 }
-`);
+`,
+    );
 
     // Generate command files
-    writeFile(`${baseDir}/src/internal/app-binder/command/utils/${kebabCase}ApplicationErrors.ts`, `export enum ${pascalCase}ErrorCodes {
+    writeFile(
+      `${baseDir}/src/internal/app-binder/command/utils/${kebabCase}ApplicationErrors.ts`,
+      `export enum ${pascalCase}ErrorCodes {
   // Define your error codes here
   // Example:
   // INVALID_DERIVATION_PATH = 0x6a80,
   // TRANSACTION_PARSING_ERROR = 0x6a81,
 }
-`);
+`,
+    );
 
     // Generate command files using helper function
     for (const apiName of selectedApis) {
       const config = API_CONFIGS[apiName];
       writeFile(
         `${baseDir}/src/internal/app-binder/command/${config.commandClassName}.ts`,
-        generateCommand(config, pascalCase, kebabCase)
+        generateCommand(config, pascalCase, kebabCase),
       );
     }
 
@@ -1454,17 +1671,17 @@ ${appBinderMethods.join("\n\n")}
       // Generate DI types
       writeFile(
         `${baseDir}/src/internal/use-cases/${config.useCaseDir}/di/${config.useCaseTypesName}.ts`,
-        generateUseCaseDITypes(config)
+        generateUseCaseDITypes(config),
       );
       // Generate DI module
       writeFile(
         `${baseDir}/src/internal/use-cases/${config.useCaseDir}/di/${config.useCaseDir}Module.ts`,
-        generateUseCaseDIModule(config)
+        generateUseCaseDIModule(config),
       );
       // Generate use case class
       writeFile(
         `${baseDir}/src/internal/use-cases/${config.useCaseDir}/${config.useCaseClassName}.ts`,
-        generateUseCase(config, pascalCase)
+        generateUseCase(config, pascalCase),
       );
     }
 
@@ -1472,24 +1689,26 @@ ${appBinderMethods.join("\n\n")}
     for (const apiName of selectedApis) {
       const config = API_CONFIGS[apiName];
       const pascal = apiName.charAt(0).toUpperCase() + apiName.slice(1);
-      
+
       // Generate device action placeholder
       writeFile(
         `${baseDir}/src/internal/app-binder/device-action/${pascal}/${pascal}DeviceAction.ts`,
-        generateDeviceActionPlaceholder(config)
+        generateDeviceActionPlaceholder(config),
       );
-      
+
       // Generate task if needed (for CallTaskInApp APIs)
       if (config.taskClassName) {
         writeFile(
           `${baseDir}/src/internal/app-binder/task/${config.taskClassName}.ts`,
-          generateTask(config, pascalCase, kebabCase)
+          generateTask(config, pascalCase, kebabCase),
         );
       }
     }
 
     // Generate README.md
-    writeFile(`${baseDir}/README.md`, `# Signer ${cryptoName}
+    writeFile(
+      `${baseDir}/README.md`,
+      `# Signer ${cryptoName}
 
 This package provides a signer implementation for ${cryptoName}.
 
@@ -1531,65 +1750,88 @@ pnpm test
 # Lint
 pnpm lint
 \`\`\`
-`);
+`,
+    );
 
     // Generate CHANGELOG.md
-    writeFile(`${baseDir}/CHANGELOG.md`, `# Changelog
+    writeFile(
+      `${baseDir}/CHANGELOG.md`,
+      `# Changelog
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.0] - ${new Date().toISOString().split('T')[0]}
+## [0.1.0] - ${new Date().toISOString().split("T")[0]}
 
 ### Added
 - Initial signer implementation for ${cryptoName}
-`);
-    console.log(chalk.gray("\n📚 Generating documentation and sample app files..."));
+`,
+    );
+    console.log(
+      chalk.gray("\n📚 Generating documentation and sample app files..."),
+    );
 
     // Generate documentation page dynamically based on selected methods
     const docsDir = `apps/docs/pages/docs/references/signers`;
     const docFileName = `${kebabCase}.mdx`;
-    
+
     // Build the list of capabilities dynamically
     const capabilities = [];
-    if (includeGetAddress) capabilities.push(`- Retrieving the ${cryptoName} address using a given derivation path`);
-    if (includeSignTransaction) capabilities.push(`- Signing a ${cryptoName} transaction`);
-    if (includeSignMessage) capabilities.push(`- Signing a message displayed on a Ledger device`);
-    if (includeGetAppConfig) capabilities.push(`- Retrieving the app configuration`);
-    
+    if (includeGetAddress)
+      capabilities.push(
+        `- Retrieving the ${cryptoName} address using a given derivation path`,
+      );
+    if (includeSignTransaction)
+      capabilities.push(`- Signing a ${cryptoName} transaction`);
+    if (includeSignMessage)
+      capabilities.push(`- Signing a message displayed on a Ledger device`);
+    if (includeGetAppConfig)
+      capabilities.push(`- Retrieving the app configuration`);
+
     // Build the index links dynamically
     const indexLinks = [
       "1. [How it works](#-how-it-works)",
       "2. [Installation](#-installation)",
       "3. [Initialisation](#-initialisation)",
-      "4. [Use Cases](#-use-cases)"
+      "4. [Use Cases](#-use-cases)",
     ];
-    
+
     let useCaseNumber = 1;
     const useCaseLinks = [];
     if (includeGetAppConfig) {
-      useCaseLinks.push(`   - [Get App Configuration](#use-case-${useCaseNumber}-get-app-configuration)`);
+      useCaseLinks.push(
+        `   - [Get App Configuration](#use-case-${useCaseNumber}-get-app-configuration)`,
+      );
       useCaseNumber++;
     }
     if (includeGetAddress) {
-      useCaseLinks.push(`   - [Get Address](#use-case-${useCaseNumber}-get-address)`);
+      useCaseLinks.push(
+        `   - [Get Address](#use-case-${useCaseNumber}-get-address)`,
+      );
       useCaseNumber++;
     }
     if (includeSignTransaction) {
-      useCaseLinks.push(`   - [Sign Transaction](#use-case-${useCaseNumber}-sign-transaction)`);
+      useCaseLinks.push(
+        `   - [Sign Transaction](#use-case-${useCaseNumber}-sign-transaction)`,
+      );
       useCaseNumber++;
     }
     if (includeSignMessage) {
-      useCaseLinks.push(`   - [Sign Message](#use-case-${useCaseNumber}-sign-message)`);
+      useCaseLinks.push(
+        `   - [Sign Message](#use-case-${useCaseNumber}-sign-message)`,
+      );
       useCaseNumber++;
     }
-    
+
     indexLinks.push(...useCaseLinks);
-    indexLinks.push("5. [Observable Behavior](#-observable-behavior)", "6. [Example](#-example)");
-    
+    indexLinks.push(
+      "5. [Observable Behavior](#-observable-behavior)",
+      "6. [Example](#-example)",
+    );
+
     // Build use case sections dynamically
     let useCaseSections = [];
     useCaseNumber = 1;
-    
+
     if (includeGetAppConfig) {
       useCaseSections.push(`### Use Case ${useCaseNumber}: Get App Configuration
 
@@ -1617,7 +1859,7 @@ type GetAppConfigCommandResponse = {
 ---`);
       useCaseNumber++;
     }
-    
+
     if (includeGetAddress) {
       useCaseSections.push(`### Use Case ${useCaseNumber}: Get Address
 
@@ -1666,7 +1908,7 @@ type GetAddressCommandResponse = {
 ---`);
       useCaseNumber++;
     }
-    
+
     if (includeSignTransaction) {
       useCaseSections.push(`### Use Case ${useCaseNumber}: Sign Transaction
 
@@ -1724,7 +1966,7 @@ type Signature = {
 ---`);
       useCaseNumber++;
     }
-    
+
     if (includeSignMessage) {
       useCaseSections.push(`### Use Case ${useCaseNumber}: Sign Message
 
@@ -1768,11 +2010,11 @@ type Signature = {
 ---`);
       useCaseNumber++;
     }
-    
+
     // Count total methods for the description
     const methodCount = selectedApis.length;
     const methodPlural = methodCount === 1 ? "method" : "methods";
-    
+
     const docContent = `# ${pascalCase} Signer Kit
 
 This module provides the implementation of the Ledger ${cryptoName} signer of the Device Management Kit. It enables interaction with the ${cryptoName} application on a Ledger device including:
@@ -1919,109 +2161,119 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
 
     // Update _meta.js in docs
     const metaFilePath = `${docsDir}/_meta.js`;
-    let metaContent = fs.readFileSync(metaFilePath, 'utf8');
+    let metaContent = fs.readFileSync(metaFilePath, "utf8");
     // Add new entry before the closing brace
     metaContent = metaContent.replace(
       /(\s+)(};)/,
-      `$1  ${kebabCase}: "Signer ${pascalCase}",\n$1$2`
+      `$1  ${kebabCase}: "Signer ${pascalCase}",\n$1$2`,
     );
     writeFile(metaFilePath, metaContent);
 
     // Generate sample app files
     console.log(chalk.gray("\n📱 Generating sample app files..."));
-    
+
     const sampleAppDir = "apps/sample/src";
-    
+
     // Create directories for sample app
     const sampleDirs = [
       `${sampleAppDir}/providers/Signer${pascalCase}Provider`,
       `${sampleAppDir}/components/Signer${pascalCase}View`,
       `${sampleAppDir}/app/signers/${kebabCase}`,
     ];
-    sampleDirs.forEach(dir => {
+    sampleDirs.forEach((dir) => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
     });
-    
+
     // Generate provider
     writeFile(
       `${sampleAppDir}/providers/Signer${pascalCase}Provider/index.tsx`,
-      generateSignerProvider(pascalCase, kebabCase)
+      generateSignerProvider(pascalCase, kebabCase),
     );
-    
+
     // Generate view component
     writeFile(
       `${sampleAppDir}/components/Signer${pascalCase}View/index.tsx`,
-      generateSignerView(pascalCase, kebabCase, selectedApis)
+      generateSignerView(pascalCase, kebabCase, selectedApis),
     );
-    
+
     // Generate page
     writeFile(
       `${sampleAppDir}/app/signers/${kebabCase}/page.tsx`,
-      generateSignerPage(pascalCase)
+      generateSignerPage(pascalCase),
     );
-    
+
     // Update client-layout.tsx to add the new signer provider
     const clientLayoutPath = `${sampleAppDir}/app/client-layout.tsx`;
     if (fs.existsSync(clientLayoutPath)) {
       let clientLayoutContent = fs.readFileSync(clientLayoutPath, "utf-8");
-      
+
       const providerImport = `import { Signer${pascalCase}Provider } from "@/providers/Signer${pascalCase}Provider";`;
       const providerName = `Signer${pascalCase}Provider`;
-      
+
       // Check if already imported
-      if (clientLayoutContent.includes(providerImport) || clientLayoutContent.includes(`<${providerName}>`)) {
-        console.log(chalk.yellow(`⚠️  ${providerName} already exists in ${clientLayoutPath}`));
+      if (
+        clientLayoutContent.includes(providerImport) ||
+        clientLayoutContent.includes(`<${providerName}>`)
+      ) {
+        console.log(
+          chalk.yellow(
+            `⚠️  ${providerName} already exists in ${clientLayoutPath}`,
+          ),
+        );
       } else {
         // Add import after the last SignerProvider import or after other provider imports
-        const importRegex = /(import \{ Signer\w+Provider \} from "@\/providers\/Signer\w+Provider";)/g;
+        const importRegex =
+          /(import \{ Signer\w+Provider \} from "@\/providers\/Signer\w+Provider";)/g;
         let lastImportMatch;
         let match;
         while ((match = importRegex.exec(clientLayoutContent)) !== null) {
           lastImportMatch = match;
         }
-        
+
         if (lastImportMatch) {
           // Insert after the last signer provider import
-          const insertPosition = lastImportMatch.index + lastImportMatch[0].length;
-          clientLayoutContent = 
-            clientLayoutContent.slice(0, insertPosition) + 
-            "\n" + providerImport +
+          const insertPosition =
+            lastImportMatch.index + lastImportMatch[0].length;
+          clientLayoutContent =
+            clientLayoutContent.slice(0, insertPosition) +
+            "\n" +
+            providerImport +
             clientLayoutContent.slice(insertPosition);
         } else {
           // Fallback: add after the store import
           clientLayoutContent = clientLayoutContent.replace(
             /(import \{ store \} from "@\/state\/store";)/,
-            `$1\n${providerImport}`
+            `$1\n${providerImport}`,
           );
         }
-        
+
         // Add provider wrapper - find the innermost provider (before CalInterceptorProvider or GlobalStyle)
         // Look for pattern like <SignerEthProvider> and wrap inside it
         const providerWrapperRegex = /(<SignerEthProvider>)/;
         if (clientLayoutContent.match(providerWrapperRegex)) {
           clientLayoutContent = clientLayoutContent.replace(
             providerWrapperRegex,
-            `$1\n                  <${providerName}>`
+            `$1\n                  <${providerName}>`,
           );
           // Find the closing tag and add our closing tag before it
           clientLayoutContent = clientLayoutContent.replace(
             /(<\/SignerEthProvider>)/,
-            `</${providerName}>\n                $1`
+            `</${providerName}>\n                $1`,
           );
         } else {
           // Fallback: wrap around CalInterceptorProvider
           clientLayoutContent = clientLayoutContent.replace(
             /(<CalInterceptorProvider>)/,
-            `<${providerName}>\n                    $1`
+            `<${providerName}>\n                    $1`,
           );
           clientLayoutContent = clientLayoutContent.replace(
             /(<\/CalInterceptorProvider>)/,
-            `$1\n                  </${providerName}>`
+            `$1\n                  </${providerName}>`,
           );
         }
-        
+
         fs.writeFileSync(clientLayoutPath, clientLayoutContent);
         console.log(chalk.green(`✅ Updated ${clientLayoutPath}`));
       }
@@ -2030,12 +2282,14 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
     // Update sample app package.json to add the new signer dependency
     const samplePackageJsonPath = "apps/sample/package.json";
     if (fs.existsSync(samplePackageJsonPath)) {
-      const packageJson = JSON.parse(fs.readFileSync(samplePackageJsonPath, "utf-8"));
+      const packageJson = JSON.parse(
+        fs.readFileSync(samplePackageJsonPath, "utf-8"),
+      );
       const depName = `@ledgerhq/device-signer-kit-${kebabCase}`;
-      
+
       if (packageJson.dependencies && !packageJson.dependencies[depName]) {
         packageJson.dependencies[depName] = "workspace:^";
-        
+
         // Sort dependencies alphabetically
         packageJson.dependencies = Object.keys(packageJson.dependencies)
           .sort()
@@ -2043,40 +2297,57 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
             obj[key] = packageJson.dependencies[key];
             return obj;
           }, {});
-        
-        fs.writeFileSync(samplePackageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
-        console.log(chalk.green(`✅ Added ${depName} to ${samplePackageJsonPath}`));
-      } else if (packageJson.dependencies && packageJson.dependencies[depName]) {
-        console.log(chalk.yellow(`⚠️  ${depName} already exists in ${samplePackageJsonPath}`));
+
+        fs.writeFileSync(
+          samplePackageJsonPath,
+          JSON.stringify(packageJson, null, 2) + "\n",
+        );
+        console.log(
+          chalk.green(`✅ Added ${depName} to ${samplePackageJsonPath}`),
+        );
+      } else if (
+        packageJson.dependencies &&
+        packageJson.dependencies[depName]
+      ) {
+        console.log(
+          chalk.yellow(
+            `⚠️  ${depName} already exists in ${samplePackageJsonPath}`,
+          ),
+        );
       }
     }
 
     // Update root package.json to add the signer alias
     const rootPackageJsonPath = "package.json";
     if (fs.existsSync(rootPackageJsonPath)) {
-      const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, "utf-8"));
+      const rootPackageJson = JSON.parse(
+        fs.readFileSync(rootPackageJsonPath, "utf-8"),
+      );
       const aliasName = `signer-${kebabCase}`;
       const packageName = `@ledgerhq/device-signer-kit-${kebabCase}`;
       const aliasValue = `pnpm --filter ${packageName}`;
-      
+
       if (!rootPackageJson.scripts) {
         rootPackageJson.scripts = {};
       }
-      
+
       if (!rootPackageJson.scripts[aliasName]) {
         // Insert the alias in alphabetical order after other signer aliases
         const scripts = rootPackageJson.scripts;
         const scriptKeys = Object.keys(scripts);
-        
+
         // Find the position to insert (after the last signer-* alias, before signer-utils)
         let insertIndex = scriptKeys.length;
         for (let i = 0; i < scriptKeys.length; i++) {
-          if (scriptKeys[i].startsWith("signer-") && scriptKeys[i] > aliasName) {
+          if (
+            scriptKeys[i].startsWith("signer-") &&
+            scriptKeys[i] > aliasName
+          ) {
             insertIndex = i;
             break;
           }
         }
-        
+
         // If we didn't find a position, check if we should insert before signer-utils
         if (insertIndex === scriptKeys.length) {
           const signerUtilsIndex = scriptKeys.indexOf("signer-utils");
@@ -2084,7 +2355,7 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
             insertIndex = signerUtilsIndex;
           }
         }
-        
+
         // Create new scripts object with the alias inserted
         const newScripts = {};
         let inserted = false;
@@ -2098,12 +2369,23 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
         if (!inserted) {
           newScripts[aliasName] = aliasValue;
         }
-        
+
         rootPackageJson.scripts = newScripts;
-        fs.writeFileSync(rootPackageJsonPath, JSON.stringify(rootPackageJson, null, 2) + "\n");
-        console.log(chalk.green(`✅ Added alias "${aliasName}" to ${rootPackageJsonPath}`));
+        fs.writeFileSync(
+          rootPackageJsonPath,
+          JSON.stringify(rootPackageJson, null, 2) + "\n",
+        );
+        console.log(
+          chalk.green(
+            `✅ Added alias "${aliasName}" to ${rootPackageJsonPath}`,
+          ),
+        );
       } else {
-        console.log(chalk.yellow(`⚠️  Alias "${aliasName}" already exists in ${rootPackageJsonPath}`));
+        console.log(
+          chalk.yellow(
+            `⚠️  Alias "${aliasName}" already exists in ${rootPackageJsonPath}`,
+          ),
+        );
       }
     }
 
@@ -2111,34 +2393,40 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
     const signerViewPath = `${sampleAppDir}/components/SignerView/index.tsx`;
     if (fs.existsSync(signerViewPath)) {
       let signerViewContent = fs.readFileSync(signerViewPath, "utf-8");
-      
+
       // Check if this signer already exists
       if (signerViewContent.includes(`title: "${pascalCase}"`)) {
-        console.log(chalk.yellow(`⚠️  ${pascalCase} already exists in ${signerViewPath}`));
+        console.log(
+          chalk.yellow(`⚠️  ${pascalCase} already exists in ${signerViewPath}`),
+        );
       } else {
         // Find the SUPPORTED_SIGNERS array and add the new entry
         const ticker = kebabCase.toUpperCase();
-        
+
         const newSignerEntry = `  {
     title: "${pascalCase}",
     description: "Access ${pascalCase} signer functionality",
     icon: <CryptoIcon ledgerId="${kebabCase}" ticker="${ticker}" size={size} />,
   },`;
-        
+
         // Find the closing of SUPPORTED_SIGNERS array and insert before it
         // Look for the pattern: },\n]; at the end of the array
         const arrayEndRegex = /(const SUPPORTED_SIGNERS = \[[\s\S]*?},)\n\];/;
         const match = signerViewContent.match(arrayEndRegex);
-        
+
         if (match) {
           signerViewContent = signerViewContent.replace(
             arrayEndRegex,
-            `$1\n${newSignerEntry}\n];`
+            `$1\n${newSignerEntry}\n];`,
           );
           fs.writeFileSync(signerViewPath, signerViewContent);
           console.log(chalk.green(`✅ Updated ${signerViewPath}`));
         } else {
-          console.log(chalk.yellow(`⚠️  Could not update ${signerViewPath} - please add the signer manually`));
+          console.log(
+            chalk.yellow(
+              `⚠️  Could not update ${signerViewPath} - please add the signer manually`,
+            ),
+          );
         }
       }
     }
@@ -2151,10 +2439,15 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
       const fullPkgName = `@ledgerhq/device-signer-kit-${kebabCase}`;
 
       if (releaseConfigContent.includes(`"${aliasKey}"`)) {
-        console.log(chalk.yellow(`⚠️  Alias "${aliasKey}" already exists in ${releaseConfigPath}`));
+        console.log(
+          chalk.yellow(
+            `⚠️  Alias "${aliasKey}" already exists in ${releaseConfigPath}`,
+          ),
+        );
       } else {
         // Insert into ALIASES: find the last "signer-*" line that sorts before ours or before "signer-utils"
-        const aliasLines = releaseConfigContent.match(/^ {2}"signer-[^"]*":.*$/gm) || [];
+        const aliasLines =
+          releaseConfigContent.match(/^ {2}"signer-[^"]*":.*$/gm) || [];
         let aliasInsertAfter = null;
         for (const line of aliasLines) {
           const key = line.match(/"(signer-[^"]+)"/)?.[1];
@@ -2166,12 +2459,15 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
           const newAliasLine = `  "${aliasKey}": "${fullPkgName}",`;
           releaseConfigContent = releaseConfigContent.replace(
             aliasInsertAfter,
-            `${aliasInsertAfter}\n${newAliasLine}`
+            `${aliasInsertAfter}\n${newAliasLine}`,
           );
         }
 
         // Insert into DISPLAY_NAMES: find the last "@ledgerhq/device-signer-kit-*" line that sorts before ours
-        const displayLines = releaseConfigContent.match(/^ {2}"@ledgerhq\/device-signer-kit-[^"]*":.*$/gm) || [];
+        const displayLines =
+          releaseConfigContent.match(
+            /^ {2}"@ledgerhq\/device-signer-kit-[^"]*":.*$/gm,
+          ) || [];
         let displayInsertAfter = null;
         for (const line of displayLines) {
           const key = line.match(/"(@ledgerhq\/device-signer-kit-[^"]+)"/)?.[1];
@@ -2183,7 +2479,7 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
           const newDisplayLine = `  "${fullPkgName}": "Signer ${pascalCase}",`;
           releaseConfigContent = releaseConfigContent.replace(
             displayInsertAfter,
-            `${displayInsertAfter}\n${newDisplayLine}`
+            `${displayInsertAfter}\n${newDisplayLine}`,
           );
         }
 
@@ -2200,7 +2496,11 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
       const fullPkgName = `@ledgerhq/device-signer-kit-${kebabCase}`;
 
       if (skillContent.includes(`\`${aliasKey}\``)) {
-        console.log(chalk.yellow(`⚠️  Alias "${aliasKey}" already exists in ${releaseSkillPath}`));
+        console.log(
+          chalk.yellow(
+            `⚠️  Alias "${aliasKey}" already exists in ${releaseSkillPath}`,
+          ),
+        );
       } else {
         // Find all signer-* rows in the markdown table and insert in alphabetical order
         const signerRowRegex = /^\| `signer-[^`]+`\s*\|.*\|$/gm;
@@ -2219,52 +2519,104 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
           const newRow = `| ${aliasPadded}| ${pkgPadded}|`;
           skillContent = skillContent.replace(
             insertAfterRow,
-            `${insertAfterRow}\n${newRow}`
+            `${insertAfterRow}\n${newRow}`,
           );
           fs.writeFileSync(releaseSkillPath, skillContent);
           console.log(chalk.green(`✅ Updated ${releaseSkillPath}`));
         } else {
-          console.log(chalk.yellow(`⚠️  Could not update ${releaseSkillPath} - please add the signer alias manually`));
+          console.log(
+            chalk.yellow(
+              `⚠️  Could not update ${releaseSkillPath} - please add the signer alias manually`,
+            ),
+          );
         }
       }
     }
 
     console.log(chalk.green("\n🎉 Signer package generated successfully!"));
     console.log(chalk.gray("\nGenerated files:"));
-    console.log(chalk.cyan(`   ✓ Signer package: packages/signer/signer-${kebabCase}`));
-    console.log(chalk.cyan(`   ✓ Documentation: apps/docs/pages/docs/references/signers/${kebabCase}.mdx`));
-    console.log(chalk.cyan(`   ✓ Sample component: apps/sample/src/components/Signer${pascalCase}View/index.tsx`));
-    console.log(chalk.cyan(`   ✓ Sample page: apps/sample/src/app/signers/${kebabCase}/page.tsx`));
-    console.log(chalk.cyan(`   ✓ Release config: .cursor/scripts/release/config.cjs`));
-    console.log(chalk.cyan(`   ✓ Release skill: .cursor/skills/release/SKILL.md`));
+    console.log(
+      chalk.cyan(`   ✓ Signer package: packages/signer/signer-${kebabCase}`),
+    );
+    console.log(
+      chalk.cyan(
+        `   ✓ Documentation: apps/docs/pages/docs/references/signers/${kebabCase}.mdx`,
+      ),
+    );
+    console.log(
+      chalk.cyan(
+        `   ✓ Sample component: apps/sample/src/components/Signer${pascalCase}View/index.tsx`,
+      ),
+    );
+    console.log(
+      chalk.cyan(
+        `   ✓ Sample page: apps/sample/src/app/signers/${kebabCase}/page.tsx`,
+      ),
+    );
+    console.log(
+      chalk.cyan(`   ✓ Release config: .cursor/scripts/release/config.cjs`),
+    );
+    console.log(
+      chalk.cyan(`   ✓ Release skill: .cursor/skills/release/SKILL.md`),
+    );
     console.log(chalk.gray("\nNext steps:"));
     console.log(chalk.gray("1. Install dependencies from the root:"));
     console.log(chalk.cyan("   pnpm install"));
     console.log(chalk.gray("2. Build the package:"));
-    console.log(chalk.cyan(`   pnpm --filter @ledgerhq/device-signer-kit-${kebabCase} build`));
+    console.log(
+      chalk.cyan(
+        `   pnpm --filter @ledgerhq/device-signer-kit-${kebabCase} build`,
+      ),
+    );
     console.log(chalk.gray("3. Run the sample app to test:"));
     console.log(chalk.cyan("   pnpm sample dev"));
-    console.log(chalk.gray(`4. Start developing your ${cryptoName} signer implementation!`));
+    console.log(
+      chalk.gray(
+        `4. Start developing your ${cryptoName} signer implementation!`,
+      ),
+    );
     console.log(chalk.yellow("\n⚠️  Remember to implement:"));
-    console.log(chalk.yellow("   - APDU construction in commands (getApdu methods)"));
-    console.log(chalk.yellow("   - Response parsing in commands (parseResponse methods)"));
-    console.log(chalk.yellow("   - Error codes in " + kebabCase + "ApplicationErrors.ts"));
+    console.log(
+      chalk.yellow("   - APDU construction in commands (getApdu methods)"),
+    );
+    console.log(
+      chalk.yellow("   - Response parsing in commands (parseResponse methods)"),
+    );
+    console.log(
+      chalk.yellow("   - Error codes in " + kebabCase + "ApplicationErrors.ts"),
+    );
     if (includeSignTransaction) {
       console.log(chalk.yellow("   - SignTransactionTask implementation"));
     }
     console.log(chalk.gray("\nGenerated files:"));
-    console.log(chalk.gray("  Signer package: ") + chalk.cyan(`packages/signer/signer-${kebabCase}/`));
-    console.log(chalk.gray("  Sample app provider: ") + chalk.cyan(`apps/sample/src/providers/Signer${pascalCase}Provider/`));
-    console.log(chalk.gray("  Sample app view: ") + chalk.cyan(`apps/sample/src/components/Signer${pascalCase}View/`));
-    console.log(chalk.gray("  Sample app page: ") + chalk.cyan(`apps/sample/src/app/signers/${kebabCase}/`));
-    console.log(chalk.gray("\nGenerated APIs: ") + chalk.cyan(selectedApis.join(", ")));
-
+    console.log(
+      chalk.gray("  Signer package: ") +
+        chalk.cyan(`packages/signer/signer-${kebabCase}/`),
+    );
+    console.log(
+      chalk.gray("  Sample app provider: ") +
+        chalk.cyan(`apps/sample/src/providers/Signer${pascalCase}Provider/`),
+    );
+    console.log(
+      chalk.gray("  Sample app view: ") +
+        chalk.cyan(`apps/sample/src/components/Signer${pascalCase}View/`),
+    );
+    console.log(
+      chalk.gray("  Sample app page: ") +
+        chalk.cyan(`apps/sample/src/app/signers/${kebabCase}/`),
+    );
+    console.log(
+      chalk.gray("\nGenerated APIs: ") + chalk.cyan(selectedApis.join(", ")),
+    );
   } catch (error) {
     if (error.name === "ExitPromptError") {
       console.log(chalk.yellow("\n❌ Generation cancelled by user"));
       process.exit(0);
     } else {
-      console.error(chalk.red("\n❌ Error generating signer package:"), error.message);
+      console.error(
+        chalk.red("\n❌ Error generating signer package:"),
+        error.message,
+      );
       console.error(error.stack);
       process.exit(1);
     }
