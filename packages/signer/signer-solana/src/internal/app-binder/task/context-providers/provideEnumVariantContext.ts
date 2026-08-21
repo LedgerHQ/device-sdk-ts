@@ -6,6 +6,7 @@ import {
   type CommandResult,
   CommandResultFactory,
   hexaStringToBuffer,
+  InvalidResponseFormatError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
@@ -37,21 +38,33 @@ export const provideEnumVariantContext: ProvideContextHandler<
     return certResult;
   }
 
+  const label = `${payload.programId}:${payload.enumId}:${payload.variantIndex}`;
   const tlv = hexaStringToBuffer(payload.descriptor.data);
   if (!tlv) {
-    logger.warn(
-      `[provideEnumVariantContext] malformed ENUM_VARIANT for ${payload.programId}:${payload.enumId}:${payload.variantIndex}, skipping`,
+    // ENUM_VARIANT is a fatal descriptor type: without it the device has no
+    // structural information to interpret the instruction, so a malformed
+    // payload must abort generic clear-signing rather than be swallowed.
+    logger.error(
+      `[provideEnumVariantContext] malformed ENUM_VARIANT for ${label}`,
     );
-    return CommandResultFactory({ data: undefined });
+    return CommandResultFactory({
+      error: new InvalidResponseFormatError(
+        `Malformed ENUM_VARIANT for ${label}`,
+      ),
+    });
   }
   // Each ENUM_VARIANT is individually signed, CAL serves the descriptor
   // unsigned, so append the signature as the trailing SIGNATURE (0x15) TLV.
   const signature = hexaStringToBuffer(payload.descriptor.signature);
   if (!signature || signature.length === 0) {
-    logger.warn(
-      `[provideEnumVariantContext] missing ENUM_VARIANT signature for ${payload.programId}:${payload.enumId}:${payload.variantIndex}, skipping`,
+    logger.error(
+      `[provideEnumVariantContext] missing ENUM_VARIANT signature for ${label}`,
     );
-    return CommandResultFactory({ data: undefined });
+    return CommandResultFactory({
+      error: new InvalidResponseFormatError(
+        `Missing ENUM_VARIANT signature for ${label}`,
+      ),
+    });
   }
 
   logger.debug("[provideEnumVariantContext] Sending ENUM_VARIANT", {
