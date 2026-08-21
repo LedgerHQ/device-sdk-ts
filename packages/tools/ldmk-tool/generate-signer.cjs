@@ -488,6 +488,37 @@ export class ${config.taskClassName} {
 `;
 }
 
+/**
+ * Generates a smoke test for the builder.
+ *
+ * `vitest run` exits 1 when a package has no test files, so a generated signer
+ * would fail CI on day one without this. Building the signer also constructs
+ * the DI container, so this covers the container setup. Bindings resolve
+ * lazily, so a missing one only surfaces once its use case is called.
+ */
+function generateBuilderTest(pascalCase) {
+  return `import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
+
+import { Signer${pascalCase}Builder } from "@api/Signer${pascalCase}Builder";
+import { DefaultSigner${pascalCase} } from "@internal/DefaultSigner${pascalCase}";
+
+describe("Signer${pascalCase}Builder", () => {
+  it("should build a Signer${pascalCase} instance", () => {
+    // ARRANGE
+    const dmk = {} as DeviceManagementKit;
+    const sessionId = "test-session-id";
+    const builder = new Signer${pascalCase}Builder({ dmk, sessionId });
+
+    // ACT
+    const signer = builder.build();
+
+    // ASSERT
+    expect(signer).toBeInstanceOf(DefaultSigner${pascalCase});
+  });
+});
+`;
+}
+
 // ============================================================================
 // Sample App Helper Functions
 // ============================================================================
@@ -1339,6 +1370,11 @@ export class Signer${pascalCase}Builder {
   }
 }
 `,
+    );
+
+    writeFile(
+      `${baseDir}/src/api/Signer${pascalCase}Builder.test.ts`,
+      generateBuilderTest(pascalCase),
     );
 
     // Generate model files (conditional)
