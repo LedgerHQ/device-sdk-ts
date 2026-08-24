@@ -8,6 +8,7 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type AppConfigOptions } from "@api/model/AppConfigOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerXrp } from "@api/SignerXrp";
 import { makeContainer } from "@internal/di";
@@ -30,10 +31,10 @@ export class DefaultSignerXrp implements SignerXrp {
     this._container = makeContainer({ dmk, sessionId });
   }
 
-  getAppConfig(): GetAppConfigDAReturnType {
+  getAppConfig(options?: AppConfigOptions): GetAppConfigDAReturnType {
     return this._container
       .get<GetAppConfigUseCase>(configTypes.GetAppConfigUseCase)
-      .execute();
+      .execute(options);
   }
 
   getAddress(

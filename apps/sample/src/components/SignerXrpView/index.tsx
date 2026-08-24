@@ -32,17 +32,21 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
       {
         title: "Get App Config",
         description: "Get the app configuration from the device",
-        executeDeviceAction: () => {
+        executeDeviceAction: ({ skipOpenApp }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          return signer.getAppConfig();
+          return signer.getAppConfig({ skipOpenApp });
         },
-        initialValues: {},
+        initialValues: {
+          skipOpenApp: false,
+        },
         deviceModelId,
       } satisfies DeviceActionProps<
         GetAppConfigDAOutput,
-        Record<string, never>,
+        {
+          skipOpenApp?: boolean;
+        },
         GetAppConfigDAError,
         GetAppConfigDAIntermediateValue
       >,
