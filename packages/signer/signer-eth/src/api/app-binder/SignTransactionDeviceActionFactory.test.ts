@@ -23,9 +23,10 @@ vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
 vi.mock(
   "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction",
   async (importOriginal) => {
-    const actual = await importOriginal<
-      typeof import("@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction")
-    >();
+    const actual =
+      await importOriginal<
+        typeof import("@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction")
+      >();
     const MockSignTransactionDeviceAction = vi
       .fn()
       .mockImplementation(
@@ -37,7 +38,10 @@ vi.mock(
       );
     MockSignTransactionDeviceAction.prototype =
       actual.SignTransactionDeviceAction.prototype;
-    return { ...actual, SignTransactionDeviceAction: MockSignTransactionDeviceAction };
+    return {
+      ...actual,
+      SignTransactionDeviceAction: MockSignTransactionDeviceAction,
+    };
   },
 );
 
@@ -45,14 +49,15 @@ const contextModuleStub = {
   getContexts: vi.fn(),
 } as unknown as ContextModule;
 
-const mockLoggerFactory = vi.fn((_tag: string) =>
-  ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    subscribers: [],
-  }) as unknown as LoggerPublisherService,
+const mockLoggerFactory = vi.fn(
+  (_tag: string) =>
+    ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      subscribers: [],
+    }) as unknown as LoggerPublisherService,
 );
 
 describe("SignTransactionDeviceActionFactory", () => {
@@ -77,7 +82,9 @@ describe("SignTransactionDeviceActionFactory", () => {
       contextModule: contextModuleStub,
     });
 
-    expect(deviceAction.input.mapper).toBeInstanceOf(EthersTransactionMapperService);
+    expect(deviceAction.input.mapper).toBeInstanceOf(
+      EthersTransactionMapperService,
+    );
     expect(deviceAction.input.parser).toBeInstanceOf(TransactionParserService);
   });
 
@@ -113,7 +120,9 @@ describe("SignTransactionDeviceActionFactory", () => {
       contextModule: contextModuleStub,
     });
 
-    const stateMachine = deviceAction.makeStateMachine(internalApi);
+    const stateMachine = (
+      deviceAction as SignTransactionDeviceAction
+    ).makeStateMachine(internalApi);
 
     expect(stateMachine).toBeDefined();
     expect(typeof stateMachine.provide).toBe("function");

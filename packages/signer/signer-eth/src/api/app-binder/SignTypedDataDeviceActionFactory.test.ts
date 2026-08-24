@@ -25,19 +25,25 @@ vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
 vi.mock(
   "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction",
   async (importOriginal) => {
-    const actual = await importOriginal<
-      typeof import("@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction")
-    >();
+    const actual =
+      await importOriginal<
+        typeof import("@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction")
+      >();
     const MockSignTypedDataDeviceAction = vi
       .fn()
       .mockImplementation(
         (
-          ...args: ConstructorParameters<typeof actual.SignTypedDataDeviceAction>
+          ...args: ConstructorParameters<
+            typeof actual.SignTypedDataDeviceAction
+          >
         ) => new actual.SignTypedDataDeviceAction(...args),
       );
     MockSignTypedDataDeviceAction.prototype =
       actual.SignTypedDataDeviceAction.prototype;
-    return { ...actual, SignTypedDataDeviceAction: MockSignTypedDataDeviceAction };
+    return {
+      ...actual,
+      SignTypedDataDeviceAction: MockSignTypedDataDeviceAction,
+    };
   },
 );
 
@@ -52,14 +58,15 @@ const typedDataStub: TypedData = {
   primaryType: "EIP712Domain",
 };
 
-const mockLoggerFactory = vi.fn((_tag: string) =>
-  ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    subscribers: [],
-  }) as unknown as LoggerPublisherService,
+const mockLoggerFactory = vi.fn(
+  (_tag: string) =>
+    ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      subscribers: [],
+    }) as unknown as LoggerPublisherService,
 );
 
 describe("SignTypedDataDeviceActionFactory", () => {
@@ -86,9 +93,15 @@ describe("SignTypedDataDeviceActionFactory", () => {
       skipOpenApp: false,
     });
 
-    expect(deviceAction.input.parser).toBeInstanceOf(DefaultTypedDataParserService);
-    expect(deviceAction.input.transactionMapper).toBeInstanceOf(EthersTransactionMapperService);
-    expect(deviceAction.input.transactionParser).toBeInstanceOf(TransactionParserService);
+    expect(deviceAction.input.parser).toBeInstanceOf(
+      DefaultTypedDataParserService,
+    );
+    expect(deviceAction.input.transactionMapper).toBeInstanceOf(
+      EthersTransactionMapperService,
+    );
+    expect(deviceAction.input.transactionParser).toBeInstanceOf(
+      TransactionParserService,
+    );
   });
 
   it("should forward inspect to the device action", () => {
@@ -126,7 +139,9 @@ describe("SignTypedDataDeviceActionFactory", () => {
       skipOpenApp: false,
     });
 
-    const stateMachine = deviceAction.makeStateMachine(internalApi);
+    const stateMachine = (
+      deviceAction as SignTypedDataDeviceAction
+    ).makeStateMachine(internalApi);
 
     expect(stateMachine).toBeDefined();
     expect(typeof stateMachine.provide).toBe("function");
