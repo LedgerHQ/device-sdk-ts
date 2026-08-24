@@ -51,8 +51,23 @@ The `SignerXrpBuilder.build()` method will return a `SignerXrp` instance that ex
 This method allows users to retrieve the app configuration from the Ledger device.
 
 ```typescript
-const { observable, cancel } = signerXrp.getAppConfig();
+const { observable, cancel } = signerXrp.getAppConfig(options);
 ```
+
+#### **Parameters**
+
+- `options`
+
+  - Optional
+  - Type: `AppConfigOptions`
+
+    ```typescript
+    type AppConfigOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the xrp app automatically (`true`) or not (`false`). Defaults to `false`.
 
 #### **Returns**
 

@@ -35,4 +35,20 @@ export class ResponsesDriver {
     const body = last.locator("span", { hasText: '"status"' }).last();
     return JSON.parse(await body.innerText()) as T;
   }
+
+  /**
+   * Wait until the last response contains `until`, then return its raw text.
+   *
+   * Errored device actions are rendered with `util.inspect` rather than as
+   * JSON (see `DeviceActionResponse`), so they carry no `"status"` field and
+   * cannot go through {@link lastJson}.
+   */
+  async lastText(
+    until: string | RegExp,
+    { timeout = 30_000 }: { timeout?: number } = {},
+  ): Promise<string> {
+    const last = this.page.locator(RESPONSE_ITEMS).last();
+    await expect(last).toContainText(until, { timeout });
+    return last.innerText();
+  }
 }

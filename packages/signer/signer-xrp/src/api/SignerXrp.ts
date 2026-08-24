@@ -2,10 +2,11 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type AppConfigOptions } from "@api/model/AppConfigOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 
 export interface SignerXrp {
-  getAppConfig: () => GetAppConfigDAReturnType;
+  getAppConfig: (options?: AppConfigOptions) => GetAppConfigDAReturnType;
 
   getAddress: (
     derivationPath: string,
