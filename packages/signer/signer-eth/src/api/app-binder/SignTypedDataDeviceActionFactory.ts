@@ -1,6 +1,16 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  type LoggerPublisherService,
+  type XStateDeviceAction,
+} from "@ledgerhq/device-management-kit";
 
+import {
+  type SignTypedDataDAError,
+  type SignTypedDataDAInput,
+  type SignTypedDataDAIntermediateValue,
+  type SignTypedDataDAInternalState,
+  type SignTypedDataDAOutput,
+} from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
 import { EthersTransactionMapperService } from "@internal/transaction/service/mapper/EthersTransactionMapperService";
@@ -14,7 +24,13 @@ export const SignTypedDataDeviceActionFactory = (args: {
   skipOpenApp: boolean;
   inspect?: boolean;
   loggerFactory?: (tag: string) => LoggerPublisherService;
-}): SignTypedDataDeviceAction =>
+}): XStateDeviceAction<
+  SignTypedDataDAOutput,
+  SignTypedDataDAInput,
+  SignTypedDataDAError,
+  SignTypedDataDAIntermediateValue,
+  SignTypedDataDAInternalState
+> =>
   new SignTypedDataDeviceAction({
     input: {
       derivationPath: args.derivationPath,
