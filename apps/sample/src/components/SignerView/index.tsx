@@ -56,6 +56,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Tron signer functionality",
     icon: <CryptoIcon ledgerId="tron" ticker="TRX" size={size} />,
   },
+  {
+    title: "Xrp",
+    description: "Access Xrp signer functionality",
+    icon: <CryptoIcon ledgerId="xrp" ticker="XRP" size={size} />,
+  },
 ];
 
 export const SignerView = () => {

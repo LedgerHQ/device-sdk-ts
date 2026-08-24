@@ -166,6 +166,7 @@ export function toInstructionInfoPayload(
   return Right({
     programId,
     discriminator,
+    instructionName: dto.instruction_name,
     instructionInfo: {
       data: dto.descriptor.data,
       signature,

@@ -89,6 +89,8 @@ export class RequirementAccumulator {
     );
     const mintKeys = new Set(this.mintAltRefs.values().map(altKey));
 
+    const tokenAccountKeys = new Set(this.tokenAccountStates.values());
+
     return {
       instructionInfos: this.instructionInfos.values(),
       enumVariants: this.enumVariants.values(),
@@ -100,7 +102,9 @@ export class RequirementAccumulator {
           (k) => !mintKeys.has(altKey(k)) && !tokenAmountKeys.has(altKey(k)),
         ),
       trustedNames: this.trustedNames.values(),
-      tokenAmountRefs: this.tokenAmountRefs.values(),
+      tokenAmountRefs: this.tokenAmountRefs
+        .values()
+        .filter((address) => !tokenAccountKeys.has(address)),
       tokenAmountAltRefs: this.tokenAmountAltRefs.values(),
       mintAltRefs: this.mintAltRefs
         .values()

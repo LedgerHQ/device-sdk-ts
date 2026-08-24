@@ -314,6 +314,79 @@ describe("ProvideGenericClearSignContextTask", () => {
     );
   });
 
+  it("tokenAccountStates: streams TOKEN_ACCOUNT_STATE once per account even if the list repeats it", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [tokenAccountStateCtx("MINT1")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return [tokenInfoCtxFor("MINT1")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      { ...NO_CHALLENGE_BOUND, tokenAccountStates: ["ATA1", "ATA1"] },
+      getContexts,
+    );
+
+    await task.run();
+
+    // The device rejects a second TOKEN_ACCOUNT_STATE for the same account, so
+    // the duplicate must never reach it.
+    const stateFetches = getContexts.mock.calls.filter(
+      (c) => c[1][0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+    );
+    expect(stateFetches).toHaveLength(1);
+  });
+
+  it("tokenAccountStates: retries an account whose descriptor never reached the device", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [tokenAccountStateCtx("MINT1")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return [tokenInfoCtxFor("MINT1")];
+        return [];
+      },
+    );
+    const made = makeTask(
+      [],
+      [],
+      { ...NO_CHALLENGE_BOUND, tokenAccountStates: ["ATA1", "ATA1"] },
+      getContexts,
+    );
+    // The first GET CHALLENGE fails, so nothing is streamed for that attempt;
+    // every later one succeeds.
+    let challengeCount = 0;
+    made.api.sendCommand.mockImplementation(async (cmd: unknown) => {
+      if (cmd instanceof GetChallengeCommand) {
+        challengeCount += 1;
+        return challengeCount === 1
+          ? CommandResultFactory({
+              error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+            })
+          : challenge;
+      }
+      return success;
+    });
+
+    await made.task.run();
+
+    // The failed attempt must not consume the account: the second reference
+    // still fetches and streams it.
+    const stateFetches = getContexts.mock.calls.filter(
+      (c) => c[1][0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+    );
+    expect(stateFetches).toHaveLength(1);
+    expect(stateFetches[0]![0]).toEqual(
+      expect.objectContaining({
+        requests: [expect.objectContaining({ tokenAccount: "ATA1" })],
+      }),
+    );
+  });
+
   it("mintAltRefs: streams ALT_RESOLUTION then fetches TOKEN_INFO for the resolved address", async () => {
     const getContexts = vi.fn(
       async (_input: any, types: ClearSignContextType[]) => {

@@ -128,7 +128,10 @@ export class BuildGenericClearSignContextTask {
         programId: this.programIdOf(message, ix.programIdIndex),
       }))
       .filter(({ programId }) => programId !== COMPUTE_BUDGET_PROGRAM_ID);
-    if (remaining.length === 0) return none;
+    if (remaining.length === 0) {
+      this.logTransactionInstructions(message, new Map(), [], 0);
+      return none;
+    }
 
     const distinctProgramIds = Array.from(
       new Set(remaining.map((r) => r.programId)),
@@ -189,6 +192,9 @@ export class BuildGenericClearSignContextTask {
         candidate.context,
       );
     }
+
+    this.logTransactionInstructions(message, byProgram, matched, unrecognized);
+
     if (matched.length === 0) return none;
 
     const instructionInfoContexts = Array.from(templateByKey.values());
@@ -260,12 +266,17 @@ export class BuildGenericClearSignContextTask {
     }
 
     // RequirementAccumulator.build() already strips tokenAmountAltRefs and
-    // mintAltRefs entries from altResolutions (cross-bucket priority dedup),
-    // so requirements.altResolutions is safe to use directly here.
+    // mintAltRefs entries from altResolutions, and tokenAccountStates entries
+    // from tokenAmountRefs (cross-bucket priority dedup), so
+    // requirements.altResolutions is safe to use directly here. The fallback
+    // merge below is still deduplicated defensively: streaming the same
+    // TOKEN_ACCOUNT_STATE twice makes the device reject the second one.
     const challengeBoundRequirements: ChallengeBoundRequirements = {
       tokenAccountStates: [
-        ...requirements.tokenAccountStates,
-        ...tokenAmountFallbackAccounts,
+        ...new Set([
+          ...requirements.tokenAccountStates,
+          ...tokenAmountFallbackAccounts,
+        ]),
       ],
       altResolutions: requirements.altResolutions,
       trustedNames: requirements.trustedNames,
@@ -293,6 +304,74 @@ export class BuildGenericClearSignContextTask {
       instructionInfoContexts,
       challengeBoundRequirements,
     };
+  }
+
+  private logTransactionInstructions(
+    message: NormalizedMessage,
+    byProgram: Map<
+      string,
+      { payload: SolanaInstructionInfoPayload; context: ClearSignContext }[]
+    >,
+    matched: MatchedInstruction[],
+    unrecognized: number,
+  ): void {
+    const total = message.compiledInstructions.length;
+    const recognized = matched.length;
+    const skipped = total - recognized - unrecognized;
+    this.logger.debug("[run] transaction instructions", {
+      data: {
+        summary: {
+          total,
+          skipped,
+          recognized,
+          unrecognized,
+          usesAlt:
+            message.addressLookupRefs?.some((ref) => ref !== undefined) ??
+            false,
+        },
+        instructions: message.compiledInstructions.map((ix) => {
+          const programId = this.programIdOf(message, ix.programIdIndex);
+          const accountCount = ix.accountKeyIndexes.length;
+          const dataLength = ix.data.length;
+          if (programId === COMPUTE_BUDGET_PROGRAM_ID) {
+            return {
+              programId,
+              fn: `compute-budget:0x${ix.data[0]?.toString(16) ?? "??"}`,
+              accountCount,
+              dataLength,
+            };
+          }
+          const candidate = (byProgram.get(programId) ?? [])
+            .filter(({ payload }) =>
+              this.discriminatorMatches(payload.discriminator, ix.data),
+            )
+            .sort(
+              (a, b) =>
+                b.payload.discriminator.length - a.payload.discriminator.length,
+            )[0];
+          if (candidate) {
+            return {
+              programId,
+              fn:
+                candidate.payload.instructionName ??
+                candidate.payload.discriminator ??
+                "(no discriminator)",
+              accountCount,
+              dataLength,
+            };
+          }
+          return {
+            programId,
+            recognized: false,
+            reason: byProgram.has(programId)
+              ? "discriminator-not-matched"
+              : "program-not-in-cal",
+            accountCount,
+            dataLength,
+          };
+        }),
+      },
+    });
   }
 
   /** Fetch contexts of `type`; ERROR / wrong-type contexts are dropped (satellites degrade). */
