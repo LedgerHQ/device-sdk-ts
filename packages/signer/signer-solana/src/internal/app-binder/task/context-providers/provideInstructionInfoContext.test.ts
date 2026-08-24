@@ -164,9 +164,6 @@ describe("provideInstructionInfoContext", () => {
 
     const out = await provideInstructionInfoContext(result as any, deps);
     expect(isSuccessCommandResult(out)).toBe(false);
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining("malformed substructure"),
-    );
     // INSTRUCTION_INFO was already sent before the malformed substructure was
     // hit, and the second (valid) substructure must not be sent either.
     expect(api.sendCommand).toHaveBeenCalledTimes(2);

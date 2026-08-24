@@ -6,14 +6,11 @@ import {
   isSuccessCommandResult,
   LoadCertificateCommand,
   type LoadCertificateErrorCodes,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 export async function loadCertificate(
   api: InternalApi,
   certificate: PkiCertificate,
-  logger: LoggerPublisherService,
-  callerTag: string,
 ): Promise<CommandResult<void, LoadCertificateErrorCodes>> {
   const result = await api.sendCommand(
     new LoadCertificateCommand({
@@ -22,13 +19,6 @@ export async function loadCertificate(
     }),
   );
   if (!isSuccessCommandResult(result)) {
-    logger.error("[loadCertificate] device rejected LOAD_CERTIFICATE", {
-      data: {
-        caller: callerTag,
-        error: result.error,
-        keyUsage: certificate.keyUsageNumber,
-      },
-    });
     return result;
   }
   return CommandResultFactory({ data: undefined });
@@ -37,18 +27,14 @@ export async function loadCertificate(
 /**
  * Loads the certificate when present, otherwise a no-op success. Every
  * context-provider handler needs exactly this "certificate is optional"
- * gate before streaming its descriptor. `callerTag` identifies the calling
- * provider (e.g. "provideTokenInfoContext") so a rejection log can be traced
- * back to which descriptor flow triggered it.
+ * gate before streaming its descriptor.
  */
 export async function loadCertificateIfPresent(
   api: InternalApi,
   certificate: PkiCertificate | undefined,
-  logger: LoggerPublisherService,
-  callerTag: string,
 ): Promise<CommandResult<void, LoadCertificateErrorCodes>> {
   if (!certificate) {
     return CommandResultFactory({ data: undefined });
   }
-  return loadCertificate(api, certificate, logger, callerTag);
+  return loadCertificate(api, certificate);
 }

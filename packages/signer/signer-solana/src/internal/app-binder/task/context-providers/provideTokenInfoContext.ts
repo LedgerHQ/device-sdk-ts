@@ -28,12 +28,7 @@ export const provideTokenInfoContext: ProvideContextHandler<
     return CommandResultFactory({ data: undefined });
   }
 
-  const certResult = await loadCertificateIfPresent(
-    api,
-    certificate,
-    logger,
-    "provideTokenInfoContext",
-  );
+  const certResult = await loadCertificateIfPresent(api, certificate);
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
   }
@@ -49,10 +44,6 @@ export const provideTokenInfoContext: ProvideContextHandler<
     }),
   );
   if (!isSuccessCommandResult(res)) {
-    logger.error(
-      `[provideTokenInfoContext] device rejected TOKEN_INFO for mint ${payload.mint}`,
-      { data: { error: res.error } },
-    );
     return res;
   }
 

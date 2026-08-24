@@ -33,12 +33,7 @@ export const provideAltResolutionContext: ProvideContextHandler<
     return CommandResultFactory({ data: undefined });
   }
 
-  const certResult = await loadCertificateIfPresent(
-    api,
-    certificate,
-    logger,
-    "provideAltResolutionContext",
-  );
+  const certResult = await loadCertificateIfPresent(api, certificate);
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
   }
@@ -58,10 +53,6 @@ export const provideAltResolutionContext: ProvideContextHandler<
     },
   ).run();
   if (!isSuccessCommandResult(res)) {
-    logger.error(
-      "[provideAltResolutionContext] device rejected ALT_RESOLUTION",
-      { data: { error: res.error, resolvedAddress: payload.resolvedAddress } },
-    );
     return res;
   }
 

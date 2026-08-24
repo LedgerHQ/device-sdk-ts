@@ -241,7 +241,7 @@ describe("ProvideGenericClearSignContextTask", () => {
     );
   });
 
-  it("resolves without aborting when a structural descriptor (instruction info) fails (task updated in PR 2)", async () => {
+  it("rejects when a fatal structural descriptor (instruction info) fails", async () => {
     const made = makeTask([tokenInfoContext()], [instructionInfoContext()]);
     // Everything succeeds except the structural INSTRUCTION_INFO command.
     made.api.sendCommand.mockImplementation(async (cmd: unknown) => {
@@ -254,9 +254,9 @@ describe("ProvideGenericClearSignContextTask", () => {
       return success;
     });
 
-    // Provider now returns a failed CommandResult instead of throwing;
-    // the task does not yet check this (PR 2 adds isSuccessCommandResult checks).
-    await expect(made.task.run()).resolves.toBeUndefined();
+    await expect(made.task.run()).rejects.toThrow(
+      "device rejected fatal descriptor",
+    );
   });
 
   // --- New challenge-bound flows ---

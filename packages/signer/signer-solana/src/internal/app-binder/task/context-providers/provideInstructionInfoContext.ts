@@ -39,12 +39,7 @@ export const provideInstructionInfoContext: ProvideContextHandler<
     return CommandResultFactory({ data: undefined });
   }
 
-  const certResult = await loadCertificateIfPresent(
-    api,
-    certificate,
-    logger,
-    "provideInstructionInfoContext",
-  );
+  const certResult = await loadCertificateIfPresent(api, certificate);
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
   }
@@ -84,10 +79,6 @@ export const provideInstructionInfoContext: ProvideContextHandler<
       }),
   }).run();
   if (!isSuccessCommandResult(infoResult)) {
-    logger.error(
-      `[provideInstructionInfoContext] device rejected INSTRUCTION_INFO for ${label}`,
-      { data: { error: infoResult.error } },
-    );
     return infoResult;
   }
 
@@ -98,9 +89,6 @@ export const provideInstructionInfoContext: ProvideContextHandler<
       // mid-way through a SUBSTRUCTURES_HASH it now expects us to complete, so a
       // malformed substructure here must fail the whole provisioning rather than
       // report success with a partially-provisioned template.
-      logger.error(
-        `[provideInstructionInfoContext] malformed substructure (kind ${substructure.kind}) for ${label}`,
-      );
       return CommandResultFactory({
         error: new InvalidResponseFormatError(
           `Malformed substructure (kind ${substructure.kind}) for ${label}`,
@@ -120,10 +108,6 @@ export const provideInstructionInfoContext: ProvideContextHandler<
         }),
     }).run();
     if (!isSuccessCommandResult(subResult)) {
-      logger.error(
-        `[provideInstructionInfoContext] device rejected substructure (kind ${substructure.kind}) for ${label}`,
-        { data: { error: subResult.error } },
-      );
       return subResult;
     }
   }

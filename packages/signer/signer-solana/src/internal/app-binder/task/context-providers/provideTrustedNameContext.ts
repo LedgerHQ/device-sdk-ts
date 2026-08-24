@@ -37,12 +37,7 @@ export const provideTrustedNameContext: ProvideContextHandler<
     return CommandResultFactory({ data: undefined });
   }
 
-  const certResult = await loadCertificateIfPresent(
-    api,
-    certificate,
-    logger,
-    "provideTrustedNameContext",
-  );
+  const certResult = await loadCertificateIfPresent(api, certificate);
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
   }
@@ -62,9 +57,6 @@ export const provideTrustedNameContext: ProvideContextHandler<
     },
   ).run();
   if (!isSuccessCommandResult(res)) {
-    logger.error("[provideTrustedNameContext] device rejected TRUSTED_NAME", {
-      data: { error: res.error },
-    });
     return res;
   }
 

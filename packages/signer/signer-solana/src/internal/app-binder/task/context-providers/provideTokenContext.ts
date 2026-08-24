@@ -34,8 +34,6 @@ export const provideTokenContext: ProvideContextHandler<
   const certResult = await loadCertificateIfPresent(
     api,
     tokenMetadataCertificate,
-    logger,
-    "provideTokenContext",
   );
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
@@ -49,9 +47,6 @@ export const provideTokenContext: ProvideContextHandler<
     }),
   );
   if (!isSuccessCommandResult(res)) {
-    logger.error("[provideTokenContext] device rejected TOKEN descriptor", {
-      data: { error: res.error },
-    });
     return res;
   }
 

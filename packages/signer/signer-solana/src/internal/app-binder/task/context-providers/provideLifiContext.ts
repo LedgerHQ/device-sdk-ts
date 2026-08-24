@@ -39,8 +39,6 @@ export const provideLifiContext: ProvideContextHandler<
   const certResult = await loadCertificateIfPresent(
     api,
     swapTemplateCertificate,
-    logger,
-    "provideLifiContext",
   );
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
@@ -106,10 +104,6 @@ export const provideLifiContext: ProvideContextHandler<
         }),
       );
       if (!isSuccessCommandResult(res)) {
-        logger.error(
-          `[provideLifiContext] device rejected instruction descriptor at index ${index}`,
-          { data: { index, programId: programIdStr, error: res.error } },
-        );
         return res;
       }
     }

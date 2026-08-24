@@ -8,14 +8,6 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { loadCertificate, loadCertificateIfPresent } from "./loadCertificate";
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-
 const cert = { payload: new Uint8Array([0xf0]), keyUsageNumber: 11 } as const;
 const success = CommandResultFactory({ data: undefined });
 
@@ -30,12 +22,7 @@ describe("loadCertificate", () => {
   it("sends LOAD_CERTIFICATE and returns success", async () => {
     api.sendCommand.mockResolvedValue(success);
 
-    const result = await loadCertificate(
-      api as any,
-      cert,
-      mockLogger as any,
-      "testCaller",
-    );
+    const result = await loadCertificate(api as any, cert);
 
     expect(isSuccessCommandResult(result)).toBe(true);
     const cmd = api.sendCommand.mock.calls[0]![0];
@@ -44,31 +31,16 @@ describe("loadCertificate", () => {
     expect(cmd.args.keyUsage).toBe(cert.keyUsageNumber);
   });
 
-  it("returns a failed CommandResult and logs when the device rejects LOAD_CERTIFICATE", async () => {
+  it("returns a failed CommandResult when the device rejects LOAD_CERTIFICATE", async () => {
     api.sendCommand.mockResolvedValue(
       CommandResultFactory({
         error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
       }),
     );
 
-    const result = await loadCertificate(
-      api as any,
-      cert,
-      mockLogger as any,
-      "testCaller",
-    );
+    const result = await loadCertificate(api as any, cert);
 
     expect(isSuccessCommandResult(result)).toBe(false);
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      "[loadCertificate] device rejected LOAD_CERTIFICATE",
-      {
-        data: {
-          caller: "testCaller",
-          error: expect.anything(),
-          keyUsage: cert.keyUsageNumber,
-        },
-      },
-    );
   });
 });
 
@@ -81,12 +53,7 @@ describe("loadCertificateIfPresent", () => {
   });
 
   it("is a no-op success when no certificate is provided", async () => {
-    const result = await loadCertificateIfPresent(
-      api as any,
-      undefined,
-      mockLogger as any,
-      "testCaller",
-    );
+    const result = await loadCertificateIfPresent(api as any, undefined);
 
     expect(isSuccessCommandResult(result)).toBe(true);
     expect(api.sendCommand).not.toHaveBeenCalled();
@@ -95,12 +62,7 @@ describe("loadCertificateIfPresent", () => {
   it("loads the certificate when present", async () => {
     api.sendCommand.mockResolvedValue(success);
 
-    const result = await loadCertificateIfPresent(
-      api as any,
-      cert,
-      mockLogger as any,
-      "testCaller",
-    );
+    const result = await loadCertificateIfPresent(api as any, cert);
 
     expect(isSuccessCommandResult(result)).toBe(true);
     expect(api.sendCommand.mock.calls[0]![0]).toBeInstanceOf(
@@ -115,12 +77,7 @@ describe("loadCertificateIfPresent", () => {
       }),
     );
 
-    const result = await loadCertificateIfPresent(
-      api as any,
-      cert,
-      mockLogger as any,
-      "testCaller",
-    );
+    const result = await loadCertificateIfPresent(api as any, cert);
 
     expect(isSuccessCommandResult(result)).toBe(false);
   });

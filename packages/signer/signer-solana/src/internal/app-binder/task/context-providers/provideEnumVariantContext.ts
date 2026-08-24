@@ -32,12 +32,7 @@ export const provideEnumVariantContext: ProvideContextHandler<
     return CommandResultFactory({ data: undefined });
   }
 
-  const certResult = await loadCertificateIfPresent(
-    api,
-    certificate,
-    logger,
-    "provideEnumVariantContext",
-  );
+  const certResult = await loadCertificateIfPresent(api, certificate);
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
   }
@@ -80,10 +75,6 @@ export const provideEnumVariantContext: ProvideContextHandler<
     },
   ).run();
   if (!isSuccessCommandResult(res)) {
-    logger.error(
-      `[provideEnumVariantContext] device rejected ENUM_VARIANT for ${payload.programId}:${payload.enumId}:${payload.variantIndex}`,
-      { data: { error: res.error } },
-    );
     return res;
   }
 

@@ -32,12 +32,7 @@ export const provideBasicTrustedNameContext: ProvideContextHandler<
     return CommandResultFactory({ data: undefined });
   }
 
-  const certResult = await loadCertificateIfPresent(
-    api,
-    certificate,
-    logger,
-    "provideBasicTrustedNameContext",
-  );
+  const certResult = await loadCertificateIfPresent(api, certificate);
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
   }
@@ -48,10 +43,6 @@ export const provideBasicTrustedNameContext: ProvideContextHandler<
     new ProvideTLVDescriptorCommand({ payload }),
   );
   if (!isSuccessCommandResult(res)) {
-    logger.error(
-      "[provideBasicTrustedNameContext] device rejected BASIC_TRUSTED_NAME",
-      { data: { error: res.error } },
-    );
     return res;
   }
 

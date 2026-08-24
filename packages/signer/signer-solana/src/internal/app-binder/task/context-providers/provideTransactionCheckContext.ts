@@ -30,8 +30,6 @@ export const provideTransactionCheckContext: ProvideContextHandler<
   const certResult = await loadCertificateIfPresent(
     api,
     transactionCheckCertificate,
-    logger,
-    "provideTransactionCheckContext",
   );
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
@@ -59,10 +57,6 @@ export const provideTransactionCheckContext: ProvideContextHandler<
   }).run();
 
   if (!isSuccessCommandResult(chunkResult)) {
-    logger.error(
-      "[provideTransactionCheckContext] device rejected transaction-check descriptor",
-      { data: { error: chunkResult.error } },
-    );
     return chunkResult;
   }
 

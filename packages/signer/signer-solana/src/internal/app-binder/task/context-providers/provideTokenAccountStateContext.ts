@@ -34,12 +34,7 @@ export const provideTokenAccountStateContext: ProvideContextHandler<
     return CommandResultFactory({ data: undefined });
   }
 
-  const certResult = await loadCertificateIfPresent(
-    api,
-    certificate,
-    logger,
-    "provideTokenAccountStateContext",
-  );
+  const certResult = await loadCertificateIfPresent(api, certificate);
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
   }
@@ -59,10 +54,6 @@ export const provideTokenAccountStateContext: ProvideContextHandler<
     },
   ).run();
   if (!isSuccessCommandResult(res)) {
-    logger.error(
-      "[provideTokenAccountStateContext] device rejected TOKEN_ACCOUNT_STATE",
-      { data: { error: res.error, mint: payload.mint } },
-    );
     return res;
   }
 
