@@ -60,12 +60,11 @@ const { observable, cancel } = signerXrp.getAppConfig();
 
 ```typescript
 type GetAppConfigCommandResponse = {
-  // TODO: Define the app configuration response type
-  // Example:
-  // version: string;
-  // flags: number;
+  readonly version: string;
 };
 ```
+
+- `version`: The version of the XRP application installed on the device, formatted as `"major.minor.patch"` (e.g. `"2.5.2"`).
 
 - `cancel` A function to cancel the action on the Ledger device.
 
