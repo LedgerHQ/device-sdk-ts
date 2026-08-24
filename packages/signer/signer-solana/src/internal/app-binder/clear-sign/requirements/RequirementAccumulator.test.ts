@@ -75,6 +75,23 @@ describe("RequirementAccumulator", () => {
     ]);
   });
 
+  it("build() applies cross-bucket priority dedup: tokenAccountStates > tokenAmountRefs", () => {
+    const accumulator = new RequirementAccumulator();
+
+    // "ata" is both a RESOLVE-port token account and a PARAM_TOKEN_AMOUNT ref.
+    accumulator.addTokenAccountState("ata");
+    accumulator.addTokenAmountRef("ata");
+    // "maybeMint" is only a PARAM_TOKEN_AMOUNT ref.
+    accumulator.addTokenAmountRef("maybeMint");
+
+    const result = accumulator.build();
+
+    // Without the strip, the ref's TOKEN_INFO probe 404s and its fallback
+    // queues a duplicate TOKEN_ACCOUNT_STATE for "ata".
+    expect(result.tokenAccountStates).toEqual(["ata"]);
+    expect(result.tokenAmountRefs).toEqual(["maybeMint"]);
+  });
+
   it("returns an empty set when nothing was added", () => {
     expect(new RequirementAccumulator().build()).toEqual({
       instructionInfos: [],
