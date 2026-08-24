@@ -151,7 +151,18 @@ export class ProvideGenericClearSignContextTask {
       }
     }
 
+    // Accounts whose TOKEN_ACCOUNT_STATE actually reached the device. The device
+    // refuses a second one for the same account, and the same address can be
+    // reached both directly and through an ALT entry (or through two ALT
+    // entries), so the ALT fallback below shares this set. Membership means
+    // "dispatched", not "accepted": a descriptor the device rejected must not be
+    // re-sent either. An attempt that never reached the device (GET CHALLENGE
+    // failed, or no usable descriptor came back) leaves the account unmarked, so
+    // a later reference to it is free to try again.
+    const streamedTokenAccounts = new Set<string>();
+
     for (const tokenAccount of tokenAccountStates) {
+      if (streamedTokenAccounts.has(tokenAccount)) continue;
       const contexts = await this.provideChallengeBoundDescriptorAndReturn(
         (challenge) => ({
           deviceModelId,
@@ -164,6 +175,7 @@ export class ProvideGenericClearSignContextTask {
           ctx.type === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE &&
           isSolanaContextSuccess(ctx)
         ) {
+          streamedTokenAccounts.add(tokenAccount);
           const mint = (ctx as SolanaTokenAccountStateContextSuccess).payload
             .mint;
           if (mint && !streamedMints.has(mint)) {
@@ -251,6 +263,7 @@ export class ProvideGenericClearSignContextTask {
 
         // Fallback: resolved address may be an ATA, fetch TOKEN_ACCOUNT_STATE
         // to get the mint, then stream both if TOKEN_INFO is available.
+        if (streamedTokenAccounts.has(resolvedAddress)) continue;
         const stateCtx = await this.fetchChallengeBoundDescriptorOnly(
           (challenge) => ({
             deviceModelId,
@@ -273,6 +286,7 @@ export class ProvideGenericClearSignContextTask {
         );
         if (!mintTokenInfoCtx) continue;
 
+        streamedTokenAccounts.add(resolvedAddress);
         await this.provideDescriptor(stateCtx);
         streamedMints.add(mint);
         await this.provideDescriptor(mintTokenInfoCtx);

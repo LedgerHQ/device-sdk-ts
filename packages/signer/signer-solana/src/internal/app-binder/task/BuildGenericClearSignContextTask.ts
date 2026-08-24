@@ -266,12 +266,17 @@ export class BuildGenericClearSignContextTask {
     }
 
     // RequirementAccumulator.build() already strips tokenAmountAltRefs and
-    // mintAltRefs entries from altResolutions (cross-bucket priority dedup),
-    // so requirements.altResolutions is safe to use directly here.
+    // mintAltRefs entries from altResolutions, and tokenAccountStates entries
+    // from tokenAmountRefs (cross-bucket priority dedup), so
+    // requirements.altResolutions is safe to use directly here. The fallback
+    // merge below is still deduplicated defensively: streaming the same
+    // TOKEN_ACCOUNT_STATE twice makes the device reject the second one.
     const challengeBoundRequirements: ChallengeBoundRequirements = {
       tokenAccountStates: [
-        ...requirements.tokenAccountStates,
-        ...tokenAmountFallbackAccounts,
+        ...new Set([
+          ...requirements.tokenAccountStates,
+          ...tokenAmountFallbackAccounts,
+        ]),
       ],
       altResolutions: requirements.altResolutions,
       trustedNames: requirements.trustedNames,
