@@ -1,5 +1,11 @@
 # @ledgerhq/dmk-ledger-wallet
 
+## 0.5.0
+
+### Minor Changes
+
+- [#1772](https://github.com/LedgerHQ/device-sdk-ts/pull/1772) [`0b1a06a`](https://github.com/LedgerHQ/device-sdk-ts/commit/0b1a06aebbcad7904a8401cd7c61b017075d871e) Thanks [@benruseau](https://github.com/benruseau)! - Export os update Backup type
+
 ## 0.4.0
 
 ### Minor Changes
