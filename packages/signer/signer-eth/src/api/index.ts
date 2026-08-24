@@ -20,6 +20,7 @@ export {
   type SignPersonalMessageDAOutput,
   type SignPersonalMessageDAReturnType,
 } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
+export { SignTransactionDeviceActionFactory } from "@api/app-binder/SignTransactionDeviceActionFactory";
 export {
   type SignTransactionDAError,
   type SignTransactionDAInput,
@@ -30,6 +31,7 @@ export {
   type SignTransactionDAState,
   SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export { SignTypedDataDeviceActionFactory } from "@api/app-binder/SignTypedDataDeviceActionFactory";
 export {
   type SignTypedDataDAError,
   type SignTypedDataDAInput,
