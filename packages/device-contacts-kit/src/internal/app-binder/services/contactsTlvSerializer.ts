@@ -1,9 +1,12 @@
 // TLV encoding for the Contacts feature.
-// Tags are always encoded as their raw one-byte value per the Address Book
-// specification; lengths >= 0x80 use DER long form.
-// Wire format per the BOLOS SDK address-book spec
-// (ledger-secure-sdk/app_features/address_book/doc/address_book_spec.md §4.2).
+// The SDK's TLV parser (lib_tlv/tlv_library.c, get_der_value_as_uint32) reads
+// tags as DER values: a byte with the high bit set means "long form, low 7 bits
+// = following byte count". So tags >= 0x80 (e.g. 0xf0) MUST be sent as the
+// 2-byte form [0x81, tag]; a bare 0xf0 is mis-read as a 112-byte tag. Lengths
+// >= 0x80 likewise use DER long form.
 import { ByteArrayBuilder } from "@ledgerhq/device-management-kit";
+
+const LONG_TAG_PREFIX_HIGH_BYTE = 0x81 << 8;
 
 export const CONTACTS_TLV_TAG = {
   STRUCT_TYPE: 0x01,
@@ -36,8 +39,14 @@ export const STRUCT_TYPE_PROVIDE_LEDGER_ACCOUNT_CONTACT = 0x34;
 export const STRUCT_VERSION_VALUE = 0x01;
 
 function writeTag(builder: ByteArrayBuilder, tag: number): void {
-  // Address Book tags are always a single raw byte — no BER multi-byte form.
-  builder.add8BitUIntToData(tag);
+  if (tag < 0x80) {
+    builder.add8BitUIntToData(tag);
+  } else if (tag <= 0xff) {
+    // DER long-form: 0x81 (1 following byte) then the tag value.
+    builder.add16BitUIntToData(LONG_TAG_PREFIX_HIGH_BYTE + tag);
+  } else {
+    throw new Error(`TLV tag ${tag} exceeds supported single-byte range`);
+  }
 }
 
 function writeDerLength(builder: ByteArrayBuilder, length: number): void {

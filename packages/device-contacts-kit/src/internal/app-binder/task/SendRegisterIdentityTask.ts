@@ -5,9 +5,12 @@
 //
 // Reference: Address Book Final Specifications — Register Identity. Tag order:
 //   STRUCT_TYPE, STRUCT_VERSION, CONTACT_NAME, SCOPE, ACCOUNT_IDENTIFIER,
-//   CHAIN_ID (Ethereum only), BLOCKCHAIN_FAMILY, then optional GROUP_HANDLE +
-//   HMAC_PROOF when extending an existing group. External-address operations
-//   carry no DERIVATION_PATH (that tag is Ledger-Account only).
+//   DERIVATION_PATH, CHAIN_ID (Ethereum only), BLOCKCHAIN_FAMILY, then optional
+//   GROUP_HANDLE + HMAC_PROOF when extending an existing group.
+//
+// TEST-ENV BRANCH: DERIVATION_PATH is included here because the currently
+// deployed dev Ethereum app requires it (0x6a80 otherwise). The productized op
+// drops it — do not merge this branch.
 import {
   ByteArrayBuilder,
   type CommandResult,
@@ -31,6 +34,7 @@ import {
   encodeTlvBuffer,
   encodeTlvChainId,
   encodeTlvUInt8,
+  packDerivationPath,
   STRUCT_TYPE_REGISTER_IDENTITY,
   STRUCT_VERSION_VALUE,
 } from "@internal/app-binder/services/contactsTlvSerializer";
@@ -120,6 +124,15 @@ export class SendRegisterIdentityTask {
       builder,
       CONTACTS_TLV_TAG.ACCOUNT_IDENTIFIER,
       args.identifier,
+    );
+    // TEST-ENV ONLY: the currently deployed dev Ethereum app still requires
+    // DERIVATION_PATH on REGISTER IDENTITY (it returns 0x6a80 without it).
+    // Default m/44'/60'/0'/0/0. Not for production — the productized op drops
+    // this tag (see the register-external-address findings).
+    encodeTlvBuffer(
+      builder,
+      CONTACTS_TLV_TAG.DERIVATION_PATH,
+      packDerivationPath([0x8000002c, 0x8000003c, 0x80000000, 0, 0]),
     );
     if (args.chainId !== undefined) {
       encodeTlvChainId(builder, CONTACTS_TLV_TAG.CHAIN_ID, args.chainId);

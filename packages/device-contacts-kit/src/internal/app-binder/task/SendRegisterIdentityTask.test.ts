@@ -1,6 +1,8 @@
 // Validates that the TLV serializer + tag ordering + chunk framing produce the
-// expected wire bytes for op 1 (Register Identity). The framed chunk = 2-byte
-// BE total length + TLV, with DERIVATION_PATH under tag 0x69 (SDK 963d72b7).
+// expected wire bytes for op 1 (Register Identity) on the TEST-ENV branch:
+// tags >= 0x80 use the 2-byte DER form [0x81, tag], and REGISTER IDENTITY
+// carries DERIVATION_PATH (tag 0x69, m/44'/60'/0'/0/0) as the deployed dev app
+// requires. The framed chunk = 2-byte BE total length + TLV.
 import {
   CommandResultFactory,
   type InternalApi,
@@ -19,18 +21,28 @@ function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-// Framed chunk = "00 <Lc>" (2-byte BE total TLV length) + TLV. External-address
-// Register Identity carries no DERIVATION_PATH: the tag order is STRUCT_TYPE,
-// STRUCT_VERSION, CONTACT_NAME, SCOPE, ACCOUNT_IDENTIFIER, CHAIN_ID,
-// BLOCKCHAIN_FAMILY, then optional GROUP_HANDLE + HMAC_PROOF.
+// Framed chunk = "00 <Lc>" (2-byte BE total TLV length) + TLV. TEST-ENV tag
+// order: STRUCT_TYPE, STRUCT_VERSION, CONTACT_NAME, SCOPE, ACCOUNT_IDENTIFIER,
+// DERIVATION_PATH, CHAIN_ID, BLOCKCHAIN_FAMILY, then optional GROUP_HANDLE +
+// HMAC_PROOF. Tags >= 0x80 are encoded as [0x81, tag]; DERIVATION_PATH (0x69)
+// packs m/44'/60'/0'/0/0 as "05 8000002c 8000003c 80000000 00000000 00000000".
 const FRESH_FRAMED_CHUNK = hexToBytes(
-  "003301012d020101f005416c696365f108457468206d61696ef21400000000000000000000000000000000deadbeef230101510101",
+  "004d01012d020101" +
+    "81f005416c696365" +
+    "81f108457468206d61696e" +
+    "81f21400000000000000000000000000000000deadbeef" +
+    "6915058000002c8000003c800000000000000000000000" +
+    "230101510101",
 );
 
 const EXTENSION_FRAMED_CHUNK = hexToBytes(
-  "009801012d020101f005416c696365f108417262206d61696ef2144444444444444444444444444444444444444444" +
+  "00b301012d020101" +
+    "81f005416c696365" +
+    "81f108417262206d61696e" +
+    "81f2144444444444444444444444444444444444444444" +
+    "6915058000002c8000003c800000000000000000000000" +
     "2302a4b1510101" +
-    "f640cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" +
+    "81f640cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" +
     "2920dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
 );
 
