@@ -1,4 +1,5 @@
 import {
+  CommandResultFactory,
   type DeviceActionState,
   DeviceActionStatus,
   DeviceModelId,
@@ -98,7 +99,9 @@ describe("ProvisionBasicClearSignDeviceAction", () => {
       transactionType: SolanaTransactionTypes.SPL,
       data: { tokenAddress: null, createATA: false },
     });
-    buildMock = vi.fn().mockResolvedValue(basicContext);
+    buildMock = vi
+      .fn()
+      .mockResolvedValue(CommandResultFactory({ data: basicContext }));
     provideMock = vi.fn().mockResolvedValue(undefined);
   });
 
@@ -221,9 +224,13 @@ describe("ProvisionBasicClearSignDeviceAction", () => {
       );
     }));
 
-  it("build throws then completes without providing", () =>
+  it("build returns error then completes without providing", () =>
     new Promise<void>((resolve, reject) => {
-      buildMock.mockRejectedValue(new Error("build boom"));
+      buildMock.mockResolvedValue(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("owner info unresolved"),
+        }),
+      );
       run(
         splInput,
         (states) => {
@@ -250,6 +257,27 @@ describe("ProvisionBasicClearSignDeviceAction", () => {
         (states) => {
           try {
             expect(provideMock).toHaveBeenCalled();
+            expect(states[states.length - 1]!.status).toBe(
+              DeviceActionStatus.Completed,
+            );
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        },
+        reject,
+      );
+    }));
+
+  it("build throws then completes without providing (safety net)", () =>
+    new Promise<void>((resolve, reject) => {
+      buildMock.mockRejectedValue(new Error("context module error"));
+      run(
+        splInput,
+        (states) => {
+          try {
+            expect(buildMock).toHaveBeenCalled();
+            expect(provideMock).not.toHaveBeenCalled();
             expect(states[states.length - 1]!.status).toBe(
               DeviceActionStatus.Completed,
             );

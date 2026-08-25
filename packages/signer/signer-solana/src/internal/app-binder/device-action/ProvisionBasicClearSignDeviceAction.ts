@@ -1,6 +1,8 @@
 import {
+  type CommandResult,
   type DeviceActionStateMachine,
   type InternalApi,
+  isSuccessCommandResult,
   type StateMachineTypes,
   UnknownDAError,
   UserInteractionRequired,
@@ -42,7 +44,7 @@ export type MachineDependencies = {
   }) => Promise<TxInspectorResult>;
   readonly buildBasicClearSignContext: (arg0: {
     input: BuildBasicClearSignContextTaskArgs;
-  }) => Promise<BasicClearSignContext>;
+  }) => Promise<CommandResult<BasicClearSignContext>>;
   readonly provideBasicClearSignContext: (arg0: {
     input: ProvideBasicClearSignContextTaskArgs;
   }) => Promise<void>;
@@ -214,16 +216,38 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
                 },
               };
             },
-            onDone: {
-              target: "ProvideContext",
-              actions: assign({
-                _internalState: ({ event, context }) => ({
-                  ...context._internalState,
-                  solanaTransactionContext: event.output,
+            onDone: [
+              {
+                target: "ProvideContext",
+                guard: ({ event }) => isSuccessCommandResult(event.output),
+                actions: assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    solanaTransactionContext: isSuccessCommandResult(
+                      event.output,
+                    )
+                      ? event.output.data
+                      : context._internalState.solanaTransactionContext,
+                  }),
                 }),
-              }),
+              },
+              {
+                target: "Done",
+                actions: ({ event }) =>
+                  logger.info(
+                    "[ClearSign] build context failed; falling back to blind signing",
+                    { data: { output: event.output } },
+                  ),
+              },
+            ],
+            onError: {
+              target: "Done",
+              actions: ({ event }) =>
+                logger.info(
+                  "[ClearSign] build context threw; falling back to blind signing",
+                  { data: { error: String(event.error) } },
+                ),
             },
-            onError: { target: "Done" },
           },
         },
         ProvideContext: {
@@ -251,12 +275,11 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
             onDone: { target: "Done" },
             onError: {
               target: "Done",
-              actions: ({ event }) => {
+              actions: ({ event }) =>
                 logger.error(
                   "[ProvideBasicClearSignContext] Failed to provide transaction context, falling back to blind signing",
-                  { data: { error: event.error } },
-                );
-              },
+                  { data: { error: String(event.error) } },
+                ),
             },
           },
         },
