@@ -55,8 +55,35 @@ observable.subscribe((state) => {
 });
 ```
 
-Concrete Contacts operations (Edit Contact Name, Edit Identifier, Edit Scope, Register Ledger
-Account, Edit Ledger Account) are added by their dedicated implementation tickets.
+## Renaming a contact
+
+`renameContact` runs the device's EDIT CONTACT NAME operation. Unlike the register operations, this
+is a blockchain-agnostic **dashboard** command served by the device OS: it always navigates to the
+dashboard first (never opens an app), checks only the [minimum OS version](#version-requirements),
+then rotates the contact group's name proof. Pass the current name, the new name, the group's
+`groupHandle`, and the existing `hmacProof`; the op returns the replacement group-level `hmacProof`
+for the host to persist. Per-entry `hmacRest` values are untouched — they never cover the name.
+
+```ts
+const { observable } = contactsManager.renameContact({
+  previousContactName: "Alice",
+  newContactName: "Bob",
+  groupHandle, // 64 bytes, from the group's Register Identity
+  hmacProof, // 32 bytes, the current name proof
+});
+
+observable.subscribe((state) => {
+  // state.intermediateValue.requiredUserInteraction surfaces the go-to-dashboard
+  // steps and the on-device validation.
+  if (state.status === DeviceActionStatus.Completed) {
+    const { contactName, groupHandle, hmacProof } = state.output;
+    // persist the new name and the replacement hmacProof.
+  }
+});
+```
+
+Concrete Contacts operations (Edit Identifier, Edit Scope, Register Ledger Account, Edit Ledger
+Account) are added by their dedicated implementation tickets.
 
 ## Version requirements
 

@@ -1,5 +1,7 @@
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+import { type RenameContactDAReturnType } from "@api/app-binder/RenameContactDeviceActionTypes";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
+import { type RenameContactInput } from "@api/model/RenameContact";
 
 /**
  * Public, stateless Contacts (Address Book) manager.
@@ -21,4 +23,15 @@ export interface ContactsManager {
   registerExternalAddress(
     input: RegisterExternalAddressInput,
   ): RegisterExternalAddressDAReturnType;
+
+  /**
+   * Rename an existing contact group (EDIT CONTACT NAME). This is a
+   * blockchain-agnostic dashboard operation served by the device OS: it always
+   * navigates to the dashboard first (never opens an app), checks the Contacts
+   * minimum OS version, then rotates the group's name proof. Pass the current
+   * `previousContactName`, the `newContactName`, the group's `groupHandle`, and
+   * the existing `hmacProof`; returns the replacement group-level `hmacProof` to
+   * persist.
+   */
+  renameContact(input: RenameContactInput): RenameContactDAReturnType;
 }

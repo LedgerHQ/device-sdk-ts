@@ -5,11 +5,14 @@ import {
 import { type Container } from "inversify";
 
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+import { type RenameContactDAReturnType } from "@api/app-binder/RenameContactDeviceActionTypes";
 import { type ContactsManager } from "@api/ContactsManager";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
+import { type RenameContactInput } from "@api/model/RenameContact";
 import { makeContainer } from "@internal/di";
 import { useCaseTypes } from "@internal/use-cases/di/useCaseTypes";
 import { type RegisterExternalAddressUseCase } from "@internal/use-cases/RegisterExternalAddressUseCase";
+import { type RenameContactUseCase } from "@internal/use-cases/RenameContactUseCase";
 
 type DefaultContactsManagerConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -35,6 +38,12 @@ export class DefaultContactsManager implements ContactsManager {
       .get<RegisterExternalAddressUseCase>(
         useCaseTypes.RegisterExternalAddressUseCase,
       )
+      .execute(input);
+  }
+
+  renameContact(input: RenameContactInput): RenameContactDAReturnType {
+    return this._container
+      .get<RenameContactUseCase>(useCaseTypes.RenameContactUseCase)
       .execute(input);
   }
 

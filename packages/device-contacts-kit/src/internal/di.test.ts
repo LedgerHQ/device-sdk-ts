@@ -6,6 +6,7 @@ import { makeContainer } from "@internal/di";
 import { externalTypes } from "@internal/externalTypes";
 import { useCaseTypes } from "@internal/use-cases/di/useCaseTypes";
 import { RegisterExternalAddressUseCase } from "@internal/use-cases/RegisterExternalAddressUseCase";
+import { RenameContactUseCase } from "@internal/use-cases/RenameContactUseCase";
 
 describe("makeContainer", () => {
   const dmk = {} as DeviceManagementKit;
@@ -30,5 +31,11 @@ describe("makeContainer", () => {
     expect(
       container.get(useCaseTypes.RegisterExternalAddressUseCase),
     ).toBeInstanceOf(RegisterExternalAddressUseCase);
+  });
+
+  it("binds the RenameContactUseCase", () => {
+    expect(container.get(useCaseTypes.RenameContactUseCase)).toBeInstanceOf(
+      RenameContactUseCase,
+    );
   });
 });
