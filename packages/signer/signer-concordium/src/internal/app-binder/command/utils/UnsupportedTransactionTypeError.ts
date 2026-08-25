@@ -8,7 +8,7 @@ export class UnsupportedTransactionTypeError extends DeviceExchangeError<Concord
       tag: "UnsupportedTransactionTypeError",
       message:
         type !== undefined
-          ? `Unsupported transaction type: ${type} (0x${type.toString(16)}). Expected Transfer (3) or TransferWithMemo (22).`
+          ? `Unsupported transaction type: ${type} (0x${type.toString(16)}). Expected Transfer (3), TransferWithMemo (22) or TokenUpdate (27).`
           : "Transaction too short to determine type (need at least 61 bytes).",
       errorCode: ConcordiumErrorCodes.UNSUPPORTED_TRANSACTION_TYPE,
     });

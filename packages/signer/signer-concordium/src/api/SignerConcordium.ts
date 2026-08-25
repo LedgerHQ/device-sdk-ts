@@ -17,6 +17,15 @@ export interface SignerConcordium {
     options?: PublicKeyOptions,
   ) => GetPublicKeyDAReturnType;
 
+  /**
+   * Sign a serialized Concordium account transaction.
+   *
+   * Supported kinds are Transfer (3), TransferWithMemo (22) and
+   * TokenUpdate (27, PLT).
+   *
+   * @param maxFee - Maximum fee in µCCD, shown on the device review screens.
+   *   Ignored for PLT transactions, whose review screens display no fee.
+   */
   signTransaction: (
     derivationPath: string,
     transaction: Uint8Array,
