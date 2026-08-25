@@ -1,4 +1,5 @@
 import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
+import { type SignReportParams } from "@/modules/multichain/sign-reporter/model/SignReportParams";
 import {
   type ClearSignContext,
   type ClearSignContextType,
@@ -20,4 +21,5 @@ export interface ContextModule {
     typedData: TypedDataContext,
   ): Promise<TypedDataClearSignContext>;
   report(params: BlindSigningReportParams): Promise<void>;
+  signReport?(params: SignReportParams): Promise<void>;
 }

@@ -6,7 +6,7 @@ import {
   type BlindSignReason,
   type ClearSigningType,
 } from "@/modules/multichain/reporter/model/BlindSigningEvent";
-import { type BlindSigningModelId } from "@/modules/multichain/reporter/model/BlindSigningModelId";
+import { type BlindSigningModelId } from "@/shared/model/BlindSigningModelId";
 
 export type BlindSigningReportEthContext = {
   clearSigningType: ClearSigningType;

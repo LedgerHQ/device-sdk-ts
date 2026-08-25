@@ -30,7 +30,7 @@ export class HttpBlindSigningReporterDatasource
   async report(params: BlindSigningReportParams): Promise<Either<Error, void>> {
     try {
       await this.http.post(
-        `${this.config.reporter.url}/blind-signing-events`,
+        `${this.config.reporter.url}/v1/blind-signing-events`,
         { ...params, source: this.config.appSource },
         { responseType: "void" },
       );

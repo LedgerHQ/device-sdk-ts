@@ -6,7 +6,7 @@ import {
   BlindSignReason,
   ClearSigningType,
 } from "@/modules/multichain/reporter/model/BlindSigningEvent";
-import { BlindSigningModelId } from "@/modules/multichain/reporter/model/BlindSigningModelId";
+import { BlindSigningModelId } from "@/shared/model/BlindSigningModelId";
 
 import { DefaultBlindSigningReporter } from "./DefaultBlindSigningReporter";
 
