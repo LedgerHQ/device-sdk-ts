@@ -15,12 +15,10 @@ import { Buffer } from "buffer";
 import { Right } from "purify-ts";
 import { describe, expect, it, vi } from "vitest";
 
+import { COMPUTE_BUDGET_PROGRAM_ID } from "@internal/app-binder/constants";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
-import {
-  BuildGenericClearSignContextTask,
-  COMPUTE_BUDGET_PROGRAM_ID,
-} from "./BuildGenericClearSignContextTask";
+import { BuildGenericClearSignContextTask } from "./BuildGenericClearSignContextTask";
 
 const DUMMY_BLOCKHASH = DefaultBs58Encoder.encode(
   new Uint8Array(32).fill(0xaa),
@@ -127,6 +125,7 @@ describe("BuildGenericClearSignContextTask", () => {
 
     expect(result.mode).toBe("full");
     expect(result.instructionInfoContexts).toHaveLength(1);
+    expect(result.unrecognizedProgramIds).toEqual([]);
     // ComputeBudget is never looked up in CAL.
     expect(getContexts).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -149,6 +148,7 @@ describe("BuildGenericClearSignContextTask", () => {
 
     expect(result.mode).toBe("full");
     expect(result.instructionInfoContexts).toHaveLength(1);
+    expect(result.unrecognizedProgramIds).toEqual([]);
   });
 
   it("prefers the most specific descriptor over a discriminator-less one", async () => {
@@ -164,6 +164,7 @@ describe("BuildGenericClearSignContextTask", () => {
     expect(result.instructionInfoContexts).toEqual([
       instructionInfoContext(KNOWN_PROGRAM.toBase58(), "0102", "bbbb"),
     ]);
+    expect(result.unrecognizedProgramIds).toEqual([]);
   });
 
   it("returns mode `none` when some instructions are unrecognized", async () => {
@@ -182,13 +183,16 @@ describe("BuildGenericClearSignContextTask", () => {
 
     expect(result.mode).toBe("none");
     expect(result.instructionInfoContexts).toHaveLength(0);
+    expect(result.unrecognizedProgramIds).toEqual([UNKNOWN_PROGRAM.toBase58()]);
   });
 
   it("returns mode `none` when nothing is recognized", async () => {
     const tx = makeRawTx([makeIx(UNKNOWN_PROGRAM, [0x09])]);
     const { task } = makeTask(tx, []);
 
-    expect((await task.run()).mode).toBe("none");
+    const result = await task.run();
+    expect(result.mode).toBe("none");
+    expect(result.unrecognizedProgramIds).toEqual([UNKNOWN_PROGRAM.toBase58()]);
   });
 
   it("returns mode `none` for a ComputeBudget-only tx without calling CAL", async () => {
@@ -197,7 +201,9 @@ describe("BuildGenericClearSignContextTask", () => {
     ]);
     const { task, getContexts } = makeTask(tx, []);
 
-    expect((await task.run()).mode).toBe("none");
+    const result = await task.run();
+    expect(result.mode).toBe("none");
+    expect(result.unrecognizedProgramIds).toEqual([]);
     expect(getContexts).not.toHaveBeenCalled();
   });
 });

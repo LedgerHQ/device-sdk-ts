@@ -1,4 +1,7 @@
-import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
+import {
+  type DmkNetworkClient,
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
@@ -14,21 +17,27 @@ import { type SignReporterDatasource } from "./SignReporterDatasource";
 @injectable()
 export class HttpSignReporterDatasource implements SignReporterDatasource {
   private readonly http: DmkNetworkClient;
+  private readonly logger: LoggerPublisherService;
 
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(networkTypes.NetworkClient)
     networkClient?: DmkNetworkClient,
   ) {
     this.http = networkClient ?? networkClientFactory(config);
+    this.logger = loggerFactory("HttpSignReporterDatasource");
   }
 
   async report(params: SignReportParams): Promise<Either<Error, void>> {
     try {
+      const dto = this.buildDto(params, this.config.appSource);
+      this.logger.debug("[report] Posting signing event", { data: dto });
       await this.http.post(
         `${this.config.reporter.url}/v2/blind-signing-events`,
-        this.buildDto(params, this.config.appSource),
+        dto,
         { responseType: "void" },
       );
     } catch (_error) {
