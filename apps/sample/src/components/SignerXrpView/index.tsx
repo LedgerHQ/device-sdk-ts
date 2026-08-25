@@ -56,6 +56,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
         executeDeviceAction: ({
           derivationPath,
           checkOnDevice,
+          returnChainCode,
           skipOpenApp,
         }) => {
           if (!signer) {
@@ -63,13 +64,21 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           }
           return signer.getAddress(derivationPath, {
             checkOnDevice,
+            returnChainCode,
             skipOpenApp,
           });
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/144'/0'/0/0",
           checkOnDevice: false,
+          returnChainCode: false,
           skipOpenApp: false,
+        },
+        labelSelector: {
+          derivationPath: "Derivation path",
+          checkOnDevice: "Check on device",
+          returnChainCode: "Return chain code",
+          skipOpenApp: "Skip open app",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -77,6 +86,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           checkOnDevice?: boolean;
+          returnChainCode?: boolean;
           skipOpenApp?: boolean;
         },
         GetAddressDAError,

@@ -2,6 +2,7 @@ export {
   type GetAddressCommandArgs,
   type GetAddressCommandResponse,
 } from "@api/app-binder/GetAddressCommandTypes";
+export { GetAddressDeviceActionFactory } from "@api/app-binder/GetAddressDeviceActionFactory";
 export {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
