@@ -98,8 +98,8 @@ const { observable, cancel } = signerXrp.getAddress(derivationPath, options);
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g., `"m/44'/0'/0'/0/0"`)
-  - The derivation path used for the xrp address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+  - **Type:** `string` (e.g., `"44'/144'/0'/0/0"`)
+  - The derivation path used for the xrp address. At most 10 elements, as the XRP application rejects longer paths. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - `options`
 
@@ -109,12 +109,14 @@ const { observable, cancel } = signerXrp.getAddress(derivationPath, options);
     ```typescript
     type AddressOptions = {
       checkOnDevice?: boolean;
+      returnChainCode?: boolean;
       skipOpenApp?: boolean;
     };
     ```
 
-  - `checkOnDevice`: An optional boolean indicating whether user confirmation on the device is required (`true`) or not (`false`).
-  - `skipOpenApp`: An optional boolean indicating whether to skip opening the xrp app automatically (`true`) or not (`false`).
+  - `checkOnDevice`: An optional boolean indicating whether user confirmation on the device is required (`true`) or not (`false`). Defaults to `false`.
+  - `returnChainCode`: An optional boolean indicating whether the BIP32 chain code should be returned alongside the address (`true`) or not (`false`). Defaults to `false`.
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the xrp app automatically (`true`) or not (`false`). Defaults to `false`.
 
 #### **Returns**
 
@@ -122,8 +124,12 @@ const { observable, cancel } = signerXrp.getAddress(derivationPath, options);
 
 ```typescript
 type GetAddressCommandResponse = {
-  publicKey: Uint8Array;
-  chainCode?: Uint8Array;
+  /** Uncompressed public key, hex encoded. */
+  publicKey: string;
+  /** The XRP address, as returned by the application. */
+  address: string;
+  /** BIP32 chain code, hex encoded. Only set when `returnChainCode` was set. */
+  chainCode?: string;
 };
 ```
 
