@@ -47,19 +47,30 @@ export const provideInstructionInfoContext: ProvideContextHandler<
   const label = `${payload.programId}:${payload.discriminator}`;
   const infoBytes = hexaStringToBuffer(payload.instructionInfo.data);
   if (!infoBytes) {
-    logger.warn(
-      `[provideInstructionInfoContext] malformed INSTRUCTION_INFO for ${label}, skipping`,
+    // INSTRUCTION_INFO is a fatal descriptor type: without it the device has
+    // no structural information to interpret the instruction, so a malformed
+    // payload must abort generic clear-signing rather than be swallowed.
+    logger.error(
+      `[provideInstructionInfoContext] malformed INSTRUCTION_INFO for ${label}`,
     );
-    return CommandResultFactory({ data: undefined });
+    return CommandResultFactory({
+      error: new InvalidResponseFormatError(
+        `Malformed INSTRUCTION_INFO for ${label}`,
+      ),
+    });
   }
   // CAL serves the descriptor unsigned; the device verifies the signature, so
   // append it as the trailing SIGNATURE (0x15) TLV before streaming.
   const infoSignature = hexaStringToBuffer(payload.instructionInfo.signature);
   if (!infoSignature || infoSignature.length === 0) {
-    logger.warn(
-      `[provideInstructionInfoContext] missing INSTRUCTION_INFO signature for ${label}, skipping`,
+    logger.error(
+      `[provideInstructionInfoContext] missing INSTRUCTION_INFO signature for ${label}`,
     );
-    return CommandResultFactory({ data: undefined });
+    return CommandResultFactory({
+      error: new InvalidResponseFormatError(
+        `Missing INSTRUCTION_INFO signature for ${label}`,
+      ),
+    });
   }
 
   logger.debug("[provideInstructionInfoContext] Sending INSTRUCTION_INFO", {

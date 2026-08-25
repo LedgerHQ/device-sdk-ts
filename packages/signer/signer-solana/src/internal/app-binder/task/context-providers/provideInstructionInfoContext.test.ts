@@ -125,14 +125,14 @@ describe("provideInstructionInfoContext", () => {
     expect(isSuccessCommandResult(result)).toBe(false);
   });
 
-  it("logs a warning and returns success when the INSTRUCTION_INFO data is malformed", async () => {
+  it("logs an error and returns a failed CommandResult when the INSTRUCTION_INFO data is malformed", async () => {
     api.sendCommand.mockResolvedValue(success);
     const result = makeResult();
     result.payload.instructionInfo.data = "zz";
 
     const out = await provideInstructionInfoContext(result as any, deps);
-    expect(isSuccessCommandResult(out)).toBe(true);
-    expect(mockLogger.warn).toHaveBeenCalledWith(
+    expect(isSuccessCommandResult(out)).toBe(false);
+    expect(mockLogger.error).toHaveBeenCalledWith(
       expect.stringContaining("malformed INSTRUCTION_INFO"),
     );
     expect(api.sendCommand).not.toHaveBeenCalledWith(
@@ -169,14 +169,14 @@ describe("provideInstructionInfoContext", () => {
     expect(api.sendCommand).toHaveBeenCalledTimes(2);
   });
 
-  it("logs a warning and returns success when the INSTRUCTION_INFO signature is missing", async () => {
+  it("logs an error and returns a failed CommandResult when the INSTRUCTION_INFO signature is missing", async () => {
     api.sendCommand.mockResolvedValue(success);
     const result = makeResult();
     result.payload.instructionInfo.signature = "";
 
     const out = await provideInstructionInfoContext(result as any, deps);
-    expect(isSuccessCommandResult(out)).toBe(true);
-    expect(mockLogger.warn).toHaveBeenCalledWith(
+    expect(isSuccessCommandResult(out)).toBe(false);
+    expect(mockLogger.error).toHaveBeenCalledWith(
       expect.stringContaining("missing INSTRUCTION_INFO signature"),
     );
     expect(api.sendCommand).not.toHaveBeenCalledWith(

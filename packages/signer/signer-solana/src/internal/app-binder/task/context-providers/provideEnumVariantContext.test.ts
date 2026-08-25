@@ -105,7 +105,7 @@ describe("provideEnumVariantContext", () => {
     expect(api.sendCommand).toHaveBeenCalledTimes(1);
   });
 
-  it("logs a warning and returns success when the ENUM_VARIANT descriptor data is malformed", async () => {
+  it("logs an error and returns a failed CommandResult when the ENUM_VARIANT descriptor data is malformed", async () => {
     api.sendCommand.mockResolvedValue(success);
 
     const result = await provideEnumVariantContext(
@@ -122,8 +122,8 @@ describe("provideEnumVariantContext", () => {
       deps,
     );
 
-    expect(isSuccessCommandResult(result)).toBe(true);
-    expect(mockLogger.warn).toHaveBeenCalledWith(
+    expect(isSuccessCommandResult(result)).toBe(false);
+    expect(mockLogger.error).toHaveBeenCalledWith(
       expect.stringContaining("malformed ENUM_VARIANT"),
     );
     expect(api.sendCommand).not.toHaveBeenCalledWith(
@@ -154,7 +154,7 @@ describe("provideEnumVariantContext", () => {
     expect(isSuccessCommandResult(result)).toBe(false);
   });
 
-  it("logs a warning and returns success when the ENUM_VARIANT signature is missing", async () => {
+  it("logs an error and returns a failed CommandResult when the ENUM_VARIANT signature is missing", async () => {
     api.sendCommand.mockResolvedValue(success);
 
     const result = await provideEnumVariantContext(
@@ -170,8 +170,8 @@ describe("provideEnumVariantContext", () => {
       } as any,
       deps,
     );
-    expect(isSuccessCommandResult(result)).toBe(true);
-    expect(mockLogger.warn).toHaveBeenCalledWith(
+    expect(isSuccessCommandResult(result)).toBe(false);
+    expect(mockLogger.error).toHaveBeenCalledWith(
       expect.stringContaining("missing ENUM_VARIANT signature"),
     );
     expect(api.sendCommand).not.toHaveBeenCalledWith(
