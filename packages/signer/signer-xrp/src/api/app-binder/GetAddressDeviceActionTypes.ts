@@ -7,7 +7,7 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
+import { type GetAddressCommandResponse } from "@api/app-binder/GetAddressCommandTypes";
 import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplicationErrors";
 
 type GetAddressDAUserInteractionRequired =
