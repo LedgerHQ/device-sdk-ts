@@ -107,23 +107,38 @@ export class ProvideGenericClearSignContextTask {
 
   /**
    * Streams a single descriptor to the device. Failures of a
-   * {@link FATAL_PROVIDE_CONTEXT_TYPES} descriptor propagate (aborting generic
-   * clear-signing); any other descriptor's failure is swallowed so the device
-   * can still clear-sign the rest with degraded UX.
+   * {@link FATAL_PROVIDE_CONTEXT_TYPES} descriptor abort generic clear-signing
+   * by throwing; any other descriptor's failure is logged and swallowed so the
+   * device can still clear-sign the rest with degraded UX.
    */
   private async provideDescriptor(context: ClearSignContext): Promise<void> {
     if (!isSolanaContextSuccess(context)) {
       return;
     }
     if (FATAL_PROVIDE_CONTEXT_TYPES.has(context.type)) {
-      await dispatchProvideContext(context, this.deps);
+      const result = await dispatchProvideContext(context, this.deps);
+      if (!isSuccessCommandResult(result)) {
+        this.logger.error(
+          "[run] fatal descriptor provisioning failed; aborting generic clear-signing",
+          { data: { type: context.type, error: result.error } },
+        );
+        throw new Error(
+          `[ProvideGenericClearSignContextTask] device rejected fatal descriptor ${context.type}`,
+        );
+      }
       return;
     }
     try {
-      await dispatchProvideContext(context, this.deps);
+      const result = await dispatchProvideContext(context, this.deps);
+      if (!isSuccessCommandResult(result)) {
+        this.logger.warn(
+          "[run] optional descriptor provisioning failed; continuing with degraded clear-signing",
+          { data: { type: context.type, error: result.error } },
+        );
+      }
     } catch (error) {
       this.logger.warn(
-        "[run] optional descriptor provisioning failed; continuing with degraded clear-signing",
+        "[run] optional descriptor provisioning threw; continuing with degraded clear-signing",
         { data: { type: context.type, error } },
       );
     }

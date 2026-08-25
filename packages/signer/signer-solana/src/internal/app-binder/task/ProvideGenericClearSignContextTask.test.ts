@@ -241,7 +241,7 @@ describe("ProvideGenericClearSignContextTask", () => {
     );
   });
 
-  it("aborts (throws) when a structural descriptor (instruction info) fails", async () => {
+  it("rejects when a fatal structural descriptor (instruction info) fails", async () => {
     const made = makeTask([tokenInfoContext()], [instructionInfoContext()]);
     // Everything succeeds except the structural INSTRUCTION_INFO command.
     made.api.sendCommand.mockImplementation(async (cmd: unknown) => {
@@ -255,7 +255,7 @@ describe("ProvideGenericClearSignContextTask", () => {
     });
 
     await expect(made.task.run()).rejects.toThrow(
-      "device rejected INSTRUCTION_INFO",
+      "device rejected fatal descriptor",
     );
   });
 

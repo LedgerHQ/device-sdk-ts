@@ -130,7 +130,15 @@ export class ProvideTransactionCheckTask {
         context.type === ClearSignContextType.SOLANA_TRANSACTION_CHECK &&
         isSolanaContextSuccess(context)
       ) {
-        await dispatchProvideContext(context, deps);
+        const result = await dispatchProvideContext(context, deps);
+        // Best-effort per the class contract above: log the rejection but keep
+        // signing proceeding rather than aborting.
+        if (!isSuccessCommandResult(result)) {
+          this.logger.warn(
+            "[run] device rejected transaction-check; continuing without it",
+            { data: { error: result.error } },
+          );
+        }
       }
     }
   }

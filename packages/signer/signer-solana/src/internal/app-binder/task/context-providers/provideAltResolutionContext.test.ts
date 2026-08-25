@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -56,22 +57,55 @@ describe("provideAltResolutionContext", () => {
     expect(cmd.args.payload).toStrictEqual(new Uint8Array([0xaa, 0xbb]));
   });
 
-  it("throws when the device rejects the descriptor", async () => {
+  it("returns success without sending any command when payload is absent", async () => {
+    const result = await provideAltResolutionContext(
+      {
+        type: ClearSignContextType.SOLANA_ALT_RESOLUTION as const,
+        payload: undefined,
+        certificate: cert,
+      } as any,
+      deps,
+    );
+
+    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(api.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("returns a failed CommandResult when the certificate is rejected", async () => {
+    api.sendCommand.mockResolvedValueOnce(
+      CommandResultFactory({
+        error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+      }),
+    );
+
+    const result = await provideAltResolutionContext(
+      {
+        type: ClearSignContextType.SOLANA_ALT_RESOLUTION as const,
+        payload: { descriptor: new Uint8Array([0xaa, 0xbb]) },
+        certificate: cert,
+      } as any,
+      deps,
+    );
+
+    expect(isSuccessCommandResult(result)).toBe(false);
+    expect(api.sendCommand).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns a failed CommandResult when the device rejects the descriptor", async () => {
     api.sendCommand.mockResolvedValueOnce(success).mockResolvedValueOnce(
       CommandResultFactory({
         error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
       }),
     );
 
-    await expect(
-      provideAltResolutionContext(
-        {
-          type: ClearSignContextType.SOLANA_ALT_RESOLUTION as const,
-          payload: { descriptor: new Uint8Array([0xaa, 0xbb]) },
-          certificate: cert,
-        } as any,
-        deps,
-      ),
-    ).rejects.toThrow("device rejected ALT_RESOLUTION");
+    const result = await provideAltResolutionContext(
+      {
+        type: ClearSignContextType.SOLANA_ALT_RESOLUTION as const,
+        payload: { descriptor: new Uint8Array([0xaa, 0xbb]) },
+        certificate: cert,
+      } as any,
+      deps,
+    );
+    expect(isSuccessCommandResult(result)).toBe(false);
   });
 });

@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -56,22 +57,55 @@ describe("provideTokenAccountStateContext", () => {
     expect(cmd.args.payload).toStrictEqual(new Uint8Array([0xaa, 0xbb]));
   });
 
-  it("throws when the device rejects the descriptor", async () => {
+  it("returns success without sending any command when payload is absent", async () => {
+    const result = await provideTokenAccountStateContext(
+      {
+        type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE as const,
+        payload: undefined,
+        certificate: cert,
+      } as any,
+      deps,
+    );
+
+    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(api.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("returns a failed CommandResult when the certificate is rejected", async () => {
+    api.sendCommand.mockResolvedValueOnce(
+      CommandResultFactory({
+        error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+      }),
+    );
+
+    const result = await provideTokenAccountStateContext(
+      {
+        type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE as const,
+        payload: { descriptor: new Uint8Array([0xaa, 0xbb]) },
+        certificate: cert,
+      } as any,
+      deps,
+    );
+
+    expect(isSuccessCommandResult(result)).toBe(false);
+    expect(api.sendCommand).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns a failed CommandResult when the device rejects the descriptor", async () => {
     api.sendCommand.mockResolvedValueOnce(success).mockResolvedValueOnce(
       CommandResultFactory({
         error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
       }),
     );
 
-    await expect(
-      provideTokenAccountStateContext(
-        {
-          type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE as const,
-          payload: { descriptor: new Uint8Array([0xaa, 0xbb]) },
-          certificate: cert,
-        } as any,
-        deps,
-      ),
-    ).rejects.toThrow("device rejected TOKEN_ACCOUNT_STATE");
+    const result = await provideTokenAccountStateContext(
+      {
+        type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE as const,
+        payload: { descriptor: new Uint8Array([0xaa, 0xbb]) },
+        certificate: cert,
+      } as any,
+      deps,
+    );
+    expect(isSuccessCommandResult(result)).toBe(false);
   });
 });

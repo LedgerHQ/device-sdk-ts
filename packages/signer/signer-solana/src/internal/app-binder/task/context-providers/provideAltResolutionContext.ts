@@ -2,14 +2,21 @@ import {
   type ClearSignContextType,
   type SolanaAltResolutionContextSuccess,
 } from "@ledgerhq/context-module";
-import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
+import {
+  type CommandResult,
+  CommandResultFactory,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-management-kit";
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
 import { ProvideAltResolutionCommand } from "@internal/app-binder/command/ProvideAltResolutionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
-import { loadCertificate } from "./loadCertificate";
-import { type ProvideContextHandler } from "./provideContextTypes";
+import { loadCertificateIfPresent } from "./loadCertificate";
+import {
+  type ProvideContextErrorCodes,
+  type ProvideContextHandler,
+} from "./provideContextTypes";
 
 /**
  * Streams a challenge-bound `ALT_RESOLUTION` (0x28) descriptor. The caller must
@@ -17,16 +24,18 @@ import { type ProvideContextHandler } from "./provideContextTypes";
  */
 export const provideAltResolutionContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_ALT_RESOLUTION
-> = async (result: SolanaAltResolutionContextSuccess, { api, logger }) => {
+> = async (
+  result: SolanaAltResolutionContextSuccess,
+  { api, logger },
+): Promise<CommandResult<void, ProvideContextErrorCodes>> => {
   const { payload, certificate } = result;
-  if (!payload) return;
+  if (!payload) {
+    return CommandResultFactory({ data: undefined });
+  }
 
-  if (certificate) {
-    await loadCertificate(
-      api,
-      certificate,
-      "[SignerSolana] provideAltResolutionContext: failed to load ALT_RESOLUTION certificate",
-    );
+  const certResult = await loadCertificateIfPresent(api, certificate);
+  if (!isSuccessCommandResult(certResult)) {
+    return certResult;
   }
 
   logger.debug("[provideAltResolutionContext] Sending ALT_RESOLUTION");
@@ -44,8 +53,8 @@ export const provideAltResolutionContext: ProvideContextHandler<
     },
   ).run();
   if (!isSuccessCommandResult(res)) {
-    throw new Error(
-      "[SignerSolana] provideAltResolutionContext: device rejected ALT_RESOLUTION",
-    );
+    return res;
   }
+
+  return CommandResultFactory({ data: undefined });
 };
