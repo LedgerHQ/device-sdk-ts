@@ -23,6 +23,9 @@ import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domai
 import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
 import { reporterTypes } from "@/modules/multichain/reporter/di/reporterTypes";
 import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
+import { signReporterTypes } from "@/modules/multichain/sign-reporter/di/signReporterTypes";
+import { type SignReporter } from "@/modules/multichain/sign-reporter/domain/SignReporter";
+import { type SignReportParams } from "@/modules/multichain/sign-reporter/model/SignReportParams";
 import { transactionCheckTypes } from "@/modules/multichain/transaction-check/di/transactionCheckTypes";
 import { altResolutionTypes } from "@/modules/solana/alt-resolution/di/altResolutionTypes";
 import { enumVariantTypes } from "@/modules/solana/enum-variant/di/enumVariantTypes";
@@ -48,6 +51,7 @@ export class DefaultContextModule implements ContextModule {
   private _typedDataLoader: TypedDataContextLoader;
   private _fieldLoaders: ContextFieldLoader<unknown>[];
   private _blindSigningReporter: BlindSigningReporter | null;
+  private _signReporter: SignReporter | null;
 
   constructor(args: ContextModuleServiceConfig & ContextModuleLoaderConfig) {
     this._config = args;
@@ -65,6 +69,7 @@ export class DefaultContextModule implements ContextModule {
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
     this._blindSigningReporter =
       args.customBlindSigningReporter ?? this._getBlindSigningReporter();
+    this._signReporter = this._getSignReporter();
   }
 
   private _getDefaultFieldLoaders(): ContextFieldLoader[] {
@@ -188,6 +193,13 @@ export class DefaultContextModule implements ContextModule {
     return null;
   }
 
+  private _getSignReporter(): SignReporter | null {
+    if (this._container.isBound(signReporterTypes.SignReporter)) {
+      return this._container.get<SignReporter>(signReporterTypes.SignReporter);
+    }
+    return null;
+  }
+
   public async getContexts(
     input: unknown,
     expectedTypes?: ClearSignContextType[],
@@ -240,5 +252,9 @@ export class DefaultContextModule implements ContextModule {
 
   public async report(params: BlindSigningReportParams): Promise<void> {
     await this._blindSigningReporter?.report(params);
+  }
+
+  public async signReport(params: SignReportParams): Promise<void> {
+    await this._signReporter?.report(params);
   }
 }
