@@ -45,7 +45,7 @@ describe("applyTrustedNameRule", () => {
       ],
       ["ignored", "named"],
     );
-    expect(result).toEqual(["named"]);
+    expect(result).toEqual(["P", "named"]);
   });
 
   it("encodes a 32-byte CONSTANT trusted-name target", () => {
@@ -59,7 +59,7 @@ describe("applyTrustedNameRule", () => {
       ],
       [],
     );
-    expect(result).toEqual([DefaultBs58Encoder.encode(addr)]);
+    expect(result).toEqual(["P", DefaultBs58Encoder.encode(addr)]);
   });
 
   it("resolves an ACCOUNT display field target (best-effort CAL name)", () => {
@@ -75,7 +75,7 @@ describe("applyTrustedNameRule", () => {
       ],
       ["account"],
     );
-    expect(result).toEqual(["account"]);
+    expect(result).toEqual(["P", "account"]);
   });
 
   it("deduplicates an address referenced by ACCOUNT and TRUSTED_NAME fields", () => {
@@ -98,9 +98,30 @@ describe("applyTrustedNameRule", () => {
       ],
       ["shared"],
     );
-    expect(result).toEqual(["shared"]);
+    expect(result).toEqual(["P", "shared"]);
   });
 
+  it("always targets the instruction's program address", () => {
+    expect(run([], [])).toEqual(["P"]);
+  });
+
+  it("does not duplicate the program address when a field also targets it", () => {
+    const result = run(
+      [
+        {
+          paramType: PARAM_TYPE_ACCOUNT,
+          value: {
+            source: ValueSource.ACCOUNT_PATH,
+            payload: Uint8Array.of(0),
+          },
+        },
+      ],
+      ["P"],
+    );
+    expect(result).toEqual(["P"]);
+  });
+
+  // Only the program address survives: the display fields contribute nothing.
   it("ignores non-trusted-name fields and unresolved account targets", () => {
     const nonTrusted = run(
       [
@@ -114,7 +135,7 @@ describe("applyTrustedNameRule", () => {
       ],
       ["a"],
     );
-    expect(nonTrusted).toEqual([]);
+    expect(nonTrusted).toEqual(["P"]);
 
     const unresolved = run(
       [
@@ -128,6 +149,6 @@ describe("applyTrustedNameRule", () => {
       ],
       [undefined],
     );
-    expect(unresolved).toEqual([]);
+    expect(unresolved).toEqual(["P"]);
   });
 });
