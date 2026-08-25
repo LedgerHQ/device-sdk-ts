@@ -59,7 +59,7 @@ const SUPPORTED_SIGNERS = [
   {
     title: "Xrp",
     description: "Access Xrp signer functionality",
-    icon: <CryptoIcon ledgerId="xrp" ticker="XRP" size={size} />,
+    icon: <CryptoIcon ledgerId="ripple" ticker="XRP" size={size} />,
   },
 ];
 

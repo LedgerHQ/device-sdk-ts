@@ -55,7 +55,7 @@ export class ProvideBasicClearSignContextTask {
     ).filter((c): c is SolanaContext => c !== undefined);
 
     this._logger.debug("[run] Providing Solana context from loaders", {
-      data: { ordered },
+      data: { ordered: ordered.map((c) => ({ type: c.type })) },
     });
 
     for (const loaderResult of ordered) {

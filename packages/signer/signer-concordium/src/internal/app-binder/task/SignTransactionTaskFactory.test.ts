@@ -10,8 +10,10 @@ import {
 import { vi } from "vitest";
 
 import { InvalidMaxFeeError } from "@internal/app-binder/command/utils/InvalidMaxFeeError";
+import { UnsupportedAppVersionError } from "@internal/app-binder/command/utils/UnsupportedAppVersionError";
 import { UnsupportedTransactionTypeError } from "@internal/app-binder/command/utils/UnsupportedTransactionTypeError";
 import { createSignTransactionTask } from "@internal/app-binder/task/SignTransactionTaskFactory";
+import { MIN_APP_VERSION_FOR_PLT } from "@internal/shared/ConcordiumAppVersions";
 
 const DERIVATION_PATH = "44'/919'/0'/0'/0'";
 const TYPE_OFFSET = 60;
@@ -90,6 +92,113 @@ describe("createSignTransactionTask", () => {
     );
 
     expect(loggerTags).toContain("SendTransferWithMemoTask");
+  });
+
+  describe("PLT dispatch", () => {
+    /** [header:60][kind:1 = 0x1B][tokenIdLength:1][tokenId:3][cborLength:4][cbor:9] */
+    function buildPltTransaction(): Uint8Array {
+      const cbor = new Uint8Array([
+        0x81, 0xa1, 0x65, 0x70, 0x61, 0x75, 0x73, 0x65, 0xa0,
+      ]);
+      const tokenId = new TextEncoder().encode("PLT");
+      const tx = new Uint8Array(60 + 1 + 1 + tokenId.length + 4 + cbor.length);
+      tx[TYPE_OFFSET] = 0x1b;
+      tx[61] = tokenId.length;
+      tx.set(tokenId, 62);
+      new DataView(tx.buffer, tx.byteOffset).setUint32(
+        62 + tokenId.length,
+        cbor.length,
+        false,
+      );
+      tx.set(cbor, 62 + tokenId.length + 4);
+      return tx;
+    }
+
+    it("should create SendPltTask for TokenUpdate type (0x1B)", () => {
+      const { api } = makeApiMock(
+        makeReadyDeviceState(MIN_APP_VERSION_FOR_PLT),
+      );
+
+      createSignTransactionTask(
+        api,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction: buildPltTransaction(),
+          maxFee: 0n,
+        },
+        loggerFactory,
+      );
+
+      expect(loggerTags).toContain("SendPltTask");
+    });
+
+    it("should send P2=0x00 on the PLT INIT frame regardless of fee-display support", async () => {
+      const { api, sentCommands } = makeApiMock(
+        makeReadyDeviceState(MIN_APP_VERSION_FOR_PLT),
+      );
+
+      await createSignTransactionTask(
+        api,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction: buildPltTransaction(),
+          maxFee: 1000n,
+        },
+        loggerFactory,
+      )();
+
+      expect(sentCommands.length).toBeGreaterThanOrEqual(1);
+      expect(getApduP2(sentCommands[0]!)).toBe(0x00);
+    });
+
+    it("should reject PLT with UnsupportedAppVersionError on an older app", async () => {
+      const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.6.0"));
+
+      const result = await createSignTransactionTask(
+        api,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction: buildPltTransaction(),
+          maxFee: 0n,
+        },
+        loggerFactory,
+      )();
+
+      expect(sentCommands).toHaveLength(0);
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toBeInstanceOf(UnsupportedAppVersionError);
+        expect(result.error).not.toBeInstanceOf(
+          UnsupportedTransactionTypeError,
+        );
+        expect((result.error as UnsupportedAppVersionError).message).toContain(
+          MIN_APP_VERSION_FOR_PLT,
+        );
+      }
+    });
+
+    it("should reject PLT when the session has no active Concordium app", async () => {
+      const { api, sentCommands } = makeApiMock({
+        sessionStateType: DeviceSessionStateType.Connected,
+        deviceModelId: DeviceModelId.NANO_X,
+      });
+
+      const result = await createSignTransactionTask(
+        api,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction: buildPltTransaction(),
+          maxFee: 0n,
+        },
+        loggerFactory,
+      )();
+
+      expect(sentCommands).toHaveLength(0);
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toBeInstanceOf(UnsupportedAppVersionError);
+      }
+    });
   });
 
   it("should return error for unsupported transaction type", async () => {

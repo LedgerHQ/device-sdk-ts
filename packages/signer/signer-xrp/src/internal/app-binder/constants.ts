@@ -1,1 +1,1 @@
-export const APP_NAME = "Xrp";
+export const APP_NAME = "XRP";

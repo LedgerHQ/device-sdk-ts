@@ -11,6 +11,7 @@ export const INS = {
   SIGN_TRANSFER_WITH_MEMO: 0x32,
   SIGN_TRANSFER_WITH_SCHEDULE_AND_MEMO: 0x34,
   REGISTER_DATA: 0x35,
+  SIGN_PLT: 0x27,
   SET_TRUSTED_NAME: 0x22,
   GET_CHALLENGE: 0x23,
   GET_APP_VERSION: 0x40,
@@ -24,6 +25,10 @@ export const P1 = {
   INITIAL_WITH_MEMO: 0x01,
   MEMO: 0x02,
   AMOUNT: 0x03,
+
+  // Protocol Level Tokens (INS 0x27)
+  PLT_INIT: 0x00,
+  PLT_CONT: 0x01,
 
   // Credential Deployment
   VERIFICATION_KEY_COUNT: 0x0a,

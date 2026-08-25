@@ -57,7 +57,11 @@ export class BuildBasicClearSignContextTask {
     // get Solana context
     this._logger.debug("[run] Calling contextModule.getContexts for Solana", {
       data: {
-        args: contextModuleGetSolanaContextArgs,
+        deviceModelId: contextModuleGetSolanaContextArgs.deviceModelId,
+        hasChallenge: !!contextModuleGetSolanaContextArgs.challenge,
+        hasTokenAddress: !!contextModuleGetSolanaContextArgs.tokenAddress,
+        hasMintAddress: !!contextModuleGetSolanaContextArgs.mintAddress,
+        createATA: contextModuleGetSolanaContextArgs.createATA,
       },
     });
 
@@ -71,7 +75,12 @@ export class BuildBasicClearSignContextTask {
     );
 
     this._logger.debug("[run] Solana context result", {
-      data: { contexts },
+      data: {
+        contexts: contexts.map((c) => ({
+          type: c.type,
+          failed: c.type === ClearSignContextType.ERROR,
+        })),
+      },
     });
 
     const contextErrorCount = contexts.filter(

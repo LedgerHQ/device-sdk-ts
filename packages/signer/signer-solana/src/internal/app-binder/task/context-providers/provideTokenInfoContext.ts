@@ -25,7 +25,7 @@ export const provideTokenInfoContext: ProvideContextHandler<
   }
 
   logger.debug("[provideTokenInfoContext] Sending TOKEN_INFO", {
-    data: { mint: payload.mint },
+    data: { hasMint: !!payload.mint },
   });
 
   const res = await api.sendCommand(
