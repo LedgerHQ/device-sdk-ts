@@ -2,6 +2,7 @@ import {
   type CommandResult,
   CommandResultFactory,
   type InternalApi,
+  InvalidResponseFormatError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -21,16 +22,14 @@ export class SignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, XrpErrorCodes>> {
-    // TODO: Adapt this implementation to your blockchain's signing protocol
-    // For transactions larger than a single APDU, you may need to:
-    // 1. Split the transaction into chunks
-    // 2. Send each chunk with appropriate first/continue flags
-    // 3. Collect the final signature from the last response
-
+    // TODO: chunk the payload (DSDK-1440). This sends the transaction as a
+    // single first-and-last chunk, which only holds for payloads that fit in
+    // one APDU, and it does not yet prepend the encoded derivation path.
     const result = await this.api.sendCommand(
       new SignTransactionCommand({
-        derivationPath: this.args.derivationPath,
-        transaction: this.args.transaction,
+        chunkedData: this.args.transaction,
+        isFirstChunk: true,
+        isLastChunk: true,
       }),
     );
 
@@ -38,8 +37,14 @@ export class SignTransactionTask {
       return result;
     }
 
-    return CommandResultFactory({
-      data: result.data.signature,
+    return result.data.caseOf({
+      Just: (signature) => CommandResultFactory({ data: signature }),
+      Nothing: () =>
+        CommandResultFactory<Signature, XrpErrorCodes>({
+          error: new InvalidResponseFormatError(
+            "No signature returned for the final chunk",
+          ),
+        }),
     });
   }
 }
