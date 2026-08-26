@@ -634,6 +634,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   usedFallback,
                   chainId: subset?.chainId ?? null,
                   targetAddress: subset?.to ?? null,
+                  selectorId:
+                    subset?.selector && subset.selector.length >= 10
+                      ? subset.selector
+                      : null,
                   deviceModelId: internalApi.getDeviceModel().id,
                   signerAppVersion:
                     context._internalState.appConfig?.version ?? "",
