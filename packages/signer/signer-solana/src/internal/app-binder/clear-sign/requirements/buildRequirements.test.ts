@@ -240,10 +240,11 @@ describe("buildRequirements", () => {
     ]);
   });
 
-  it("emits TRUSTED_NAME for PARAM_TRUSTED_NAME fields (account path + constant)", () => {
+  it("emits TRUSTED_NAME for the program and for PARAM_TRUSTED_NAME fields (account path + constant)", () => {
     const constantAddr = new Uint8Array(32).fill(5);
     const result = run([
       matched({
+        programId: "Prog",
         accounts: [account("ignored"), account("namedAccount")],
         descriptor: {
           displayFields: [
@@ -254,9 +255,19 @@ describe("buildRequirements", () => {
       }),
     ]);
     expect(result.trustedNames).toEqual([
+      "Prog",
       "namedAccount",
       DefaultBs58Encoder.encode(constantAddr),
     ]);
+  });
+
+  it("emits one TRUSTED_NAME per distinct program across instructions", () => {
+    const result = run([
+      matched({ programId: "ProgA", discriminator: "01", accounts: [] }),
+      matched({ programId: "ProgB", discriminator: "02", accounts: [] }),
+      matched({ programId: "ProgA", discriminator: "03", accounts: [] }),
+    ]);
+    expect(result.trustedNames).toEqual(["ProgA", "ProgB"]);
   });
 
   it("decodes selected enum variants via the default decoder", () => {

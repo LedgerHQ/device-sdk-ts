@@ -16,6 +16,12 @@ import {
  * that may have a CAL name. For `PARAM_ACCOUNT` this is best-effort: the device
  * shows the name if a descriptor is found and falls back to the base58 address
  * otherwise.
+ *
+ * The instruction's own program address is added on the same best-effort basis
+ * (a program is a `smart_contract`-type trusted name): if CAL knows it, the
+ * device displays the program name instead of the raw key. Deduplication across
+ * instructions is handled by the accumulator, so a program used by several
+ * instructions is fetched once.
  */
 export function applyTrustedNameRule(
   parsed: ParsedInstruction,
@@ -23,6 +29,8 @@ export function applyTrustedNameRule(
   accumulator: RequirementAccumulator,
   bs58Encoder: Bs58Encoder = DefaultBs58Encoder,
 ): void {
+  accumulator.addTrustedName(instruction.programId);
+
   for (const field of parsed.displayFields) {
     if (
       (field.paramType !== PARAM_TYPE_TRUSTED_NAME &&
