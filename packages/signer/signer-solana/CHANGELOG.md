@@ -1,5 +1,20 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.12.1
+
+### Patch Changes
+
+- [#1785](https://github.com/LedgerHQ/device-sdk-ts/pull/1785) [`66580d2`](https://github.com/LedgerHQ/device-sdk-ts/commit/66580d288bc851d0af192c9c751944fdafaf7da7) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Clean signer solana logs
+
+- [#1756](https://github.com/LedgerHQ/device-sdk-ts/pull/1756) [`b31f2cd`](https://github.com/LedgerHQ/device-sdk-ts/commit/b31f2cd9340ccb6b6cd9805913e53b3df8a54c9a) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Gate app-solana 1.17 for general clear sign
+
+- [#1757](https://github.com/LedgerHQ/device-sdk-ts/pull/1757) [`6c6a845`](https://github.com/LedgerHQ/device-sdk-ts/commit/6c6a8459e76c3e5d009a08b2d88aa3085a5da07b) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add full instruction logging for Solana transactions
+
+- [#1778](https://github.com/LedgerHQ/device-sdk-ts/pull/1778) [`c7dac5c`](https://github.com/LedgerHQ/device-sdk-ts/commit/c7dac5c1be39893e8b213de350e4f06e4618ac1f) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Deduplicate TOKEN_ACCOUNT_STATE descriptors in generic clear signing
+
+- Updated dependencies [[`6c6a845`](https://github.com/LedgerHQ/device-sdk-ts/commit/6c6a8459e76c3e5d009a08b2d88aa3085a5da07b)]:
+  - @ledgerhq/context-module@2.4.1
+
 ## 1.12.0
 
 ### Minor Changes

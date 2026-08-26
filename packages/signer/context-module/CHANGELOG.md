@@ -1,5 +1,11 @@
 # @ledgerhq/context-module
 
+## 2.4.1
+
+### Patch Changes
+
+- [#1757](https://github.com/LedgerHQ/device-sdk-ts/pull/1757) [`6c6a845`](https://github.com/LedgerHQ/device-sdk-ts/commit/6c6a8459e76c3e5d009a08b2d88aa3085a5da07b) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add full instruction logging for Solana transactions
+
 ## 2.4.0
 
 ### Minor Changes
