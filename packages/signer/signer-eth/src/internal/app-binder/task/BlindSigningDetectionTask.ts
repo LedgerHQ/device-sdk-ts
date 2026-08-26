@@ -4,7 +4,9 @@ import {
   BlindSignReason,
   ClearSignContextType,
   type ContextModule,
+  type EthSignReportParams,
   mapDeviceModelId,
+  SigningMethod,
 } from "@ledgerhq/context-module";
 import {
   type DeviceModelId,
@@ -21,8 +23,7 @@ const METADATA_ONLY_CONTEXT_TYPES = new Set<ClearSignContextType>([
   ClearSignContextType.ETHEREUM_GATED_SIGNING,
 ]);
 
-export type BlindSigningDetectionInput = {
-  type: "transaction" | "typedData";
+type BlindSigningDetectionInputBase = {
   hasContext: boolean;
   contextTypes?: ClearSignContextType[];
   usedFallback: boolean;
@@ -34,6 +35,13 @@ export type BlindSigningDetectionInput = {
   clearSigningType: ClearSigningType | null;
   partialContextErrors: number;
 };
+
+export type BlindSigningDetectionInput =
+  | (BlindSigningDetectionInputBase & {
+      type: "transaction";
+      selectorId: string | null;
+    })
+  | (BlindSigningDetectionInputBase & { type: "typedData" });
 
 export type BlindSigningDetectionTaskArgs = {
   input: BlindSigningDetectionInput;
@@ -98,6 +106,35 @@ function buildReportParams(
   };
 }
 
+function buildSignReportParams(
+  input: BlindSigningDetectionInput,
+  isBlindSign: boolean,
+): EthSignReportParams {
+  const signingMethod =
+    input.type === "transaction"
+      ? SigningMethod.ETH_SIGN_TRANSACTION
+      : SigningMethod.ETH_SIGN_TYPED_DATA;
+
+  return {
+    chain: "ETH",
+    signatureId: generateSignatureId(),
+    signingMethod,
+    isBlindSign,
+    chainId: input.chainId,
+    targetAddress: input.targetAddress,
+    blindSignReason: isBlindSign ? computeBlindSignReason(input) : null,
+    modelId: mapDeviceModelId(input.deviceModelId),
+    signerAppVersion: input.signerAppVersion,
+    deviceVersion: input.deviceVersion,
+    ...(input.type === "transaction" &&
+      input.selectorId !== null && { selectorId: input.selectorId }),
+    ...(input.clearSigningType !== null && {
+      clearSigningType: input.clearSigningType,
+      partialContextErrors: input.partialContextErrors,
+    }),
+  };
+}
+
 export class BlindSigningDetectionTask {
   private readonly _logger: LoggerPublisherService;
 
@@ -119,6 +156,15 @@ export class BlindSigningDetectionTask {
       await contextModule.report(params);
     } catch (error) {
       this._logger.error("[run] Failed to report blind signing event", {
+        data: { error },
+      });
+    }
+
+    try {
+      const signParams = buildSignReportParams(input, isBlindSign);
+      await contextModule.signReport?.(signParams);
+    } catch (error) {
+      this._logger.error("[run] Failed to report signing event", {
         data: { error },
       });
     }
