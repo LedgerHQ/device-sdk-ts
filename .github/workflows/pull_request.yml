@@ -158,9 +158,8 @@ jobs:
 
       - name: Run sample Playwright tests
         id: playwright
-        # The Playwright webServer (start-servers.sh) runs a production
-        # `next build` and starts both the device mock server and the sample
-        # app, so neither is launched here. Reuses the libs already built above.
+        # The Playwright webServer (start-servers.sh) starts the sample app.
+        # Tests connect to the hosted mock server; no local mock server is needed.
         if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' }}
         continue-on-error: true
         run: pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
