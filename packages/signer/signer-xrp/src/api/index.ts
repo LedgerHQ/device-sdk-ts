@@ -15,6 +15,7 @@ export {
   type GetAppConfigDAOutput,
   type GetAppConfigDAReturnType,
 } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+export { SignTransactionDeviceActionFactory } from "@api/app-binder/SignTransactionDeviceActionFactory";
 export {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,

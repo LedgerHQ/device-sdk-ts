@@ -1,7 +1,7 @@
 import {
-  CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
+  type LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -15,13 +15,15 @@ import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
 import { GetAddressDeviceActionFactory } from "./device-action/GetAddressDeviceActionFactory";
-import { SignTransactionTask } from "./task/SignTransactionTask";
+import { SignTransactionDeviceActionFactory } from "./device-action/SignTransactionDeviceActionFactory";
 
 @injectable()
 export class XrpAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+    @inject(externalTypes.DmkLoggerFactory)
+    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getAppConfig(args: { skipOpenApp: boolean }): GetAppConfigDAReturnType {
@@ -53,18 +55,13 @@ export class XrpAppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Uint8Array;
-    skipOpenApp?: boolean;
+    skipOpenApp: boolean;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new CallTaskInAppDeviceAction({
-        input: {
-          task: async (internalApi) =>
-            new SignTransactionTask(internalApi, args).run(),
-          appName: APP_NAME,
-          requiredUserInteraction: UserInteractionRequired.SignTransaction,
-          skipOpenApp: args.skipOpenApp ?? false,
-        },
+      deviceAction: SignTransactionDeviceActionFactory({
+        ...args,
+        loggerFactory: this.dmkLoggerFactory,
       }),
     });
   }
