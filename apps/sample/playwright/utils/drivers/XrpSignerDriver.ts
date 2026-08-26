@@ -65,6 +65,31 @@ export class XrpSignerDriver {
   }
 
   /**
+   * Open the Sign Transaction action, fill the hex-encoded transaction blob
+   * and Execute it. The action stays pending until the transaction is reviewed
+   * and signed on the device.
+   */
+  async signTransaction(
+    transaction: string,
+    {
+      derivationPath,
+      skipOpenApp = false,
+    }: { derivationPath?: string; skipOpenApp?: boolean } = {},
+  ): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign Transaction").click();
+    if (derivationPath !== undefined) {
+      const path = this.page.getByTestId("input-text_derivationPath");
+      await path.waitFor({ state: "visible" });
+      await path.fill(derivationPath);
+    }
+    const input = this.page.getByTestId("input-text_transaction");
+    await input.waitFor({ state: "visible" });
+    await input.fill(transaction);
+    await this.setSwitch("skipOpenApp", skipOpenApp);
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
    * Set a boolean form field to `checked`.
    *
    * The `input-switch_*` test id sits on a wrapper around the switch, and
