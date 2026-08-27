@@ -23,7 +23,6 @@ import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domai
 import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
 import { reporterTypes } from "@/modules/multichain/reporter/di/reporterTypes";
 import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
-import { signReporterTypes } from "@/modules/multichain/sign-reporter/di/signReporterTypes";
 import { type SignReporter } from "@/modules/multichain/sign-reporter/domain/SignReporter";
 import { type SignReportParams } from "@/modules/multichain/sign-reporter/model/SignReportParams";
 import { transactionCheckTypes } from "@/modules/multichain/transaction-check/di/transactionCheckTypes";
@@ -69,7 +68,7 @@ export class DefaultContextModule implements ContextModule {
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
     this._blindSigningReporter =
       args.customBlindSigningReporter ?? this._getBlindSigningReporter();
-    this._signReporter = this._getSignReporter();
+    this._signReporter = null;
   }
 
   private _getDefaultFieldLoaders(): ContextFieldLoader[] {
@@ -189,13 +188,6 @@ export class DefaultContextModule implements ContextModule {
       return this._container.get<BlindSigningReporter>(
         reporterTypes.BlindSigningReporter,
       );
-    }
-    return null;
-  }
-
-  private _getSignReporter(): SignReporter | null {
-    if (this._container.isBound(signReporterTypes.SignReporter)) {
-      return this._container.get<SignReporter>(signReporterTypes.SignReporter);
     }
     return null;
   }
