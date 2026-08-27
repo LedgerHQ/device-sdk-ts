@@ -9,11 +9,7 @@ import {
 } from "@ledgerhq/context-module";
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 
-import {
-  DEFAULT_MOCK_SERVER_URL,
-  DEFAULT_SPECULOS_URL,
-  DEFAULT_SPECULOS_VNC_URL,
-} from "@/utils/const";
+import { DEFAULT_MOCK_SERVER_URL, DEFAULT_SPECULOS_URL } from "@/utils/const";
 
 export type CalMode = ContextModuleCalMode;
 export type CalBranch = ContextModuleCalBranch;
@@ -42,8 +38,10 @@ export type SettingsState = {
   mockServerUrl: string;
   mockServerSessionToken: string;
   speculosUrl: string;
-  speculosVncUrl: string;
   speculosDeviceModel: DeviceModelId;
+
+  // UI settings
+  deviceScreenCollapsed: boolean;
 
   // DMK settings
   appProvider: number;
@@ -65,8 +63,10 @@ export const initialState: SettingsState = {
   mockServerUrl: DEFAULT_MOCK_SERVER_URL,
   mockServerSessionToken: "",
   speculosUrl: DEFAULT_SPECULOS_URL,
-  speculosVncUrl: DEFAULT_SPECULOS_VNC_URL,
   speculosDeviceModel: DeviceModelId.STAX,
+
+  // UI settings
+  deviceScreenCollapsed: false,
 
   // DMK settings
   appProvider: 1,

@@ -38,11 +38,11 @@ export const settingsSlice = createSlice({
     setSpeculosUrl: (state, action: PayloadAction<{ speculosUrl: string }>) => {
       state.speculosUrl = action.payload.speculosUrl;
     },
-    setSpeculosVncUrl: (
+    setDeviceScreenCollapsed: (
       state,
-      action: PayloadAction<{ speculosVncUrl: string }>,
+      action: PayloadAction<{ deviceScreenCollapsed: boolean }>,
     ) => {
-      state.speculosVncUrl = action.payload.speculosVncUrl;
+      state.deviceScreenCollapsed = action.payload.deviceScreenCollapsed;
     },
     setSpeculosDeviceModel: (
       state,
@@ -144,8 +144,8 @@ export const {
   setMockServerUrl,
   setMockServerSessionToken,
   setSpeculosUrl,
-  setSpeculosVncUrl,
   setSpeculosDeviceModel,
+  setDeviceScreenCollapsed,
   setAppProvider,
   setPollingInterval,
   setBypassIntentQueue,

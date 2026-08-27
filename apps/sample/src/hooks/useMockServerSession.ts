@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { DmkNetworkClientError } from "@ledgerhq/device-management-kit";
-import { type Session } from "@ledgerhq/device-mockserver-client";
+import {
+  type MockClient,
+  type Session,
+} from "@ledgerhq/device-mockserver-client";
 
 import { useMockClient } from "@/hooks/useMockClient";
 import {
@@ -10,6 +13,7 @@ import {
   selectTransportType,
 } from "@/state/settings/selectors";
 import { setMockServerSessionToken } from "@/state/settings/slice";
+import { DEFAULT_MOCK_DEVICES } from "@/utils/defaultMockDevices";
 
 export type MockServerSessionStatus =
   | "disabled"
@@ -25,6 +29,22 @@ export type MockServerSessionState = {
 };
 
 const REFRESH_INTERVAL_MS = 5000;
+
+/**
+ * Give a new session the default devices, so the app opens with something to
+ * connect to. Seeding is best effort: a session without devices is still
+ * usable, and the Mock view can add them by hand.
+ */
+async function seedDefaultDevices(client: MockClient): Promise<void> {
+  try {
+    if ((await client.listDevices()).length > 0) return;
+    for (const device of DEFAULT_MOCK_DEVICES) {
+      await client.addDevice(device);
+    }
+  } catch (error) {
+    console.warn("Failed to seed the default mock devices", error);
+  }
+}
 
 /**
  * Resolves (and shares) the mock server session used by the mockserver
@@ -61,6 +81,8 @@ export function useMockServerSession(): MockServerSessionState {
     // recreates the client and re-runs this effect with the new token.
     const provisionSession = async () => {
       const provisioned = await client.authenticate();
+      if (cancelled) return;
+      await seedDefaultDevices(client);
       if (cancelled) return;
       dispatch(
         setMockServerSessionToken({ mockServerSessionToken: provisioned }),

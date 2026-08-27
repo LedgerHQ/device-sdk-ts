@@ -400,6 +400,78 @@ describe("MockClient", () => {
         model: "stax",
       });
     });
+
+    it("requests the screenshot as a blob", async () => {
+      const png = new Blob([new Uint8Array([0x89, 0x50])], {
+        type: "image/png",
+      });
+      const http = httpClientStubBuilder().mockResponse({
+        method: "get",
+        endpoint: "devices/dev-1/speculos/screenshot",
+        response: png,
+      });
+      const client = new MockClient("http://localhost:8080", {
+        token: "tok",
+        httpClient: http,
+      });
+
+      const screenshot = await client.getScreenshot("dev-1");
+
+      expect(screenshot).toBe(png);
+      // Anything but "blob" would decode the PNG as text and corrupt it.
+      const request = http.configs.find(
+        ({ endpoint }) => endpoint === "devices/dev-1/speculos/screenshot",
+      );
+      expect(request?.config?.responseType).toBe("blob");
+    });
+
+    it("presses a button", async () => {
+      const http = httpClientStubBuilder();
+      const client = new MockClient("http://localhost:8080", {
+        token: "tok",
+        httpClient: http,
+      });
+
+      await client.pressButton("dev-1", "both");
+
+      expect(http.calls).toContainEqual({
+        method: "post",
+        endpoint: "devices/dev-1/speculos/button/both",
+        body: { action: "press-and-release" },
+      });
+    });
+
+    it("forwards an explicit button action", async () => {
+      const http = httpClientStubBuilder();
+      const client = new MockClient("http://localhost:8080", {
+        token: "tok",
+        httpClient: http,
+      });
+
+      await client.pressButton("dev-1", "left", "press");
+
+      expect(http.calls).toContainEqual({
+        method: "post",
+        endpoint: "devices/dev-1/speculos/button/left",
+        body: { action: "press" },
+      });
+    });
+
+    it("taps the screen at device coordinates", async () => {
+      const http = httpClientStubBuilder();
+      const client = new MockClient("http://localhost:8080", {
+        token: "tok",
+        httpClient: http,
+      });
+
+      await client.touchScreen("dev-1", 200, 537);
+
+      expect(http.calls).toContainEqual({
+        method: "post",
+        endpoint: "devices/dev-1/speculos/finger",
+        body: { action: "press-and-release", x: 200, y: 537 },
+      });
+    });
   });
 
   describe("session", () => {

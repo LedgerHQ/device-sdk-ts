@@ -18,6 +18,12 @@ const EMULATOR_URL = "https://emulator.test";
 const OPEN_BITCOIN = "e0d8000007426974636f696e";
 const CLOSE_APP = "b0a7000000";
 
+// A PNG header: the 0x89 lead byte and the 0x0d0a1a0a run do not survive a
+// UTF-8 round trip, so this doubles as the binary-passthrough assertion.
+const SCREENSHOT_BYTES = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0xfe,
+]);
+
 const fakeResponse = (
   body: unknown,
   init: { ok?: boolean; status?: number; contentType?: string } = {},
@@ -29,6 +35,17 @@ const fakeResponse = (
     json: () => Promise.resolve(body),
     text: () =>
       Promise.resolve(typeof body === "string" ? body : JSON.stringify(body)),
+    arrayBuffer: () => {
+      const buffer = Buffer.isBuffer(body)
+        ? body
+        : Buffer.from(typeof body === "string" ? body : JSON.stringify(body));
+      return Promise.resolve(
+        buffer.buffer.slice(
+          buffer.byteOffset,
+          buffer.byteOffset + buffer.byteLength,
+        ) as ArrayBuffer,
+      );
+    },
   }) as unknown as Response;
 
 let server: Server;
@@ -49,7 +66,7 @@ const route = (url: string, init?: RequestInit): Response => {
   if (url === `${EMULATOR_URL}/apdu`) return fakeResponse({ data: "ff9000" });
   // Raw passthrough (e.g. screenshot).
   if (url.startsWith(`${EMULATOR_URL}/`)) {
-    return fakeResponse("PNG-BYTES", { contentType: "image/png" });
+    return fakeResponse(SCREENSHOT_BYTES, { contentType: "image/png" });
   }
   throw new Error(`unexpected fetch: ${init?.method ?? "GET"} ${url}`);
 };
@@ -166,7 +183,9 @@ describe("createMockServer + Speculos (HTTP contract)", () => {
     );
     expect(screenshot.status).toBe(200);
     expect(screenshot.headers.get("content-type")).toMatch(/^image\/png/);
-    expect(await screenshot.text()).toBe("PNG-BYTES");
+    expect(Buffer.from(await screenshot.arrayBuffer())).toEqual(
+      SCREENSHOT_BYTES,
+    );
 
     // Close App releases the emulator and reverts to mock mode.
     const closed = (await (await sendApdu(token, id, CLOSE_APP)).json()) as {

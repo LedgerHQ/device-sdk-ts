@@ -13,10 +13,12 @@ export const selectMockServerSessionToken = (state: RootState) =>
   state.settings.mockServerSessionToken;
 export const selectSpeculosUrl = (state: RootState) =>
   state.settings.speculosUrl;
-export const selectSpeculosVncUrl = (state: RootState) =>
-  state.settings.speculosVncUrl;
 export const selectSpeculosDeviceModel = (state: RootState) =>
   state.settings.speculosDeviceModel;
+
+// UI settings selectors
+export const selectDeviceScreenCollapsed = (state: RootState) =>
+  state.settings.deviceScreenCollapsed;
 
 // Derived transport config selector (memoized to avoid creating new objects on every render)
 export const selectTransportConfig = createSelector(
