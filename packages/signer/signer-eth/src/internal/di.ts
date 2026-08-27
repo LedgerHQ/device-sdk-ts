@@ -6,6 +6,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
+import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { addressModuleFactory } from "@internal/address/di/addressModule";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { eip7702ModuleFactory } from "@internal/eip7702/di/eip7702Module";
@@ -19,12 +20,14 @@ export type MakeContainerProps = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
+  addressBook?: EvmAddressBook;
 };
 
 export const makeContainer = ({
   dmk,
   sessionId,
   contextModule,
+  addressBook,
 }: MakeContainerProps) => {
   const container = new Container();
 
@@ -35,6 +38,11 @@ export const makeContainer = ({
   container
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
+  // Always bound: an absent address book is an empty one, which simply never
+  // matches, so consumers never have to handle `undefined`.
+  container
+    .bind<EvmAddressBook>(externalTypes.AddressBook)
+    .toConstantValue(addressBook ?? { contactGroups: [], ledgerAccounts: [] });
 
   container
     .bind<

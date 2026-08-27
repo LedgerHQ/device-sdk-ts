@@ -12,6 +12,7 @@ import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactio
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
@@ -37,13 +38,24 @@ type DefaultSignerConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
+  addressBook?: EvmAddressBook;
 };
 
 export class DefaultSignerEth implements SignerEth {
   private _container: Container;
 
-  constructor({ dmk, sessionId, contextModule }: DefaultSignerConstructorArgs) {
-    this._container = makeContainer({ dmk, sessionId, contextModule });
+  constructor({
+    dmk,
+    sessionId,
+    contextModule,
+    addressBook,
+  }: DefaultSignerConstructorArgs) {
+    this._container = makeContainer({
+      dmk,
+      sessionId,
+      contextModule,
+      addressBook,
+    });
   }
 
   signTransaction(
