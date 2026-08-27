@@ -8,6 +8,7 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 
+import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { DefaultSignerEth } from "@internal/DefaultSignerEth";
 
 type SignerEthBuilderConstructorArgs = {
@@ -30,6 +31,7 @@ export class SignerEthBuilder {
   private _sessionId: DeviceSessionId;
   private _customContextModule: ContextModule | undefined;
   private _originToken: string | undefined;
+  private _addressBook: EvmAddressBook | undefined;
 
   constructor({
     dmk,
@@ -53,6 +55,20 @@ export class SignerEthBuilder {
   }
 
   /**
+   * Provide the EVM-compatible address book used to clear-sign contact names.
+   *
+   * The snapshot must be complete: the signer neither mutates nor persists it,
+   * and reads it as-is. Rebuild the signer to pick up later changes.
+   *
+   * @param addressBook a complete EVM address-book snapshot
+   * @returns this
+   */
+  withAddressBook(addressBook: EvmAddressBook) {
+    this._addressBook = addressBook;
+    return this;
+  }
+
+  /**
    * Build the ethereum signer
    *
    * @returns the ethereum signer
@@ -72,6 +88,7 @@ export class SignerEthBuilder {
       dmk: this._dmk,
       sessionId: this._sessionId,
       contextModule,
+      addressBook: this._addressBook,
     });
   }
 }

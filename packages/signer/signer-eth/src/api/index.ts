@@ -44,6 +44,7 @@ export {
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";
+export * from "@api/model/EvmAddressBook";
 export * from "@api/model/Signature";
 export * from "@api/model/TransactionOptions";
 export * from "@api/model/TransactionType";
