@@ -12,7 +12,6 @@
 import React, { type PropsWithChildren } from "react";
 import { Provider as StoreProvider } from "react-redux";
 import { Flex, StyleProvider } from "@ledgerhq/react-ui";
-import dynamic from "next/dynamic";
 import styled, { type DefaultTheme } from "styled-components";
 
 import { Notifications } from "@/components/Notifications";
@@ -31,16 +30,6 @@ import { SignerXrpProvider } from "@/providers/SignerXrpProvider";
 import { SignerZcashProvider } from "@/providers/SignerZcashProvider";
 import { store } from "@/state/store";
 import { GlobalStyle } from "@/styles/globalstyles";
-
-const FloatingIcon = dynamic(
-  () =>
-    import("@/components/FloatingIcon").then((mod) => ({
-      default: mod.FloatingIcon,
-    })),
-  {
-    ssr: false,
-  },
-);
 
 const Root = styled(Flex)`
   flex-direction: row;
@@ -63,7 +52,6 @@ const RootApp: React.FC<PropsWithChildren> = ({ children }) => {
     <Root>
       <Sidebar />
       <PageContainer>{children}</PageContainer>
-      <FloatingIcon />
       <Notifications />
     </Root>
   );
