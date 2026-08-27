@@ -14,4 +14,8 @@ export {
 export { type Mock, type MockConfig, mockConfigCodec } from "./model/Mock";
 export type { Session } from "./model/Session";
 export { type SessionExport, sessionExportCodec } from "./model/SessionExport";
-export type { SpeculosInstance } from "./model/Speculos";
+export type {
+  SpeculosAction,
+  SpeculosButton,
+  SpeculosInstance,
+} from "./model/Speculos";

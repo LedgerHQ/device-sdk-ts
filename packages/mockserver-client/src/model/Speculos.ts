@@ -19,3 +19,12 @@ export const speculosInstanceCodec = Codec.interface({
   speculos_url: string,
   model: string,
 });
+
+/** A physical button on a button-driven device. */
+export type SpeculosButton = "left" | "right" | "both";
+
+/**
+ * How an input is delivered. `press-and-release` covers a normal click or tap;
+ * the split variants exist for flows that require a held input.
+ */
+export type SpeculosAction = "press" | "release" | "press-and-release";

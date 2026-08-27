@@ -17,7 +17,12 @@ import { type Device, deviceCodec, type DeviceConfig } from "./model/Device";
 import { type Mock, mockCodec, type MockConfig } from "./model/Mock";
 import { type Session, sessionCodec } from "./model/Session";
 import { type SessionExport, sessionExportCodec } from "./model/SessionExport";
-import { type SpeculosInstance, speculosInstanceCodec } from "./model/Speculos";
+import {
+  type SpeculosAction,
+  type SpeculosButton,
+  type SpeculosInstance,
+  speculosInstanceCodec,
+} from "./model/Speculos";
 
 export interface MockClientOptions {
   /**
@@ -203,6 +208,46 @@ export class MockClient {
       headers: await this.authHeaders(),
     });
     return this.decode(speculosInstanceCodec, data);
+  }
+
+  /**
+   * Capture the device's current screen as a PNG. Throws with status 409 when
+   * the device has no active instance, which is the case whenever no app is
+   * running.
+   */
+  async getScreenshot(deviceId: string): Promise<Blob> {
+    const data = await this.client.get(
+      `devices/${deviceId}/speculos/screenshot`,
+      { headers: await this.authHeaders(), responseType: "blob" },
+    );
+    return data as Blob;
+  }
+
+  /** Actuate a physical button on a button-driven device. */
+  async pressButton(
+    deviceId: string,
+    button: SpeculosButton,
+    action: SpeculosAction = "press-and-release",
+  ): Promise<void> {
+    await this.client.post(
+      `devices/${deviceId}/speculos/button/${button}`,
+      { action },
+      { headers: await this.authHeaders() },
+    );
+  }
+
+  /** Tap a touchscreen device, in device screen pixels. */
+  async touchScreen(
+    deviceId: string,
+    x: number,
+    y: number,
+    action: SpeculosAction = "press-and-release",
+  ): Promise<void> {
+    await this.client.post(
+      `devices/${deviceId}/speculos/finger`,
+      { action, x, y },
+      { headers: await this.authHeaders() },
+    );
   }
 
   // --- Session --------------------------------------------------------------
