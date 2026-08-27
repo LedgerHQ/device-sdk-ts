@@ -21,6 +21,7 @@ import { typedDataModuleFactory } from "@/modules/ethereum/typed-data/di/typedDa
 import { uniswapModuleFactory } from "@/modules/ethereum/uniswap/di/uniswapModuleFactory";
 import { nanoPkiModuleFactory } from "@/modules/multichain/pki/di/pkiModuleFactory";
 import { reporterModuleFactory } from "@/modules/multichain/reporter/di/reporterModuleFactory";
+import { signReporterModuleFactory } from "@/modules/multichain/sign-reporter/di/signReporterModuleFactory";
 import { ethereumTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/ethereumTransactionCheckModuleFactory";
 import { solanaTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/solanaTransactionCheckModuleFactory";
 import { altResolutionModuleFactory } from "@/modules/solana/alt-resolution/di/altResolutionModuleFactory";
@@ -58,6 +59,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
       container.loadSync(
         nanoPkiModuleFactory(),
         reporterModuleFactory(),
+        signReporterModuleFactory(),
         trustedNameModuleFactory(config.customTrustedNameDataSource),
         externalPluginModuleFactory(),
         dynamicNetworkModuleFactory(),
@@ -75,6 +77,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     case ContextModuleChainID.Solana:
       container.loadSync(
         nanoPkiModuleFactory(),
+        signReporterModuleFactory(),
         ownerInfoModuleFactory(),
         solanaTokenModuleFactory(),
         lifiModuleFactory(),

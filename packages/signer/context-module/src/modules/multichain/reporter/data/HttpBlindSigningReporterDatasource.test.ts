@@ -10,7 +10,7 @@ import {
   BlindSignReason,
   ClearSigningType,
 } from "@/modules/multichain/reporter/model/BlindSigningEvent";
-import { BlindSigningModelId } from "@/modules/multichain/reporter/model/BlindSigningModelId";
+import { BlindSigningModelId } from "@/shared/model/BlindSigningModelId";
 
 describe("HttpBlindSigningReporterDatasource", () => {
   const config = {
@@ -87,7 +87,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
 
       // THEN
       expect(httpMock.post).toHaveBeenCalledWith(
-        `${config.reporter!.url}/blind-signing-events`,
+        `${config.reporter!.url}/v1/blind-signing-events`,
         { ...params, source: config.appSource },
         { responseType: "void" },
       );
@@ -111,7 +111,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
 
       // THEN
       expect(httpMock.post).toHaveBeenCalledWith(
-        `${config.reporter!.url}/blind-signing-events`,
+        `${config.reporter!.url}/v1/blind-signing-events`,
         { ...paramsWithOptionalFields, source: config.appSource },
         { responseType: "void" },
       );

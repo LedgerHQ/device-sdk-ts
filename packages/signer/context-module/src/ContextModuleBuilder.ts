@@ -26,7 +26,7 @@ const DEFAULT_CAL_URL = "https://global.api.prd.ledger.com/cal/v1";
 const DEFAULT_WEB3_CHECKS_URL =
   "https://global.api.prd.ledger.com/transaction-checks/v3";
 const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
-const DEFAULT_REPORTER_URL = "https://blind-signing.api.ledger.com/ingest/v1";
+const DEFAULT_REPORTER_URL = "https://blind-signing.api.ledger.com/ingest";
 
 /**
  * Default configuration for the context module

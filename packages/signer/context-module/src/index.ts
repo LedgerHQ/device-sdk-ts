@@ -71,7 +71,7 @@ export * from "./modules/multichain/reporter/data/HttpBlindSigningReporterDataso
 export * from "./modules/multichain/reporter/domain/BlindSigningReporter";
 export * from "./modules/multichain/reporter/domain/DefaultBlindSigningReporter";
 export * from "./modules/multichain/reporter/model/BlindSigningEvent";
-export * from "./modules/multichain/reporter/model/BlindSigningModelId";
+export * from "./modules/multichain/sign-reporter/model/SignReportParams";
 export * from "./modules/multichain/transaction-check/utils/constants";
 export * from "./modules/solana/alt-resolution/data/AltResolutionDataSource";
 export * from "./modules/solana/alt-resolution/data/HttpAltResolutionDataSource";
@@ -99,6 +99,7 @@ export * from "./modules/solana/trusted-name/domain/TrustedNameContextLoader";
 export * from "./shared/domain/ContextFieldLoader";
 export * from "./shared/domain/ContextLoader";
 export * from "./shared/domain/ContextModuleChainID";
+export * from "./shared/model/BlindSigningModelId";
 export * from "./shared/model/ClearSignContext";
 export * from "./shared/model/GenericPath";
 export * from "./shared/model/TransactionSubset";
