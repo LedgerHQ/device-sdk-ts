@@ -134,6 +134,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
           poolContexts: null,
           instructionInfoContexts: null,
           challengeBoundRequirements: null,
+          unrecognizedProgramIds: [],
         },
       }),
       states: {
@@ -163,6 +164,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
                   instructionInfoContexts: event.output.instructionInfoContexts,
                   challengeBoundRequirements:
                     event.output.challengeBoundRequirements,
+                  unrecognizedProgramIds: event.output.unrecognizedProgramIds,
                 }),
               }),
             },
@@ -292,7 +294,10 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
         Degraded: { type: "final" },
       },
       output: ({ context }) =>
-        Right(context._internalState.outcome ?? "degraded"),
+        Right({
+          status: context._internalState.outcome ?? "degraded",
+          unrecognizedProgramIds: context._internalState.unrecognizedProgramIds,
+        }),
     });
   }
 

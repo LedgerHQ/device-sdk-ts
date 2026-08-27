@@ -84,6 +84,8 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
       mode: "full",
       poolContexts: [],
       instructionInfoContexts: [],
+
+      unrecognizedProgramIds: [],
     });
     provideMock = vi
       .fn()
@@ -104,7 +106,7 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
           expect(last.status).toBe(DeviceActionStatus.Completed);
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
-          ).toBe("prepared");
+          ).toEqual(expect.objectContaining({ status: "prepared" }));
           resolve();
         } catch (e) {
           reject(e);
@@ -118,6 +120,8 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
         mode: "none",
         poolContexts: [],
         instructionInfoContexts: [],
+
+        unrecognizedProgramIds: [],
       });
       run((states) => {
         try {
@@ -126,7 +130,7 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
           const last = states[states.length - 1]!;
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
-          ).toBe("degraded");
+          ).toEqual(expect.objectContaining({ status: "degraded" }));
           resolve();
         } catch (e) {
           reject(e);
@@ -150,7 +154,7 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
           const last = states[states.length - 1]!;
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
-          ).toBe("degraded");
+          ).toEqual(expect.objectContaining({ status: "degraded" }));
           resolve();
         } catch (e) {
           reject(e);
@@ -167,7 +171,7 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
           const last = states[states.length - 1]!;
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
-          ).toBe("degraded");
+          ).toEqual(expect.objectContaining({ status: "degraded" }));
           resolve();
         } catch (e) {
           reject(e);
@@ -191,7 +195,7 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
           const last = states[states.length - 1]!;
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
-          ).toBe("degraded");
+          ).toEqual(expect.objectContaining({ status: "degraded" }));
           resolve();
         } catch (e) {
           reject(e);
@@ -209,7 +213,7 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
           const last = states[states.length - 1]!;
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
-          ).toBe("degraded");
+          ).toEqual(expect.objectContaining({ status: "degraded" }));
           resolve();
         } catch (e) {
           reject(e);
@@ -226,7 +230,7 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
           const last = states[states.length - 1]!;
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
-          ).toBe("degraded");
+          ).toEqual(expect.objectContaining({ status: "degraded" }));
           resolve();
         } catch (e) {
           reject(e);
