@@ -49,7 +49,8 @@ export interface SpeculosProxyRequest {
 export interface SpeculosProxyResponse {
   readonly status: number;
   readonly contentType: string | null;
-  readonly body: string;
+  /** Raw bytes, so binary payloads such as `/screenshot` survive the relay. */
+  readonly body: Buffer;
 }
 
 /** Why opening an app via Speculos failed. */

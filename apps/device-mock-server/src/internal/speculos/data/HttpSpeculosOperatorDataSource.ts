@@ -201,7 +201,9 @@ export class HttpSpeculosOperatorDataSource
         return {
           status: upstream.status,
           contentType: upstream.headers.get("content-type"),
-          body: await upstream.text(),
+          // Relayed as bytes, not text: /screenshot answers image/png, and
+          // decoding that as UTF-8 destroys it.
+          body: Buffer.from(await upstream.arrayBuffer()),
         };
       } catch (error) {
         return throwE(
