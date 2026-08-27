@@ -56,6 +56,11 @@ function getApduP2(cmd: Command<unknown, unknown>): number {
   return cmd.getApdu().getRawApdu()[3]!;
 }
 
+/** APDU data field: everything after the 5-byte CLA/INS/P1/P2/Lc header. */
+function getApduData(cmd: Command<unknown, unknown>): Uint8Array {
+  return cmd.getApdu().getRawApdu().slice(5);
+}
+
 describe("createSignTransactionTask", () => {
   let loggerFactory: (tag: string) => LoggerPublisherService;
   let loggerTags: string[];
@@ -132,7 +137,9 @@ describe("createSignTransactionTask", () => {
       expect(loggerTags).toContain("SendPltTask");
     });
 
-    it("should send P2=0x00 on the PLT INIT frame regardless of fee-display support", async () => {
+    // Fee display needs no separate version gate: the app release that ships
+    // PLT signing ships clear-signing too, so reaching this branch is enough.
+    it("should send P2=0x01 on the PLT INIT frame at the minimum PLT version", async () => {
       const { api, sentCommands } = makeApiMock(
         makeReadyDeviceState(MIN_APP_VERSION_FOR_PLT),
       );
@@ -148,7 +155,29 @@ describe("createSignTransactionTask", () => {
       )();
 
       expect(sentCommands.length).toBeGreaterThanOrEqual(1);
-      expect(getApduP2(sentCommands[0]!)).toBe(0x00);
+      expect(getApduP2(sentCommands[0]!)).toBe(0x01);
+    });
+
+    it("should forward maxFee to the PLT task as an 8-byte big-endian suffix", async () => {
+      const { api, sentCommands } = makeApiMock(
+        makeReadyDeviceState(MIN_APP_VERSION_FOR_PLT),
+      );
+
+      await createSignTransactionTask(
+        api,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction: buildPltTransaction(),
+          maxFee: 726_675n,
+        },
+        loggerFactory,
+      )();
+
+      const init = getApduData(sentCommands[0]!);
+
+      expect(Buffer.from(init.slice(-8)).toString("hex")).toBe(
+        "00000000000b1693",
+      );
     });
 
     it("should reject PLT with UnsupportedAppVersionError on an older app", async () => {

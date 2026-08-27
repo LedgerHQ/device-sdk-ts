@@ -21,6 +21,7 @@ describe("SignPltCommand", () => {
     it("should build the INIT frame with INS=0x27, P1=0x00 and P2=0x00", () => {
       const command = new SignPltCommand({
         p1: P1.PLT_INIT,
+        p2: P2.NONE,
         data: new Uint8Array(80).fill(0x01),
       });
 
@@ -36,6 +37,7 @@ describe("SignPltCommand", () => {
     it("should build the CONT frame with P1=0x01", () => {
       const command = new SignPltCommand({
         p1: P1.PLT_CONT,
+        p2: P2.NONE,
         data: new Uint8Array(9).fill(0xcc),
       });
 
@@ -46,23 +48,25 @@ describe("SignPltCommand", () => {
       expect(raw[3]).toBe(P2.NONE);
     });
 
-    it("should keep P2 at 0x00 and not accept a fee-display flag", () => {
-      const init = new SignPltCommand({
-        p1: P1.PLT_INIT,
-        data: new Uint8Array(4),
-      });
-      const cont = new SignPltCommand({
-        p1: P1.PLT_CONT,
-        data: new Uint8Array(4),
-      });
+    // The command forwards P2 verbatim; choosing it per frame is the caller's
+    // job, because the device accepts fee display only on INIT.
+    it("should forward P2 to the APDU rather than pinning it", () => {
+      const build = (p2: number) =>
+        new SignPltCommand({ p1: P1.PLT_INIT, p2, data: new Uint8Array(4) })
+          .getApdu()
+          .getRawApdu()[3];
 
-      expect(init.getApdu().getRawApdu()[3]).toBe(0x00);
-      expect(cont.getApdu().getRawApdu()[3]).toBe(0x00);
+      expect(build(P2.NONE)).toBe(0x00);
+      expect(build(P2.FEE_DISPLAY)).toBe(0x01);
     });
 
     it("should include the data in the APDU payload", () => {
       const data = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
-      const command = new SignPltCommand({ p1: P1.PLT_CONT, data });
+      const command = new SignPltCommand({
+        p1: P1.PLT_CONT,
+        p2: P2.NONE,
+        data,
+      });
 
       const raw = command.getApdu().getRawApdu();
 
@@ -74,6 +78,7 @@ describe("SignPltCommand", () => {
     it("should return an empty signature for INIT and intermediate CONT frames", () => {
       const command = new SignPltCommand({
         p1: P1.PLT_INIT,
+        p2: P2.NONE,
         data: new Uint8Array(4),
       });
 
@@ -88,6 +93,7 @@ describe("SignPltCommand", () => {
     it("should extract the 64-byte signature from the final CONT frame", () => {
       const command = new SignPltCommand({
         p1: P1.PLT_CONT,
+        p2: P2.NONE,
         data: new Uint8Array(9),
       });
       const signature = new Uint8Array(64).fill(0xab);
@@ -118,6 +124,7 @@ describe("SignPltCommand", () => {
     ])("should map status word %s to a typed error", (statusCode, expected) => {
       const command = new SignPltCommand({
         p1: P1.PLT_CONT,
+        p2: P2.NONE,
         data: new Uint8Array(4),
       });
 

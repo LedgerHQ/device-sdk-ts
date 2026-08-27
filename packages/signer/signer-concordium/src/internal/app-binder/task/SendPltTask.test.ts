@@ -13,10 +13,12 @@ import {
   ConcordiumErrorCodes,
 } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
 import { encodeDerivationPath } from "@internal/app-binder/command/utils/EncodeDerivationPath";
-import { INS, LEDGER_CLA, P1 } from "@internal/app-binder/constants";
+import { encodeMaxFeeBigEndian } from "@internal/app-binder/command/utils/EncodeMaxFee";
+import { INS, LEDGER_CLA, P1, P2 } from "@internal/app-binder/constants";
 import { SendPltTask } from "@internal/app-binder/task/SendPltTask";
 
 const DERIVATION_PATH = "44'/919'/0'/0'/0'";
+const MAX_FEE = 726_675n;
 const HEADER = new Uint8Array(60).fill(0x11);
 const KIND_TOKEN_UPDATE = 0x1b;
 const SIGNATURE = new Uint8Array(64).fill(0xab);
@@ -86,7 +88,7 @@ describe("SendPltTask", () => {
 
     const result = await new SendPltTask(
       api,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
       makeLogger(),
     ).run();
 
@@ -105,7 +107,7 @@ describe("SendPltTask", () => {
 
     await new SendPltTask(
       api,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
       makeLogger(),
     ).run();
 
@@ -121,6 +123,7 @@ describe("SendPltTask", () => {
       0x00,
       0x00,
       cbor.length,
+      ...encodeMaxFeeBigEndian(MAX_FEE),
     ]);
 
     expect(init.cla).toBe(LEDGER_CLA);
@@ -129,13 +132,13 @@ describe("SendPltTask", () => {
     expect(init.data).toStrictEqual(expected);
   });
 
-  it("should carry P2=0x00 on the INIT frame and append no fee suffix", async () => {
+  it("should carry P2=0x01 on the INIT frame and end with the 8-byte fee", async () => {
     const { api, sentCommands } = makeApiMock();
     const transaction = buildTransaction();
 
     await new SendPltTask(
       api,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
       makeLogger(),
     ).run();
 
@@ -143,11 +146,48 @@ describe("SendPltTask", () => {
     const pathBytes = encodeDerivationPath(DERIVATION_PATH);
     const tokenIdLength = 3;
 
-    expect(init.p2).toBe(0x00);
-    // Ends exactly at cbor_total_length: no trailing 8-byte fee.
+    expect(init.p2).toBe(P2.FEE_DISPLAY);
     expect(init.data).toHaveLength(
-      pathBytes.length + 60 + 1 + 1 + tokenIdLength + 4,
+      pathBytes.length + 60 + 1 + 1 + tokenIdLength + 4 + 8,
     );
+    expect(init.data.slice(-8)).toStrictEqual(encodeMaxFeeBigEndian(MAX_FEE));
+  });
+
+  // The device accepts fee display only on INIT; a CONT frame with 0x01 gets 0x6B00.
+  it("should carry P2=0x00 on every CONT frame", async () => {
+    const { api, sentCommands } = makeApiMock();
+    const transaction = buildTransaction({ cbor: new Uint8Array(300) });
+
+    await new SendPltTask(
+      api,
+      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
+      makeLogger(),
+    ).run();
+
+    const contP2 = sentCommands.slice(1).map((cmd) => apduOf(cmd).p2);
+
+    expect(contP2.length).toBeGreaterThan(1);
+    expect(contP2.every((p2) => p2 === P2.NONE)).toBe(true);
+  });
+
+  it("should not change the signed bytes when the fee changes", async () => {
+    const run = async (maxFee: bigint) => {
+      const { api, sentCommands } = makeApiMock();
+      await new SendPltTask(
+        api,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction: buildTransaction(),
+          maxFee,
+        },
+        makeLogger(),
+      ).run();
+      const init = apduOf(sentCommands[0]!);
+      // Everything before the fee suffix is what the device hashes.
+      return Buffer.from(init.data.slice(0, -8)).toString("hex");
+    };
+
+    expect(await run(1n)).toBe(await run(999_999n));
   });
 
   it("should send the CBOR payload as CONT frames of at most APDU_MAX_PAYLOAD bytes", async () => {
@@ -158,7 +198,7 @@ describe("SendPltTask", () => {
 
     await new SendPltTask(
       api,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
       makeLogger(),
     ).run();
 
@@ -183,7 +223,7 @@ describe("SendPltTask", () => {
 
     await new SendPltTask(
       api,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
       makeLogger(),
     ).run();
 
@@ -201,7 +241,11 @@ describe("SendPltTask", () => {
 
     const result = await new SendPltTask(
       api,
-      { derivationPath: "44'/919'/0'/0'/0'", transaction },
+      {
+        derivationPath: "44'/919'/0'/0'/0'",
+        transaction,
+        maxFee: MAX_FEE,
+      },
       makeLogger(),
     ).run();
 
@@ -220,7 +264,11 @@ describe("SendPltTask", () => {
 
     const result = await new SendPltTask(
       api,
-      { derivationPath: DERIVATION_PATH, transaction: buildTransaction() },
+      {
+        derivationPath: DERIVATION_PATH,
+        transaction: buildTransaction(),
+        maxFee: MAX_FEE,
+      },
       makeLogger(),
     ).run();
 
@@ -241,6 +289,7 @@ describe("SendPltTask", () => {
       {
         derivationPath: DERIVATION_PATH,
         transaction: buildTransaction({ cbor }),
+        maxFee: MAX_FEE,
       },
       makeLogger(),
     ).run();
@@ -249,9 +298,8 @@ describe("SendPltTask", () => {
     expect(isSuccessCommandResult(result)).toBe(false);
   });
 
-  describe("firmware fixture parity", () => {
-    // Fixtures from app-concordium/tests/standalone/test_sign_plt.py.
-    // _HEADER_60: sender[32] + seq_num[8]=10 + energy[8]=100 + payload_size[4]
+  describe("device contract parity", () => {
+    // header(60): sender[32] + seqNum[8]=10 + energy[8]=100 + payloadSize[4]
     // + expiry[8]=0x63de5da7.
     const FIXTURE_HEADER = Uint8Array.from(
       Buffer.from(
@@ -263,9 +311,9 @@ describe("SendPltTask", () => {
         "hex",
       ),
     );
-    // _TOKEN_ID_MIN = b"T"
+    // Shortest token id the device accepts: one byte.
     const FIXTURE_TOKEN_ID = new Uint8Array([0x54]);
-    // _CBOR_SMALL = array(1) [ map(1) { "pause": map(0) } ]
+    // array(1) [ map(1) { "pause": map(0) } ]
     const FIXTURE_CBOR = new Uint8Array([
       0x81, 0xa1, 0x65, 0x70, 0x61, 0x75, 0x73, 0x65, 0xa0,
     ]);
@@ -275,12 +323,7 @@ describe("SendPltTask", () => {
     // regression in encodeDerivationPath fails this test rather than being
     // cancelled out by using the same function on both sides.
     //
-    // [depth:1 = 8][node:4 BE] x 8, every node hardened. The firmware fixture
-    // sends these nodes UNhardened, because ragger's pack_derivation_path only
-    // sets the hardened bit for elements written with a "\'" suffix. That is not
-    // a divergence in practice: parse_derivation_path() calls
-    // harden_derivation_path() unconditionally (derivation_path.c:119), so the
-    // device hardens every node whatever arrives on the wire.
+    // [depth:1 = 8][node:4 BE] x 8, every node hardened.
     const FIXTURE_PATH_BYTES = Uint8Array.from(
       Buffer.from(
         "08" +
@@ -315,14 +358,13 @@ describe("SendPltTask", () => {
         {
           derivationPath: FIXTURE_PATH,
           transaction: fixtureTransaction(FIXTURE_CBOR),
+          maxFee: MAX_FEE,
         },
         makeLogger(),
       ).run();
 
       const init = apduOf(sentCommands[0]!);
-      // test_sign_plt_ui.py:450 —
-      // pack_derivation_path(path) + header_60 + [0x1B, len(token_id)]
-      // + token_id + len(cbor).to_bytes(4, "big")
+      // cborLength is 4 bytes big-endian, then the 8-byte fee suffix.
       const expected = new Uint8Array([
         ...FIXTURE_PATH_BYTES,
         ...FIXTURE_HEADER,
@@ -333,8 +375,10 @@ describe("SendPltTask", () => {
         0x00,
         0x00,
         FIXTURE_CBOR.length,
+        ...encodeMaxFeeBigEndian(MAX_FEE),
       ]);
 
+      expect(init.p2).toBe(P2.FEE_DISPLAY);
       expect(init.data).toStrictEqual(expected);
     });
 
@@ -344,13 +388,17 @@ describe("SendPltTask", () => {
       );
     });
 
-    it("should split a 512-byte payload as 255 + 255 + 2, matching test_sign_plt_exact_cbor_max", async () => {
+    it("should split a payload at the 512-byte CBOR maximum as 255 + 255 + 2", async () => {
       const { api, sentCommands } = makeApiMock();
       const cbor = new Uint8Array(512);
 
       await new SendPltTask(
         api,
-        { derivationPath: FIXTURE_PATH, transaction: fixtureTransaction(cbor) },
+        {
+          derivationPath: FIXTURE_PATH,
+          transaction: fixtureTransaction(cbor),
+          maxFee: MAX_FEE,
+        },
         makeLogger(),
       ).run();
 
@@ -361,13 +409,17 @@ describe("SendPltTask", () => {
       expect(contLengths).toStrictEqual([255, 255, 2]);
     });
 
-    it("should send a 300-byte payload as two CONT frames, matching test_sign_plt_multi_cont_frame", async () => {
+    it("should send a 300-byte payload as two CONT frames", async () => {
       const { api, sentCommands } = makeApiMock();
       const cbor = new Uint8Array(300);
 
       await new SendPltTask(
         api,
-        { derivationPath: FIXTURE_PATH, transaction: fixtureTransaction(cbor) },
+        {
+          derivationPath: FIXTURE_PATH,
+          transaction: fixtureTransaction(cbor),
+          maxFee: MAX_FEE,
+        },
         makeLogger(),
       ).run();
 
@@ -385,7 +437,7 @@ describe("SendPltTask", () => {
 
       const result = await new SendPltTask(
         api,
-        { derivationPath: DERIVATION_PATH, transaction },
+        { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
         makeLogger(),
       ).run();
 

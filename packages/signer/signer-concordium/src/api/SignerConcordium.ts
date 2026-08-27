@@ -24,7 +24,8 @@ export interface SignerConcordium {
    * TokenUpdate (27, PLT).
    *
    * @param maxFee - Maximum fee in µCCD, shown on the device review screens.
-   *   Ignored for PLT transactions, whose review screens display no fee.
+   *   Used for every supported kind, PLT included. The device does not hash it,
+   *   so it affects the display only.
    */
   signTransaction: (
     derivationPath: string,
