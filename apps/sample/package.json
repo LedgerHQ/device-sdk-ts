@@ -22,6 +22,7 @@
     "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/crypto-icons": "catalog:",
     "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-contacts-kit": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-core": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-websocket-common": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-websocket-connector": "workspace:^",

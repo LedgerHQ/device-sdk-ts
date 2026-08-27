@@ -4,6 +4,8 @@ import { ContactsAppBinder } from "@internal/app-binder/ContactsAppBinder";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { makeContainer } from "@internal/di";
 import { externalTypes } from "@internal/externalTypes";
+import { useCaseTypes } from "@internal/use-cases/di/useCaseTypes";
+import { RegisterExternalAddressUseCase } from "@internal/use-cases/RegisterExternalAddressUseCase";
 
 describe("makeContainer", () => {
   const dmk = {} as DeviceManagementKit;
@@ -22,5 +24,11 @@ describe("makeContainer", () => {
     expect(container.get(appBinderTypes.AppBinder)).toBeInstanceOf(
       ContactsAppBinder,
     );
+  });
+
+  it("binds the RegisterExternalAddressUseCase", () => {
+    expect(
+      container.get(useCaseTypes.RegisterExternalAddressUseCase),
+    ).toBeInstanceOf(RegisterExternalAddressUseCase);
   });
 });
