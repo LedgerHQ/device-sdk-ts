@@ -16,10 +16,11 @@ import {
   ConcordiumAppCommandErrorFactory,
   type ConcordiumErrorCodes,
 } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
-import { INS, LEDGER_CLA, P2 } from "@internal/app-binder/constants";
+import { INS, LEDGER_CLA } from "@internal/app-binder/constants";
 
 export type SignPltCommandArgs = {
   readonly p1: number;
+  readonly p2: number;
   readonly data: Uint8Array;
 };
 
@@ -32,9 +33,10 @@ export type SignPltCommandResponse = Signature;
 /**
  * PLT (Protocol Level Token) signing, INS 0x27.
  *
- * P2 is fixed at 0x00 — the handler returns 0x6B00 for any other value, so it
- * is not exposed as an argument. The PLT review screens display no fee, so the
- * fee-display extension used by the CCD signing paths does not apply here.
+ * P2 selects fee display on the INIT frame: `0x00` sends no fee, `0x01` appends
+ * an 8-byte big-endian µCCD suffix and the device renders a "Max fees" step.
+ * A CONT frame must use `0x00`, and returns 0x6B00 otherwise, so the caller
+ * chooses P2 per frame rather than reusing one value for the whole flow.
  */
 export class SignPltCommand
   implements
@@ -58,7 +60,7 @@ export class SignPltCommand
       cla: LEDGER_CLA,
       ins: INS.SIGN_PLT,
       p1: this.args.p1,
-      p2: P2.NONE,
+      p2: this.args.p2,
     });
 
     apduBuilder.addBufferToData(this.args.data);
