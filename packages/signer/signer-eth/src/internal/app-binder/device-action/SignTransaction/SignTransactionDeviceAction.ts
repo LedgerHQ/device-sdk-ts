@@ -38,7 +38,7 @@ import {
   Web3CheckOptInCommand,
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
-import { APP_NAME } from "@internal/app-binder/constants";
+import { APP_NAME, SELECTOR_ID_LENGTH } from "@internal/app-binder/constants";
 import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 import {
   BlindSigningDetectionTask,
@@ -634,6 +634,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   usedFallback,
                   chainId: subset?.chainId ?? null,
                   targetAddress: subset?.to ?? null,
+                  selectorId:
+                    subset?.selector &&
+                    subset.selector.length === SELECTOR_ID_LENGTH
+                      ? subset.selector
+                      : null,
                   deviceModelId: internalApi.getDeviceModel().id,
                   signerAppVersion:
                     context._internalState.appConfig?.version ?? "",
