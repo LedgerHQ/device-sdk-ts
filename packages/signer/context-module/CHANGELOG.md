@@ -1,5 +1,17 @@
 # @ledgerhq/context-module
 
+## 2.5.0
+
+### Minor Changes
+
+- [#1791](https://github.com/LedgerHQ/device-sdk-ts/pull/1791) [`8bd6cf3`](https://github.com/LedgerHQ/device-sdk-ts/commit/8bd6cf3f2ed9b60ede2bce7193d24ac40c9c65ce) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add SignReporter module with v2 blind-sign API support. Moves BlindSigningModelId to shared/model/, extends BlindSignReason with UNRECOGNIZED_PROGRAM, and introduces signReport?() on ContextModule posting a three-layer payload to /v2/blind-signing-events.
+
+### Patch Changes
+
+- [#1796](https://github.com/LedgerHQ/device-sdk-ts/pull/1796) [`089b421`](https://github.com/LedgerHQ/device-sdk-ts/commit/089b421cd1d2e7d16d99cfaf145c1776522c5cfb) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add log in blind sign reporter
+
+- [#1809](https://github.com/LedgerHQ/device-sdk-ts/pull/1809) [`a3de88a`](https://github.com/LedgerHQ/device-sdk-ts/commit/a3de88a7b6720729adec59294f9a793a1afcaff2) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - disable blind sign reporter v2
+
 ## 2.4.1
 
 ### Patch Changes
