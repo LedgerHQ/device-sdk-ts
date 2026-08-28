@@ -25,15 +25,17 @@ export class DefaultSolanaTransactionProgramRepository
     programId: string,
     scanLimit?: number,
     samplesPerInstruction?: number,
+    distill?: boolean,
   ): Promise<SolanaTransactionData[]> {
     this.logger.debug("Getting clear-signable transactions for program", {
-      data: { programId, scanLimit, samplesPerInstruction },
+      data: { programId, scanLimit, samplesPerInstruction, distill },
     });
 
     const transactions = await this.rpcAdapter.fetchClearSignableTransactions(
       programId,
       scanLimit,
       samplesPerInstruction,
+      distill,
     );
 
     this.logger.debug("Got transactions", {

@@ -89,6 +89,7 @@ jobs:
           device: ${{ matrix.device }}
           coin-app: Solana
           use-rpc: "true"
+          use-distill: "true"
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: solana-program-cs-tester-logs

@@ -19,6 +19,7 @@ export type TestSolanaProgramConfig = {
   readonly skipCraft?: boolean;
   readonly scanLimit?: number;
   readonly samplesPerInstruction?: number;
+  readonly distill?: boolean;
 };
 
 @injectable()
@@ -45,6 +46,7 @@ export class TestSolanaProgramUseCase {
       config.programId,
       config.scanLimit,
       config.samplesPerInstruction,
+      config.distill,
     );
 
     if (txs.length === 0) {

@@ -5,5 +5,6 @@ export interface SolanaTransactionProgramRepository {
     programId: string,
     scanLimit?: number,
     samplesPerInstruction?: number,
+    distill?: boolean,
   ): Promise<SolanaTransactionData[]>;
 }

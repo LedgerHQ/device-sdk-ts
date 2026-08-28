@@ -54,6 +54,7 @@ export type SolanaCliConfig = {
   // extras
   derivationPath: string;
   skipCraft?: boolean;
+  distill?: boolean;
 
   // Start Speculos only (skip DMK initialization)
   onlySpeculos?: boolean;
@@ -218,6 +219,11 @@ export class SolanaTransactionTesterCli {
       .option(
         "--skip-craft",
         "Skip payer replacement (transaction crafting) for all transactions",
+        false,
+      )
+      .option(
+        "--distill",
+        "Enable transaction distillation for program commands: filters to a single clear-signable instruction per transaction (default: off)",
         false,
       )
       .option(
@@ -422,6 +428,7 @@ export class SolanaTransactionTesterCli {
       skipCraft: this.config.skipCraft,
       scanLimit: this.config.scanLimit,
       samplesPerInstruction: this.config.samplesPerInstruction,
+      distill: this.config.distill,
     };
 
     const result = await testUseCase.execute(config);
@@ -456,6 +463,7 @@ export class SolanaTransactionTesterCli {
           skipCraft: this.config.skipCraft,
           scanLimit: this.config.scanLimit,
           samplesPerInstruction: this.config.samplesPerInstruction,
+          distill: this.config.distill,
         };
 
         const result = await testUseCase.execute(config);
