@@ -1,5 +1,4 @@
 import {
-  type AppConfig,
   ApplicationChecker,
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
@@ -11,23 +10,32 @@ import {
 
 import { ContactsApplicationResolver } from "./ContactsApplicationResolver";
 
+/** The running app's identity, read freshly from the device. */
+export type RunningApp = {
+  readonly name: string;
+  readonly version: string;
+};
+
 /**
  * Session-aware Contacts support check, for internal consumption by Contacts
- * `DeviceAction`s. Reads the current device session and resolves it against the
- * static requirements table:
+ * `DeviceAction`s. Resolves the given running app against the static
+ * requirements table:
  * - the device model must be supported;
- * - the running app must be known to Contacts and meet its minimum version —
- *   validated with DMK's {@link ApplicationChecker} so the version comes from
- *   the authoritative `GetAppConfiguration` result;
+ * - the running app must be known to Contacts and meet its minimum version;
  * - the device OS must meet its minimum version (a dimension `ApplicationChecker`
  *   does not cover, so it is checked separately here).
  *
+ * The app `name` and `version` are supplied by the caller so they can come from
+ * a fresh `WaitForAppAndVersion` result rather than the (potentially stale)
+ * device session state; the model and OS come from the session state, which
+ * does not change under the caller's feet the way the running app can.
+ *
  * @param internalApi - the DeviceAction's internal API for the current session.
- * @param appConfig - the running app's configuration (must include its version).
+ * @param app - the running app's fresh name and version.
  */
 export function isContactsSupportedForSession(
   internalApi: InternalApi,
-  appConfig: AppConfig,
+  app: RunningApp,
 ): boolean {
   const deviceState = internalApi.getDeviceSessionState();
   const requirement = resolveContactsVersionRequirements(
@@ -35,16 +43,12 @@ export function isContactsSupportedForSession(
   );
   if (!requirement.supported) return false;
 
-  const appName =
-    "currentApp" in deviceState ? deviceState.currentApp?.name : undefined;
-  if (appName === undefined) return false;
-
-  const minAppVersion = requirement.minAppVersion[appName];
+  const minAppVersion = requirement.minAppVersion[app.name];
   if (minAppVersion === undefined) return false;
 
   const appCompatible = new ApplicationChecker(
     deviceState,
-    appConfig,
+    { version: app.version },
     new ContactsApplicationResolver(),
   )
     .withMinVersionInclusive(minAppVersion)

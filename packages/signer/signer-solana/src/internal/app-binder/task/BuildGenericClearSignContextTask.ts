@@ -24,17 +24,9 @@ import {
   type MatchedInstruction,
   type RequirementAccount,
 } from "@internal/app-binder/clear-sign/requirements";
+import { COMPUTE_BUDGET_PROGRAM_ID } from "@internal/app-binder/constants";
 import { type NormalizedMessage } from "@internal/app-binder/services/TransactionInspector";
 import { TransactionParser } from "@internal/app-binder/services/utils/TransactionParser";
-
-/**
- * ComputeBudget program — a hardcoded allow-list skip. It has no CAL descriptor
- * and is understood natively by the device: never looked up, never counted,
- * never streamed. `setComputeUnitPrice` (priority fee) is a ComputeBudget
- * instruction so it is covered by the same skip.
- */
-export const COMPUTE_BUDGET_PROGRAM_ID =
-  "ComputeBudget111111111111111111111111111111";
 
 export const DEFAULT_NETWORK = "solana-mainnet";
 const EMPTY_ENUM_CACHE: VariantCache = new Map();
@@ -64,6 +56,8 @@ export type GenericClearSignContext = {
   readonly instructionInfoContexts: ClearSignContext[];
   /** Challenge-bound Phase A requirements, fetched+streamed in the provide phase. */
   readonly challengeBoundRequirements: ChallengeBoundRequirements;
+  /** Programs that had no matching CAL descriptor. */
+  readonly unrecognizedProgramIds: string[];
 };
 
 export type BuildGenericClearSignContextTaskArgs = {
@@ -106,6 +100,7 @@ export class BuildGenericClearSignContextTask {
         tokenAmountAltRefs: [],
         mintAltRefs: [],
       },
+      unrecognizedProgramIds: [],
     };
 
     // --- Parse + CAL lookup + match (Stage 1) ---
@@ -159,7 +154,7 @@ export class BuildGenericClearSignContextTask {
 
     const matched: MatchedInstruction[] = [];
     const templateByKey = new Map<string, ClearSignContext>();
-    let unrecognized = 0;
+    const unrecognizedProgramIds: string[] = [];
     for (const { ix, programId } of remaining) {
       // Prefer the most specific match: a discriminator-less descriptor
       // matches any data of its program, so it must not shadow a descriptor
@@ -176,7 +171,7 @@ export class BuildGenericClearSignContextTask {
         ? this.toInstructionDescriptor(candidate.payload)
         : null;
       if (!candidate || !descriptor) {
-        unrecognized += 1;
+        unrecognizedProgramIds.push(programId);
         continue;
       }
       matched.push({
@@ -193,9 +188,19 @@ export class BuildGenericClearSignContextTask {
       );
     }
 
-    this.logTransactionInstructions(message, byProgram, matched, unrecognized);
+    this.logTransactionInstructions(
+      message,
+      byProgram,
+      matched,
+      unrecognizedProgramIds.length,
+    );
 
-    if (matched.length === 0) return none;
+    if (matched.length === 0) {
+      return {
+        ...none,
+        unrecognizedProgramIds: [...new Set(unrecognizedProgramIds)],
+      };
+    }
 
     const instructionInfoContexts = Array.from(templateByKey.values());
 
@@ -204,12 +209,20 @@ export class BuildGenericClearSignContextTask {
     // Any unrecognized instruction guarantees 6d20 so cs_transaction_reset() and
     // basic sign to 6808 (blind signing disabled). Bail out early so basic sign
     // starts from a clean device state.
-    if (unrecognized > 0) {
+    if (unrecognizedProgramIds.length > 0) {
       this.logger.warn(
         "[run] transaction has unrecognized instructions; falling back to legacy",
-        { data: { unrecognized, recognized: matched.length } },
+        {
+          data: {
+            unrecognized: unrecognizedProgramIds.length,
+            recognized: matched.length,
+          },
+        },
       );
-      return none;
+      return {
+        ...none,
+        unrecognizedProgramIds: [...new Set(unrecognizedProgramIds)],
+      };
     }
     const mode: ClearSignMode = "full";
 
@@ -221,7 +234,7 @@ export class BuildGenericClearSignContextTask {
       this.logger.warn("[run] requirement build failed; falling back", {
         data: { error: requirementsResult.extract() },
       });
-      return none;
+      return { ...none, unrecognizedProgramIds: [] };
     }
     const requirements = requirementsResult.unsafeCoerce();
 
@@ -303,6 +316,7 @@ export class BuildGenericClearSignContextTask {
       poolContexts,
       instructionInfoContexts,
       challengeBoundRequirements,
+      unrecognizedProgramIds: [],
     };
   }
 

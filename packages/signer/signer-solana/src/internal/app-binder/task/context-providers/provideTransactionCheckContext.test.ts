@@ -4,6 +4,7 @@ import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   APDU_MAX_PAYLOAD,
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -66,7 +67,7 @@ describe("provideTransactionCheckContext", () => {
     expect(web3Cmd).toBeInstanceOf(ProvideTransactionCheckCommand);
   });
 
-  it("throws when certificate load fails", async () => {
+  it("returns a failed CommandResult when certificate load fails", async () => {
     const errorResult = CommandResultFactory({
       error: { _tag: "SomeError", errorCode: 0x6a80, message: "bad" },
     });
@@ -78,9 +79,8 @@ describe("provideTransactionCheckContext", () => {
       certificate: txCheckCert,
     };
 
-    await expect(provideTransactionCheckContext(result, deps)).rejects.toThrow(
-      "Failed to send transaction-check certificate to device",
-    );
+    const out = await provideTransactionCheckContext(result, deps);
+    expect(isSuccessCommandResult(out)).toBe(false);
   });
 
   it("sends descriptor without certificate when certificate is absent", async () => {
@@ -124,7 +124,7 @@ describe("provideTransactionCheckContext", () => {
     ).toBe(true);
   });
 
-  it("throws when descriptor sending fails", async () => {
+  it("returns a failed CommandResult when descriptor sending fails", async () => {
     api.sendCommand.mockResolvedValueOnce(
       CommandResultFactory({
         error: { _tag: "SomeError", errorCode: 0x6a80, message: "bad" },
@@ -137,9 +137,8 @@ describe("provideTransactionCheckContext", () => {
       certificate: undefined,
     };
 
-    await expect(
-      provideTransactionCheckContext(result as any, deps),
-    ).rejects.toThrow("Failed to send transaction-check descriptor to device");
+    const out = await provideTransactionCheckContext(result as any, deps);
+    expect(isSuccessCommandResult(out)).toBe(false);
   });
 
   it("warns and returns when descriptor is unparseable", async () => {

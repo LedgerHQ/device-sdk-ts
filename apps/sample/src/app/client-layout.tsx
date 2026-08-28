@@ -12,7 +12,6 @@
 import React, { type PropsWithChildren } from "react";
 import { Provider as StoreProvider } from "react-redux";
 import { Flex, StyleProvider } from "@ledgerhq/react-ui";
-import dynamic from "next/dynamic";
 import styled, { type DefaultTheme } from "styled-components";
 
 import { Notifications } from "@/components/Notifications";
@@ -20,6 +19,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useUpdateConnectionsRefresherOptions } from "@/hooks/useUpdateConnectionsRefresherOptions";
 import { useUpdateDeviceSessions } from "@/hooks/useUpdateDeviceSessions";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
+import { ContactsProvider } from "@/providers/ContactsProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SettingsGate } from "@/providers/SettingsGate";
@@ -31,16 +31,6 @@ import { SignerXrpProvider } from "@/providers/SignerXrpProvider";
 import { SignerZcashProvider } from "@/providers/SignerZcashProvider";
 import { store } from "@/state/store";
 import { GlobalStyle } from "@/styles/globalstyles";
-
-const FloatingIcon = dynamic(
-  () =>
-    import("@/components/FloatingIcon").then((mod) => ({
-      default: mod.FloatingIcon,
-    })),
-  {
-    ssr: false,
-  },
-);
 
 const Root = styled(Flex)`
   flex-direction: row;
@@ -63,7 +53,6 @@ const RootApp: React.FC<PropsWithChildren> = ({ children }) => {
     <Root>
       <Sidebar />
       <PageContainer>{children}</PageContainer>
-      <FloatingIcon />
       <Notifications />
     </Root>
   );
@@ -83,18 +72,20 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                       <SignerZcashProvider>
                         <SignerAleoProvider>
                           <SignerCosmosProvider>
-                            <CalInterceptorProvider>
-                              <GlobalStyle />
-                              <head>
-                                <link
-                                  rel="shortcut icon"
-                                  href="../favicon.png"
-                                />
-                              </head>
-                              <body>
-                                <RootApp>{children}</RootApp>
-                              </body>
-                            </CalInterceptorProvider>
+                            <ContactsProvider>
+                              <CalInterceptorProvider>
+                                <GlobalStyle />
+                                <head>
+                                  <link
+                                    rel="shortcut icon"
+                                    href="../favicon.png"
+                                  />
+                                </head>
+                                <body>
+                                  <RootApp>{children}</RootApp>
+                                </body>
+                              </CalInterceptorProvider>
+                            </ContactsProvider>
                           </SignerCosmosProvider>
                         </SignerAleoProvider>
                       </SignerZcashProvider>

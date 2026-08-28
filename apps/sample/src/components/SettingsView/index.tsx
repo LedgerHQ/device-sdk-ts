@@ -21,7 +21,6 @@ import { SectionTitle } from "./SectionTitle";
 import { SpeculosDeviceModelSetting } from "./SpeculosDeviceModelSetting";
 import { SpeculosToggleSetting } from "./SpeculosToggleSetting";
 import { SpeculosUrlSetting } from "./SpeculosUrlSetting";
-import { SpeculosVncUrlSetting } from "./SpeculosVncUrlSetting";
 import { Web3ChecksUrlSetting } from "./Web3ChecksUrlSetting";
 
 const SectionContainer = Block;
@@ -41,7 +40,6 @@ export const SettingsView: React.FC = () => {
           <SectionTitle>Speculos</SectionTitle>
           <SpeculosToggleSetting />
           <SpeculosUrlSetting />
-          <SpeculosVncUrlSetting />
           <SpeculosDeviceModelSetting />
         </SectionContainer>
 

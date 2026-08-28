@@ -28,6 +28,10 @@ inputs:
     description: "Include Solana RPC flags (--rpc-url, --scan-limit, --samples-per-instruction)"
     required: false
     default: "false"
+  use-distill:
+    description: "Enable transaction distillation for program commands (--distill flag)"
+    required: false
+    default: "false"
   scan-limit:
     description: "Number of signatures to scan (only when use-rpc is true)"
     required: false
@@ -105,6 +109,7 @@ runs:
         INPUT_USE_RPC: ${{ inputs.use-rpc }}
         INPUT_SCAN_LIMIT: ${{ inputs.scan-limit }}
         INPUT_SAMPLES_PER_INSTRUCTION: ${{ inputs.samples-per-instruction }}
+        INPUT_USE_DISTILL: ${{ inputs.use-distill }}
         INPUT_ENABLE_FILE_LOGGING: ${{ inputs.enable-file-logging }}
         INPUT_TEST: ${{ inputs.test }}
         INPUT_DAPP: ${{ inputs.dapp }}
@@ -123,6 +128,10 @@ runs:
           ARGS+=("--rpc-url" "$SOLANA_RPC_URL")
           ARGS+=("--scan-limit" "$INPUT_SCAN_LIMIT")
           ARGS+=("--samples-per-instruction" "$INPUT_SAMPLES_PER_INSTRUCTION")
+        fi
+
+        if [ "$INPUT_USE_DISTILL" = "true" ]; then
+          ARGS+=("--distill")
         fi
 
         if [ "$INPUT_ENABLE_FILE_LOGGING" = "true" ]; then

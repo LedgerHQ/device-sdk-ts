@@ -40,6 +40,55 @@ export class XrpSignerDriver {
     await this.page.getByTestId("CTA_send-device-action").click();
   }
 
+  /** Open the Get Address action and Execute it. */
+  async getAddress({
+    derivationPath,
+    checkOnDevice = false,
+    returnChainCode = false,
+    skipOpenApp = false,
+  }: {
+    derivationPath?: string;
+    checkOnDevice?: boolean;
+    returnChainCode?: boolean;
+    skipOpenApp?: boolean;
+  } = {}): Promise<void> {
+    await this.page.getByTestId("CTA_command-Get Address").click();
+    if (derivationPath !== undefined) {
+      const input = this.page.getByTestId("input-text_derivationPath");
+      await input.waitFor({ state: "visible" });
+      await input.fill(derivationPath);
+    }
+    await this.setSwitch("checkOnDevice", checkOnDevice);
+    await this.setSwitch("returnChainCode", returnChainCode);
+    await this.setSwitch("skipOpenApp", skipOpenApp);
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
+   * Open the Sign Transaction action, fill the hex-encoded transaction blob
+   * and Execute it. The action stays pending until the transaction is reviewed
+   * and signed on the device.
+   */
+  async signTransaction(
+    transaction: string,
+    {
+      derivationPath,
+      skipOpenApp = false,
+    }: { derivationPath?: string; skipOpenApp?: boolean } = {},
+  ): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign Transaction").click();
+    if (derivationPath !== undefined) {
+      const path = this.page.getByTestId("input-text_derivationPath");
+      await path.waitFor({ state: "visible" });
+      await path.fill(derivationPath);
+    }
+    const input = this.page.getByTestId("input-text_transaction");
+    await input.waitFor({ state: "visible" });
+    await input.fill(transaction);
+    await this.setSwitch("skipOpenApp", skipOpenApp);
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
   /**
    * Set a boolean form field to `checked`.
    *

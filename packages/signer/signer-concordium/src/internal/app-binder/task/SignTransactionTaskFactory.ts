@@ -81,6 +81,7 @@ export function createSignTransactionTask(
         {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
+          maxFee: args.maxFee,
         },
         logger,
       ).run();

@@ -106,6 +106,8 @@ export type SignTransactionDAInternalState = {
   // descriptors, so the terminal sign runs the generic PROMPT UI DISPLAY flow
   // instead of the legacy preview.
   readonly clearSignPrepared: boolean;
+  // Unrecognized program IDs from generic clear-sign, used for blind-sign reporting.
+  readonly unrecognizedProgramIds: string[];
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

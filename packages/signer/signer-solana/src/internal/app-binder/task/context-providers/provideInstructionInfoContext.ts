@@ -3,7 +3,10 @@ import {
   type SolanaInstructionInfoContextSuccess,
 } from "@ledgerhq/context-module";
 import {
+  type CommandResult,
+  CommandResultFactory,
   hexaStringToBuffer,
+  InvalidResponseFormatError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
@@ -13,8 +16,11 @@ import { ProvideInstructionSubstructureCommand } from "@internal/app-binder/comm
 import { appendSignatureTlv } from "@internal/app-binder/command/utils/apduChunking";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
-import { loadCertificate } from "./loadCertificate";
-import { type ProvideContextHandler } from "./provideContextTypes";
+import { loadCertificateIfPresent } from "./loadCertificate";
+import {
+  type ProvideContextErrorCodes,
+  type ProvideContextHandler,
+} from "./provideContextTypes";
 
 /**
  * Streams a Phase-B instruction template: `PROVIDE INSTRUCTION INFO` (0x24)
@@ -24,32 +30,47 @@ import { type ProvideContextHandler } from "./provideContextTypes";
  */
 export const provideInstructionInfoContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_INSTRUCTION_INFO
-> = async (result: SolanaInstructionInfoContextSuccess, { api, logger }) => {
+> = async (
+  result: SolanaInstructionInfoContextSuccess,
+  { api, logger },
+): Promise<CommandResult<void, ProvideContextErrorCodes>> => {
   const { payload, certificate } = result;
-  if (!payload) return;
+  if (!payload) {
+    return CommandResultFactory({ data: undefined });
+  }
 
-  if (certificate) {
-    await loadCertificate(
-      api,
-      certificate,
-      "[SignerSolana] provideInstructionInfoContext: failed to load INSTRUCTION_INFO certificate",
-    );
+  const certResult = await loadCertificateIfPresent(api, certificate);
+  if (!isSuccessCommandResult(certResult)) {
+    return certResult;
   }
 
   const label = `${payload.programId}:${payload.discriminator}`;
   const infoBytes = hexaStringToBuffer(payload.instructionInfo.data);
   if (!infoBytes) {
-    throw new Error(
-      `[SignerSolana] provideInstructionInfoContext: malformed INSTRUCTION_INFO for ${label}`,
+    // INSTRUCTION_INFO is a fatal descriptor type: without it the device has
+    // no structural information to interpret the instruction, so a malformed
+    // payload must abort generic clear-signing rather than be swallowed.
+    logger.error(
+      `[provideInstructionInfoContext] malformed INSTRUCTION_INFO for ${label}`,
     );
+    return CommandResultFactory({
+      error: new InvalidResponseFormatError(
+        `Malformed INSTRUCTION_INFO for ${label}`,
+      ),
+    });
   }
   // CAL serves the descriptor unsigned; the device verifies the signature, so
   // append it as the trailing SIGNATURE (0x15) TLV before streaming.
   const infoSignature = hexaStringToBuffer(payload.instructionInfo.signature);
   if (!infoSignature || infoSignature.length === 0) {
-    throw new Error(
-      `[SignerSolana] provideInstructionInfoContext: missing INSTRUCTION_INFO signature for ${label}`,
+    logger.error(
+      `[provideInstructionInfoContext] missing INSTRUCTION_INFO signature for ${label}`,
     );
+    return CommandResultFactory({
+      error: new InvalidResponseFormatError(
+        `Missing INSTRUCTION_INFO signature for ${label}`,
+      ),
+    });
   }
 
   logger.debug("[provideInstructionInfoContext] Sending INSTRUCTION_INFO", {
@@ -69,17 +90,21 @@ export const provideInstructionInfoContext: ProvideContextHandler<
       }),
   }).run();
   if (!isSuccessCommandResult(infoResult)) {
-    throw new Error(
-      `[SignerSolana] provideInstructionInfoContext: device rejected INSTRUCTION_INFO for ${label}`,
-    );
+    return infoResult;
   }
 
   for (const substructure of payload.substructures) {
     const tlv = hexaStringToBuffer(substructure.data);
     if (!tlv) {
-      throw new Error(
-        `[SignerSolana] provideInstructionInfoContext: malformed substructure (kind ${substructure.kind}) for ${label}`,
-      );
+      // INSTRUCTION_INFO has already been streamed at this point: the device is
+      // mid-way through a SUBSTRUCTURES_HASH it now expects us to complete, so a
+      // malformed substructure here must fail the whole provisioning rather than
+      // report success with a partially-provisioned template.
+      return CommandResultFactory({
+        error: new InvalidResponseFormatError(
+          `Malformed substructure (kind ${substructure.kind}) for ${label}`,
+        ),
+      });
     }
     const subResult = await new SendCommandInChunksTask<
       void,
@@ -94,9 +119,9 @@ export const provideInstructionInfoContext: ProvideContextHandler<
         }),
     }).run();
     if (!isSuccessCommandResult(subResult)) {
-      throw new Error(
-        `[SignerSolana] provideInstructionInfoContext: device rejected substructure (kind ${substructure.kind}) for ${label}`,
-      );
+      return subResult;
     }
   }
+
+  return CommandResultFactory({ data: undefined });
 };

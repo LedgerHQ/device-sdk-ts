@@ -29,6 +29,7 @@ import {
   type ChallengeBoundRequirements,
   type GenericClearSignContext,
 } from "@internal/app-binder/task/BuildGenericClearSignContextTask";
+import { type ProvideContextErrorCodes } from "@internal/app-binder/task/context-providers/provideContextTypes";
 import { ProvideGenericClearSignContextTask } from "@internal/app-binder/task/ProvideGenericClearSignContextTask";
 
 export type MachineDependencies = {
@@ -44,7 +45,7 @@ export type MachineDependencies = {
       instructionInfoContexts: ClearSignContext[];
       challengeBoundRequirements: ChallengeBoundRequirements;
     };
-  }) => Promise<void>;
+  }) => Promise<CommandResult<void, ProvideContextErrorCodes>>;
   readonly finalizeGenericClearSign: () => Promise<
     CommandResult<void, SolanaAppErrorCodes>
   >;
@@ -133,6 +134,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
           poolContexts: null,
           instructionInfoContexts: null,
           challengeBoundRequirements: null,
+          unrecognizedProgramIds: [],
         },
       }),
       states: {
@@ -162,6 +164,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
                   instructionInfoContexts: event.output.instructionInfoContexts,
                   challengeBoundRequirements:
                     event.output.challengeBoundRequirements,
+                  unrecognizedProgramIds: event.output.unrecognizedProgramIds,
                 }),
               }),
             },
@@ -170,9 +173,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] build failed; falling back to legacy",
-                  {
-                    data: { error: event.error },
-                  },
+                  { data: { error: String(event.error) } },
                 ),
             },
           },
@@ -209,13 +210,26 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
                 mintAltRefs: [],
               },
             }),
-            onDone: { target: "Finalize" },
+            onDone: [
+              {
+                target: "Finalize",
+                guard: ({ event }) => isSuccessCommandResult(event.output),
+              },
+              {
+                target: "Degraded",
+                actions: ({ event }) =>
+                  logger.info(
+                    "[ClearSign] descriptor streaming failed; falling back to legacy",
+                    { data: { output: event.output } },
+                  ),
+              },
+            ],
             onError: {
               target: "Degraded",
               actions: ({ event }) =>
                 logger.info(
-                  "[ClearSign] descriptor streaming failed; falling back to legacy",
-                  { data: { error: event.error } },
+                  "[ClearSign] descriptor streaming threw; falling back to legacy",
+                  { data: { error: String(event.error) } },
                 ),
             },
           },
@@ -261,7 +275,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] FINALIZE threw; falling back to legacy",
-                  { data: { error: event.error } },
+                  { data: { error: String(event.error) } },
                 ),
             },
           },
@@ -280,7 +294,10 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
         Degraded: { type: "final" },
       },
       output: ({ context }) =>
-        Right(context._internalState.outcome ?? "degraded"),
+        Right({
+          status: context._internalState.outcome ?? "degraded",
+          unrecognizedProgramIds: context._internalState.unrecognizedProgramIds,
+        }),
     });
   }
 

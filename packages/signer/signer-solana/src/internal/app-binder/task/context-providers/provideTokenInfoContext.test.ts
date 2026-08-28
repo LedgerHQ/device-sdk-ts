@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -59,22 +60,55 @@ describe("provideTokenInfoContext", () => {
     expect(cmd.args.signatureHex).toBe("cc");
   });
 
-  it("throws when the device rejects the descriptor", async () => {
+  it("returns success without sending any command when payload is absent", async () => {
+    const result = await provideTokenInfoContext(
+      {
+        type: ClearSignContextType.SOLANA_TOKEN_INFO as const,
+        payload: undefined,
+        certificate: cert,
+      } as any,
+      deps,
+    );
+
+    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(api.sendCommand).not.toHaveBeenCalled();
+  });
+
+  it("returns a failed CommandResult when the certificate is rejected", async () => {
+    api.sendCommand.mockResolvedValueOnce(
+      CommandResultFactory({
+        error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+      }),
+    );
+
+    const result = await provideTokenInfoContext(
+      {
+        type: ClearSignContextType.SOLANA_TOKEN_INFO as const,
+        payload: { mint: "M", descriptor: { data: "aabb", signature: "cc" } },
+        certificate: cert,
+      } as any,
+      deps,
+    );
+
+    expect(isSuccessCommandResult(result)).toBe(false);
+    expect(api.sendCommand).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns a failed CommandResult when the device rejects the descriptor", async () => {
     api.sendCommand.mockResolvedValueOnce(success).mockResolvedValueOnce(
       CommandResultFactory({
         error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
       }),
     );
 
-    await expect(
-      provideTokenInfoContext(
-        {
-          type: ClearSignContextType.SOLANA_TOKEN_INFO as const,
-          payload: { mint: "M", descriptor: { data: "aabb", signature: "cc" } },
-          certificate: cert,
-        } as any,
-        deps,
-      ),
-    ).rejects.toThrow("device rejected TOKEN_INFO");
+    const result = await provideTokenInfoContext(
+      {
+        type: ClearSignContextType.SOLANA_TOKEN_INFO as const,
+        payload: { mint: "M", descriptor: { data: "aabb", signature: "cc" } },
+        certificate: cert,
+      } as any,
+      deps,
+    );
+    expect(isSuccessCommandResult(result)).toBe(false);
   });
 });

@@ -260,6 +260,7 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
     address: string,
     limit: number = DEFAULT_SCAN_LIMIT,
     samplesPerInstruction: number = 1,
+    distill: boolean = false,
   ): Promise<SolanaTransactionData[]> {
     this.logger.info(
       `Fetching up to ${limit} signatures for address ${address}`,
@@ -299,7 +300,9 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
     for (let i = 0; i < successfulSigs.length; i += BATCH_SIZE) {
       const batch = successfulSigs.slice(i, i + BATCH_SIZE);
       const results = await Promise.all(
-        batch.map((sig) => this.fetchAndClassify(sig.signature, address)),
+        batch.map((sig) =>
+          this.fetchAndClassify(sig.signature, address, distill),
+        ),
       );
       for (const result of results) {
         if (result) {
@@ -318,6 +321,7 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
   private async fetchAndClassify(
     signature: string,
     targetProgramId: string,
+    distill: boolean,
   ): Promise<SolanaTransactionData | null> {
     try {
       const tx = await this.getTransaction(signature);
@@ -326,6 +330,16 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
       }
 
       const [base64Data] = tx.transaction;
+
+      if (!distill) {
+        const programLabel = PROGRAM_LABELS[targetProgramId] ?? targetProgramId;
+        return {
+          rawTx: base64Data,
+          signature,
+          category: programLabel,
+        };
+      }
+
       let rawBytes: Buffer = Buffer.from(base64Data, "base64");
 
       // The Ledger Solana app does not support v0 (versioned) transactions.

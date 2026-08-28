@@ -66,6 +66,8 @@ let finalizeMock: ReturnType<typeof vi.fn>;
 let inspectMock: ReturnType<typeof vi.fn>;
 let buildBasicMock: ReturnType<typeof vi.fn>;
 let provideBasicMock: ReturnType<typeof vi.fn>;
+// Reporting
+let reportSignMock: ReturnType<typeof vi.fn>;
 // Terminal sign-op deps (generic + basic) and the shared refresh task
 let promptUiDisplayMock: ReturnType<typeof vi.fn>;
 let previewMock: ReturnType<typeof vi.fn>;
@@ -169,6 +171,7 @@ function run(
       serializedForTxCheck: undefined,
     }),
     getAppConfig: getAppConfigMock,
+    reportSign: reportSignMock,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any) as unknown as ReturnType<typeof vi.spyOn>;
   const { observable } = action._execute(apiMock);
@@ -234,8 +237,11 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       mode: "none",
       poolContexts: [],
       instructionInfoContexts: [],
+      unrecognizedProgramIds: [],
     });
-    provideGenericMock = vi.fn().mockResolvedValue(undefined);
+    provideGenericMock = vi
+      .fn()
+      .mockResolvedValue(CommandResultFactory({ data: undefined }));
     finalizeMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: undefined }));
@@ -247,10 +253,11 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     inspectMock = vi
       .fn()
       .mockResolvedValue({ transactionType: SolanaTransactionTypes.STANDARD });
-    buildBasicMock = vi.fn().mockResolvedValue({
-      loadersResults: [],
-      contextErrorCount: 0,
-    });
+    buildBasicMock = vi.fn().mockResolvedValue(
+      CommandResultFactory({
+        data: { loadersResults: [], contextErrorCount: 0 },
+      }),
+    );
     provideBasicMock = vi.fn().mockResolvedValue(undefined);
 
     // Terminal/delayed child: every path resolves to a signature.
@@ -269,6 +276,8 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     signMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: Just(signature) }));
+
+    reportSignMock = vi.fn().mockResolvedValue(undefined);
 
     spyChildren();
   });
@@ -321,6 +330,8 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         mode: "full",
         poolContexts: [],
         instructionInfoContexts: [],
+
+        unrecognizedProgramIds: [],
       });
       run(
         withRpcDelayed,
@@ -366,6 +377,8 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         mode: "full",
         poolContexts: [],
         instructionInfoContexts: [],
+
+        unrecognizedProgramIds: [],
       });
       // withRpc (no delayed): the armed device still terminates on SIGN
       // MESSAGE DELAYED (0x09), but signs the original blockhash — no refresh.
@@ -500,6 +513,8 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         mode: "full",
         poolContexts: [],
         instructionInfoContexts: [],
+
+        unrecognizedProgramIds: [],
       });
       promptUiDisplayMock.mockResolvedValue(
         CommandResultFactory({
@@ -700,6 +715,8 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         mode: "full",
         poolContexts: [],
         instructionInfoContexts: [],
+
+        unrecognizedProgramIds: [],
       });
       run(
         withRpcDelayed,
@@ -727,4 +744,148 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         reject,
       );
     }));
+
+  describe("Report state — isBlindSign contract", () => {
+    it("legacy path (generic gate skipped) → isBlindSign: true, reportSign called once", () =>
+      new Promise<void>((resolve, reject) => {
+        // Default: legacyVersion < SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION → gate
+        // routes straight to BasicClearSign without arming the generic child.
+        run(
+          baseInput,
+          () => {
+            try {
+              expect(reportSignMock).toHaveBeenCalledOnce();
+              const callArg = reportSignMock.mock.calls[0]![0] as {
+                input: { isBlindSign: boolean };
+              };
+              expect(callArg.input.isBlindSign).toBe(true);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("generic clear-sign success → isBlindSign: false, reportSign called once", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+          }),
+        );
+        buildGenericMock.mockResolvedValue({
+          mode: "full",
+          poolContexts: [],
+          instructionInfoContexts: [],
+          unrecognizedProgramIds: [],
+        });
+        run(
+          withRpcDelayed,
+          () => {
+            try {
+              expect(reportSignMock).toHaveBeenCalledOnce();
+              const callArg = reportSignMock.mock.calls[0]![0] as {
+                input: { isBlindSign: boolean };
+              };
+              expect(callArg.input.isBlindSign).toBe(false);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("generic cancel (6985) → isBlindSign: false, reportSign called once", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+          }),
+        );
+        buildGenericMock.mockResolvedValue({
+          mode: "full",
+          poolContexts: [],
+          instructionInfoContexts: [],
+          unrecognizedProgramIds: [],
+        });
+        promptUiDisplayMock.mockResolvedValue(
+          CommandResultFactory({
+            error: new SolanaAppCommandError({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...({ errorCode: "6985", message: "Canceled by user" } as any),
+            }),
+          }),
+        );
+        run(
+          withRpc,
+          () => {
+            try {
+              expect(reportSignMock).toHaveBeenCalledOnce();
+              const callArg = reportSignMock.mock.calls[0]![0] as {
+                input: { isBlindSign: boolean };
+              };
+              expect(callArg.input.isBlindSign).toBe(false);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("generic non-cancel prompt failure degrades to basic → isBlindSign: true, reportSign called once", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+          }),
+        );
+        buildGenericMock.mockResolvedValue({
+          mode: "full",
+          poolContexts: [],
+          instructionInfoContexts: [],
+          unrecognizedProgramIds: [],
+        });
+        // A non-cancel UI failure causes the child to return Right("degraded"),
+        // leaving signature and error unset → BasicClearSign → Report.
+        promptUiDisplayMock.mockResolvedValue(
+          CommandResultFactory({
+            error: new SolanaAppCommandError({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...({ errorCode: "6f01", message: "Display error" } as any),
+            }),
+          }),
+        );
+        run(
+          withRpc,
+          () => {
+            try {
+              expect(reportSignMock).toHaveBeenCalledOnce();
+              const callArg = reportSignMock.mock.calls[0]![0] as {
+                input: { isBlindSign: boolean };
+              };
+              expect(callArg.input.isBlindSign).toBe(true);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+  });
 });

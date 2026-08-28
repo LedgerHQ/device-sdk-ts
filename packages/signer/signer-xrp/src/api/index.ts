@@ -1,4 +1,9 @@
 export {
+  type GetAddressCommandArgs,
+  type GetAddressCommandResponse,
+} from "@api/app-binder/GetAddressCommandTypes";
+export { GetAddressDeviceActionFactory } from "@api/app-binder/GetAddressDeviceActionFactory";
+export {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
@@ -10,12 +15,14 @@ export {
   type GetAppConfigDAOutput,
   type GetAppConfigDAReturnType,
 } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+export { SignTransactionDeviceActionFactory } from "@api/app-binder/SignTransactionDeviceActionFactory";
 export {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
   type SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export { type Address } from "@api/model/Address";
 export { type AddressOptions } from "@api/model/AddressOptions";
 export { type AppConfig } from "@api/model/AppConfig";
 export { type AppConfigOptions } from "@api/model/AppConfigOptions";

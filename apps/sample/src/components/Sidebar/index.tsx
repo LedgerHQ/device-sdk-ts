@@ -9,6 +9,7 @@ import styled, { type DefaultTheme } from "styled-components";
 import { AvailableDevices } from "@/components/AvailableDevices";
 import { ConnectDeviceMenuDropdown } from "@/components/ConnectDevice/ConnectDeviceMenuDropdown";
 import { Device } from "@/components/Device";
+import { DeviceScreen } from "@/components/DeviceScreen";
 import { Menu } from "@/components/Menu";
 import { useMockServerSession } from "@/hooks/useMockServerSession";
 import {
@@ -185,6 +186,7 @@ export const Sidebar: React.FC = () => {
           />
         ))}
       </Flex>
+      <DeviceScreen />
       <AvailableDevices />
       <ConnectDeviceMenuDropdown />
       <MenuContainer active={!!selectedSessionId}>

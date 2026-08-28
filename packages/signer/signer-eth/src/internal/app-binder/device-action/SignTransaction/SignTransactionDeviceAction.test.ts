@@ -1158,5 +1158,110 @@ describe("SignTransactionDeviceAction", () => {
         }),
       );
     });
+
+    it("should forward a 10-char selector as selectorId", async () => {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+
+      const subsetWithSelector: TransactionSubset = {
+        ...defaultSubset,
+        selector: "0xa9059cbb",
+      };
+
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock as unknown as ContextModule,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: subsetWithSelector,
+        type: TransactionType.EIP1559,
+      });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: { address: defaultAddress } }),
+      );
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSigningType: null,
+      });
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
+      observable = deviceAction._execute(apiMock).observable;
+      await lastValueFrom(observable);
+
+      expect(detectBlindSigningMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          input: expect.objectContaining({
+            input: expect.objectContaining({ selectorId: "0xa9059cbb" }),
+          }),
+        }),
+      );
+    });
+
+    it("should set selectorId to null for a plain ETH transfer (selector '0x')", async () => {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock as unknown as ContextModule,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: defaultSubset, // selector: "0x"
+        type: TransactionType.EIP1559,
+      });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: { address: defaultAddress } }),
+      );
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSigningType: null,
+      });
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
+      observable = deviceAction._execute(apiMock).observable;
+      await lastValueFrom(observable);
+
+      expect(detectBlindSigningMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          input: expect.objectContaining({
+            input: expect.objectContaining({ selectorId: null }),
+          }),
+        }),
+      );
+    });
   });
 });

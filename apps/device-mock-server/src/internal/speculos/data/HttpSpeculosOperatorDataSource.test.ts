@@ -12,6 +12,13 @@ const jsonResponse = (body: unknown, ok = true, status = 200): Response =>
 
 const TEST_SEED = "test seed";
 
+/** Node pools small Buffers, so `.buffer` must be sliced to the view. */
+const toArrayBuffer = (buffer: Buffer): ArrayBuffer =>
+  buffer.buffer.slice(
+    buffer.byteOffset,
+    buffer.byteOffset + buffer.byteLength,
+  ) as ArrayBuffer;
+
 const newOperator = () =>
   new HttpSpeculosOperatorDataSource({
     baseUrl: "https://speculinho.test/",
@@ -127,7 +134,8 @@ describe("HttpSpeculosOperatorDataSource", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
       status: 200,
       headers: { get: () => "image/png" },
-      text: () => Promise.resolve("PNG-BYTES"),
+      arrayBuffer: () =>
+        Promise.resolve(toArrayBuffer(Buffer.from("PNG-BYTES"))),
     } as unknown as Response);
 
     const result = await newOperator()
@@ -143,7 +151,7 @@ describe("HttpSpeculosOperatorDataSource", () => {
     expect(result.extract()).toEqual({
       status: 200,
       contentType: "image/png",
-      body: "PNG-BYTES",
+      body: Buffer.from("PNG-BYTES"),
     });
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe("https://r.speculos.test/button/right?delay=0");
@@ -151,6 +159,31 @@ describe("HttpSpeculosOperatorDataSource", () => {
     expect(JSON.parse((init as RequestInit).body as string)).toEqual({
       action: "press-and-release",
     });
+  });
+
+  it("relays binary payloads byte for byte", async () => {
+    // A real PNG header: the 0x89 lead byte and the 0x0d0a1a0a run are
+    // mangled by any UTF-8 round trip.
+    const png = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff, 0xfe,
+    ]);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      status: 200,
+      headers: { get: () => "image/png" },
+      arrayBuffer: () => Promise.resolve(toArrayBuffer(png)),
+    } as unknown as Response);
+
+    const result = await newOperator()
+      .proxyRequest("https://r.speculos.test/", {
+        method: "GET",
+        path: "screenshot",
+        query: "",
+        body: null,
+        hasBody: false,
+      })
+      .run();
+
+    expect(result.extract()).toMatchObject({ body: png });
   });
 
   it("returns Left when the proxied request throws", async () => {

@@ -6,6 +6,7 @@ import {
 import {
   CommandResultFactory,
   DeviceModelId,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
@@ -211,7 +212,8 @@ describe("ProvideGenericClearSignContextTask", () => {
         : success,
     );
 
-    await expect(made.task.run()).resolves.toBeUndefined();
+    const result = await made.task.run();
+    expect(isSuccessCommandResult(result)).toBe(true);
     // The descriptor was never fetched because the challenge failed.
     expect(made.getContexts).not.toHaveBeenCalled();
   });
@@ -231,7 +233,8 @@ describe("ProvideGenericClearSignContextTask", () => {
       return success;
     });
 
-    await expect(made.task.run()).resolves.toBeUndefined();
+    const result = await made.task.run();
+    expect(isSuccessCommandResult(result)).toBe(true);
 
     // The structural instruction-info template was still streamed despite the
     // optional TOKEN_INFO failure.
@@ -241,7 +244,46 @@ describe("ProvideGenericClearSignContextTask", () => {
     );
   });
 
-  it("aborts (throws) when a structural descriptor (instruction info) fails", async () => {
+  it("continues (no throw) when an optional descriptor's dispatch throws unexpectedly, still streaming the structural templates", async () => {
+    const made = makeTask([tokenInfoContext()], [instructionInfoContext()]);
+    api = made.api;
+    // Preview + GET CHALLENGE succeed, but dispatching TOKEN_INFO (an optional
+    // descriptor) throws instead of returning a failed CommandResult; the rest
+    // must still be streamed.
+    made.api.sendCommand.mockImplementation(async (cmd: unknown) => {
+      if (cmd instanceof GetChallengeCommand) return challenge;
+      if (cmd instanceof ProvideTLVTransactionInstructionDescriptorCommand) {
+        throw new Error("unexpected bug");
+      }
+      return success;
+    });
+
+    const result = await made.task.run();
+    expect(isSuccessCommandResult(result)).toBe(true);
+
+    // The structural instruction-info template was still streamed despite the
+    // optional TOKEN_INFO dispatch throwing.
+    const sent = api.sendCommand.mock.calls.map((c) => c[0]);
+    expect(sent.some((c) => c instanceof ProvideInstructionInfoCommand)).toBe(
+      true,
+    );
+  });
+
+  it("returns a failed CommandResult (does not reject) when a structural descriptor's dispatch throws unexpectedly", async () => {
+    const made = makeTask([tokenInfoContext()], [instructionInfoContext()]);
+    made.api.sendCommand.mockImplementation(async (cmd: unknown) => {
+      if (cmd instanceof GetChallengeCommand) return challenge;
+      if (cmd instanceof ProvideInstructionInfoCommand) {
+        throw new Error("unexpected bug");
+      }
+      return success;
+    });
+
+    const result = await made.task.run();
+    expect(isSuccessCommandResult(result)).toBe(false);
+  });
+
+  it("returns a failed CommandResult when a structural descriptor (instruction info) fails", async () => {
     const made = makeTask([tokenInfoContext()], [instructionInfoContext()]);
     // Everything succeeds except the structural INSTRUCTION_INFO command.
     made.api.sendCommand.mockImplementation(async (cmd: unknown) => {
@@ -254,9 +296,8 @@ describe("ProvideGenericClearSignContextTask", () => {
       return success;
     });
 
-    await expect(made.task.run()).rejects.toThrow(
-      "device rejected INSTRUCTION_INFO",
-    );
+    const result = await made.task.run();
+    expect(isSuccessCommandResult(result)).toBe(false);
   });
 
   // --- New challenge-bound flows ---
@@ -264,14 +305,14 @@ describe("ProvideGenericClearSignContextTask", () => {
   function altResolutionCtx(resolvedAddress: string): ClearSignContext {
     return {
       type: ClearSignContextType.SOLANA_ALT_RESOLUTION,
-      payload: { resolvedAddress, descriptor: { data: "aa", signature: "bb" } },
+      payload: { resolvedAddress, descriptor: new Uint8Array([0xaa, 0xbb]) },
       certificate: cert,
     } as any;
   }
   function tokenAccountStateCtx(mint: string): ClearSignContext {
     return {
       type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
-      payload: { mint, descriptor: { data: "aa", signature: "bb" } },
+      payload: { mint, descriptor: new Uint8Array([0xaa, 0xbb]) },
       certificate: cert,
     } as any;
   }
@@ -479,7 +520,7 @@ describe("ProvideGenericClearSignContextTask", () => {
     );
   });
 
-  it("aborts (throws) when the device rejects GENERIC PREVIEW", async () => {
+  it("returns a failed CommandResult when the device rejects GENERIC PREVIEW", async () => {
     const made = makeTask([], []);
     made.api.sendCommand.mockResolvedValue(
       CommandResultFactory({
@@ -487,8 +528,7 @@ describe("ProvideGenericClearSignContextTask", () => {
       }),
     );
 
-    await expect(made.task.run()).rejects.toThrow(
-      "device rejected SIGN MESSAGE GENERIC PREVIEW",
-    );
+    const result = await made.task.run();
+    expect(isSuccessCommandResult(result)).toBe(false);
   });
 });

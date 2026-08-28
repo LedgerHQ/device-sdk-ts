@@ -14,11 +14,17 @@ import {
 } from "@internal/app-binder/command/SignPltCommand";
 import { type ConcordiumErrorCodes } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
 import { encodeDerivationPath } from "@internal/app-binder/command/utils/EncodeDerivationPath";
+import { encodeMaxFeeBigEndian } from "@internal/app-binder/command/utils/EncodeMaxFee";
 import { InvalidPltTransactionError } from "@internal/app-binder/command/utils/InvalidPltTransactionError";
-import { P1 } from "@internal/app-binder/constants";
+import { FEE_DISPLAY_SIZE, P1, P2 } from "@internal/app-binder/constants";
 
 // Serialized TokenUpdate transaction layout:
 // [header:60][kind:1 = 0x1B][tokenIdLength:1][tokenId:1..128][cborTotalLength:4 BE][cbor:N]
+//
+// The INIT frame is everything up to and including cborTotalLength, prefixed
+// with the derivation path and suffixed with the 8-byte max fee. Worst case with
+// a 5-node path and a 128-byte token id: 21 + 60 + 1 + 1 + 128 + 4 + 8 = 223
+// bytes, still inside APDU_MAX_PAYLOAD but with less headroom than it looks.
 
 const HEADER_LENGTH = 60;
 const KIND_LENGTH = 1;
@@ -27,9 +33,9 @@ const CBOR_LENGTH_FIELD = 4;
 
 const TRANSACTION_KIND_TOKEN_UPDATE = 0x1b;
 
-/** PLT_TOKEN_ID_MAX in the app (`src/helpers/app_sizes.h`). */
+/** Maximum token-id length the device accepts, per CIS-7. */
 const TOKEN_ID_MAX = 128;
-/** APP_PLT_CBOR_MAX in the app (`src/helpers/app_sizes.h`). */
+/** Maximum PLT CBOR operations blob the device will buffer. */
 const CBOR_MAX = 512;
 
 const MIN_TRANSACTION_LENGTH =
@@ -43,17 +49,25 @@ const MIN_TRANSACTION_LENGTH =
 type SendPltTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
+  /** Max fee in µCCD, rendered as a "Max fees" step on the review screens. */
+  maxFee: bigint;
 };
 
 /**
  * Streams a PLT (TokenUpdate) transaction to the device over INS 0x27.
  *
  * One INIT frame (P1=0x00) carries the derivation path and everything up to and
- * including the CBOR length, then CONT frames (P1=0x01) carry the CBOR payload.
- * Chunking is byte-oriented: a CBOR field may span a frame boundary, since the
- * device buffers the whole payload before parsing it.
+ * including the CBOR length, plus the 8-byte big-endian µCCD max fee. CONT
+ * frames (P1=0x01) then carry the CBOR payload. Chunking is byte-oriented: a
+ * CBOR field may span a frame boundary, since the device buffers the whole
+ * payload before parsing it.
  *
- * `maxFee` is not part of this flow — the PLT review screens display no fee.
+ * Fee display is unconditional here. The factory only reaches this task on an
+ * app at or above `MIN_APP_VERSION_FOR_PLT`, and that release ships PLT signing
+ * and clear-signing together, so a PLT-capable app always accepts the suffix.
+ *
+ * The fee suffix is not hashed by the device, so the signature is identical
+ * whether or not it is sent.
  */
 export class SendPltTask {
   constructor(
@@ -65,7 +79,7 @@ export class SendPltTask {
   async run(): Promise<
     CommandResult<SignPltCommandResponse, ConcordiumErrorCodes>
   > {
-    const { derivationPath, transaction } = this.args;
+    const { derivationPath, transaction, maxFee } = this.args;
 
     this.logger.debug("[run] Starting SendPltTask", {
       data: {
@@ -119,9 +133,13 @@ export class SendPltTask {
     }
 
     const pathBytes = encodeDerivationPath(derivationPath);
-    const initPayload = new Uint8Array(pathBytes.length + cborOffset);
+    const feeSuffix = encodeMaxFeeBigEndian(maxFee);
+    const initPayload = new Uint8Array(
+      pathBytes.length + cborOffset + FEE_DISPLAY_SIZE,
+    );
     initPayload.set(pathBytes, 0);
     initPayload.set(transaction.slice(0, cborOffset), pathBytes.length);
+    initPayload.set(feeSuffix, pathBytes.length + cborOffset);
 
     if (initPayload.length > APDU_MAX_PAYLOAD) {
       return this.reject(
@@ -130,7 +148,11 @@ export class SendPltTask {
     }
 
     const initResult = await this.api.sendCommand(
-      new SignPltCommand({ p1: P1.PLT_INIT, data: initPayload }),
+      new SignPltCommand({
+        p1: P1.PLT_INIT,
+        p2: P2.FEE_DISPLAY,
+        data: initPayload,
+      }),
     );
 
     if (!isSuccessCommandResult(initResult)) {
@@ -148,7 +170,7 @@ export class SendPltTask {
         SignPltCommandResponse,
         ConcordiumErrorCodes
       > = await this.api.sendCommand(
-        new SignPltCommand({ p1: P1.PLT_CONT, data: chunk }),
+        new SignPltCommand({ p1: P1.PLT_CONT, p2: P2.NONE, data: chunk }),
       );
 
       if (!isSuccessCommandResult(contResult)) {

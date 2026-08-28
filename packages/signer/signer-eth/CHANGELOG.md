@@ -1,5 +1,20 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.17.0
+
+### Minor Changes
+
+- [#1805](https://github.com/LedgerHQ/device-sdk-ts/pull/1805) [`0908610`](https://github.com/LedgerHQ/device-sdk-ts/commit/0908610b4c98641e98fc236cf5065feaebc2ee65) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Accept an optional EVM address book in SignerEthBuilder via withAddressBook, exposing the EvmAddressBook public model
+
+- [#1775](https://github.com/LedgerHQ/device-sdk-ts/pull/1775) [`a486f4d`](https://github.com/LedgerHQ/device-sdk-ts/commit/a486f4d5df41bcd5fc7c180110f263d316f9b2c1) Thanks [@pvautherin-ledger](https://github.com/pvautherin-ledger)! - Add SignTransactionDeviceActionFactory and SignTypedDataDeviceActionFactory public composable factories that hide internal service wiring (mapper, parser, typed-data parser) from consumers
+
+- [#1798](https://github.com/LedgerHQ/device-sdk-ts/pull/1798) [`20dff30`](https://github.com/LedgerHQ/device-sdk-ts/commit/20dff303681ad5799a540c7b6470e2cfa3dc02a6) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Implement v2 sign-event reporting for Ethereum
+
+### Patch Changes
+
+- Updated dependencies [[`8bd6cf3`](https://github.com/LedgerHQ/device-sdk-ts/commit/8bd6cf3f2ed9b60ede2bce7193d24ac40c9c65ce), [`089b421`](https://github.com/LedgerHQ/device-sdk-ts/commit/089b421cd1d2e7d16d99cfaf145c1776522c5cfb), [`a3de88a`](https://github.com/LedgerHQ/device-sdk-ts/commit/a3de88a7b6720729adec59294f9a793a1afcaff2)]:
+  - @ledgerhq/context-module@2.5.0
+
 ## 1.16.0
 
 ### Minor Changes

@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
@@ -56,6 +57,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
         executeDeviceAction: ({
           derivationPath,
           checkOnDevice,
+          returnChainCode,
           skipOpenApp,
         }) => {
           if (!signer) {
@@ -63,13 +65,21 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           }
           return signer.getAddress(derivationPath, {
             checkOnDevice,
+            returnChainCode,
             skipOpenApp,
           });
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/144'/0'/0/0",
           checkOnDevice: false,
+          returnChainCode: false,
           skipOpenApp: false,
+        },
+        labelSelector: {
+          derivationPath: "Derivation path",
+          checkOnDevice: "Check on device",
+          returnChainCode: "Return chain code",
+          skipOpenApp: "Skip open app",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -77,6 +87,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           checkOnDevice?: boolean;
+          returnChainCode?: boolean;
           skipOpenApp?: boolean;
         },
         GetAddressDAError,
@@ -89,27 +100,23 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          // Convert hex string to Uint8Array
-          const txBytes = transaction.startsWith("0x")
-            ? new Uint8Array(
-                transaction
-                  .slice(2)
-                  .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
-              )
-            : new Uint8Array(
-                transaction
-                  .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
-              );
+          const txBytes = hexaStringToBuffer(transaction);
+          if (!txBytes || txBytes.length === 0) {
+            throw new Error("Invalid transaction: expected a hex blob");
+          }
           return signer.signTransaction(derivationPath, txBytes, {
             skipOpenApp,
           });
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/144'/0'/0/0",
           transaction: "",
           skipOpenApp: false,
+        },
+        labelSelector: {
+          derivationPath: "Derivation path",
+          transaction: "Transaction (hex)",
+          skipOpenApp: "Skip open app",
         },
         deviceModelId,
       } satisfies DeviceActionProps<

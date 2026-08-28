@@ -201,6 +201,30 @@ describe("ProvideTransactionCheckTask", () => {
     expect(getContexts).not.toHaveBeenCalled();
   });
 
+  it("logs a warning (best-effort) when the device rejects the transaction-check descriptor", async () => {
+    const warn = vi.fn();
+    const getContexts = vi.fn(async () => [txCheckContext]);
+    const { task, api } = makeTask(getContexts);
+    api.sendCommand.mockImplementation(async (cmd: unknown) => {
+      if (cmd instanceof GetPubKeyCommand)
+        return CommandResultFactory({ data: SIGNER });
+      if (cmd instanceof GetChallengeCommand)
+        return CommandResultFactory({ data: { challenge: "deadbeef" } });
+      if (cmd instanceof ProvideTransactionCheckCommand)
+        return CommandResultFactory({
+          error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+        });
+      return CommandResultFactory({ data: undefined });
+    });
+    (task as any).logger.warn = warn;
+
+    await expect(task.run()).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("device rejected transaction-check"),
+      expect.anything(),
+    );
+  });
+
   it("skips (best-effort) when GET CHALLENGE fails", async () => {
     const { task, api, getContexts } = makeTask();
     api.sendCommand.mockImplementation(async (cmd: unknown) => {

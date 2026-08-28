@@ -1,6 +1,7 @@
 import {
   type CommandResult,
   type DeviceActionStateMachine,
+  DeviceSessionStateType,
   type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -32,6 +33,10 @@ import {
   isSolanaSignerFeatureSupported,
   type SolanaSignerFeaturesNames,
 } from "@internal/app-binder/SolanaApplicationResolver";
+import {
+  SolanaSigningReportTask,
+  type SolanaSigningReportTaskArgs,
+} from "@internal/app-binder/task/SolanaSigningReportTask";
 
 import { ProvisionBasicClearSignDeviceAction } from "./ProvisionBasicClearSignDeviceAction";
 import { ProvisionGenericClearSignDeviceAction } from "./ProvisionGenericClearSignDeviceAction";
@@ -54,6 +59,9 @@ export type MachineDependencies = {
   readonly getAppConfig: () => Promise<
     CommandResult<AppConfiguration, SolanaAppErrorCodes>
   >;
+  readonly reportSign: (arg0: {
+    input: SolanaSigningReportTaskArgs;
+  }) => Promise<void>;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -80,12 +88,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       SignTransactionDAInternalState
     >;
 
-    const { normalizeTransaction, getAppConfig } =
+    const { normalizeTransaction, getAppConfig, reportSign } =
       this.extractDependencies(internalApi);
 
-    const logger = this.getLoggerFactory(internalApi)(
-      "SignTransactionDeviceAction",
-    );
+    const loggerFactory = this.getLoggerFactory(internalApi);
+    const logger = loggerFactory("SignTransactionDeviceAction");
 
     const disabledFeaturesSet:
       | ReadonlySet<SolanaSignerFeaturesNames>
@@ -143,6 +150,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       actors: {
         normalizeTransaction: fromPromise(normalizeTransaction),
+        reportSign: fromPromise(reportSign),
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
@@ -240,6 +248,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           messageBytes: this.input.transaction,
           serializedForTxCheck: undefined,
           clearSignPrepared: false,
+          unrecognizedProgramIds: [],
         },
       }),
       states: {
@@ -438,10 +447,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: ({ event, context }) =>
                   event.output.caseOf<SignTransactionDAInternalState>({
-                    // Right("prepared") / Right("degraded").
                     Right: (outcome) => ({
                       ...context._internalState,
-                      clearSignPrepared: outcome === "prepared",
+                      clearSignPrepared: outcome.status === "prepared",
+                      unrecognizedProgramIds: outcome.unrecognizedProgramIds,
                     }),
                     // Left never occurs (the prepare phase has no UI), but stay
                     // defensive and surface it.
@@ -454,15 +463,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] generic clear-sign threw; falling back to legacy",
-                  { data: { error: event.error } },
+                  { data: { error: String(event.error) } },
                 ),
             },
           },
         },
         CheckGenericClearSignResult: {
           always: [
-            // Prepared: run the generic terminal sign (prompt + refresh +
-            // delayed sign).
+            // Prepared: run the generic terminal sign; report fires after.
             {
               target: "GenericTerminalSign",
               guard: and(["noInternalError", "isClearSignPrepared"]),
@@ -524,12 +532,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         CheckGenericTerminalSignResult: {
           always: [
-            // Signed: done.
-            { target: "SignTransactionResultCheck", guard: "hasSignature" },
+            // Signed: report (isBlindSign: false) then surface result.
+            { target: "Report", guard: "hasSignature" },
             // Degraded (no signature, no error): fall back to the legacy path.
             { target: "BasicClearSign", guard: "noInternalError" },
-            // User cancel / signing failure: surface.
-            { target: "Error" },
+            // User cancel / signing failure: report (isBlindSign: false) then surface error.
+            { target: "Report" },
           ],
         },
         // Legacy SPL / token provisioning child (best-effort, never signs). It
@@ -554,8 +562,63 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   event.snapshot.context.intermediateValue,
               }),
             },
-            onDone: { target: "BasicTerminalSign" },
-            onError: { target: "BasicTerminalSign" },
+            onDone: { target: "Report" },
+            onError: { target: "Report" },
+          },
+        },
+        // Single report state for all paths.
+        // isBlindSign is derived from context: false when a signature or error is
+        // already set (clear-sign path — success or cancel), true otherwise
+        // (basic/legacy path, neither has run yet).
+        // Routes to: SignTransactionResultCheck (clear-sign success),
+        //            Error (clear-sign cancel/failure), or
+        //            BasicTerminalSign (basic path).
+        Report: {
+          invoke: {
+            src: "reportSign",
+            input: ({ context }) => {
+              const sessionState = internalApi.getDeviceSessionState();
+              const deviceVersion =
+                sessionState.sessionStateType !==
+                DeviceSessionStateType.Connected
+                  ? (sessionState.firmwareVersion?.os ?? null)
+                  : null;
+              return {
+                isBlindSign:
+                  context._internalState.signature === null &&
+                  context._internalState.error === null,
+                messageBytes: context._internalState.messageBytes,
+                unrecognizedProgramIds:
+                  context._internalState.unrecognizedProgramIds,
+                contextModule: context.input.contextModule,
+                signerAppVersion: context._internalState.appConfig!.version,
+                deviceModelId: sessionState.deviceModelId,
+                deviceVersion,
+                loggerFactory,
+              } satisfies SolanaSigningReportTaskArgs;
+            },
+            onDone: [
+              {
+                target: "SignTransactionResultCheck",
+                guard: "hasSignature",
+              },
+              {
+                target: "Error",
+                guard: ({ context }) => context._internalState.error !== null,
+              },
+              { target: "BasicTerminalSign" },
+            ],
+            onError: [
+              {
+                target: "SignTransactionResultCheck",
+                guard: "hasSignature",
+              },
+              {
+                target: "Error",
+                guard: ({ context }) => context._internalState.error !== null,
+              },
+              { target: "BasicTerminalSign" },
+            ],
           },
         },
         // Basic terminal sign: the legacy preview/one-shot path. It decides
@@ -626,7 +689,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       } catch (error) {
         this.getLoggerFactory(internalApi)("NormalizeTransaction").warn(
           "[normalizeTransaction] format detection failed; treating input as message bytes",
-          { data: { error } },
+          { data: { error: String(error) } },
         );
         return {
           messageBytes: this.input.transaction,
@@ -638,9 +701,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const getAppConfig = async () =>
       internalApi.sendCommand(new GetAppConfigurationCommand());
 
+    const reportSign = async (arg0: { input: SolanaSigningReportTaskArgs }) =>
+      new SolanaSigningReportTask(arg0.input).run();
+
     return {
       normalizeTransaction,
       getAppConfig,
+      reportSign,
     };
   }
 }

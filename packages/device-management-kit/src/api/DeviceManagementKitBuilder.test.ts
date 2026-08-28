@@ -29,4 +29,11 @@ describe("LedgerDeviceManagementKitBuilder", () => {
     // @ts-expect-error Access private field loggers
     expect(builder.loggers).toContain(logger);
   });
+
+  it("should default mockUrl to the hosted mock server", () => {
+    // @ts-expect-error Access private field config
+    expect(builder.config.mockUrl).toBe(
+      "https://device-mock-server.aws.ldg-ps-default.ldg-tech.com",
+    );
+  });
 });

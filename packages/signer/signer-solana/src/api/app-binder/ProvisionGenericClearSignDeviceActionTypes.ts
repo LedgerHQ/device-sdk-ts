@@ -23,7 +23,10 @@ import { type ChallengeBoundRequirements } from "@internal/app-binder/task/Build
  * Every step is best-effort, so this machine never surfaces a user cancel (the
  * first user interaction lives downstream in the prompt).
  */
-export type ProvisionGenericClearSignDAOutput = "prepared" | "degraded";
+export type ProvisionGenericClearSignDAOutput = {
+  status: "prepared" | "degraded";
+  unrecognizedProgramIds: string[];
+};
 
 export type ProvisionGenericClearSignDAInput = {
   readonly derivationPath: string;
@@ -38,9 +41,10 @@ export type ProvisionGenericClearSignDAIntermediateValue =
 
 export type ProvisionGenericClearSignDAInternalState = {
   readonly error: ProvisionGenericClearSignDAError | null;
-  readonly outcome: ProvisionGenericClearSignDAOutput | null;
+  readonly outcome: "prepared" | "degraded" | null;
   readonly mode: ClearSignMode | null;
   readonly poolContexts: ClearSignContext[] | null;
   readonly instructionInfoContexts: ClearSignContext[] | null;
   readonly challengeBoundRequirements: ChallengeBoundRequirements | null;
+  readonly unrecognizedProgramIds: string[];
 };

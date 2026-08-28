@@ -14,6 +14,7 @@ import { type AddressOptions } from "@api/model/AddressOptions";
 import { type EcdhOptions } from "@api/model/EcdhOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TronAddressBook } from "@api/model/TronAddressBook";
 import { type SignerTrx } from "@api/SignerTrx";
 import { makeContainer } from "@internal/di";
 import { addressTypes } from "@internal/use-cases/address/di/addressTypes";
@@ -31,13 +32,18 @@ import { type SignTransactionUseCase } from "@internal/use-cases/transaction/Sig
 type DefaultSignerTrxConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  addressBook?: TronAddressBook;
 };
 
 export class DefaultSignerTrx implements SignerTrx {
   private readonly _container: Container;
 
-  constructor({ dmk, sessionId }: DefaultSignerTrxConstructorArgs) {
-    this._container = makeContainer({ dmk, sessionId });
+  constructor({
+    dmk,
+    sessionId,
+    addressBook,
+  }: DefaultSignerTrxConstructorArgs) {
+    this._container = makeContainer({ dmk, sessionId, addressBook });
   }
 
   getAddress(
