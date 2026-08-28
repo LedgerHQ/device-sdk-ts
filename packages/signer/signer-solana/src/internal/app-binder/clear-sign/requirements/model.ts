@@ -16,10 +16,16 @@ export type AltEntryKey = { altAddress: string; entryIndex: number };
  * it is `undefined` for ALT-supplied slots that are not resolved at
  * requirement-build time (DMK does not talk to RPC) — those still carry an
  * `altRef` so an `ALT_RESOLUTION` requirement can be emitted.
+ *
+ * `isWritable` mirrors the slot's writability as compiled in the message (its
+ * header plus the ALT writable/read-only index lists). The device needs every
+ * writable slot resolved to report its writable-account list complete, so the
+ * ALT rule reads this flag; no RPC call is involved.
  */
 export type RequirementAccount = {
   address?: string;
   altRef?: AltEntryKey;
+  isWritable: boolean;
 };
 
 export type RequirementInstruction = {
