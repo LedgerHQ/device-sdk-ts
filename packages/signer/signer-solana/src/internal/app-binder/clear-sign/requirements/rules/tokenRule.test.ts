@@ -59,7 +59,7 @@ function makeInstruction(
 ): RequirementInstruction {
   return {
     programId,
-    accounts: addresses.map((address) => ({ address })),
+    accounts: addresses.map((address) => ({ address, isWritable: false })),
     data: new Uint8Array(),
   };
 }
