@@ -228,8 +228,15 @@ export class InMemorySessionRepository implements SessionRepository {
       return Maybe.empty();
     }
     record.pendingFirmwareOperations.delete(deviceId);
+    // An OS update erases the app storage, so an app operation armed before the
+    // update must not survive it and land on the post-update device.
+    record.pendingAppOperations.delete(deviceId);
     return this.findDevice(record, deviceId).map((device) => {
-      const updated: Device = { ...device, firmware_version: targetVersion };
+      const updated: Device = {
+        ...device,
+        firmware_version: targetVersion,
+        apps: [],
+      };
       record.devices.set(deviceId, updated);
       return updated;
     });

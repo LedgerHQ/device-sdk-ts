@@ -1,4 +1,4 @@
-import { type Server } from "node:http";
+import { createServer, type Server } from "node:http";
 import { type AddressInfo } from "node:net";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -310,34 +310,41 @@ describe("secure channel WebSocket: install commits the app to the device contex
  * from the Manager API) once the final install block is acknowledged, mirroring
  * a real device auto-flashing the final image on reboot.
  */
+const createDevice = async (
+  firmware_version: string,
+  apps?: { name: string; version: string; hash?: string }[],
+) => {
+  const token = (
+    (await (await api("/auth", { method: "POST" })).json()) as {
+      token: string;
+    }
+  ).token;
+  const device = (await (
+    await api(
+      "/devices",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          device_type: "stax",
+          firmware_version,
+          ...(apps ? { apps } : {}),
+        }),
+      },
+      token,
+    )
+  ).json()) as { id: string };
+  await api(`/devices/${device.id}/connect`, { method: "POST" }, token);
+  return { token, id: device.id };
+};
+
+const firmwareOf = async (token: string, id: string): Promise<string> =>
+  (
+    (await (await api(`/devices/${id}`, {}, token)).json()) as {
+      firmware_version: string;
+    }
+  ).firmware_version;
+
 describe("secure channel WebSocket: firmware install advances the device version", () => {
-  const createDevice = async (firmware_version: string) => {
-    const token = (
-      (await (await api("/auth", { method: "POST" })).json()) as {
-        token: string;
-      }
-    ).token;
-    const device = (await (
-      await api(
-        "/devices",
-        {
-          method: "POST",
-          body: JSON.stringify({ device_type: "stax", firmware_version }),
-        },
-        token,
-      )
-    ).json()) as { id: string };
-    await api(`/devices/${device.id}/connect`, { method: "POST" }, token);
-    return { token, id: device.id };
-  };
-
-  const firmwareOf = async (token: string, id: string): Promise<string> =>
-    (
-      (await (await api(`/devices/${id}`, {}, token)).json()) as {
-        firmware_version: string;
-      }
-    ).firmware_version;
-
   it("install fails fast when the next version cannot be resolved", async () => {
     // The Manager API is pinned to a refused address (see beforeEach), so the
     // version resolution returns Nothing and the install closes with an error
@@ -351,6 +358,96 @@ describe("secure channel WebSocket: firmware install advances the device version
     );
     expect(install.type).not.toBe("bulk");
     expect(await firmwareOf(token, id)).toBe("1.9.0");
+  });
+});
+
+/**
+ * An OS update erases the device's app storage, so the apps installed before it
+ * are gone once the update commits. Driving that end to end needs the version
+ * resolution to succeed, so this suite re-points the server at a stubbed Manager
+ * API instead of the refused address the other suites rely on.
+ */
+describe("secure channel WebSocket: firmware install erases the app storage", () => {
+  const NEXT_VERSION = "1.9.1";
+  let manager: { url: string; close: () => Promise<void> };
+
+  /**
+   * Minimal Manager API covering the four-call chain `FirmwareUpdateResolver`
+   * replays, plus the MCU catalog `GetOsVersion` consults.
+   */
+  const startManagerApi = async () => {
+    const routes: Record<string, unknown> = {
+      get_device_version: { id: 17 },
+      get_firmware_version: { id: 100 },
+      get_latest_firmware: {
+        result: "ok",
+        se_firmware_osu_version: {
+          name: `${NEXT_VERSION}-osu`,
+          next_se_firmware_final_version: 200,
+        },
+      },
+      "firmware_final_versions/200": {
+        name: NEXT_VERSION,
+        mcu_versions: [5],
+      },
+      mcu_versions: [{ id: 5, name: "5.32.3" }],
+    };
+    const stub = createServer((request, response) => {
+      const path = (request.url ?? "").split("?")[0]!.replace(/^\//, "");
+      const body = routes[path];
+      response.writeHead(body === undefined ? 404 : 200, {
+        "Content-Type": "application/json",
+      });
+      response.end(JSON.stringify(body ?? {}));
+    });
+    await new Promise<void>((resolve) => stub.listen(0, resolve));
+    const { port } = stub.address() as AddressInfo;
+    return {
+      url: `http://127.0.0.1:${port}`,
+      close: () => new Promise<void>((resolve) => stub.close(() => resolve())),
+    };
+  };
+
+  beforeEach(async () => {
+    close();
+    server.close();
+    manager = await startManagerApi();
+    const built = createMockServer({ managerApiUrl: manager.url });
+    close = built.close;
+    await new Promise<void>((resolve) => {
+      server = built.app.listen(0, resolve);
+    });
+    built.attachWebSocket(server);
+    const { port } = server.address() as AddressInfo;
+    baseUrl = `http://127.0.0.1:${port}`;
+    wsBase = `ws://127.0.0.1:${port}`;
+  });
+
+  afterEach(async () => {
+    await manager.close();
+  });
+
+  it("reports no installed apps once the update commits", async () => {
+    const { token, id } = await createDevice("1.9.0", [
+      { name: "Bitcoin", version: "2.1.0", hash: "abc123" },
+    ]);
+    const before = await drive(token, id, "apps/list");
+    expect(before.data).toEqual([
+      { flags: 0, hash: "abc123", hash_code_data: "", name: "Bitcoin" },
+    ]);
+
+    const install = await drive(
+      token,
+      id,
+      "install?firmware=abcd&targetId=857735172",
+    );
+    expect(install.type).toBe("bulk");
+    expect(await firmwareOf(token, id)).toBe(NEXT_VERSION);
+
+    // The app storage was wiped with the update: the client re-lists and finds
+    // nothing, which is what drives it into reinstalling.
+    const after = await drive(token, id, "apps/list");
+    expect(after.data).toEqual([]);
   });
 });
 
