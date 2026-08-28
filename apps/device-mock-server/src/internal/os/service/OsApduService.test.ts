@@ -9,6 +9,10 @@ import { type SessionRecord } from "@internal/session/model/SessionModels";
 const GET_OS_VERSION = "e001000000";
 const EARLY_CHECK_ENTER = "e0030000";
 const EARLY_CHECK_EXIT = "e0030001";
+// Same cla+ins+p1 as the early-check toggle, but not one of its two p2 values.
+const OTHER_E003 = "e0030002";
+// How the toggle actually arrives from a transport: p2 followed by Lc = 00.
+const EARLY_CHECK_ENTER_WITH_LC = "e003000000";
 
 const firmwareResolver: FirmwareUpdateResolver = {
   resolveNextVersion: vi.fn().mockResolvedValue(Maybe.empty()),
@@ -94,6 +98,65 @@ describe("OsApduService onboarding", () => {
     expect(repo.findDevice(record, device.id).unsafeCoerce().onboarded).toBe(
       true,
     );
+  });
+
+  it("leaves an unrelated e003 APDU alone while onboarding", async () => {
+    const { os, record, device } = setup(false);
+    await os.resolve(record, device, GET_OS_VERSION); // WELCOME
+
+    // Not the early-check command: it falls through rather than being
+    // acknowledged, and the onboarding step is untouched.
+    expect(await os.resolve(record, device, OTHER_E003)).toBeUndefined();
+    const still = await os.resolve(record, device, GET_OS_VERSION);
+    expect(seFlagsOf(still!)).toBe("00000000");
+  });
+
+  it("handles the toggle as it arrives on the wire, with its Lc byte", async () => {
+    const { os, record, device } = setup(false);
+    await os.resolve(record, device, GET_OS_VERSION); // WELCOME
+
+    expect(await os.resolve(record, device, EARLY_CHECK_ENTER_WITH_LC)).toBe(
+      "9000",
+    );
+    const early = await os.resolve(record, device, GET_OS_VERSION);
+    expect(seFlagsOf(early!)).toBe("0000000f");
+  });
+
+  it("restarts the walk when a completed device is set back to not onboarded", async () => {
+    const { os, repo, record, device } = setup(false);
+    await os.resolve(record, device, GET_OS_VERSION);
+    await os.resolve(record, device, EARLY_CHECK_ENTER);
+    await os.resolve(record, device, GET_OS_VERSION);
+    await os.resolve(record, device, EARLY_CHECK_EXIT);
+    for (let i = 0; i < 7; i += 1) {
+      await os.resolve(record, device, GET_OS_VERSION);
+    }
+    const ready = await os.resolve(record, device, GET_OS_VERSION);
+    expect(seFlagsOf(ready!)).toBe("e600000b");
+
+    // Asking for a not-onboarded device again walks it from WELCOME, rather
+    // than leaving the finished simulation reporting itself onboarded.
+    const reset = repo
+      .editDevice(record, device.id, { onboarded: false })
+      .unsafeCoerce();
+    expect(reset.onboarded).toBe(false);
+    const welcome = await os.resolve(record, reset, GET_OS_VERSION);
+    expect(seFlagsOf(welcome!)).toBe("00000000");
+  });
+
+  it("keeps a walk in progress where it is when the device is edited", async () => {
+    const { os, repo, record, device } = setup(false);
+    await os.resolve(record, device, GET_OS_VERSION);
+    await os.resolve(record, device, EARLY_CHECK_ENTER);
+    const early = await os.resolve(record, device, GET_OS_VERSION);
+    expect(seFlagsOf(early!)).toBe("0000000f");
+
+    const edited = repo
+      .editDevice(record, device.id, { onboarded: false, name: "Renamed" })
+      .unsafeCoerce();
+
+    const stillEarly = await os.resolve(record, edited, GET_OS_VERSION);
+    expect(seFlagsOf(stillEarly!)).toBe("0000000f");
   });
 
   it("does not intercept the early-check APDU outside onboarding", async () => {

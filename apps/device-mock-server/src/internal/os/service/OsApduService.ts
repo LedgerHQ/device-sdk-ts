@@ -20,6 +20,7 @@ import { type SessionRecord } from "@internal/session/model/SessionModels";
  */
 const TOGGLE_EARLY_CHECK_PREFIX = "e00300";
 const TOGGLE_EARLY_CHECK_ENTER_P2 = "00";
+const TOGGLE_EARLY_CHECK_EXIT_P2 = "01";
 
 const STATUS_OK = "9000";
 
@@ -62,11 +63,22 @@ export class OsApduService {
     }
 
     // toggleOnboardingEarlyCheck moves the device in/out of the early-security
-    // -check step; only meaningful while onboarding. Always acknowledges.
+    // -check step; only meaningful while onboarding. Always acknowledges. Only
+    // the two p2 values the command defines are ours: anything else sharing the
+    // cla+ins+p1 is a different APDU and falls through to the other resolvers.
     if (onboarding && apdu.startsWith(TOGGLE_EARLY_CHECK_PREFIX)) {
-      const enter = apdu.slice(6, 8) === TOGGLE_EARLY_CHECK_ENTER_P2;
-      this.repository.toggleOnboardingEarlyCheck(record, device.id, enter);
-      return STATUS_OK;
+      const p2 = apdu.slice(6, 8);
+      if (
+        p2 === TOGGLE_EARLY_CHECK_ENTER_P2 ||
+        p2 === TOGGLE_EARLY_CHECK_EXIT_P2
+      ) {
+        this.repository.toggleOnboardingEarlyCheck(
+          record,
+          device.id,
+          p2 === TOGGLE_EARLY_CHECK_ENTER_P2,
+        );
+        return STATUS_OK;
+      }
     }
 
     return deriveOsApduResponse(device, apdu);

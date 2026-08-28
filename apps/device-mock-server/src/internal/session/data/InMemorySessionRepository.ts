@@ -158,8 +158,14 @@ export class InMemorySessionRepository implements SessionRepository {
       record.devices.set(deviceId, updated);
       // Start/stop the onboarding simulation in place so the device id stays
       // stable (a client bound to it, e.g. Ledger Live, keeps its connection).
-      if (config.onboarded === false && !record.onboarding.has(deviceId)) {
-        record.onboarding.set(deviceId, initialOnboardingState());
+      // A device that already finished onboarding starts over, so the same
+      // device can be walked through the flow again; a walk in progress is left
+      // where it is, so an unrelated edit does not rewind it.
+      if (config.onboarded === false) {
+        const state = record.onboarding.get(deviceId);
+        if (!state || state.completed) {
+          record.onboarding.set(deviceId, initialOnboardingState());
+        }
       } else if (config.onboarded === true) {
         record.onboarding.delete(deviceId);
       }
