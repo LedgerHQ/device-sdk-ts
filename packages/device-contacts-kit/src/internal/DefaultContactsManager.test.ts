@@ -1,6 +1,7 @@
 import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
+import { type RenameContactInput } from "@api/model/RenameContact";
 
 import { DefaultContactsManager } from "./DefaultContactsManager";
 
@@ -10,6 +11,13 @@ const VALID_INPUT: RegisterExternalAddressInput = {
   identifier: new Uint8Array(20).fill(0x11),
   blockchainFamily: "ethereum",
   chainId: 1n,
+};
+
+const VALID_RENAME_INPUT: RenameContactInput = {
+  previousContactName: "Alice",
+  newContactName: "Bob",
+  groupHandle: new Uint8Array(64).fill(0xcc),
+  hmacProof: new Uint8Array(32).fill(0xdd),
 };
 
 describe("DefaultContactsManager", () => {
@@ -54,5 +62,27 @@ describe("DefaultContactsManager", () => {
       }),
     ).not.toThrow();
     expect(executeDeviceAction).toHaveBeenCalledTimes(1);
+  });
+
+  it("renameContact flows manager -> use-case -> binder -> dmk.executeDeviceAction", () => {
+    const executeDeviceAction = vi.fn().mockReturnValue("DA_RETURN");
+    const dmk = { executeDeviceAction } as unknown as DeviceManagementKit;
+
+    const manager = new DefaultContactsManager({
+      dmk,
+      sessionId: "session-id",
+      appName: "Ethereum",
+    });
+
+    const result = manager.renameContact(VALID_RENAME_INPUT);
+
+    expect(executeDeviceAction).toHaveBeenCalledTimes(1);
+    const call = executeDeviceAction.mock.calls[0]![0] as {
+      sessionId: string;
+      deviceAction: unknown;
+    };
+    expect(call.sessionId).toBe("session-id");
+    expect(call.deviceAction).toBeDefined();
+    expect(result).toBe("DA_RETURN");
   });
 });

@@ -7,6 +7,15 @@ export {
   type RegisterExternalAddressDAReturnType,
   type RegisterExternalAddressDAState,
 } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+export {
+  type RenameContactDAError,
+  type RenameContactDAInput,
+  type RenameContactDAIntermediateValue,
+  type RenameContactDAOutput,
+  type RenameContactDARequiredInteraction,
+  type RenameContactDAReturnType,
+  type RenameContactDAState,
+} from "@api/app-binder/RenameContactDeviceActionTypes";
 export { type ContactsManager } from "@api/ContactsManager";
 export { ContactsManagerBuilder } from "@api/ContactsManagerBuilder";
 export {
@@ -27,3 +36,7 @@ export {
   type RegisterExternalAddressMode,
   type RegisterExternalAddressOutput,
 } from "@api/model/RegisterExternalAddress";
+export {
+  type RenameContactInput,
+  type RenameContactOutput,
+} from "@api/model/RenameContact";

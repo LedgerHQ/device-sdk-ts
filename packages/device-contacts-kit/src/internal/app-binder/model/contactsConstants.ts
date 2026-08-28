@@ -14,10 +14,27 @@ export const CONTACTS_APDU_INS = 0x10;
 /** P1 sub-command selector for REGISTER IDENTITY (register external address). */
 export const SUB_CMD_REGISTER_IDENTITY = 0x01;
 
+/**
+ * EDIT CONTACT NAME (rename) is a blockchain-agnostic OS/dashboard command with
+ * its own CLA/INS — NOT a sub-command of the address-book app APDU (0xB0/0x10).
+ * The OS serves it directly, so it must run on the dashboard. P1 is a fixed
+ * 0x00 (there is no sub-command selector for this command); P2 still carries the
+ * chunk-continuation flag handled by {@link ./../services/sendFramedContactsPayload}.
+ */
+export const RENAME_CONTACT_APDU_CLA = 0xe0;
+export const RENAME_CONTACT_APDU_INS = 0x2e;
+export const RENAME_CONTACT_P1 = 0x00;
+
 /** Sizes (bytes) of the fields in the REGISTER IDENTITY final-chunk response. */
 export const GROUP_HANDLE_BYTES = 64;
 export const HMAC_PROOF_BYTES = 32;
 export const HMAC_REST_BYTES = 32;
+
+/**
+ * Size (bytes) of the rotated `hmac_name` returned on the EDIT CONTACT NAME
+ * final-chunk response — the replacement group-level name proof.
+ */
+export const HMAC_NAME_BYTES = 32;
 
 /**
  * Blockchain-family byte encoded in the `BLOCKCHAIN_FAMILY` TLV, keyed by a
