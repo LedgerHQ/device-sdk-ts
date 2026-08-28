@@ -4,4 +4,5 @@ export const speculosTypes = {
   OpenAppUseCase: Symbol.for("OpenAppViaSpeculosUseCase"),
   ForwardApduUseCase: Symbol.for("ForwardApduUseCase"),
   CloseAppUseCase: Symbol.for("CloseAppUseCase"),
+  ReleaseDeadProxyUseCase: Symbol.for("ReleaseDeadProxyUseCase"),
 };

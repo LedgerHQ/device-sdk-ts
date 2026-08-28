@@ -18,6 +18,7 @@ const makeOperator = (
   acquire: vi.fn(() => EitherAsync.liftEither(Right("run-1"))),
   waitUntilReady: vi.fn(() => EitherAsync.liftEither(Right("https://x.test"))),
   release: vi.fn(() => EitherAsync.liftEither(Right(undefined))),
+  isAlive: vi.fn(() => Promise.resolve(true)),
   forwardApdu: vi.fn(() => EitherAsync.liftEither(Right("deadbeef9000"))),
   proxyRequest: vi.fn(() =>
     EitherAsync.liftEither(

@@ -11,11 +11,16 @@ import { INSTALL_COMMIT_APDU } from "@internal/secure-channel/service/secureChan
 import { type SecureChannelApduService } from "@internal/secure-channel/service/SecureChannelApduService";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
-import { type SessionRecord } from "@internal/session/model/SessionModels";
+import {
+  type SessionRecord,
+  type SpeculosProxySession,
+} from "@internal/session/model/SessionModels";
 import { speculosTypes } from "@internal/speculos/di/speculosTypes";
+import { type SpeculosError } from "@internal/speculos/model/SpeculosModels";
 import { type CloseAppUseCase } from "@internal/speculos/use-case/CloseAppUseCase";
 import { type ForwardApduUseCase } from "@internal/speculos/use-case/ForwardApduUseCase";
 import { type OpenAppViaSpeculosUseCase } from "@internal/speculos/use-case/OpenAppViaSpeculosUseCase";
+import { type ReleaseDeadProxyUseCase } from "@internal/speculos/use-case/ReleaseDeadProxyUseCase";
 import {
   CLOSE_APP_PREFIX,
   parseOpenApp,
@@ -28,7 +33,8 @@ import {
  * Resolves the response for an incoming APDU, applying the precedence:
  * 1. explicit per-device mock (wins even while a Speculos proxy is active, so a
  *    mock can override an app response — e.g. force GetAppAndVersion to 5515),
- * 2. active Speculos proxy -> forward (Close App releases and reverts to mock),
+ * 2. active Speculos proxy -> forward (Close App — or an emulator that quit
+ *    with its app — releases it and reverts to mock),
  * 3. derived handshake (GetOsVersion / GetAppAndVersion) and relayed
  *    secure-channel APDUs (permission / GetCertificate / install block),
  * 4. unmatched Open App -> provision a Speculos instance,
@@ -52,6 +58,9 @@ export class ApduResolverService {
     @optional()
     @inject(speculosTypes.CloseAppUseCase)
     private readonly closeApp?: CloseAppUseCase,
+    @optional()
+    @inject(speculosTypes.ReleaseDeadProxyUseCase)
+    private readonly releaseDeadProxy?: ReleaseDeadProxyUseCase,
   ) {}
 
   async resolve(
@@ -121,17 +130,13 @@ export class ApduResolverService {
       }
       const result = await this.forwardApdu.execute(proxy, apdu).run();
       return result.caseOf({
-        Left: (error) => {
-          logger.error(
-            `Speculos proxy forward failed for ${device.id}: ${error.message}`,
-          );
-          return SW_PROXY_ERROR;
-        },
+        Left: (error) =>
+          this.onForwardFailed(record, device, apduHex, proxy, error),
         Right: (response) => {
           logger.info(
             `APDU [${device.id}] ${apdu} -> ${response} (speculos ${proxy.runId})`,
           );
-          return response;
+          return Promise.resolve(response);
         },
       });
     }
@@ -181,5 +186,27 @@ export class ApduResolverService {
       `APDU [${device.id}] ${apdu} -> ${UNKNOWN_APDU_RESPONSE} (no matching mock)`,
     );
     return UNKNOWN_APDU_RESPONSE;
+  }
+
+  /**
+   * An emulator can also go away without a Close App APDU: quitting the app from
+   * the device screen exits Speculos with it. When the emulator behind the proxy
+   * turns out to be gone, the app is closed and the APDU is resolved again in
+   * mock mode, the way a real device back at the dashboard answers it.
+   */
+  private async onForwardFailed(
+    record: SessionRecord,
+    device: Device,
+    apduHex: string,
+    proxy: SpeculosProxySession,
+    error: SpeculosError,
+  ): Promise<string> {
+    if (await this.releaseDeadProxy?.execute(record, device.id, proxy)) {
+      return this.resolveResponse(record, device, apduHex);
+    }
+    logger.error(
+      `Speculos proxy forward failed for ${device.id}: ${error.message}`,
+    );
+    return SW_PROXY_ERROR;
   }
 }

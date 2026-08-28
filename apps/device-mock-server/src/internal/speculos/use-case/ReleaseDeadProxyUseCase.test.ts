@@ -4,6 +4,7 @@ import { vi } from "vitest";
 import { InMemorySessionRepository } from "@internal/session/data/InMemorySessionRepository";
 import { type SpeculosOperatorDataSource } from "@internal/speculos/data/SpeculosOperatorDataSource";
 import { CloseAppUseCase } from "@internal/speculos/use-case/CloseAppUseCase";
+import { ReleaseDeadProxyUseCase } from "@internal/speculos/use-case/ReleaseDeadProxyUseCase";
 
 const makeOperator = (
   overrides: Partial<SpeculosOperatorDataSource> = {},
@@ -35,21 +36,39 @@ const setup = () => {
     speculosUrl: "https://r.speculos.test",
     appName: "Bitcoin",
   });
-  return { repo, record, device };
+  const proxy = repo.findProxy(record, device.id).unsafeCoerce();
+  return { repo, record, device, proxy };
 };
 
-describe("CloseAppUseCase", () => {
-  it("forgets the proxy and releases the speculos instance", async () => {
-    const { repo, record, device } = setup();
-    const operator = makeOperator();
-    const proxy = repo.findProxy(record, device.id).unsafeCoerce();
+describe("ReleaseDeadProxyUseCase", () => {
+  it("closes the app when the emulator is gone", async () => {
+    const { repo, record, device, proxy } = setup();
+    const operator = makeOperator({
+      isAlive: vi.fn(() => Promise.resolve(false)),
+    });
 
-    const result = await new CloseAppUseCase(operator, repo)
-      .execute(record, device.id, proxy)
-      .run();
+    const discarded = await new ReleaseDeadProxyUseCase(
+      operator,
+      new CloseAppUseCase(operator, repo),
+    ).execute(record, device.id, proxy);
 
-    expect(result.isRight()).toBe(true);
-    expect(repo.findProxy(record, device.id).isNothing()).toBe(true);
+    expect(discarded).toBe(true);
+    expect(operator.isAlive).toHaveBeenCalledWith("https://r.speculos.test");
     expect(operator.release).toHaveBeenCalledWith("run-1");
+    expect(repo.findProxy(record, device.id).isNothing()).toBe(true);
+  });
+
+  it("keeps the proxy while the emulator still answers", async () => {
+    const { repo, record, device, proxy } = setup();
+    const operator = makeOperator();
+
+    const discarded = await new ReleaseDeadProxyUseCase(
+      operator,
+      new CloseAppUseCase(operator, repo),
+    ).execute(record, device.id, proxy);
+
+    expect(discarded).toBe(false);
+    expect(operator.release).not.toHaveBeenCalled();
+    expect(repo.findProxy(record, device.id).isJust()).toBe(true);
   });
 });

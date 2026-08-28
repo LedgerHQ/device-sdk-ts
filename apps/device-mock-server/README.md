@@ -254,6 +254,8 @@ sequenceDiagram
 
 > The `coin_app` sent to Speculinho must be the verbatim BOLOS app name (e.g. `Ethereum`, not `eth`).
 
+An app can also be quit from the device screen itself, which exits Speculos with it — no Close App APDU is ever sent. The emulator behind the proxy is then probed whenever a forwarded APDU or a passthrough request comes back unusable, and when it turns out to be gone the app is closed on the device's behalf: the run is released, the APDU is answered in mock mode (`GetAppAndVersion` reports `BOLOS`) and the passthrough answers `409`, exactly as for a device that never opened an app.
+
 ## 🔹 Getting started
 
 Install dependencies from the **monorepo root**:

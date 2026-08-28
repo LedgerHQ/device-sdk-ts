@@ -17,6 +17,7 @@ const makeOperator = (
     EitherAsync.liftEither(Right("https://run-1.speculos.test")),
   ),
   release: vi.fn(() => EitherAsync.liftEither(Right(undefined))),
+  isAlive: vi.fn(() => Promise.resolve(true)),
   forwardApdu: vi.fn(() => EitherAsync.liftEither(Right("9000"))),
   proxyRequest: vi.fn(() =>
     EitherAsync.liftEither(
