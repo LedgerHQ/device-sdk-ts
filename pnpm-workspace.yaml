@@ -60,7 +60,7 @@ catalog:
   '@types/web-bluetooth': ^0.0.20
   '@types/ws': ^8.5.14
   '@vitejs/plugin-react': ^5.0.0
-  '@vitest/coverage-istanbul': ^3.2.4
+  '@vitest/coverage-istanbul': ^4.1.11
   autoprefixer: ^10.4.17
 
   babel-plugin-module-resolver: ^5.0.2
@@ -134,7 +134,7 @@ catalog:
   util: ^0.12.5
   uuid: 11.0.3
   vite: 7.3.6
-  vitest: 3.2.6
+  vitest: 4.1.11
   vitest-react-native: ^0.1.5
   ws: ^8.18.0
   xstate: 5.19.2
