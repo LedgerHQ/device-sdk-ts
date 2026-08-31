@@ -8,6 +8,15 @@ export {
   type EditExternalAddressIdentifierDAState,
 } from "@api/app-binder/EditExternalAddressIdentifierDeviceActionTypes";
 export {
+  type EditExternalAddressScopeDAError,
+  type EditExternalAddressScopeDAInput,
+  type EditExternalAddressScopeDAIntermediateValue,
+  type EditExternalAddressScopeDAOutput,
+  type EditExternalAddressScopeDARequiredInteraction,
+  type EditExternalAddressScopeDAReturnType,
+  type EditExternalAddressScopeDAState,
+} from "@api/app-binder/EditExternalAddressScopeDeviceActionTypes";
+export {
   type RegisterExternalAddressDAError,
   type RegisterExternalAddressDAInput,
   type RegisterExternalAddressDAIntermediateValue,
@@ -43,6 +52,10 @@ export {
   type EditExternalAddressIdentifierInput,
   type EditExternalAddressIdentifierOutput,
 } from "@api/model/EditExternalAddressIdentifier";
+export {
+  type EditExternalAddressScopeInput,
+  type EditExternalAddressScopeOutput,
+} from "@api/model/EditExternalAddressScope";
 export {
   type ExistingContactGroup,
   type RegisterExternalAddressInput,

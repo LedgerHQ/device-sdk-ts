@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import {
   type EditExternalAddressIdentifierDAOutput,
+  type EditExternalAddressScopeDAOutput,
   type RegisterExternalAddressDAOutput,
   type RenameContactDAOutput,
 } from "@ledgerhq/device-contacts-kit";
@@ -19,6 +20,10 @@ const DEFAULT_IDENTIFIER = "de0b295669a9fd93d5f28d9ec85e40f4cb697bae";
 // A distinct Ethereum address used as the default replacement for the
 // edit-identifier form, so the edit visibly changes the entry's identifier.
 const DEFAULT_NEW_IDENTIFIER = "70997970c51812dc3a010c7d01b50e0d17dc79c8";
+
+// A distinct scope used as the default replacement for the edit-scope form, so
+// the edit visibly changes the entry's scope.
+const DEFAULT_NEW_SCOPE = "Eth cold";
 
 function hexToBytes(hex: string): Uint8Array {
   const raw = hex.startsWith("0x") || hex.startsWith("0X") ? hex.slice(2) : hex;
@@ -128,6 +133,30 @@ function applyEditIdentifier(
   window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(updated));
 }
 
+/** After a successful scope edit, update the matching persisted entry in place —
+ * matched by group handle, identifier, and the pre-edit scope — with the new
+ * scope and the rotated address-level proof (`hmacRest`). The group-level
+ * `hmacProof` and the identifier are unchanged by the edit, so they pass through
+ * untouched and a subsequent edit round-trips. */
+function applyEditScope(output: EditExternalAddressScopeDAOutput): void {
+  if (typeof window === "undefined") return;
+  const groupHandleHex = bytesToHex(output.groupHandle);
+  const identifierHex = bytesToHex(output.identifier);
+  const newHmacRestHex = bytesToHex(output.hmacRest);
+  const updated = loadEntries().map((entry) =>
+    entry.groupHandleHex === groupHandleHex &&
+    entry.identifierHex === identifierHex &&
+    entry.scope === output.previousScope
+      ? {
+          ...entry,
+          scope: output.scope,
+          hmacRestHex: newHmacRestHex,
+        }
+      : entry,
+  );
+  window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(updated));
+}
+
 const PersistedProofRows: React.FC<{ rows: Array<[string, string]> }> = ({
   rows,
 }) => (
@@ -218,6 +247,30 @@ const EditExternalAddressIdentifierOutputView: React.FC<{
   return <PersistedProofRows rows={rows} />;
 };
 
+const EditExternalAddressScopeOutputView: React.FC<{
+  output: EditExternalAddressScopeDAOutput;
+}> = ({ output }) => {
+  // Update the matching persisted entry locally as soon as the scope and its
+  // address-level proof rotate.
+  useEffect(() => {
+    applyEditScope(output);
+  }, [output]);
+
+  const rows: Array<[string, string]> = [
+    ["contactName", output.contactName],
+    ["previousScope", output.previousScope],
+    ["scope", output.scope],
+    ["identifier", bytesToHex(output.identifier)],
+    ["blockchainFamily", output.blockchainFamily],
+    ["chainId", output.chainId?.toString() ?? "—"],
+    ["groupHandle", bytesToHex(output.groupHandle)],
+    ["hmacProof", bytesToHex(output.hmacProof)],
+    ["hmacRest", bytesToHex(output.hmacRest)],
+  ];
+
+  return <PersistedProofRows rows={rows} />;
+};
+
 type RegisterInput = {
   contactName: string;
   scope: string;
@@ -241,6 +294,19 @@ type EditExternalAddressIdentifierInputForm = {
   scope: string;
   previousIdentifier: string;
   newIdentifier: string;
+  blockchainFamily: string;
+  chainId: string;
+  groupHandle: string;
+  hmacProof: string;
+  hmacRest: string;
+  skipOpenApp: boolean;
+};
+
+type EditExternalAddressScopeInputForm = {
+  contactName: string;
+  previousScope: string;
+  newScope: string;
+  identifier: string;
   blockchainFamily: string;
   chainId: string;
   groupHandle: string;
@@ -422,6 +488,70 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           skipOpenApp: false,
         },
         OutputComponent: EditExternalAddressIdentifierOutputView,
+        deviceModelId,
+      },
+      {
+        title: "Edit External Address Scope",
+        description:
+          "Replace an entry's scope within an existing contact group (EDIT SCOPE), keeping the same contact name and identifier. Pre-filled from the most recently registered external-address contact; rotates and returns the address-level proof (hmacRest) while the group name proof passes through unchanged.",
+        executeDeviceAction: ({
+          contactName,
+          previousScope,
+          newScope,
+          identifier,
+          blockchainFamily,
+          chainId,
+          groupHandle,
+          hmacProof,
+          hmacRest,
+          skipOpenApp,
+        }: EditExternalAddressScopeInputForm) => {
+          if (!contactsManager) {
+            throw new Error("Contacts manager not initialized");
+          }
+
+          return contactsManager.editExternalAddressScope({
+            contactName,
+            previousScope,
+            newScope,
+            identifier: hexToBytes(identifier.trim()),
+            blockchainFamily,
+            chainId: chainId.trim().length > 0 ? BigInt(chainId) : undefined,
+            groupHandle: hexToBytes(groupHandle.trim()),
+            hmacProof: hexToBytes(hmacProof.trim()),
+            hmacRest: hexToBytes(hmacRest.trim()),
+            skipOpenApp,
+          });
+        },
+        validateValues: ({
+          contactName,
+          previousScope,
+          newScope,
+          identifier,
+          groupHandle,
+          hmacProof,
+          hmacRest,
+        }: EditExternalAddressScopeInputForm) =>
+          contactName.trim().length > 0 &&
+          previousScope.trim().length > 0 &&
+          newScope.trim().length > 0 &&
+          identifier.trim().length > 0 &&
+          groupHandle.trim().length > 0 &&
+          hmacProof.trim().length > 0 &&
+          hmacRest.trim().length > 0,
+        initialValues: {
+          contactName: latestContact?.contactName ?? "Alice",
+          previousScope: latestContact?.scope ?? "Eth main",
+          newScope: DEFAULT_NEW_SCOPE,
+          identifier: latestContact?.identifierHex ?? DEFAULT_IDENTIFIER,
+          blockchainFamily: latestContact?.blockchainFamily ?? "ethereum",
+          chainId: latestContact?.chainId ?? "1",
+          groupHandle: latestContact?.groupHandleHex ?? "",
+          hmacProof: latestContact?.hmacProofHex ?? "",
+          hmacRest: latestContact?.hmacRestHex ?? "",
+          skipOpenApp: false,
+        },
+        OutputComponent: EditExternalAddressScopeOutputView,
         deviceModelId,
       },
     ],

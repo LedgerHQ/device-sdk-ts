@@ -21,6 +21,13 @@ export const SUB_CMD_REGISTER_IDENTITY = 0x01;
 export const SUB_CMD_EDIT_IDENTIFIER = 0x03;
 
 /**
+ * P1 sub-command selector for EDIT SCOPE — an address-book app sub-command
+ * (CLA 0xB0 / INS 0x10) served by the coin app, never OS-dispatched. Changes an
+ * entry's scope while keeping its contact name and identifier.
+ */
+export const SUB_CMD_EDIT_SCOPE = 0x04;
+
+/**
  * BIP32 segments (`m/44'/60'/0'/0/0`) sent with EDIT IDENTIFIER. Temporary: the
  * coin app currently requires a DERIVATION_PATH TLV, so the kit sends one fixed,
  * unexposed path; it will be removed once firmware stops requiring it.

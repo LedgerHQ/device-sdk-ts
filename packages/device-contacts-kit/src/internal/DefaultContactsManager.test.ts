@@ -1,6 +1,7 @@
 import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 
 import { type EditExternalAddressIdentifierInput } from "@api/model/EditExternalAddressIdentifier";
+import { type EditExternalAddressScopeInput } from "@api/model/EditExternalAddressScope";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
 import { type RenameContactInput } from "@api/model/RenameContact";
 
@@ -26,6 +27,18 @@ const VALID_EDIT_INPUT: EditExternalAddressIdentifierInput = {
   scope: "Eth main",
   previousIdentifier: new Uint8Array(20).fill(0x11),
   newIdentifier: new Uint8Array(20).fill(0x22),
+  blockchainFamily: "ethereum",
+  chainId: 1n,
+  groupHandle: new Uint8Array(64).fill(0xcc),
+  hmacProof: new Uint8Array(32).fill(0xdd),
+  hmacRest: new Uint8Array(32).fill(0xaa),
+};
+
+const VALID_EDIT_SCOPE_INPUT: EditExternalAddressScopeInput = {
+  contactName: "Alice",
+  previousScope: "Eth main",
+  newScope: "Eth cold",
+  identifier: new Uint8Array(20).fill(0x11),
   blockchainFamily: "ethereum",
   chainId: 1n,
   groupHandle: new Uint8Array(64).fill(0xcc),
@@ -110,6 +123,28 @@ describe("DefaultContactsManager", () => {
     });
 
     const result = manager.editExternalAddressIdentifier(VALID_EDIT_INPUT);
+
+    expect(executeDeviceAction).toHaveBeenCalledTimes(1);
+    const call = executeDeviceAction.mock.calls[0]![0] as {
+      sessionId: string;
+      deviceAction: unknown;
+    };
+    expect(call.sessionId).toBe("session-id");
+    expect(call.deviceAction).toBeDefined();
+    expect(result).toBe("DA_RETURN");
+  });
+
+  it("editExternalAddressScope flows manager -> use-case -> binder -> dmk.executeDeviceAction", () => {
+    const executeDeviceAction = vi.fn().mockReturnValue("DA_RETURN");
+    const dmk = { executeDeviceAction } as unknown as DeviceManagementKit;
+
+    const manager = new DefaultContactsManager({
+      dmk,
+      sessionId: "session-id",
+      appName: "Ethereum",
+    });
+
+    const result = manager.editExternalAddressScope(VALID_EDIT_SCOPE_INPUT);
 
     expect(executeDeviceAction).toHaveBeenCalledTimes(1);
     const call = executeDeviceAction.mock.calls[0]![0] as {
