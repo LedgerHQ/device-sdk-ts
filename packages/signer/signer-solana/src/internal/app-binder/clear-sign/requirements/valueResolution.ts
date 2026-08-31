@@ -1,6 +1,6 @@
 import { type Bs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
-import { type RequirementInstruction } from "./model";
+import { type AltEntryKey, type RequirementInstruction } from "./model";
 import {
   OptionalAccountStrategy,
   type ParsedValue,
@@ -17,6 +17,20 @@ export function accountAddressAt(
 ): string | undefined {
   if (index < 0 || index >= instruction.accounts.length) return undefined;
   return instruction.accounts[index]!.address;
+}
+
+/**
+ * The ALT reference of an account slot, bounds-checked. Set only for slots the
+ * host cannot resolve (ALT-supplied, no `ALT_RESOLUTION` streamed yet), so it is
+ * the natural complement of {@link accountAddressAt}: exactly one of the two
+ * answers for any slot of a parsed message.
+ */
+export function accountAltRefAt(
+  instruction: RequirementInstruction,
+  index: number,
+): AltEntryKey | undefined {
+  if (index < 0 || index >= instruction.accounts.length) return undefined;
+  return instruction.accounts[index]!.altRef;
 }
 
 /**
@@ -44,6 +58,21 @@ export function resolvePortAccountIndex(
     return idx;
   }
   return indices[indices.length - 1]!;
+}
+
+/**
+ * The ALT reference behind a pubkey-bearing VALUE — the complement of
+ * {@link resolvePubkeyValue} for an `ACCOUNT_PATH` into an unresolved slot.
+ * A `CONSTANT` is already an address and an `ARGUMENT_PATH` names no slot, so
+ * both yield `undefined`.
+ */
+export function altRefForPubkeyValue(
+  value: ParsedValue,
+  instruction: RequirementInstruction,
+): AltEntryKey | undefined {
+  if (value.source !== ValueSource.ACCOUNT_PATH) return undefined;
+  if (value.payload.length === 0) return undefined;
+  return accountAltRefAt(instruction, value.payload[0]!);
 }
 
 /**

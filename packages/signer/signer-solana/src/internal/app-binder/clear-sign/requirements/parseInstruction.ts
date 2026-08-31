@@ -1,6 +1,7 @@
 import {
   fromCalAccountReset,
   fromCalDisplayField,
+  fromCalHideRule,
   fromCalInstructionInfo,
   fromCalValueFlowPort,
 } from "./fromCal";
@@ -9,8 +10,7 @@ import { type ParsedInstruction } from "./records";
 
 /**
  * Map a matched CAL descriptor's decoded JSON into the structured records the
- * requirement builder consumes. HIDE_RULE substructures are not carried — they
- * only drive post-resolution witness logic, out of scope here.
+ * requirement builder consumes.
  */
 export function parseInstructionDescriptor(
   descriptor: InstructionDescriptor,
@@ -19,9 +19,11 @@ export function parseInstructionDescriptor(
     info: fromCalInstructionInfo(
       descriptor.idlDescriptor,
       descriptor.mintAssociations,
+      descriptor.ownerAssociations,
     ),
     valueFlowPorts: descriptor.valueFlowPorts.map(fromCalValueFlowPort),
     accountResets: descriptor.accountResets.map(fromCalAccountReset),
     displayFields: descriptor.displayFields.map(fromCalDisplayField),
+    hideRules: descriptor.hideRules.map(fromCalHideRule),
   };
 }

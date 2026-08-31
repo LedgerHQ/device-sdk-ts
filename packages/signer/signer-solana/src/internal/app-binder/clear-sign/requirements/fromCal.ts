@@ -4,19 +4,26 @@ import { poolFromJson } from "@internal/app-binder/clear-sign/idl-type-pool";
 
 import {
   type CalAccountReset,
+  type CalActiveWhenPredicate,
   type CalDisplayField,
+  type CalHideRule,
   type CalIdlDescriptor,
   type CalMintAssociation,
+  type CalOwnerAssociation,
   type CalTokenValue,
   type CalValue,
   type CalValueFlowPort,
 } from "./calTypes";
 import {
+  type ActiveWhenPredicate,
+  type HideCondition,
   type MintAssociation,
   OptionalAccountStrategy,
   type ParsedAccountReset,
   type ParsedDisplayField,
+  type ParsedHideRule,
   type ParsedInstructionInfo,
+  type ParsedOwnerAssociation,
   type ParsedTokenValue,
   type ParsedValue,
   type ParsedValueFlowPort,
@@ -35,6 +42,22 @@ const TOKEN_KIND_BY_NAME: Readonly<Record<string, TokenKind>> = {
   RESOLVE: 0x01,
   NULL: 0x02,
   NATIVE: 0x03,
+};
+
+const HIDE_CONDITION_BY_NAME: Readonly<Record<string, HideCondition>> = {
+  CREATED_IN_TRANSACTION: 0x00,
+  IS_SIGNER: 0x01,
+  ACCOUNT_USED_ELSEWHERE: 0x02,
+  IS_ANOTHER_SIGNER: 0x03,
+  ACCOUNT_EFFECTS_DISPLAYED_ELSEWHERE: 0x04,
+};
+
+const ACTIVE_WHEN_BY_NAME: Readonly<Record<string, ActiveWhenPredicate>> = {
+  CREATED_IN_TRANSACTION: 0x00,
+  IS_SIGNER: 0x01,
+  ACCOUNT_USED_ELSEWHERE: 0x02,
+  MINT_PREDICATE: 0x03,
+  IS_ANOTHER_SIGNER: 0x04,
 };
 
 /**
@@ -98,7 +121,30 @@ export function fromCalTokenValue(tokenValue: CalTokenValue): ParsedTokenValue {
     kind,
     value: tokenValue.value ? fromCalValue(tokenValue.value) : undefined,
     accountIndex: tokenValue.account_index,
+    fallbackAccountIndex: tokenValue.fallback_account,
   };
+}
+
+/**
+ * `VALUE_FLOW_PORT.ACTIVE_WHEN`: a bare `ActiveWhenPredicate` name, or an object
+ * whose `kind` names it (`MINT_PREDICATE` carries the mint the device compares
+ * against itself, so only the code is kept).
+ *
+ * An unrecognized predicate is dropped rather than rejected. Nothing host-side
+ * evaluates activation — the only requirement keyed off this list is the
+ * `IS_SIGNER` owner attestation, and an unknown name is by definition not
+ * `IS_SIGNER` — so dropping it cannot under-request a descriptor, while
+ * rejecting would fail the whole requirement build and degrade every
+ * transaction touching the program to blind signing.
+ */
+function fromCalActiveWhen(
+  predicates: CalActiveWhenPredicate[] | undefined,
+): ActiveWhenPredicate[] {
+  return (predicates ?? []).flatMap((predicate) => {
+    const name = typeof predicate === "string" ? predicate : predicate.kind;
+    const code = ACTIVE_WHEN_BY_NAME[name];
+    return code === undefined ? [] : [code];
+  });
 }
 
 /**
@@ -131,6 +177,36 @@ export function fromCalValueFlowPort(
       port.optional_account_strategy,
     ),
     tokenValue: fromCalTokenValue(port.token_value),
+    activeWhen: fromCalActiveWhen(port.active_when),
+  };
+}
+
+/**
+ * One `HIDE_RULE`. An absent or unrecognized condition leaves `condition`
+ * undefined instead of failing the decode: the rule's `target` is resolved by
+ * the device for *every* rule it receives, so the entry must survive to keep
+ * that target's `ALT_RESOLUTION` in the requirement set. Only the `IS_SIGNER`
+ * owner attestation keys off the condition, and an unknown name is not
+ * `IS_SIGNER`. `RULE_SET_INDEX` defaults to 0 (a single AND-set), matching the
+ * spec's OR-of-ANDs default.
+ */
+export function fromCalHideRule(rule: CalHideRule): ParsedHideRule {
+  return {
+    ruleSetIndex: rule.rule_set_index ?? 0,
+    condition:
+      rule.condition === undefined
+        ? undefined
+        : HIDE_CONDITION_BY_NAME[rule.condition],
+    target: rule.target ? fromCalValue(rule.target) : undefined,
+  };
+}
+
+export function fromCalOwnerAssociation(
+  association: CalOwnerAssociation,
+): ParsedOwnerAssociation {
+  return {
+    accountIndex: association.account_index,
+    owner: fromCalValue(association.owner),
   };
 }
 
@@ -156,6 +232,7 @@ export function fromCalDisplayField(
 export function fromCalInstructionInfo(
   idlDescriptor: CalIdlDescriptor,
   mintAssociations: CalMintAssociation[],
+  ownerAssociations: CalOwnerAssociation[],
 ): ParsedInstructionInfo {
   return {
     typePool: poolFromJson(idlDescriptor.type_pool),
@@ -164,5 +241,6 @@ export function fromCalInstructionInfo(
       accountIndex: association.account_index,
       mintIndex: association.mint_index,
     })),
+    ownerAssociations: ownerAssociations.map(fromCalOwnerAssociation),
   };
 }

@@ -75,6 +75,43 @@ describe("RequirementAccumulator", () => {
     ]);
   });
 
+  it("build() ranks tokenAccountStateAltRefs above every other ALT bucket", () => {
+    const accumulator = new RequirementAccumulator();
+
+    // (ALT, 1) is an IS_SIGNER target that is also a PARAM_TOKEN_AMOUNT ref, a
+    // MINT_ASSOC mint and a writable slot: four buckets, one ALT entry, and the
+    // device rejects a second ALT_RESOLUTION for it.
+    accumulator.addAltResolution("ALT", 1);
+    accumulator.addMintAltRef("ALT", 1);
+    accumulator.addTokenAmountAltRef("ALT", 1);
+    accumulator.addTokenAccountStateAltRef("ALT", 1);
+
+    const result = accumulator.build();
+
+    // The state bucket's loop ends with a TOKEN_INFO attempt on the resolved
+    // address, so it does everything the three lower buckets do.
+    expect(result.tokenAccountStateAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 1 },
+    ]);
+    expect(result.tokenAmountAltRefs).toEqual([]);
+    expect(result.mintAltRefs).toEqual([]);
+    expect(result.altResolutions).toEqual([]);
+  });
+
+  it("build() keeps mintAltRefs when only tokenAmountAltRefs is outranked", () => {
+    // Regression guard for the strip order: mintAltRefs must be filtered against
+    // the *surviving* tokenAmount keys, not the raw ones.
+    const accumulator = new RequirementAccumulator();
+    accumulator.addTokenAccountStateAltRef("ALT", 1);
+    accumulator.addTokenAmountAltRef("ALT", 1);
+    accumulator.addMintAltRef("ALT", 1);
+    accumulator.addMintAltRef("ALT", 2);
+
+    const result = accumulator.build();
+
+    expect(result.mintAltRefs).toEqual([{ altAddress: "ALT", entryIndex: 2 }]);
+  });
+
   it("build() applies cross-bucket priority dedup: tokenAccountStates > tokenAmountRefs", () => {
     const accumulator = new RequirementAccumulator();
 
@@ -102,6 +139,7 @@ describe("RequirementAccumulator", () => {
       trustedNames: [],
       tokenAmountRefs: [],
       tokenAmountAltRefs: [],
+      tokenAccountStateAltRefs: [],
       mintAltRefs: [],
     });
   });

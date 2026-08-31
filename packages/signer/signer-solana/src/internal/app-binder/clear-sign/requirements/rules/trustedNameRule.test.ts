@@ -16,10 +16,16 @@ function run(
   addresses: (string | undefined)[],
 ) {
   const parsed: ParsedInstruction = {
-    info: { typePool: [], rootType: 0, mintAssociations: [] },
+    info: {
+      typePool: [],
+      rootType: 0,
+      mintAssociations: [],
+      ownerAssociations: [],
+    },
     valueFlowPorts: [],
     accountResets: [],
     displayFields,
+    hideRules: [],
   };
   const instruction: RequirementInstruction = {
     programId: "P",

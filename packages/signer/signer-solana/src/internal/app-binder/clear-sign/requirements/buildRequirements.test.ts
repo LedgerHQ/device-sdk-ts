@@ -11,8 +11,11 @@ import {
   accountReset,
   bytes,
   constantValue,
+  descriptor,
+  hideRule,
   idlDescriptor,
   mintAssociation,
+  ownerAssociation,
   tokenValue,
   trustedNameDisplayField,
   valueFlowPort,
@@ -44,14 +47,18 @@ function port(
   opts: {
     accountIndex?: number;
     tokenAccountIndex?: number;
+    fallbackAccount?: number;
     value?: CalValue;
+    activeWhen?: string[];
   } = {},
 ): CalValueFlowPort {
   const kindName = (["DIRECT", "RESOLVE", "NULL", "NATIVE"] as const)[kind]!;
   return valueFlowPort({
     accountIndex: opts.accountIndex ?? 0,
+    activeWhen: opts.activeWhen,
     tokenValue: tokenValue(kindName, {
       accountIndex: opts.tokenAccountIndex,
+      fallbackAccount: opts.fallbackAccount,
       value: opts.value,
     }),
   });
@@ -70,16 +77,11 @@ function matched(opts: {
       accounts: opts.accounts,
       data: opts.data ?? new Uint8Array(),
     },
-    descriptor: {
+    descriptor: descriptor({
       discriminator: opts.discriminator ?? "00",
-      idlDescriptor: idlDescriptor({}),
-      mintAssociations: [],
-      valueFlowPorts: [],
-      accountResets: [],
-      displayFields: [],
       enumCache: EMPTY_CACHE,
       ...opts.descriptor,
-    },
+    }),
   };
 }
 
@@ -399,5 +401,185 @@ describe("buildRequirements", () => {
     result.ifLeft((error) =>
       expect(error).toBeInstanceOf(RequirementsDecodeError),
     );
+  });
+  it("emits ALT_RESOLUTION for a hide-rule target and an owner association behind an ALT", () => {
+    // Gap: the device dereferences HIDE_RULE.TARGET and both OWNER_ASSOC halves
+    // at finalize and refuses to sign when an ALT slot is unresolved.
+    const alt = (entryIndex: number): RequirementAccount => ({
+      isWritable: false,
+      altRef: { altAddress: "ALT", entryIndex },
+    });
+    const result = run([
+      matched({
+        accounts: [account("signer"), alt(3), alt(4)],
+        descriptor: {
+          ownerAssociations: [ownerAssociation(1, accountPathValue(2))],
+          hideRules: [
+            hideRule({ condition: "IS_SIGNER", target: accountPathValue(1) }),
+          ],
+        },
+      }),
+    ]);
+    // Entry 3 is the IS_SIGNER target, so it graduates to the higher-priority
+    // bucket that streams the same ALT_RESOLUTION and then fetches the state.
+    // Entry 4 is only the OWNER_ASSOC owner half: resolution and nothing more.
+    expect(result.tokenAccountStateAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 3 },
+    ]);
+    expect(result.altResolutions).toEqual([
+      { altAddress: "ALT", entryIndex: 4 },
+    ]);
+  });
+
+  it("emits TOKEN_ACCOUNT_STATE_ALT_REF for an ALT-backed IS_SIGNER hide-rule target", () => {
+    // Gap: the address is unknown host-side, so the owner map can only be seeded
+    // from a state fetched after ALT_RESOLUTION. Without it the predicate
+    // evaluates false and the device shows the screens the rule meant to hide.
+    // An ALT slot is never a message signer, so the owner map is the only path
+    // by which such a target can satisfy IS_SIGNER at all.
+    const result = run([
+      matched({
+        accounts: [account(undefined, { altAddress: "ALT", entryIndex: 5 })],
+        descriptor: {
+          hideRules: [
+            hideRule({ condition: "IS_SIGNER", target: accountPathValue(0) }),
+          ],
+        },
+      }),
+    ]);
+    expect(result.tokenAccountStateAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 5 },
+    ]);
+    // Stripped from the plain bucket: one ALT_RESOLUTION per entry, and the
+    // device rejects a second one.
+    expect(result.altResolutions).toEqual([]);
+    expect(result.tokenAccountStates).toEqual([]);
+  });
+
+  it("emits TOKEN_ACCOUNT_STATE_ALT_REF for an ALT-backed RESOLVE port token account", () => {
+    // Same shape for the mint map: an ALT-backed token account can carry no
+    // MINT_ASSOC binding, so its mint has to come from the attested state.
+    const result = run([
+      matched({
+        accounts: [account(undefined, { altAddress: "ALT", entryIndex: 1 })],
+        descriptor: {
+          valueFlowPorts: [port(TokenKind.RESOLVE, { accountIndex: 0 })],
+        },
+      }),
+    ]);
+    expect(result.tokenAccountStateAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 1 },
+    ]);
+    expect(result.tokenAccountStates).toEqual([]);
+  });
+
+  it("keeps an ALT-backed ACTIVE_WHEN IS_SIGNER port out of the plain ALT bucket", () => {
+    const result = run([
+      matched({
+        accounts: [account(undefined, { altAddress: "ALT", entryIndex: 2 })],
+        descriptor: {
+          valueFlowPorts: [
+            // NULL kind: no token requirement of its own, so the ACTIVE_WHEN
+            // path is the only thing that can emit anything here.
+            port(TokenKind.NULL, {
+              accountIndex: 0,
+              activeWhen: ["IS_SIGNER"],
+            }),
+          ],
+        },
+      }),
+    ]);
+    expect(result.tokenAccountStateAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 2 },
+    ]);
+    expect(result.altResolutions).toEqual([]);
+  });
+
+  it("emits TOKEN_ACCOUNT_STATE for an IS_SIGNER hide-rule target, unless a TX-derived OWNER_ASSOC covers it", () => {
+    const withoutBinding = run([
+      matched({
+        accounts: [account("ata")],
+        descriptor: {
+          hideRules: [
+            hideRule({ condition: "IS_SIGNER", target: accountPathValue(0) }),
+          ],
+        },
+      }),
+    ]);
+    expect(withoutBinding.tokenAccountStates).toEqual(["ata"]);
+
+    const withBinding = run([
+      matched({
+        accounts: [account("ata"), account("owner")],
+        descriptor: {
+          ownerAssociations: [ownerAssociation(0, accountPathValue(1))],
+          hideRules: [
+            hideRule({ condition: "IS_SIGNER", target: accountPathValue(0) }),
+          ],
+        },
+      }),
+    ]);
+    expect(withBinding.tokenAccountStates).toEqual([]);
+  });
+
+  it("honours an OWNER_ASSOC declared by another instruction of the transaction", () => {
+    // The owner map is transaction-scoped on the device, so a binding declared
+    // by the ATA-creation instruction covers a hide rule elsewhere.
+    const result = run([
+      matched({
+        programId: "Ata",
+        accounts: [account("ata"), account("owner")],
+        descriptor: {
+          ownerAssociations: [ownerAssociation(0, accountPathValue(1))],
+        },
+      }),
+      matched({
+        programId: "Token",
+        accounts: [account("ata")],
+        descriptor: {
+          hideRules: [
+            hideRule({ condition: "IS_SIGNER", target: accountPathValue(0) }),
+          ],
+        },
+      }),
+    ]);
+    expect(result.tokenAccountStates).toEqual([]);
+  });
+
+  it("treats a RESOLVE port's FALLBACK_ACCOUNT address as a mint candidate", () => {
+    const result = run([
+      matched({
+        accounts: [account("ephemeralAta"), account("fallbackMint")],
+        descriptor: {
+          valueFlowPorts: [
+            port(TokenKind.RESOLVE, { accountIndex: 0, fallbackAccount: 1 }),
+          ],
+        },
+      }),
+    ]);
+    expect(result.tokenInfos).toEqual(["fallbackMint"]);
+    expect(result.tokenAccountStates).toEqual(["ephemeralAta"]);
+  });
+  it("still emits ALT_RESOLUTION for the target of a rule whose condition CAL did not name", () => {
+    // The rule's signed TLV reaches the device either way and the device
+    // resolves every target, so an undecodable condition must not cost the
+    // requirement.
+    const result = run([
+      matched({
+        accounts: [account(undefined, { altAddress: "ALT", entryIndex: 7 })],
+        descriptor: {
+          hideRules: [
+            { target: accountPathValue(0) },
+            hideRule({ condition: "IS_SIGNER", target: accountPathValue(0) }),
+          ],
+        },
+      }),
+    ]);
+    // The IS_SIGNER rule routes the entry to the state bucket, which streams
+    // the same ALT_RESOLUTION — the undecodable rule still costs nothing.
+    expect(result.altResolutions).toEqual([]);
+    expect(result.tokenAccountStateAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 7 },
+    ]);
   });
 });
