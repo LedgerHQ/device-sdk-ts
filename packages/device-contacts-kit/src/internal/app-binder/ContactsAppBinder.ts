@@ -4,10 +4,13 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { type EditExternalAddressIdentifierDAReturnType } from "@api/app-binder/EditExternalAddressIdentifierDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type RenameContactDAReturnType } from "@api/app-binder/RenameContactDeviceActionTypes";
+import { type EditExternalAddressIdentifierInput } from "@api/model/EditExternalAddressIdentifier";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
 import { type RenameContactInput } from "@api/model/RenameContact";
+import { EditExternalAddressIdentifierDeviceAction } from "@internal/app-binder/device-action/EditExternalAddressIdentifier/EditExternalAddressIdentifierDeviceAction";
 import { RegisterExternalAddressDeviceAction } from "@internal/app-binder/device-action/RegisterExternalAddress/RegisterExternalAddressDeviceAction";
 import { RenameContactDeviceAction } from "@internal/app-binder/device-action/RenameContact/RenameContactDeviceAction";
 import { externalTypes } from "@internal/externalTypes";
@@ -44,6 +47,17 @@ export class ContactsAppBinder {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new RenameContactDeviceAction({ input }),
+    });
+  }
+
+  editExternalAddressIdentifier(
+    input: EditExternalAddressIdentifierInput,
+  ): EditExternalAddressIdentifierDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new EditExternalAddressIdentifierDeviceAction({
+        input: { ...input, appName: this.appName },
+      }),
     });
   }
 }

@@ -1,4 +1,13 @@
 export {
+  type EditExternalAddressIdentifierDAError,
+  type EditExternalAddressIdentifierDAInput,
+  type EditExternalAddressIdentifierDAIntermediateValue,
+  type EditExternalAddressIdentifierDAOutput,
+  type EditExternalAddressIdentifierDARequiredInteraction,
+  type EditExternalAddressIdentifierDAReturnType,
+  type EditExternalAddressIdentifierDAState,
+} from "@api/app-binder/EditExternalAddressIdentifierDeviceActionTypes";
+export {
   type RegisterExternalAddressDAError,
   type RegisterExternalAddressDAInput,
   type RegisterExternalAddressDAIntermediateValue,
@@ -30,6 +39,10 @@ export {
   isVersionAtLeast,
   resolveContactsVersionRequirements,
 } from "@api/model/ContactsVersionRequirements";
+export {
+  type EditExternalAddressIdentifierInput,
+  type EditExternalAddressIdentifierOutput,
+} from "@api/model/EditExternalAddressIdentifier";
 export {
   type ExistingContactGroup,
   type RegisterExternalAddressInput,

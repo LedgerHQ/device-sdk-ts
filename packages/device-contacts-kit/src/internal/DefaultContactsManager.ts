@@ -4,13 +4,16 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
+import { type EditExternalAddressIdentifierDAReturnType } from "@api/app-binder/EditExternalAddressIdentifierDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type RenameContactDAReturnType } from "@api/app-binder/RenameContactDeviceActionTypes";
 import { type ContactsManager } from "@api/ContactsManager";
+import { type EditExternalAddressIdentifierInput } from "@api/model/EditExternalAddressIdentifier";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
 import { type RenameContactInput } from "@api/model/RenameContact";
 import { makeContainer } from "@internal/di";
 import { useCaseTypes } from "@internal/use-cases/di/useCaseTypes";
+import { type EditExternalAddressIdentifierUseCase } from "@internal/use-cases/EditExternalAddressIdentifierUseCase";
 import { type RegisterExternalAddressUseCase } from "@internal/use-cases/RegisterExternalAddressUseCase";
 import { type RenameContactUseCase } from "@internal/use-cases/RenameContactUseCase";
 
@@ -44,6 +47,16 @@ export class DefaultContactsManager implements ContactsManager {
   renameContact(input: RenameContactInput): RenameContactDAReturnType {
     return this._container
       .get<RenameContactUseCase>(useCaseTypes.RenameContactUseCase)
+      .execute(input);
+  }
+
+  editExternalAddressIdentifier(
+    input: EditExternalAddressIdentifierInput,
+  ): EditExternalAddressIdentifierDAReturnType {
+    return this._container
+      .get<EditExternalAddressIdentifierUseCase>(
+        useCaseTypes.EditExternalAddressIdentifierUseCase,
+      )
       .execute(input);
   }
 

@@ -1,5 +1,7 @@
+import { type EditExternalAddressIdentifierDAReturnType } from "@api/app-binder/EditExternalAddressIdentifierDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type RenameContactDAReturnType } from "@api/app-binder/RenameContactDeviceActionTypes";
+import { type EditExternalAddressIdentifierInput } from "@api/model/EditExternalAddressIdentifier";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
 import { type RenameContactInput } from "@api/model/RenameContact";
 
@@ -34,4 +36,16 @@ export interface ContactsManager {
    * persist.
    */
   renameContact(input: RenameContactInput): RenameContactDAReturnType;
+
+  /**
+   * Edit an external address's identifier (EDIT IDENTIFIER) — replace an entry's
+   * address bytes within a contact group. Opens the app by default (`skipOpenApp:
+   * true` skips it; the version guard still runs) and checks the Contacts version
+   * requirements. Pass the previous/new identifiers, `groupHandle`, `hmacProof`,
+   * and current `hmacRest`; returns the replacement `hmacRest` (the `hmacProof`
+   * is unchanged).
+   */
+  editExternalAddressIdentifier(
+    input: EditExternalAddressIdentifierInput,
+  ): EditExternalAddressIdentifierDAReturnType;
 }
