@@ -18,12 +18,12 @@ function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-// Framed chunk = "00 e0" (2-byte BE total TLV length = 224) + TLV.
+// Framed chunk = "00 c9" (2-byte BE total TLV length = 201) + TLV.
 // Tag order: STRUCT_TYPE(0x32), STRUCT_VERSION, CONTACT_NAME, SCOPE(new),
-// ACCOUNT_IDENTIFIER, PREVIOUS_SCOPE, GROUP_HANDLE, DERIVATION_PATH, CHAIN_ID,
-// HMAC_PROOF, HMAC_REST(old), BLOCKCHAIN_FAMILY.
+// ACCOUNT_IDENTIFIER, PREVIOUS_SCOPE, GROUP_HANDLE, CHAIN_ID, HMAC_PROOF,
+// HMAC_REST(old), BLOCKCHAIN_FAMILY. No DERIVATION_PATH TLV.
 const FRAMED_CHUNK = hexToBytes(
-  "00e0" +
+  "00c9" +
     "010132" +
     "020101" +
     "81f005416c696365" + // CONTACT_NAME "Alice"
@@ -33,7 +33,6 @@ const FRAMED_CHUNK = hexToBytes(
     "81f508457468206d61696e" + // PREVIOUS_SCOPE "Eth main"
     "81f640" +
     "cc".repeat(64) +
-    "6915058000002c8000003c800000000000000000000000" +
     "230101" +
     "2920" +
     "dd".repeat(32) +

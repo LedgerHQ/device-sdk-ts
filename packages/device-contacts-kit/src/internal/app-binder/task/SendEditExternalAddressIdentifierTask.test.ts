@@ -18,9 +18,10 @@ function hexToBytes(hex: string): Uint8Array {
   return out;
 }
 
-// Framed chunk = "00 ec" (2-byte BE total TLV length = 236) + TLV.
+// Framed chunk = "00 d5" (2-byte BE total TLV length = 213) + TLV. No
+// DERIVATION_PATH TLV (external-address ops carry no path).
 const FRAMED_CHUNK = hexToBytes(
-  "00ec" +
+  "00d5" +
     "010131" +
     "020101" +
     "81f005416c696365" +
@@ -29,7 +30,6 @@ const FRAMED_CHUNK = hexToBytes(
     "81f41400000000000000000000000000000000deadbeef" +
     "81f640" +
     "cc".repeat(64) +
-    "6915058000002c8000003c800000000000000000000000" +
     "230101" +
     "2920" +
     "dd".repeat(32) +

@@ -2,9 +2,9 @@
 // chunked framing; the device returns struct_type + hmac_rest on the final
 // chunk. Tag order: STRUCT_TYPE, STRUCT_VERSION, CONTACT_NAME, SCOPE,
 // ACCOUNT_IDENTIFIER (new), PREVIOUS_IDENTIFIER (old), GROUP_HANDLE,
-// DERIVATION_PATH, CHAIN_ID (Ethereum only), HMAC_PROOF, HMAC_REST (old),
-// BLOCKCHAIN_FAMILY. DERIVATION_PATH is a temporary coin-app requirement: the
-// kit sends one fixed, unexposed path and will drop it once firmware does.
+// CHAIN_ID (Ethereum only), HMAC_PROOF, HMAC_REST (old), BLOCKCHAIN_FAMILY.
+// No DERIVATION_PATH: external-address ops carry no path — the current Ethereum
+// app rejects the tag (0x6a80); it is Ledger-Account only (DSDK-1465).
 // Reference: Address Book Final Specifications — Edit Identifier.
 import {
   ByteArrayBuilder,
@@ -19,7 +19,6 @@ import {
 import { EditExternalAddressIdentifierCommand } from "@internal/app-binder/command/EditExternalAddressIdentifierCommand";
 import {
   BLOCKCHAIN_FAMILY_BY_NAME,
-  EXTERNAL_ADDRESS_DERIVATION_PATH_SEGMENTS,
   SUB_CMD_EDIT_IDENTIFIER,
 } from "@internal/app-binder/model/contactsConstants";
 import { type ContactsErrorCodes } from "@internal/app-binder/model/contactsErrors";
@@ -29,7 +28,6 @@ import {
   encodeTlvBuffer,
   encodeTlvChainId,
   encodeTlvUInt8,
-  packDerivationPath,
   STRUCT_TYPE_EDIT_IDENTIFIER,
   STRUCT_VERSION_VALUE,
 } from "@internal/app-binder/services/contactsTlvSerializer";
@@ -99,10 +97,6 @@ export class SendEditExternalAddressIdentifierTask {
       );
     }
 
-    const pathBytes = packDerivationPath([
-      ...EXTERNAL_ADDRESS_DERIVATION_PATH_SEGMENTS,
-    ]);
-
     const builder = new ByteArrayBuilder();
     encodeTlvUInt8(
       builder,
@@ -127,7 +121,6 @@ export class SendEditExternalAddressIdentifierTask {
       args.previousIdentifier,
     );
     encodeTlvBuffer(builder, CONTACTS_TLV_TAG.GROUP_HANDLE, args.groupHandle);
-    encodeTlvBuffer(builder, CONTACTS_TLV_TAG.DERIVATION_PATH, pathBytes);
     if (args.chainId !== undefined) {
       encodeTlvChainId(builder, CONTACTS_TLV_TAG.CHAIN_ID, args.chainId);
     }
