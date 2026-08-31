@@ -1,5 +1,17 @@
 # @ledgerhq/device-contacts-kit
 
+## 0.3.0
+
+### Minor Changes
+
+- [#1803](https://github.com/LedgerHQ/device-sdk-ts/pull/1803) [`8b6e876`](https://github.com/LedgerHQ/device-sdk-ts/commit/8b6e876044963167b24a34e532d6612318c8d844) Thanks [@daniel-choinski-ledger](https://github.com/daniel-choinski-ledger)! - Add `ContactsManager.editExternalAddressIdentifier`: the EDIT IDENTIFIER operation (replace the identifier bytes of an existing external-address entry within a contact group), with a version-guarded device action that opens the app by default, checks the Contacts version requirements, and supports `skipOpenApp`. Rotates only the address-level `hmacRest` and preserves the contact-group `hmacProof`.
+
+- [#1825](https://github.com/LedgerHQ/device-sdk-ts/pull/1825) [`7180695`](https://github.com/LedgerHQ/device-sdk-ts/commit/718069578914efea354c8b81b6e52c8455acc00f) Thanks [@daniel-choinski-ledger](https://github.com/daniel-choinski-ledger)! - Add `ContactsManager.editExternalAddressScope`: the EDIT SCOPE operation (replace the scope of an existing external-address entry within a contact group, keeping the same contact name and identifier), with a version-guarded device action that opens the app by default, checks the Contacts version requirements, and supports `skipOpenApp`. Rotates only the address-level `hmacRest` and preserves the contact-group `hmacProof`.
+
+### Patch Changes
+
+- [#1830](https://github.com/LedgerHQ/device-sdk-ts/pull/1830) [`8d5f425`](https://github.com/LedgerHQ/device-sdk-ts/commit/8d5f425e3d913dc5a6eaa0e83117ce1498e9cf99) Thanks [@daniel-choinski-ledger](https://github.com/daniel-choinski-ledger)! - Stop sending the `DERIVATION_PATH` TLV (tag `0x69`) on the external-address operations — Register External Address, Edit External Address Identifier, and Edit External Address Scope. The current Ethereum app rejects the tag on these ops (`0x6a80`) and no longer requires it; the path was a temporary coin-app requirement and is Ledger-Account only. The path was kit-internal (never part of the public input), so this is not a breaking API change. Note: this requires an Ethereum app build that has dropped the requirement — older apps that still mandate the path will fail these ops.
+
 ## 0.2.0
 
 ### Minor Changes
