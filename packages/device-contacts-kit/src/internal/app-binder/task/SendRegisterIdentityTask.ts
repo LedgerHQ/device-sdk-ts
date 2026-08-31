@@ -5,12 +5,12 @@
 //
 // Reference: Address Book Final Specifications — Register Identity. Tag order:
 //   STRUCT_TYPE, STRUCT_VERSION, CONTACT_NAME, SCOPE, ACCOUNT_IDENTIFIER,
-//   DERIVATION_PATH, CHAIN_ID (Ethereum only), BLOCKCHAIN_FAMILY, then optional
+//   CHAIN_ID (Ethereum only), BLOCKCHAIN_FAMILY, then optional
 //   GROUP_HANDLE + HMAC_PROOF when extending an existing group.
 //
-// DERIVATION_PATH (tag 0x69, default m/44'/60'/0'/0/0): the Ethereum app
-// requires it on Register Identity and rejects the payload with 0x6a80 when it
-// is absent (verified on-device against the deployed dev app).
+// No DERIVATION_PATH: external-address ops carry no path. The current Ethereum
+// app rejects the tag when present (0x6a80) and no longer requires it; the tag
+// is Ledger-Account only (verified on-device, DSDK-1465).
 import {
   ByteArrayBuilder,
   type CommandResult,
@@ -34,7 +34,6 @@ import {
   encodeTlvBuffer,
   encodeTlvChainId,
   encodeTlvUInt8,
-  packDerivationPath,
   STRUCT_TYPE_REGISTER_IDENTITY,
   STRUCT_VERSION_VALUE,
 } from "@internal/app-binder/services/contactsTlvSerializer";
@@ -124,13 +123,6 @@ export class SendRegisterIdentityTask {
       builder,
       CONTACTS_TLV_TAG.ACCOUNT_IDENTIFIER,
       args.identifier,
-    );
-    // The Ethereum app requires DERIVATION_PATH on Register Identity (0x6a80
-    // without it). Default m/44'/60'/0'/0/0.
-    encodeTlvBuffer(
-      builder,
-      CONTACTS_TLV_TAG.DERIVATION_PATH,
-      packDerivationPath([0x8000002c, 0x8000003c, 0x80000000, 0, 0]),
     );
     if (args.chainId !== undefined) {
       encodeTlvChainId(builder, CONTACTS_TLV_TAG.CHAIN_ID, args.chainId);

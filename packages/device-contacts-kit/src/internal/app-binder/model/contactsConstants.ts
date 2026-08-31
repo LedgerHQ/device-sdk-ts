@@ -28,15 +28,6 @@ export const SUB_CMD_EDIT_IDENTIFIER = 0x03;
 export const SUB_CMD_EDIT_SCOPE = 0x04;
 
 /**
- * BIP32 segments (`m/44'/60'/0'/0/0`) sent with EDIT IDENTIFIER. Temporary: the
- * coin app currently requires a DERIVATION_PATH TLV, so the kit sends one fixed,
- * unexposed path; it will be removed once firmware stops requiring it.
- */
-export const EXTERNAL_ADDRESS_DERIVATION_PATH_SEGMENTS: readonly number[] = [
-  0x8000002c, 0x8000003c, 0x80000000, 0x00000000, 0x00000000,
-];
-
-/**
  * EDIT CONTACT NAME (rename) is a blockchain-agnostic OS/dashboard command with
  * its own CLA/INS — NOT a sub-command of the address-book app APDU (0xB0/0x10).
  * The OS serves it directly, so it must run on the dashboard. P1 is a fixed
