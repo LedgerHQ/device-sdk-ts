@@ -178,6 +178,7 @@ export function resolveTargetId(device: Device): number | undefined {
 export function deriveGetOsVersion(
   device: Device,
   mcuVersion: string,
+  seFlagsOverride?: string,
 ): string | undefined {
   const model = normalizeModel(device.device_type);
   const mask = device.masks?.[0] ?? TARGET_ID_MASK[model];
@@ -187,7 +188,8 @@ export function deriveGetOsVersion(
 
   let hex = uint32Hex(targetId); // targetId
   hex += lvAscii(seVersion); // seVersion
-  hex += lvHex("e6000000"); // seFlags (onboarded, pin-validated, ...)
+  // seFlags (onboarded, pin-validated, ...); overridden while onboarding.
+  hex += lvHex(seFlagsOverride ?? "e6000000");
   hex += lvAscii(mcuVersion); // mcuSephVersion
   if (isBootloaderVersionSupported(seVersion, model)) {
     hex += lvAscii("1.16"); // mcuBootloaderVersion
@@ -329,9 +331,12 @@ export function deriveOsApduResponse(
   device: Device,
   apdu: string,
   mcuVersion?: string,
+  seFlagsOverride?: string,
 ): string | undefined {
   if (apdu.startsWith(GET_OS_VERSION_PREFIX)) {
-    return mcuVersion ? deriveGetOsVersion(device, mcuVersion) : undefined;
+    return mcuVersion
+      ? deriveGetOsVersion(device, mcuVersion, seFlagsOverride)
+      : undefined;
   }
   if (apdu.startsWith(GET_APP_AND_VERSION_PREFIX)) {
     return deriveGetAppAndVersion(device);

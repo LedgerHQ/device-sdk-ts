@@ -233,6 +233,70 @@ describe("createMockServer (HTTP contract)", () => {
       );
       expect(res.status).toBe(404);
     });
+
+    // The 4-byte seFlags in a GetOsVersion response: targetId (4 bytes) +
+    // seVersion LV + seFlags LV (len byte + flags). seVersion "1.3.0" is fixed,
+    // so the flags are a fixed slice. byte0 & 0x04 = onboarded, byte3 = step.
+    const seFlagsOf = (response: string): string => response.slice(22, 30);
+
+    it("walks a not-onboarded device through the onboarding steps", async () => {
+      const token = await authenticate();
+      const created = (await (
+        await api(
+          "/devices",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              device_type: "nanoX",
+              firmware_version: "1.3.0",
+              onboarded: false,
+            }),
+          },
+          token,
+        )
+      ).json()) as { id: string };
+      const id = created.id;
+
+      // Starts not onboarded at WELCOME and dwells there until the enter APDU.
+      const welcome = await sendApdu(token, id, "e001000000");
+      expect(seFlagsOf(welcome.body.response!)).toBe("00000000");
+      const stillWelcome = await sendApdu(token, id, "e001000000");
+      expect(seFlagsOf(stillWelcome.body.response!)).toBe("00000000");
+
+      // Enter the early security check, then dwell there until the exit APDU.
+      expect((await sendApdu(token, id, "e0030000")).body.response).toBe(
+        "9000",
+      );
+      const early = await sendApdu(token, id, "e001000000");
+      expect(seFlagsOf(early.body.response!)).toBe("0000000f");
+      const stillEarly = await sendApdu(token, id, "e001000000");
+      expect(seFlagsOf(stillEarly.body.response!)).toBe("0000000f");
+
+      // Exit, then successive polls walk to READY with the onboarded bit set.
+      expect((await sendApdu(token, id, "e0030001")).body.response).toBe(
+        "9000",
+      );
+      const steps: string[] = [];
+      for (let i = 0; i < 7; i += 1) {
+        const res = await sendApdu(token, id, "e001000000");
+        steps.push(seFlagsOf(res.body.response!));
+      }
+      expect(steps).toEqual([
+        "0000000c",
+        "00000006",
+        "00000005",
+        "00000007",
+        "00000008",
+        "0000000a",
+        "e600000b",
+      ]);
+
+      // The device is now reported as onboarded.
+      const fetched = (await (
+        await api(`/devices/${id}`, {}, token)
+      ).json()) as { onboarded?: boolean };
+      expect(fetched.onboarded).toBe(true);
+    });
   });
 
   describe("mock validation", () => {
