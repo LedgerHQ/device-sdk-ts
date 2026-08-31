@@ -92,8 +92,11 @@ export interface SessionRepository {
   ): void;
   /**
    * Apply a device's pending firmware operation and clear it: sets the device's
-   * `firmware_version` to the armed target. Idempotent and a no-op when nothing
-   * is pending.
+   * `firmware_version` to the armed target and erases its installed apps, the
+   * way a real OS update wipes the app storage — so the follow-up `apps/list`
+   * comes back empty and the client reinstalls. Any app operation armed but not
+   * yet committed is dropped for the same reason. Idempotent and a no-op when
+   * nothing is pending.
    */
   commitPendingFirmwareOperation(
     record: SessionRecord,

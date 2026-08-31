@@ -198,6 +198,8 @@ describe("ApduResolverService", () => {
     expect(
       repo.findDevice(record, device.id).unsafeCoerce().firmware_version,
     ).toBe("1.9.1-osu");
+    // The update erased the app storage, as it does on a real device.
+    expect(repo.findDevice(record, device.id).unsafeCoerce().apps).toEqual([]);
     // The pending operation was cleared.
     expect(
       repo.commitPendingFirmwareOperation(record, device.id).isNothing(),
