@@ -4,4 +4,7 @@ export const useCaseTypes = {
   EditExternalAddressIdentifierUseCase: Symbol.for(
     "EditExternalAddressIdentifierUseCase",
   ),
+  EditExternalAddressScopeUseCase: Symbol.for(
+    "EditExternalAddressScopeUseCase",
+  ),
 } as const;
