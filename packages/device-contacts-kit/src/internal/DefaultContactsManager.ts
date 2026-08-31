@@ -4,12 +4,21 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
+import { type EditExternalAddressIdentifierDAReturnType } from "@api/app-binder/EditExternalAddressIdentifierDeviceActionTypes";
+import { type EditExternalAddressScopeDAReturnType } from "@api/app-binder/EditExternalAddressScopeDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+import { type RenameContactDAReturnType } from "@api/app-binder/RenameContactDeviceActionTypes";
 import { type ContactsManager } from "@api/ContactsManager";
+import { type EditExternalAddressIdentifierInput } from "@api/model/EditExternalAddressIdentifier";
+import { type EditExternalAddressScopeInput } from "@api/model/EditExternalAddressScope";
 import { type RegisterExternalAddressInput } from "@api/model/RegisterExternalAddress";
+import { type RenameContactInput } from "@api/model/RenameContact";
 import { makeContainer } from "@internal/di";
 import { useCaseTypes } from "@internal/use-cases/di/useCaseTypes";
+import { type EditExternalAddressIdentifierUseCase } from "@internal/use-cases/EditExternalAddressIdentifierUseCase";
+import { type EditExternalAddressScopeUseCase } from "@internal/use-cases/EditExternalAddressScopeUseCase";
 import { type RegisterExternalAddressUseCase } from "@internal/use-cases/RegisterExternalAddressUseCase";
+import { type RenameContactUseCase } from "@internal/use-cases/RenameContactUseCase";
 
 type DefaultContactsManagerConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -34,6 +43,32 @@ export class DefaultContactsManager implements ContactsManager {
     return this._container
       .get<RegisterExternalAddressUseCase>(
         useCaseTypes.RegisterExternalAddressUseCase,
+      )
+      .execute(input);
+  }
+
+  renameContact(input: RenameContactInput): RenameContactDAReturnType {
+    return this._container
+      .get<RenameContactUseCase>(useCaseTypes.RenameContactUseCase)
+      .execute(input);
+  }
+
+  editExternalAddressIdentifier(
+    input: EditExternalAddressIdentifierInput,
+  ): EditExternalAddressIdentifierDAReturnType {
+    return this._container
+      .get<EditExternalAddressIdentifierUseCase>(
+        useCaseTypes.EditExternalAddressIdentifierUseCase,
+      )
+      .execute(input);
+  }
+
+  editExternalAddressScope(
+    input: EditExternalAddressScopeInput,
+  ): EditExternalAddressScopeDAReturnType {
+    return this._container
+      .get<EditExternalAddressScopeUseCase>(
+        useCaseTypes.EditExternalAddressScopeUseCase,
       )
       .execute(input);
   }

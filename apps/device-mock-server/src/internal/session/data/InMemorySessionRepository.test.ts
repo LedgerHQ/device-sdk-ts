@@ -254,4 +254,56 @@ describe("InMemorySessionRepository", () => {
         .firmware_version,
     ).toBe("1.9.1");
   });
+
+  it("erases the installed apps when a firmware operation commits", () => {
+    const { repo, record } = newSession();
+    const device = repo.addDevice(record, {
+      device_type: "stax",
+      firmware_version: "1.9.0",
+      apps: [{ name: "Bitcoin", version: "2.1.0" }],
+      catalog: [BTC],
+    });
+
+    repo.setPendingFirmwareOperation(record, device.id, "1.9.1");
+    const updated = repo
+      .commitPendingFirmwareOperation(record, device.id)
+      .unsafeCoerce();
+    expect(updated.firmware_version).toBe("1.9.1");
+    expect(updated.apps).toEqual([]);
+
+    // The device is reinstallable through the normal install flow afterwards.
+    repo.setPendingAppOperation(record, device.id, BTC);
+    expect(
+      repo.commitPendingAppOperation(record, device.id).unsafeCoerce().apps,
+    ).toEqual([{ name: "Bitcoin", version: "2.1.0", hash: "abc123" }]);
+  });
+
+  it("drops an app operation armed before a firmware update, and stays erased across the OSU-then-final sequence", () => {
+    const { repo, record } = newSession();
+    const device = repo.addDevice(record, {
+      device_type: "stax",
+      firmware_version: "1.9.0",
+      apps: [{ name: "Bitcoin", version: "2.1.0" }],
+      catalog: [BTC],
+    });
+
+    // An install armed but never committed must not land on the updated device.
+    repo.setPendingAppOperation(record, device.id, BTC);
+    repo.setPendingFirmwareOperation(record, device.id, "1.9.1-osu");
+    expect(
+      repo.commitPendingFirmwareOperation(record, device.id).unsafeCoerce()
+        .apps,
+    ).toEqual([]);
+    expect(repo.commitPendingAppOperation(record, device.id).isNothing()).toBe(
+      true,
+    );
+
+    // The final install wipes an already-empty list: still no apps, no throw.
+    repo.setPendingFirmwareOperation(record, device.id, "1.9.1");
+    const final = repo
+      .commitPendingFirmwareOperation(record, device.id)
+      .unsafeCoerce();
+    expect(final.firmware_version).toBe("1.9.1");
+    expect(final.apps).toEqual([]);
+  });
 });

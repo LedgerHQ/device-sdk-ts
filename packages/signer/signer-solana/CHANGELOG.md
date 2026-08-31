@@ -1,5 +1,21 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.13.0
+
+### Minor Changes
+
+- [#1796](https://github.com/LedgerHQ/device-sdk-ts/pull/1796) [`089b421`](https://github.com/LedgerHQ/device-sdk-ts/commit/089b421cd1d2e7d16d99cfaf145c1776522c5cfb) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Implement blind-sign event reporting for the Solana transaction signing flow
+
+### Patch Changes
+
+- [#1765](https://github.com/LedgerHQ/device-sdk-ts/pull/1765) [`22e9953`](https://github.com/LedgerHQ/device-sdk-ts/commit/22e995346c436a8eab425ce8a09c025b77282fce) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Refactor error logging in the generic and basic clear-sign tasks
+
+- [#1771](https://github.com/LedgerHQ/device-sdk-ts/pull/1771) [`5a862b1`](https://github.com/LedgerHQ/device-sdk-ts/commit/5a862b19a4b748e1c663c9cc0dc77a021b1adf3d) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Ensure no raw Error objects reach logger data fields
+
+- [#1764](https://github.com/LedgerHQ/device-sdk-ts/pull/1764) [`2ff5cfa`](https://github.com/LedgerHQ/device-sdk-ts/commit/2ff5cfacfc46d8412d2b43b1bd97aa802827544c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Refactor context-providers to return CommandResult instead of throwing
+
+- [#1821](https://github.com/LedgerHQ/device-sdk-ts/pull/1821) [`3ca316a`](https://github.com/LedgerHQ/device-sdk-ts/commit/3ca316af40c39deb1fe1aa724453f985920c1a5a) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Request ALT_RESOLUTION for every ALT-backed account the device dereferences at finalize: writable instruction accounts, all value-flow-port candidates, port token references, PARAM_TOKEN_AMOUNT token refs and account-reset targets, on top of the display-field and mint-association accounts already covered
+
 ## 1.12.1
 
 ### Patch Changes

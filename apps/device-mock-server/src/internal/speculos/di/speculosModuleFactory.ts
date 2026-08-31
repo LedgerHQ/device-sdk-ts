@@ -6,6 +6,7 @@ import { speculosTypes } from "@internal/speculos/di/speculosTypes";
 import { CloseAppUseCase } from "@internal/speculos/use-case/CloseAppUseCase";
 import { ForwardApduUseCase } from "@internal/speculos/use-case/ForwardApduUseCase";
 import { OpenAppViaSpeculosUseCase } from "@internal/speculos/use-case/OpenAppViaSpeculosUseCase";
+import { ReleaseDeadProxyUseCase } from "@internal/speculos/use-case/ReleaseDeadProxyUseCase";
 
 /**
  * Binds the Speculos operator + open-app use-case only when an operator is
@@ -26,4 +27,7 @@ export const speculosModuleFactory = (config: MockServerConfig) =>
       .to(ForwardApduUseCase)
       .inSingletonScope();
     bind(speculosTypes.CloseAppUseCase).to(CloseAppUseCase).inSingletonScope();
+    bind(speculosTypes.ReleaseDeadProxyUseCase)
+      .to(ReleaseDeadProxyUseCase)
+      .inSingletonScope();
   });

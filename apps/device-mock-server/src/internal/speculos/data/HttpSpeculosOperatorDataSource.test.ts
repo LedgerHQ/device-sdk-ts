@@ -124,6 +124,34 @@ describe("HttpSpeculosOperatorDataSource", () => {
     });
   });
 
+  it("reports a live emulator from its events endpoint", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(jsonResponse({ events: [] }));
+
+    expect(await newOperator().isAlive("https://r.speculos.test/")).toBe(true);
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      "https://r.speculos.test/events?currentscreenonly=true",
+    );
+  });
+
+  it("reports an emulator that is gone (unreachable or gateway error)", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("ECONNREFUSED"));
+    expect(await newOperator().isAlive("https://r.speculos.test")).toBe(false);
+
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ error: "bad gateway" }, false, 502),
+    );
+    expect(await newOperator().isAlive("https://r.speculos.test")).toBe(false);
+  });
+
+  it("counts an emulator that answers 4xx as alive", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      jsonResponse({ error: "not found" }, false, 404),
+    );
+    expect(await newOperator().isAlive("https://r.speculos.test")).toBe(true);
+  });
+
   it("swallows release errors (best-effort)", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
     const result = await newOperator().release("r").run();

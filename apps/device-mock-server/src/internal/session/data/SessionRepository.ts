@@ -92,8 +92,11 @@ export interface SessionRepository {
   ): void;
   /**
    * Apply a device's pending firmware operation and clear it: sets the device's
-   * `firmware_version` to the armed target. Idempotent and a no-op when nothing
-   * is pending.
+   * `firmware_version` to the armed target and erases its installed apps, the
+   * way a real OS update wipes the app storage — so the follow-up `apps/list`
+   * comes back empty and the client reinstalls. Any app operation armed but not
+   * yet committed is dropped for the same reason. Idempotent and a no-op when
+   * nothing is pending.
    */
   commitPendingFirmwareOperation(
     record: SessionRecord,
@@ -131,6 +134,23 @@ export interface SessionRepository {
   deleteMock(record: SessionRecord, deviceId: string, mockId: string): boolean;
   clearMocks(record: SessionRecord, deviceId: string): void;
   consumeResponse(record: SessionRecord, deviceId: string, mock: Mock): string;
+
+  // --- Onboarding simulation ------------------------------------------------
+  /** Whether a device is running the onboarding simulation. */
+  onboardingActive(record: SessionRecord, deviceId: string): boolean;
+  /** The 4-byte GetOsVersion `seFlags` (hex) for the device's current step. */
+  currentOnboardingSeFlags(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<string>;
+  /** Advance one onboarding step (called per GetOsVersion poll). */
+  advanceOnboarding(record: SessionRecord, deviceId: string): void;
+  /** Apply a toggleOnboardingEarlyCheck transition (`enter`/`exit`). */
+  toggleOnboardingEarlyCheck(
+    record: SessionRecord,
+    deviceId: string,
+    enter: boolean,
+  ): void;
 
   // --- Import / Export ------------------------------------------------------
   exportSession(record: SessionRecord): SessionExport;

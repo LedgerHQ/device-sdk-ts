@@ -63,3 +63,35 @@ export function isContactsSupportedForSession(
 
   return isVersionAtLeast(osVersion, requirement.minOsVersion);
 }
+
+/**
+ * OS-only Contacts support check, for internal consumption by dashboard
+ * `DeviceAction`s (e.g. Rename Contact, EDIT CONTACT NAME). Dashboard operations
+ * are served by the device OS, not the embedded app, so only two dimensions
+ * apply:
+ * - the device model must be supported;
+ * - the device OS must meet its minimum version.
+ *
+ * The running-app dimension is intentionally skipped: on the dashboard there is
+ * no embedded app to gate on (the running "app" is BOLOS). The model and OS both
+ * come from the session state, which is stable across the operation.
+ *
+ * @param internalApi - the DeviceAction's internal API for the current session.
+ */
+export function isContactsOsSupportedForSession(
+  internalApi: InternalApi,
+): boolean {
+  const deviceState = internalApi.getDeviceSessionState();
+  const requirement = resolveContactsVersionRequirements(
+    deviceState.deviceModelId,
+  );
+  if (!requirement.supported) return false;
+
+  const osVersion =
+    "firmwareVersion" in deviceState
+      ? deviceState.firmwareVersion?.os
+      : undefined;
+  if (osVersion === undefined) return false;
+
+  return isVersionAtLeast(osVersion, requirement.minOsVersion);
+}

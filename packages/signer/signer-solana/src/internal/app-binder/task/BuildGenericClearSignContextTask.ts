@@ -177,7 +177,11 @@ export class BuildGenericClearSignContextTask {
       matched.push({
         instruction: {
           programId,
-          accounts: this.toRequirementAccounts(message, ix.accountKeyIndexes),
+          accounts: this.toRequirementAccounts(
+            message,
+            ix.accountKeyIndexes,
+            ix.accountWritable,
+          ),
           data: ix.data,
         },
         descriptor,
@@ -496,18 +500,21 @@ export class BuildGenericClearSignContextTask {
   private toRequirementAccounts(
     message: NormalizedMessage,
     accountKeyIndexes: number[],
+    accountWritable: boolean[],
   ): RequirementAccount[] {
-    return accountKeyIndexes.map((keyIdx) => {
+    return accountKeyIndexes.map((keyIdx, slot) => {
+      const isWritable = accountWritable[slot] ?? false;
       const altRef = message.addressLookupRefs?.[keyIdx];
       if (altRef) {
         return {
+          isWritable,
           altRef: {
             altAddress: altRef.altAddress.toBase58(),
             entryIndex: altRef.entryIndex,
           },
         };
       }
-      return { address: message.allKeys[keyIdx]?.toBase58() };
+      return { isWritable, address: message.allKeys[keyIdx]?.toBase58() };
     });
   }
 }

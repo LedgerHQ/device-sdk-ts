@@ -16,9 +16,9 @@ const instruction: RequirementInstruction = {
   programId: "P",
   data: new Uint8Array(),
   accounts: [
-    { address: "first" },
-    { address: undefined },
-    { address: "third" },
+    { address: "first", isWritable: false },
+    { address: undefined, isWritable: false },
+    { address: "third", isWritable: false },
   ],
 };
 
@@ -93,7 +93,10 @@ describe("resolvePortAccountIndex", () => {
   const withProgramIdInSlot0: RequirementInstruction = {
     programId: "P",
     data: new Uint8Array(),
-    accounts: [{ address: "P" }, { address: "second" }],
+    accounts: [
+      { address: "P", isWritable: false },
+      { address: "second", isWritable: false },
+    ],
   };
 
   it("returns the sole candidate for a single-account port", () => {

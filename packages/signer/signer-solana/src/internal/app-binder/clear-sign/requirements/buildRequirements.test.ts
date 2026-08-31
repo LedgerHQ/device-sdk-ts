@@ -34,8 +34,9 @@ const NO_ENUMS: EnumVariantSelector = () => Right([]);
 function account(
   address?: string,
   altRef?: RequirementAccount["altRef"],
+  isWritable = false,
 ): RequirementAccount {
-  return { address, altRef };
+  return { address, altRef, isWritable };
 }
 
 function port(
@@ -240,6 +241,39 @@ describe("buildRequirements", () => {
     ]);
   });
 
+  it("routes a read-only ALT mint from MINT_ASSOCIATION to mintAltRefs", () => {
+    const result = run([
+      matched({
+        accounts: [
+          account(undefined, { altAddress: "ALT", entryIndex: 4 }), // token account
+          account(undefined, { altAddress: "ALT", entryIndex: 6 }), // mint, read-only
+        ],
+        descriptor: { mintAssociations: [mintAssociation(0, 1)] },
+      }),
+    ]);
+    // The mint stays out of altResolutions: the provide phase holds it and
+    // conditionally streams TOKEN_INFO after the 0x6d10 signal.
+    expect(result.altResolutions).toEqual([
+      { altAddress: "ALT", entryIndex: 4 },
+    ]);
+    expect(result.mintAltRefs).toEqual([{ altAddress: "ALT", entryIndex: 6 }]);
+  });
+
+  it("emits ALT_RESOLUTION for a writable ALT account named by no descriptor field", () => {
+    const result = run([
+      matched({
+        accounts: [
+          account("staticKey"),
+          account(undefined, { altAddress: "ALT", entryIndex: 3 }, true),
+          account(undefined, { altAddress: "ALT", entryIndex: 9 }), // read-only
+        ],
+      }),
+    ]);
+    expect(result.altResolutions).toEqual([
+      { altAddress: "ALT", entryIndex: 3 },
+    ]);
+  });
+
   it("emits TRUSTED_NAME for PARAM_TRUSTED_NAME fields (account path + constant)", () => {
     const constantAddr = new Uint8Array(32).fill(5);
     const result = run([
@@ -342,9 +376,8 @@ describe("buildRequirements", () => {
       DefaultBs58Encoder.encode(inMint),
       DefaultBs58Encoder.encode(outMint),
     ]);
-    // account[2] is ALT-backed but not referenced by any display field or
-    // MINT_ASSOC, so it is excluded from altResolutions (stays within the
-    // device's 16-entry ALT cache limit).
+    // account[2] is ALT-backed but read-only and named by nothing, so it is
+    // excluded from altResolutions (the deliberate exclusion of the rule).
     expect(result.altResolutions).toEqual([]);
   });
 
