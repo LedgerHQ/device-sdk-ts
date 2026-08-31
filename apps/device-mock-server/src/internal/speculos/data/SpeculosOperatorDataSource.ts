@@ -25,6 +25,12 @@ export interface SpeculosOperatorDataSource {
   waitUntilReady(runId: string): EitherAsync<SpeculosError, string>;
   /** Destroy a Speculos instance (best-effort). */
   release(runId: string): EitherAsync<SpeculosError, void>;
+  /**
+   * Whether the emulator is still serving. Speculos exits together with the app
+   * it runs, so an emulator that no longer answers means the app is gone — the
+   * user quit it from the device screen.
+   */
+  isAlive(speculosUrl: string): Promise<boolean>;
   /** Forward a raw APDU (hex) to a ready emulator; resolves its hex response. */
   forwardApdu(
     speculosUrl: string,

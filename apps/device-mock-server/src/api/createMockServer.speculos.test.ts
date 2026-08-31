@@ -17,6 +17,8 @@ const EMULATOR_URL = "https://emulator.test";
 // e0 d8 00 00 07 "Bitcoin" — Open App(Bitcoin)
 const OPEN_BITCOIN = "e0d8000007426974636f696e";
 const CLOSE_APP = "b0a7000000";
+// Derived GetAppAndVersion for a device at the dashboard: 01 |5 "BOLOS"|5 "1.3.0"| 9000
+const BOLOS_1_3_0 = "0105424f4c4f5305312e332e309000";
 
 // A PNG header: the 0x89 lead byte and the 0x0d0a1a0a run do not survive a
 // UTF-8 round trip, so this doubles as the binary-passthrough assertion.
@@ -48,6 +50,13 @@ const fakeResponse = (
     },
   }) as unknown as Response;
 
+/**
+ * Flipped by a test to stand in for the user quitting the app on the device
+ * screen: Speculos exits with its app, so the pod is gone and its gateway
+ * answers for it.
+ */
+let emulatorAlive = true;
+
 let server: Server;
 let close: () => void;
 let baseUrl: string;
@@ -63,6 +72,15 @@ const route = (url: string, init?: RequestInit): Response => {
     });
   }
   if (url.endsWith("/release")) return fakeResponse({});
+  if (url.startsWith(`${EMULATOR_URL}/`) && !emulatorAlive) {
+    return fakeResponse(
+      { error: "no healthy upstream" },
+      {
+        ok: false,
+        status: 502,
+      },
+    );
+  }
   if (url === `${EMULATOR_URL}/apdu`) return fakeResponse({ data: "ff9000" });
   // Raw passthrough (e.g. screenshot).
   if (url.startsWith(`${EMULATOR_URL}/`)) {
@@ -110,6 +128,7 @@ const sendApdu = (token: string, id: string, apdu: string) =>
   );
 
 beforeEach(async () => {
+  emulatorAlive = true;
   fetchMock = vi.fn((url: string | URL | Request, init?: RequestInit) =>
     Promise.resolve(route(String(url), init)),
   );
@@ -197,6 +216,45 @@ describe("createMockServer + Speculos (HTTP contract)", () => {
       "https://speculinho.test/release",
       expect.objectContaining({ method: "POST" }),
     );
+  });
+
+  it("reverts to mock mode when the app is quit on the device", async () => {
+    const { token, id } = await setupSession();
+    const opened = (await (await sendApdu(token, id, OPEN_BITCOIN)).json()) as {
+      response: string;
+    };
+    expect(opened.response).toBe("9000");
+
+    // Quitting the app from the device screen takes Speculos down with it: no
+    // Close App APDU is ever sent, the emulator simply stops answering.
+    emulatorAlive = false;
+
+    // The APDU that finds it gone is answered from mock mode instead: the
+    // derived GetAppAndVersion reports BOLOS, i.e. the device is back at the
+    // dashboard.
+    const appAndVersion = (await (
+      await sendApdu(token, id, "b0010000")
+    ).json()) as { response: string };
+    expect(appAndVersion.response).toBe(BOLOS_1_3_0);
+    expect((await api(`/devices/${id}/speculos`, {}, token)).status).toBe(409);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://speculinho.test/release",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("answers the screen passthrough with 409 once the emulator is gone", async () => {
+    const { token, id } = await setupSession();
+    await sendApdu(token, id, OPEN_BITCOIN);
+
+    emulatorAlive = false;
+
+    // 409 (no instance), not 502: the panel polling the screen falls back to
+    // the device's own record rather than showing an error.
+    expect(
+      (await api(`/devices/${id}/speculos/screenshot`, {}, token)).status,
+    ).toBe(409);
+    expect((await api(`/devices/${id}/speculos`, {}, token)).status).toBe(409);
   });
 
   it("rejects opening an app the device does not have installed", async () => {

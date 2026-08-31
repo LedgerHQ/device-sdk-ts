@@ -12,6 +12,7 @@ import { SpeculosError } from "@internal/speculos/model/SpeculosModels";
 import { CloseAppUseCase } from "@internal/speculos/use-case/CloseAppUseCase";
 import { ForwardApduUseCase } from "@internal/speculos/use-case/ForwardApduUseCase";
 import { type OpenAppViaSpeculosUseCase } from "@internal/speculos/use-case/OpenAppViaSpeculosUseCase";
+import { ReleaseDeadProxyUseCase } from "@internal/speculos/use-case/ReleaseDeadProxyUseCase";
 
 // e0 d8 00 00 07 "Bitcoin"
 const OPEN_BITCOIN = "e0d8000007426974636f696e";
@@ -22,6 +23,7 @@ const makeOperator = (
   acquire: vi.fn(() => EitherAsync.liftEither(Right("run-1"))),
   waitUntilReady: vi.fn(() => EitherAsync.liftEither(Right("https://x.test"))),
   release: vi.fn(() => EitherAsync.liftEither(Right(undefined))),
+  isAlive: vi.fn(() => Promise.resolve(true)),
   forwardApdu: vi.fn(() => EitherAsync.liftEither(Right("deadbeef9000"))),
   proxyRequest: vi.fn(() =>
     EitherAsync.liftEither(
@@ -95,6 +97,68 @@ describe("ApduResolverService", () => {
     expect(response).toBe("9000");
     expect(operator.release).toHaveBeenCalledWith("run-1");
     expect(repo.findProxy(record, device.id).isNothing()).toBe(true);
+  });
+
+  it("reverts to mock mode when the emulator quit with its app", async () => {
+    const { repo, record, device, os, secureChannel } = setup();
+    repo.setProxy(record, device.id, {
+      runId: "run-1",
+      speculosUrl: "https://x.test",
+      appName: "Bitcoin",
+    });
+    // Quitting the app on the device screen exits Speculos: the forward fails
+    // and the emulator no longer answers.
+    const operator = makeOperator({
+      forwardApdu: vi.fn(() =>
+        EitherAsync.liftEither(Left(new SpeculosError("connection refused"))),
+      ),
+      isAlive: vi.fn(() => Promise.resolve(false)),
+    });
+    const closeApp = new CloseAppUseCase(operator, repo);
+    const resolver = new ApduResolverService(
+      repo,
+      os,
+      secureChannel,
+      undefined,
+      new ForwardApduUseCase(operator),
+      closeApp,
+      new ReleaseDeadProxyUseCase(operator, closeApp),
+    );
+
+    // The APDU that hit the dead emulator is answered from mock mode: BOLOS.
+    expect(await resolver.resolve(record, device, "b0010000")).toBe(
+      "0105424f4c4f5305312e332e309000",
+    );
+    expect(operator.release).toHaveBeenCalledWith("run-1");
+    expect(repo.findProxy(record, device.id).isNothing()).toBe(true);
+  });
+
+  it("keeps the proxy when a forward fails but the emulator is alive", async () => {
+    const { repo, record, device, os, secureChannel } = setup();
+    repo.setProxy(record, device.id, {
+      runId: "run-1",
+      speculosUrl: "https://x.test",
+      appName: "Bitcoin",
+    });
+    const operator = makeOperator({
+      forwardApdu: vi.fn(() =>
+        EitherAsync.liftEither(Left(new SpeculosError("boom"))),
+      ),
+    });
+    const closeApp = new CloseAppUseCase(operator, repo);
+    const resolver = new ApduResolverService(
+      repo,
+      os,
+      secureChannel,
+      undefined,
+      new ForwardApduUseCase(operator),
+      closeApp,
+      new ReleaseDeadProxyUseCase(operator, closeApp),
+    );
+
+    expect(await resolver.resolve(record, device, "b0010000")).toBe("6d00");
+    expect(operator.release).not.toHaveBeenCalled();
+    expect(repo.findProxy(record, device.id).isJust()).toBe(true);
   });
 
   it("lets an explicit mock override the active speculos proxy", async () => {

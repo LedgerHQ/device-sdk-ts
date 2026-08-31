@@ -14,6 +14,8 @@ import {
 
 const DEFAULT_READY_TIMEOUT_MS = 120_000;
 const DEFAULT_POLL_INTERVAL_MS = 1_000;
+/** Liveness probe budget: a gone pod is refused well within this. */
+const LIVENESS_TIMEOUT_MS = 2_000;
 
 const stripTrailingSlashes = (url: string): string => url.replace(/\/+$/, "");
 
@@ -147,6 +149,20 @@ export class HttpSpeculosOperatorDataSource
         );
       }
     });
+  }
+
+  async isAlive(speculosUrl: string): Promise<boolean> {
+    try {
+      const res = await fetch(
+        `${stripTrailingSlashes(speculosUrl)}/events?currentscreenonly=true`,
+        { signal: AbortSignal.timeout(LIVENESS_TIMEOUT_MS) },
+      );
+      // Anything the emulator answers itself proves it is up; only a gateway
+      // error (its pod is gone) or no answer at all means it is not.
+      return res.status < 500;
+    } catch {
+      return false;
+    }
   }
 
   forwardApdu(

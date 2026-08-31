@@ -15,8 +15,10 @@ import {
 } from "@internal/server/validation/requests";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
+import { type SpeculosProxySession } from "@internal/session/model/SessionModels";
 import { type SpeculosOperatorDataSource } from "@internal/speculos/data/SpeculosOperatorDataSource";
 import { speculosTypes } from "@internal/speculos/di/speculosTypes";
+import { type ReleaseDeadProxyUseCase } from "@internal/speculos/use-case/ReleaseDeadProxyUseCase";
 
 /**
  * Device resource routes: discovery, lifecycle, connection state, APDU
@@ -32,6 +34,9 @@ export class DeviceRoutes {
     @optional()
     @inject(speculosTypes.OperatorDataSource)
     private readonly operator?: SpeculosOperatorDataSource,
+    @optional()
+    @inject(speculosTypes.ReleaseDeadProxyUseCase)
+    private readonly releaseDeadProxy?: ReleaseDeadProxyUseCase,
   ) {}
 
   build(): Router {
@@ -435,6 +440,16 @@ export class DeviceRoutes {
             hasBody,
           })
           .run();
+        // Nothing usable came back: the emulator may have quit with its app, in
+        // which case the device is reverted to mock mode and answers as it does
+        // with no instance at all.
+        const unusable = result.caseOf({
+          Left: () => true,
+          Right: (response) => response.status >= 500,
+        });
+        if (unusable && (await this.discardProxyIfGone(req, resolved.proxy))) {
+          return this.noInstance(res);
+        }
         result.caseOf({
           Left: (error) => {
             logger.error(
@@ -459,6 +474,26 @@ export class DeviceRoutes {
     res.status(404).json({ error: message });
   }
 
+  private noInstance(res: Response): void {
+    res
+      .status(409)
+      .json({ error: "No active Speculos instance for this device" });
+  }
+
+  /** Forget a proxy whose emulator is gone. @returns whether it was. */
+  private async discardProxyIfGone(
+    req: AuthedRequest,
+    proxy: SpeculosProxySession,
+  ): Promise<boolean> {
+    return (
+      (await this.releaseDeadProxy?.execute(
+        getSession(req),
+        req.params["id"] ?? "",
+        proxy,
+      )) ?? false
+    );
+  }
+
   /** Resolve the device + its active Speculos proxy, or write 404/409. */
   private resolveSpeculos(req: AuthedRequest, res: Response) {
     const id = req.params["id"] ?? "";
@@ -470,9 +505,7 @@ export class DeviceRoutes {
     }
     const proxy = this.repository.findProxy(session, id).extract();
     if (!proxy) {
-      res
-        .status(409)
-        .json({ error: "No active Speculos instance for this device" });
+      this.noInstance(res);
       return undefined;
     }
     return { device, proxy };
