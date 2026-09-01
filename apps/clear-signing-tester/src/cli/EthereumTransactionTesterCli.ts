@@ -6,6 +6,7 @@ import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 import { type Container } from "inversify";
 
+import { type TestBatchContactFromFileUseCase } from "@root/src/application/usecases/TestBatchContactFromFileUseCase";
 import { type TestBatchContractFromFileUseCase } from "@root/src/application/usecases/TestBatchContractFromFileUseCase";
 import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
 import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
@@ -442,6 +443,16 @@ export class EthereumTransactionTesterCli {
         exitCode = await cli!.handleContractFile(file, options.skipCal);
       });
 
+    // Contact file command
+    program
+      .command("contact-file <file>")
+      .description(
+        "Register contacts on the device and check their review screens",
+      )
+      .action(async (file) => {
+        exitCode = await cli!.handleContactFile(file);
+      });
+
     // Start Speculos command (no signing tests)
     program
       .command("start-speculos")
@@ -587,6 +598,25 @@ export class EthereumTransactionTesterCli {
       skipCal,
       plugin: this.config.plugin,
     });
+
+    console.log(`\n${result.title}`);
+    console.table(result.resultsTable);
+    console.log(`\n${result.summaryTitle}`);
+    console.table(result.summaryTable);
+
+    return result.exitCode;
+  }
+
+  /**
+   * Handle contact file command
+   */
+  async handleContactFile(file: string): Promise<number> {
+    const batchTestUseCase =
+      this.container.get<TestBatchContactFromFileUseCase>(
+        TYPES.TestBatchContactFromFileUseCase,
+      );
+
+    const result = await batchTestUseCase.execute(file);
 
     console.log(`\n${result.title}`);
     console.table(result.resultsTable);

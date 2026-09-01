@@ -35,11 +35,13 @@
     "test:solana:program:all": "pnpm cli:solana program-all",
     "test:erc7730": "./scripts/test-erc7730-calldata.sh",
     "test:erc7730:typed-data": "./scripts/test-erc7730-typed-data.sh",
-    "test:gating": "./scripts/test-gating.sh"
+    "test:gating": "./scripts/test-gating.sh",
+    "test:contacts": "pnpm cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev contact-file ./ressources/contacts/contacts.json"
   },
   "dependencies": {
     "@ledgerhq/cal-interceptor": "workspace:^",
     "@ledgerhq/context-module": "workspace:^",
+    "@ledgerhq/device-contacts-kit": "workspace:^",
     "@ledgerhq/device-management-kit": "workspace:^",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
     "@ledgerhq/device-signer-kit-solana": "workspace:^",

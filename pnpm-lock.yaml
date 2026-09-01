@@ -458,6 +458,9 @@ importers:
       '@ledgerhq/context-module':
         specifier: workspace:^
         version: link:../../packages/signer/context-module
+      '@ledgerhq/device-contacts-kit':
+        specifier: workspace:^
+        version: link:../../packages/device-contacts-kit
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
         version: link:../../packages/device-management-kit

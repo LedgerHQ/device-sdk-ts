@@ -4,7 +4,10 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
 import { type ScreenContent } from "@root/src/domain/models/ScreenContent";
-import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+import {
+  type ScreenAnalyzerService,
+  type ScreenTextAnalysis,
+} from "@root/src/domain/services/ScreenAnalyzer";
 
 @injectable()
 export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
@@ -22,9 +25,10 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
 
   async analyzeAccumulatedTexts(
     expectedTexts: string[],
-  ): Promise<{ containsAll: boolean; found: string[]; missing: string[] }> {
+    unexpectedTexts: string[] = [],
+  ): Promise<ScreenTextAnalysis> {
     this.logger.debug("Analyzing accumulated screen texts", {
-      data: { expectedTexts },
+      data: { expectedTexts, unexpectedTexts },
     });
     const accumulatedTexts = await this.getAndClearAccumulatedTexts();
 
@@ -40,20 +44,24 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     const stripWhitespace = (text: string) =>
       text.toLowerCase().replace(/\s+/g, "");
 
-    for (const expectedText of expectedTexts) {
-      const strippedExpected = stripWhitespace(expectedText);
-      const isFound = accumulatedTexts.some((screenText) =>
-        stripWhitespace(screenText).includes(strippedExpected),
+    const isOnScreen = (needle: string) => {
+      const stripped = stripWhitespace(needle);
+      return accumulatedTexts.some((screenText) =>
+        stripWhitespace(screenText).includes(stripped),
       );
+    };
 
-      if (isFound) {
+    for (const expectedText of expectedTexts) {
+      if (isOnScreen(expectedText)) {
         found.push(expectedText);
       } else {
         missing.push(expectedText);
       }
     }
 
-    const containsAll = missing.length === 0;
+    const forbidden = unexpectedTexts.filter(isOnScreen);
+
+    const containsAll = missing.length === 0 && forbidden.length === 0;
 
     this.logger.info(
       `Summary: ${found.length}/${expectedTexts.length} expected texts found`,
@@ -63,21 +71,40 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
         `Missing texts: ${missing.map((t) => `"${t}"`).join(", ")}`,
       );
     }
+    if (forbidden.length > 0) {
+      this.logger.info(
+        `Texts that should not have appeared: ${forbidden.map((t) => `"${t}"`).join(", ")}`,
+      );
+    }
     this.logger.info(
-      `Result: ${containsAll ? "All expected texts found (clear signed)" : "Some texts missing (partially clear signed)"}`,
+      `Result: ${containsAll ? "All expected texts found (clear signed)" : "Assertion not satisfied (partially clear signed)"}`,
     );
 
     this.logger.debug("Analyzed accumulated screen texts", {
       data: {
         expectedTexts,
+        unexpectedTexts,
         found,
         missing,
+        forbidden,
         containsAll,
         totalAccumulatedTexts: accumulatedTexts.length,
       },
     });
 
-    return { containsAll, found, missing };
+    return { containsAll, found, missing, forbidden };
+  }
+
+  /** {@inheritDoc ScreenAnalyzerService.screenContains} */
+  async screenContains(marker: string): Promise<boolean> {
+    const data = await this.readScreenContent();
+    const matches = data.text.toLowerCase().includes(marker);
+
+    if (matches) {
+      this.logger.debug(`Current screen contains "${marker}"`);
+    }
+
+    return matches;
   }
 
   async isLastPage(): Promise<boolean> {

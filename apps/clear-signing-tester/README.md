@@ -278,6 +278,45 @@ pnpm cs-tester cli raw-transaction <tx> --custom-app stax/1.8.1/Ethereum/app_dev
 - **Absolute paths** (e.g., `/home/user/builds/my_app.elf`) are automatically mounted into the container at `/custom-app/app.elf`
 - Plugin options (`--plugin`, `--plugin-version`) are also ignored when using a custom app
 
+### Contacts (Address Book) Support
+
+**`contact-file`** checks the Ethereum app's Address Book behaviour: it
+registers each contact with `@ledgerhq/device-contacts-kit` and asserts the
+review screens. No signing.
+
+```bash
+pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev \
+  contact-file ./ressources/contacts/contacts.json
+```
+
+```json
+[
+  {
+    "description": "Registering an external address shows the contact name for review",
+    "contactName": "Alice",
+    "scope": "Ethereum",
+    "address": "0xa1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4",
+    "chainId": "1",
+    "expectedTexts": ["Review contact details", "Alice"]
+  }
+]
+```
+
+#### Case isolation
+
+The Ethereum app caches provided contacts in RAM for the whole app session, so a
+name provided by one case stays resolvable for every later case in the same run.
+Give each case its own recipient address; do not reuse one across cases.
+
+#### Requirements
+
+Contacts need an RC firmware pair — the newest *stable* Ethereum app answers
+`6e00 "CLA not supported"` to the first address-book APDU, and that also drops
+the Speculos session, so every later case fails as `DeviceSessionNotFound`. Run
+with `--device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev`. The
+Address Book HMACs are OS syscalls, so the Speculos image must be recent enough
+to implement them. Not in CI until both the app and a suitable image ship.
+
 ## Output
 
 The application outputs test results to the console and uses exit codes to indicate success/failure:

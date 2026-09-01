@@ -5,6 +5,8 @@ export const TYPES = {
   TypedDataFileRepository: Symbol.for("TypedDataFileRepository"),
   ContractFileRepository: Symbol.for("ContractFileRepository"),
   TransactionContractRepository: Symbol.for("TransactionContractRepository"),
+  ContactsRepository: Symbol.for("ContactsRepository"),
+  ContactFileRepository: Symbol.for("ContactFileRepository"),
 
   // Services
   EtherscanAdapter: Symbol.for("EtherscanAdapter"),
@@ -52,6 +54,10 @@ export const TYPES = {
     "TestBatchTypedDataFromFileUseCase",
   ),
   TestContractUseCase: Symbol.for("TestContractUseCase"),
+  TestContactUseCase: Symbol.for("TestContactUseCase"),
+  TestBatchContactFromFileUseCase: Symbol.for(
+    "TestBatchContactFromFileUseCase",
+  ),
   TestBatchContractFromFileUseCase: Symbol.for(
     "TestBatchContractFromFileUseCase",
   ),

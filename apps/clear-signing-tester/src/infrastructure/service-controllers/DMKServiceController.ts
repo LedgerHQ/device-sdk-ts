@@ -4,6 +4,10 @@ import {
   ContextModuleChainID,
 } from "@ledgerhq/context-module";
 import {
+  ContactsManagerBuilder,
+  ETHEREUM_APP_NAME,
+} from "@ledgerhq/device-contacts-kit";
+import {
   DeviceManagementKit,
   DeviceManagementKitBuilder,
   DiscoveredDevice,
@@ -26,6 +30,7 @@ import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
+import { SpeculosContactsRepository } from "@root/src/infrastructure/repositories/SpeculosContactsRepository";
 import { DefaultSigningService } from "@root/src/infrastructure/services/DefaultSigningService";
 
 export class DMKServiceController implements ServiceController {
@@ -38,6 +43,8 @@ export class DMKServiceController implements ServiceController {
   constructor(
     @inject(TYPES.SigningService)
     private readonly signingService: DefaultSigningService,
+    @inject(TYPES.ContactsRepository)
+    private readonly contactsRepository: SpeculosContactsRepository,
     @inject(TYPES.RetryService)
     private readonly retryService: RetryService,
     @inject(TYPES.SpeculosConfig)
@@ -99,15 +106,14 @@ export class DMKServiceController implements ServiceController {
                     this.logger.debug("Device connected", {
                       data: { sessionId: this.sessionId },
                     });
-                    this.signer = new SignerEthBuilder({
-                      dmk: this.dmk,
-                      sessionId: sessionId,
-                      originToken: this.signerConfig.originToken,
-                    })
-                      .withContextModule(this.contextModule)
-                      .build();
-
-                    this.signingService.setSigner(this.signer);
+                    this.contactsRepository.setContactsManager(
+                      new ContactsManagerBuilder({
+                        dmk: this.dmk,
+                        sessionId,
+                        appName: ETHEREUM_APP_NAME,
+                      }).build(),
+                    );
+                    this.buildSigner();
 
                     resolve();
                   })
@@ -132,6 +138,24 @@ export class DMKServiceController implements ServiceController {
     );
 
     this.logger.info("DMK started successfully");
+  }
+
+  /** Build the signer for the current session. */
+  private buildSigner(): void {
+    if (this.sessionId === null) {
+      throw new Error("Cannot build a signer before the device is connected");
+    }
+
+    const builder = new SignerEthBuilder({
+      dmk: this.dmk,
+      sessionId: this.sessionId,
+      originToken: this.signerConfig.originToken,
+    }).withContextModule(this.contextModule);
+
+    this.signer = builder.build();
+    this.signingService.setSigner(this.signer);
+
+    this.logger.debug("Signer built");
   }
 
   async stop(): Promise<void> {

@@ -48,11 +48,35 @@ export interface ScreenAnalyzerService {
   isBlindSigningBlocked(): Promise<boolean>;
 
   /**
+   * Check whether the screen showing right now contains `marker`, matched
+   * case-insensitively. For screens with no dedicated predicate above.
+   * @param marker - Lowercase text to look for on the current screen
+   * @returns Promise<boolean> - True if the marker is on screen
+   */
+  screenContains(marker: string): Promise<boolean>;
+
+  /**
    * Analyze all accumulated screen texts for expected texts
-   * @param expectedTexts - Array of texts to look for
-   * @returns Promise<{ containsAll: boolean; found: string[]; missing: string[] }> - Result of the analysis
+   *
+   * Clears the accumulated buffer, so each call scopes its assertion to the
+   * screens produced since the previous call.
+   *
+   * @param expectedTexts - Array of texts that must appear
+   * @param unexpectedTexts - Array of texts that must not appear
+   * @returns Promise<ScreenTextAnalysis> - Result of the analysis
    */
   analyzeAccumulatedTexts(
     expectedTexts: string[],
-  ): Promise<{ containsAll: boolean; found: string[]; missing: string[] }>;
+    unexpectedTexts?: string[],
+  ): Promise<ScreenTextAnalysis>;
 }
+
+/** Outcome of matching a set of texts against the accumulated screens. */
+export type ScreenTextAnalysis = {
+  /** True when every expected text was found and no unexpected one was. */
+  readonly containsAll: boolean;
+  readonly found: string[];
+  readonly missing: string[];
+  /** Texts from `unexpectedTexts` that were found on screen anyway. */
+  readonly forbidden: string[];
+};

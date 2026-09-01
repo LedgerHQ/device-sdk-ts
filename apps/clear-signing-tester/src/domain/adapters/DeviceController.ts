@@ -36,6 +36,11 @@ export interface DeviceController {
   continueToBlindSigning(): Promise<void>;
 
   /**
+   * Confirm the Address Book contact review (REGISTER IDENTITY)
+   */
+  confirmContactRegistration(): Promise<void>;
+
+  /**
    * Navigate to the Ethereum app settings and enable the blind signing toggle
    */
   enableBlindSigningInSettings(): Promise<void>;
