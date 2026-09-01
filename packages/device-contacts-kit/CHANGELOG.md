@@ -1,5 +1,11 @@
 # @ledgerhq/device-contacts-kit
 
+## 0.3.1
+
+### Patch Changes
+
+- [#1835](https://github.com/LedgerHQ/device-sdk-ts/pull/1835) [`7a5810a`](https://github.com/LedgerHQ/device-sdk-ts/commit/7a5810a802059d5523bdfddd50617d4614005dc8) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Drop the minimum OS version check for Register External Address, Edit External Address Scope, and Edit External Address Identifier — the minimum app version check is sufficient for these app-owned operations. Rename Contact is unaffected, as it is served by the device OS and keeps its OS-only check.
+
 ## 0.3.0
 
 ### Minor Changes
