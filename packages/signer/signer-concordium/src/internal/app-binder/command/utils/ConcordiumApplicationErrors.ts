@@ -23,6 +23,7 @@ export enum ConcordiumErrorCodes {
   PLT_BUFFER_ERROR = "6b0e",
   PLT_DATA_ERROR = "6b0f",
   PLT_MULTI_OP = "6b10",
+  PLT_UNSUPPORTED_DECIMALS = "6b11",
   UNSUPPORTED_TRANSACTION_TYPE = "unsupported_transaction_type",
   UNSUPPORTED_APP_VERSION = "unsupported_app_version",
   INVALID_PLT_TRANSACTION = "invalid_plt_transaction",
@@ -50,6 +51,10 @@ export const CONCORDIUM_APP_ERRORS: CommandErrors<ConcordiumErrorCodes> = {
   "6b0e": { message: "PLT buffer error" },
   "6b0f": { message: "PLT data error" },
   "6b10": { message: "PLT payload has more than one operation" },
+  "6b11": {
+    message:
+      "PLT amount has more than the 18 decimal places the app can display",
+  },
   unsupported_transaction_type: { message: "Unsupported transaction type" },
   unsupported_app_version: { message: "Unsupported app version" },
   invalid_plt_transaction: { message: "Invalid PLT transaction" },

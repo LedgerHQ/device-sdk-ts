@@ -20,9 +20,9 @@ import {
   type RegisterExternalAddressDAOutput,
 } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import {
-  isContactsSupportedForSession,
+  isContactsAppVersionSupportedForSession,
   type RunningApp,
-} from "@internal/app-binder/isContactsSupportedForSession";
+} from "@internal/app-binder/contactsVersionGuards";
 import { ContactsVersionRequirementError } from "@internal/app-binder/model/contactsErrors";
 import {
   type RegisterIdentityProofs,
@@ -305,7 +305,7 @@ export class RegisterExternalAddressDeviceAction extends XStateDeviceAction<
     internalApi: InternalApi,
   ): RegisterExternalAddressMachineDependencies {
     const isSupported = (app: RunningApp) =>
-      isContactsSupportedForSession(internalApi, app);
+      isContactsAppVersionSupportedForSession(internalApi, app);
 
     const registerIdentity = (
       input: RegisterExternalAddressDAInput,

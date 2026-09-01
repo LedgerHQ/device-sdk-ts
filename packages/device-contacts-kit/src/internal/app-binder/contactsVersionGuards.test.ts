@@ -11,9 +11,10 @@ import {
 } from "@api/model/ContactsVersionRequirements";
 
 import {
-  isContactsSupportedForSession,
+  isContactsAppVersionSupportedForSession,
+  isContactsOsSupportedForSession,
   type RunningApp,
-} from "./isContactsSupportedForSession";
+} from "./contactsVersionGuards";
 
 const flexSupport = (() => {
   const requirement = resolveContactsVersionRequirements(DeviceModelId.FLEX);
@@ -64,24 +65,36 @@ function runningApp(
   return { name, version };
 }
 
-describe("isContactsSupportedForSession", () => {
-  it("returns true when model, app version and OS version all meet the minimums", () => {
+describe("isContactsAppVersionSupportedForSession", () => {
+  it("returns true when the model and app version meet the minimums", () => {
     const api = createInternalApi(createReadyState());
-    expect(isContactsSupportedForSession(api, runningApp())).toBe(true);
+    expect(isContactsAppVersionSupportedForSession(api, runningApp())).toBe(
+      true,
+    );
+  });
+
+  it("returns true regardless of OS version, since app-owned operations are not gated by it", () => {
+    const api = createInternalApi(
+      createReadyState({ osVersion: BELOW_ANY_VERSION }),
+    );
+    expect(isContactsAppVersionSupportedForSession(api, runningApp())).toBe(
+      true,
+    );
   });
 
   it("returns false on an unsupported device model", () => {
     const api = createInternalApi(
       createReadyState({ modelId: DeviceModelId.NANO_X }),
     );
-    expect(isContactsSupportedForSession(api, runningApp())).toBe(false);
+    expect(isContactsAppVersionSupportedForSession(api, runningApp())).toBe(
+      false,
+    );
   });
 
-  // App-version requirement (evaluated from the fresh app version).
   it("returns false when the app version is below the minimum", () => {
     const api = createInternalApi(createReadyState());
     expect(
-      isContactsSupportedForSession(
+      isContactsAppVersionSupportedForSession(
         api,
         runningApp(ETHEREUM_APP_NAME, BELOW_ANY_VERSION),
       ),
@@ -90,17 +103,9 @@ describe("isContactsSupportedForSession", () => {
 
   it("returns false when the running app is unknown to Contacts", () => {
     const api = createInternalApi(createReadyState());
-    expect(isContactsSupportedForSession(api, runningApp("Bitcoin"))).toBe(
-      false,
-    );
-  });
-
-  // OS-version requirement.
-  it("returns false when the OS version is below the minimum", () => {
-    const api = createInternalApi(
-      createReadyState({ osVersion: BELOW_ANY_VERSION }),
-    );
-    expect(isContactsSupportedForSession(api, runningApp())).toBe(false);
+    expect(
+      isContactsAppVersionSupportedForSession(api, runningApp("Bitcoin")),
+    ).toBe(false);
   });
 
   it("returns false when the device session has no running app", () => {
@@ -109,6 +114,38 @@ describe("isContactsSupportedForSession", () => {
       deviceStatus: DeviceStatus.CONNECTED,
       deviceModelId: DeviceModelId.FLEX,
     });
-    expect(isContactsSupportedForSession(api, runningApp())).toBe(false);
+    expect(isContactsAppVersionSupportedForSession(api, runningApp())).toBe(
+      false,
+    );
+  });
+});
+
+describe("isContactsOsSupportedForSession", () => {
+  it("returns true when the model and OS version meet the minimums", () => {
+    const api = createInternalApi(createReadyState());
+    expect(isContactsOsSupportedForSession(api)).toBe(true);
+  });
+
+  it("returns false on an unsupported device model", () => {
+    const api = createInternalApi(
+      createReadyState({ modelId: DeviceModelId.NANO_X }),
+    );
+    expect(isContactsOsSupportedForSession(api)).toBe(false);
+  });
+
+  it("returns false when the OS version is below the minimum", () => {
+    const api = createInternalApi(
+      createReadyState({ osVersion: BELOW_ANY_VERSION }),
+    );
+    expect(isContactsOsSupportedForSession(api)).toBe(false);
+  });
+
+  it("returns false when the device session has no firmware version", () => {
+    const api = createInternalApi({
+      sessionStateType: DeviceSessionStateType.Connected,
+      deviceStatus: DeviceStatus.CONNECTED,
+      deviceModelId: DeviceModelId.FLEX,
+    });
+    expect(isContactsOsSupportedForSession(api)).toBe(false);
   });
 });

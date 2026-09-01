@@ -18,7 +18,7 @@ import {
   type RenameContactDAInternalState,
   type RenameContactDAOutput,
 } from "@api/app-binder/RenameContactDeviceActionTypes";
-import { isContactsOsSupportedForSession } from "@internal/app-binder/isContactsSupportedForSession";
+import { isContactsOsSupportedForSession } from "@internal/app-binder/contactsVersionGuards";
 import { ContactsVersionRequirementError } from "@internal/app-binder/model/contactsErrors";
 import {
   type RenameContactProof,
