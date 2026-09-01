@@ -35,7 +35,9 @@ jobs:
       signer-solana: ${{ steps.filter.outputs.signer-solana }}
       signer-utils: ${{ steps.filter.outputs.signer-utils }}
       solana-tools: ${{ steps.filter.outputs.solana-tools }}
+      contacts-kit: ${{ steps.filter.outputs.contacts-kit }}
       cs-tester: ${{ steps.filter.outputs.cs-tester }}
+      should-run-contacts-cs-tester: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.contacts-kit == 'true' || steps.filter.outputs.cs-tester == 'true' }}
       should-run-ethereum-cs-tester: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.cs-tester == 'true' }}
       should-run-solana-cs-tester: ${{ steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.cs-tester == 'true' || steps.filter.outputs.solana-tools == 'true' }}
     steps:
@@ -55,6 +57,8 @@ jobs:
               - 'packages/signer/signer-utils/**'
             solana-tools:
               - 'packages/tools/solana-tools/**'
+            contacts-kit:
+              - 'packages/device-contacts-kit/**'
             cs-tester:
               - 'apps/clear-signing-tester/**'
               - '.github/**'
@@ -258,6 +262,40 @@ jobs:
           coin-app: Ethereum
           artifact-prefix: eth-cs-tester-logs
           summary-prefix: "Ethereum Clear Signing Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+
+  contacts-cs-tester:
+    needs: [checks, detect-changes]
+    if: needs.detect-changes.outputs.should-run-contacts-cs-tester == 'true'
+    name: Ethereum Contacts Test (${{ matrix.test }})
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # No device axis: Contacts is unsupported on Nano, and the Address Book
+        # APDUs need an RC firmware pair that each script pins itself, so `flex`
+        # here only selects which ELFs are checked out of coin-apps.
+        test:
+          - test:contacts
+          - test:contacts:sign
+          - test:contacts:sign-rejected
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester
+          test: ${{ matrix.test }}
+          device: flex
+          coin-app: Ethereum
+          artifact-prefix: eth-contacts-logs
+          summary-prefix: "Ethereum Contacts Test"
+          # A device registration flow is hard to diagnose from a bare log.
+          enable-file-logging: "true"
           gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
           gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
