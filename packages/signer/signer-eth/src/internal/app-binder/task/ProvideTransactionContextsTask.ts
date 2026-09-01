@@ -1,7 +1,9 @@
 import {
   ClearSignContextType,
   isEthereumClearSignContextSuccess,
+  type TransactionSubset,
 } from "@ledgerhq/context-module";
+import { sendProvideContactPayload } from "@ledgerhq/device-contacts-kit";
 import {
   ByteArrayBuilder,
   type CommandErrorResult,
@@ -12,8 +14,11 @@ import {
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { type Either, Left, Right } from "purify-ts";
 
+import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
+import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { StoreTransactionCommand } from "@internal/app-binder/command/StoreTransactionCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
+import { buildExternalContactPayload } from "@internal/shared/utils/buildExternalContactPayload";
 
 import { type ContextWithSubContexts } from "./BuildFullContextsTask";
 import {
@@ -24,6 +29,16 @@ import {
   SendCommandInChunksTask,
   type SendCommandInChunksTaskArgs,
 } from "./SendCommandInChunksTask";
+
+/**
+ * Everything needed to look up the transaction recipient in the host address
+ * book. The three travel together because none of them means anything alone.
+ */
+export type ExternalContactArgs = {
+  readonly addressBook: EvmAddressBook;
+  readonly subset: TransactionSubset;
+  readonly appConfig: GetConfigCommandResponse;
+};
 
 export type ProvideTransactionContextsTaskArgs = {
   /**
@@ -40,6 +55,12 @@ export type ProvideTransactionContextsTaskArgs = {
    * if there is only a standalone calldata embedded in a message.
    */
   serializedTransaction?: Uint8Array;
+  /**
+   * Provide the contact matching the transaction recipient, ahead of the
+   * contexts. Omitted where there is no transaction recipient to match against
+   * — typed-data calldata, or a nested call inside a transaction.
+   */
+  externalContact?: ExternalContactArgs;
   /**
    * Logger factory for creating loggers with custom tags.
    */
@@ -86,8 +107,19 @@ export class ProvideTransactionContextsTask {
     });
 
     let transactionInfoProvided = false;
+    const contactProvided = await this._provideExternalContact();
 
     for (const { context, subcontextCallbacks } of this._args.contexts) {
+      if (
+        contactProvided &&
+        context.type === ClearSignContextType.ETHEREUM_TRUSTED_NAME
+      ) {
+        // The user-chosen name wins: a trusted name (ENS) resolves the same
+        // recipient the contact just decorated, so providing it would overwrite
+        // the contact on the review screen.
+        continue;
+      }
+
       for (const callback of subcontextCallbacks) {
         const subcontext = await callback();
 
@@ -159,5 +191,45 @@ export class ProvideTransactionContextsTask {
       "[run] ProvideTransactionContextsTask completed successfully",
     );
     return Right(void 0);
+  }
+
+  /**
+   * Returns whether the device accepted a contact for the recipient, so the
+   * caller knows to drop the trusted name it replaces.
+   */
+  private async _provideExternalContact(): Promise<boolean> {
+    if (this._args.externalContact === undefined) {
+      return false;
+    }
+
+    const payload = buildExternalContactPayload({
+      ...this._args.externalContact,
+      deviceState: this._api.getDeviceSessionState(),
+    });
+    if (payload === undefined) {
+      return false;
+    }
+
+    const result = await sendProvideContactPayload(this._api, {
+      payload,
+      logger: this._logger,
+    });
+
+    if (!isSuccessCommandResult(result)) {
+      // Warn, not error: a rejection is a routine outcome, not a fault. The
+      // device answers 0x6982 for a proof made by another seed, and the host is
+      // not required to filter its address book by seed, so this fires in normal
+      // use. A contact only decorates the review screen, so the name is dropped
+      // and the user signs against the raw address.
+      this._logger.warn(
+        "[provideExternalContact] Contact rejected, signing without it",
+        {
+          data: { error: result.error },
+        },
+      );
+      return false;
+    }
+
+    return true;
   }
 }

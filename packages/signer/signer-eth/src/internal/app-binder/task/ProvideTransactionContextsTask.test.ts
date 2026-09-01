@@ -1,14 +1,25 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
+  buildProvideContactPayload,
+  type ContactsErrorCodes,
+  sendProvideContactPayload,
+} from "@ledgerhq/device-contacts-kit";
+import {
   CommandResultFactory,
+  DeviceModelId,
+  DeviceSessionStateType,
+  DeviceStatus,
   type InternalApi,
   type UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
+import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
+import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { StoreTransactionCommand } from "@internal/app-binder/command/StoreTransactionCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
+import { type ContextWithSubContexts } from "@internal/app-binder/task/BuildFullContextsTask";
 
 import {
   type ProvideContextTask,
@@ -22,6 +33,17 @@ import {
   type SendCommandInChunksTask,
   type SendCommandInChunksTaskArgs,
 } from "./SendCommandInChunksTask";
+
+vi.mock("@ledgerhq/device-contacts-kit", async (importOriginal) => {
+  const original =
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
+    await importOriginal<typeof import("@ledgerhq/device-contacts-kit")>();
+  return {
+    ...original,
+    sendProvideContactPayload: vi.fn(),
+  };
+});
+const sendProvideContactPayloadMock = vi.mocked(sendProvideContactPayload);
 
 const mockLogger = {
   debug: vi.fn(),
@@ -736,6 +758,202 @@ describe("ProvideTransactionContextsTask", () => {
         // THEN
         expect(task["_provideContextTaskFactory"]).toBeDefined();
         expect(task["_sendCommandInChunksTaskFactory"]).toBeDefined();
+      });
+    });
+
+    describe("external contact", () => {
+      const RECIPIENT = "0x1111111111111111111111111111111111111111" as const;
+
+      const addressBook: EvmAddressBook = {
+        contactGroups: [
+          {
+            contactName: "Alice",
+            groupHandle: new Uint8Array(64).fill(0xaa),
+            hmacProof: new Uint8Array(32).fill(0xbb),
+            externalAddresses: [
+              {
+                scope: "Ethereum",
+                address: RECIPIENT,
+                chainId: 1n,
+                hmacRest: new Uint8Array(32).fill(0xcc),
+              },
+            ],
+          },
+        ],
+        ledgerAccounts: [],
+      };
+
+      const appConfig: GetConfigCommandResponse = {
+        blindSigningEnabled: false,
+        web3ChecksEnabled: false,
+        web3ChecksOptIn: false,
+        version: "1.15.0",
+      };
+
+      const resolveTrustedName = vi.fn();
+      const trustedName: ContextWithSubContexts = {
+        context: {
+          type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+          payload: "trusted name payload",
+        },
+        subcontextCallbacks: [resolveTrustedName],
+      };
+
+      const contactAccepted = CommandResultFactory<void, ContactsErrorCodes>({
+        data: undefined,
+      });
+      const contactRejected = CommandResultFactory<void, ContactsErrorCodes>({
+        data: undefined,
+        error: {} as UnknownDeviceExchangeError,
+      });
+
+      function makeArgs(
+        overrides: Partial<ProvideTransactionContextsTaskArgs> = {},
+      ): ProvideTransactionContextsTaskArgs {
+        return {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.ETHEREUM_TOKEN,
+                payload: "token payload",
+              },
+              subcontextCallbacks: [],
+            },
+          ],
+          derivationPath: "44'/60'/0'/0/0",
+          externalContact: {
+            addressBook,
+            subset: {
+              chainId: 1,
+              to: RECIPIENT,
+              data: "0x",
+              selector: "0x",
+            },
+            appConfig,
+          },
+          loggerFactory: mockLoggerFactory,
+          ...overrides,
+        };
+      }
+
+      function run(args: ProvideTransactionContextsTaskArgs) {
+        return new ProvideTransactionContextsTask(
+          api,
+          args,
+          provideContextTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        ).run();
+      }
+
+      beforeEach(() => {
+        // No `firmwareVersion`: the session refresher drops it once an app is
+        // open, so this is the shape a real signing flow sees.
+        api.getDeviceSessionState.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.CONNECTED,
+          installedApps: [],
+          currentApp: { name: "Ethereum", version: "1.15.0" },
+          deviceModelId: DeviceModelId.FLEX,
+          isSecureConnectionAllowed: false,
+        });
+        provideContextTaskRunMock.mockResolvedValue(successResult);
+        sendProvideContactPayloadMock.mockResolvedValue(contactAccepted);
+        resolveTrustedName.mockResolvedValue({
+          type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+          payload: "resolved trusted name payload",
+        });
+      });
+
+      it("should provide the matching contact before any context", async () => {
+        // WHEN
+        const result = await run(makeArgs());
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(sendProvideContactPayloadMock).toHaveBeenCalledWith(api, {
+          payload: buildProvideContactPayload({
+            contactName: "Alice",
+            scope: "Ethereum",
+            identifier: new Uint8Array(20).fill(0x11),
+            groupHandle: new Uint8Array(64).fill(0xaa),
+            hmacProof: new Uint8Array(32).fill(0xbb),
+            hmacRest: new Uint8Array(32).fill(0xcc),
+            blockchainFamily: "ethereum",
+            chainId: 1n,
+          }),
+          logger: mockLogger,
+        });
+        expect(
+          sendProvideContactPayloadMock.mock.invocationCallOrder[0]!,
+        ).toBeLessThan(provideContextTaskRunMock.mock.invocationCallOrder[0]!);
+      });
+
+      it("should skip the trusted name the contact replaces", async () => {
+        // GIVEN
+        const args = makeArgs({ contexts: [trustedName] });
+
+        // WHEN
+        const result = await run(args);
+
+        // THEN
+        // Neither the subcontext nor the main context reaches the device: the
+        // resolved ENS name would overwrite the contact on the review screen.
+        expect(result).toEqual(Right(void 0));
+        expect(resolveTrustedName).not.toHaveBeenCalled();
+        expect(provideContextTaskRunMock).not.toHaveBeenCalled();
+      });
+
+      it("should keep the trusted name when no contact matches the recipient", async () => {
+        // GIVEN
+        const args = makeArgs({
+          contexts: [trustedName],
+          externalContact: {
+            addressBook,
+            subset: {
+              chainId: 8453,
+              to: RECIPIENT,
+              data: "0x",
+              selector: "0x",
+            },
+            appConfig,
+          },
+        });
+
+        // WHEN
+        const result = await run(args);
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(sendProvideContactPayloadMock).not.toHaveBeenCalled();
+        expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
+      });
+
+      it("should sign anyway when the device rejects the contact", async () => {
+        // GIVEN
+        // A book that is not filtered by seed makes 0x6982 routine; the name is
+        // dropped but the user still gets to sign against the raw address.
+        sendProvideContactPayloadMock.mockResolvedValue(contactRejected);
+        const args = makeArgs({ contexts: [trustedName] });
+
+        // WHEN
+        const result = await run(args);
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(mockLogger.warn).toHaveBeenCalled();
+        // Routine, not a fault: it must not reach error-level monitoring.
+        expect(mockLogger.error).not.toHaveBeenCalled();
+        // The contact never made it, so the trusted name is the only name left.
+        expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
+      });
+
+      it("should send nothing when no external contact is given", async () => {
+        // WHEN
+        const result = await run(makeArgs({ externalContact: undefined }));
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(sendProvideContactPayloadMock).not.toHaveBeenCalled();
       });
     });
   });

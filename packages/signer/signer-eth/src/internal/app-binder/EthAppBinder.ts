@@ -14,6 +14,7 @@ import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPerson
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
+import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
@@ -43,6 +44,7 @@ export class EthAppBinder {
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
     @inject(externalTypes.DmkLoggerFactory)
     private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(externalTypes.AddressBook) private addressBook: EvmAddressBook,
   ) {}
 
   getAddress(args: {
@@ -132,6 +134,7 @@ export class EthAppBinder {
           mapper: this.mapper,
           parser: this.parser,
           contextModule: this.contextModule,
+          addressBook: this.addressBook,
           options: args.options ?? {},
         },
         loggerFactory: this.dmkLoggerFactory,
