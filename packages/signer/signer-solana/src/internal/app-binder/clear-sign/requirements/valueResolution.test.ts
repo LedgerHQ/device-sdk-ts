@@ -8,6 +8,8 @@ import {
 } from "./records";
 import {
   accountAddressAt,
+  accountAltRefAt,
+  altRefForPubkeyValue,
   resolvePortAccountIndex,
   resolvePubkeyValue,
 } from "./valueResolution";
@@ -17,7 +19,11 @@ const instruction: RequirementInstruction = {
   data: new Uint8Array(),
   accounts: [
     { address: "first", isWritable: false },
-    { address: undefined, isWritable: false },
+    {
+      address: undefined,
+      altRef: { altAddress: "ALT", entryIndex: 5 },
+      isWritable: false,
+    },
     { address: "third", isWritable: false },
   ],
 };
@@ -28,6 +34,57 @@ describe("accountAddressAt", () => {
     expect(accountAddressAt(instruction, 1)).toBeUndefined(); // unresolved (ALT)
     expect(accountAddressAt(instruction, 9)).toBeUndefined(); // out of bounds
     expect(accountAddressAt(instruction, -1)).toBeUndefined();
+  });
+});
+
+describe("accountAltRefAt", () => {
+  it("returns the ALT ref of an unresolved slot, and undefined elsewhere", () => {
+    // Complement of accountAddressAt: exactly one of the two answers per slot.
+    expect(accountAltRefAt(instruction, 1)).toEqual({
+      altAddress: "ALT",
+      entryIndex: 5,
+    });
+    expect(accountAltRefAt(instruction, 0)).toBeUndefined(); // resolved
+    expect(accountAltRefAt(instruction, 9)).toBeUndefined(); // out of bounds
+    expect(accountAltRefAt(instruction, -1)).toBeUndefined();
+  });
+});
+
+describe("altRefForPubkeyValue", () => {
+  it("returns the ALT ref behind an ACCOUNT_PATH into an unresolved slot", () => {
+    expect(
+      altRefForPubkeyValue(
+        { source: ValueSource.ACCOUNT_PATH, payload: Uint8Array.of(1) },
+        instruction,
+      ),
+    ).toEqual({ altAddress: "ALT", entryIndex: 5 });
+  });
+
+  it("returns undefined for a resolved slot, a CONSTANT, an ARGUMENT_PATH or an empty path", () => {
+    expect(
+      altRefForPubkeyValue(
+        { source: ValueSource.ACCOUNT_PATH, payload: Uint8Array.of(0) },
+        instruction,
+      ),
+    ).toBeUndefined();
+    expect(
+      altRefForPubkeyValue(
+        { source: ValueSource.CONSTANT, payload: new Uint8Array(32) },
+        instruction,
+      ),
+    ).toBeUndefined();
+    expect(
+      altRefForPubkeyValue(
+        { source: ValueSource.ARGUMENT_PATH, payload: Uint8Array.of(1) },
+        instruction,
+      ),
+    ).toBeUndefined();
+    expect(
+      altRefForPubkeyValue(
+        { source: ValueSource.ACCOUNT_PATH, payload: new Uint8Array() },
+        instruction,
+      ),
+    ).toBeUndefined();
   });
 });
 
@@ -85,7 +142,11 @@ describe("resolvePortAccountIndex", () => {
   const makePort = (
     accountIndices: number[],
     optionalAccountStrategy = OptionalAccountStrategy.PROGRAM_ID,
-  ): ParsedValueFlowPort => ({ accountIndices, optionalAccountStrategy });
+  ): ParsedValueFlowPort => ({
+    accountIndices,
+    optionalAccountStrategy,
+    activeWhen: [],
+  });
 
   // `instruction` accounts: [0]="first", [1]=undefined, [2]="third".
   // A separate fixture places the program id "P" in slot 0 for the sentinel

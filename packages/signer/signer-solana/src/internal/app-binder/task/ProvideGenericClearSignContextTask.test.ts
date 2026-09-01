@@ -28,6 +28,7 @@ const NO_CHALLENGE_BOUND: ChallengeBoundRequirements = {
   altResolutions: [],
   trustedNames: [],
   tokenAmountAltRefs: [],
+  tokenAccountStateAltRefs: [],
   mintAltRefs: [],
 };
 
@@ -134,6 +135,7 @@ describe("ProvideGenericClearSignContextTask", () => {
         altResolutions: [{ altAddress: "ALT", entryIndex: 3 }],
         trustedNames: ["NAME"],
         tokenAmountAltRefs: [],
+        tokenAccountStateAltRefs: [],
         mintAltRefs: [],
       },
       // Empty fetch: assert the challenge + fetch protocol, not handler internals.
@@ -199,6 +201,7 @@ describe("ProvideGenericClearSignContextTask", () => {
         altResolutions: [],
         trustedNames: [],
         tokenAmountAltRefs: [],
+        tokenAccountStateAltRefs: [],
         mintAltRefs: [],
       },
       vi.fn(async () => []),
@@ -443,6 +446,7 @@ describe("ProvideGenericClearSignContextTask", () => {
       [],
       {
         ...NO_CHALLENGE_BOUND,
+        tokenAccountStateAltRefs: [],
         mintAltRefs: [{ altAddress: "ALT1", entryIndex: 0 }],
       },
       getContexts,
@@ -518,6 +522,129 @@ describe("ProvideGenericClearSignContextTask", () => {
       expect.objectContaining({ mints: ["MINT3"] }),
       [ClearSignContextType.SOLANA_TOKEN_INFO],
     );
+  });
+
+  it("tokenAccountStateAltRefs: streams ALT_RESOLUTION, then TOKEN_ACCOUNT_STATE, then TOKEN_INFO for the attested mint", async () => {
+    // The IS_SIGNER / RESOLVE case: the state payload is the point (it seeds the
+    // device's owner and mint maps), so no TOKEN_INFO is probed on the resolved
+    // address itself.
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("ATA3")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [tokenAccountStateCtx("MINT4")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return [tokenInfoCtxFor("MINT4")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAccountStateAltRefs: [{ altAddress: "ALT3", entryIndex: 2 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requests: [
+          expect.objectContaining({ altAddress: "ALT3", entryIndex: 2 }),
+        ],
+      }),
+      [ClearSignContextType.SOLANA_ALT_RESOLUTION],
+    );
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requests: [expect.objectContaining({ tokenAccount: "ATA3" })],
+      }),
+      [ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE],
+    );
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({ mints: ["MINT4"] }),
+      [ClearSignContextType.SOLANA_TOKEN_INFO],
+    );
+    // Never probed as a mint: that is the tokenAmountAltRefs order, and here it
+    // would spend a CAL round-trip on an address known to be a token account.
+    expect(getContexts).not.toHaveBeenCalledWith(
+      expect.objectContaining({ mints: ["ATA3"] }),
+      [ClearSignContextType.SOLANA_TOKEN_INFO],
+    );
+  });
+
+  it("tokenAccountStateAltRefs: with no attested state, falls back to TOKEN_INFO for the resolved address", async () => {
+    // The address was not a token account after all (a MINT_ASSOC mint, say).
+    // This fallback is what lets build() strip the entry from mintAltRefs and
+    // tokenAmountAltRefs.
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("MINT5")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return [tokenInfoCtxFor("MINT5")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAccountStateAltRefs: [{ altAddress: "ALT4", entryIndex: 0 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({ mints: ["MINT5"] }),
+      [ClearSignContextType.SOLANA_TOKEN_INFO],
+    );
+  });
+
+  it("tokenAccountStateAltRefs: skips an account whose TOKEN_ACCOUNT_STATE already reached the device", async () => {
+    // The same ATA can be named directly by one instruction and through an ALT
+    // by another; the device rejects the second TOKEN_ACCOUNT_STATE.
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("ATA6")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [tokenAccountStateCtx("MINT6")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return [tokenInfoCtxFor("MINT6")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAccountStates: ["ATA6"],
+        tokenAccountStateAltRefs: [{ altAddress: "ALT5", entryIndex: 4 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    const stateFetches = getContexts.mock.calls.filter(
+      (c) => c[1]?.[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+    );
+    expect(stateFetches).toHaveLength(1);
+    const mintFetches = getContexts.mock.calls.filter(
+      (c) => c[1]?.[0] === ClearSignContextType.SOLANA_TOKEN_INFO,
+    );
+    expect(mintFetches).toHaveLength(1);
   });
 
   it("returns a failed CommandResult when the device rejects GENERIC PREVIEW", async () => {

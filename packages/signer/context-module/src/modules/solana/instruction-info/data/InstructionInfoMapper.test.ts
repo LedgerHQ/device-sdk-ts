@@ -4,7 +4,9 @@ import { type CalInstructionDescriptorDto } from "./InstructionInfoDto";
 import {
   toAccountResets,
   toDisplayFields,
+  toHideRules,
   toInstructionInfoPayload,
+  toOwnerAssociations,
   toProgramEnumVariants,
   toValueFlowPorts,
 } from "./InstructionInfoMapper";
@@ -38,14 +40,16 @@ describe("InstructionInfoMapper", () => {
             descriptor: "vfp1",
             account_indices: [0, 1],
             optional_account_strategy: "OMITTED",
-            token_value: { kind: "NATIVE" },
+            token_value: { kind: "RESOLVE", fallback_account: 5 },
+            active_when: ["IS_SIGNER"],
           },
         ]),
       ).toEqual([
         {
           account_indices: [0, 1],
           optional_account_strategy: "OMITTED",
-          token_value: { kind: "NATIVE" },
+          token_value: { kind: "RESOLVE", fallback_account: 5 },
+          active_when: ["IS_SIGNER"],
         },
       ]);
     });
@@ -64,8 +68,80 @@ describe("InstructionInfoMapper", () => {
           account_indices: [0],
           optional_account_strategy: undefined,
           token_value: { kind: "NATIVE" },
+          active_when: undefined,
         },
       ]);
+    });
+  });
+
+  describe("toHideRules", () => {
+    it("returns an empty list for undefined input", () => {
+      expect(toHideRules()).toEqual([]);
+    });
+
+    it("maps the decoded fields, dropping the signed-TLV descriptor", () => {
+      expect(
+        toHideRules([
+          {
+            descriptor: "hr1",
+            rule_set_index: 1,
+            target: { source: "ACCOUNT_PATH", account_index: 2 },
+            condition: "IS_SIGNER",
+          },
+        ]),
+      ).toEqual([
+        {
+          rule_set_index: 1,
+          target: { source: "ACCOUNT_PATH", account_index: 2 },
+          condition: "IS_SIGNER",
+        },
+      ]);
+    });
+
+    it("keeps a rule with no condition so its target stays in the requirement set", () => {
+      // The signed TLV reaches the device regardless, and the device resolves
+      // the target of every rule it receives.
+      expect(
+        toHideRules([
+          {
+            descriptor: "hrNoCondition",
+            target: { source: "ACCOUNT_PATH", account_index: 4 },
+          },
+        ]),
+      ).toEqual([
+        {
+          rule_set_index: undefined,
+          target: { source: "ACCOUNT_PATH", account_index: 4 },
+          condition: undefined,
+        },
+      ]);
+    });
+  });
+
+  describe("toOwnerAssociations", () => {
+    it("returns an empty list for undefined input", () => {
+      expect(toOwnerAssociations(undefined)).toEqual([]);
+    });
+
+    it("wraps CAL's single association into a list", () => {
+      expect(
+        toOwnerAssociations({
+          account_index: 1,
+          owner: { source: "ACCOUNT_PATH", account_index: 0 },
+        }),
+      ).toEqual([
+        {
+          account_index: 1,
+          owner: { source: "ACCOUNT_PATH", account_index: 0 },
+        },
+      ]);
+    });
+
+    it("drops a half-declared pair", () => {
+      expect(toOwnerAssociations({ account_index: 1 })).toEqual([]);
+      expect(
+        toOwnerAssociations({ owner: { source: "ACCOUNT_PATH" } }),
+      ).toEqual([]);
     });
   });
 
@@ -146,6 +222,10 @@ describe("InstructionInfoMapper", () => {
           ],
         },
         mint_association: { account_index: 1, mint_index: 3 },
+        owner_association: {
+          account_index: 1,
+          owner: { source: "ACCOUNT_PATH", account_index: 0 },
+        },
         display_fields: [
           {
             descriptor: "df1",
@@ -163,7 +243,14 @@ describe("InstructionInfoMapper", () => {
             token_value: { kind: "NATIVE" },
           },
         ],
-        hide_rules: [{ descriptor: "hr1" }],
+        hide_rules: [
+          {
+            descriptor: "hr1",
+            rule_set_index: 0,
+            target: { source: "ACCOUNT_PATH", account_index: 1 },
+            condition: "ACCOUNT_EFFECTS_DISPLAYED_ELSEWHERE",
+          },
+        ],
         account_resets: [
           {
             descriptor: "ar1",
@@ -192,11 +279,24 @@ describe("InstructionInfoMapper", () => {
           ],
         },
         mintAssociations: [{ account_index: 1, mint_index: 3 }],
+        ownerAssociations: [
+          {
+            account_index: 1,
+            owner: { source: "ACCOUNT_PATH", account_index: 0 },
+          },
+        ],
         valueFlowPorts: [
           {
             account_indices: [0],
             optional_account_strategy: undefined,
             token_value: { kind: "NATIVE" },
+          },
+        ],
+        hideRules: [
+          {
+            rule_set_index: 0,
+            target: { source: "ACCOUNT_PATH", account_index: 1 },
+            condition: "ACCOUNT_EFFECTS_DISPLAYED_ELSEWHERE",
           },
         ],
         accountResets: [{ account_index: 1, require_pre_balance_zero: true }],

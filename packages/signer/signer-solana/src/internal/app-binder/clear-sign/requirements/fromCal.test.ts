@@ -1,9 +1,17 @@
 import {
+  fromCalHideRule,
+  fromCalOwnerAssociation,
   fromCalTokenValue,
   fromCalValue,
   fromCalValueFlowPort,
 } from "./fromCal";
-import { OptionalAccountStrategy, TokenKind, ValueSource } from "./records";
+import {
+  ActiveWhenPredicate,
+  HideCondition,
+  OptionalAccountStrategy,
+  TokenKind,
+  ValueSource,
+} from "./records";
 
 describe("fromCalValue", () => {
   it("maps CONSTANT hex to its raw bytes", () => {
@@ -49,6 +57,95 @@ describe("fromCalTokenValue", () => {
     expect(() => fromCalTokenValue({ kind: "NOPE" })).toThrow(
       /unknown token_value kind/,
     );
+  });
+
+  it("carries FALLBACK_ACCOUNT", () => {
+    expect(
+      fromCalTokenValue({ kind: "RESOLVE", fallback_account: 5 })
+        .fallbackAccountIndex,
+    ).toBe(5);
+  });
+});
+
+describe("fromCalHideRule", () => {
+  it("maps a condition name, target and rule-set index", () => {
+    const rule = fromCalHideRule({
+      rule_set_index: 2,
+      target: { source: "ACCOUNT_PATH", account_index: 3 },
+      condition: "IS_SIGNER",
+    });
+    expect(rule.condition).toBe(HideCondition.IS_SIGNER);
+    expect(rule.ruleSetIndex).toBe(2);
+    expect(rule.target?.source).toBe(ValueSource.ACCOUNT_PATH);
+  });
+
+  it("defaults RULE_SET_INDEX to 0", () => {
+    expect(fromCalHideRule({ condition: "IS_SIGNER" }).ruleSetIndex).toBe(0);
+  });
+
+  it("keeps the target of a rule whose condition is unknown or absent", () => {
+    // The device resolves every rule's target, so losing the entry would cost
+    // the target's ALT_RESOLUTION and make the device refuse to sign.
+    const unknown = fromCalHideRule({
+      condition: "SOMETIMES",
+      target: { source: "ACCOUNT_PATH", account_index: 4 },
+    });
+    expect(unknown.condition).toBeUndefined();
+    expect(Array.from(unknown.target!.payload)).toEqual([4]);
+
+    const absent = fromCalHideRule({
+      target: { source: "ACCOUNT_PATH", account_index: 5 },
+    });
+    expect(absent.condition).toBeUndefined();
+    expect(Array.from(absent.target!.payload)).toEqual([5]);
+  });
+});
+
+describe("fromCalOwnerAssociation", () => {
+  it("maps the bound account and its owner VALUE", () => {
+    const association = fromCalOwnerAssociation({
+      account_index: 1,
+      owner: { source: "ACCOUNT_PATH", account_index: 0 },
+    });
+    expect(association.accountIndex).toBe(1);
+    expect(Array.from(association.owner.payload)).toEqual([0]);
+  });
+});
+
+describe("fromCalValueFlowPort ACTIVE_WHEN", () => {
+  it("defaults to no predicates", () => {
+    expect(
+      fromCalValueFlowPort({
+        account_indices: [0],
+        token_value: { kind: "NATIVE" },
+      }).activeWhen,
+    ).toEqual([]);
+  });
+
+  it("maps bare names and MINT_PREDICATE alike", () => {
+    expect(
+      fromCalValueFlowPort({
+        account_indices: [0],
+        token_value: { kind: "NATIVE" },
+        active_when: ["IS_SIGNER", { kind: "MINT_PREDICATE", mint: "Mint" }],
+      }).activeWhen,
+    ).toEqual([
+      ActiveWhenPredicate.IS_SIGNER,
+      ActiveWhenPredicate.MINT_PREDICATE,
+    ]);
+  });
+
+  it("drops an unknown predicate instead of failing the decode", () => {
+    // Nothing host-side evaluates activation, and an unknown name cannot be
+    // IS_SIGNER, so dropping it can never under-request a descriptor — whereas
+    // rejecting would degrade the whole transaction to blind signing.
+    expect(
+      fromCalValueFlowPort({
+        account_indices: [0],
+        token_value: { kind: "NATIVE" },
+        active_when: ["IS_LUCKY", "IS_SIGNER"],
+      }).activeWhen,
+    ).toEqual([ActiveWhenPredicate.IS_SIGNER]);
   });
 });
 

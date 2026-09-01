@@ -3,8 +3,10 @@ import { type VariantCache } from "@internal/app-binder/clear-sign/idl-type-pool
 import {
   type CalAccountReset,
   type CalDisplayField,
+  type CalHideRule,
   type CalIdlDescriptor,
   type CalMintAssociation,
+  type CalOwnerAssociation,
   type CalValueFlowPort,
 } from "./calTypes";
 
@@ -42,10 +44,24 @@ export type InstructionDescriptor = {
   discriminator: string;
   idlDescriptor: CalIdlDescriptor;
   mintAssociations: CalMintAssociation[];
+  ownerAssociations: CalOwnerAssociation[];
   valueFlowPorts: CalValueFlowPort[];
   accountResets: CalAccountReset[];
   displayFields: CalDisplayField[];
+  hideRules: CalHideRule[];
   enumCache: VariantCache;
+};
+
+/**
+ * The transaction-scoped binding maps the TX's own descriptors declare, both
+ * keyed by token-account address: `mints` from the `MINT_ASSOC` pairs and
+ * `owners` from the `OWNER_ASSOC` pairs. The device seeds the same two maps at
+ * finalize, and a fact the transaction already carries needs no attestation —
+ * so each map lets the matching `TOKEN_ACCOUNT_STATE` requirement be skipped.
+ */
+export type TxBindings = {
+  mints: ReadonlyMap<string, string>;
+  owners: ReadonlyMap<string, string>;
 };
 
 /** A transaction instruction paired with its matched CAL descriptor. */
@@ -83,6 +99,17 @@ export type DescriptorRequirements = {
    * TOKEN_INFO-first / TOKEN_ACCOUNT_STATE-fallback logic.
    */
   tokenAmountAltRefs: AltEntryKey[];
+  /**
+   * ALT-backed accounts that need an attested `TOKEN_ACCOUNT_STATE`: `IS_SIGNER`
+   * predicate targets (the device's owner map has no other source for them) and
+   * `RESOLVE` port token accounts (its mint map likewise). The address is
+   * unknown at build time, so the fetch happens in the provide phase once
+   * `ALT_RESOLUTION` comes back: TOKEN_ACCOUNT_STATE first, then TOKEN_INFO for
+   * the attested mint, then — only if the address turns out not to be a token
+   * account — TOKEN_INFO for the address itself. That last step makes this
+   * bucket subsume `tokenAmountAltRefs` and `mintAltRefs`.
+   */
+  tokenAccountStateAltRefs: AltEntryKey[];
   /**
    * ALT-backed MINT entries from MINT_ASSOCIATIONS (accounts at a `mint_index`
    * that have no resolved address). The device may signal these via status

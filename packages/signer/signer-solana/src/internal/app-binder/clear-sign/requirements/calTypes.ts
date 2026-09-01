@@ -1,7 +1,10 @@
 import {
   type SolanaCalAccountReset,
+  type SolanaCalActiveWhenPredicate,
   type SolanaCalDisplayField,
+  type SolanaCalHideRule,
   type SolanaCalMintAssociation,
+  type SolanaCalOwnerAssociation,
   type SolanaCalTokenValue,
   type SolanaCalTypePoolEntry,
   type SolanaCalValue,
@@ -20,6 +23,9 @@ export type CalValueFlowPort = SolanaCalValueFlowPort;
 export type CalAccountReset = SolanaCalAccountReset;
 export type CalDisplayField = SolanaCalDisplayField;
 export type CalMintAssociation = SolanaCalMintAssociation;
+export type CalOwnerAssociation = SolanaCalOwnerAssociation;
+export type CalHideRule = SolanaCalHideRule;
+export type CalActiveWhenPredicate = SolanaCalActiveWhenPredicate;
 
 export type CalIdlDescriptor = {
   type_pool: SolanaCalTypePoolEntry[];

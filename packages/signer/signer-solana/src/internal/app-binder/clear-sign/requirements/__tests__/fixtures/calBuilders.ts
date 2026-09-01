@@ -5,9 +5,12 @@
 import { type CalTypePoolEntry } from "@internal/app-binder/clear-sign/idl-type-pool";
 import {
   type CalAccountReset,
+  type CalActiveWhenPredicate,
   type CalDisplayField,
+  type CalHideRule,
   type CalIdlDescriptor,
   type CalMintAssociation,
+  type CalOwnerAssociation,
   type CalTokenValue,
   type CalValue,
   type CalValueFlowPort,
@@ -40,9 +43,18 @@ export function argumentPathValue(steps: number[] = []): CalValue {
 
 export function tokenValue(
   kind: CalTokenValue["kind"],
-  opts: { value?: CalValue; accountIndex?: number } = {},
+  opts: {
+    value?: CalValue;
+    accountIndex?: number;
+    fallbackAccount?: number;
+  } = {},
 ): CalTokenValue {
-  return { kind, value: opts.value, account_index: opts.accountIndex };
+  return {
+    kind,
+    value: opts.value,
+    account_index: opts.accountIndex,
+    fallback_account: opts.fallbackAccount,
+  };
 }
 
 export function valueFlowPort(opts: {
@@ -50,6 +62,7 @@ export function valueFlowPort(opts: {
   accountIndices?: number[];
   optionalAccountStrategy?: CalValueFlowPort["optional_account_strategy"];
   tokenValue?: CalTokenValue;
+  activeWhen?: CalActiveWhenPredicate[];
 }): CalValueFlowPort {
   return {
     account_indices:
@@ -57,7 +70,27 @@ export function valueFlowPort(opts: {
       (opts.accountIndex !== undefined ? [opts.accountIndex] : []),
     optional_account_strategy: opts.optionalAccountStrategy,
     token_value: opts.tokenValue ?? tokenValue("NATIVE"),
+    active_when: opts.activeWhen,
   };
+}
+
+export function hideRule(opts: {
+  condition: string;
+  target?: CalValue;
+  ruleSetIndex?: number;
+}): CalHideRule {
+  return {
+    rule_set_index: opts.ruleSetIndex,
+    target: opts.target,
+    condition: opts.condition,
+  };
+}
+
+export function ownerAssociation(
+  accountIndex: number,
+  owner: CalValue,
+): CalOwnerAssociation {
+  return { account_index: accountIndex, owner };
 }
 
 export function accountReset(opts: {
@@ -100,9 +133,11 @@ export function descriptor(
     discriminator: "00",
     idlDescriptor: idlDescriptor({}),
     mintAssociations: [],
+    ownerAssociations: [],
     valueFlowPorts: [],
     accountResets: [],
     displayFields: [],
+    hideRules: [],
     enumCache: new Map(),
     ...overrides,
   };

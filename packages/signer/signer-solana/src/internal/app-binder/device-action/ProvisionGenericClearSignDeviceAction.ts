@@ -207,6 +207,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
                 altResolutions: [],
                 trustedNames: [],
                 tokenAmountAltRefs: [],
+                tokenAccountStateAltRefs: [],
                 mintAltRefs: [],
               },
             }),

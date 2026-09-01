@@ -1,7 +1,10 @@
 import {
+  accountPathValue,
   accountReset,
   constantValue,
   descriptor,
+  hideRule,
+  ownerAssociation,
   tokenAmountDisplayField,
   tokenValue,
   trustedNameDisplayField,
@@ -9,6 +12,8 @@ import {
 } from "./__tests__/fixtures/calBuilders";
 import { parseInstructionDescriptor } from "./parseInstruction";
 import {
+  ActiveWhenPredicate,
+  HideCondition,
   PARAM_TYPE_TOKEN_AMOUNT,
   PARAM_TYPE_TRUSTED_NAME,
   TokenKind,
@@ -66,5 +71,31 @@ describe("parseInstructionDescriptor", () => {
     const field = parsed.displayFields[0]!;
     expect(field.paramType).toBe(PARAM_TYPE_TOKEN_AMOUNT);
     expect(field.token).toBeDefined();
+  });
+
+  it("maps hide rules, owner associations and port activation predicates", () => {
+    const parsed = parseInstructionDescriptor(
+      descriptor({
+        ownerAssociations: [ownerAssociation(1, accountPathValue(0))],
+        hideRules: [
+          hideRule({ condition: "IS_SIGNER", target: accountPathValue(1) }),
+        ],
+        valueFlowPorts: [
+          valueFlowPort({
+            accountIndex: 1,
+            activeWhen: ["CREATED_IN_TRANSACTION"],
+            tokenValue: tokenValue("RESOLVE", { fallbackAccount: 4 }),
+          }),
+        ],
+      }),
+    );
+    expect(parsed.info.ownerAssociations).toEqual([
+      { accountIndex: 1, owner: expect.objectContaining({}) },
+    ]);
+    expect(parsed.hideRules[0]!.condition).toBe(HideCondition.IS_SIGNER);
+    expect(parsed.valueFlowPorts[0]!.activeWhen).toEqual([
+      ActiveWhenPredicate.CREATED_IN_TRANSACTION,
+    ]);
+    expect(parsed.valueFlowPorts[0]!.tokenValue?.fallbackAccountIndex).toBe(4);
   });
 });

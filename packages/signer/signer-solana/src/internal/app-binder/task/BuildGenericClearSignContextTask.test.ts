@@ -78,9 +78,11 @@ function instructionInfoContext(
       enumVariants: [],
       idlDescriptor: MIN_IDL_DESCRIPTOR,
       mintAssociations: [],
+      ownerAssociations: [],
       valueFlowPorts: [],
       accountResets: [],
       displayFields: [],
+      hideRules: [],
     },
   } as any;
 }

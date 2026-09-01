@@ -75,9 +75,11 @@ export type SolanaInstructionInfoPayload = {
     rootType: number;
   };
   mintAssociations: SolanaCalMintAssociation[];
+  ownerAssociations: SolanaCalOwnerAssociation[];
   valueFlowPorts: SolanaCalValueFlowPort[];
   accountResets: SolanaCalAccountReset[];
   displayFields: SolanaCalDisplayField[];
+  hideRules: SolanaCalHideRule[];
 };
 
 export enum SolanaInstructionSubstructureKind {
@@ -109,13 +111,52 @@ export type SolanaCalTokenValue = {
   kind: string;
   value?: SolanaCalValue;
   account_index?: number;
+  /**
+   * `RESOLVE` only: account index whose *address* the device uses as the mint
+   * when the binding lookup fails through both the mint-association map and
+   * `TOKEN_ACCOUNT_STATE` (`accountMintTokenNode.fallbackAccount`).
+   */
+  fallback_account?: number;
 };
+
+/**
+ * One `VALUE_FLOW_PORT.ACTIVE_WHEN` predicate: a bare `ActiveWhenPredicate`
+ * name, or `MINT_PREDICATE` with its trailing mint.
+ */
+export type SolanaCalActiveWhenPredicate =
+  | string
+  | { kind: string; mint?: string };
 
 export type SolanaCalValueFlowPort = {
   /** Ordered candidate list of account indices (length 1 for a single-account port). */
   account_indices: number[];
   optional_account_strategy?: string;
   token_value: SolanaCalTokenValue;
+  /** Port activation predicates; all must pass for the port to be active. */
+  active_when?: SolanaCalActiveWhenPredicate[];
+};
+
+/**
+ * One `HIDE_RULE` substructure: a `(rule_set_index, target, condition)` triple.
+ * `condition` is non-optional in the TLV, but it stays optional here: the signed
+ * substructure reaches the device either way, so a rule whose condition CAL
+ * failed to name must still be surfaced — dropping it would lose the `target`
+ * the device resolves for every rule.
+ */
+export type SolanaCalHideRule = {
+  rule_set_index?: number;
+  target?: SolanaCalValue;
+  condition?: string;
+};
+
+/**
+ * An `OWNER_ASSOC_ACCOUNT` / `OWNER_ASSOC_OWNER` pair: binds a token account to
+ * its owner, seeding the transaction-scoped owner map the `IS_SIGNER` /
+ * `IS_ANOTHER_SIGNER` predicates read.
+ */
+export type SolanaCalOwnerAssociation = {
+  account_index: number;
+  owner: SolanaCalValue;
 };
 
 export type SolanaCalAccountReset = {
