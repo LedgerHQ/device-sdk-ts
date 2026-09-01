@@ -20,9 +20,9 @@ import {
   type EditExternalAddressScopeDAOutput,
 } from "@api/app-binder/EditExternalAddressScopeDeviceActionTypes";
 import {
-  isContactsSupportedForSession,
+  isContactsAppVersionSupportedForSession,
   type RunningApp,
-} from "@internal/app-binder/isContactsSupportedForSession";
+} from "@internal/app-binder/contactsVersionGuards";
 import { ContactsVersionRequirementError } from "@internal/app-binder/model/contactsErrors";
 import {
   type EditScopeProof,
@@ -307,7 +307,7 @@ export class EditExternalAddressScopeDeviceAction extends XStateDeviceAction<
     internalApi: InternalApi,
   ): EditExternalAddressScopeMachineDependencies {
     const isSupported = (app: RunningApp) =>
-      isContactsSupportedForSession(internalApi, app);
+      isContactsAppVersionSupportedForSession(internalApi, app);
 
     const editScope = (
       input: EditExternalAddressScopeDAInput,

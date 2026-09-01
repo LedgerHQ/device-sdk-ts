@@ -20,9 +20,9 @@ import {
   type EditExternalAddressIdentifierDAOutput,
 } from "@api/app-binder/EditExternalAddressIdentifierDeviceActionTypes";
 import {
-  isContactsSupportedForSession,
+  isContactsAppVersionSupportedForSession,
   type RunningApp,
-} from "@internal/app-binder/isContactsSupportedForSession";
+} from "@internal/app-binder/contactsVersionGuards";
 import { ContactsVersionRequirementError } from "@internal/app-binder/model/contactsErrors";
 import {
   type EditIdentifierProof,
@@ -316,7 +316,7 @@ export class EditExternalAddressIdentifierDeviceAction extends XStateDeviceActio
     internalApi: InternalApi,
   ): EditExternalAddressIdentifierMachineDependencies {
     const isSupported = (app: RunningApp) =>
-      isContactsSupportedForSession(internalApi, app);
+      isContactsAppVersionSupportedForSession(internalApi, app);
 
     const editIdentifier = (
       input: EditExternalAddressIdentifierDAInput,
