@@ -55,6 +55,7 @@ export class CompleteStateHandler implements StateHandler {
 
     const analysis = await this.screenAnalyzer.analyzeAccumulatedTexts(
       ctx.input.expectedTexts || [],
+      ctx.input.unexpectedTexts || [],
     );
 
     if (analysis.containsAll) {

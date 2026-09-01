@@ -23,6 +23,7 @@ import {
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
+import { readAddressBookFile } from "@root/src/infrastructure/repositories/readAddressBookFile";
 import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
 
 export type CliConfig = {
@@ -46,6 +47,7 @@ export type CliConfig = {
   erc7730Files?: string[];
   blindSigningEnabled?: boolean;
   skipOriginToken?: boolean;
+  addressBook?: string;
 
   // config.logger
   logLevel: CliLogLevel;
@@ -105,6 +107,9 @@ export class EthereumTransactionTesterCli {
           ? ""
           : process.env["GATING_TOKEN"] || "test-origin-token",
         blindSigningEnabled: config.blindSigningEnabled ?? false,
+        ...(config.addressBook && {
+          addressBook: readAddressBookFile(config.addressBook),
+        }),
       },
       cal: {
         url: "https://global.api.prd.ledger.com/cal/v1",
@@ -282,6 +287,10 @@ export class EthereumTransactionTesterCli {
       .option(
         "--erc7730-files <files...>",
         "One or more ERC7730 JSON files to inject for clear signing testing",
+      )
+      .option(
+        "--address-book <path>",
+        "JSON address book bound to the signer for the whole run (see ressources/contacts)",
       )
       .option(
         "--docker-image-tag <tag>",

@@ -6,4 +6,6 @@ export type TypedDataInput = {
   readonly data: string;
   readonly description?: string;
   readonly expectedTexts?: string[];
+  /** Texts that must NOT appear on any screen of this signing flow. */
+  readonly unexpectedTexts?: string[];
 };

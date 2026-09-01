@@ -280,6 +280,8 @@ pnpm cs-tester cli raw-transaction <tx> --custom-app stax/1.8.1/Ethereum/app_dev
 
 ### Contacts (Address Book) Support
 
+Two flows, one command each.
+
 **`contact-file`** checks the Ethereum app's Address Book behaviour: it
 registers each contact with `@ledgerhq/device-contacts-kit` and asserts the
 review screens. No signing.
@@ -301,6 +303,26 @@ pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0
   }
 ]
 ```
+
+**`--address-book`** checks the signing side: it binds an address book to the
+signer for the whole run, so any signing command reviews against it.
+
+```bash
+pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev \
+  --address-book ./ressources/contacts/address-book.json \
+  raw-file ./ressources/contacts/sign-with-contact.json
+```
+
+The proofs in an address-book file are device-issued and seed-bound. `contact-file`
+logs the ones it gets back, which is how `address-book.json` was produced; re-record
+them if the device or seed changes. `address-book-rejected.json` carries a flipped
+group handle, so the device answers `0x6982` and the transaction signs against the
+raw address — the guard that a bad book never costs a signature.
+
+`chainId` is a decimal string or number, since JSON has no bigint.
+`unexpectedTexts` asserts a text is **absent**; the negative cases need it, because
+"the raw address renders" only means something alongside "the contact name does
+not". It works on any signing case, not just contacts ones.
 
 #### Case isolation
 
