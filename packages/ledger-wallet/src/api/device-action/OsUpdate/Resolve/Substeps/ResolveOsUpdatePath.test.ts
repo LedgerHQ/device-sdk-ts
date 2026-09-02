@@ -1,4 +1,7 @@
-import { type GetOsVersionResponse } from "@ledgerhq/device-management-kit";
+import {
+  type GetOsVersionResponse,
+  OnboardingState,
+} from "@ledgerhq/device-management-kit";
 import { EitherAsync, Just, Nothing } from "purify-ts";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
@@ -43,6 +46,11 @@ describe("ResolveOsUpdatePath", () => {
       isOnboarded: true,
       isMcuCodeSigned: true,
       isInRecoveryMode: false,
+      hasEndorsementCertificateInSlot1: false,
+      hasEndorsementCertificateInSlot2: false,
+      numberOfWords: 24,
+      currentWordIndex: 0,
+      onboardingState: OnboardingState.Unknown,
     },
   } satisfies GetOsVersionResponse;
 
