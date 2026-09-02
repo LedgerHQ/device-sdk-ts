@@ -161,11 +161,17 @@ const isRecoverSupported = (seVersion: string, model: string): boolean => {
  * and that the Manager API keys firmware lookups on, or `undefined` for a model
  * with no known mask and no explicit `masks` override.
  */
+export function targetIdForModel(
+  deviceType: string,
+  mask?: number,
+): number | undefined {
+  const resolved = mask ?? TARGET_ID_MASK[normalizeModel(deviceType)];
+  if (resolved === undefined) return undefined;
+  return (resolved & 0xffff0000) | 0x0004;
+}
+
 export function resolveTargetId(device: Device): number | undefined {
-  const model = normalizeModel(device.device_type);
-  const mask = device.masks?.[0] ?? TARGET_ID_MASK[model];
-  if (mask === undefined) return undefined;
-  return (mask & 0xffff0000) | 0x0004;
+  return targetIdForModel(device.device_type, device.masks?.[0]);
 }
 
 /**
