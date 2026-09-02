@@ -1,5 +1,15 @@
 # @ledgerhq/device-management-kit
 
+## 1.9.0
+
+### Minor Changes
+
+- [#1840](https://github.com/LedgerHQ/device-sdk-ts/pull/1840) [`30100b5`](https://github.com/LedgerHQ/device-sdk-ts/commit/30100b5a19cd977320a18338c08590a7830b58eb) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Add ApplicationChecker.withMinVersionInclusiveAcceptingPrerelease, a variant of withMinVersionInclusive that strips prerelease and build tags before comparing, so an app reporting a release candidate of the minimum still passes the check
+
+### Patch Changes
+
+- [#1760](https://github.com/LedgerHQ/device-sdk-ts/pull/1760) [`943650b`](https://github.com/LedgerHQ/device-sdk-ts/commit/943650b911a9c9a07c3ad29ea2057eb8a4b99c07) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Change the default mock server base URL to the hosted `https://device-mock-server.aws.ldg-ps-default.ldg-tech.com` instead of a local server
+
 ## 1.8.0
 
 ### Minor Changes

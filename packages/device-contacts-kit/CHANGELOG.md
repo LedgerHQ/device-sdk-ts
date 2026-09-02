@@ -1,5 +1,20 @@
 # @ledgerhq/device-contacts-kit
 
+## 0.4.0
+
+### Minor Changes
+
+- [#1822](https://github.com/LedgerHQ/device-sdk-ts/pull/1822) [`6f51c2e`](https://github.com/LedgerHQ/device-sdk-ts/commit/6f51c2eda5321d30690330459f673c8e0a9044a2) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Add the PROVIDE CONTACT operation, so a signer can have the device show a registered contact name while reviewing.
+
+- [#1840](https://github.com/LedgerHQ/device-sdk-ts/pull/1840) [`30100b5`](https://github.com/LedgerHQ/device-sdk-ts/commit/30100b5a19cd977320a18338c08590a7830b58eb) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Update the Contacts version requirements: raise the minimum OS versions for Stax, Flex and Apex, raise the minimum Ethereum app version, and add Nano X and Nano SP as supported models (Nano S stays unsupported). Version comparison now ignores prerelease and build tags, so a device on a release candidate of a minimum counts as meeting it. Removes `isContactsSupported`: the OS and app minimums gate different operations and are checked independently, so compose them from `resolveContactsVersionRequirements` and `isVersionAtLeast` instead
+
+### Patch Changes
+
+- [#1822](https://github.com/LedgerHQ/device-sdk-ts/pull/1822) [`7e4bc4e`](https://github.com/LedgerHQ/device-sdk-ts/commit/7e4bc4e92c213dcafd34f7f969356bb13d01bf3b) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Stop sending the DERIVATION_PATH TLV on Register Identity and Edit Contact Name. Current embedded apps reject a payload carrying it.
+
+- Updated dependencies [[`30100b5`](https://github.com/LedgerHQ/device-sdk-ts/commit/30100b5a19cd977320a18338c08590a7830b58eb), [`943650b`](https://github.com/LedgerHQ/device-sdk-ts/commit/943650b911a9c9a07c3ad29ea2057eb8a4b99c07)]:
+  - @ledgerhq/device-management-kit@1.9.0
+
 ## 0.3.1
 
 ### Patch Changes
