@@ -76,14 +76,21 @@ export class MockTransport implements Transport {
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
     this.logger.debug("listenToAvailableDevices");
     return timer(0, DISCOVERY_POLL_INTERVAL_MS).pipe(
-      switchMap(() => from(this.mockClient.listDevices())),
-      map((devices) => this.mapToDiscoveredDevices(devices)),
-      catchError((error) => {
-        this.logger.error("listenToAvailableDevices failed", {
-          data: { error },
-        });
-        return of([]);
-      }),
+      switchMap(() =>
+        // Recovery belongs to the request, not to the pipeline: a catchError
+        // on the outer chain replaces the timer along with the failed poll, so
+        // one unreachable moment would end discovery for the rest of the
+        // subscription and no device added later could ever be found.
+        from(this.mockClient.listDevices()).pipe(
+          map((devices) => this.mapToDiscoveredDevices(devices)),
+          catchError((error) => {
+            this.logger.error("listenToAvailableDevices failed", {
+              data: { error },
+            });
+            return of<TransportDiscoveredDevice[]>([]);
+          }),
+        ),
+      ),
     );
   }
 

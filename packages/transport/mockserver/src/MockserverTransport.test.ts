@@ -142,6 +142,25 @@ describe("mockserverTransportFactory", () => {
 
       expect(devices).toEqual([]);
     });
+
+    it("keeps polling after a failed request", async () => {
+      const listDevices = mockListDevices(() => Promise.resolve([]));
+      listDevices
+        .mockRejectedValueOnce(new Error("offline"))
+        .mockResolvedValueOnce([aDevice()]);
+      const transport = mockserverTransportFactory("http://localhost:8080")(
+        transportArgs,
+      );
+
+      const emissions = await firstValueFrom(
+        transport.listenToAvailableDevices().pipe(take(2), toArray()),
+      );
+
+      expect(emissions[0]).toEqual([]);
+      expect(emissions[1]).toEqual([
+        expect.objectContaining({ id: "device-1" }),
+      ]);
+    });
   });
 
   describe("startDiscovering", () => {
