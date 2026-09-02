@@ -31,6 +31,10 @@ export const openapiDefinition: OAS3Definition = {
       description: "Control of the device-linked Speculos emulator",
     },
     { name: "Transfer", description: "Import/export of session state" },
+    {
+      name: "Catalog",
+      description: "Apps that really exist for a model and firmware",
+    },
     { name: "Health", description: "Liveness probe" },
   ],
   components: {

@@ -4,6 +4,7 @@ import { inject, injectable } from "inversify";
 import { serverTypes } from "@internal/server/di/serverTypes";
 import { requestLogger } from "@internal/server/middleware/requestLogger";
 import { type AuthRoutes } from "@internal/server/routes/AuthRoutes";
+import { type CatalogRoutes } from "@internal/server/routes/CatalogRoutes";
 import { type DeviceRoutes } from "@internal/server/routes/DeviceRoutes";
 import { type SessionsRoutes } from "@internal/server/routes/SessionsRoutes";
 import { type TransferRoutes } from "@internal/server/routes/TransferRoutes";
@@ -22,6 +23,8 @@ export class HttpAppFactory {
     @inject(serverTypes.DeviceRoutes) private readonly devices: DeviceRoutes,
     @inject(serverTypes.TransferRoutes)
     private readonly transfer: TransferRoutes,
+    @inject(serverTypes.CatalogRoutes)
+    private readonly catalog: CatalogRoutes,
   ) {}
 
   build(): Express {
@@ -68,6 +71,7 @@ export class HttpAppFactory {
     app.use(this.sessions.build());
     app.use(this.devices.build());
     app.use(this.transfer.build());
+    app.use(this.catalog.build());
 
     return app;
   }

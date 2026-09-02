@@ -2,6 +2,7 @@ import { Container } from "inversify";
 
 import { type MockServerConfig } from "@api/model/MockServerConfig";
 import { apduModuleFactory } from "@internal/apdu/di/apduModuleFactory";
+import { catalogModuleFactory } from "@internal/catalog/di/catalogModuleFactory";
 import { appTypes } from "@internal/di/types";
 import { osModuleFactory } from "@internal/os/di/osModuleFactory";
 import { secureChannelModuleFactory } from "@internal/secure-channel/di/secureChannelModuleFactory";
@@ -18,6 +19,7 @@ export function makeContainer(config: MockServerConfig): Container {
     osModuleFactory(),
     secureChannelModuleFactory(),
     apduModuleFactory(),
+    catalogModuleFactory(),
     speculosModuleFactory(config),
     serverModuleFactory(),
   );
