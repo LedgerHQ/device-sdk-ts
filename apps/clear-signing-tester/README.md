@@ -332,12 +332,17 @@ Give each case its own recipient address; do not reuse one across cases.
 
 #### Requirements
 
-Contacts need an RC firmware pair — the newest *stable* Ethereum app answers
+Contacts need an RC firmware pair — the newest _stable_ Ethereum app answers
 `6e00 "CLA not supported"` to the first address-book APDU, and that also drops
 the Speculos session, so every later case fails as `DeviceSessionNotFound`. Run
 with `--device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev`. The
 Address Book HMACs are OS syscalls, so the Speculos image must be recent enough
-to implement them. Not in CI until both the app and a suitable image ship.
+to implement them.
+
+These three flows run on pull requests via the `contacts-cs-tester` job, gated on
+changes to `signer-eth`, `device-contacts-kit` or this app. The job inherits the
+firmware pin from the scripts above; it depends on the Speculos image the shared
+CI action pulls, which is not pinned per job.
 
 ## Output
 

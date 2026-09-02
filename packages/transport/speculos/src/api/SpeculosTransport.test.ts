@@ -3,7 +3,7 @@ import {
   type LoggerPublisherService,
   type TransportConnectedDevice,
 } from "@ledgerhq/device-management-kit";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SpeculosTransport } from "@api/SpeculosTransport";
 
@@ -35,6 +35,11 @@ describe("SpeculosTransport", () => {
     vi.useFakeTimers();
     postApdu.mockResolvedValue(GET_APP_AND_VERSION_RESPONSE);
     isServerAvailable.mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    // Restore real timers so the fake ones cannot leak into another test file.
+    vi.useRealTimers();
   });
 
   const connect = async () => {

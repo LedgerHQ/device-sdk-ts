@@ -98,7 +98,7 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
   /** {@inheritDoc ScreenAnalyzerService.screenContains} */
   async screenContains(marker: string): Promise<boolean> {
     const data = await this.readScreenContent();
-    const matches = data.text.toLowerCase().includes(marker);
+    const matches = data.text.toLowerCase().includes(marker.toLowerCase());
 
     if (matches) {
       this.logger.debug(`Current screen contains "${marker}"`);

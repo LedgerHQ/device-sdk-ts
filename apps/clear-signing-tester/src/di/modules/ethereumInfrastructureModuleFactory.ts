@@ -50,9 +50,18 @@ export const ethereumInfrastructureModuleFactory = (
     bind<ContactFileRepository>(TYPES.ContactFileRepository)
       .to(ContactFileRepository)
       .inSingletonScope();
-    bind<ContactsRepository>(TYPES.ContactsRepository)
+    // Two tokens, one instance: the service controller needs the concrete
+    // class to hand over the session-bound ContactsManager, while every
+    // consumer sees only the interface.
+    bind<SpeculosContactsRepository>(TYPES.SpeculosContactsRepository)
       .to(SpeculosContactsRepository)
       .inSingletonScope();
+    bind<ContactsRepository>(TYPES.ContactsRepository).toDynamicValue(
+      (context) =>
+        context.get<SpeculosContactsRepository>(
+          TYPES.SpeculosContactsRepository,
+        ),
+    );
 
     // Signing
     bind<SigningService>(TYPES.SigningService)

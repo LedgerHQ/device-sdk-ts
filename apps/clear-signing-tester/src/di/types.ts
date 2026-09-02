@@ -6,6 +6,7 @@ export const TYPES = {
   ContractFileRepository: Symbol.for("ContractFileRepository"),
   TransactionContractRepository: Symbol.for("TransactionContractRepository"),
   ContactsRepository: Symbol.for("ContactsRepository"),
+  SpeculosContactsRepository: Symbol.for("SpeculosContactsRepository"),
   ContactFileRepository: Symbol.for("ContactFileRepository"),
 
   // Services

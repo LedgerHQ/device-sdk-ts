@@ -50,7 +50,7 @@ export interface ScreenAnalyzerService {
   /**
    * Check whether the screen showing right now contains `marker`, matched
    * case-insensitively. For screens with no dedicated predicate above.
-   * @param marker - Lowercase text to look for on the current screen
+   * @param marker - Text to look for on the current screen, in any case
    * @returns Promise<boolean> - True if the marker is on screen
    */
   screenContains(marker: string): Promise<boolean>;

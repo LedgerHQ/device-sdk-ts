@@ -43,7 +43,7 @@ export class DMKServiceController implements ServiceController {
   constructor(
     @inject(TYPES.SigningService)
     private readonly signingService: DefaultSigningService,
-    @inject(TYPES.ContactsRepository)
+    @inject(TYPES.SpeculosContactsRepository)
     private readonly contactsRepository: SpeculosContactsRepository,
     @inject(TYPES.RetryService)
     private readonly retryService: RetryService,
