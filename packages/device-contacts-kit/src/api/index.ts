@@ -56,6 +56,7 @@ export {
   type EditExternalAddressScopeInput,
   type EditExternalAddressScopeOutput,
 } from "@api/model/EditExternalAddressScope";
+export { type ProvideContactInput } from "@api/model/ProvideContact";
 export {
   type ExistingContactGroup,
   type RegisterExternalAddressInput,
@@ -66,3 +67,9 @@ export {
   type RenameContactInput,
   type RenameContactOutput,
 } from "@api/model/RenameContact";
+export { type ContactsErrorCodes } from "@internal/app-binder/model/contactsErrors";
+export {
+  buildProvideContactPayload,
+  sendProvideContactPayload,
+  type SendProvideContactPayloadArgs,
+} from "@internal/app-binder/services/provideContact";

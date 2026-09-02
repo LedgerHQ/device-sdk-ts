@@ -54,6 +54,49 @@ const signerEth = new SignerEthBuilder({ sdk, sessionId })
   .build();
 ```
 
+### Address book
+
+Give the signer the user's address book to have the device show a saved contact
+name in place of the raw recipient address when it reviews a transaction:
+
+```typescript
+const signerEth = new SignerEthBuilder({ sdk, sessionId })
+  .withAddressBook({
+    contactGroups: [
+      {
+        contactName: "Alice",
+        groupHandle, // returned when the contact was registered on the device
+        hmacProof,
+        externalAddresses: [
+          {
+            scope: "Ethereum",
+            address: "0x...",
+            chainId: 1n,
+            hmacRest,
+          },
+        ],
+      },
+    ],
+    ledgerAccounts: [],
+  })
+  .build();
+```
+
+Points to know:
+
+- The snapshot must be complete, and it is read as-is: the signer neither
+  mutates nor persists it. Build a new signer to pick up later changes.
+- Only EVM entries belong here. Filter by blockchain family before you build the
+  snapshot.
+- A contact matches on address **and** `chainId`, and only against the
+  transaction recipient. A recipient carried in calldata — an ERC-20 `transfer`,
+  for example — still reviews as a raw address.
+- A matched contact replaces the trusted name (ENS) for the same recipient.
+- Nothing here can break a signature. An address book you do not supply, a
+  recipient that does not match, an app too old to support contacts, or a
+  contact the device rejects all leave the transaction signing as before,
+  against the raw address.
+
 ## 🔹 Use Cases
 
 The `SignerEthBuilder.build()` method will return a `SignerEth` instance that exposes 6 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.

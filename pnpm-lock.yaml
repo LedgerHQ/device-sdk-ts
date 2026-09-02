@@ -1773,6 +1773,9 @@ importers:
 
   packages/signer/signer-eth:
     dependencies:
+      '@ledgerhq/device-contacts-kit':
+        specifier: workspace:^
+        version: link:../../device-contacts-kit
       '@ledgerhq/signer-utils':
         specifier: workspace:^
         version: link:../signer-utils
@@ -6951,6 +6954,7 @@ packages:
   '@xmldom/xmldom@0.8.13':
     resolution: {integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
@@ -8631,6 +8635,7 @@ packages:
   eslint@9.34.0:
     resolution: {integrity: sha512-RNCHRX5EwdrESy3Jc9o8ie8Bog+PeYvvSR8sDGoZxNFTvZ4dlxUB3WzQ3bQMztFrSRODGrLLj8g6OFuGY/aiQg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -18390,6 +18395,14 @@ snapshots:
       chai: 5.2.0
       tinyrainbow: 2.0.0
 
+  '@vitest/mocker@3.2.6(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0))':
+    dependencies:
+      '@vitest/spy': 3.2.6
+      estree-walker: 3.0.3
+      magic-string: 0.30.17
+    optionalDependencies:
+      vite: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
+
   '@vitest/mocker@3.2.6(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
     dependencies:
       '@vitest/spy': 3.2.6
@@ -26730,7 +26743,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.6
-      '@vitest/mocker': 3.2.6(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+      '@vitest/mocker': 3.2.6(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0))
       '@vitest/pretty-format': 3.2.7
       '@vitest/runner': 3.2.6
       '@vitest/snapshot': 3.2.6

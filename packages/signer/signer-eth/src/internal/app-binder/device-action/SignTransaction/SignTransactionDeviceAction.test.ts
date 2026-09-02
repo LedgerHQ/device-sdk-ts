@@ -28,6 +28,7 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { Signature } from "@api/index";
 import { ClearSigningType } from "@api/model/ClearSigningType";
+import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { TransactionType } from "@api/model/TransactionType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
@@ -1260,6 +1261,105 @@ describe("SignTransactionDeviceAction", () => {
           input: expect.objectContaining({
             input: expect.objectContaining({ selectorId: null }),
           }),
+        }),
+      );
+    });
+  });
+
+  describe("with a non-empty address book", () => {
+    const RECIPIENT = "0x1111111111111111111111111111111111111111" as const;
+
+    const addressBook: EvmAddressBook = {
+      contactGroups: [
+        {
+          contactName: "Alice",
+          groupHandle: new Uint8Array(64).fill(0xaa),
+          hmacProof: new Uint8Array(32).fill(0xbb),
+          externalAddresses: [
+            {
+              scope: "Ethereum",
+              address: RECIPIENT,
+              chainId: 1n,
+              hmacRest: new Uint8Array(32).fill(0xcc),
+            },
+          ],
+        },
+      ],
+      ledgerAccounts: [],
+    };
+
+    let observable: ReturnType<
+      SignTransactionDeviceAction["_execute"]
+    >["observable"];
+
+    beforeEach(() => {
+      vi.resetAllMocks();
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: { address: defaultAddress } }),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: { ...defaultSubset, to: RECIPIENT },
+        type: TransactionType.EIP1559,
+      });
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSigningType: ClearSigningType.EIP7730,
+      });
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: { v: 0x1c, r: "0x8a54", s: "0x64a0" },
+        }),
+      );
+
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock as unknown as ContextModule,
+          addressBook,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+
+      observable = deviceAction._execute(apiMock).observable;
+    });
+
+    it("hands the book to the provide step untouched", async () => {
+      await executeUntilStep(6, observable);
+
+      // The signer never mutates or re-derives the snapshot: matching a
+      // recipient against it happens downstream, in the provide step.
+      expect(provideContextsMock).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          input: expect.objectContaining({
+            externalContact: expect.objectContaining({
+              addressBook,
+              subset: expect.objectContaining({ to: RECIPIENT }),
+              appConfig: createAppConfig("1.15.0", false, false),
+            }),
+          }),
+        }),
+      );
+    });
+
+    it("keeps the address book out of the context builder", async () => {
+      await executeUntilStep(5, observable);
+
+      // The context module only serves backend-fetched contexts; the host
+      // address book is not one of them.
+      expect(buildContextsMock).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          input: expect.not.objectContaining({ addressBook }),
         }),
       );
     });

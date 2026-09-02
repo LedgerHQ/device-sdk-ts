@@ -11,6 +11,7 @@ import {
   type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 import { EthersTransactionMapperService } from "@internal/transaction/service/mapper/EthersTransactionMapperService";
@@ -20,6 +21,7 @@ export const SignTransactionDeviceActionFactory = (args: {
   derivationPath: string;
   transaction: Uint8Array;
   contextModule: ContextModule;
+  addressBook?: EvmAddressBook;
   options?: TransactionOptions;
   inspect?: boolean;
   loggerFactory?: (tag: string) => LoggerPublisherService;
@@ -35,6 +37,7 @@ export const SignTransactionDeviceActionFactory = (args: {
       derivationPath: args.derivationPath,
       transaction: args.transaction,
       contextModule: args.contextModule,
+      addressBook: args.addressBook,
       options: args.options ?? {},
       mapper: new EthersTransactionMapperService(),
       parser: new TransactionParserService(),

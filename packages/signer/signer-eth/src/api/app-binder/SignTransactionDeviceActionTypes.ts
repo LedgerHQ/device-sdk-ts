@@ -13,6 +13,7 @@ import {
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { type ClearSigningType } from "@api/model/ClearSigningType";
+import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { type Signature } from "@api/model/Signature";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
@@ -43,6 +44,8 @@ export type SignTransactionDAInput = {
   readonly mapper: TransactionMapperService;
   readonly parser: TransactionParserService;
   readonly contextModule: ContextModule;
+  /** Defaults to `EMPTY_EVM_ADDRESS_BOOK`, which matches no recipient. */
+  readonly addressBook?: EvmAddressBook;
   readonly options: TransactionOptions;
 };
 

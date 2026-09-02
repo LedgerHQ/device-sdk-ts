@@ -1,8 +1,8 @@
 // Validates that the TLV serializer + tag ordering + chunk framing produce the
 // expected wire bytes for op 1 (Register Identity): tags >= 0x80 use the 2-byte
-// DER form [0x81, tag], and Register Identity carries NO DERIVATION_PATH (the
-// Ethereum app rejects the tag on external-address ops). The framed chunk =
-// 2-byte BE total length + TLV.
+// DER form [0x81, tag], and no DERIVATION_PATH is sent (the SDK removed tag
+// 0x69 from REGISTER_IDENTITY_TAGS on 2026-08-10 and rejects payloads carrying
+// it). The framed chunk = 2-byte BE total length + TLV.
 import {
   CommandResultFactory,
   type InternalApi,
@@ -24,7 +24,7 @@ function hexToBytes(hex: string): Uint8Array {
 // Framed chunk = "00 <Lc>" (2-byte BE total TLV length) + TLV. Tag order:
 // STRUCT_TYPE, STRUCT_VERSION, CONTACT_NAME, SCOPE, ACCOUNT_IDENTIFIER,
 // CHAIN_ID, BLOCKCHAIN_FAMILY, then optional GROUP_HANDLE + HMAC_PROOF. Tags
-// >= 0x80 are encoded as [0x81, tag]. No DERIVATION_PATH TLV.
+// >= 0x80 are encoded as [0x81, tag].
 const FRESH_FRAMED_CHUNK = hexToBytes(
   "003601012d020101" +
     "81f005416c696365" +

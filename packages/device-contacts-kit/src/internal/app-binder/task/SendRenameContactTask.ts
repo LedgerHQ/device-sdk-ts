@@ -11,7 +11,20 @@
 //
 // Reference: Address Book Final Specifications — Edit Contact Name. Tag order:
 //   STRUCT_TYPE, STRUCT_VERSION, CONTACT_NAME (new), PREVIOUS_CONTACT_NAME
-//   (old), GROUP_HANDLE, DERIVATION_PATH, HMAC_PROOF.
+//   (old), GROUP_HANDLE, HMAC_PROOF.
+//
+// No DERIVATION_PATH. The tag's status changed three times in the BOLOS SDK,
+// and the address-book TLV parser is compiled into the app (app_features/), so
+// the SDK revision the app was *built* against decides — not the app version,
+// which reads 1.23.0-dev either way:
+//   - before 2026-08-07: tag 0x69 present and MANDATORY, omitting it -> 0x6a80
+//   - 8e7e7a4f (2026-08-07): made optional, both forms accepted
+//   - a0bb21f5 (2026-08-10): removed, sending it -> 0x6a80 (unknown tag)
+// Omitting it is therefore correct for any app built from 2026-08-07 onward,
+// and wrong for one built before. Both ends verified on hardware: a Flex
+// running a pre-08-07 build of app-ethereum a79f9f8f rejects the payload
+// without the tag in 9ms and no review screen; Speculos running a post-08-10
+// build of the same commit rejects it *with* the tag, the same way.
 import {
   ByteArrayBuilder,
   type CommandResult,
@@ -30,7 +43,6 @@ import {
   encodeTlvAscii,
   encodeTlvBuffer,
   encodeTlvUInt8,
-  packDerivationPath,
   STRUCT_TYPE_EDIT_CONTACT_NAME,
   STRUCT_VERSION_VALUE,
 } from "@internal/app-binder/services/contactsTlvSerializer";
@@ -102,13 +114,6 @@ export class SendRenameContactTask {
       args.previousContactName,
     );
     encodeTlvBuffer(builder, CONTACTS_TLV_TAG.GROUP_HANDLE, args.groupHandle);
-    // The Ethereum app requires DERIVATION_PATH on Edit Contact Name (0x6a80
-    // without it), same as Register Identity. Default m/44'/60'/0'/0/0.
-    encodeTlvBuffer(
-      builder,
-      CONTACTS_TLV_TAG.DERIVATION_PATH,
-      packDerivationPath([0x8000002c, 0x8000003c, 0x80000000, 0, 0]),
-    );
     encodeTlvBuffer(builder, CONTACTS_TLV_TAG.HMAC_PROOF, args.hmacProof);
 
     return builder.build();
