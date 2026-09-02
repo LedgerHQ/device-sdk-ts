@@ -90,6 +90,14 @@ export class SpeculosNanoController implements DeviceController {
     );
   }
 
+  // Contacts is unsupported on the Nano models altogether
+  // (CONTACTS_VERSION_REQUIREMENTS), so this is unreachable in practice.
+  async confirmContactRegistration(): Promise<void> {
+    throw new Error(
+      "Not implemented: Contacts is not supported on Nano devices",
+    );
+  }
+
   /**
    * Navigate to the next screen by pressing the right button
    */

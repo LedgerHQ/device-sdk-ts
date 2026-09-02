@@ -81,6 +81,37 @@ export const enableBlindSigningSettings =
     await tapQuick(touch, deviceKey)(point);
   };
 
+/**
+ * Confirm button of the Address Book review (REGISTER IDENTITY). NBGL's
+ * "review light" puts this button above the page footer rather than in it, so
+ * neither mainButton() nor secondaryButton() reaches it. Measured on Speculos:
+ * flex 480x600 -> button centre y=436 (72%), stax 400x672 -> y=520 (77%).
+ */
+const ADDRESS_BOOK_CONFIRM_COORDS = {
+  stax: { x: 50, y: 77 },
+  flex: { x: 50, y: 72 },
+} as const satisfies Record<string, PercentCoordinates>;
+
+type AddressBookConfirmKey = keyof typeof ADDRESS_BOOK_CONFIRM_COORDS;
+
+const isAddressBookConfirmKey = (key: string): key is AddressBookConfirmKey =>
+  Object.hasOwn(ADDRESS_BOOK_CONFIRM_COORDS, key);
+
+/** Flex's placement, used for any touchscreen model not measured above. */
+const DEFAULT_ADDRESS_BOOK_CONFIRM_COORDS: PercentCoordinates = {
+  x: 50,
+  y: 72,
+};
+
+export const confirmAddressBookReview =
+  <K extends string>(touch: TouchController<K>, deviceKey: K) =>
+  async () => {
+    const point = isAddressBookConfirmKey(deviceKey)
+      ? ADDRESS_BOOK_CONFIRM_COORDS[deviceKey]
+      : DEFAULT_ADDRESS_BOOK_CONFIRM_COORDS;
+    await tapQuick(touch, deviceKey)(point);
+  };
+
 export const continueToBlindSigning =
   <K extends string>(touch: TouchController<K>, deviceKey: K) =>
   async () =>

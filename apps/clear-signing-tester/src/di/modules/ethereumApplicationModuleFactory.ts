@@ -1,8 +1,10 @@
 import { ContainerModule } from "inversify";
 
+import { TestBatchContactFromFileUseCase } from "@root/src/application/usecases/TestBatchContactFromFileUseCase";
 import { TestBatchContractFromFileUseCase } from "@root/src/application/usecases/TestBatchContractFromFileUseCase";
 import { TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
 import { TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
+import { TestContactUseCase } from "@root/src/application/usecases/TestContactUseCase";
 import { TestContractUseCase } from "@root/src/application/usecases/TestContractUseCase";
 import { TestTransactionUseCase } from "@root/src/application/usecases/TestTransactionUseCase";
 import { TestTypedDataUseCase } from "@root/src/application/usecases/TestTypedDataUseCase";
@@ -21,5 +23,9 @@ export const ethereumApplicationModuleFactory = () =>
     bind(TYPES.TestContractUseCase).to(TestContractUseCase);
     bind(TYPES.TestBatchContractFromFileUseCase).to(
       TestBatchContractFromFileUseCase,
+    );
+    bind(TYPES.TestContactUseCase).to(TestContactUseCase);
+    bind(TYPES.TestBatchContactFromFileUseCase).to(
+      TestBatchContactFromFileUseCase,
     );
   });

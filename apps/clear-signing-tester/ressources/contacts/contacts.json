@@ -1,0 +1,24 @@
+[
+  {
+    "description": "Registering an external address shows the contact name and address for review",
+    "contactName": "Alice",
+    "scope": "Ethereum",
+    "address": "0xa1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4",
+    "chainId": "1",
+    "expectedTexts": [
+      "Review contact details",
+      "Alice",
+      "0xa1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4",
+      "Saved to your Contacts"
+    ]
+  },
+  {
+    "description": "A second contact registers independently of the first",
+    "contactName": "Bob",
+    "scope": "Ethereum",
+    "address": "0xb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3",
+    "chainId": "1",
+    "expectedTexts": ["Bob", "Saved to your Contacts"],
+    "unexpectedTexts": ["Alice"]
+  }
+]

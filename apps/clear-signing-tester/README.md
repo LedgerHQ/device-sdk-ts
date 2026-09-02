@@ -278,6 +278,72 @@ pnpm cs-tester cli raw-transaction <tx> --custom-app stax/1.8.1/Ethereum/app_dev
 - **Absolute paths** (e.g., `/home/user/builds/my_app.elf`) are automatically mounted into the container at `/custom-app/app.elf`
 - Plugin options (`--plugin`, `--plugin-version`) are also ignored when using a custom app
 
+### Contacts (Address Book) Support
+
+Two flows, one command each.
+
+**`contact-file`** checks the Ethereum app's Address Book behaviour: it
+registers each contact with `@ledgerhq/device-contacts-kit` and asserts the
+review screens. No signing.
+
+```bash
+pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev \
+  contact-file ./ressources/contacts/contacts.json
+```
+
+```json
+[
+  {
+    "description": "Registering an external address shows the contact name for review",
+    "contactName": "Alice",
+    "scope": "Ethereum",
+    "address": "0xa1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4",
+    "chainId": "1",
+    "expectedTexts": ["Review contact details", "Alice"]
+  }
+]
+```
+
+**`--address-book`** checks the signing side: it binds an address book to the
+signer for the whole run, so any signing command reviews against it.
+
+```bash
+pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev \
+  --address-book ./ressources/contacts/address-book.json \
+  raw-file ./ressources/contacts/sign-with-contact.json
+```
+
+The proofs in an address-book file are device-issued and seed-bound. `contact-file`
+logs the ones it gets back, which is how `address-book.json` was produced; re-record
+them if the device or seed changes. `address-book-rejected.json` carries a flipped
+group handle, so the device answers `0x6982` and the transaction signs against the
+raw address — the guard that a bad book never costs a signature.
+
+`chainId` is a decimal string or number, since JSON has no bigint.
+`unexpectedTexts` asserts a text is **absent**; the negative cases need it, because
+"the raw address renders" only means something alongside "the contact name does
+not". It works on any signing case, not just contacts ones.
+
+#### Case isolation
+
+The Ethereum app caches provided contacts in RAM for the whole app session, so a
+name provided by one case stays resolvable for every later case in the same run.
+Give each case its own recipient address; do not reuse one across cases.
+
+#### Requirements
+
+Contacts need an RC firmware pair — the newest _stable_ Ethereum app answers
+`6e00 "CLA not supported"` to the first address-book APDU, and that also drops
+the Speculos session, so every later case fails as `DeviceSessionNotFound`. Run
+with `--device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev`. The
+Address Book HMACs are OS syscalls, so the Speculos image must be recent enough
+to implement them.
+
+These three flows run on pull requests via the `contacts-cs-tester` job, gated on
+changes to `signer-eth`, `device-contacts-kit` or this app. The job inherits the
+firmware pin from the scripts above; it depends on the Speculos image the shared
+CI action pulls, which is not pinned per job.
+
 ## Output
 
 The application outputs test results to the console and uses exit codes to indicate success/failure:

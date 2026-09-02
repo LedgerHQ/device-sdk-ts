@@ -1,0 +1,18 @@
+{
+  "_comment": "Proofs are device-issued and seed-bound. Recorded from a `contact-file` run against the Speculos default seed; re-record them with `contact-file` if the device or seed changes.",
+  "contactGroups": [
+    {
+      "contactName": "Alice",
+      "groupHandle": "0x24d73c85b7a0942b28b3408989ef5ae34604279c112c54b83510480349ca976d55d5df045345649b23515ae722255673ec7ca6302fef4f441fd461524f2657d2",
+      "hmacProof": "0x3f2d563217a8218c3792c767c071ebcd46ac8b23989830d6c49a1fc93ba79b62",
+      "externalAddresses": [
+        {
+          "scope": "Ethereum",
+          "address": "0xa1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4",
+          "chainId": "1",
+          "hmacRest": "0x10c588709d9bf1cac9b4cb650f551cee58fad03588e8c32d7fefdd1968ba83ff"
+        }
+      ]
+    }
+  ]
+}
