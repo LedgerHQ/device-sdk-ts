@@ -2,6 +2,8 @@ import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   buildProvideContactPayload,
   type ContactsErrorCodes,
+  ETHEREUM_APP_NAME,
+  resolveContactsVersionRequirements,
   sendProvideContactPayload,
 } from "@ledgerhq/device-contacts-kit";
 import {
@@ -54,6 +56,14 @@ const mockLogger = {
 };
 
 const mockLoggerFactory = (_tag: string) => mockLogger;
+
+const minContactsAppVersion = (() => {
+  const requirement = resolveContactsVersionRequirements(DeviceModelId.FLEX);
+  if (!requirement.supported) throw new Error("Flex must be supported");
+  const version = requirement.minAppVersion[ETHEREUM_APP_NAME];
+  if (version === undefined) throw new Error("Ethereum min version required");
+  return version;
+})();
 
 describe("ProvideTransactionContextsTask", () => {
   const api = makeDeviceActionInternalApiMock();
@@ -787,7 +797,7 @@ describe("ProvideTransactionContextsTask", () => {
         blindSigningEnabled: false,
         web3ChecksEnabled: false,
         web3ChecksOptIn: false,
-        version: "1.15.0",
+        version: minContactsAppVersion,
       };
 
       const resolveTrustedName = vi.fn();
@@ -852,7 +862,7 @@ describe("ProvideTransactionContextsTask", () => {
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
           installedApps: [],
-          currentApp: { name: "Ethereum", version: "1.15.0" },
+          currentApp: { name: "Ethereum", version: minContactsAppVersion },
           deviceModelId: DeviceModelId.FLEX,
           isSecureConnectionAllowed: false,
         });

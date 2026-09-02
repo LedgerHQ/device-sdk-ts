@@ -1,5 +1,9 @@
 import { type TransactionSubset } from "@ledgerhq/context-module";
-import { buildProvideContactPayload } from "@ledgerhq/device-contacts-kit";
+import {
+  buildProvideContactPayload,
+  ETHEREUM_APP_NAME,
+  resolveContactsVersionRequirements,
+} from "@ledgerhq/device-contacts-kit";
 import {
   DeviceModelId,
   type DeviceSessionState,
@@ -55,6 +59,14 @@ const addressBook: EvmAddressBook = {
 
 const emptyBook: EvmAddressBook = { contactGroups: [], ledgerAccounts: [] };
 
+const minContactsAppVersion = (() => {
+  const requirement = resolveContactsVersionRequirements(DeviceModelId.FLEX);
+  if (!requirement.supported) throw new Error("Flex must be supported");
+  const version = requirement.minAppVersion[ETHEREUM_APP_NAME];
+  if (version === undefined) throw new Error("Ethereum min version required");
+  return version;
+})();
+
 function subset(overrides: Partial<TransactionSubset> = {}): TransactionSubset {
   return {
     chainId: 1,
@@ -69,7 +81,7 @@ function subset(overrides: Partial<TransactionSubset> = {}): TransactionSubset {
 // this is the shape a real signing flow sees.
 function deviceState({
   appName = "Ethereum",
-  appVersion = "1.15.0",
+  appVersion = minContactsAppVersion,
   deviceModelId = DeviceModelId.FLEX,
 }: {
   appName?: string;
@@ -86,7 +98,7 @@ function deviceState({
   };
 }
 
-function appConfig(version = "1.15.0"): GetConfigCommandResponse {
+function appConfig(version = minContactsAppVersion): GetConfigCommandResponse {
   return {
     blindSigningEnabled: false,
     web3ChecksEnabled: false,
@@ -210,11 +222,26 @@ describe("buildExternalContactPayload", () => {
       ).toBeUndefined();
     });
 
+    // The version compared is the one on `currentApp`, not `appConfig`:
+    // EthereumApplicationResolver only falls back to the config version for a
+    // clone. Setting it here would leave the prerelease string uncompared.
+    it("encodes the contact on a prerelease build of the minimum app version", () => {
+      expect(
+        buildExternalContactPayload(
+          args({
+            deviceState: deviceState({
+              appVersion: `${minContactsAppVersion}-rc2`,
+            }),
+          }),
+        ),
+      ).toBeDefined();
+    });
+
     it("returns undefined on a device model without Contacts support", () => {
       expect(
         buildExternalContactPayload(
           args({
-            deviceState: deviceState({ deviceModelId: DeviceModelId.NANO_X }),
+            deviceState: deviceState({ deviceModelId: DeviceModelId.NANO_S }),
           }),
         ),
       ).toBeUndefined();
@@ -227,7 +254,7 @@ describe("buildExternalContactPayload", () => {
       const payload = buildExternalContactPayload(
         args({
           deviceState: deviceState({ appName: "Polygon", appVersion: "1.0.0" }),
-          appConfig: appConfig("1.15.0"),
+          appConfig: appConfig(minContactsAppVersion),
         }),
       );
 

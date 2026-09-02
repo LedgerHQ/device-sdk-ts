@@ -84,7 +84,7 @@ describe("isContactsAppVersionSupportedForSession", () => {
 
   it("returns false on an unsupported device model", () => {
     const api = createInternalApi(
-      createReadyState({ modelId: DeviceModelId.NANO_X }),
+      createReadyState({ modelId: DeviceModelId.NANO_S }),
     );
     expect(isContactsAppVersionSupportedForSession(api, runningApp())).toBe(
       false,
@@ -108,6 +108,16 @@ describe("isContactsAppVersionSupportedForSession", () => {
     ).toBe(false);
   });
 
+  it("returns true for a prerelease build of the minimum app version", () => {
+    const api = createInternalApi(createReadyState());
+    expect(
+      isContactsAppVersionSupportedForSession(
+        api,
+        runningApp(ETHEREUM_APP_NAME, `${MIN_APP_VERSION}-rc2`),
+      ),
+    ).toBe(true);
+  });
+
   it("returns false when the device session has no running app", () => {
     const api = createInternalApi({
       sessionStateType: DeviceSessionStateType.Connected,
@@ -128,7 +138,7 @@ describe("isContactsOsSupportedForSession", () => {
 
   it("returns false on an unsupported device model", () => {
     const api = createInternalApi(
-      createReadyState({ modelId: DeviceModelId.NANO_X }),
+      createReadyState({ modelId: DeviceModelId.NANO_S }),
     );
     expect(isContactsOsSupportedForSession(api)).toBe(false);
   });
@@ -136,6 +146,20 @@ describe("isContactsOsSupportedForSession", () => {
   it("returns false when the OS version is below the minimum", () => {
     const api = createInternalApi(
       createReadyState({ osVersion: BELOW_ANY_VERSION }),
+    );
+    expect(isContactsOsSupportedForSession(api)).toBe(false);
+  });
+
+  it("returns true for a release candidate of the minimum OS version", () => {
+    const api = createInternalApi(
+      createReadyState({ osVersion: `${MIN_OS_VERSION}-rc2` }),
+    );
+    expect(isContactsOsSupportedForSession(api)).toBe(true);
+  });
+
+  it("returns false for a release candidate below the minimum OS version", () => {
+    const api = createInternalApi(
+      createReadyState({ osVersion: `${BELOW_ANY_VERSION}-rc2` }),
     );
     expect(isContactsOsSupportedForSession(api)).toBe(false);
   });

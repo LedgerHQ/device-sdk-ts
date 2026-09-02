@@ -2,31 +2,10 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 
 import {
   CONTACTS_VERSION_REQUIREMENTS,
-  type ContactsModelSupport,
   ETHEREUM_APP_NAME,
-  isContactsSupported,
   isVersionAtLeast,
   resolveContactsVersionRequirements,
 } from "./ContactsVersionRequirements";
-
-const BELOW_ANY_VERSION = "0.0.1";
-const ABOVE_ANY_VERSION = "999.0.0";
-
-function supportOf(modelId: DeviceModelId): ContactsModelSupport {
-  const requirement = resolveContactsVersionRequirements(modelId);
-  if (!requirement.supported) {
-    throw new Error(`expected ${modelId} to be supported in the test fixture`);
-  }
-  return requirement;
-}
-
-function ethAppVersionOf(support: ContactsModelSupport): string {
-  const version = support.minAppVersion[ETHEREUM_APP_NAME];
-  if (version === undefined) {
-    throw new Error("expected an Ethereum minimum app version in the fixture");
-  }
-  return version;
-}
 
 describe("ContactsVersionRequirements", () => {
   describe("resolveContactsVersionRequirements", () => {
@@ -36,83 +15,46 @@ describe("ContactsVersionRequirements", () => {
       }
     });
 
-    it("reports Nano models as unsupported", () => {
+    it("reports Nano S as unsupported", () => {
       expect(resolveContactsVersionRequirements(DeviceModelId.NANO_S)).toEqual({
         supported: false,
       });
-      expect(resolveContactsVersionRequirements(DeviceModelId.NANO_X)).toEqual({
-        supported: false,
+    });
+
+    // Pins the minimums themselves, not just their shape: each OS version is
+    // the release whose changelog introduces the Address Book feature, so a
+    // change here has to be a deliberate one, reviewed against that release.
+    it("pins the minimum OS and app versions of every supported model", () => {
+      const ethereum = { [ETHEREUM_APP_NAME]: "1.23.0" };
+
+      expect(CONTACTS_VERSION_REQUIREMENTS).toEqual({
+        [DeviceModelId.NANO_S]: { supported: false },
+        [DeviceModelId.NANO_SP]: {
+          supported: true,
+          minOsVersion: "1.7.0",
+          minAppVersion: ethereum,
+        },
+        [DeviceModelId.NANO_X]: {
+          supported: true,
+          minOsVersion: "2.8.0",
+          minAppVersion: ethereum,
+        },
+        [DeviceModelId.STAX]: {
+          supported: true,
+          minOsVersion: "1.11.0",
+          minAppVersion: ethereum,
+        },
+        [DeviceModelId.FLEX]: {
+          supported: true,
+          minOsVersion: "1.7.0",
+          minAppVersion: ethereum,
+        },
+        [DeviceModelId.APEX]: {
+          supported: true,
+          minOsVersion: "1.2.0",
+          minAppVersion: ethereum,
+        },
       });
-    });
-
-    it("reports touchscreen models as supported with OS and app minimums", () => {
-      const flex = supportOf(DeviceModelId.FLEX);
-      expect(flex.minOsVersion).toEqual(expect.any(String));
-      expect(ethAppVersionOf(flex)).toEqual(expect.any(String));
-    });
-  });
-
-  describe("isContactsSupported", () => {
-    it("returns false for an unsupported device model", () => {
-      const flex = supportOf(DeviceModelId.FLEX);
-      expect(
-        isContactsSupported({
-          deviceModelId: DeviceModelId.NANO_S,
-          osVersion: ABOVE_ANY_VERSION,
-          appName: ETHEREUM_APP_NAME,
-          appVersion: ethAppVersionOf(flex),
-        }),
-      ).toBe(false);
-    });
-
-    // App-version requirement.
-    it("gates on the minimum app version", () => {
-      const flex = supportOf(DeviceModelId.FLEX);
-      const minAppVersion = ethAppVersionOf(flex);
-      const base = {
-        deviceModelId: DeviceModelId.FLEX,
-        osVersion: flex.minOsVersion,
-        appName: ETHEREUM_APP_NAME,
-      };
-
-      expect(
-        isContactsSupported({ ...base, appVersion: BELOW_ANY_VERSION }),
-      ).toBe(false);
-      expect(isContactsSupported({ ...base, appVersion: minAppVersion })).toBe(
-        true,
-      );
-      expect(
-        isContactsSupported({ ...base, appVersion: ABOVE_ANY_VERSION }),
-      ).toBe(true);
-    });
-
-    it("returns false for an app that is unknown to Contacts", () => {
-      const flex = supportOf(DeviceModelId.FLEX);
-      expect(
-        isContactsSupported({
-          deviceModelId: DeviceModelId.FLEX,
-          osVersion: flex.minOsVersion,
-          appName: "Bitcoin",
-          appVersion: ABOVE_ANY_VERSION,
-        }),
-      ).toBe(false);
-    });
-
-    // OS-version requirement.
-    it("gates on the minimum OS version", () => {
-      const flex = supportOf(DeviceModelId.FLEX);
-      const base = {
-        deviceModelId: DeviceModelId.FLEX,
-        appName: ETHEREUM_APP_NAME,
-        appVersion: ethAppVersionOf(flex),
-      };
-
-      expect(
-        isContactsSupported({ ...base, osVersion: BELOW_ANY_VERSION }),
-      ).toBe(false);
-      expect(
-        isContactsSupported({ ...base, osVersion: flex.minOsVersion }),
-      ).toBe(true);
     });
   });
 
@@ -130,6 +72,15 @@ describe("ContactsVersionRequirements", () => {
     it("returns false when a version cannot be parsed", () => {
       expect(isVersionAtLeast("not-a-version", "1.2.0")).toBe(false);
       expect(isVersionAtLeast("1.2.0", "not-a-version")).toBe(false);
+    });
+
+    it("ignores prerelease and build tags when comparing to the minimum", () => {
+      expect(isVersionAtLeast("1.7.0-rc2", "1.7.0")).toBe(true);
+      expect(isVersionAtLeast("1.23.0-dev", "1.23.0")).toBe(true);
+    });
+
+    it("still fails a minimum strictly above the tagged version's core", () => {
+      expect(isVersionAtLeast("1.6.9-rc5", "1.7.0")).toBe(false);
     });
   });
 });

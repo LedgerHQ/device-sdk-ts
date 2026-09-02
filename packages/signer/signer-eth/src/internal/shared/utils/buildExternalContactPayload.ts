@@ -115,6 +115,6 @@ function supportsContacts(
     appConfig,
     new EthereumApplicationResolver(),
   )
-    .withMinVersionInclusive(minAppVersion)
+    .withMinVersionInclusiveAcceptingPrerelease(minAppVersion)
     .check();
 }
