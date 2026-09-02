@@ -94,7 +94,8 @@ consume them without duplicating the values:
 ```ts
 import {
   CONTACTS_VERSION_REQUIREMENTS,
-  isContactsSupported,
+  ETHEREUM_APP_NAME,
+  isVersionAtLeast,
   resolveContactsVersionRequirements,
 } from "@ledgerhq/device-contacts-kit";
 
@@ -102,17 +103,25 @@ import {
 const requirement = resolveContactsVersionRequirements(deviceModelId);
 // { supported: true, minOsVersion, minAppVersion: { Ethereum } } | { supported: false }
 
-// Or evaluate support directly.
-const supported = isContactsSupported({
-  deviceModelId,
-  osVersion,
-  appName,
-  appVersion,
-});
+if (requirement.supported) {
+  // OS-owned operations, e.g. renaming a contact from the dashboard.
+  const osReady = isVersionAtLeast(osVersion, requirement.minOsVersion);
+
+  // App-owned operations, e.g. registering an external address.
+  const minAppVersion = requirement.minAppVersion[ETHEREUM_APP_NAME];
+  const appReady =
+    minAppVersion !== undefined && isVersionAtLeast(appVersion, minAppVersion);
+}
 ```
 
-There are two independent axes: `minOsVersion` gates OS-owned operations (served by the device OS,
-e.g. renaming a contact from the dashboard) and `minAppVersion` gates app-owned operations (served
-by the embedded app, keyed by app name — v1 ships Ethereum only). The `isContactsSupported` helper
-and the raw `CONTACTS_VERSION_REQUIREMENTS` table are pure and dependency-light, so a host such as
-Ledger Wallet can import either to compose its own app-readiness checks.
+The two axes are checked independently, never as one combined verdict: `minOsVersion` gates
+OS-owned operations (served by the device OS, e.g. renaming a contact from the dashboard) and
+`minAppVersion` gates app-owned operations (served by the embedded app, keyed by app name — v1
+ships Ethereum only). A device can satisfy one and not the other, and each Contacts operation
+depends on exactly one of them, so collapsing them into a single "is Contacts supported" answer
+would reject devices that can serve the operation the host actually wants.
+
+`isVersionAtLeast` and the raw `CONTACTS_VERSION_REQUIREMENTS` table are pure and
+dependency-light, so a host such as Ledger Wallet can import either to compose its own
+app-readiness checks. Version comparison ignores prerelease and build tags, so a device on a
+release candidate of a minimum (`1.7.0-rc2` against a `1.7.0` minimum) counts as meeting it.

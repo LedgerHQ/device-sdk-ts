@@ -43,22 +43,30 @@ export const ETHEREUM_APP_NAME = "Ethereum";
 
 const UNSUPPORTED: ContactsModelUnsupported = { supported: false };
 
-// TODO(DSDK-1376): replace these placeholder versions with the real minimums
-// confirmed by the firmware and Ethereum-app owners. The shape and consumers
-// are final; only the version strings below are provisional.
-const MIN_OS_VERSION_STAX = "1.5.0";
-const MIN_OS_VERSION_FLEX = "1.2.0";
-const MIN_OS_VERSION_APEX = "0.9.0";
-const MIN_ETHEREUM_APP_VERSION = "1.15.0";
+const MIN_OS_VERSION_STAX = "1.11.0";
+const MIN_OS_VERSION_FLEX = "1.7.0";
+const MIN_OS_VERSION_APEX = "1.2.0";
+const MIN_OS_VERSION_NANO_X = "2.8.0";
+const MIN_OS_VERSION_NANO_SP = "1.7.0";
+
+const MIN_ETHEREUM_APP_VERSION = "1.23.0";
 
 /**
- * Contacts APDUs are supported only on the touchscreen device models (Stax,
- * Flex, Apex). The Nano models do not support Contacts at all.
+ * Contacts APDUs are supported on the touchscreen device models (Stax, Flex,
+ * Apex) and on Nano X / Nano SP. Nano S does not support Contacts at all.
  */
 export const CONTACTS_VERSION_REQUIREMENTS: ContactsVersionRequirements = {
   [DeviceModelId.NANO_S]: UNSUPPORTED,
-  [DeviceModelId.NANO_SP]: UNSUPPORTED,
-  [DeviceModelId.NANO_X]: UNSUPPORTED,
+  [DeviceModelId.NANO_SP]: {
+    supported: true,
+    minOsVersion: MIN_OS_VERSION_NANO_SP,
+    minAppVersion: { [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION },
+  },
+  [DeviceModelId.NANO_X]: {
+    supported: true,
+    minOsVersion: MIN_OS_VERSION_NANO_X,
+    minAppVersion: { [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION },
+  },
   [DeviceModelId.STAX]: {
     supported: true,
     minOsVersion: MIN_OS_VERSION_STAX,
@@ -88,48 +96,15 @@ export function resolveContactsVersionRequirements(
 
 /**
  * Whether `actual` is greater than or equal to `minimum`, comparing as semver.
- * Tolerant of non-strict version strings (coerces where possible) and returns
- * `false` (i.e. requirement not met) when either version cannot be parsed, so
- * an unknown version never passes a check.
+ * Tolerant of non-strict version strings and prerelease/build tags (coerces
+ * both sides, which drops them) so a release candidate such as `1.7.0-rc2`
+ * counts as meeting a `1.7.0` minimum. Returns `false` (i.e. requirement not
+ * met) when either version cannot be parsed, so an unknown version never
+ * passes a check.
  */
 export function isVersionAtLeast(actual: string, minimum: string): boolean {
-  const a = valid(actual) ?? valid(coerce(actual));
-  const b = valid(minimum) ?? valid(coerce(minimum));
+  const a = valid(coerce(actual));
+  const b = valid(coerce(minimum));
   if (a === null || b === null) return false;
   return gte(a, b);
-}
-
-/** Inputs for {@link isContactsSupported}. */
-export type ContactsSupportQuery = {
-  readonly deviceModelId: DeviceModelId;
-  /** The device OS (firmware) version. */
-  readonly osVersion: string;
-  /** The name of the currently running embedded app. */
-  readonly appName: string;
-  /** The version of the currently running embedded app. */
-  readonly appVersion: string;
-};
-
-/**
- * Whether Contacts app-owned operations are supported for the given device
- * model, OS version, and running app — checking the model is supported, the OS
- * meets its minimum, the app is known to Contacts, and the app meets its
- * minimum.
- *
- * Pure and dependency-light: hosts can call this directly, or read
- * {@link CONTACTS_VERSION_REQUIREMENTS} to build their own checks.
- */
-export function isContactsSupported({
-  deviceModelId,
-  osVersion,
-  appName,
-  appVersion,
-}: ContactsSupportQuery): boolean {
-  const requirement = resolveContactsVersionRequirements(deviceModelId);
-  if (!requirement.supported) return false;
-  if (!isVersionAtLeast(osVersion, requirement.minOsVersion)) return false;
-
-  const minAppVersion = requirement.minAppVersion[appName];
-  if (minAppVersion === undefined) return false;
-  return isVersionAtLeast(appVersion, minAppVersion);
 }

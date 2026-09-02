@@ -41,10 +41,8 @@ export {
   type ContactsModelRequirement,
   type ContactsModelSupport,
   type ContactsModelUnsupported,
-  type ContactsSupportQuery,
   type ContactsVersionRequirements,
   ETHEREUM_APP_NAME,
-  isContactsSupported,
   isVersionAtLeast,
   resolveContactsVersionRequirements,
 } from "@api/model/ContactsVersionRequirements";
