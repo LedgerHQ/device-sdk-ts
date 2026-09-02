@@ -43,11 +43,76 @@ export type DeviceGeneralState = {
   isInRecoveryMode: boolean;
 };
 
-// 2nd byte of the secure element flags, placeholder for the endorsement information
-export type EndorsementInformation = unknown;
+/**
+ * Represents which endorsement certificate slots are populated.
+ * This information comes from the second byte of the secure element flags.
+ */
+export type EndorsementInformation = {
+  hasEndorsementCertificateInSlot1: boolean;
+  hasEndorsementCertificateInSlot2: boolean;
+};
 
-// 3rd byte of the secure element flags, placeholder for the words information
-export type WordsInformation = unknown;
+export type SeedWordCount = 12 | 18 | 24;
 
-// 4th byte of the secure element flags, placeholder for the onboarding status
-export type OnboardingStatus = unknown;
+/**
+ * Represents the seed phrase setup progress.
+ * This information comes from the third byte of the secure element flags.
+ */
+export type WordsInformation = {
+  /**
+   * Number of seed words selected by the user.
+   * `undefined` represents a reserved or unknown encoding.
+   */
+  numberOfWords: SeedWordCount | undefined;
+  /**
+   * Zero-based index of the word currently being entered or confirmed.
+   */
+  currentWordIndex: number;
+};
+
+/**
+ * Onboarding screen encoded in the fourth secure element flag byte.
+ * Values follow GET VERSION byte 4 (0x01 to 0x10).
+ */
+export enum OnboardingState {
+  /**
+   * The byte is 0x00 or an encoding not covered by the specification, which
+   * future firmware versions may introduce.
+   */
+  Unknown = "unknown",
+  WelcomeScreen1 = "welcome-screen-1",
+  WelcomeScreen2 = "welcome-screen-2",
+  WelcomeScreen3 = "welcome-screen-3",
+  WelcomeScreen4 = "welcome-screen-4",
+  WelcomeScreenReminder = "welcome-screen-reminder",
+  SetupChoice = "setup-choice",
+  NewDevice = "new-device",
+  ConfirmNewDevice = "confirm-new-device",
+  RestoreRecoveryPhrase = "restore-recovery-phrase",
+  SafetyWarning = "safety-warning",
+  DeviceIsReady = "device-is-ready",
+  ChooseName = "choose-name",
+  RestoreRecoverBackup = "restore-recover-backup",
+  SetupRestoreChoice = "setup-restore-choice",
+  OnboardingStatusCheck = "onboarding-status-check",
+  RestoreWithRk = "restore-with-rk",
+}
+
+/**
+ * Represents the current onboarding state.
+ * This information comes from the fourth byte of the secure element flags.
+ */
+export type OnboardingStatus = {
+  /**
+   * Parsed onboarding state, `OnboardingState.Unknown` for unmapped bytes.
+   */
+  onboardingState: OnboardingState;
+};
+
+/**
+ * Parsed secure element flags from a Get OS version response.
+ */
+export type SecureElementFlags = DeviceGeneralState &
+  EndorsementInformation &
+  WordsInformation &
+  OnboardingStatus;

@@ -3,6 +3,7 @@ import {
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
 import { DeviceModelId } from "@api/device/DeviceModel";
+import { OnboardingState } from "@api/device/SecureElementFlags";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import { getOsVersionCommandResponseMockBuilder } from "./__mocks__/GetOsVersionCommand";
@@ -18,6 +19,15 @@ const LNX_RESPONSE_DATA_GOOD = Uint8Array.from([
 const LNX_RESPONSE_GOOD = new ApduResponse({
   statusCode: Uint8Array.from([0x90, 0x00]),
   data: LNX_RESPONSE_DATA_GOOD,
+});
+
+const LNX_RESPONSE_WITH_EMPTY_SE_FLAGS = new ApduResponse({
+  statusCode: Uint8Array.from([0x90, 0x00]),
+  data: Uint8Array.from([
+    0x33, 0x00, 0x00, 0x04, 0x05, 0x32, 0x2e, 0x32, 0x2e, 0x33, 0x00, 0x04,
+    0x32, 0x2e, 0x33, 0x30, 0x04, 0x31, 0x2e, 0x31, 0x36, 0x01, 0x00, 0x01,
+    0x00, 0x01, 0x00, 0x90, 0x00,
+  ]),
 });
 
 const LNSP_REPONSE_DATA_GOOD = Uint8Array.from([
@@ -93,6 +103,63 @@ describe("GetOsVersionCommand", () => {
 
         expect(parsed).toStrictEqual(expected);
       });
+
+      it("should default parsed flags when the response contains empty SE flags", () => {
+        const parsed = command.parseResponse(
+          LNX_RESPONSE_WITH_EMPTY_SE_FLAGS,
+          DeviceModelId.NANO_X,
+        );
+
+        expect(isSuccessCommandResult(parsed)).toBe(true);
+        if (!isSuccessCommandResult(parsed)) {
+          return;
+        }
+        expect(parsed.data.seFlags).toStrictEqual(new Uint8Array());
+        expect(parsed.data.secureElementFlags).toStrictEqual({
+          isPinValidated: false,
+          hasMcuSerialNumber: false,
+          hasValidCertificate: false,
+          isCustomAuthorityConnectionAllowed: false,
+          isSecureConnectionAllowed: false,
+          isOnboarded: false,
+          isMcuCodeSigned: false,
+          isInRecoveryMode: false,
+          hasEndorsementCertificateInSlot1: false,
+          hasEndorsementCertificateInSlot2: false,
+          numberOfWords: 24,
+          currentWordIndex: 0,
+          onboardingState: OnboardingState.Unknown,
+        });
+      });
+
+      it.each([
+        [0x0b, OnboardingState.DeviceIsReady],
+        [0x10, OnboardingState.RestoreWithRk],
+      ] as const)(
+        "should parse SE flag byte 4 0x%s as %s",
+        (onboardingByte, onboardingState) => {
+          const data = Uint8Array.from(LNX_RESPONSE_DATA_GOOD);
+          data[14] = onboardingByte;
+          const parsed = command.parseResponse(
+            new ApduResponse({
+              statusCode: Uint8Array.from([0x90, 0x00]),
+              data,
+            }),
+            DeviceModelId.NANO_X,
+          );
+
+          expect(isSuccessCommandResult(parsed)).toBe(true);
+          if (!isSuccessCommandResult(parsed)) {
+            return;
+          }
+          expect(parsed.data.seFlags).toStrictEqual(
+            new Uint8Array([0xe6, 0x00, 0x00, onboardingByte]),
+          );
+          expect(parsed.data.secureElementFlags.onboardingState).toBe(
+            onboardingState,
+          );
+        },
+      );
     });
 
     describe("Nano S Plus", () => {
@@ -155,6 +222,11 @@ describe("GetOsVersionCommand", () => {
               isOnboarded: true,
               isMcuCodeSigned: false,
               isInRecoveryMode: false,
+              hasEndorsementCertificateInSlot1: false,
+              hasEndorsementCertificateInSlot2: false,
+              numberOfWords: 18,
+              currentWordIndex: 10,
+              onboardingState: OnboardingState.Unknown,
             },
           },
         });
@@ -193,6 +265,11 @@ describe("GetOsVersionCommand", () => {
               isOnboarded: true,
               isMcuCodeSigned: true,
               isInRecoveryMode: false,
+              hasEndorsementCertificateInSlot1: false,
+              hasEndorsementCertificateInSlot2: false,
+              numberOfWords: 24,
+              currentWordIndex: 0,
+              onboardingState: OnboardingState.Unknown,
             },
           },
         });

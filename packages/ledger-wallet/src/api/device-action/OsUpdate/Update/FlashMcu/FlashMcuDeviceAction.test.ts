@@ -1,6 +1,7 @@
 import {
   DeviceActionStatus,
   type GetOsVersionResponse,
+  OnboardingState,
   SecureChannelError,
   SecureChannelEventType,
   UnknownDAError,
@@ -87,6 +88,11 @@ describe("FlashMcuDeviceAction", () => {
       isOnboarded: true,
       isMcuCodeSigned: true,
       isInRecoveryMode: false,
+      hasEndorsementCertificateInSlot1: false,
+      hasEndorsementCertificateInSlot2: false,
+      numberOfWords: 24,
+      currentWordIndex: 0,
+      onboardingState: OnboardingState.Unknown,
     },
   } satisfies GetOsVersionResponse;
 
