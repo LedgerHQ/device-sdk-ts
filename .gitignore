@@ -30,7 +30,10 @@ Thumbs.db
 # build
 lib
 packages/devtools-rozenite/dist
+apps/device-mock-server-ui/dist
+*.tsbuildinfo
 !apps/sample/src/lib/
+!apps/device-mock-server-ui/src/lib/
 
 # turbo
 .turbo
