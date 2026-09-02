@@ -1,6 +1,8 @@
 import express, { type Express, type Request, type Response } from "express";
 import { inject, injectable } from "inversify";
 
+import { type MockServerConfig } from "@api/model/MockServerConfig";
+import { appTypes } from "@internal/di/types";
 import { serverTypes } from "@internal/server/di/serverTypes";
 import { requestLogger } from "@internal/server/middleware/requestLogger";
 import { type AuthRoutes } from "@internal/server/routes/AuthRoutes";
@@ -25,6 +27,7 @@ export class HttpAppFactory {
     private readonly transfer: TransferRoutes,
     @inject(serverTypes.CatalogRoutes)
     private readonly catalog: CatalogRoutes,
+    @inject(appTypes.Config) private readonly config: MockServerConfig,
   ) {}
 
   build(): Express {
@@ -68,6 +71,14 @@ export class HttpAppFactory {
     });
 
     app.use(this.auth.build());
+
+    // The configuration UI is served from the root, ahead of the routers that
+    // demand a bearer token on every request they see — a request for a file the
+    // UI does not own falls through to them untouched.
+    if (this.config.webUiDir) {
+      app.use(express.static(this.config.webUiDir));
+    }
+
     app.use(this.sessions.build());
     app.use(this.devices.build());
     app.use(this.transfer.build());

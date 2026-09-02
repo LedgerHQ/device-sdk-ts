@@ -22,6 +22,9 @@ FROM install AS builder
 # Build workspace deps so their lib/ output is available for esbuild to bundle
 RUN pnpm --filter @ledgerhq/device-mockserver-client... build
 
+# Build the configuration UI the server serves at its root URL
+RUN pnpm --filter @ledgerhq/device-mock-server-ui build
+
 # Bundle the entire server — including all workspace deps — into one file.
 # bufferutil and utf-8-validate are optional native perf add-ons for ws;
 # ws works without them, so they stay external and are omitted from the image.
@@ -41,6 +44,8 @@ FROM node:24-alpine
 WORKDIR /app
 # Run as the built-in unprivileged `node` user (uid 1000) instead of root
 COPY --chown=node:node --from=builder /bundle/server.js .
+# Served at the server's root URL; `public` is the first path resolveWebUiDir looks at
+COPY --chown=node:node --from=builder /repo/apps/device-mock-server-ui/dist ./public
 USER node
 EXPOSE 9752
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
