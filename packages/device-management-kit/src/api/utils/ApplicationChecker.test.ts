@@ -176,6 +176,143 @@ describe("ApplicationChecker", () => {
     expect(result).toStrictEqual(false);
   });
 
+  describe("withMinVersionInclusiveAcceptingPrerelease", () => {
+    it("should accept a release candidate of the minimum", () => {
+      const resolver = createMockResolver({
+        isCompatible: true,
+        version: "1.23.0-rc2",
+      });
+      const result = new ApplicationChecker(
+        createReadyState(),
+        appConfig,
+        resolver,
+      )
+        .withMinVersionInclusiveAcceptingPrerelease("1.23.0")
+        .check();
+      expect(result).toStrictEqual(true);
+    });
+
+    it("should accept a dev build of the minimum", () => {
+      const resolver = createMockResolver({
+        isCompatible: true,
+        version: "1.23.0-dev",
+      });
+      const result = new ApplicationChecker(
+        createReadyState(),
+        appConfig,
+        resolver,
+      )
+        .withMinVersionInclusiveAcceptingPrerelease("1.23.0")
+        .check();
+      expect(result).toStrictEqual(true);
+    });
+
+    it("should accept a plain version equal to the minimum", () => {
+      const resolver = createMockResolver({
+        isCompatible: true,
+        version: "1.23.0",
+      });
+      const result = new ApplicationChecker(
+        createReadyState(),
+        appConfig,
+        resolver,
+      )
+        .withMinVersionInclusiveAcceptingPrerelease("1.23.0")
+        .check();
+      expect(result).toStrictEqual(true);
+    });
+
+    it("should accept a plain version above the minimum", () => {
+      const resolver = createMockResolver({
+        isCompatible: true,
+        version: "1.24.0",
+      });
+      const result = new ApplicationChecker(
+        createReadyState(),
+        appConfig,
+        resolver,
+      )
+        .withMinVersionInclusiveAcceptingPrerelease("1.23.0")
+        .check();
+      expect(result).toStrictEqual(true);
+    });
+
+    it("should reject a plain version below the minimum", () => {
+      const resolver = createMockResolver({
+        isCompatible: true,
+        version: "1.22.9",
+      });
+      const result = new ApplicationChecker(
+        createReadyState(),
+        appConfig,
+        resolver,
+      )
+        .withMinVersionInclusiveAcceptingPrerelease("1.23.0")
+        .check();
+      expect(result).toStrictEqual(false);
+    });
+
+    it("should reject a prerelease whose release core is below the minimum", () => {
+      const resolver = createMockResolver({
+        isCompatible: true,
+        version: "1.22.9-rc5",
+      });
+      const result = new ApplicationChecker(
+        createReadyState(),
+        appConfig,
+        resolver,
+      )
+        .withMinVersionInclusiveAcceptingPrerelease("1.23.0")
+        .check();
+      expect(result).toStrictEqual(false);
+    });
+
+    it("should reject a version that cannot be parsed", () => {
+      const resolver = createMockResolver({
+        isCompatible: true,
+        version: "not-a-version",
+      });
+      const result = new ApplicationChecker(
+        createReadyState(),
+        appConfig,
+        resolver,
+      )
+        .withMinVersionInclusiveAcceptingPrerelease("1.23.0")
+        .check();
+      expect(result).toStrictEqual(false);
+    });
+
+    it("should reject a minimum that cannot be parsed", () => {
+      const resolver = createMockResolver({
+        isCompatible: true,
+        version: "1.23.0",
+      });
+      const result = new ApplicationChecker(
+        createReadyState(),
+        appConfig,
+        resolver,
+      )
+        .withMinVersionInclusiveAcceptingPrerelease("not-a-version")
+        .check();
+      expect(result).toStrictEqual(false);
+    });
+
+    it("should not override incompatible resolution", () => {
+      const resolver = createMockResolver({
+        isCompatible: false,
+        version: "1.23.0-rc2",
+      });
+      const result = new ApplicationChecker(
+        createReadyState(),
+        appConfig,
+        resolver,
+      )
+        .withMinVersionInclusiveAcceptingPrerelease("1.23.0")
+        .check();
+      expect(result).toStrictEqual(false);
+    });
+  });
+
   it("should not override incompatible resolution even if constraints pass", () => {
     const resolver = createMockResolver({
       isCompatible: false,

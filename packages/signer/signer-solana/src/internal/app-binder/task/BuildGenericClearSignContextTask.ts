@@ -38,6 +38,8 @@ export type ChallengeBoundRequirements = Pick<
 > & {
   /** ALT-backed PARAM_TOKEN_AMOUNT.TOKEN refs needing TOKEN_INFO-first resolution. */
   tokenAmountAltRefs: AltEntryKey[];
+  /** ALT-backed accounts needing TOKEN_ACCOUNT_STATE-first resolution (owner / mint attestation). */
+  tokenAccountStateAltRefs: AltEntryKey[];
   /** ALT-backed MINT entries from MINT_ASSOCIATIONS; require TOKEN_INFO via hold-and-conditionally-stream. */
   mintAltRefs: AltEntryKey[];
 };
@@ -98,6 +100,7 @@ export class BuildGenericClearSignContextTask {
         altResolutions: [],
         trustedNames: [],
         tokenAmountAltRefs: [],
+        tokenAccountStateAltRefs: [],
         mintAltRefs: [],
       },
       unrecognizedProgramIds: [],
@@ -282,8 +285,9 @@ export class BuildGenericClearSignContextTask {
       }
     }
 
-    // RequirementAccumulator.build() already strips tokenAmountAltRefs and
-    // mintAltRefs entries from altResolutions, and tokenAccountStates entries
+    // RequirementAccumulator.build() already strips tokenAccountStateAltRefs,
+    // tokenAmountAltRefs and mintAltRefs entries from altResolutions (and the
+    // lower-priority ALT buckets of each other), and tokenAccountStates entries
     // from tokenAmountRefs (cross-bucket priority dedup), so
     // requirements.altResolutions is safe to use directly here. The fallback
     // merge below is still deduplicated defensively: streaming the same
@@ -298,6 +302,7 @@ export class BuildGenericClearSignContextTask {
       altResolutions: requirements.altResolutions,
       trustedNames: requirements.trustedNames,
       tokenAmountAltRefs: requirements.tokenAmountAltRefs,
+      tokenAccountStateAltRefs: requirements.tokenAccountStateAltRefs,
       mintAltRefs: requirements.mintAltRefs,
     };
 
@@ -311,6 +316,7 @@ export class BuildGenericClearSignContextTask {
           challengeBoundRequirements.altResolutions.length +
           challengeBoundRequirements.trustedNames.length +
           challengeBoundRequirements.tokenAmountAltRefs.length +
+          challengeBoundRequirements.tokenAccountStateAltRefs.length +
           challengeBoundRequirements.mintAltRefs.length,
       },
     });
@@ -475,9 +481,11 @@ export class BuildGenericClearSignContextTask {
         root_type: payload.idlDescriptor.rootType,
       },
       mintAssociations: payload.mintAssociations,
+      ownerAssociations: payload.ownerAssociations,
       valueFlowPorts: payload.valueFlowPorts,
       accountResets: payload.accountResets,
       displayFields: payload.displayFields,
+      hideRules: payload.hideRules,
       enumCache: this.toEnumCache(payload.enumVariants),
     };
   }

@@ -1,5 +1,19 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.18.0
+
+### Minor Changes
+
+- [#1822](https://github.com/LedgerHQ/device-sdk-ts/pull/1822) [`118b869`](https://github.com/LedgerHQ/device-sdk-ts/commit/118b869addc7b3fca680a139bd1a51eaecac43b2) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Show a saved contact name in place of the raw recipient address when reviewing a transaction, matched against the address book given to `withAddressBook`. Only the transaction recipient is matched, and a contact the device rejects never costs the signature.
+
+- [#1840](https://github.com/LedgerHQ/device-sdk-ts/pull/1840) [`30100b5`](https://github.com/LedgerHQ/device-sdk-ts/commit/30100b5a19cd977320a18338c08590a7830b58eb) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Provide matching external contacts before signing on prerelease builds of the Ethereum app: the Contacts support check now compares only the release core, so an app reporting e.g. 1.23.0-rc2 against a 1.23.0 minimum is no longer treated as too old
+
+### Patch Changes
+
+- Updated dependencies [[`7e4bc4e`](https://github.com/LedgerHQ/device-sdk-ts/commit/7e4bc4e92c213dcafd34f7f969356bb13d01bf3b), [`6f51c2e`](https://github.com/LedgerHQ/device-sdk-ts/commit/6f51c2eda5321d30690330459f673c8e0a9044a2), [`30100b5`](https://github.com/LedgerHQ/device-sdk-ts/commit/30100b5a19cd977320a18338c08590a7830b58eb), [`943650b`](https://github.com/LedgerHQ/device-sdk-ts/commit/943650b911a9c9a07c3ad29ea2057eb8a4b99c07)]:
+  - @ledgerhq/device-contacts-kit@0.4.0
+  - @ledgerhq/device-management-kit@1.9.0
+
 ## 1.17.0
 
 ### Minor Changes

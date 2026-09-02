@@ -6,7 +6,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
-import { type EvmAddressBook } from "@api/model/EvmAddressBook";
+import {
+  EMPTY_EVM_ADDRESS_BOOK,
+  type EvmAddressBook,
+} from "@api/model/EvmAddressBook";
 import { addressModuleFactory } from "@internal/address/di/addressModule";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { eip7702ModuleFactory } from "@internal/eip7702/di/eip7702Module";
@@ -42,7 +45,7 @@ export const makeContainer = ({
   // matches, so consumers never have to handle `undefined`.
   container
     .bind<EvmAddressBook>(externalTypes.AddressBook)
-    .toConstantValue(addressBook ?? { contactGroups: [], ledgerAccounts: [] });
+    .toConstantValue(addressBook ?? EMPTY_EVM_ADDRESS_BOOK);
 
   container
     .bind<

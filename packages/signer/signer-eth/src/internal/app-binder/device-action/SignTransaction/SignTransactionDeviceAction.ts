@@ -29,6 +29,7 @@ import {
   SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { ClearSigningType } from "@api/model/ClearSigningType";
+import { EMPTY_EVM_ADDRESS_BOOK } from "@api/model/EvmAddressBook";
 import { type Signature } from "@api/model/Signature";
 import { type TransactionType } from "@api/model/TransactionType";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
@@ -489,6 +490,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               contexts: context._internalState.contexts,
               derivationPath: context.input.derivationPath,
               serializedTransaction: context.input.transaction,
+              externalContact: {
+                addressBook:
+                  context.input.addressBook ?? EMPTY_EVM_ADDRESS_BOOK,
+                subset: context._internalState.subset!,
+                appConfig: context._internalState.appConfig!,
+              },
               loggerFactory: this.getLoggerFactory(internalApi),
             }),
             onDone: {

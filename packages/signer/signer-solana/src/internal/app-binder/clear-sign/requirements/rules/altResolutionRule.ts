@@ -22,7 +22,9 @@ import { resolvePortAccountIndex } from "@internal/app-binder/clear-sign/require
  *    just the first: the device walks them in order and refuses on the first
  *    in-range candidate it cannot resolve.
  * 3. Every port token reference: the `RESOLVE` token account (with the port's
- *    own account as its fallback) and any `ACCOUNT_PATH` token value.
+ *    own account as its fallback), its `FALLBACK_ACCOUNT` — dereferenced
+ *    unconditionally by `resolve_port_mints_for_instruction` — and any
+ *    `ACCOUNT_PATH` token value.
  * 4. Every `DISPLAY_FIELD` `ACCOUNT_PATH` address — read for rendering,
  *    trusted-name lookup, etc.
  * 5. Every `PARAM_TOKEN_AMOUNT` token reference sourced from an `ACCOUNT_PATH`.
@@ -30,6 +32,15 @@ import { resolvePortAccountIndex } from "@internal/app-binder/clear-sign/require
  *    mint-binding map. Mint positions are handled separately as `mintAltRefs`
  *    so they can be paired with a TOKEN_INFO attempt for display.
  * 7. Every `ACCOUNT_RESET` account index.
+ * 8. Every `OWNER_ASSOCIATION` pair: the bound token account, and the owner
+ *    when it comes from an `ACCOUNT_PATH`.
+ * 9. Every `HIDE_RULE.TARGET` from an `ACCOUNT_PATH`.
+ *
+ * An entry this rule requests can graduate to a higher-priority ALT bucket
+ * (`tokenAccountStateAltRefs`, `tokenAmountAltRefs`, `mintAltRefs`), whose
+ * provide-phase loop streams the same `ALT_RESOLUTION` and then fetches what the
+ * resolved address unlocks. `RequirementAccumulator.build()` strips those
+ * entries from here, since the device rejects a second resolution for one entry.
  *
  * Deliberately excluded, to keep device heap use down: read-only ALT accounts
  * that no port, token reference, display field, association or reset names. The
@@ -74,6 +85,10 @@ export function applyAltResolutionRule(
       requestAccount(
         tokenValue.accountIndex ?? resolvePortAccountIndex(port, instruction),
       );
+      // FALLBACK_ACCOUNT is meaningful for RESOLVE only, and the device reads it
+      // whenever the binding map misses — an unresolved ALT slot there aborts
+      // finalize rather than degrading the display.
+      requestAccount(tokenValue.fallbackAccountIndex);
     }
     requestValue(tokenValue.value);
   }
@@ -94,5 +109,18 @@ export function applyAltResolutionRule(
   // 7. ACCOUNT_RESET targets.
   for (const { accountIndex } of parsed.accountResets) {
     requestAccount(accountIndex);
+  }
+
+  // 8. OWNER_ASSOCIATION pairs. The device dereferences both halves while
+  // seeding the owner-binding map, and refuses to sign if either is unresolved.
+  for (const { accountIndex, owner } of parsed.info.ownerAssociations) {
+    requestAccount(accountIndex);
+    requestValue(owner);
+  }
+
+  // 9. HIDE_RULE targets. Resolved for every rule before the merge, whether or
+  // not the rule ends up firing.
+  for (const { target } of parsed.hideRules) {
+    requestValue(target);
   }
 }

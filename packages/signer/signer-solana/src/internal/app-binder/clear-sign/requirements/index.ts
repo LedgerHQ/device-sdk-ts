@@ -4,9 +4,12 @@ export {
 } from "./buildRequirements";
 export {
   type CalAccountReset,
+  type CalActiveWhenPredicate,
   type CalDisplayField,
+  type CalHideRule,
   type CalIdlDescriptor,
   type CalMintAssociation,
+  type CalOwnerAssociation,
   type CalTokenValue,
   type CalValue,
   type CalValueFlowPort,
@@ -14,7 +17,9 @@ export {
 export {
   fromCalAccountReset,
   fromCalDisplayField,
+  fromCalHideRule,
   fromCalInstructionInfo,
+  fromCalOwnerAssociation,
   fromCalTokenValue,
   fromCalValue,
   fromCalValueFlowPort,
@@ -28,17 +33,22 @@ export {
   type ProgramDiscriminator,
   type RequirementAccount,
   type RequirementInstruction,
+  type TxBindings,
 } from "./model";
 export { parseInstructionDescriptor } from "./parseInstruction";
 export {
+  ActiveWhenPredicate,
+  HideCondition,
   type MintAssociation,
   OptionalAccountStrategy,
   PARAM_TYPE_TOKEN_AMOUNT,
   PARAM_TYPE_TRUSTED_NAME,
   type ParsedAccountReset,
   type ParsedDisplayField,
+  type ParsedHideRule,
   type ParsedInstruction,
   type ParsedInstructionInfo,
+  type ParsedOwnerAssociation,
   type ParsedTokenValue,
   type ParsedValue,
   type ParsedValueFlowPort,

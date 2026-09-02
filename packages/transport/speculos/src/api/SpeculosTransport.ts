@@ -143,6 +143,7 @@ export class SpeculosTransport implements Transport {
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
     this.connectedDevice = null;
+    this.clearDisconnectInterval();
     return Promise.resolve(Right(undefined));
   }
 
@@ -167,10 +168,6 @@ export class SpeculosTransport implements Transport {
         this.disconnect({
           connectedDevice: this.connectedDevice,
         });
-
-        if (this.disconnectInterval) {
-          clearInterval(this.disconnectInterval);
-        }
       }
       return Left(new GeneralDmkError(error));
     }
@@ -216,11 +213,16 @@ export class SpeculosTransport implements Transport {
           });
         }
 
-        if (this.disconnectInterval) {
-          clearInterval(this.disconnectInterval);
-        }
+        this.clearDisconnectInterval();
       }
     }, 2000);
+  }
+
+  private clearDisconnectInterval(): void {
+    if (this.disconnectInterval) {
+      clearInterval(this.disconnectInterval);
+      this.disconnectInterval = null;
+    }
   }
 }
 

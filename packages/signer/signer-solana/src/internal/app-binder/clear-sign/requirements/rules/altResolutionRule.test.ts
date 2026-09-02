@@ -3,6 +3,7 @@ import {
   type RequirementInstruction,
 } from "@internal/app-binder/clear-sign/requirements/model";
 import {
+  HideCondition,
   OptionalAccountStrategy,
   PARAM_TYPE_TOKEN_AMOUNT,
   type ParsedInstruction,
@@ -15,10 +16,16 @@ import { applyAltResolutionRule } from "./altResolutionRule";
 
 function emptyParsed(): ParsedInstruction {
   return {
-    info: { typePool: [], rootType: 0, mintAssociations: [] },
+    info: {
+      typePool: [],
+      rootType: 0,
+      mintAssociations: [],
+      ownerAssociations: [],
+    },
     valueFlowPorts: [],
     accountResets: [],
     displayFields: [],
+    hideRules: [],
   };
 }
 
@@ -100,6 +107,7 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0, 1, 2],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+          activeWhen: [],
         },
       ],
     };
@@ -117,6 +125,7 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+          activeWhen: [],
           tokenValue: { kind: TokenKind.RESOLVE, accountIndex: 2 },
         },
       ],
@@ -134,6 +143,7 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [1],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+          activeWhen: [],
           tokenValue: { kind: TokenKind.RESOLVE },
         },
       ],
@@ -151,6 +161,7 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+          activeWhen: [],
           tokenValue: { kind: TokenKind.DIRECT, value: accountPath(1) },
         },
       ],
@@ -181,6 +192,7 @@ describe("applyAltResolutionRule", () => {
         typePool: [],
         rootType: 0,
         mintAssociations: [{ accountIndex: 0, mintIndex: 1 }],
+        ownerAssociations: [],
       },
     };
     // token account at 0, mint at 1 — the mint is NOT emitted here
@@ -189,6 +201,129 @@ describe("applyAltResolutionRule", () => {
     // mint position (mintIndex=1) is handled by the mintAltRef pass.
     expect(run(parsed, instruction)).toEqual([
       { altAddress: "ALT", entryIndex: 5 },
+    ]);
+  });
+
+  it("emits ALT_RESOLUTION for a RESOLVE port's FALLBACK_ACCOUNT", () => {
+    // resolve_port_mints_for_instruction dereferences FALLBACK_ACCOUNT whenever
+    // the binding map misses, and refuses to sign when the slot is unresolved.
+    const parsed: ParsedInstruction = {
+      ...emptyParsed(),
+      valueFlowPorts: [
+        {
+          accountIndices: [0],
+          optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+          activeWhen: [],
+          tokenValue: {
+            kind: TokenKind.RESOLVE,
+            accountIndex: 0,
+            fallbackAccountIndex: 2,
+          },
+        },
+      ],
+    };
+    const instruction = instructionOf([addr("port"), addr("other"), alt(21)]);
+    expect(run(parsed, instruction)).toEqual([
+      { altAddress: "ALT", entryIndex: 21 },
+    ]);
+  });
+
+  it("ignores FALLBACK_ACCOUNT on a non-RESOLVE token value", () => {
+    // The device ignores FALLBACK_ACCOUNT for any other KIND, so it never
+    // dereferences the slot and no resolution is needed.
+    const parsed: ParsedInstruction = {
+      ...emptyParsed(),
+      valueFlowPorts: [
+        {
+          accountIndices: [0],
+          optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+          activeWhen: [],
+          tokenValue: { kind: TokenKind.NATIVE, fallbackAccountIndex: 1 },
+        },
+      ],
+    };
+    expect(run(parsed, instructionOf([addr("port"), alt(22)]))).toEqual([]);
+  });
+
+  it("emits ALT_RESOLUTION for both halves of an OWNER_ASSOCIATION", () => {
+    const parsed: ParsedInstruction = {
+      ...emptyParsed(),
+      info: {
+        typePool: [],
+        rootType: 0,
+        mintAssociations: [],
+        ownerAssociations: [{ accountIndex: 0, owner: accountPath(1) }],
+      },
+    };
+    const instruction = instructionOf([alt(31), alt(32)]);
+    expect(run(parsed, instruction)).toEqual([
+      { altAddress: "ALT", entryIndex: 31 },
+      { altAddress: "ALT", entryIndex: 32 },
+    ]);
+  });
+
+  it("emits nothing for an OWNER_ASSOCIATION owner from ARGUMENT_PATH", () => {
+    // An ARGUMENT_PATH owner comes out of the instruction data, so no account
+    // slot backs it.
+    const parsed: ParsedInstruction = {
+      ...emptyParsed(),
+      info: {
+        typePool: [],
+        rootType: 0,
+        mintAssociations: [],
+        ownerAssociations: [
+          {
+            accountIndex: 1,
+            owner: {
+              source: ValueSource.ARGUMENT_PATH,
+              payload: new Uint8Array(),
+            },
+          },
+        ],
+      },
+    };
+    expect(run(parsed, instructionOf([alt(33), addr("static")]))).toEqual([]);
+  });
+
+  it("emits ALT_RESOLUTION for an ACCOUNT_PATH HIDE_RULE target", () => {
+    const parsed: ParsedInstruction = {
+      ...emptyParsed(),
+      hideRules: [
+        {
+          ruleSetIndex: 0,
+          condition: HideCondition.CREATED_IN_TRANSACTION,
+          target: accountPath(1),
+        },
+      ],
+    };
+    const instruction = instructionOf([addr("static"), alt(41)]);
+    expect(run(parsed, instruction)).toEqual([
+      { altAddress: "ALT", entryIndex: 41 },
+    ]);
+  });
+
+  it("emits ALT_RESOLUTION for a HIDE_RULE target of every rule set", () => {
+    // Targets are resolved before the merge runs, so a rule that ends up not
+    // firing still needs its target.
+    const parsed: ParsedInstruction = {
+      ...emptyParsed(),
+      hideRules: [
+        {
+          ruleSetIndex: 0,
+          condition: HideCondition.IS_SIGNER,
+          target: accountPath(0),
+        },
+        {
+          ruleSetIndex: 1,
+          condition: HideCondition.ACCOUNT_USED_ELSEWHERE,
+          target: accountPath(1),
+        },
+      ],
+    };
+    const instruction = instructionOf([alt(42), alt(43)]);
+    expect(run(parsed, instruction)).toEqual([
+      { altAddress: "ALT", entryIndex: 42 },
+      { altAddress: "ALT", entryIndex: 43 },
     ]);
   });
 
@@ -210,6 +345,7 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+          activeWhen: [],
           tokenValue: { kind: TokenKind.RESOLVE, accountIndex: 0 },
         },
       ],
@@ -239,6 +375,7 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+          activeWhen: [],
           tokenValue: { kind: TokenKind.RESOLVE },
         },
       ],

@@ -90,6 +90,6 @@ export function isContactsAppVersionSupportedForSession(
     { version: app.version },
     new ContactsApplicationResolver(),
   )
-    .withMinVersionInclusive(minAppVersion)
+    .withMinVersionInclusiveAcceptingPrerelease(minAppVersion)
     .check();
 }

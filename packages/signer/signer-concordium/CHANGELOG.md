@@ -1,5 +1,20 @@
 # @ledgerhq/device-signer-kit-concordium
 
+## 0.5.0
+
+### Minor Changes
+
+- [#1807](https://github.com/LedgerHQ/device-sdk-ts/pull/1807) [`3d479f3`](https://github.com/LedgerHQ/device-sdk-ts/commit/3d479f311484ab35d5de7a0f336305d3b2beae0f) Thanks [@lysyi3m](https://github.com/lysyi3m)! - Send the max fee on the PLT signing INIT frame so the device displays it
+
+- [#1769](https://github.com/LedgerHQ/device-sdk-ts/pull/1769) [`e344e40`](https://github.com/LedgerHQ/device-sdk-ts/commit/e344e40a763564d5370e456fda8c1c39c0a226d9) Thanks [@lysyi3m](https://github.com/lysyi3m)! - Add PLT (Protocol Level Token) transaction signing. `signTransaction` now accepts serialized `TokenUpdate` transactions (kind 27) alongside `Transfer` (3) and `TransferWithMemo` (22), streaming them to the device over INS `0x27` as one INIT frame followed by CONT frames carrying the CIS-7 CBOR payload. The public API is unchanged; `maxFee` is ignored for PLT transactions, whose device review screens display no fee. PLT signing requires a Concordium app that supports INS `0x27` — older apps are rejected with `UnsupportedAppVersionError` so callers can prompt for an app update.
+
+- [#1831](https://github.com/LedgerHQ/device-sdk-ts/pull/1831) [`a81873b`](https://github.com/LedgerHQ/device-sdk-ts/commit/a81873bbc9a4462fb45fc8e32c6e36b3e9c14ebd) Thanks [@lysyi3m](https://github.com/lysyi3m)! - Register the `0x6B11` status word the Concordium app returns when a PLT amount carries more than the 18 decimal places the app can display. It previously fell through to `UnknownDeviceExchangeError`; it now resolves to `ConcordiumErrorCodes.PLT_UNSUPPORTED_DECIMALS`, so consumers can match on it.
+
+### Patch Changes
+
+- Updated dependencies [[`30100b5`](https://github.com/LedgerHQ/device-sdk-ts/commit/30100b5a19cd977320a18338c08590a7830b58eb), [`943650b`](https://github.com/LedgerHQ/device-sdk-ts/commit/943650b911a9c9a07c3ad29ea2057eb8a4b99c07)]:
+  - @ledgerhq/device-management-kit@1.9.0
+
 ## 0.4.0
 
 ### Minor Changes

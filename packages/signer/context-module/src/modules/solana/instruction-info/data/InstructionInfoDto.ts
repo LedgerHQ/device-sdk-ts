@@ -32,12 +32,26 @@ export type CalTokenValueDto = {
   kind: string;
   value?: CalValueDto;
   account_index?: number;
+  /** `RESOLVE` only: account index whose address is the mint of last resort. */
+  fallback_account?: number;
 };
 
 export type CalMintAssociationDto = {
   account_index: number;
   mint_index: number;
 };
+
+// Neither half is codec-validated, and the spec requires both or neither, so
+// both are optional here and the mapper drops a half-declared pair.
+export type CalOwnerAssociationDto = {
+  account_index?: number;
+  owner?: CalValueDto;
+};
+
+/** One `ACTIVE_WHEN` predicate: a bare name, or `MINT_PREDICATE` + its mint. */
+export type CalActiveWhenPredicateDto =
+  | string
+  | { kind: string; mint?: string };
 
 export type CalTypePoolEntryDto = {
   index: number;
@@ -68,6 +82,13 @@ export type CalValueFlowPortDto = CalSubstructureDto & {
   account_indices: number[];
   optional_account_strategy?: string;
   token_value: CalTokenValueDto;
+  active_when?: CalActiveWhenPredicateDto[];
+};
+
+export type CalHideRuleDto = CalSubstructureDto & {
+  rule_set_index?: number;
+  target?: CalValueDto;
+  condition?: string;
 };
 
 export type CalAccountResetDto = CalSubstructureDto & {
@@ -89,11 +110,11 @@ export type CalInstructionDescriptorDto = {
     root_type?: number;
   };
   mint_association?: CalMintAssociationDto;
-  owner_association?: unknown;
+  owner_association?: CalOwnerAssociationDto;
   enum_variants?: Record<string, Record<string, CalEnumVariantDto>>;
   display_fields?: CalDisplayFieldDto[];
   value_flow_ports?: CalValueFlowPortDto[];
-  hide_rules?: CalSubstructureDto[];
+  hide_rules?: CalHideRuleDto[];
   account_resets?: CalAccountResetDto[];
 };
 

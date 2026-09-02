@@ -11,9 +11,11 @@ describe("applyInstructionInfoRule", () => {
         discriminator: "ab",
         idlDescriptor: { type_pool: [], root_type: 0 },
         mintAssociations: [],
+        ownerAssociations: [],
         valueFlowPorts: [],
         accountResets: [],
         displayFields: [],
+        hideRules: [],
         enumCache: new Map(),
       },
     } satisfies MatchedInstruction;

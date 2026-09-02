@@ -15,6 +15,24 @@ export enum TokenKind {
   NATIVE = 0x03,
 }
 
+/** `HIDE_RULE.CONDITION` (`HideCondition` enum). */
+export enum HideCondition {
+  CREATED_IN_TRANSACTION = 0x00,
+  IS_SIGNER = 0x01,
+  ACCOUNT_USED_ELSEWHERE = 0x02,
+  IS_ANOTHER_SIGNER = 0x03,
+  ACCOUNT_EFFECTS_DISPLAYED_ELSEWHERE = 0x04,
+}
+
+/** `VALUE_FLOW_PORT.ACTIVE_WHEN` predicate (`ActiveWhenPredicate` enum). */
+export enum ActiveWhenPredicate {
+  CREATED_IN_TRANSACTION = 0x00,
+  IS_SIGNER = 0x01,
+  ACCOUNT_USED_ELSEWHERE = 0x02,
+  MINT_PREDICATE = 0x03,
+  IS_ANOTHER_SIGNER = 0x04,
+}
+
 /**
  * How a candidate-array port's optional (non-final) candidates are detected as
  * *unset* (`VALUE_FLOW_PORT.OPTIONAL_ACCOUNT_STRATEGY`). Only meaningful when a
@@ -47,6 +65,14 @@ export type ParsedTokenValue = {
   kind: TokenKind;
   value?: ParsedValue;
   accountIndex?: number;
+  /**
+   * `RESOLVE` only (`TOKEN_VALUE.FALLBACK_ACCOUNT`): the account index whose
+   * *address* the device uses as the mint once the binding lookup has failed
+   * through both the mint-association map and `TOKEN_ACCOUNT_STATE`. The device
+   * dereferences it unconditionally, so an ALT-backed slot here still needs an
+   * `ALT_RESOLUTION` or finalize refuses the transaction.
+   */
+  fallbackAccountIndex?: number;
 };
 
 export type ParsedValueFlowPort = {
@@ -58,6 +84,28 @@ export type ParsedValueFlowPort = {
   accountIndices: number[];
   optionalAccountStrategy: OptionalAccountStrategy;
   tokenValue?: ParsedTokenValue;
+  /**
+   * `ACTIVE_WHEN` predicates, ANDed. Only the predicate codes are carried:
+   * `MINT_PREDICATE`'s trailing mint drives nothing host-side (the device
+   * compares it against the resolved token itself).
+   */
+  activeWhen: ActiveWhenPredicate[];
+};
+
+/**
+ * One `HIDE_RULE`. `target` is absent when the rule's target could not be
+ * mapped to a `VALUE` (CAL omitted it), which makes the rule inert host-side.
+ */
+export type ParsedHideRule = {
+  ruleSetIndex: number;
+  condition?: HideCondition;
+  target?: ParsedValue;
+};
+
+/** An `OWNER_ASSOC_ACCOUNT` / `OWNER_ASSOC_OWNER` pair. */
+export type ParsedOwnerAssociation = {
+  accountIndex: number;
+  owner: ParsedValue;
 };
 
 export type ParsedAccountReset = {
@@ -84,6 +132,7 @@ export type ParsedInstructionInfo = {
   typePool: Entry[];
   rootType: number;
   mintAssociations: MintAssociation[];
+  ownerAssociations: ParsedOwnerAssociation[];
 };
 
 /** An instruction's INSTRUCTION_INFO + its substructures, grouped by kind. */
@@ -92,4 +141,5 @@ export type ParsedInstruction = {
   valueFlowPorts: ParsedValueFlowPort[];
   accountResets: ParsedAccountReset[];
   displayFields: ParsedDisplayField[];
+  hideRules: ParsedHideRule[];
 };

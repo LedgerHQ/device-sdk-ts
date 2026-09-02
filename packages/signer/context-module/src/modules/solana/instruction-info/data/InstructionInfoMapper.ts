@@ -8,6 +8,8 @@ import { type Either, Left, Right } from "purify-ts";
 import {
   type SolanaCalAccountReset,
   type SolanaCalDisplayField,
+  type SolanaCalHideRule,
+  type SolanaCalOwnerAssociation,
   type SolanaCalValueFlowPort,
   type SolanaInstructionEnumVariant,
   type SolanaInstructionInfoPayload,
@@ -19,7 +21,9 @@ import { u16Codec } from "@/shared/utils/uIntCodec";
 import {
   type CalAccountResetDto,
   type CalDisplayFieldDto,
+  type CalHideRuleDto,
   type CalInstructionDescriptorDto,
+  type CalOwnerAssociationDto,
   type CalSignatures,
   type CalValueFlowPortDto,
 } from "./InstructionInfoDto";
@@ -44,6 +48,7 @@ export function toValueFlowPorts(
     account_indices: port.account_indices,
     optional_account_strategy: port.optional_account_strategy,
     token_value: port.token_value,
+    active_when: port.active_when,
   }));
 }
 
@@ -62,6 +67,36 @@ export function toAccountResets(
           },
         ],
   );
+}
+
+/**
+ * Every rule is carried, including one CAL served without a `condition`. The
+ * rule's signed TLV goes to the device through {@link toSubstructures}
+ * regardless, and the device resolves the `target` of every rule it receives —
+ * so dropping the entry here would cost the host the `ALT_RESOLUTION` for that
+ * target and make the device refuse to sign. A missing condition only means no
+ * requirement keys off this rule's predicate.
+ */
+export function toHideRules(dtos: CalHideRuleDto[] = []): SolanaCalHideRule[] {
+  return dtos.map((rule) => ({
+    rule_set_index: rule.rule_set_index,
+    target: rule.target,
+    condition: rule.condition,
+  }));
+}
+
+/**
+ * CAL carries at most one `owner_association` per descriptor; the payload holds
+ * a list so the transaction-wide owner map is built the same way as the mint
+ * map. Both halves of the pair are required (spec: "must both be present or
+ * both absent"), so a half-declared association is dropped.
+ */
+export function toOwnerAssociations(
+  dto: CalOwnerAssociationDto | undefined,
+): SolanaCalOwnerAssociation[] {
+  if (dto === undefined) return [];
+  if (dto.account_index === undefined || dto.owner === undefined) return [];
+  return [{ account_index: dto.account_index, owner: dto.owner }];
 }
 
 export function toDisplayFields(
@@ -178,8 +213,10 @@ export function toInstructionInfoPayload(
       rootType: dto.idl_descriptor?.root_type ?? 0,
     },
     mintAssociations: dto.mint_association ? [dto.mint_association] : [],
+    ownerAssociations: toOwnerAssociations(dto.owner_association),
     valueFlowPorts: toValueFlowPorts(dto.value_flow_ports),
     accountResets: toAccountResets(dto.account_resets),
     displayFields: toDisplayFields(dto.display_fields),
+    hideRules: toHideRules(dto.hide_rules),
   });
 }

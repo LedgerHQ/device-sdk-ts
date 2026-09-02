@@ -41,10 +41,8 @@ export {
   type ContactsModelRequirement,
   type ContactsModelSupport,
   type ContactsModelUnsupported,
-  type ContactsSupportQuery,
   type ContactsVersionRequirements,
   ETHEREUM_APP_NAME,
-  isContactsSupported,
   isVersionAtLeast,
   resolveContactsVersionRequirements,
 } from "@api/model/ContactsVersionRequirements";
@@ -56,6 +54,7 @@ export {
   type EditExternalAddressScopeInput,
   type EditExternalAddressScopeOutput,
 } from "@api/model/EditExternalAddressScope";
+export { type ProvideContactInput } from "@api/model/ProvideContact";
 export {
   type ExistingContactGroup,
   type RegisterExternalAddressInput,
@@ -66,3 +65,9 @@ export {
   type RenameContactInput,
   type RenameContactOutput,
 } from "@api/model/RenameContact";
+export { type ContactsErrorCodes } from "@internal/app-binder/model/contactsErrors";
+export {
+  buildProvideContactPayload,
+  sendProvideContactPayload,
+  type SendProvideContactPayloadArgs,
+} from "@internal/app-binder/services/provideContact";

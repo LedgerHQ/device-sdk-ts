@@ -1,0 +1,14 @@
+[
+  {
+    "description": "Recipient in the address book reviews as the contact name",
+    "rawTx": "0x02ef0101843b9aca008506fc23ac0082520894a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d487038d7ea4c6800080c0",
+    "expectedTexts": ["Alice"],
+    "unexpectedTexts": ["0xa1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4"]
+  },
+  {
+    "description": "Recipient absent from the address book reviews as the raw address",
+    "rawTx": "0x02ef0102843b9aca008506fc23ac0082520894c0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d387038d7ea4c6800080c0",
+    "expectedTexts": ["0xc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3"],
+    "unexpectedTexts": ["Alice"]
+  }
+]

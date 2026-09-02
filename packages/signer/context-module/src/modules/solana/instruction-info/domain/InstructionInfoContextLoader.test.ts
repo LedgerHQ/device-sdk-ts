@@ -47,9 +47,11 @@ function makeSystemPayload(): SolanaInstructionInfoPayload {
     enumVariants: [],
     idlDescriptor: { typePool: [], rootType: 0 },
     mintAssociations: [],
+    ownerAssociations: [],
     valueFlowPorts: [],
     accountResets: [],
     displayFields: [],
+    hideRules: [],
   };
 }
 
@@ -70,9 +72,11 @@ function makeJupiterPayload(): SolanaInstructionInfoPayload {
     enumVariants: [],
     idlDescriptor: { typePool: [], rootType: 0 },
     mintAssociations: [],
+    ownerAssociations: [],
     valueFlowPorts: [],
     accountResets: [],
     displayFields: [],
+    hideRules: [],
   };
 }
 

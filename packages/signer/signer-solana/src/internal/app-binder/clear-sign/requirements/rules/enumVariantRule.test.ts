@@ -19,9 +19,11 @@ const matched: MatchedInstruction = {
     discriminator: "00",
     idlDescriptor: { type_pool: [], root_type: 0 },
     mintAssociations: [],
+    ownerAssociations: [],
     valueFlowPorts: [],
     accountResets: [],
     displayFields: [],
+    hideRules: [],
     enumCache: new Map(),
   },
 };

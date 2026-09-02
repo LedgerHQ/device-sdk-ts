@@ -4,7 +4,22 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { TouchController } from "@root/src/internal/core/TouchController";
 
-import { enableBlindSigningSettings, tapLong, tapQuick } from "./touchUseCases";
+import {
+  acceptBlindSigning,
+  confirmAddressBookReview,
+  continueToBlindSigning,
+  enableBlindSigningSettings,
+  enterMenu,
+  exitMenu,
+  mainButton,
+  navigateNext,
+  navigatePrevious,
+  reject,
+  secondaryButton,
+  sign,
+  tapLong,
+  tapQuick,
+} from "./touchUseCases";
 
 describe("touchUsecases", () => {
   const deviceKey = "devA";
@@ -135,6 +150,96 @@ describe("touchUsecases", () => {
       expect(controller.tapAndRelease).toHaveBeenCalledWith(unknownKey, {
         x: 88,
         y: 51,
+      });
+    });
+  });
+
+  describe("fixed-coordinate taps", () => {
+    it.each([
+      ["reject", reject, { x: 20, y: 90 }],
+      ["navigateNext", navigateNext, { x: 90, y: 90 }],
+      ["navigatePrevious", navigatePrevious, { x: 45, y: 90 }],
+      ["mainButton", mainButton, { x: 50, y: 80 }],
+      ["secondaryButton", secondaryButton, { x: 50, y: 90 }],
+      ["enterMenu", enterMenu, { x: 85, y: 8 }],
+      ["exitMenu", exitMenu, { x: 10, y: 4 }],
+      ["continueToBlindSigning", continueToBlindSigning, { x: 50, y: 94 }],
+      ["acceptBlindSigning", acceptBlindSigning, { x: 50, y: 94 }],
+    ] as const)("%s taps %o", async (_name, useCase, expected) => {
+      await useCase(controller, deviceKey)();
+
+      expect(controller.tapAndRelease).toHaveBeenCalledTimes(1);
+      expect(controller.tapAndRelease).toHaveBeenCalledWith(
+        deviceKey,
+        expected,
+      );
+    });
+  });
+
+  describe("sign", () => {
+    const HOLD_TO_SIGN = { x: 85, y: 80 };
+
+    it("holds the sign button for the default 5s", async () => {
+      vi.useFakeTimers();
+      const timeoutSpy = vi.spyOn(globalThis, "setTimeout");
+
+      const run = sign(controller, deviceKey)();
+      await Promise.resolve();
+
+      expect(controller.tap).toHaveBeenCalledWith(deviceKey, HOLD_TO_SIGN);
+      expect(timeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), 5000);
+
+      await vi.advanceTimersByTimeAsync(5000);
+      await run;
+
+      expect(controller.release).toHaveBeenCalledWith(deviceKey, HOLD_TO_SIGN);
+    });
+
+    it("holds the sign button for the provided delay", async () => {
+      vi.useFakeTimers();
+      const timeoutSpy = vi.spyOn(globalThis, "setTimeout");
+
+      const customMs = 250;
+      const run = sign(controller, deviceKey)(customMs);
+      await Promise.resolve();
+
+      expect(timeoutSpy).toHaveBeenLastCalledWith(
+        expect.any(Function),
+        customMs,
+      );
+
+      await vi.advanceTimersByTimeAsync(customMs);
+      await run;
+
+      expect(controller.release).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("confirmAddressBookReview", () => {
+    // The Address Book review puts its Confirm button above the page footer,
+    // so these coordinates are measured per model rather than shared with
+    // mainButton/secondaryButton.
+    it.each([
+      ["stax", { x: 50, y: 77 }],
+      ["flex", { x: 50, y: 72 }],
+    ] as const)(
+      "taps the Confirm button at the %s coordinates",
+      async (key, expected) => {
+        await confirmAddressBookReview(controller, key)();
+
+        expect(controller.tapAndRelease).toHaveBeenCalledTimes(1);
+        expect(controller.tapAndRelease).toHaveBeenCalledWith(key, expected);
+      },
+    );
+
+    it("falls back to Flex coordinates for an unmeasured device key", async () => {
+      const unknownKey = "apex";
+      await confirmAddressBookReview(controller, unknownKey)();
+
+      expect(controller.tapAndRelease).toHaveBeenCalledTimes(1);
+      expect(controller.tapAndRelease).toHaveBeenCalledWith(unknownKey, {
+        x: 50,
+        y: 72,
       });
     });
   });

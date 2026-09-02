@@ -187,6 +187,7 @@ export class ProvideGenericClearSignContextTask {
       altResolutions,
       trustedNames,
       tokenAmountAltRefs,
+      tokenAccountStateAltRefs,
       mintAltRefs,
     } = this.args.challengeBoundRequirements;
 
@@ -340,6 +341,61 @@ export class ProvideGenericClearSignContextTask {
         await this.provideDescriptor(stateCtx);
         streamedMints.add(mint);
         await this.provideDescriptor(mintTokenInfoCtx);
+      }
+    }
+
+    // ALT-backed accounts needing an attested TOKEN_ACCOUNT_STATE: IS_SIGNER
+    // predicate targets (owner map) and RESOLVE port token accounts (mint map).
+    // Same shape as the direct tokenAccountStates loop above, except the address
+    // only exists once ALT_RESOLUTION comes back, so the fetch happens here.
+    // Order is the mirror image of the tokenAmountAltRefs loop: the state comes
+    // first because its payload is the point, and TOKEN_INFO for the address
+    // itself is attempted only when the state fetch finds nothing (the address
+    // was a mint, not a token account, after all) — which is what makes this
+    // bucket subsume the two below it in build()'s priority order.
+    for (const { altAddress, entryIndex } of tokenAccountStateAltRefs) {
+      const altContexts = await this.provideChallengeBoundDescriptorAndReturn(
+        (challenge) => ({
+          deviceModelId,
+          requests: [{ altAddress, entryIndex, challenge }],
+        }),
+        ClearSignContextType.SOLANA_ALT_RESOLUTION,
+      );
+      for (const altCtx of altContexts) {
+        if (
+          altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
+          !isSolanaContextSuccess(altCtx)
+        )
+          continue;
+        const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
+          .payload.resolvedAddress;
+        if (!resolvedAddress) continue;
+        if (streamedTokenAccounts.has(resolvedAddress)) continue;
+
+        const stateCtx = await this.fetchChallengeBoundDescriptorOnly(
+          (challenge) => ({
+            deviceModelId,
+            requests: [{ tokenAccount: resolvedAddress, challenge }],
+          }),
+          ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+        );
+        if (stateCtx && isSolanaContextSuccess(stateCtx)) {
+          streamedTokenAccounts.add(resolvedAddress);
+          await this.provideDescriptor(stateCtx);
+          const mint = (stateCtx as SolanaTokenAccountStateContextSuccess)
+            .payload.mint;
+          if (mint && !streamedMints.has(mint)) {
+            streamedMints.add(mint);
+            await this.fetchAndStreamTokenInfo(mint, deviceModelId);
+          }
+          continue;
+        }
+
+        // No attested state: the resolved address may be a mint itself.
+        if (!streamedMints.has(resolvedAddress)) {
+          streamedMints.add(resolvedAddress);
+          await this.fetchAndStreamTokenInfo(resolvedAddress, deviceModelId);
+        }
       }
     }
 

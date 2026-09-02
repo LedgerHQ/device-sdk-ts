@@ -19,8 +19,11 @@ import {
 export type {
   SolanaAltResolutionPayload,
   SolanaCalAccountReset,
+  SolanaCalActiveWhenPredicate,
   SolanaCalDisplayField,
+  SolanaCalHideRule,
   SolanaCalMintAssociation,
+  SolanaCalOwnerAssociation,
   SolanaCalTokenValue,
   SolanaCalTypePoolEntry,
   SolanaCalValue,

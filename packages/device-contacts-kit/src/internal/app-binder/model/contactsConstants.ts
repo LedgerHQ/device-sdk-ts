@@ -14,6 +14,9 @@ export const CONTACTS_APDU_INS = 0x10;
 /** P1 sub-command selector for REGISTER IDENTITY (register external address). */
 export const SUB_CMD_REGISTER_IDENTITY = 0x01;
 
+/** P1 sub-command selector for PROVIDE CONTACT (pre-signing decoration). */
+export const SUB_CMD_PROVIDE_CONTACT = 0x20;
+
 /**
  * P1 sub-command selector for EDIT IDENTIFIER — an address-book app sub-command
  * (CLA 0xB0 / INS 0x10) served by the coin app, never OS-dispatched.

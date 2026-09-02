@@ -5,12 +5,22 @@
 //
 // Reference: Address Book Final Specifications — Register Identity. Tag order:
 //   STRUCT_TYPE, STRUCT_VERSION, CONTACT_NAME, SCOPE, ACCOUNT_IDENTIFIER,
-//   CHAIN_ID (Ethereum only), BLOCKCHAIN_FAMILY, then optional
-//   GROUP_HANDLE + HMAC_PROOF when extending an existing group.
+//   CHAIN_ID (Ethereum only), BLOCKCHAIN_FAMILY, then optional GROUP_HANDLE +
+//   HMAC_PROOF when extending an existing group.
 //
-// No DERIVATION_PATH: external-address ops carry no path. The current Ethereum
-// app rejects the tag when present (0x6a80) and no longer requires it; the tag
-// is Ledger-Account only (verified on-device, DSDK-1465).
+// No DERIVATION_PATH. The tag's status changed three times in the BOLOS SDK,
+// and the address-book TLV parser is compiled into the app (app_features/), so
+// the SDK revision the app was *built* against decides — not the app version,
+// which reads 1.23.0-dev either way:
+//   - before 2026-08-07: tag 0x69 present and MANDATORY, omitting it -> 0x6a80
+//   - 8e7e7a4f (2026-08-07): made optional, both forms accepted
+//   - a0bb21f5 (2026-08-10): removed, sending it -> 0x6a80 (unknown tag)
+// Omitting it is therefore correct for any app built from 2026-08-07 onward,
+// and wrong for one built before. Both ends verified on hardware: a Flex
+// running a pre-08-07 build of app-ethereum a79f9f8f rejects the payload
+// without the tag in 9ms and no review screen; Speculos running a post-08-10
+// build of the same commit rejects it *with* the tag, the same way.
+// The OS derives the HMAC key from a fixed internal path.
 import {
   ByteArrayBuilder,
   type CommandResult,

@@ -9,6 +9,7 @@ import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCr
 import { type ContractInput } from "@root/src/domain/models/ContractInput";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type ContactsRepository } from "@root/src/domain/repositories/ContactsRepository";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type TransactionContractRepository } from "@root/src/domain/repositories/TransactionContractRepository";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
@@ -16,8 +17,10 @@ import { type SigningService } from "@root/src/domain/services/SigningService";
 import { EthersTransactionCrafter } from "@root/src/infrastructure/adapters/evm/EthersTransactionCrafter";
 import { HttpCalAdapter } from "@root/src/infrastructure/adapters/external/HttpCalAdapter";
 import { HttpEtherscanAdapter } from "@root/src/infrastructure/adapters/external/HttpEtherscanAdapter";
+import { ContactFileRepository } from "@root/src/infrastructure/repositories/ContactFileRepository";
 import { ContractFileRepository } from "@root/src/infrastructure/repositories/ContractFileRepository";
 import { DefaultTransactionContractRepository } from "@root/src/infrastructure/repositories/DefaultTransactionContractRepository";
+import { SpeculosContactsRepository } from "@root/src/infrastructure/repositories/SpeculosContactsRepository";
 import { TransactionFileRepository } from "@root/src/infrastructure/repositories/TransactionFileRepository";
 import { TypedDataFileRepository } from "@root/src/infrastructure/repositories/TypedDataFileRepository";
 import { DMKServiceController } from "@root/src/infrastructure/service-controllers/DMKServiceController";
@@ -44,6 +47,21 @@ export const ethereumInfrastructureModuleFactory = (
     bind<TransactionContractRepository>(TYPES.TransactionContractRepository)
       .to(DefaultTransactionContractRepository)
       .inSingletonScope();
+    bind<ContactFileRepository>(TYPES.ContactFileRepository)
+      .to(ContactFileRepository)
+      .inSingletonScope();
+    // Two tokens, one instance: the service controller needs the concrete
+    // class to hand over the session-bound ContactsManager, while every
+    // consumer sees only the interface.
+    bind<SpeculosContactsRepository>(TYPES.SpeculosContactsRepository)
+      .to(SpeculosContactsRepository)
+      .inSingletonScope();
+    bind<ContactsRepository>(TYPES.ContactsRepository).toDynamicValue(
+      (context) =>
+        context.get<SpeculosContactsRepository>(
+          TYPES.SpeculosContactsRepository,
+        ),
+    );
 
     // Signing
     bind<SigningService>(TYPES.SigningService)
