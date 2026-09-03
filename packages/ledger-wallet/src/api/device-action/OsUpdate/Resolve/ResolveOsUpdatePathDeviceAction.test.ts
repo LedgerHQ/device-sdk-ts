@@ -2,6 +2,7 @@ import {
   DeviceActionStatus,
   type GetOsVersionResponse,
   OnboardingState,
+  SeedWordCount,
   UnknownDAError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -98,7 +99,7 @@ describe("ResolveOsUpdatePathDeviceAction", () => {
       isInRecoveryMode: false,
       hasEndorsementCertificateInSlot1: false,
       hasEndorsementCertificateInSlot2: false,
-      numberOfWords: 24,
+      numberOfWords: SeedWordCount.TwentyFour,
       currentWordIndex: 0,
       onboardingState: OnboardingState.Unknown,
     },
