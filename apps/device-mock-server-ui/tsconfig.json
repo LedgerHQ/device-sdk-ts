@@ -1,0 +1,12 @@
+{
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.web",
+  "include": ["src", "vite.config.ts", "tailwind.config.ts"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  }
+}
