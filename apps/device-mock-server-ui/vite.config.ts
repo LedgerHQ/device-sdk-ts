@@ -10,7 +10,8 @@ const API_TARGET = process.env["MOCK_SERVER_URL"] ?? "http://127.0.0.1:9752";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  // Relative asset URLs, so the bundle survives being mounted under a sub-path.
+  // Relative asset URLs, so index.html finds its bundle whatever path it is
+  // served from. The API calls stay root-absolute, like the server serving both.
   base: "./",
   resolve: {
     alias: { "@": path.resolve(import.meta.dirname, "src") },

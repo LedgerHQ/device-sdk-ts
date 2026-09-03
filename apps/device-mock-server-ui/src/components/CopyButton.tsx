@@ -14,10 +14,13 @@ export function CopyButton({ value, label }: CopyButtonProps) {
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const copy = () => {
-    void navigator.clipboard.writeText(value).then(() => {
-      setCopied(true);
-      timer.current = setTimeout(() => setCopied(false), 1500);
-    });
+    void navigator.clipboard
+      .writeText(value)
+      .then(() => {
+        setCopied(true);
+        timer.current = setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => setCopied(false));
   };
 
   return (

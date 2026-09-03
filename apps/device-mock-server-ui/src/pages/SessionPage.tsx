@@ -54,7 +54,10 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
     setRefreshing(true);
     api
       .getSession(token)
-      .then(setSession)
+      .then((next) => {
+        setSession(next);
+        setError(null);
+      })
       .catch((cause: unknown) =>
         setError(cause instanceof Error ? cause.message : String(cause)),
       )
