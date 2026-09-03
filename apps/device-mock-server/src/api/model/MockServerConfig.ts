@@ -24,6 +24,11 @@ export interface MockServerConfig {
    * omitted, the server behaves as a pure mock.
    */
   readonly speculos?: SpeculosOperatorConfig;
+  /**
+   * Built configuration UI to serve at the root URL. Omitted exposes the HTTP
+   * API only.
+   */
+  readonly webUiDir?: string;
 }
 
 /** A built mock server: the Express app plus a lifecycle handle. */
