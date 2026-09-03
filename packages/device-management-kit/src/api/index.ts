@@ -88,7 +88,7 @@ export {
   OnboardingState,
   type OnboardingStatus,
   type SecureElementFlags,
-  type SeedWordCount,
+  SeedWordCount,
   type WordsInformation,
 } from "@api/device/SecureElementFlags";
 export { type InternalApi } from "@api/device-action/DeviceAction";

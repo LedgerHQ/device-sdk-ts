@@ -3,7 +3,7 @@ import {
   type EndorsementInformation,
   OnboardingState,
   type OnboardingStatus,
-  type SeedWordCount,
+  SeedWordCount,
   type WordsInformation,
 } from "@api/device/SecureElementFlags";
 
@@ -81,9 +81,9 @@ export class SecureElementFlagsParser {
     const thirdByte = this.seFlags[2] ?? 0x00;
     const wordCountValue = (thirdByte >> 5) & 0x03;
     const wordCounts: ReadonlyArray<SeedWordCount | undefined> = [
-      24,
-      18,
-      12,
+      SeedWordCount.TwentyFour,
+      SeedWordCount.Eighteen,
+      SeedWordCount.Twelve,
       undefined,
     ];
 

@@ -1,6 +1,6 @@
 import { type GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { OnboardingState } from "@api/device/SecureElementFlags";
+import { OnboardingState, SeedWordCount } from "@api/device/SecureElementFlags";
 
 export const getOsVersionCommandResponseMockBuilder = (
   deviceModelId: DeviceModelId = DeviceModelId.NANO_SP,
@@ -31,7 +31,7 @@ export const getOsVersionCommandResponseMockBuilder = (
         isInRecoveryMode: false,
         hasEndorsementCertificateInSlot1: false,
         hasEndorsementCertificateInSlot2: false,
-        numberOfWords: 24 as const,
+        numberOfWords: SeedWordCount.TwentyFour,
         currentWordIndex: 0,
         onboardingState: OnboardingState.Unknown,
       },
@@ -61,7 +61,7 @@ export const getOsVersionCommandResponseMockBuilder = (
         isInRecoveryMode: false,
         hasEndorsementCertificateInSlot1: false,
         hasEndorsementCertificateInSlot2: false,
-        numberOfWords: 24 as const,
+        numberOfWords: SeedWordCount.TwentyFour,
         currentWordIndex: 0,
         onboardingState: OnboardingState.Unknown,
       },
@@ -91,7 +91,7 @@ export const getOsVersionCommandResponseMockBuilder = (
         isInRecoveryMode: false,
         hasEndorsementCertificateInSlot1: false,
         hasEndorsementCertificateInSlot2: false,
-        numberOfWords: 24 as const,
+        numberOfWords: SeedWordCount.TwentyFour,
         currentWordIndex: 0,
         onboardingState: OnboardingState.Unknown,
       },
@@ -121,7 +121,7 @@ export const getOsVersionCommandResponseMockBuilder = (
         isInRecoveryMode: false,
         hasEndorsementCertificateInSlot1: false,
         hasEndorsementCertificateInSlot2: false,
-        numberOfWords: 24 as const,
+        numberOfWords: SeedWordCount.TwentyFour,
         currentWordIndex: 0,
         onboardingState: OnboardingState.Unknown,
       },
@@ -151,7 +151,7 @@ export const getOsVersionCommandResponseMockBuilder = (
         isInRecoveryMode: false,
         hasEndorsementCertificateInSlot1: false,
         hasEndorsementCertificateInSlot2: false,
-        numberOfWords: 24 as const,
+        numberOfWords: SeedWordCount.TwentyFour,
         currentWordIndex: 0,
         onboardingState: OnboardingState.Unknown,
       },
@@ -181,7 +181,7 @@ export const getOsVersionCommandResponseMockBuilder = (
         isInRecoveryMode: false,
         hasEndorsementCertificateInSlot1: false,
         hasEndorsementCertificateInSlot2: false,
-        numberOfWords: 24 as const,
+        numberOfWords: SeedWordCount.TwentyFour,
         currentWordIndex: 0,
         onboardingState: OnboardingState.Unknown,
       },

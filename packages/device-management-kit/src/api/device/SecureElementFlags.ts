@@ -52,7 +52,15 @@ export type EndorsementInformation = {
   hasEndorsementCertificateInSlot2: boolean;
 };
 
-export type SeedWordCount = 12 | 18 | 24;
+/**
+ * Number of seed words selected during onboarding.
+ * Values follow GET VERSION byte 3 (bits 5–6): 24, 18, or 12.
+ */
+export enum SeedWordCount {
+  Twelve = 12,
+  Eighteen = 18,
+  TwentyFour = 24,
+}
 
 /**
  * Represents the seed phrase setup progress.

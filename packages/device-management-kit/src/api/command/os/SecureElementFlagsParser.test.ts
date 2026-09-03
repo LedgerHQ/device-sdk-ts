@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   type DeviceGeneralState,
   OnboardingState,
+  SeedWordCount,
 } from "@api/device/SecureElementFlags";
 
 import { SecureElementFlagsParser } from "./SecureElementFlagsParser";
@@ -17,7 +18,7 @@ describe("SecureElementFlagsParser", () => {
       hasEndorsementCertificateInSlot2: false,
     });
     expect(parser.wordsInformation()).toEqual({
-      numberOfWords: 24,
+      numberOfWords: SeedWordCount.TwentyFour,
       currentWordIndex: 0,
     });
     expect(parser.onboardingStatus()).toEqual({
@@ -61,9 +62,9 @@ describe("SecureElementFlagsParser", () => {
   );
 
   it.each([
-    [0b00000000, 24, 0],
-    [0b00100101, 18, 5],
-    [0b01010001, 12, 17],
+    [0b00000000, SeedWordCount.TwentyFour, 0],
+    [0b00100101, SeedWordCount.Eighteen, 5],
+    [0b01010001, SeedWordCount.Twelve, 17],
     [0b01111111, undefined, 31],
   ])(
     "should parse words information value %#",
@@ -85,8 +86,22 @@ describe("SecureElementFlagsParser", () => {
     );
 
     expect(parser.wordsInformation()).toEqual({
-      numberOfWords: 18,
+      numberOfWords: SeedWordCount.Eighteen,
       currentWordIndex: 5,
+    });
+  });
+
+  it("should expose numeric seed word counts so they survive serialization", () => {
+    const parser = new SecureElementFlagsParser(
+      new Uint8Array([0x00, 0x00, 0x00, 0x00]),
+    );
+
+    const words = parser.wordsInformation();
+
+    expect(words.numberOfWords).toBe(SeedWordCount.TwentyFour);
+    expect(JSON.parse(JSON.stringify(words))).toEqual({
+      numberOfWords: SeedWordCount.TwentyFour,
+      currentWordIndex: 0,
     });
   });
 
