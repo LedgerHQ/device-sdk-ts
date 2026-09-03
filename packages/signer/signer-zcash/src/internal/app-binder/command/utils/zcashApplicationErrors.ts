@@ -50,7 +50,7 @@ export const ZCASH_APP_ERRORS: CommandErrors<ZcashErrorCodes> = {
   "6700": { message: "IncorrectLengthError" },
   "6981": { message: "CommandIncompatibleFileStructureError" },
   "6982": { message: "SecurityStatusNotSatisfiedError" },
-  "6985": { message: "ConditionOfUseNotSatisfiedError" },
+  "6985": { message: "UserRejectedError" },
   // The app keeps 6985 for a user denial, so this adjacent word carries the
   // preconditions it refuses on: a signing command whose derivation path does not
   // match the account the change returns to, and one issued before the PCZT is

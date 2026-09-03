@@ -95,7 +95,7 @@ describe("GetTrustedInputCommand", () => {
       if (!isSuccessCommandResult(response)) {
         const error = response.error as { errorCode?: string; message: string };
         expect(error.errorCode).toBe("6985");
-        expect(error.message).toBe("ConditionOfUseNotSatisfiedError");
+        expect(error.message).toBe("UserRejectedError");
       }
     });
 
