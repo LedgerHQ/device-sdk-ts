@@ -12,6 +12,7 @@ export type ZcashErrorCodes =
   | "6981"
   | "6982"
   | "6985"
+  | "6986"
   | "6a80"
   | "6a84"
   | "6a88"
@@ -21,6 +22,8 @@ export type ZcashErrorCodes =
   | "6d00"
   | "6e00"
   | "6f00"
+  | "6f01"
+  | "6f03"
   | "6f42"
   | "6faa"
   | "9240"
@@ -48,6 +51,11 @@ export const ZCASH_APP_ERRORS: CommandErrors<ZcashErrorCodes> = {
   "6981": { message: "CommandIncompatibleFileStructureError" },
   "6982": { message: "SecurityStatusNotSatisfiedError" },
   "6985": { message: "ConditionOfUseNotSatisfiedError" },
+  // The app keeps 6985 for a user denial, so this adjacent word carries the
+  // preconditions it refuses on: a signing command whose derivation path does not
+  // match the account the change returns to, and one issued before the PCZT is
+  // finalized.
+  "6986": { message: "ConditionsOfUseNotSatisfiedError" },
   "6a80": { message: "IncorrectDataError" },
   "6a84": { message: "NotEnoughMemorySpaceError" },
   "6a88": { message: "ReferencedDataNotFoundError" },
@@ -57,6 +65,8 @@ export const ZCASH_APP_ERRORS: CommandErrors<ZcashErrorCodes> = {
   "6d00": { message: "InsNotSupportedError" },
   "6e00": { message: "ClaNotSupportedError" },
   "6f00": { message: "TechnicalProblemError" },
+  "6f01": { message: "VersionParsingFailError" },
+  "6f03": { message: "RngFailureError" },
   "6f42": { message: "LicensingError" },
   "6faa": { message: "HaltedError" },
   "9240": { message: "MemoryProblemError" },
