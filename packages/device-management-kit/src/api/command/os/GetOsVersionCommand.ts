@@ -12,12 +12,7 @@ import {
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { DeviceModelId } from "@api/device/DeviceModel";
-import {
-  type DeviceGeneralState,
-  type EndorsementInformation,
-  type OnboardingStatus,
-  type WordsInformation,
-} from "@api/device/SecureElementFlags";
+import { type SecureElementFlags } from "@api/device/SecureElementFlags";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 import { SecureElementFlagsParser } from "./SecureElementFlagsParser";
@@ -105,10 +100,7 @@ export type GetOsVersionResponse = {
   /**
    * The parsed secure element flags.
    */
-  readonly secureElementFlags: DeviceGeneralState &
-    EndorsementInformation &
-    WordsInformation &
-    OnboardingStatus;
+  readonly secureElementFlags: SecureElementFlags;
 };
 
 export type GetOsVersionCommandResult = CommandResult<GetOsVersionResponse>;
@@ -150,8 +142,12 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
     let version = parser.encodeToString(parser.extractFieldLVEncoded());
     let seFlags = parser.extractFieldLVEncoded() ?? new Uint8Array(0);
     const seFlagsParser = new SecureElementFlagsParser(seFlags);
-    // This is the parsed secure element flags.
-    const secureElementFlags = { ...seFlagsParser.generalDeviceState() };
+    const secureElementFlags = {
+      ...seFlagsParser.generalDeviceState(),
+      ...seFlagsParser.endorsementInformation(),
+      ...seFlagsParser.wordsInformation(),
+      ...seFlagsParser.onboardingStatus(),
+    };
 
     // Handle old firmwares with no version
     if (!version) {

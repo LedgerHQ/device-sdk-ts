@@ -43,6 +43,7 @@ export {
 } from "@api/command/os/GetBatteryStatusCommand";
 export {
   GetOsVersionCommand,
+  type GetOsVersionCommandResult,
   type GetOsVersionResponse,
 } from "@api/command/os/GetOsVersionCommand";
 export {
@@ -81,6 +82,15 @@ export {
   LEDGER_VENDOR_ID,
 } from "@api/device/DeviceModel";
 export { DeviceStatus } from "@api/device/DeviceStatus";
+export {
+  type DeviceGeneralState,
+  type EndorsementInformation,
+  OnboardingState,
+  type OnboardingStatus,
+  type SecureElementFlags,
+  type SeedWordCount,
+  type WordsInformation,
+} from "@api/device/SecureElementFlags";
 export { type InternalApi } from "@api/device-action/DeviceAction";
 export {
   type DeviceActionState,

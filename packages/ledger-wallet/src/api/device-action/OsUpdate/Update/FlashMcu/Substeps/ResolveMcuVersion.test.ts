@@ -1,6 +1,7 @@
 import {
   type GetOsVersionResponse,
   type InternalApi,
+  OnboardingState,
 } from "@ledgerhq/device-management-kit";
 import { EitherAsync } from "purify-ts";
 
@@ -36,6 +37,11 @@ describe("ResolveMcuVersion", () => {
       isOnboarded: true,
       isMcuCodeSigned: true,
       isInRecoveryMode: false,
+      hasEndorsementCertificateInSlot1: false,
+      hasEndorsementCertificateInSlot2: false,
+      numberOfWords: 24,
+      currentWordIndex: 0,
+      onboardingState: OnboardingState.Unknown,
     },
   } satisfies GetOsVersionResponse;
 
