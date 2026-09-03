@@ -165,3 +165,45 @@ describe("OsApduService onboarding", () => {
     expect(await os.resolve(record, device, EARLY_CHECK_ENTER)).toBeUndefined();
   });
 });
+
+describe("OsApduService rename", () => {
+  // `e0 d4 00 00 <len> <utf-8 name>` — "Louis Flex" is 10 bytes.
+  const SET_NAME = "e0d400000a4c6f75697320466c6578";
+  const GET_NAME = "e0d2000000";
+
+  it("renames the device and reads the new name back", async () => {
+    const { os, repo, record, device } = setup();
+
+    expect(await os.resolve(record, device, SET_NAME)).toBe("9000");
+
+    const renamed = repo.findDevice(record, device.id).unsafeCoerce();
+    expect(renamed.name).toBe("Louis Flex");
+    expect(await os.resolve(record, renamed, GET_NAME)).toBe(
+      "4c6f75697320466c6578" + "9000",
+    );
+  });
+
+  it("keeps the rest of the device as it was", async () => {
+    const { os, repo, record, device } = setup();
+
+    await os.resolve(record, device, SET_NAME);
+
+    const renamed = repo.findDevice(record, device.id).unsafeCoerce();
+    expect(renamed.id).toBe(device.id);
+    expect(renamed.device_type).toBe(device.device_type);
+    expect(renamed.firmware_version).toBe(device.firmware_version);
+  });
+
+  it("rejects a name the command does not carry in full", async () => {
+    const { os, repo, record, device } = setup();
+
+    // Declares 10 bytes, sends 4.
+    expect(await os.resolve(record, device, "e0d400000a4c6f7569")).toBe("6a80");
+    // Declares no name at all.
+    expect(await os.resolve(record, device, "e0d400000000")).toBe("6a80");
+
+    expect(repo.findDevice(record, device.id).unsafeCoerce().name).toBe(
+      device.name,
+    );
+  });
+});
