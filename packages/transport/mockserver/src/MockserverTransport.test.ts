@@ -32,6 +32,9 @@ const transportArgs = {
   loggerServiceFactory,
 } as unknown as TransportArgs;
 
+/** Mirrors the transport's own discovery interval. */
+const POLL_INTERVAL_MS = 1000;
+
 const aDevice = (overrides: Partial<Device> = {}): Device => ({
   id: "device-1",
   name: "Ledger Nano X",
@@ -68,6 +71,10 @@ describe("mockserverTransportFactory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockListDevices(() => Promise.resolve([]));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("builds a supported transport with the mockserver identifier", () => {
@@ -114,15 +121,18 @@ describe("mockserverTransportFactory", () => {
     });
 
     it("keeps polling so newly added devices appear", async () => {
+      vi.useFakeTimers();
       const listDevices = mockListDevices(() => Promise.resolve([]));
       listDevices.mockResolvedValueOnce([]).mockResolvedValueOnce([aDevice()]);
       const transport = mockserverTransportFactory("http://localhost:8080")(
         transportArgs,
       );
 
-      const emissions = await firstValueFrom(
+      const polled = firstValueFrom(
         transport.listenToAvailableDevices().pipe(take(2), toArray()),
       );
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      const emissions = await polled;
 
       expect(emissions[0]).toEqual([]);
       expect(emissions[1]).toEqual([
@@ -141,6 +151,28 @@ describe("mockserverTransportFactory", () => {
       );
 
       expect(devices).toEqual([]);
+    });
+
+    it("keeps polling after a failed request", async () => {
+      vi.useFakeTimers();
+      const listDevices = mockListDevices(() => Promise.resolve([]));
+      listDevices
+        .mockRejectedValueOnce(new Error("offline"))
+        .mockResolvedValueOnce([aDevice()]);
+      const transport = mockserverTransportFactory("http://localhost:8080")(
+        transportArgs,
+      );
+
+      const polled = firstValueFrom(
+        transport.listenToAvailableDevices().pipe(take(2), toArray()),
+      );
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+      const emissions = await polled;
+
+      expect(emissions[0]).toEqual([]);
+      expect(emissions[1]).toEqual([
+        expect.objectContaining({ id: "device-1" }),
+      ]);
     });
   });
 
