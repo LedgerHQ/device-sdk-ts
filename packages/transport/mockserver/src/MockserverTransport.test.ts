@@ -426,6 +426,127 @@ describe("mockserverTransportFactory", () => {
     });
   });
 
+  describe("disconnect polling", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const connectTo = async (listDevices: ReturnType<typeof vi.fn>) => {
+      mockClientImpl({
+        connect: vi.fn(() =>
+          Promise.resolve({ device: aDevice(), connected: true }),
+        ),
+        disconnect: vi.fn(() => Promise.resolve(true)),
+        listDevices,
+      });
+      const transport = mockserverTransportFactory("http://localhost:8080")(
+        transportArgs,
+      );
+      const onDisconnect = vi.fn();
+      const connected = (
+        await transport.connect({ deviceId: "device-1", onDisconnect })
+      ).unsafeCoerce();
+      return { transport, connected, onDisconnect };
+    };
+
+    it("calls onDisconnect once the device is gone from the mock server", async () => {
+      const listDevices = vi.fn(() => Promise.resolve([aDevice()]));
+      const { onDisconnect } = await connectTo(listDevices);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(onDisconnect).not.toHaveBeenCalled();
+
+      listDevices.mockResolvedValue([]);
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(onDisconnect).toHaveBeenCalledWith("device-1");
+    });
+
+    it("calls onDisconnect when the server reports the device as disconnected", async () => {
+      const listDevices = vi.fn(() =>
+        Promise.resolve([aDevice({ connected: false })]),
+      );
+      const { onDisconnect } = await connectTo(listDevices);
+
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(onDisconnect).toHaveBeenCalledWith("device-1");
+    });
+
+    it("keeps the device connected while the mock server is unreachable", async () => {
+      const listDevices = vi.fn(() => Promise.reject(new Error("offline")));
+      const { onDisconnect } = await connectTo(listDevices);
+
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(onDisconnect).not.toHaveBeenCalled();
+    });
+
+    it("reports the disconnect only once", async () => {
+      const listDevices = vi.fn(() => Promise.resolve([]));
+      const { onDisconnect } = await connectTo(listDevices);
+
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(onDisconnect).toHaveBeenCalledTimes(1);
+    });
+
+    it("stops polling after an explicit disconnect", async () => {
+      const listDevices = vi.fn(() => Promise.resolve([aDevice()]));
+      const { transport, connected, onDisconnect } =
+        await connectTo(listDevices);
+
+      await transport.disconnect({ connectedDevice: connected });
+      listDevices.mockResolvedValue([]);
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(onDisconnect).not.toHaveBeenCalled();
+    });
+
+    it("stays silent when a request in flight answers after a disconnect", async () => {
+      // Clearing the interval cannot cancel a request already sent.
+      let answer = (_: Device[]) => {};
+      const listDevices = vi.fn(
+        () =>
+          new Promise<Device[]>((resolve) => {
+            answer = resolve;
+          }),
+      );
+      const { transport, connected, onDisconnect } =
+        await connectTo(listDevices);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      await transport.disconnect({ connectedDevice: connected });
+      answer([]);
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(onDisconnect).not.toHaveBeenCalled();
+    });
+
+    it("reports once when two polls overlap", async () => {
+      // A request slower than the interval leaves two in flight at once.
+      const answers: ((devices: Device[]) => void)[] = [];
+      const listDevices = vi.fn(
+        () =>
+          new Promise<Device[]>((resolve) => {
+            answers.push(resolve);
+          }),
+      );
+      const { onDisconnect } = await connectTo(listDevices);
+
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(answers).toHaveLength(2);
+      answers.forEach((answer) => answer([]));
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(onDisconnect).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("mockserverTransportFactory", () => {
     it("uses the config mock url when no explicit url is provided", () => {
       const client = mockClientImpl();

@@ -51,10 +51,17 @@ const deviceModelDataSource = new StaticDeviceModelDataSource();
 /** Interval (ms) at which the mock server is polled for available devices. */
 const DISCOVERY_POLL_INTERVAL_MS = 1000;
 
+/** Interval (ms) at which a connected device is polled for its liveness. */
+const DISCONNECT_POLL_INTERVAL_MS = 1000;
+
 export class MockTransport implements Transport {
   private logger: LoggerPublisherService;
   private mockClient: MockClient;
   private readonly identifier: TransportIdentifier = mockserverIdentifier;
+  private readonly disconnectPolls = new Map<
+    DeviceId,
+    ReturnType<typeof setInterval>
+  >();
 
   constructor(
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
@@ -123,6 +130,7 @@ export class MockTransport implements Transport {
         type: device.connectivity_type,
         transport: this.identifier,
       } as TransportConnectedDevice;
+      this.listenForDisconnect(deviceId, params.onDisconnect);
       return Right(connectedDevice);
     } catch (error) {
       return Left(new OpeningConnectionError(error as Error));
@@ -134,6 +142,7 @@ export class MockTransport implements Transport {
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
     const deviceId: string = params.connectedDevice.id;
+    this.clearDisconnectPoll(deviceId);
     try {
       const success: boolean = await this.mockClient.disconnect(deviceId);
       if (!success) {
@@ -170,9 +179,59 @@ export class MockTransport implements Transport {
       this.logger.debug(formatApduReceivedLog(apduResponse));
       return Right(apduResponse);
     } catch (error) {
+      this.clearDisconnectPoll(onDisconnectDeviceId);
       onDisconnect(onDisconnectDeviceId);
       return Left(new NoAccessibleDeviceError(error as Error));
     }
+  }
+
+  /**
+   * A device can be deleted or disconnected through the API by any client, and
+   * nothing announces it the way a physical unplug does. Without the signal,
+   * DMK keeps a session that claims to be connected.
+   */
+  private listenForDisconnect(
+    deviceId: DeviceId,
+    onDisconnect: DisconnectHandler,
+  ): void {
+    this.clearDisconnectPoll(deviceId);
+    const poll: ReturnType<typeof setInterval> = setInterval(() => {
+      this.mockClient
+        .listDevices()
+        .then((devices) => {
+          // clearInterval leaves a request in flight; only the poll still
+          // registered may report.
+          if (this.disconnectPolls.get(deviceId) !== poll) {
+            return;
+          }
+          const present = devices.some(
+            (device) => device.id === deviceId && device.connected !== false,
+          );
+          if (present) {
+            return;
+          }
+          this.logger.info(
+            `Device ${deviceId} is no longer connected, disconnecting`,
+          );
+          this.clearDisconnectPoll(deviceId);
+          onDisconnect(deviceId);
+        })
+        .catch((error) => {
+          // An unreachable server is not proof the device left; the next tick
+          // decides.
+          this.logger.error("disconnect poll failed", { data: { error } });
+        });
+    }, DISCONNECT_POLL_INTERVAL_MS);
+    this.disconnectPolls.set(deviceId, poll);
+  }
+
+  private clearDisconnectPoll(deviceId: DeviceId): void {
+    const poll = this.disconnectPolls.get(deviceId);
+    if (poll === undefined) {
+      return;
+    }
+    clearInterval(poll);
+    this.disconnectPolls.delete(deviceId);
   }
 
   private mapToDiscoveredDevices(
