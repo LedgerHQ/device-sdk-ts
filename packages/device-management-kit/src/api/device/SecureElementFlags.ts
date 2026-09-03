@@ -55,12 +55,17 @@ export type EndorsementInformation = {
 /**
  * Number of seed words selected during onboarding.
  * Values follow GET VERSION byte 3 (bits 5–6): 24, 18, or 12.
+ *
+ * Defined as a const object rather than a numeric enum so the type stays
+ * `12 | 18 | 24` and is not assignable from an arbitrary `number`.
  */
-export enum SeedWordCount {
-  Twelve = 12,
-  Eighteen = 18,
-  TwentyFour = 24,
-}
+export const SeedWordCount = {
+  Twelve: 12,
+  Eighteen: 18,
+  TwentyFour: 24,
+} as const;
+
+export type SeedWordCount = (typeof SeedWordCount)[keyof typeof SeedWordCount];
 
 /**
  * Represents the seed phrase setup progress.

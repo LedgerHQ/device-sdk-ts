@@ -105,6 +105,15 @@ describe("SecureElementFlagsParser", () => {
     });
   });
 
+  it("should keep SeedWordCount as 12 | 18 | 24, not an open numeric enum", () => {
+    const valid: SeedWordCount = SeedWordCount.Twelve;
+    expect(valid).toBe(12);
+
+    // @ts-expect-error arbitrary numbers are not valid seed word counts
+    const invalid: SeedWordCount = 15;
+    expect(typeof invalid).toBe("number");
+  });
+
   describe("onboardingStatus", () => {
     it.each([
       [0x00, OnboardingState.Unknown],
