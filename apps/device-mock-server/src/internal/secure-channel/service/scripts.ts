@@ -56,8 +56,20 @@ const HANDSHAKE: readonly SecureChannelStep[] = [
 ];
 
 /**
+ * What a real device reports for an entry that carries no code data, and what
+ * Ledger Live skips on sight. An empty string does not read that way to it: a
+ * hash-less app is taken for an installed one and its empty hash looked up,
+ * which the Manager API answers with an unrelated app.
+ */
+const NO_CODE_DATA = "0".repeat(64);
+
+/**
  * Map a device's `apps` metadata to the installed-app list shape DMK expects,
  * excluding the BOLOS dashboard (which is not a regular installed app).
+ *
+ * The code-data hash is derived per app, not fixed: an app carrying an install
+ * hash is reported as installed, one without as having no code data, so it is
+ * skipped rather than misidentified.
  */
 export function deriveInstalledApps(device: Device): InstalledAppEntry[] {
   return (device.apps ?? [])
@@ -65,7 +77,7 @@ export function deriveInstalledApps(device: Device): InstalledAppEntry[] {
     .map((app) => ({
       flags: 0,
       hash: app.hash ?? "",
-      hash_code_data: "",
+      hash_code_data: app.hash ?? NO_CODE_DATA,
       name: app.name,
     }));
 }
