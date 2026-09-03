@@ -1,3 +1,4 @@
+import { type Device } from "@ledgerhq/device-mockserver-client";
 import { Maybe } from "purify-ts";
 import { vi } from "vitest";
 
