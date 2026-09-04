@@ -27,6 +27,11 @@ export const LIST_APPS_CONTINUE_PREFIX = "e0df0000";
  */
 export const GET_DEVICE_NAME_CLEANING_PREFIX = "e0500000";
 export const GET_DEVICE_NAME_PREFIX = "e0d20000";
+/**
+ * SetDeviceName (cla=0xe0, ins=0xd4), sent as `<prefix><len><utf-8 name>` by
+ * live-common's `editDeviceName` when a device is renamed from Ledger Live.
+ */
+export const SET_DEVICE_NAME_PREFIX = "e0d40000";
 
 /**
  * Custom Lock Screen commands (CLA 0xe0), matched on their cla+ins prefix. The
@@ -267,6 +272,22 @@ export function deriveListApps(
  */
 export function deriveGetDeviceName(device: Device): string {
   return asciiHex(device.name ?? "") + STATUS_OK;
+}
+
+/**
+ * The name carried by a SetDeviceName APDU, or `null` when the command is
+ * malformed — no length byte, or fewer name bytes than it declares. A device
+ * also refuses an empty name, which reads as malformed here.
+ */
+export function parseSetDeviceName(apdu: string): string | null {
+  const body = apdu.slice(SET_DEVICE_NAME_PREFIX.length);
+  const declared = parseInt(body.slice(0, 2), 16);
+  const data = body.slice(2);
+  if (!declared || data.length !== declared * 2) {
+    return null;
+  }
+  const bytes = data.match(/../g) ?? [];
+  return String.fromCharCode(...bytes.map((byte) => parseInt(byte, 16)));
 }
 
 const BATTERY_CAPABLE_MODELS = new Set(["stax", "flex", "apex"]);

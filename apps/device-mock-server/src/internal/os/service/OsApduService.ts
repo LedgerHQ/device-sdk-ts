@@ -5,7 +5,9 @@ import {
   deriveGetOsVersion,
   deriveOsApduResponse,
   GET_OS_VERSION_PREFIX,
+  parseSetDeviceName,
   resolveTargetId,
+  SET_DEVICE_NAME_PREFIX,
 } from "@internal/os/service/osApdus";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
 import { type FirmwareUpdateResolver } from "@internal/secure-channel/service/FirmwareUpdateResolver";
@@ -23,6 +25,9 @@ const TOGGLE_EARLY_CHECK_ENTER_P2 = "00";
 const TOGGLE_EARLY_CHECK_EXIT_P2 = "01";
 
 const STATUS_OK = "9000";
+
+/** What a device answers a command whose data it cannot use (`6a80`). */
+const INVALID_DATA_SW = "6a80";
 
 /**
  * Synthesizes the OS-handshake APDU responses (GetOsVersion / GetAppAndVersion /
@@ -79,6 +84,17 @@ export class OsApduService {
         );
         return STATUS_OK;
       }
+    }
+
+    // A rename has to stick: the name is what GetDeviceName reads back, and
+    // what every later read of the device reports.
+    if (apdu.startsWith(SET_DEVICE_NAME_PREFIX)) {
+      const name = parseSetDeviceName(apdu);
+      if (name === null) {
+        return INVALID_DATA_SW;
+      }
+      this.repository.editDevice(record, device.id, { name });
+      return STATUS_OK;
     }
 
     return deriveOsApduResponse(device, apdu);

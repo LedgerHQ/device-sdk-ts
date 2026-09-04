@@ -132,7 +132,7 @@ flowchart TD
 
 1. **Explicit per-device mock** — an exact-prefix match always wins, **even while a Speculos proxy is active** (multi-response mocks cycle). This lets you override a single app response mid-session — e.g. mock `GetAppAndVersion` to `5515` to simulate a locked device while the app runs on the emulator.
 2. **Active Speculos proxy** — once an app is open, unmatched APDUs are forwarded to the emulator; `Close App` releases it and reverts to mock mode.
-3. **Derived handshake & secure-channel APDUs** — `GetOsVersion` / `GetAppAndVersion` are synthesized from the device's firmware/app metadata, and the [secure-channel](#-secure-channel-websocket) relayed APDUs (`e051` permission, `e052` GetCertificate, `e0f0` install block) derive to sensible defaults (`9000` / a parseable certificate). All of these never need mocking but can be overridden by a mock — which is how secure-channel error paths are injected.
+3. **Derived handshake & secure-channel APDUs** — `GetOsVersion` / `GetAppAndVersion` are synthesized from the device's firmware/app metadata, and the [secure-channel](#-secure-channel-websocket) relayed APDUs (`e051` permission, `e052` GetCertificate, `e0f0` install block) derive to sensible defaults (`9000` / a parseable certificate). All of these never need mocking but can be overridden by a mock — which is how secure-channel error paths are injected. `SetDeviceName` (`e0d4…`) is the one that writes back: it renames the device, so `GetDeviceName`, `GET /devices` and the export all report the new name.
 4. **Unmatched Open App** — when Speculos is configured, provisions a real emulator for the requested app (`6807` if the app is not installed on the device).
 5. **Fallback** — `6d00`.
 
