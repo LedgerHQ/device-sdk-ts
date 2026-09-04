@@ -60,7 +60,7 @@ catalog:
   '@types/web-bluetooth': ^0.0.20
   '@types/ws': ^8.5.14
   '@vitejs/plugin-react': ^5.0.0
-  '@vitest/coverage-istanbul': ^3.2.4
+  '@vitest/coverage-istanbul': ^4.1.11
   autoprefixer: ^10.4.17
 
   babel-plugin-module-resolver: ^5.0.2
