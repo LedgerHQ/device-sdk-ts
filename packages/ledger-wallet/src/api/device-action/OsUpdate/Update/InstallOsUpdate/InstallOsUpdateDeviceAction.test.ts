@@ -2,9 +2,9 @@ import {
   DeviceActionStatus,
   type GetOsVersionResponse,
   OnboardingState,
-  SeedWordCount,
   SecureChannelError,
   SecureChannelEventType,
+  SeedWordCount,
   UnknownDAError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
