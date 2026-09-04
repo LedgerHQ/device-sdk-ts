@@ -1,6 +1,7 @@
 import {
   type GetOsVersionResponse,
   OnboardingState,
+  SeedWordCount,
 } from "@ledgerhq/device-management-kit";
 import { EitherAsync, Just, Nothing } from "purify-ts";
 
@@ -48,7 +49,7 @@ describe("ResolveOsUpdatePath", () => {
       isInRecoveryMode: false,
       hasEndorsementCertificateInSlot1: false,
       hasEndorsementCertificateInSlot2: false,
-      numberOfWords: 24,
+      numberOfWords: SeedWordCount.TwentyFour,
       currentWordIndex: 0,
       onboardingState: OnboardingState.Unknown,
     },

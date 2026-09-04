@@ -3,7 +3,7 @@ import {
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
 import { DeviceModelId } from "@api/device/DeviceModel";
-import { OnboardingState } from "@api/device/SecureElementFlags";
+import { OnboardingState, SeedWordCount } from "@api/device/SecureElementFlags";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import { getOsVersionCommandResponseMockBuilder } from "./__mocks__/GetOsVersionCommand";
@@ -126,7 +126,7 @@ describe("GetOsVersionCommand", () => {
           isInRecoveryMode: false,
           hasEndorsementCertificateInSlot1: false,
           hasEndorsementCertificateInSlot2: false,
-          numberOfWords: 24,
+          numberOfWords: SeedWordCount.TwentyFour,
           currentWordIndex: 0,
           onboardingState: OnboardingState.Unknown,
         });
@@ -224,7 +224,7 @@ describe("GetOsVersionCommand", () => {
               isInRecoveryMode: false,
               hasEndorsementCertificateInSlot1: false,
               hasEndorsementCertificateInSlot2: false,
-              numberOfWords: 18,
+              numberOfWords: SeedWordCount.Eighteen,
               currentWordIndex: 10,
               onboardingState: OnboardingState.Unknown,
             },
@@ -267,7 +267,7 @@ describe("GetOsVersionCommand", () => {
               isInRecoveryMode: false,
               hasEndorsementCertificateInSlot1: false,
               hasEndorsementCertificateInSlot2: false,
-              numberOfWords: 24,
+              numberOfWords: SeedWordCount.TwentyFour,
               currentWordIndex: 0,
               onboardingState: OnboardingState.Unknown,
             },

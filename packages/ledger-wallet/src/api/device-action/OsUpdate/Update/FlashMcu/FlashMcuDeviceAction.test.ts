@@ -4,6 +4,7 @@ import {
   OnboardingState,
   SecureChannelError,
   SecureChannelEventType,
+  SeedWordCount,
   UnknownDAError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -90,7 +91,7 @@ describe("FlashMcuDeviceAction", () => {
       isInRecoveryMode: false,
       hasEndorsementCertificateInSlot1: false,
       hasEndorsementCertificateInSlot2: false,
-      numberOfWords: 24,
+      numberOfWords: SeedWordCount.TwentyFour,
       currentWordIndex: 0,
       onboardingState: OnboardingState.Unknown,
     },
