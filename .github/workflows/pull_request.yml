@@ -24,7 +24,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: toshimaru/auto-author-assign@3e19bfc990cb1cf0589dce95e9f75289bb1e22de # v3.0.3
+      - uses: toshimaru/auto-author-assign@a78a94b219445cece8ccf0d45fec60af449f212a # v3.1.0
 
   detect-changes:
     name: Detect changed packages
@@ -69,7 +69,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@6b3263a58c32b384c12ed6f18eb549384547ffdf
 
   danger:
     name: Run Danger check
@@ -78,7 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@6b3263a58c32b384c12ed6f18eb549384547ffdf
 
       - name: Danger
         env:
@@ -109,7 +109,7 @@ jobs:
       - name: Fetch base branch for --affected
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@6b3263a58c32b384c12ed6f18eb549384547ffdf
 
       - name: Build
         id: build

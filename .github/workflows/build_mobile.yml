@@ -26,10 +26,10 @@ jobs:
         with:
           ref: ${{ github.event.inputs.ref }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@6b3263a58c32b384c12ed6f18eb549384547ffdf
 
       - name: Set Up JDK
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: "zulu" # See 'Supported distributions' for available options
           java-version: "20"

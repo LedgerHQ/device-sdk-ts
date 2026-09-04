@@ -23,7 +23,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@6b3263a58c32b384c12ed6f18eb549384547ffdf
 
       - name: Tests
         id: unit-tests
