@@ -932,7 +932,7 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
 
-    it("Error thrown while providing context", () =>
+    it("Error thrown while providing context should fallback to legacy signing", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
@@ -960,6 +960,15 @@ describe("SignTypedDataDeviceAction", () => {
         );
         buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
         provideContextMock.mockRejectedValueOnce(new UnknownDAError("Error"));
+        signTypedDataLegacyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
 
         const expectedStates: Array<SignTypedDataDAState> = [
           {
@@ -1005,7 +1014,113 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
-            error: new UnknownDAError("Error"),
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
+      }));
+
+    it("Error thrown while providing context with a user refusal should not fallback", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule as unknown as ContextModule,
+            parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
+            skipOpenApp: false,
+          },
+        });
+
+        // Mock a refusal raised while providing the context
+        const refusalError = EthAppCommandErrorFactory({
+          errorCode: "6985",
+          message: "Condition of use not satisfied",
+        });
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockRejectedValueOnce(refusalError);
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: refusalError,
             status: DeviceActionStatus.Error,
           },
         ];
@@ -1054,6 +1169,127 @@ describe("SignTypedDataDeviceAction", () => {
             }),
           }),
         );
+        signTypedDataLegacyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
+      }));
+
+    it("Error thrown while signing should fallback to legacy signing", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule as unknown as ContextModule,
+            parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
+            skipOpenApp: false,
+          },
+        });
+
+        // Mock a signing error thrown instead of returned
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
+        signTypedDataMock.mockRejectedValueOnce(new UnknownDAError("Error"));
         signTypedDataLegacyMock.mockResolvedValueOnce(
           CommandResultFactory({
             data: {
