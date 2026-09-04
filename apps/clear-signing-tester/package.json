@@ -55,7 +55,7 @@
     "inversify": "catalog:",
     "rxjs": "catalog:",
     "semver": "catalog:",
-    "undici": "^8.5.0"
+    "undici": "^8.10.1"
   },
   "devDependencies": {
     "@ledgerhq/vitest-config-dmk": "workspace:^",
