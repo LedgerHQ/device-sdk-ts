@@ -2,7 +2,7 @@
 
 An HTTP server that emulates Ledger devices for the [Device Management Kit](https://github.com/LedgerHQ/device-sdk-ts) (DMK). It lets you script device behaviour (APDU request/response pairs) per device, derives the standard handshake (`GetOsVersion` / `GetAppAndVersion`) from device metadata, exposes a mock [ScriptRunner](#-secure-channel-websocket) WebSocket so secure-channel device actions (genuine check, app management) can run fully offline, and — optionally — proxies real APDUs to a live [Speculos](https://github.com/LedgerHQ/speculos) emulator via [Speculinho](https://ledgerhq.atlassian.net/wiki/spaces/PE/pages/7100399635) when an app is opened.
 
-It is the server-side counterpart of [`@ledgerhq/device-mockserver-client`](../../packages/mockserver-client) and the `MockTransport` used by DMK in tests and the sample apps.
+It is the server-side counterpart of [`@ledgerhq/device-mockserver-client`](../../packages/mockserver-client) and the `MockTransport` used by DMK in tests and the sample apps. It also serves a [configuration UI](#-configuration-ui) at its root URL, so a session can be built by clicking rather than by curl.
 
 ## 🔹 Index
 
@@ -13,13 +13,14 @@ It is the server-side counterpart of [`@ledgerhq/device-mockserver-client`](../.
 3. [APDU resolution](#-apdu-resolution)
 4. [Secure channel WebSocket](#-secure-channel-websocket)
 5. [Speculos integration](#-speculos-integration)
-6. [Getting started](#-getting-started)
-7. [Docker](#-docker)
-8. [Configuration](#-configuration)
-9. [HTTP API](#-http-api)
-10. [Programmatic usage](#-programmatic-usage)
-11. [Testing](#-testing)
-12. [OpenAPI](#-openapi)
+6. [Configuration UI](#-configuration-ui)
+7. [Getting started](#-getting-started)
+8. [Docker](#-docker)
+9. [Configuration](#-configuration)
+10. [HTTP API](#-http-api)
+11. [Programmatic usage](#-programmatic-usage)
+12. [Testing](#-testing)
+13. [OpenAPI](#-openapi)
 
 ## 🔹 Overview
 
@@ -256,6 +257,33 @@ sequenceDiagram
 
 An app can also be quit from the device screen itself, which exits Speculos with it — no Close App APDU is ever sent. The emulator behind the proxy is then probed whenever a forwarded APDU or a passthrough request comes back unusable, and when it turns out to be gone the app is closed on the device's behalf: the run is released, the APDU is answered in mock mode (`GetAppAndVersion` reports `BOLOS`) and the passthrough answers `409`, exactly as for a device that never opened an app.
 
+## 🔹 Configuration UI
+
+The server hands out a small web app — [`@ledgerhq/device-mock-server-ui`](../device-mock-server-ui), built with the [Lumen](https://ldls.vercel.app) design system — at its **root URL**, so a session can be set up by clicking instead of by curl. It talks to the same HTTP API documented below, so nothing in it is exclusive to the UI.
+
+Two screens:
+
+- **Landing** — check the server is up, create a session or paste an existing token, and pick up a session used earlier from this browser.
+- **Session** — the URL and token to hand to Ledger Live or a DMK app, the session's devices (model, firmware, connectivity, installed apps, onboarded or not), each device's mocks and an APDU console, the Speculos seed, and export/import of the whole session as JSON.
+
+The UI is a static bundle, built as part of `serve`, `dev` and the workspace `build`. The server serves whatever bundle it finds and exposes the API alone if there is none.
+
+`serve` and `dev` build it before listening, so the root URL always has
+something to hand out:
+
+```bash
+pnpm --filter @ledgerhq/device-mock-server serve
+# open http://127.0.0.1:9752
+```
+
+`MOCK_SERVER_WEB_DIR` points the server at a specific bundle; otherwise it looks at `./public` (where the Docker image puts it), `./apps/device-mock-server-ui/dist` and `../device-mock-server-ui/dist`, in that order.
+
+To work on the UI itself, run its dev server instead — it proxies the API routes to a mock server on `9752`, so both sides reload independently:
+
+```bash
+pnpm --filter @ledgerhq/device-mock-server-ui dev   # http://127.0.0.1:9753
+```
+
 ## 🔹 Getting started
 
 Install dependencies from the **monorepo root**:
@@ -286,9 +314,11 @@ curl http://127.0.0.1:9752/health
 # {"status":"ok","sessions":0}
 ```
 
+Open <http://127.0.0.1:9752> for the [configuration UI](#-configuration-ui), once its bundle has been built.
+
 ## 🔹 Docker
 
-A `Dockerfile` and `docker-compose.yml` are provided for running the server as a container. The **build context must be the monorepo root** because the image is built from the full workspace.
+A `Dockerfile` and `docker-compose.yml` are provided for running the server as a container. The **build context must be the monorepo root** because the image is built from the full workspace. The image bundles the [configuration UI](#-configuration-ui) into `/app/public`, so a container serves it with no extra setup.
 
 ### Build and run with Docker Compose (recommended)
 
@@ -332,22 +362,24 @@ The container exposes port `9752` and includes a built-in health check that hits
 
 The standalone server (`src/main.ts`) reads environment variables:
 
-| Variable                    | Default                             | Description                                                                                                         |
-| --------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                      | `9752`                              | HTTP port.                                                                                                          |
-| `SPECULINHO_URL`            | `https://speculinho.ledgerlabs.net` | Speculinho operator base URL. Set to empty (`SPECULINHO_URL=`) to run as a **pure mock** with no Speculos proxying. |
-| `SPECULOS_VERSION`          | _unset_                             | Pin a Speculos version.                                                                                             |
-| `SPECULOS_READY_TIMEOUT_MS` | `120000`                            | How long to wait for an emulator to become ready.                                                                   |
-| `MOCK_SERVER_LOG_LEVEL`     | `info`                              | Console log verbosity. One of `silent`, `error`, `warn`, `info`, `debug`.                                           |
+| Variable                    | Default                             | Description                                                                                                                            |
+| --------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                      | `9752`                              | HTTP port.                                                                                                                             |
+| `SPECULINHO_URL`            | `https://speculinho.ledgerlabs.net` | Speculinho operator base URL. Set to empty (`SPECULINHO_URL=`) to run as a **pure mock** with no Speculos proxying.                    |
+| `SPECULOS_VERSION`          | _unset_                             | Pin a Speculos version.                                                                                                                |
+| `SPECULOS_READY_TIMEOUT_MS` | `120000`                            | How long to wait for an emulator to become ready.                                                                                      |
+| `MOCK_SERVER_LOG_LEVEL`     | `info`                              | Console log verbosity. One of `silent`, `error`, `warn`, `info`, `debug`.                                                              |
+| `MOCK_SERVER_WEB_DIR`       | _auto-detected_                     | Directory holding the built [configuration UI](#-configuration-ui). Overrides the lookup; no UI is served if it holds no `index.html`. |
 
 Programmatically, `createMockServer(config)` accepts a `MockServerConfig`:
 
-| Option            | Description                                                                                                 |
-| ----------------- | ----------------------------------------------------------------------------------------------------------- |
-| `ttlMs`           | Sliding inactivity timeout (refreshed on each authed request).                                              |
-| `maxLifetimeMs`   | Hard cap on session lifetime regardless of activity.                                                        |
-| `sweepIntervalMs` | Expired-session sweep interval; `0` disables the sweeper.                                                   |
-| `speculos`        | `{ baseUrl, speculosVersion?, readyTimeoutMs?, pollIntervalMs? }`. When omitted, the server is a pure mock. |
+| Option            | Description                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `ttlMs`           | Sliding inactivity timeout (refreshed on each authed request).                                                          |
+| `maxLifetimeMs`   | Hard cap on session lifetime regardless of activity.                                                                    |
+| `sweepIntervalMs` | Expired-session sweep interval; `0` disables the sweeper.                                                               |
+| `speculos`        | `{ baseUrl, speculosVersion?, readyTimeoutMs?, pollIntervalMs? }`. When omitted, the server is a pure mock.             |
+| `webUiDir`        | Directory holding the built [configuration UI](#-configuration-ui). When omitted, the server exposes the HTTP API only. |
 
 ## 🔹 HTTP API
 

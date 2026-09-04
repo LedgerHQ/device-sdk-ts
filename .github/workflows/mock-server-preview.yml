@@ -6,6 +6,7 @@ on:
     types: [opened, synchronize, reopened, labeled]
     paths:
       - apps/device-mock-server/**
+      - apps/device-mock-server-ui/**
       - packages/mockserver-client/**
       - pnpm-lock.yaml
 

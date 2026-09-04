@@ -27,9 +27,10 @@
   "scripts": {
     "prebuild": "rimraf lib",
     "build": "pnpm ldmk-tool build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "ui": "pnpm --filter @ledgerhq/device-mock-server-ui build",
     "start": "node lib/cjs/main.js",
-    "dev": "tsx watch src/main.ts",
-    "serve": "tsx src/main.ts",
+    "dev": "pnpm ui; tsx watch src/main.ts",
+    "serve": "pnpm ui; tsx src/main.ts",
     "generate:openapi": "tsx scripts/generate-openapi.ts",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
@@ -48,6 +49,7 @@
     "ws": "catalog:"
   },
   "devDependencies": {
+    "@ledgerhq/device-mock-server-ui": "workspace:^",
     "@ledgerhq/device-mockserver-client": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/ldmk-tool": "workspace:^",
