@@ -34,6 +34,40 @@ export const GET_DEVICE_NAME_PREFIX = "e0d20000";
 export const SET_DEVICE_NAME_PREFIX = "e0d40000";
 
 /**
+ * Language packs. `ListLanguagePack` (ins=0x34) is paged: p1 `00` asks for the
+ * first entry, `01` for the next. `DeleteLanguagePack` (ins=0x33) carries the
+ * pack id in p1, or `ff` for every pack. Installing one replays a script of
+ * load commands — create (ins=0x30, whose data is the pack's byte size), chunk
+ * (ins=0x31) and commit (ins=0x32) — the same shape as an app install.
+ */
+export const LIST_LANGUAGE_PACK_PREFIX = "e034";
+export const DELETE_LANGUAGE_PACK_PREFIX = "e033";
+export const LANGUAGE_LOAD_CREATE_PREFIX = "e030";
+export const LANGUAGE_LOAD_CHUNK_PREFIX = "e031";
+export const LANGUAGE_LOAD_COMMIT_PREFIX = "e032";
+
+/**
+ * Language ids as BOLOS numbers them, matching DMK's `LANGUAGE_ID_TO_LANGUAGE`.
+ * GetOsVersion reports the id; the mock stores the name, which reads better in
+ * the session export and the configuration UI.
+ */
+const LANGUAGE_IDS: Record<string, number> = {
+  english: 0,
+  french: 1,
+  spanish: 2,
+  brazilian: 3,
+  german: 4,
+  russian: 5,
+  turkish: 6,
+  thai: 7,
+};
+
+/** The device's language id; 0 (English) unless a pack says otherwise. */
+export function languageIdOf(device: Device): number {
+  return LANGUAGE_IDS[device.language?.toLowerCase() ?? ""] ?? 0;
+}
+
+/**
  * Custom Lock Screen commands (CLA 0xe0), matched on their cla+ins prefix. The
  * mock models a device with no lock screen image loaded (an "empty" device), so
  * read commands report empty and mutation commands succeed.
@@ -203,7 +237,7 @@ export function deriveGetOsVersion(
     hex += lvHex("00"); // hwVersion
   }
   if (isLocalizationSupported(seVersion, model)) {
-    hex += lvHex("00"); // langId
+    hex += lvHex(toHexByte(languageIdOf(device))); // langId
   }
   if (isRecoverSupported(seVersion, model)) {
     hex += lvHex("00"); // recoverState
@@ -272,6 +306,40 @@ export function deriveListApps(
  */
 export function deriveGetDeviceName(device: Device): string {
   return asciiHex(device.name ?? "") + STATUS_OK;
+}
+
+/**
+ * ListLanguagePack: `<tlv version><length><LV id><LV size>`, or a bare success
+ * when the device carries no pack — which is how DMK's parser reads "no more
+ * language package", and how it ends the paging loop. Only the first page can
+ * carry an entry: a device holds one pack at a time. The size is reported as
+ * zero; the mock knows which language is installed, not how many bytes the
+ * real pack takes.
+ */
+export function deriveListLanguagePack(device: Device, apdu: string): string {
+  const firstPage = apdu.slice(4, 6) === "00";
+  if (!firstPage || !device.language) {
+    return STATUS_OK;
+  }
+  const id = lvHex(toHexByte(languageIdOf(device)));
+  const size = lvHex("00000000");
+  const body = id + size;
+  return "01" + toHexByte(body.length / 2) + body + STATUS_OK;
+}
+
+/**
+ * The byte size a language-pack load announces in its create command, or `null`
+ * when the APDU does not carry the expected 4-byte length. The install script
+ * names the language nowhere, so this size is the only handle on which pack is
+ * arriving.
+ */
+export function parseLanguagePackSize(apdu: string): number | null {
+  const declared = parseInt(apdu.slice(8, 10), 16);
+  const data = apdu.slice(10);
+  if (declared !== 4 || data.length !== 8) {
+    return null;
+  }
+  return parseInt(data, 16);
 }
 
 /**
@@ -376,6 +444,9 @@ export function deriveOsApduResponse(
   // error status.
   if (apdu.startsWith(GET_DEVICE_NAME_CLEANING_PREFIX)) {
     return STATUS_OK;
+  }
+  if (apdu.startsWith(LIST_LANGUAGE_PACK_PREFIX)) {
+    return deriveListLanguagePack(device, apdu);
   }
   if (apdu.startsWith(GET_DEVICE_NAME_PREFIX)) {
     return deriveGetDeviceName(device);

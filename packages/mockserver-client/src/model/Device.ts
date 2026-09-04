@@ -57,6 +57,12 @@ export interface Device {
    * polled).
    */
   readonly onboarded?: boolean;
+  /**
+   * The installed language pack, by name (`"french"`, `"german"`, …). Omitted
+   * means the device runs on its built-in English, as one with no pack
+   * installed does. Installing a pack over the wire sets it.
+   */
+  readonly language?: string;
 }
 
 export const deviceCodec = Codec.interface({
@@ -69,6 +75,7 @@ export const deviceCodec = Codec.interface({
   masks: optional(array(number)),
   connected: optional(boolean),
   onboarded: optional(boolean),
+  language: optional(string),
 });
 
 /**
@@ -90,6 +97,8 @@ export interface DeviceConfig {
    * device; `false` starts the onboarding simulation.
    */
   readonly onboarded?: boolean;
+  /** The installed language pack, by name (`"french"`, `"german"`, …). */
+  readonly language?: string;
 }
 
 export const deviceConfigCodec = Codec.interface({
@@ -102,4 +111,5 @@ export const deviceConfigCodec = Codec.interface({
   mocks: optional(array(mockConfigCodec)),
   catalog: optional(array(catalogAppCodec)),
   onboarded: optional(boolean),
+  language: optional(string),
 });

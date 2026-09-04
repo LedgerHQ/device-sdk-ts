@@ -51,6 +51,11 @@ interface McuVersionDto {
   readonly name?: string;
 }
 
+interface LanguagePackageDto {
+  readonly language?: string;
+  readonly bytes?: number;
+}
+
 /**
  * Resolves firmware-update facts from the Manager API the way the real
  * ScriptRunner backend does: the clean version a firmware install targets
@@ -84,6 +89,12 @@ export class FirmwareUpdateResolver {
    */
   private readonly mcuVersionCache = new Map<string, Promise<Maybe<string>>>();
 
+  /** Language packs per `${targetId}:${currentVersion}:${providerId}`. */
+  private readonly languagePackCache = new Map<
+    string,
+    Promise<LanguagePackageDto[]>
+  >();
+
   constructor(@inject(appTypes.Config) config: MockServerConfig) {
     this.managerApiUrl = config.managerApiUrl ?? DEFAULT_MANAGER_API_URL;
   }
@@ -104,6 +115,77 @@ export class FirmwareUpdateResolver {
     return (await this.resolveFinalFirmware(params)).chain((final) =>
       Maybe.fromNullable(final.name),
     );
+  }
+
+  /**
+   * The language a pack of `bytes` bytes carries, per the Manager API's list for
+   * this device and firmware. A language-pack install replays a script whose
+   * create command announces only the size, so that size is what identifies the
+   * language the device just received. Returns `Nothing` when no pack matches or
+   * a lookup fails.
+   */
+  async resolveLanguageBySize({
+    targetId,
+    currentVersion,
+    bytes,
+    providerId = DEFAULT_PROVIDER,
+  }: {
+    targetId: string | number;
+    currentVersion: string;
+    bytes: number;
+    providerId?: number;
+  }): Promise<Maybe<string>> {
+    const key = `${targetId}:${currentVersion}:${providerId}`;
+    let pending = this.languagePackCache.get(key);
+    if (!pending) {
+      pending = this.fetchLanguagePackages({
+        targetId,
+        currentVersion,
+        providerId,
+      }).catch((error) => {
+        this.languagePackCache.delete(key);
+        logger.error(`Manager API language lookup failed: ${String(error)}`);
+        return [];
+      });
+      this.languagePackCache.set(key, pending);
+    }
+    const packs = await pending;
+    return Maybe.fromNullable(
+      packs.find((pack) => pack.bytes === bytes)?.language,
+    );
+  }
+
+  private async fetchLanguagePackages({
+    targetId,
+    currentVersion,
+    providerId,
+  }: {
+    targetId: string | number;
+    currentVersion: string;
+    providerId: number;
+  }): Promise<LanguagePackageDto[]> {
+    const deviceVersion = await this.get<DeviceVersionDto>(
+      "get_device_version",
+      { provider: providerId, target_id: targetId },
+    );
+    if (deviceVersion?.id === undefined) {
+      logger.warn(`Manager API: unknown target_id ${targetId}`);
+      return [];
+    }
+    const firmware = await this.get<FinalFirmwareDto>("get_firmware_version", {
+      device_version: deviceVersion.id,
+      version_name: currentVersion,
+      provider: providerId,
+    });
+    if (firmware?.id === undefined) {
+      logger.warn(`Manager API: unknown firmware ${currentVersion}`);
+      return [];
+    }
+    const packs = await this.get<LanguagePackageDto[]>("language-packages", {
+      device_version: deviceVersion.id,
+      current_se_firmware_final_version: firmware.id,
+    });
+    return packs ?? [];
   }
 
   /**
