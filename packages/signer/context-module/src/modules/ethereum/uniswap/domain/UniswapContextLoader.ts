@@ -14,7 +14,6 @@ import {
   UNISWAP_COMMANDS,
   UNISWAP_EXECUTE_ABI,
   UNISWAP_EXECUTE_SELECTOR,
-  UNISWAP_SWAP_COMMANDS,
   UniswapSupportedCommand,
 } from "@/modules/ethereum/uniswap/constants/uniswap";
 import { type CommandDecoderDataSource } from "@/modules/ethereum/uniswap/data/CommandDecoderDataSource";
@@ -131,10 +130,9 @@ export class UniswapContextLoader
         [] as [UniswapSupportedCommand, HexaString[]][],
       );
 
-      if (!this._isChainingSwapSupported(addressesByCommand)) {
-        return [];
-      }
-
+      // No route-shape filtering here: the plugin enforces display integrity
+      // on-device and now supports chained, split and mixed-version routes
+      // (including V4). This loader only provides token descriptors.
       const uniqueAddresses = [
         ...new Set(addressesByCommand.flatMap(([, addresses]) => addresses)),
       ];
@@ -195,67 +193,6 @@ export class UniswapContextLoader
           ? Maybe.of(commands as UniswapSupportedCommand[])
           : Nothing,
       );
-  }
-
-  /**
-   * Checks if the provided swap commands can be chained together.
-   * A valid chain requires that:
-   * - The output asset of the previous swap matches the input asset of the next swap.
-   * - The pool version remains consistent across swaps.
-   *
-   * @private
-   * @param {Array<[UniswapSupportedCommand, HexaString[]]>} data - An array of tuples containing a swap command and associated addresses.
-   * @returns {boolean} - Returns `true` if the swap commands form a valid chain, otherwise `false`.
-   *
-   * @example
-   * // Valid chaining: same output/input asset and pool version
-   * _isChainingSwapSupported([
-   *   ['0x08', ['0xABC', '0xDEF']],
-   *   ['0x08', ['0xDEF', '0x123']]
-   * ]);
-   * // Returns: true
-   *
-   * @example
-   * // Invalid chaining: different pool versions
-   * _isChainingSwapSupported([
-   *   ['0x08', ['0xABC', '0xDEF']],
-   *   ['0x01', ['0xDEF', '0x123']]
-   * ]);
-   * // Returns: false
-   *
-   * @example
-   * // Invalid chaining: output does not match next input
-   * _isChainingSwapSupported([
-   *   ['0x01A1', ['0xABC', '0xDEF']],
-   *   ['0x01B2', ['0xXYZ', '0x123']]
-   * ]);
-   * // Returns: false
-   */
-  private _isChainingSwapSupported(
-    data: [UniswapSupportedCommand, HexaString[]][],
-  ): boolean {
-    let lastAsset: HexaString | undefined = undefined;
-    let lastPoolVersion: string | undefined = undefined;
-
-    for (const [command, addresses] of data) {
-      if (!UNISWAP_SWAP_COMMANDS.includes(command)) continue; // Ignore non-swap commands
-
-      const poolVersion = command.slice(0, 2);
-
-      if (
-        lastAsset &&
-        (lastAsset !== addresses[0] || lastPoolVersion !== poolVersion)
-      ) {
-        // Invalid chaining, return empty array
-        return false;
-      }
-
-      // update last asset and pool version
-      lastAsset = addresses[addresses.length - 1];
-      lastPoolVersion = poolVersion;
-    }
-
-    return true;
   }
 
   /**
