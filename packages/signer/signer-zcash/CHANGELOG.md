@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1
+
+### Patch Changes
+
+- [#1851](https://github.com/LedgerHQ/device-sdk-ts/pull/1851) [`4385b08`](https://github.com/LedgerHQ/device-sdk-ts/commit/4385b086455dceee673b5c042edb953efa911f35) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Map the status words the Zcash app returns for an unmet signing precondition, a version parsing failure and an RNG failure, so they surface as named errors instead of UnknownError
+
+- [#1851](https://github.com/LedgerHQ/device-sdk-ts/pull/1851) [`86fcdff`](https://github.com/LedgerHQ/device-sdk-ts/commit/86fcdff8bec44ddde878b08a991ea6e80377fb7f) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Rename the 0x6985 error to UserRejectedError, the condition the Zcash app actually reports on that status word
+
 ## 0.7.0
 
 ### Minor Changes

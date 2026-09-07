@@ -1,5 +1,13 @@
 # @ledgerhq/device-transport-kit-mock-client
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1853](https://github.com/LedgerHQ/device-sdk-ts/pull/1853) [`e47fde0`](https://github.com/LedgerHQ/device-sdk-ts/commit/e47fde0c0b89dd5648d95826de723e3e2a27bee2) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add `language` to a device: the installed language pack, by name
+
+- [#1802](https://github.com/LedgerHQ/device-sdk-ts/pull/1802) [`ad3bbec`](https://github.com/LedgerHQ/device-sdk-ts/commit/ad3bbece725869b02631d26d3e26805943e82500) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add Speculos screen controls: `getScreenshot`, `pressButton` and `touchScreen`
+
 ## 1.2.0
 
 ### Minor Changes
