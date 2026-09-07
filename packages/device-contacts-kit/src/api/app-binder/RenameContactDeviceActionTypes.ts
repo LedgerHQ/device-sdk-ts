@@ -30,6 +30,10 @@ export type RenameContactDAError =
   | GoToDashboardDAError
   | ContactsValidationError
   | ContactsVersionRequirementError
+  // A `GetOsVersion` failure surfaces as the command error itself (not a
+  // version-requirement error). `GetOsVersion` carries no Contacts-specific
+  // error codes, so its error type is the bare command error.
+  | CommandErrorResult["error"]
   | CommandErrorResult<ContactsErrorCodes>["error"];
 
 export type RenameContactDARequiredInteraction =
@@ -48,6 +52,10 @@ export type RenameContactDAState = DeviceActionState<
 
 export type RenameContactDAInternalState = {
   readonly error: RenameContactDAError | null;
+  // The device OS version read freshly via `GetOsVersion` after reaching the
+  // dashboard, fed to the version guard instead of the session state (whose
+  // firmware version is often absent on this path).
+  readonly osVersion: string | null;
   readonly proof: {
     readonly hmacProof: Uint8Array;
   } | null;
