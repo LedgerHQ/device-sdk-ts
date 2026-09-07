@@ -66,7 +66,7 @@ The skill automates the steps below via scripts in `.cursor/scripts/release/`.
 - [ ] Generate changelogs (`changelog.cjs`)
 - [ ] Clean up consumed changesets (`cleanup.cjs`)
 - [ ] Update lockfile (`pnpm install --no-frozen-lockfile`)
-- [ ] Update `apps/docs/pages/docs/getting-started.mdx`
+- [ ] Update `apps/docs/content/docs/index.mdx`
 - [ ] Create this PR (`create-pr.cjs`)
 - [ ] Verify documentation and README
 - [ ] Quality Assurance:
