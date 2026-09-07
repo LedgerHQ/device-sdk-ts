@@ -102,6 +102,25 @@ describe("GetAppConfigCommand", () => {
       }
     });
 
+    it("should name the status word the app returns when it cannot parse its own version", () => {
+      const command = new GetAppConfigCommand();
+      const response = new ApduResponse({
+        statusCode: new Uint8Array([0x6f, 0x01]),
+        data: new Uint8Array(0),
+      });
+
+      const result = command.parseResponse(response);
+
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        const err = result.error as ZcashAppCommandError;
+        expect(err.errorCode).toBe("6f01");
+        // An unmapped word also carries its errorCode, so the message is what
+        // tells a named error apart from the UnknownError fallback.
+        expect(err.message).toBe("VersionParsingFailError");
+      }
+    });
+
     it("should return InvalidStatusWordError when response is empty", () => {
       const command = new GetAppConfigCommand();
       const response = new ApduResponse({

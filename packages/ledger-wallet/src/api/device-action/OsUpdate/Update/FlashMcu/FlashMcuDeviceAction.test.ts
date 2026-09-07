@@ -1,8 +1,10 @@
 import {
   DeviceActionStatus,
   type GetOsVersionResponse,
+  OnboardingState,
   SecureChannelError,
   SecureChannelEventType,
+  SeedWordCount,
   UnknownDAError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -87,6 +89,11 @@ describe("FlashMcuDeviceAction", () => {
       isOnboarded: true,
       isMcuCodeSigned: true,
       isInRecoveryMode: false,
+      hasEndorsementCertificateInSlot1: false,
+      hasEndorsementCertificateInSlot2: false,
+      numberOfWords: SeedWordCount.TwentyFour,
+      currentWordIndex: 0,
+      onboardingState: OnboardingState.Unknown,
     },
   } satisfies GetOsVersionResponse;
 

@@ -62,6 +62,7 @@ export class InMemorySessionRepository implements SessionRepository {
       catalog: new Map(),
       pendingAppOperations: new Map(),
       pendingFirmwareOperations: new Map(),
+      pendingLanguageOperations: new Map(),
       onboarding: new Map(),
     };
     this.sessions.set(record.token, record);
@@ -235,6 +236,23 @@ export class InMemorySessionRepository implements SessionRepository {
       record.devices.set(deviceId, updated);
       return updated;
     });
+  }
+
+  setPendingLanguageOperation(
+    record: SessionRecord,
+    deviceId: string,
+    bytes: number,
+  ): void {
+    record.pendingLanguageOperations.set(deviceId, bytes);
+  }
+
+  takePendingLanguageOperation(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<number> {
+    const bytes = record.pendingLanguageOperations.get(deviceId);
+    record.pendingLanguageOperations.delete(deviceId);
+    return Maybe.fromNullable(bytes);
   }
 
   setPendingFirmwareOperation(
@@ -415,6 +433,7 @@ export class InMemorySessionRepository implements SessionRepository {
     record.catalog.clear();
     record.pendingAppOperations.clear();
     record.pendingFirmwareOperations.clear();
+    record.pendingLanguageOperations.clear();
     record.onboarding.clear();
     for (const device of snapshot.devices) {
       this.addDevice(record, device);

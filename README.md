@@ -87,14 +87,15 @@ A brief overview of this project's packages:
 
 ### Transport Packages
 
-| Name                                            | Path                        | Description                                   |
-| ----------------------------------------------- | --------------------------- | --------------------------------------------- |
-| @ledgerhq/device-transport-kit-node-hid         | packages/transport/node-hid | Node HID transport implementation             |
-| @ledgerhq/device-transport-kit-web-hid          | packages/transport/web-hid  | Web HID transport implementation              |
-| @ledgerhq/device-transport-kit-web-ble          | packages/transport/web-ble  | Web BLE transport implementation              |
-| @ledgerhq/device-transport-kit-react-native-ble | packages/transport/rn-ble   | React Native BLE transport implementation     |
-| @ledgerhq/device-transport-kit-react-native-hid | packages/transport/rn-hid   | React Native HID transport implementation     |
-| @ledgerhq/device-transport-kit-speculos         | packages/transport/speculos | Speculos transport implementation for testing |
+| Name                                            | Path                          | Description                                      |
+| ----------------------------------------------- | ----------------------------- | ------------------------------------------------ |
+| @ledgerhq/device-transport-kit-node-hid         | packages/transport/node-hid   | Node HID transport implementation                |
+| @ledgerhq/device-transport-kit-web-hid          | packages/transport/web-hid    | Web HID transport implementation                 |
+| @ledgerhq/device-transport-kit-web-ble          | packages/transport/web-ble    | Web BLE transport implementation                 |
+| @ledgerhq/device-transport-kit-react-native-ble | packages/transport/rn-ble     | React Native BLE transport implementation        |
+| @ledgerhq/device-transport-kit-react-native-hid | packages/transport/rn-hid     | React Native HID transport implementation        |
+| @ledgerhq/device-transport-kit-speculos         | packages/transport/speculos   | Speculos transport implementation for testing    |
+| @ledgerhq/device-transport-kit-mockserver       | packages/transport/mockserver | Mock server transport implementation for testing |
 
 ### Signer Packages
 

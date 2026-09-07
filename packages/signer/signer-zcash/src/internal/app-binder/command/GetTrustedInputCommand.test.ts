@@ -95,7 +95,25 @@ describe("GetTrustedInputCommand", () => {
       if (!isSuccessCommandResult(response)) {
         const error = response.error as { errorCode?: string; message: string };
         expect(error.errorCode).toBe("6985");
-        expect(error.message).toBe("ConditionOfUseNotSatisfiedError");
+        expect(error.message).toBe("UserRejectedError");
+      }
+    });
+
+    it("should name the status word the app returns when its nonce draw fails", () => {
+      const apduResponse = new ApduResponse({
+        statusCode: new Uint8Array([0x6f, 0x03]),
+        data: new Uint8Array([]),
+      });
+
+      const response = command.parseResponse(apduResponse);
+
+      expect(isSuccessCommandResult(response)).toBe(false);
+      if (!isSuccessCommandResult(response)) {
+        const error = response.error as { errorCode?: string; message: string };
+        expect(error.errorCode).toBe("6f03");
+        // An unmapped word also carries its errorCode, so the message is what
+        // tells a named error apart from the UnknownError fallback.
+        expect(error.message).toBe("RngFailureError");
       }
     });
   });

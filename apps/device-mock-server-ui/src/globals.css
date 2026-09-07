@@ -1,0 +1,27 @@
+@import "tailwindcss/theme.css";
+@import "tailwindcss/preflight.css";
+@import "tailwindcss/utilities.css";
+@import "@ledgerhq/lumen-ui-react/tailwind.css";
+
+@config "../tailwind.config.ts";
+
+html {
+  height: 100%;
+}
+
+/* min-height, not height: a fixed height on the scroll container's children is
+   the classic way to end up with a page that cannot scroll. */
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Inter, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}

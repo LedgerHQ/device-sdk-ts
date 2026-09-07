@@ -3,6 +3,7 @@ import "reflect-metadata";
 import { createMockServer } from "@api/createMockServer";
 import { type MockServerConfig } from "@api/model/MockServerConfig";
 import { logger } from "@internal/logger/logger";
+import { resolveWebUiDir } from "@internal/server/webUi";
 
 const port = Number(process.env["PORT"] ?? 9752);
 
@@ -23,7 +24,9 @@ const speculos: MockServerConfig["speculos"] = speculinhoUrl
     }
   : undefined;
 
-const { app, attachWebSocket } = createMockServer({ speculos });
+const webUiDir = resolveWebUiDir();
+
+const { app, attachWebSocket } = createMockServer({ speculos, webUiDir });
 
 const server = app.listen(port, () => {
   const baseUrl = `http://127.0.0.1:${port}`;
@@ -32,6 +35,13 @@ const server = app.listen(port, () => {
   logger.info(
     `Secure channel WebSocket at ws://127.0.0.1:${port}/secure-channel`,
   );
+  if (webUiDir) {
+    logger.info(`Configuration UI at ${baseUrl} (from ${webUiDir})`);
+  } else {
+    logger.info(
+      "Configuration UI not built — run `pnpm --filter @ledgerhq/device-mock-server-ui build`",
+    );
+  }
   if (speculos) {
     logger.info(`Speculos proxy via Speculinho at ${speculos.baseUrl}`);
   }

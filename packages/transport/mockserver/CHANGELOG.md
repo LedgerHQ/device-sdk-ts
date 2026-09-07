@@ -1,5 +1,13 @@
 # @ledgerhq/device-transport-kit-mockserver
 
+## 1.1.1
+
+### Patch Changes
+
+- [#1848](https://github.com/LedgerHQ/device-sdk-ts/pull/1848) [`e16b990`](https://github.com/LedgerHQ/device-sdk-ts/commit/e16b990b2179e628e3b8e18da53b59ae3b2543d8) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Keep polling for available devices after a failed request. A `catchError` on the outer pipeline replaced the poll timer along with the failed request, so one unreachable moment ended discovery for the rest of the subscription and a device added later was never found.
+
+- [#1849](https://github.com/LedgerHQ/device-sdk-ts/pull/1849) [`dbf2406`](https://github.com/LedgerHQ/device-sdk-ts/commit/dbf2406e33b85f25bda2eb83ebba4541a4ce8caa) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Report a disconnect when a connected device leaves the mock server. The device was only discovered to be gone when an APDU sent to it failed, so a device deleted or disconnected through the API left a session that still claimed to be connected.
+
 ## 1.1.0
 
 ### Minor Changes

@@ -1,6 +1,8 @@
 import {
   type GetOsVersionResponse,
   type InternalApi,
+  OnboardingState,
+  SeedWordCount,
 } from "@ledgerhq/device-management-kit";
 import { Right } from "purify-ts";
 
@@ -33,6 +35,11 @@ describe("FlashMcu", () => {
       isOnboarded: true,
       isMcuCodeSigned: true,
       isInRecoveryMode: false,
+      hasEndorsementCertificateInSlot1: false,
+      hasEndorsementCertificateInSlot2: false,
+      numberOfWords: SeedWordCount.TwentyFour,
+      currentWordIndex: 0,
+      onboardingState: OnboardingState.Unknown,
     },
   } satisfies GetOsVersionResponse;
 

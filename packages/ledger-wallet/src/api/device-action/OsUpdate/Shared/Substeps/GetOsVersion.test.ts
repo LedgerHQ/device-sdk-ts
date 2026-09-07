@@ -2,6 +2,8 @@ import {
   CommandResultFactory,
   GLOBAL_ERRORS,
   GlobalCommandError,
+  OnboardingState,
+  SeedWordCount,
 } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
@@ -40,6 +42,11 @@ describe("GetOsVersion", () => {
           isOnboarded: true,
           isMcuCodeSigned: true,
           isInRecoveryMode: false,
+          hasEndorsementCertificateInSlot1: false,
+          hasEndorsementCertificateInSlot2: false,
+          numberOfWords: SeedWordCount.TwentyFour,
+          currentWordIndex: 0,
+          onboardingState: OnboardingState.Unknown,
         },
       };
       sendCommandMock.mockResolvedValueOnce(

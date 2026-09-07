@@ -103,6 +103,21 @@ export interface SessionRepository {
     deviceId: string,
   ): Maybe<Device>;
 
+  /**
+   * Arm a device's in-flight language-pack load with the byte size its create
+   * command announced — the only thing that says which language is arriving.
+   */
+  setPendingLanguageOperation(
+    record: SessionRecord,
+    deviceId: string,
+    bytes: number,
+  ): void;
+  /** Read and clear a device's armed language-pack size. */
+  takePendingLanguageOperation(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<number>;
+
   // --- Speculos proxy -------------------------------------------------------
   findProxy(
     record: SessionRecord,

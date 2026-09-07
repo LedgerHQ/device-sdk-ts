@@ -5,6 +5,7 @@ on:
     branches: [develop]
     paths:
       - apps/device-mock-server/**
+      - apps/device-mock-server-ui/**
       - packages/mockserver-client/**
       - pnpm-lock.yaml
 

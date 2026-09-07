@@ -7,13 +7,17 @@ import { describe, expect, it } from "vitest";
 import { SignPcztIronwoodCommand } from "@internal/app-binder/command/SignPcztIronwoodCommand";
 import { SignPcztOrchardCommand } from "@internal/app-binder/command/SignPcztOrchardCommand";
 import { SignPcztTransparentCommand } from "@internal/app-binder/command/SignPcztTransparentCommand";
+import { ZcashAppCommandError } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 
 const apduHex = (raw: Uint8Array): string => Buffer.from(raw).toString("hex");
 const response = (statusCode: number[], data: Uint8Array): ApduResponse =>
   new ApduResponse({ statusCode: Uint8Array.from(statusCode), data });
 
 const OK = [0x90, 0x00];
-const REJECTED = [0x69, 0x85]; // ConditionOfUseNotSatisfied (signed before finalize)
+const REJECTED = [0x69, 0x85]; // the user declined on device
+// Preconditions the app refuses a signature on: a derivation path that is not the
+// account the change returns to, and a command issued before the PCZT is finalized.
+const PRECONDITION_UNMET = [0x69, 0x86];
 
 describe("SignPcztOrchardCommand", () => {
   it("builds INS 0x57 with empty data and the action index in P2", () => {
@@ -46,6 +50,17 @@ describe("SignPcztOrchardCommand", () => {
       response(REJECTED, new Uint8Array()),
     );
     expect(isSuccessCommandResult(result)).toBe(false);
+  });
+
+  it("names the unmet-precondition status word", () => {
+    const result = new SignPcztOrchardCommand({ actionIndex: 0 }).parseResponse(
+      response(PRECONDITION_UNMET, new Uint8Array()),
+    );
+    expect(isSuccessCommandResult(result)).toBe(false);
+    if (!isSuccessCommandResult(result)) {
+      expect(result.error).toBeInstanceOf(ZcashAppCommandError);
+      expect((result.error as ZcashAppCommandError).errorCode).toBe("6986");
+    }
   });
 });
 
@@ -81,6 +96,17 @@ describe("SignPcztIronwoodCommand", () => {
       actionIndex: 0,
     }).parseResponse(response(REJECTED, new Uint8Array()));
     expect(isSuccessCommandResult(result)).toBe(false);
+  });
+
+  it("names the unmet-precondition status word", () => {
+    const result = new SignPcztIronwoodCommand({
+      actionIndex: 0,
+    }).parseResponse(response(PRECONDITION_UNMET, new Uint8Array()));
+    expect(isSuccessCommandResult(result)).toBe(false);
+    if (!isSuccessCommandResult(result)) {
+      expect(result.error).toBeInstanceOf(ZcashAppCommandError);
+      expect((result.error as ZcashAppCommandError).errorCode).toBe("6986");
+    }
   });
 });
 
@@ -127,5 +153,16 @@ describe("SignPcztTransparentCommand", () => {
       inputIndex: 0,
     }).parseResponse(response(REJECTED, new Uint8Array()));
     expect(isSuccessCommandResult(result)).toBe(false);
+  });
+
+  it("names the unmet-precondition status word", () => {
+    const result = new SignPcztTransparentCommand({
+      inputIndex: 0,
+    }).parseResponse(response(PRECONDITION_UNMET, new Uint8Array()));
+    expect(isSuccessCommandResult(result)).toBe(false);
+    if (!isSuccessCommandResult(result)) {
+      expect(result.error).toBeInstanceOf(ZcashAppCommandError);
+      expect((result.error as ZcashAppCommandError).errorCode).toBe("6986");
+    }
   });
 });

@@ -23,7 +23,7 @@ const success = new ApduResponse({
   data: new Uint8Array(),
 });
 const rejected = new ApduResponse({
-  statusCode: Uint8Array.of(0x69, 0x85), // ConditionOfUseNotSatisfied
+  statusCode: Uint8Array.of(0x69, 0x85), // the user declined on device
   data: new Uint8Array(),
 });
 

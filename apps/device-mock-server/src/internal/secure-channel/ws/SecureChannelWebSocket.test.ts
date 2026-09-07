@@ -189,8 +189,8 @@ describe("secure channel WebSocket", () => {
     const terminal = await drive(token, id, "apps/list");
     expect(terminal.type).toBe("success");
     expect(terminal.data).toEqual([
-      { flags: 0, hash: "", hash_code_data: "", name: "Bitcoin" },
-      { flags: 0, hash: "", hash_code_data: "", name: "Ethereum" },
+      { flags: 0, hash: "", hash_code_data: "0".repeat(64), name: "Bitcoin" },
+      { flags: 0, hash: "", hash_code_data: "0".repeat(64), name: "Ethereum" },
     ]);
   });
 
@@ -253,7 +253,7 @@ describe("secure channel WebSocket: install commits the app to the device contex
     // The device context now reflects Bitcoin, with its install hash.
     const after = await drive(token, id, "apps/list");
     expect(after.data).toEqual([
-      { flags: 0, hash: BTC.hash, hash_code_data: "", name: "Bitcoin" },
+      { flags: 0, hash: BTC.hash, hash_code_data: BTC.hash, name: "Bitcoin" },
     ]);
   });
 
@@ -292,7 +292,7 @@ describe("secure channel WebSocket: install commits the app to the device contex
 
     const before = await drive(token, id, "apps/list");
     expect(before.data).toEqual([
-      { flags: 0, hash: BTC.hash, hash_code_data: "", name: "Bitcoin" },
+      { flags: 0, hash: BTC.hash, hash_code_data: BTC.hash, name: "Bitcoin" },
     ]);
 
     const uninstall = await drive(token, id, `install?hash=${BTC.hash}`);
@@ -433,7 +433,7 @@ describe("secure channel WebSocket: firmware install erases the app storage", ()
     ]);
     const before = await drive(token, id, "apps/list");
     expect(before.data).toEqual([
-      { flags: 0, hash: "abc123", hash_code_data: "", name: "Bitcoin" },
+      { flags: 0, hash: "abc123", hash_code_data: "abc123", name: "Bitcoin" },
     ]);
 
     const install = await drive(

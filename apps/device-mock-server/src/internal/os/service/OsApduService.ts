@@ -2,10 +2,17 @@ import { type Device } from "@ledgerhq/device-mockserver-client";
 import { inject, injectable, optional } from "inversify";
 
 import {
+  DELETE_LANGUAGE_PACK_PREFIX,
   deriveGetOsVersion,
   deriveOsApduResponse,
   GET_OS_VERSION_PREFIX,
+  LANGUAGE_LOAD_CHUNK_PREFIX,
+  LANGUAGE_LOAD_COMMIT_PREFIX,
+  LANGUAGE_LOAD_CREATE_PREFIX,
+  parseLanguagePackSize,
+  parseSetDeviceName,
   resolveTargetId,
+  SET_DEVICE_NAME_PREFIX,
 } from "@internal/os/service/osApdus";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
 import { type FirmwareUpdateResolver } from "@internal/secure-channel/service/FirmwareUpdateResolver";
@@ -23,6 +30,9 @@ const TOGGLE_EARLY_CHECK_ENTER_P2 = "00";
 const TOGGLE_EARLY_CHECK_EXIT_P2 = "01";
 
 const STATUS_OK = "9000";
+
+/** What a device answers a command whose data it cannot use (`6a80`). */
+const INVALID_DATA_SW = "6a80";
 
 /**
  * Synthesizes the OS-handshake APDU responses (GetOsVersion / GetAppAndVersion /
@@ -81,7 +91,73 @@ export class OsApduService {
       }
     }
 
+    // A language pack arrives as a load script: create announces its size,
+    // chunks carry it, the last command commits. Nothing in it names the
+    // language, so the size is what the commit resolves it from.
+    if (apdu.startsWith(LANGUAGE_LOAD_CREATE_PREFIX)) {
+      const bytes = parseLanguagePackSize(apdu);
+      if (bytes === null) {
+        return INVALID_DATA_SW;
+      }
+      this.repository.setPendingLanguageOperation(record, device.id, bytes);
+      return STATUS_OK;
+    }
+    if (apdu.startsWith(LANGUAGE_LOAD_CHUNK_PREFIX)) {
+      return STATUS_OK;
+    }
+    if (apdu.startsWith(LANGUAGE_LOAD_COMMIT_PREFIX)) {
+      await this.commitLanguagePack(record, device);
+      return STATUS_OK;
+    }
+    if (apdu.startsWith(DELETE_LANGUAGE_PACK_PREFIX)) {
+      this.repository.editDevice(record, device.id, { language: undefined });
+      return STATUS_OK;
+    }
+
+    // A rename has to stick: the name is what GetDeviceName reads back, and
+    // what every later read of the device reports.
+    if (apdu.startsWith(SET_DEVICE_NAME_PREFIX)) {
+      const name = parseSetDeviceName(apdu);
+      if (name === null) {
+        return INVALID_DATA_SW;
+      }
+      this.repository.editDevice(record, device.id, { name });
+      return STATUS_OK;
+    }
+
     return deriveOsApduResponse(device, apdu);
+  }
+
+  /**
+   * Settle an armed language-pack load: the language is whichever pack has the
+   * announced byte size for this device and firmware. A device whose pack the
+   * Manager API cannot place keeps the language it had — the install still
+   * succeeds, the way the device would have accepted the bytes either way.
+   */
+  private async commitLanguagePack(
+    record: SessionRecord,
+    device: Device,
+  ): Promise<void> {
+    const bytes = this.repository
+      .takePendingLanguageOperation(record, device.id)
+      .extract();
+    const targetId = resolveTargetId(device);
+    if (
+      bytes === undefined ||
+      !this.firmwareResolver ||
+      targetId === undefined ||
+      !device.firmware_version
+    ) {
+      return;
+    }
+    const language = await this.firmwareResolver.resolveLanguageBySize({
+      targetId,
+      currentVersion: device.firmware_version,
+      bytes,
+    });
+    language.ifJust((name) => {
+      this.repository.editDevice(record, device.id, { language: name });
+    });
   }
 
   /**

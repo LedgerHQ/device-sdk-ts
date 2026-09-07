@@ -36,6 +36,17 @@
     "typecheck": {
       "dependsOn": ["^build", "^typecheck"]
     },
+    "@ledgerhq/device-mock-server-ui#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "inputs": [
+        "src/**",
+        "index.html",
+        "vite.config.ts",
+        "tailwind.config.ts",
+        "tsconfig.json"
+      ]
+    },
     "@ledgerhq/device-management-kit-sample#typecheck": {
       "dependsOn": ["build", "^typecheck"]
     },
