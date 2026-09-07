@@ -1,4 +1,4 @@
-# @ledgerhq/device-transport-kit-mock-client
+# @ledgerhq/device-mockserver-client
 
 ## 1.3.0
 
