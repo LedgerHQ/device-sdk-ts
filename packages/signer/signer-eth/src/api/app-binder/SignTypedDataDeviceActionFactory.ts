@@ -1,5 +1,7 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
+  type DeviceActionStateMachine,
+  type InternalApi,
   type LoggerPublisherService,
   type XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
@@ -17,6 +19,24 @@ import { EthersTransactionMapperService } from "@internal/transaction/service/ma
 import { TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { DefaultTypedDataParserService } from "@internal/typed-data/service/DefaultTypedDataParserService";
 
+type SignTypedDataDA = XStateDeviceAction<
+  SignTypedDataDAOutput,
+  SignTypedDataDAInput,
+  SignTypedDataDAError,
+  SignTypedDataDAIntermediateValue,
+  SignTypedDataDAInternalState
+> & {
+  makeStateMachine(
+    internalApi: InternalApi,
+  ): DeviceActionStateMachine<
+    SignTypedDataDAOutput,
+    SignTypedDataDAInput,
+    SignTypedDataDAError,
+    SignTypedDataDAIntermediateValue,
+    SignTypedDataDAInternalState
+  >;
+};
+
 export const SignTypedDataDeviceActionFactory = (args: {
   derivationPath: string;
   data: TypedData;
@@ -24,13 +44,7 @@ export const SignTypedDataDeviceActionFactory = (args: {
   skipOpenApp: boolean;
   inspect?: boolean;
   loggerFactory?: (tag: string) => LoggerPublisherService;
-}): XStateDeviceAction<
-  SignTypedDataDAOutput,
-  SignTypedDataDAInput,
-  SignTypedDataDAError,
-  SignTypedDataDAIntermediateValue,
-  SignTypedDataDAInternalState
-> =>
+}): SignTypedDataDA =>
   new SignTypedDataDeviceAction({
     input: {
       derivationPath: args.derivationPath,
