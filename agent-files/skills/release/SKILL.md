@@ -219,9 +219,9 @@ git add .
 git commit -m "🔧 (release): Update lockfile"
 ```
 
-### Step 10 -- Update getting-started.mdx
+### Step 10 -- Update the docs version tables
 
-Update the version tables in `apps/docs/pages/docs/getting-started.mdx` to reflect the new versions of all released packages.
+Update the version tables in `apps/docs/content/docs/index.mdx` to reflect the new versions of all released packages.
 
 - Read the file and locate the library tables (DMK, Signers & Trusted App Kit, Transports, DevTools).
 - For each released (public) package, find its row in the table and replace the old version number with the new bumped version from Step 6.
@@ -247,9 +247,9 @@ pnpm exec zx agent-files/scripts/release/create-pr.cjs
 
 Perform a documentation health check. This step does not block the release but surfaces issues for the user.
 
-- **`apps/docs/pages/docs/getting-started.mdx`**: Cross-check that every released package now shows its new version in the tables. Report any mismatches.
+- **`apps/docs/content/docs/index.mdx`**: Cross-check that every released package now shows its new version in the tables. Report any mismatches.
 - **`README.md`**: Check that every released package appears in the package inventory tables (around lines 88-153). If a package is missing, warn the user.
-- **Migration guides**: For any package with a **major** or **minor** bump, check whether a migration guide exists under `apps/docs/pages/docs/integration/migrations/`. If none is found, remind the user that a migration guide may be needed.
+- **Migration guides**: For any package with a **major** or **minor** bump, check whether a migration guide exists under `apps/docs/content/docs/integration/migrations/`. If none is found, remind the user that a migration guide may be needed.
 - Report all findings to the user.
 
 ## Error handling
