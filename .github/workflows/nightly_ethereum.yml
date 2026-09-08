@@ -67,9 +67,6 @@ jobs:
           test: test:erc7730
           dapp: ${{ matrix.dapp }}
           device: ${{ matrix.device }}
-          coin-app: Ethereum
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: erc7730-calldata-logs
@@ -107,9 +104,6 @@ jobs:
           test: test:erc7730:typed-data
           dapp: ${{ matrix.dapp }}
           device: ${{ matrix.device }}
-          coin-app: Ethereum
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: erc7730-ethereum-logs
@@ -134,9 +128,6 @@ jobs:
           runner: cs-tester
           test: test:gating
           device: ${{ matrix.device }}
-          coin-app: Ethereum
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: ethereum-gating-logs

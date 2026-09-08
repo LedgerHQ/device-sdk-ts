@@ -26,6 +26,8 @@ import { type ServiceController } from "@root/src/domain/services/ServiceControl
 import { readAddressBookFile } from "@root/src/infrastructure/repositories/readAddressBookFile";
 import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
 
+import { pinnedVersions } from "./pinnedVersions";
+
 export type CliConfig = {
   // config.speculinho
   device: SpeculinhoConfig["device"];
@@ -76,12 +78,14 @@ export class EthereumTransactionTesterCli {
     const calMode =
       config.erc7730Files && config.erc7730Files.length > 0 ? "test" : "prod";
 
+    const pins = pinnedVersions("Ethereum", config.device);
+
     // Create DI container configuration
     const diConfig: ClearSigningTesterConfig = {
       speculinho: {
         device: config.device,
-        osVersion: config.osVersion,
-        appVersion: config.appEthVersion,
+        osVersion: config.osVersion ?? pins.osVersion,
+        appVersion: config.appEthVersion ?? pins.appVersion,
         screenshotPath: config.screenshotFolderPath,
         speculinhoUrl: config.speculinhoUrl,
         speculosHttpTimeoutMs: config.speculosHttpTimeoutMs,
@@ -224,11 +228,11 @@ export class EthereumTransactionTesterCli {
       )
       .option(
         "--app-eth-version <version>",
-        "Ethereum app version (e.g., 1.19.1). If not specified, uses latest version for the device.",
+        "Ethereum app version (e.g., 1.19.1). Defaults to the pin in versions.json.",
       )
       .option(
         "--os-version <version>",
-        "Device OS version (e.g., 1.8.1). If not specified, uses latest OS version for the device.",
+        "Device OS version (e.g., 1.8.1). Defaults to the pin in versions.json.",
       )
       .option(
         "--erc7730-files <files...>",

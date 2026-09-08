@@ -28,6 +28,8 @@ import {
 } from "@root/src/domain/models/SolanaProgramMap";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
+import { pinnedVersions } from "./pinnedVersions";
+
 export type SolanaCliConfig = {
   // config.speculinho
   device: SpeculinhoConfig["device"];
@@ -69,12 +71,14 @@ export class SolanaTransactionTesterCli {
   constructor(config: SolanaCliConfig) {
     this.config = config;
 
+    const pins = pinnedVersions("Solana", config.device);
+
     const diConfig: ClearSigningTesterConfig = {
       speculinho: {
         device: config.device,
         appName: "Solana",
-        osVersion: config.osVersion,
-        appVersion: config.appSolVersion,
+        osVersion: config.osVersion ?? pins.osVersion,
+        appVersion: config.appSolVersion ?? pins.appVersion,
         screenshotPath: config.screenshotFolderPath,
         speculinhoUrl: config.speculinhoUrl,
         speculosHttpTimeoutMs: config.speculosHttpTimeoutMs,
@@ -169,11 +173,11 @@ export class SolanaTransactionTesterCli {
       )
       .option(
         "--app-sol-version <version>",
-        "Solana app version (e.g., 1.5.0). If not specified, uses latest version for the device.",
+        "Solana app version (e.g., 1.5.0). Defaults to the pin in versions.json.",
       )
       .option(
         "--os-version <version>",
-        "Device OS version (e.g., 1.8.1). If not specified, uses latest OS version for the device.",
+        "Device OS version (e.g., 1.8.1). Defaults to the pin in versions.json.",
       )
       .option(
         "--skip-craft",

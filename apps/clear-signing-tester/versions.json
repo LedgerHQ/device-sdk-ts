@@ -1,0 +1,17 @@
+{
+  "_comment": "Emulator versions Speculinho is asked for when a run pins nothing. Both CI and local runs read this file, so they cannot disagree. Bump deliberately: a version must exist on Speculinho, which lags coin-apps by up to about an hour after a release.",
+  "os": {
+    "stax": "1.10.1",
+    "nanox": "2.7.1",
+    "flex": "1.6.1"
+  },
+  "app": {
+    "Ethereum": "1.22.3",
+    "Solana": "1.16.0"
+  },
+  "contacts": {
+    "_comment": "Address Book HMACs are OS syscalls that only exist in these pre-release builds.",
+    "os": "1.7.0-rc2",
+    "app": "1.23.0-dev"
+  }
+}

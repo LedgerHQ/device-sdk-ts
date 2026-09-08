@@ -59,9 +59,6 @@ jobs:
           runner: cs-tester:solana
           test: ${{ matrix.test }}
           device: ${{ matrix.device }}
-          coin-app: Solana
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: solana-cs-tester-logs
@@ -91,9 +88,6 @@ jobs:
           runner: cs-tester:solana
           test: ${{ matrix.test }}
           device: ${{ matrix.device }}
-          coin-app: Solana
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           use-rpc: "true"
           use-distill: "true"
           log-level: error

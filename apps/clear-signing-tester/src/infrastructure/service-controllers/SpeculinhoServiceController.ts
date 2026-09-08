@@ -11,9 +11,24 @@ const DEFAULT_READY_TIMEOUT_MS = 120_000;
 const DEFAULT_POLL_INTERVAL_MS = 2_000;
 const ROUTE_TIMEOUT_SECONDS = 60;
 
-/** Well-known Speculos test mnemonic. Overridable via SPECULOS_SEED env var. */
+/** Speculos' own default seed, so a pod derives the same keys it would with no
+ * `--seed` at all. Overridable via SPECULOS_SEED env var. */
 const DEFAULT_SPECULOS_SEED =
-  "glory promote mansion idle axis finger extend february uncover one trip resolve toe";
+  "glory promote mansion idle axis finger extra february uncover one trip resource lawn turtle enact monster seven myth punch hobby comfort wild raise skin";
+
+/**
+ * Address Book proofs are device-bound: the device mints them with its user and
+ * attestation keys, which Speculos generates afresh on every boot unless they are
+ * pinned. Each run gets a new pod, so without this a recorded address book is
+ * rejected with `6982` ("registered with a different seed") by the next pod.
+ *
+ * Emulator test values only - never a real device secret.
+ */
+const DEVICE_USER_PRIVATE_KEY =
+  "0101010101010101010101010101010101010101010101010101010101010101";
+const DEVICE_ATTESTATION_KEY =
+  "0202020202020202020202020202020202020202020202020202020202020202";
+const DETERMINISTIC_RNG_SEED = "cs-tester";
 
 interface StatusResponse {
   readonly run_id: string;
@@ -117,14 +132,26 @@ export class SpeculinhoServiceController implements ServiceController {
       route_timeout_seconds: ROUTE_TIMEOUT_SECONDS,
     };
 
-    // Boot the pod's Speculos with "-p" so it trusts the production PKI root
-    // when CAL mode is "prod". Without it Speculos defaults to the test root
-    // and prod-signed CAL certificates (PKI + gated descriptors) fail on-device
-    // with 5720 "failed to verify signature". Mirrors the local Docker path in
-    // SpeculosServiceController; forwarded verbatim via Speculinho `extra_args`.
+    // Forwarded verbatim to the pod's Speculos via Speculinho `extra_args`.
+    const extraArgs = [
+      // Pin the device identity so Address Book proofs survive a new pod.
+      "--user-private-key",
+      DEVICE_USER_PRIVATE_KEY,
+      "--attestation-key",
+      DEVICE_ATTESTATION_KEY,
+      "--deterministic-rng",
+      DETERMINISTIC_RNG_SEED,
+    ];
+
+    // "-p" makes Speculos trust the production PKI root when CAL mode is "prod".
+    // Without it Speculos defaults to the test root and prod-signed CAL
+    // certificates (PKI + gated descriptors) fail on-device with 5720 "failed to
+    // verify signature". Mirrors the local Docker path in SpeculosServiceController.
     if (this.calConfig.mode === "prod") {
-      body["extra_args"] = ["-p"];
+      extraArgs.push("-p");
     }
+
+    body["extra_args"] = extraArgs;
 
     this.logger.debug("Acquiring Speculinho pod", {
       data: { body },

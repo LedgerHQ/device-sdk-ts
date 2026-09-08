@@ -110,20 +110,36 @@ Options:
   --file-log-level <level>         File log level (requires --log-file)
 ```
 
-## Finding valid app/OS versions
+## App and OS versions
 
-Speculinho only has specific app/OS combinations available. Passing an unknown combination will fail with a `FileNotFoundError` from the pod. Query the available versions first:
+Speculinho requires an explicit app and OS version on every run and resolves no
+"latest" of its own, so [`versions.json`](./versions.json) pins the pair each run
+asks for, keyed **device > OS > coin app > app version**:
 
-```bash
-# All available entries
-curl https://speculinho.ledgerlabs.net/apps | jq '.'
-
-# Filter by device and coin app
-curl https://speculinho.ledgerlabs.net/apps | jq '.[] | select(.device == "stax" and .coin_app == "Ethereum")'
-curl https://speculinho.ledgerlabs.net/apps | jq '.[] | select(.device == "flex" and .coin_app == "Solana")'
+```json
+{
+  "stax": { "1.10.1": { "Ethereum": "1.22.3", "Solana": "1.16.0" } },
+  "flex": {
+    "1.7.0-rc2": { "Ethereum": "1.23.0-dev" },
+    "1.6.1": { "Solana": "1.16.0" }
+  }
+}
 ```
 
-Then pass matching values to `--app-eth-version`/`--app-sol-version` and `--os-version`.
+The OS is not chosen separately: an app is pinned under exactly one OS per
+device, so `--device flex` plus an Ethereum run resolves `1.7.0-rc2` and
+`1.23.0-dev`. That is deliberate — the Address Book needs the pre-release pair,
+and every flex Ethereum run uses it rather than keeping a contacts-only special
+case. Pin an app under two OS versions for one device and the lookup fails as
+ambiguous rather than guessing.
+
+Both CI and a local run read that file, so they cannot disagree. `--os-version`
+and `--app-eth-version`/`--app-sol-version` still override it for a one-off.
+
+Bump a pin deliberately: the version has to exist **on Speculinho**, which trails
+coin-apps by up to about an hour after a release. Speculinho exposes no endpoint
+listing what it holds, so the only way to check a candidate is to acquire a pod
+with it — an unavailable version fails with `FileNotFoundError` from the pod.
 
 ## ERC7730 Clear Signing Support
 
@@ -170,8 +186,7 @@ registers each contact with `@ledgerhq/device-contacts-kit` and asserts the
 review screens. No signing.
 
 ```bash
-pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev \
-  contact-file ./ressources/contacts/contacts.json
+pnpm cs-tester cli --device flex contact-file ./ressources/contacts/contacts.json
 ```
 
 ```json
@@ -191,7 +206,7 @@ pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0
 signer for the whole run, so any signing command reviews against it.
 
 ```bash
-pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev \
+pnpm cs-tester cli --device flex \
   --address-book ./ressources/contacts/address-book.json \
   raw-file ./ressources/contacts/sign-with-contact.json
 ```
@@ -217,15 +232,20 @@ Give each case its own recipient address; do not reuse one across cases.
 
 Contacts need an RC firmware pair — the newest _stable_ Ethereum app answers
 `6e00 "CLA not supported"` to the first address-book APDU, and that also drops
-the Speculos session, so every later case fails as `DeviceSessionNotFound`. Run
-with `--device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev`. The
-Address Book HMACs are OS syscalls, so the Speculos image must be recent enough
-to implement them.
+the Speculos session, so every later case fails as `DeviceSessionNotFound`. That
+pair is what [`versions.json`](./versions.json) pins for flex Ethereum, so a
+contacts run only needs `--device flex`. The Address Book HMACs are OS syscalls
+that 1.6.1 does not implement, which is why the OS pin matters as much as the app
+one.
+
+The proofs are also bound to the emulator's user and attestation keys, which
+Speculos regenerates on every boot. `SpeculinhoServiceController` pins them so a
+recorded address book stays valid across pods; change those pins and the recorded
+proofs must be re-recorded.
 
 These three flows run on pull requests via the `contacts-cs-tester` job, gated on
-changes to `signer-eth`, `device-contacts-kit` or this app. The job inherits the
-firmware pin from the scripts above; it depends on the Speculos image the shared
-CI action pulls, which is not pinned per job.
+changes to `signer-eth`, `device-contacts-kit` or this app. It resolves versions
+through the same `versions.json`, so CI and a local run agree.
 
 ## Output
 
