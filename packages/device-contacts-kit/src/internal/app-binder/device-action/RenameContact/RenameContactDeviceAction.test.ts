@@ -483,4 +483,76 @@ describe("RenameContactDeviceAction", () => {
         onError: reject,
       });
     }));
+
+  // DSDK-1481: the derivation-path flag is derived from the fresh OS version +
+  // the (real) requirements table. deviceModelId is FLEX (cutoff 1.7.0-rc3).
+  const SUCCESS_STATES = [
+    {
+      intermediateValue: {
+        requiredUserInteraction: UserInteractionRequired.None,
+      },
+      status: DeviceActionStatus.Pending,
+    },
+    {
+      intermediateValue: {
+        requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+      },
+      status: DeviceActionStatus.Pending,
+    },
+    {
+      intermediateValue: {
+        requiredUserInteraction: UserInteractionRequired.None,
+      },
+      status: DeviceActionStatus.Pending,
+    },
+    {
+      intermediateValue: {
+        requiredUserInteraction: UserInteractionRequired.RegisterWallet,
+      },
+      status: DeviceActionStatus.Pending,
+    },
+    { output: EXPECTED_OUTPUT, status: DeviceActionStatus.Completed },
+  ] as DeviceActionState<
+    RenameContactDAOutput,
+    RenameContactDAError,
+    RenameContactDAIntermediateValue
+  >[];
+
+  it("sends the derivation path when the fresh OS is below the model cutoff (rc2)", () =>
+    new Promise<void>((resolve, reject) => {
+      setupGoToDashboardDAMock({
+        requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+      });
+      getOsVersionMock.mockResolvedValue(
+        CommandResultFactory({ data: { seVersion: "1.7.0-rc2" } }),
+      );
+      const action = makeAction(BASE_INPUT);
+
+      testDeviceActionStates(action, SUCCESS_STATES, apiMock, {
+        onDone: () => {
+          expect(renameContactMock).toHaveBeenCalledWith(BASE_INPUT, true);
+          resolve();
+        },
+        onError: reject,
+      });
+    }));
+
+  it("omits the derivation path when the fresh OS is at/after the cutoff (rc3/GA)", () =>
+    new Promise<void>((resolve, reject) => {
+      setupGoToDashboardDAMock({
+        requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+      });
+      getOsVersionMock.mockResolvedValue(
+        CommandResultFactory({ data: { seVersion: "1.7.0-rc3" } }),
+      );
+      const action = makeAction(BASE_INPUT);
+
+      testDeviceActionStates(action, SUCCESS_STATES, apiMock, {
+        onDone: () => {
+          expect(renameContactMock).toHaveBeenCalledWith(BASE_INPUT, false);
+          resolve();
+        },
+        onError: reject,
+      });
+    }));
 });

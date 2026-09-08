@@ -14,7 +14,6 @@ import {
   CommandResultFactory,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
@@ -24,8 +23,7 @@ import {
   SUB_CMD_EDIT_SCOPE,
 } from "@internal/app-binder/model/contactsConstants";
 import {
-  CONTACTS_APP_ERRORS,
-  contactsCommandErrorFactory,
+  ContactsCommandErrorHelper,
   type ContactsErrorCodes,
 } from "@internal/app-binder/model/contactsErrors";
 import { STRUCT_TYPE_EDIT_SCOPE } from "@internal/app-binder/services/contactsTlvSerializer";
@@ -72,10 +70,8 @@ export class EditExternalAddressScopeCommand
 {
   readonly name = "editExternalAddressScope";
   readonly args: EditExternalAddressScopeCommandArgs;
-  private readonly errorHelper = new CommandErrorHelper<
-    EditExternalAddressScopeCommandResponse,
-    ContactsErrorCodes
-  >(CONTACTS_APP_ERRORS, contactsCommandErrorFactory);
+  private readonly errorHelper =
+    new ContactsCommandErrorHelper<EditExternalAddressScopeCommandResponse>();
 
   constructor(args: EditExternalAddressScopeCommandArgs) {
     this.args = args;

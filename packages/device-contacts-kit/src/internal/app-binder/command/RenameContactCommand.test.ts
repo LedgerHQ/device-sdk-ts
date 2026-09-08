@@ -6,6 +6,7 @@
 import {
   type ApduResponse,
   CommandResultStatus,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 
 import {
@@ -128,6 +129,47 @@ describe("RenameContactCommand", () => {
       if (result.status === CommandResultStatus.Error) {
         expect(result.error).toBeInstanceOf(ContactsCommandError);
         expect((result.error as ContactsCommandError).errorCode).toBe("6985");
+      }
+    });
+
+    it("maps SW=0x686A (OS still mandates the derivation path) to a ContactsCommandError", () => {
+      const command = new RenameContactCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
+
+      const result = command.parseResponse({
+        data: Buffer.from([]),
+        statusCode: Buffer.from([0x68, 0x6a]),
+      });
+
+      expect(result.status).toBe(CommandResultStatus.Error);
+      if (result.status === CommandResultStatus.Error) {
+        expect(result.error).toBeInstanceOf(ContactsCommandError);
+        expect((result.error as ContactsCommandError).errorCode).toBe("686a");
+      }
+    });
+
+    it("gives an unmapped status word an actionable message instead of UnknownDeviceExchangeError", () => {
+      // 0x6D01 is in neither the Contacts nor the global error dictionary, so
+      // the base helper would yield a bare UnknownDeviceExchangeError. The
+      // Contacts helper upgrades it to an InvalidStatusWordError naming the SW.
+      const command = new RenameContactCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
+
+      const result = command.parseResponse({
+        data: Buffer.from([]),
+        statusCode: Buffer.from([0x6d, 0x01]),
+      });
+
+      expect(result.status).toBe(CommandResultStatus.Error);
+      if (result.status === CommandResultStatus.Error) {
+        expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+        expect(
+          (result.error as InvalidStatusWordError).originalError?.message,
+        ).toContain("0x6d01");
       }
     });
 
