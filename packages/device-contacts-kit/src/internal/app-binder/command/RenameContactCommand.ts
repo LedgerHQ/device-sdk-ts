@@ -22,7 +22,6 @@ import {
   CommandResultFactory,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
@@ -32,8 +31,7 @@ import {
   RENAME_CONTACT_P1,
 } from "@internal/app-binder/model/contactsConstants";
 import {
-  CONTACTS_APP_ERRORS,
-  contactsCommandErrorFactory,
+  ContactsCommandErrorHelper,
   type ContactsErrorCodes,
 } from "@internal/app-binder/model/contactsErrors";
 import { STRUCT_TYPE_EDIT_CONTACT_NAME } from "@internal/app-binder/services/contactsTlvSerializer";
@@ -80,10 +78,8 @@ export class RenameContactCommand
 {
   readonly name = "renameContact";
   readonly args: RenameContactCommandArgs;
-  private readonly errorHelper = new CommandErrorHelper<
-    RenameContactCommandResponse,
-    ContactsErrorCodes
-  >(CONTACTS_APP_ERRORS, contactsCommandErrorFactory);
+  private readonly errorHelper =
+    new ContactsCommandErrorHelper<RenameContactCommandResponse>();
 
   constructor(args: RenameContactCommandArgs) {
     this.args = args;

@@ -16,7 +16,6 @@ import {
   CommandResultFactory,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
@@ -28,8 +27,7 @@ import {
   SUB_CMD_REGISTER_IDENTITY,
 } from "@internal/app-binder/model/contactsConstants";
 import {
-  CONTACTS_APP_ERRORS,
-  contactsCommandErrorFactory,
+  ContactsCommandErrorHelper,
   type ContactsErrorCodes,
 } from "@internal/app-binder/model/contactsErrors";
 
@@ -80,10 +78,8 @@ export class RegisterIdentityCommand
 {
   readonly name = "registerIdentity";
   readonly args: RegisterIdentityCommandArgs;
-  private readonly errorHelper = new CommandErrorHelper<
-    RegisterIdentityCommandResponse,
-    ContactsErrorCodes
-  >(CONTACTS_APP_ERRORS, contactsCommandErrorFactory);
+  private readonly errorHelper =
+    new ContactsCommandErrorHelper<RegisterIdentityCommandResponse>();
 
   constructor(args: RegisterIdentityCommandArgs) {
     this.args = args;

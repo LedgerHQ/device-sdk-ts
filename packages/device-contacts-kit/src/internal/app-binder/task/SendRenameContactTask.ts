@@ -11,20 +11,21 @@
 //
 // Reference: Address Book Final Specifications — Edit Contact Name. Tag order:
 //   STRUCT_TYPE, STRUCT_VERSION, CONTACT_NAME (new), PREVIOUS_CONTACT_NAME
-//   (old), GROUP_HANDLE, HMAC_PROOF.
+//   (old), GROUP_HANDLE, [DERIVATION_PATH], HMAC_PROOF.
 //
-// No DERIVATION_PATH. The tag's status changed three times in the BOLOS SDK,
-// and the address-book TLV parser is compiled into the app (app_features/), so
-// the SDK revision the app was *built* against decides — not the app version,
-// which reads 1.23.0-dev either way:
-//   - before 2026-08-07: tag 0x69 present and MANDATORY, omitting it -> 0x6a80
-//   - 8e7e7a4f (2026-08-07): made optional, both forms accepted
-//   - a0bb21f5 (2026-08-10): removed, sending it -> 0x6a80 (unknown tag)
-// Omitting it is therefore correct for any app built from 2026-08-07 onward,
-// and wrong for one built before. Both ends verified on hardware: a Flex
-// running a pre-08-07 build of app-ethereum a79f9f8f rejects the payload
-// without the tag in 9ms and no review screen; Speculos running a post-08-10
-// build of the same commit rejects it *with* the tag, the same way.
+// DERIVATION_PATH (tag 0x69) is CONDITIONAL (DSDK-1481). The final product
+// serves rename from the OS, which needs no path — but the OS build decides the
+// payload shape, and the two shapes are mutually exclusive across builds:
+//   - OS below the model's cutoff (e.g. Flex 1.7.0-rc2 and earlier): the path
+//     is still MANDATORY, omitting it -> 0x686A (before any review screen).
+//   - OS at/after the cutoff (Flex 1.7.0-rc3, final, later): the path is
+//     rejected, sending it -> 0x6A80 (unknown tag).
+// So the caller passes includeDerivationPath, computed from the device OS
+// version read *freshly* from the device (renameRequiresDerivationPath), and we
+// emit the tag only for the older builds. This shim — the flag, the cutoff
+// table entries, and renameRequiresDerivationPath — is removed in one commit
+// once no in-the-field OS predates the cutoff. The rc2 requirement was verified
+// on hardware: a Flex on OS 1.7.0-rc2 rejects the path-free payload with 0x686A.
 import {
   ByteArrayBuilder,
   type CommandResult,
@@ -43,6 +44,7 @@ import {
   encodeTlvAscii,
   encodeTlvBuffer,
   encodeTlvUInt8,
+  packDerivationPath,
   STRUCT_TYPE_EDIT_CONTACT_NAME,
   STRUCT_VERSION_VALUE,
 } from "@internal/app-binder/services/contactsTlvSerializer";
@@ -57,6 +59,14 @@ export type SendRenameContactTaskArgs = {
   readonly newContactName: string;
   readonly groupHandle: Uint8Array;
   readonly hmacProof: Uint8Array;
+  /**
+   * TEMPORARY (DSDK-1481) — emit the `DERIVATION_PATH` (tag 0x69) TLV. Defaults
+   * to `false` (the GA payload, path-free). The caller sets it `true` only for
+   * OS builds below the model's cutoff, which still mandate the path; see
+   * {@link renameRequiresDerivationPath}. Not exposed on the public
+   * `RenameContactInput` — the host never chooses this.
+   */
+  readonly includeDerivationPath?: boolean;
   readonly logger?: LoggerPublisherService;
 };
 
@@ -114,6 +124,18 @@ export class SendRenameContactTask {
       args.previousContactName,
     );
     encodeTlvBuffer(builder, CONTACTS_TLV_TAG.GROUP_HANDLE, args.groupHandle);
+    // TEMPORARY (DSDK-1481): OS builds below the model's cutoff still mandate
+    // DERIVATION_PATH for EDIT CONTACT NAME (0x686A without it); newer builds
+    // reject it (0x6A80). The caller sets includeDerivationPath from the fresh
+    // device OS version. Fixed m/44'/60'/0'/0/0 — rename is name-only, the path
+    // is a payload-shape formality the old OS parser requires.
+    if (args.includeDerivationPath) {
+      encodeTlvBuffer(
+        builder,
+        CONTACTS_TLV_TAG.DERIVATION_PATH,
+        packDerivationPath([0x8000002c, 0x8000003c, 0x80000000, 0, 0]),
+      );
+    }
     encodeTlvBuffer(builder, CONTACTS_TLV_TAG.HMAC_PROOF, args.hmacProof);
 
     return builder.build();
