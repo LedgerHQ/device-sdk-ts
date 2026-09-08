@@ -1,9 +1,5 @@
 name: "[Tests] Solana Nightly"
 on:
-  # TODO: TEMPORARY – remove before merging feat/no-issue-use-speculinho-CS-tester
-  push:
-    branches:
-      - feat/no-issue-use-speculinho-CS-tester
   schedule:
     # Run every day at 3:00 AM UTC (offset from Ethereum/ERC7730 nightly at 2:00 AM)
     - cron: "0 3 * * *"

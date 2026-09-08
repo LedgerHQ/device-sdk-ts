@@ -1,9 +1,5 @@
 name: "[Tests] Ethereum Nightly"
 on:
-  # TODO: TEMPORARY – remove before merging feat/no-issue-use-speculinho-CS-tester
-  push:
-    branches:
-      - feat/no-issue-use-speculinho-CS-tester
   schedule:
     # Run every day at 2:00 AM UTC
     - cron: "0 2 * * *"
