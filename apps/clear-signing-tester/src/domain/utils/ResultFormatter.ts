@@ -90,9 +90,14 @@ export class ResultFormatter {
 
     const resultsTable = results.map((testResult) => {
       const statusEmoji = this.getStatusEmoji(testResult.status);
+      const asExpected = this.isAsExpected(testResult);
       const row: { Description: string; Status: string; Hash?: string } = {
         Description: testResult.input.description || "No description",
-        Status: `${statusEmoji} ${testResult.status.replace(/_/g, " ")}`,
+        Status:
+          `${statusEmoji} ${testResult.status.replace(/_/g, " ")}` +
+          (asExpected && testResult.status !== "clear_signed"
+            ? " (expected)"
+            : ""),
       };
 
       if (config.includeHash && "hash" in testResult && testResult.hash) {
@@ -133,9 +138,23 @@ export class ResultFormatter {
       resultsTable,
       summaryTitle: config.summaryTitle,
       summaryTable,
-      exitCode: totalItems - statusCounts.clearSigned,
+      exitCode: totalItems - results.filter((r) => this.isAsExpected(r)).length,
       counts: statusCounts,
     };
+  }
+
+  /**
+   * Whether a result is the outcome its case asked for.
+   *
+   * Clear signing is the expectation everywhere except a case that declares
+   * `expectBlindSigned`, which exists to prove the blind-signing fallback is
+   * still detected and so passes only when the device blind-signs.
+   */
+  private static isAsExpected(result: TestResult): boolean {
+    const expectsBlind =
+      "expectBlindSigned" in result.input &&
+      result.input.expectBlindSigned === true;
+    return result.status === (expectsBlind ? "blind_signed" : "clear_signed");
   }
 
   /**

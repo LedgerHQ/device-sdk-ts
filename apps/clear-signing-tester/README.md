@@ -292,3 +292,8 @@ of its own, so CI and a local run resolve the same pair from the scenario files.
 - **⚠️ `partially_clear_signed`**: Signed successfully but at least one expected text was not visible
 - **🙈 `blind_signed`**: Signed with blind signing (clear signing not available)
 - **❌ `error`**: Operation failed (device communication failure, parsing error, timeout, etc.)
+
+Clear signing is what every case expects, except one that sets
+`"expectBlindSigned": true`. Such a case exists to prove the blind-signing
+fallback is still detected, so it passes on `blind_signed` — shown as
+`🙈 blind signed (expected)` — and fails if it ever clear-signs or errors.

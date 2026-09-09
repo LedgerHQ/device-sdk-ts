@@ -17,6 +17,7 @@ type RawTransactionData = {
   txHash?: string;
   description?: string;
   expectedTexts?: string[];
+  expectBlindSigned?: boolean;
 };
 
 /**
@@ -82,6 +83,7 @@ export class TransactionFileRepository
       description: rawTx.description || `Transaction ${index + 1}`,
       txHash: rawTx.txHash,
       expectedTexts: rawTx.expectedTexts,
+      expectBlindSigned: rawTx.expectBlindSigned,
     };
   }
 }
