@@ -1,0 +1,23 @@
+{
+  "_comment": "Emulator pins, device > OS > coin app > app version. Speculinho demands an explicit app and OS version on every run and resolves no \"latest\", so a run with no --os-version/--app-*-version reads its pair from here; CI and local runs therefore cannot disagree. An app appears under exactly one OS per device, which is what makes the lookup unambiguous. Flex pins the Ethereum pre-release pair because the Address Book HMACs are OS syscalls absent from 1.6.1, and every flex Ethereum run uses it. Bump deliberately: a version has to exist on Speculinho, which trails coin-apps by up to about an hour after a release.",
+  "stax": {
+    "1.10.1": {
+      "Ethereum": "1.22.3",
+      "Solana": "1.16.0"
+    }
+  },
+  "nanox": {
+    "2.7.1": {
+      "Ethereum": "1.22.3",
+      "Solana": "1.16.0"
+    }
+  },
+  "flex": {
+    "1.7.0-rc2": {
+      "Ethereum": "1.23.0-dev"
+    },
+    "1.6.1": {
+      "Solana": "1.16.0"
+    }
+  }
+}

@@ -19,7 +19,6 @@ import {
 export type BatchContractTestConfig = {
   readonly defaultDerivationPath: string;
   readonly skipCal?: boolean;
-  readonly plugin?: string;
 };
 
 /**
@@ -55,10 +54,6 @@ export class TestBatchContractFromFileUseCase {
 
     // Read contracts from file
     const contracts = this.contractFileRepository.readFromFile(filePath);
-
-    if (config.plugin) {
-      this.logger.info(`Using plugin: ${config.plugin}`);
-    }
 
     // Count total tests (each contract-chainId combination)
     const totalTests = contracts.reduce(
@@ -141,7 +136,7 @@ export class TestBatchContractFromFileUseCase {
 
     return ResultFormatter.formatBatchResults(results, results.length, {
       title: "📋 CONTRACT BATCH TEST RESULTS",
-      summaryTitle: `📊 CONTRACT BATCH SUMMARY${config.plugin ? ` (Plugin: ${config.plugin})` : ""} (Total: ${results.length})`,
+      summaryTitle: `📊 CONTRACT BATCH SUMMARY (Total: ${results.length})`,
       includeHash: true,
     });
   }
