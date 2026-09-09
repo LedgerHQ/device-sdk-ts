@@ -152,7 +152,7 @@ describe("loadScenarioCatalog", () => {
 
 describe("the shipped catalog", () => {
   it("loads every scenario the app ships", () => {
-    expect(CATALOG.length).toBe(45);
+    expect(CATALOG.length).toBe(46);
   });
 
   // These are kept in the repo but not run — alternate chains nobody wired up,
