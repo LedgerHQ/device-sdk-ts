@@ -7,8 +7,23 @@ import { type CalConfig } from "@root/src/domain/models/config/CalConfig";
 import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
-const DEFAULT_READY_TIMEOUT_MS = 120_000;
+/**
+ * How long to wait for a pod before giving up on it and asking for another.
+ *
+ * A pod is normally ready in about 6s. A few get stuck instead — the cluster
+ * reports `CreateContainerConfigError`, or the status simply never leaves
+ * pending — and those do not recover. Waiting two minutes for one is worse than
+ * releasing it and taking a fresh pod, which is ready in seconds.
+ */
+const DEFAULT_READY_TIMEOUT_MS = 45_000;
+
+/** How many pods to try before giving the case up. */
+const MAX_POD_ATTEMPTS = 3;
+
+/** A pod that never came up, as opposed to a request that was refused. */
+class PodNotUsableError extends Error {}
 const DEFAULT_POLL_INTERVAL_MS = 2_000;
+const RELEASE_TIMEOUT_MS = 10_000;
 const ROUTE_TIMEOUT_SECONDS = 60;
 
 /** Speculos' own default seed, so a pod derives the same keys it would with no
@@ -84,31 +99,71 @@ export class SpeculinhoServiceController implements ServiceController {
     const appVersion = this.config.appVersion;
     const osVersion = this.config.osVersion;
 
-    this.runId = `cs-tester-${randomUUID()}`;
+    for (let attempt = 1; ; attempt++) {
+      this.runId = `cs-tester-${randomUUID()}`;
 
-    this.logger.info(
-      `Acquiring Speculinho pod (runId=${this.runId}, app=${appName}${appVersion ? `@${appVersion}` : ""}, device=${this.config.device}${osVersion ? `, os=${osVersion}` : ""})`,
-    );
+      this.logger.info(
+        `Acquiring Speculinho pod (runId=${this.runId}, app=${appName}${appVersion ? `@${appVersion}` : ""}, device=${this.config.device}${osVersion ? `, os=${osVersion}` : ""})`,
+      );
 
-    await this.acquire(appName, appVersion, osVersion);
-    const speculosUrl = await this.waitUntilReady();
+      // Only the pod is retried, never the acquire: a refused request is a
+      // permanent answer (an unknown version, or RBAC), so asking again would
+      // just fail slower.
+      await this.acquire(appName, appVersion, osVersion);
 
-    this.config.resolvedUrl = speculosUrl;
-    this.logger.info(`Speculinho pod ready at ${speculosUrl}`);
+      try {
+        const speculosUrl = await this.waitUntilReady();
+        this.config.resolvedUrl = speculosUrl;
+        this.logger.info(`Speculinho pod ready at ${speculosUrl}`);
+        return;
+      } catch (error) {
+        if (
+          !(error instanceof PodNotUsableError) ||
+          attempt >= MAX_POD_ATTEMPTS
+        ) {
+          throw error;
+        }
+        this.logger.warn(
+          `${error.message} — releasing it and taking another ` +
+            `(attempt ${attempt}/${MAX_POD_ATTEMPTS})`,
+        );
+        // Hand the dud back before asking for a replacement, so a run does not
+        // hold two pods per case.
+        await this.stop();
+      }
+    }
   }
 
   async stop(): Promise<void> {
     if (!this.runId) return;
+    const runId = this.runId;
 
-    this.logger.info(`Releasing Speculinho pod (runId=${this.runId})`);
+    this.logger.debug(`Releasing Speculinho pod (runId=${runId})`);
     try {
-      await fetch(`${this.baseUrl}/release`, {
+      const res = await fetch(`${this.baseUrl}/release`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ run_id: this.runId }),
+        body: JSON.stringify({ run_id: runId }),
+        // A run killed mid-release has seconds at best, so never wait longer
+        // than it takes to know the pod is either handed back or stranded.
+        signal: AbortSignal.timeout(RELEASE_TIMEOUT_MS),
       });
+      // Logged only once the pod is actually handed back. Announcing the
+      // intent alone reads as a release that happened, which hides a pod
+      // stranded by a process that died before the request completed.
+      if (res.ok) {
+        this.logger.info(`Released Speculinho pod (runId=${runId})`);
+      } else {
+        this.logger.warn(
+          `Speculinho release refused (${res.status}) for ${runId}: ` +
+            `the pod stays up until it is released by run id`,
+        );
+      }
     } catch (error) {
-      this.logger.warn(`Failed to release Speculinho pod: ${String(error)}`);
+      this.logger.warn(
+        `Failed to release Speculinho pod ${runId}: ${String(error)} — ` +
+          `it stays up until released by run id`,
+      );
     } finally {
       this.runId = null;
       this.config.resolvedUrl = undefined;
@@ -197,13 +252,13 @@ export class SpeculinhoServiceController implements ServiceController {
       }
 
       if (status.status === "failed") {
-        throw new Error(
+        throw new PodNotUsableError(
           `Speculinho pod ${this.runId} failed: ${status.error_details ?? "unknown"}`,
         );
       }
 
       if (Date.now() >= deadline) {
-        throw new Error(
+        throw new PodNotUsableError(
           `Speculinho pod ${this.runId} not ready within ${DEFAULT_READY_TIMEOUT_MS / 1000}s`,
         );
       }

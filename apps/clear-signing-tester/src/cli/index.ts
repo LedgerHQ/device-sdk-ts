@@ -56,6 +56,36 @@ type TestOptions = {
   appSolVersion?: string;
 };
 
+/** Conventional exit code for a run killed by a signal. */
+const INTERRUPTED_EXIT_CODE = 130;
+
+/**
+ * Hand every held emulator back when the run is killed.
+ *
+ * A Speculinho pod stays `ready` until someone posts /release, and the default
+ * SIGINT handler tears the process down without unwinding, so Ctrl+C or a
+ * cancelled CI job would otherwise strand one pod per worker.
+ */
+function releaseOnSignal(runner: ContainerScenarioRunner): () => void {
+  let releasing = false;
+
+  const handler = (signal: NodeJS.Signals) => {
+    if (releasing) return;
+    releasing = true;
+    console.log(`\n${signal} received, releasing emulators…`);
+    void runner.releaseAll().then((count) => {
+      console.log(`Released ${count} emulator(s).`);
+      process.exit(INTERRUPTED_EXIT_CODE);
+    });
+  };
+
+  const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM", "SIGHUP"];
+  for (const signal of signals) process.on(signal, handler);
+  return () => {
+    for (const signal of signals) process.off(signal, handler);
+  };
+}
+
 /** Exit codes are a byte, so a multiple of 256 would read as success. */
 const asExitCode = (failures: number): number => Math.min(failures, 255);
 
@@ -219,7 +249,6 @@ function planCases(
     device: options.device,
   });
   requireRpc(scenarioRuns, options.rpcUrl);
-
   // A case is the unit of work: split each fixture so its cases can run on
   // separate emulators, leaving order-dependent scenarios whole.
   const runs =
@@ -266,10 +295,11 @@ async function runTest(
       `${options.device ?? "every supported device"}, ${options.concurrency} at a time.`,
   );
 
+  const runner = new ContainerScenarioRunner(runtime);
+  const stopListening = releaseOnSignal(runner);
+
   try {
-    const report = await new RunScenariosUseCase(
-      new ContainerScenarioRunner(runtime),
-    ).execute(runs, {
+    const report = await new RunScenariosUseCase(runner).execute(runs, {
       concurrency: options.concurrency,
       onOutcome: (outcome, done, total) =>
         console.log(
@@ -284,6 +314,7 @@ async function runTest(
     reportScenarios(report);
     return asExitCode(report.failures);
   } finally {
+    stopListening();
     interceptor?.stop();
   }
 }

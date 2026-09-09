@@ -65,14 +65,50 @@ const NO_COUNTS = {
  * pod URL, so sharing one container would mean sharing one device.
  */
 export class ContainerScenarioRunner implements ScenarioRunner {
+  /**
+   * Emulators currently held, so an interrupted run can hand them back.
+   *
+   * A pod outlives the process that acquired it — Speculinho keeps it `ready`
+   * until someone posts /release — so a run killed mid-flight strands one pod
+   * per worker unless they are released explicitly.
+   */
+  private readonly active = new Set<ServiceController>();
+  private cancelled = false;
+
   constructor(private readonly runtime: ScenarioRuntime) {}
+
+  /**
+   * Release every emulator still held and refuse to acquire any more.
+   *
+   * Safe to call while runs are in flight: each `run` releases its own pod in
+   * its `finally`, and releasing twice is a no-op.
+   */
+  async releaseAll(): Promise<number> {
+    this.cancelled = true;
+    const held = [...this.active];
+    this.active.clear();
+    await Promise.all(held.map((s) => s.stop().catch(() => undefined)));
+    return held.length;
+  }
 
   async run(run: ScenarioRun): Promise<ScenarioOutcome> {
     const startedAt = Date.now();
+    if (this.cancelled) {
+      return {
+        run,
+        counts: NO_COUNTS,
+        failures: 1,
+        failedCases: [],
+        durationMs: 0,
+        errorMessage: "cancelled before it started",
+      };
+    }
+
     const container = this.buildContainer(run);
     const services = container.get<ServiceController>(
       TYPES.MainServiceController,
     );
+    this.active.add(services);
 
     try {
       await services.start();
@@ -96,6 +132,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         errorMessage: error instanceof Error ? error.message : String(error),
       };
     } finally {
+      this.active.delete(services);
       await services.stop().catch(() => undefined);
     }
   }
