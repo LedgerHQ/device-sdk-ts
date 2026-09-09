@@ -7,12 +7,8 @@ import { Command } from "commander";
 import { type Container } from "inversify";
 
 import { type TestBatchContactFromFileUseCase } from "@root/src/application/usecases/TestBatchContactFromFileUseCase";
-import { type TestBatchContractFromFileUseCase } from "@root/src/application/usecases/TestBatchContractFromFileUseCase";
 import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
 import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
-import { type TestContractUseCase } from "@root/src/application/usecases/TestContractUseCase";
-import { type TestTransactionUseCase } from "@root/src/application/usecases/TestTransactionUseCase";
-import { type TestTypedDataUseCase } from "@root/src/application/usecases/TestTypedDataUseCase";
 import { makeEthereumContainer } from "@root/src/di/ethereumContainer";
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
@@ -21,7 +17,6 @@ import {
   type CliLogLevel,
 } from "@root/src/domain/models/config/LoggerConfig";
 import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
-import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { readAddressBookFile } from "@root/src/infrastructure/repositories/readAddressBookFile";
 import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
@@ -38,7 +33,6 @@ export type CliConfig = {
   speculosHttpTimeoutMs?: number;
 
   // config.signer
-  skipCal?: boolean;
   erc7730Files?: string[];
   blindSigningEnabled?: boolean;
 
@@ -103,9 +97,6 @@ export class EthereumTransactionTesterCli {
         url: "https://global.api.prd.ledger.com/cal/v1",
         mode: calMode,
         branch: "main",
-      },
-      etherscan: {
-        apiKey: process.env["ETHERSCAN_API_KEY"] || "default-key",
       },
       onlySpeculos: config.onlySpeculos,
     };
@@ -317,14 +308,6 @@ export class EthereumTransactionTesterCli {
       }
     });
 
-    // Raw transaction command
-    program
-      .command("raw-transaction <transaction>")
-      .description("Test a single raw transaction")
-      .action(async (transaction) => {
-        exitCode = await cli!.handleRawTransaction(transaction);
-      });
-
     // Raw file command
     program
       .command("raw-file <file>")
@@ -333,55 +316,12 @@ export class EthereumTransactionTesterCli {
         exitCode = await cli!.handleRawFile(file);
       });
 
-    // Typed data command
-    program
-      .command("typed-data <data>")
-      .description("Test a single typed data object (JSON string)")
-      .action(async (data) => {
-        exitCode = await cli!.handleTypedData(data);
-      });
-
     // Typed data file command
     program
       .command("typed-data-file <file>")
       .description("Test multiple typed data objects from a JSON file")
       .action(async (file) => {
         exitCode = await cli!.handleTypedDataFile(file);
-      });
-
-    program
-      .command("contract <address>")
-      .description("Test a contract")
-      .option(
-        "--chain-id <chainId>",
-        "Chain ID (default: 1)",
-        (value: string) => parseInt(value),
-        1,
-      )
-      .option(
-        "--skip-cal",
-        "Skip CAL filtering and fetch random transactions directly from Etherscan",
-        false,
-      )
-      .action(async (address, options) => {
-        exitCode = await cli!.handleContract(
-          address,
-          options.chainId,
-          options.skipCal,
-        );
-      });
-
-    // Contract file command
-    program
-      .command("contract-file <file>")
-      .description("Test multiple contracts from a JSON file")
-      .option(
-        "--skip-cal",
-        "Skip CAL filtering and fetch random transactions directly from Etherscan",
-        false,
-      )
-      .action(async (file, options) => {
-        exitCode = await cli!.handleContractFile(file, options.skipCal);
       });
 
     // Contact file command
@@ -408,29 +348,6 @@ export class EthereumTransactionTesterCli {
   }
 
   /**
-   * Handle raw transaction command
-   */
-  async handleRawTransaction(transaction: string): Promise<number> {
-    const testTransactionUseCase = this.container.get<TestTransactionUseCase>(
-      TYPES.TestTransactionUseCase,
-    );
-
-    const result = await testTransactionUseCase.execute(
-      {
-        kind: SignableInputKind.Transaction,
-        rawTx: transaction,
-        description: "Single transaction test",
-      },
-      { derivationPath: this.config.derivationPath },
-    );
-
-    console.log(`\n${result.title}`);
-    console.table([result.data]);
-
-    return result.exitCode;
-  }
-
-  /**
    * Handle raw file command
    */
   async handleRawFile(file: string): Promise<number> {
@@ -452,29 +369,6 @@ export class EthereumTransactionTesterCli {
   }
 
   /**
-   * Handle typed data command
-   */
-  async handleTypedData(data: string): Promise<number> {
-    const testTypedDataUseCase = this.container.get<TestTypedDataUseCase>(
-      TYPES.TestTypedDataUseCase,
-    );
-
-    const result = await testTypedDataUseCase.execute(
-      {
-        kind: SignableInputKind.TypedData,
-        data,
-        description: "single typed data",
-      },
-      { derivationPath: this.config.derivationPath },
-    );
-
-    console.log(`\n${result.title}`);
-    console.table([result.data]);
-
-    return result.exitCode;
-  }
-
-  /**
    * Handle typed data file command
    */
   async handleTypedDataFile(file: string): Promise<number> {
@@ -485,58 +379,6 @@ export class EthereumTransactionTesterCli {
 
     const result = await batchTestUseCase.execute(file, {
       defaultDerivationPath: this.config.derivationPath,
-    });
-
-    console.log(`\n${result.title}`);
-    console.table(result.resultsTable);
-    console.log(`\n${result.summaryTitle}`);
-    console.table(result.summaryTable);
-
-    return result.exitCode;
-  }
-
-  /**
-   * Handle contract command
-   */
-  async handleContract(
-    address: string,
-    chainId: number,
-    skipCal: boolean = false,
-  ): Promise<number> {
-    const testContractUseCase = this.container.get<TestContractUseCase>(
-      TYPES.TestContractUseCase,
-    );
-
-    const result = await testContractUseCase.execute({
-      contractAddress: address,
-      chainId,
-      derivationPath: this.config.derivationPath,
-      skipCal,
-    });
-
-    console.log(`\n${result.title}`);
-    console.table(result.resultsTable);
-    console.log(`\n${result.summaryTitle}`);
-    console.table(result.summaryTable);
-
-    return result.exitCode;
-  }
-
-  /**
-   * Handle contract file command
-   */
-  async handleContractFile(
-    file: string,
-    skipCal: boolean = false,
-  ): Promise<number> {
-    const batchTestUseCase =
-      this.container.get<TestBatchContractFromFileUseCase>(
-        TYPES.TestBatchContractFromFileUseCase,
-      );
-
-    const result = await batchTestUseCase.execute(file, {
-      defaultDerivationPath: this.config.derivationPath,
-      skipCal,
     });
 
     console.log(`\n${result.title}`);

@@ -3,14 +3,11 @@ export const TYPES = {
   DeviceRepository: Symbol.for("DeviceRepository"),
   TransactionFileRepository: Symbol.for("TransactionFileRepository"),
   TypedDataFileRepository: Symbol.for("TypedDataFileRepository"),
-  ContractFileRepository: Symbol.for("ContractFileRepository"),
-  TransactionContractRepository: Symbol.for("TransactionContractRepository"),
   ContactsRepository: Symbol.for("ContactsRepository"),
   SpeculosContactsRepository: Symbol.for("SpeculosContactsRepository"),
   ContactFileRepository: Symbol.for("ContactFileRepository"),
 
   // Services
-  EtherscanAdapter: Symbol.for("EtherscanAdapter"),
   TransactionCrafter: Symbol.for("TransactionCrafter"),
   ScreenAnalyzerService: Symbol.for("ScreenAnalyzerService"),
   SigningService: Symbol.for("SigningService"),
@@ -44,21 +41,15 @@ export const TYPES = {
   DeviceController: Symbol.for("DeviceController"),
 
   // Use Cases
-  TestTransactionUseCase: Symbol.for("TestTransactionUseCase"),
   TestBatchTransactionFromFileUseCase: Symbol.for(
     "TestBatchTransactionFromFileUseCase",
   ),
-  TestTypedDataUseCase: Symbol.for("TestTypedDataUseCase"),
   TestBatchTypedDataFromFileUseCase: Symbol.for(
     "TestBatchTypedDataFromFileUseCase",
   ),
-  TestContractUseCase: Symbol.for("TestContractUseCase"),
   TestContactUseCase: Symbol.for("TestContactUseCase"),
   TestBatchContactFromFileUseCase: Symbol.for(
     "TestBatchContactFromFileUseCase",
-  ),
-  TestBatchContractFromFileUseCase: Symbol.for(
-    "TestBatchContractFromFileUseCase",
   ),
   TestSolanaTransactionUseCase: Symbol.for("TestSolanaTransactionUseCase"),
   TestBatchSolanaTransactionFromFileUseCase: Symbol.for(
@@ -75,7 +66,6 @@ export const TYPES = {
   // Config
   SpeculinhoConfig: Symbol.for("SpeculinhoConfig"),
   SignerConfig: Symbol.for("SignerConfig"),
-  EtherscanConfig: Symbol.for("EtherscanConfig"),
   SolanaRpcConfig: Symbol.for("SolanaRpcConfig"),
   CalConfig: Symbol.for("CalConfig"),
 

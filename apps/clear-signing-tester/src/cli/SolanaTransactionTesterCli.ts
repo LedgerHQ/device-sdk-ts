@@ -92,9 +92,6 @@ export class SolanaTransactionTesterCli {
         mode: "prod",
         branch: "main",
       },
-      etherscan: {
-        apiKey: "",
-      },
       solanaRpc: config.rpcUrl ? { url: config.rpcUrl } : undefined,
       onlySpeculos: config.onlySpeculos,
     };
