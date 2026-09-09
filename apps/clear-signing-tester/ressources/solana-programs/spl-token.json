@@ -4,6 +4,8 @@
   "action": "solanaProgram",
   "devices": ["stax", "nanox", "flex"],
   "coinApp": "Solana",
+  "_comment": "Disabled: a program scenario pulls transactions from an RPC and carries no expectedTexts, so it cannot fail the clear-signing check \u2014 a blind signature reports as clear-signed. Re-enable once a program case can assert what the device showed.",
+  "enabled": false,
   "mode": "parallel",
   "options": {
     "distill": true

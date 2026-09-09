@@ -8,10 +8,6 @@ import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepos
 import { type SolanaTransactionProgramRepository } from "@root/src/domain/repositories/SolanaTransactionProgramRepository";
 import { type TestResult } from "@root/src/domain/types/TestStatus";
 import {
-  delay,
-  INTER_CASE_DELAY_MS,
-} from "@root/src/domain/utils/interCaseDelay";
-import {
   type BatchTestResult,
   ResultFormatter,
 } from "@root/src/domain/utils/ResultFormatter";
@@ -67,7 +63,6 @@ export class TestSolanaProgramUseCase {
     const results: TestResult[] = [];
 
     for (const [index, tx] of txs.entries()) {
-      const isLast = index === txs.length - 1;
       const transaction: TransactionInput = {
         kind: SignableInputKind.Transaction,
         rawTx: tx.rawTx,
@@ -98,9 +93,7 @@ export class TestSolanaProgramUseCase {
         });
       }
 
-      // Program cases share one emulator, so settle between them but not
-      // after the last, which would hold the pod for nothing.
-      if (!isLast) await delay(INTER_CASE_DELAY_MS);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
     return ResultFormatter.formatBatchResults(results, txs.length);

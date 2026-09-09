@@ -152,7 +152,7 @@ describe("loadScenarioCatalog", () => {
 
 describe("the shipped catalog", () => {
   it("loads every scenario the app ships", () => {
-    expect(CATALOG.length).toBe(46);
+    expect(CATALOG.length).toBe(42);
   });
 
   // These are kept in the repo but not run — alternate chains nobody wired up,
@@ -169,6 +169,10 @@ describe("the shipped catalog", () => {
       "erc7730-typed-data:dispatch",
       "erc7730-typed-data:makerdao",
       "erc7730-typed-data:rarible",
+      "solana-programs:spl-token",
+      "solana-programs:stake",
+      "solana-programs:system",
+      "solana-programs:token-2022",
     ]);
   });
 
@@ -230,6 +234,9 @@ describe("the shipped catalog", () => {
     expect(empty).toEqual([]);
   });
 
+  // Every scenario in solana-programs is disabled, so the group is not
+  // selectable at all — a selector naming it would fail as unknown, which is
+  // why the Solana nightly asks for the fixtures only.
   it("covers the groups CI selects", () => {
     expect([...new Set(CATALOG.map((s) => s.group))]).toEqual([
       "contacts",
@@ -238,7 +245,6 @@ describe("the shipped catalog", () => {
       "erc7730-typed-data",
       "gating",
       "solana",
-      "solana-programs",
     ]);
   });
 });

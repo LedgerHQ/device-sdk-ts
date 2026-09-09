@@ -45,7 +45,7 @@ type TestOptions = {
   screenshotFolderPath?: string;
   speculinhoUrl?: string;
   speculosHttpTimeout?: number;
-  rpcUrl?: string;
+  rpcUrl: string;
   scanLimit?: number;
   samplesPerInstruction?: number;
   derivationPath: string;
@@ -55,6 +55,12 @@ type TestOptions = {
   appEthVersion?: string;
   appSolVersion?: string;
 };
+
+/**
+ * Solana RPC used when none is given: Ledger's own endpoint, which serves the
+ * burst a program scan makes. A public endpoint cannot — see the README.
+ */
+const DEFAULT_SOLANA_RPC_URL = "https://solana.coin.ledger.com";
 
 /** Conventional exit code for a run killed by a signal. */
 const INTERRUPTED_EXIT_CODE = 130;
@@ -189,25 +195,6 @@ function reportOwnPins(
   }
 }
 
-/**
- * The Solana RPC is wired into the container, so a program scenario cannot even
- * be resolved without it. Say so before acquiring an emulator.
- *
- * @throws If a selected program scenario has no RPC to pull from
- */
-function requireRpc(
-  runs: readonly ScenarioRun[],
-  rpcUrl: string | undefined,
-): void {
-  const needRpc = runs.filter((r) => r.scenario.action === "solanaProgram");
-  if (needRpc.length === 0 || rpcUrl) return;
-  const names = [...new Set(needRpc.map((r) => r.scenario.name))];
-  throw new Error(
-    `${names.join(", ")} pull live transactions and need --rpc-url <solana rpc>. ` +
-      `Pass it, or exclude the solana-programs group.`,
-  );
-}
-
 function buildRuntime(
   options: TestOptions,
   calMode: ScenarioRuntime["calMode"],
@@ -248,7 +235,6 @@ function planCases(
   const scenarioRuns = planRuns(catalog, selectors, {
     device: options.device,
   });
-  requireRpc(scenarioRuns, options.rpcUrl);
   // A case is the unit of work: split each fixture so its cases can run on
   // separate emulators, leaving order-dependent scenarios whole.
   const runs =
@@ -383,7 +369,8 @@ function buildProgram(): Command {
     )
     .option(
       "--rpc-url <url>",
-      "Solana RPC endpoint, required by the solana-programs group",
+      "Solana RPC endpoint used by the solana-programs group",
+      DEFAULT_SOLANA_RPC_URL,
     )
     .option(
       "--scan-limit <n>",

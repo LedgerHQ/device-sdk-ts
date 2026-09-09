@@ -67,15 +67,29 @@ requested `--device` is skipped rather than failed.
 
 ### Groups
 
-| Group                | Devices           | What it covers                                |
-| -------------------- | ----------------- | --------------------------------------------- |
-| `core`               | stax, nanox       | Ethereum transaction and typed-data fixtures  |
-| `contacts`           | flex              | Address Book registration and signing         |
-| `gating`             | stax, flex        | Unauthenticated callers fall back to gating   |
-| `erc7730`            | stax, nanox, flex | Per-dapp calldata descriptors                 |
-| `erc7730-typed-data` | stax, nanox, flex | Per-dapp typed-data descriptors               |
-| `solana`             | stax, nanox, flex | Solana transaction fixtures                   |
-| `solana-programs`    | stax, nanox, flex | Live program transactions (needs `--rpc-url`) |
+| Group                | Devices           | What it covers                                  |
+| -------------------- | ----------------- | ----------------------------------------------- |
+| `core`               | stax, nanox       | Ethereum transaction and typed-data fixtures    |
+| `contacts`           | flex              | Address Book registration and signing           |
+| `gating`             | stax, flex        | Unauthenticated callers fall back to gating     |
+| `erc7730`            | stax, nanox, flex | Per-dapp calldata descriptors                   |
+| `erc7730-typed-data` | stax, nanox, flex | Per-dapp typed-data descriptors                 |
+| `solana`             | stax, nanox, flex | Solana transaction fixtures                     |
+| `solana-programs`    | —                 | Live program transactions — disabled, see below |
+
+The `solana-programs` group is **disabled**. Its cases pull transactions from an
+RPC rather than a fixture, so they carry no `expectedTexts` — and a case with
+nothing to assert cannot fail the clear-signing check, since the check passes
+when every expected text is found and there are none. A blind signature would
+report as clear-signed.
+
+Re-enabling it needs a way for an RPC-derived case to assert what the device
+showed. Two smaller obstacles are worth knowing first: the default endpoint
+answers the Stake program's address with `-32602 Address is not supported`, and
+a public endpoint answers a scan of this size with `429`.
+
+Note develop reports these scenarios green. That is not evidence they work —
+develop exits 0 when a scan finds nothing at all.
 
 ### Options
 
@@ -90,7 +104,7 @@ requested `--device` is skipped rather than failed.
 | `--screenshot-folder-path`     | —                | Save signing screenshots                           |
 | `--speculinho-url <url>`       | `SPECULINHO_URL` | Speculinho operator URL                            |
 | `--speculos-http-timeout <ms>` | `0` (none)       | Timeout for Speculos pod requests                  |
-| `--rpc-url <url>`              | —                | Solana RPC, required by `solana-programs`          |
+| `--rpc-url <url>`              | Ledger endpoint  | Solana RPC, unused while `solana-programs` is off  |
 | `--derivation-path <path>`     | `44'/60'/0'/0/0` | Ethereum derivation path                           |
 | `--solana-derivation-path`     | `44'/501'/0'`    | Solana derivation path                             |
 | `--os-version <version>`       | defaults file    | Override the default OS version for a one-off run  |
@@ -301,6 +315,29 @@ proofs must be re-recorded.
 These three flows run on pull requests via the `contacts-cs-tester` job, gated on
 changes to `signer-eth`, `device-contacts-kit` or this app. It passes no versions
 of its own, so CI and a local run resolve the same pair from the scenario files.
+
+## Cancelling a run
+
+A Speculinho pod stays `ready` until someone posts `/release`, so an interrupted
+run has to hand back what it holds. `SIGINT` (Ctrl+C), `SIGTERM` and `SIGHUP`
+release every emulator in flight, refuse to acquire more, and exit `130`:
+
+```
+^C
+SIGINT received, releasing emulators…
+Released 6 emulator(s).
+```
+
+Anything that kills the process outright — `SIGKILL`, a crashed machine, a
+runner reaped mid-job — cannot run that, and strands one pod per worker. Those
+have to be released by run id:
+
+```bash
+curl -X POST https://speculinho.ledgerlabs.net/release \
+  -H 'Content-Type: application/json' -d '{"run_id":"cs-tester-…"}'
+```
+
+The ids are in the run's own output, on the `Acquiring Speculinho pod` lines.
 
 ## Output
 
