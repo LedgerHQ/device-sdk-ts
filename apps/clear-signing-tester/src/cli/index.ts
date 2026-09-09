@@ -287,6 +287,14 @@ async function runTest(
   try {
     const report = await new RunScenariosUseCase(runner).execute(runs, {
       concurrency: options.concurrency,
+      // A silent retry hides a flaky emulator; say so, with the reason the
+      // first attempt gave.
+      onRetry: (outcome, attempt, of) =>
+        console.log(
+          `      ${outcome.run.scenario.name} @ ${outcome.run.device} failed ` +
+            `(${outcome.errorMessage ?? outcome.failedCases[0]?.errorMessage ?? "no reason given"})` +
+            ` — attempt ${attempt}/${of} on a fresh emulator`,
+        ),
       onOutcome: (outcome, done, total) =>
         console.log(
           `[${done}/${total}] ${outcome.run.scenario.name}` +

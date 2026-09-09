@@ -34,6 +34,54 @@ const outcome = (r: ScenarioRun, failures: number): ScenarioOutcome => ({
   durationMs: 1,
 });
 
+describe("RunScenariosUseCase retries", () => {
+  const theRun = run("demo:retry");
+
+  it("takes a second emulator when the first attempt failed", async () => {
+    const outcomes = [
+      outcome(theRun, 1),
+      {
+        ...outcome(theRun, 0),
+        counts: {
+          clearSigned: 2,
+          partiallyClearSigned: 0,
+          blindSigned: 0,
+          error: 0,
+        },
+      },
+    ];
+    let calls = 0;
+    const runner = { run: () => Promise.resolve(outcomes[calls++]!) };
+    const retries: number[] = [];
+
+    const report = await new RunScenariosUseCase(runner).execute([theRun], {
+      concurrency: 1,
+      onRetry: (_o, attempt) => retries.push(attempt),
+    });
+
+    expect(calls).toBe(2);
+    expect(retries).toEqual([2]);
+    expect(report.failures).toBe(0);
+  });
+
+  it("gives up after the second emulator rather than looping", async () => {
+    let calls = 0;
+    const runner = {
+      run: () => {
+        calls++;
+        return Promise.resolve(outcome(theRun, 1));
+      },
+    };
+
+    const report = await new RunScenariosUseCase(runner).execute([theRun], {
+      concurrency: 1,
+    });
+
+    expect(calls).toBe(2);
+    expect(report.failures).toBe(1);
+  });
+});
+
 describe("RunScenariosUseCase", () => {
   it("sums failures across scenarios", async () => {
     const runner: ScenarioRunner = {

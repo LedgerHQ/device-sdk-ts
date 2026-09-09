@@ -5,9 +5,22 @@ import {
 } from "@root/src/domain/models/ScenarioOutcome";
 import { type ScenarioRunner } from "@root/src/domain/services/ScenarioRunner";
 
+/**
+ * How many emulators one run may burn through. Each attempt builds its own
+ * container, so a retry always lands on a fresh pod rather than the one that
+ * just failed.
+ */
+const MAX_ATTEMPTS = 2;
+
 export type RunScenariosOptions = {
   /** How many scenarios may hold an emulator at once. */
   readonly concurrency: number;
+  /** Called when a run is about to be attempted again on a fresh emulator. */
+  readonly onRetry?: (
+    outcome: ScenarioOutcome,
+    attempt: number,
+    of: number,
+  ) => void;
   /** Called as each scenario finishes, so a long run reports as it goes. */
   readonly onOutcome?: (
     outcome: ScenarioOutcome,
@@ -40,7 +53,7 @@ export class RunScenariosUseCase {
       for (;;) {
         const index = next++;
         if (index >= runs.length) return;
-        const outcome = await this.runner.run(runs[index]!);
+        const outcome = await this.attempt(runs[index]!, options);
         outcomes[index] = outcome;
         done += 1;
         options.onOutcome?.(outcome, done, runs.length);
@@ -53,5 +66,34 @@ export class RunScenariosUseCase {
       outcomes,
       failures: outcomes.reduce((sum, o) => sum + o.failures, 0),
     };
+  }
+
+  /**
+   * Run one scenario, trying again on a fresh emulator if it failed.
+   *
+   * The retry lives here rather than inside a signing flow so it covers every
+   * action equally, and so each attempt builds its own container — being rid of
+   * the previous emulator is the whole point, since the usual reason to retry
+   * is that the emulator went away.
+   *
+   * A genuine failure fails again, so a retry costs time rather than hiding
+   * anything; what it buys is that a pod taken away mid-run does not.
+   */
+  private async attempt(
+    run: ScenarioRun,
+    options: RunScenariosOptions,
+  ): Promise<ScenarioOutcome> {
+    let outcome = await this.runner.run(run);
+
+    for (
+      let attempt = 2;
+      attempt <= MAX_ATTEMPTS && outcome.failures > 0;
+      attempt++
+    ) {
+      options.onRetry?.(outcome, attempt, MAX_ATTEMPTS);
+      outcome = await this.runner.run(run);
+    }
+
+    return outcome;
   }
 }
