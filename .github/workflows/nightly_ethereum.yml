@@ -35,7 +35,7 @@ jobs:
 
   erc7730-calldata-tests:
     needs: [build-libraries]
-    name: ERC7730 Calldata Test (${{ matrix.device }} - ${{ matrix.dapp }})
+    name: ERC7730 Calldata Test (${{ matrix.device }})
     runs-on: ledgerhq-device-sdk
     permissions:
       contents: read
@@ -43,36 +43,21 @@ jobs:
       fail-fast: false
       matrix:
         device: [stax, nanox, flex]
-        dapp:
-          - 1inch
-          - aave
-          - ethena
-          - lido
-          - lombard
-          - poap
-          - swissborg
-          - tether
-          - uniswap
-          - velora
-          - yieldxyz
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/cs-tester-composite
         with:
-          runner: cs-tester
-          test: test:erc7730
-          dapp: ${{ matrix.dapp }}
+          scenarios: erc7730
           device: ${{ matrix.device }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: erc7730-calldata-logs
           summary-prefix: "ERC7730 Calldata Test"
           gating-token: ${{ secrets.GATING_TOKEN }}
-          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   erc7730-ethereum-tests:
     needs: [build-libraries]
-    name: ERC7730 Ethereum Test (${{ matrix.device }} - ${{ matrix.dapp }})
+    name: ERC7730 Typed Data Test (${{ matrix.device }})
     runs-on: ledgerhq-device-sdk
     permissions:
       contents: read
@@ -80,32 +65,17 @@ jobs:
       fail-fast: false
       matrix:
         device: [stax, nanox, flex]
-        dapp:
-          - 1inch
-          - degate
-          - ledgerquest
-          - lens
-          - lombard
-          - opensea
-          - permit
-          - smartcredit
-          - tally
-          - uniswap
-          - velora
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/cs-tester-composite
         with:
-          runner: cs-tester
-          test: test:erc7730:typed-data
-          dapp: ${{ matrix.dapp }}
+          scenarios: erc7730-typed-data
           device: ${{ matrix.device }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: erc7730-ethereum-logs
-          summary-prefix: "ERC7730 Ethereum Test"
+          summary-prefix: "ERC7730 Typed Data Test"
           gating-token: ${{ secrets.GATING_TOKEN }}
-          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   ethereum-gating-tests:
     needs: [build-libraries]
@@ -121,15 +91,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/cs-tester-composite
         with:
-          runner: cs-tester
-          test: test:gating
+          scenarios: gating
           device: ${{ matrix.device }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: ethereum-gating-logs
           summary-prefix: "Ethereum Gating Test"
           gating-token: ${{ secrets.GATING_TOKEN }}
-          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   notify:
     name: Notify Slack

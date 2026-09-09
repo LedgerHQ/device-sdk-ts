@@ -1,55 +1,38 @@
 name: "Clear Signing Tester"
-description: "Run a single Clear Signing Tester cell (one device, one test) via Speculinho."
+description: "Run clear-signing scenarios for one device, in parallel across Speculinho emulators."
 
 inputs:
-  runner:
-    description: "pnpm script (cs-tester for ETH, cs-tester:solana for Solana)"
+  device:
+    description: "Device the scenarios run on (stax, nanox, flex)"
     required: true
-  test:
-    description: "Single test command (e.g. test:raw:complete)"
+  scenarios:
+    description: >-
+      Space-separated selectors passed to `cli test`: groups, scenario names, or
+      `all`. Scenarios that do not support the device are skipped.
     required: true
-  dapp:
-    description: "Optional positional argument forwarded to the pnpm script (e.g. ERC7730 dapp/provider)"
+  concurrency:
+    description: "How many scenarios may hold an emulator at once"
+    required: false
+    default: "6"
+  log-level:
+    description: "Console log level (omit to use the app default)"
     required: false
     default: ""
-  device:
-    description: "Single device type (stax, nanox, flex)"
-    required: true
+  enable-file-logging:
+    description: "Write a log file per scenario, plus screenshots, and upload them"
+    required: false
+    default: "false"
   artifact-prefix:
     description: "Prefix for uploaded artifact names"
     required: true
   summary-prefix:
     description: "Prefix for GitHub step summary titles"
     required: true
-  use-rpc:
-    description: "Include Solana RPC flags (--rpc-url, --scan-limit, --samples-per-instruction)"
-    required: false
-    default: "false"
-  use-distill:
-    description: "Enable transaction distillation for program commands (--distill flag)"
-    required: false
-    default: "false"
-  scan-limit:
-    description: "Number of signatures to scan (only when use-rpc is true)"
-    required: false
-    default: "1000"
-  samples-per-instruction:
-    description: "Samples per instruction type (only when use-rpc is true)"
-    required: false
-    default: "20"
-  log-level:
-    description: "Console log level (omit to use app default)"
-    required: false
-    default: ""
-  enable-file-logging:
-    description: "Enable file logging and screenshots"
-    required: false
-    default: "false"
   gating-token:
     description: "Clear signing gating token"
     required: true
   solana-rpc-url:
-    description: "Solana RPC URL (required when use-rpc is true)"
+    description: "Solana RPC URL, required by the solana-programs group"
     required: false
     default: ""
 
@@ -64,55 +47,42 @@ runs:
       shell: bash
       run: pnpm turbo run build --filter=@ledgerhq/clear-signing-tester...
 
-    - name: Run Clear Signing Test
+    - name: Run scenarios
       shell: bash
       env:
         FORCE_COLOR: "0"
         GATING_TOKEN: ${{ inputs.gating-token }}
-        SOLANA_RPC_URL: ${{ inputs.solana-rpc-url }}
         INPUT_DEVICE: ${{ inputs.device }}
+        INPUT_SCENARIOS: ${{ inputs.scenarios }}
+        INPUT_CONCURRENCY: ${{ inputs.concurrency }}
         INPUT_LOG_LEVEL: ${{ inputs.log-level }}
-        INPUT_USE_RPC: ${{ inputs.use-rpc }}
-        INPUT_SCAN_LIMIT: ${{ inputs.scan-limit }}
-        INPUT_SAMPLES_PER_INSTRUCTION: ${{ inputs.samples-per-instruction }}
-        INPUT_USE_DISTILL: ${{ inputs.use-distill }}
         INPUT_ENABLE_FILE_LOGGING: ${{ inputs.enable-file-logging }}
-        INPUT_TEST: ${{ inputs.test }}
-        INPUT_DAPP: ${{ inputs.dapp }}
-        INPUT_RUNNER: ${{ inputs.runner }}
+        INPUT_SOLANA_RPC_URL: ${{ inputs.solana-rpc-url }}
       run: |
         set -o pipefail
         mkdir -p /tmp/logs/screenshots
 
-        ARGS=("--device" "$INPUT_DEVICE")
+        ARGS=("--device" "$INPUT_DEVICE" "--concurrency" "$INPUT_CONCURRENCY")
 
         if [ -n "$INPUT_LOG_LEVEL" ]; then
           ARGS+=("--log-level" "$INPUT_LOG_LEVEL")
         fi
 
-        if [ "$INPUT_USE_RPC" = "true" ]; then
-          ARGS+=("--rpc-url" "$SOLANA_RPC_URL")
-          ARGS+=("--scan-limit" "$INPUT_SCAN_LIMIT")
-          ARGS+=("--samples-per-instruction" "$INPUT_SAMPLES_PER_INSTRUCTION")
-        fi
-
-        if [ "$INPUT_USE_DISTILL" = "true" ]; then
-          ARGS+=("--distill")
+        if [ -n "$INPUT_SOLANA_RPC_URL" ]; then
+          ARGS+=("--rpc-url" "$INPUT_SOLANA_RPC_URL")
         fi
 
         if [ "$INPUT_ENABLE_FILE_LOGGING" = "true" ]; then
-          SAFE_NAME=$(echo "${INPUT_TEST}${INPUT_DAPP:+-$INPUT_DAPP}" | tr ':/ ' '-')
-          ARGS+=("--log-file" "/tmp/logs/${SAFE_NAME}.log")
+          ARGS+=("--log-dir" "/tmp/logs")
           ARGS+=("--file-log-level" "debug")
           ARGS+=("--screenshot-folder-path" "/tmp/logs/screenshots")
         fi
 
-        PNPM_TEST_ARGS=("$INPUT_TEST")
-        if [ -n "$INPUT_DAPP" ]; then
-          PNPM_TEST_ARGS+=("$INPUT_DAPP")
-        fi
+        # Selectors are a space-separated list, so they must word-split.
+        read -ra SELECTORS <<< "$INPUT_SCENARIOS"
 
-        pnpm "$INPUT_RUNNER" "${PNPM_TEST_ARGS[@]}" "${ARGS[@]}" 2>&1 | tee /tmp/cs-tester-output.log
+        pnpm cs-tester cli test "${SELECTORS[@]}" "${ARGS[@]}" 2>&1 \
+          | tee /tmp/cs-tester-output.log
 
     - name: Write job summary
       if: always()
@@ -120,17 +90,17 @@ runs:
       env:
         INPUT_SUMMARY_PREFIX: ${{ inputs.summary-prefix }}
         INPUT_DEVICE: ${{ inputs.device }}
-        INPUT_TEST: ${{ inputs.test }}
-        INPUT_DAPP: ${{ inputs.dapp }}
+        INPUT_SCENARIOS: ${{ inputs.scenarios }}
       run: |
         {
-          echo "## ${INPUT_SUMMARY_PREFIX} (${INPUT_DEVICE} - ${INPUT_TEST}${INPUT_DAPP:+ ${INPUT_DAPP}})"
+          echo "## ${INPUT_SUMMARY_PREFIX} (${INPUT_DEVICE} - ${INPUT_SCENARIOS})"
           echo ""
           if [ -f /tmp/cs-tester-output.log ]; then
             echo '```'
-            sed -n '/TEST RESULTS\|PROGRAM TEST\|📋/,/^└/p' /tmp/cs-tester-output.log
+            sed -n '/SCENARIO RESULTS/,/^└/p' /tmp/cs-tester-output.log
             echo ""
-            sed -n '/SUMMARY\|PROGRAM SUMMARY\|📊/,/^└/p' /tmp/cs-tester-output.log
+            sed -n '/FAILED SCENARIOS/,/^$/p' /tmp/cs-tester-output.log
+            sed -n '/RUN SUMMARY/,/^└/p' /tmp/cs-tester-output.log
             echo '```'
           else
             echo "No test output available"
@@ -144,10 +114,8 @@ runs:
       env:
         INPUT_ARTIFACT_PREFIX: ${{ inputs.artifact-prefix }}
         INPUT_DEVICE: ${{ inputs.device }}
-        INPUT_TEST: ${{ inputs.test }}
-        INPUT_DAPP: ${{ inputs.dapp }}
       run: |
-        name=$(echo "${INPUT_ARTIFACT_PREFIX}-${INPUT_DEVICE}-${INPUT_TEST}${INPUT_DAPP:+-$INPUT_DAPP}" | tr ':/ ' '-')
+        name=$(echo "${INPUT_ARTIFACT_PREFIX}-${INPUT_DEVICE}" | tr ':/ ' '-')
         echo "name=$name" >> "$GITHUB_OUTPUT"
 
     - name: Upload logs

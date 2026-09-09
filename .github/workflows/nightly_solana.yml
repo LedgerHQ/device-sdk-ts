@@ -35,7 +35,7 @@ jobs:
 
   solana-cs-tester:
     needs: [build-libraries]
-    name: Solana Fixture Test (${{ matrix.device }} - ${{ matrix.test }})
+    name: Solana Fixture Test (${{ matrix.device }})
     runs-on: ledgerhq-device-sdk
     permissions:
       contents: read
@@ -43,28 +43,21 @@ jobs:
       fail-fast: false
       matrix:
         device: [stax, nanox, flex]
-        test:
-          - test:solana:system-transfers
-          - test:solana:spl-legacy
-          - test:solana:spl-token2022
-          - test:solana:stake
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/cs-tester-composite
         with:
-          runner: cs-tester:solana
-          test: ${{ matrix.test }}
+          scenarios: solana
           device: ${{ matrix.device }}
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: solana-cs-tester-logs
           summary-prefix: "Solana Fixture Test"
           gating-token: ${{ secrets.GATING_TOKEN }}
-          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   solana-program-cs-tester:
     needs: [build-libraries]
-    name: Solana Program Test (${{ matrix.device }} - ${{ matrix.test }})
+    name: Solana Program Test (${{ matrix.device }})
     runs-on: ledgerhq-device-sdk
     permissions:
       contents: read
@@ -72,20 +65,13 @@ jobs:
       fail-fast: false
       matrix:
         device: [stax, nanox, flex]
-        test:
-          - test:solana:program:system
-          - test:solana:program:stake
-          - test:solana:program:spl-token
-          - test:solana:program:token-2022
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # The solana-programs scenarios pull live transactions, so they need the RPC.
       - uses: ./.github/actions/cs-tester-composite
         with:
-          runner: cs-tester:solana
-          test: ${{ matrix.test }}
+          scenarios: solana-programs
           device: ${{ matrix.device }}
-          use-rpc: "true"
-          use-distill: "true"
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: solana-program-cs-tester-logs
