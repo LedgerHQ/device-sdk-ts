@@ -47,7 +47,7 @@ export function selectScenarios(
       const groups = [...new Set(catalog.map((s) => s.group))].sort();
       throw new Error(
         `Unknown scenario or group "${selector}". Groups: ${groups.join(", ")}. ` +
-          `Use --list to see every scenario.`,
+          `Run "cs-tester list" to see every scenario.`,
       );
     }
     for (const scenario of matches) selected.set(scenario.name, scenario);

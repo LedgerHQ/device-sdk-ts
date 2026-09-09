@@ -58,7 +58,7 @@ pnpm cs-tester cli test core:complete
 pnpm cs-tester cli test all --device stax --concurrency 6
 
 # see what exists
-pnpm cs-tester cli test --list
+pnpm cs-tester cli list
 ```
 
 A selector is `all`, a group name, or a scenario name. Unknown selectors fail
@@ -82,10 +82,10 @@ requested `--device` is skipped rather than failed.
 | Option                         | Default          | Description                                        |
 | ------------------------------ | ---------------- | -------------------------------------------------- |
 | `--device <device>`            | every supported  | Run only scenarios supporting this device          |
-| `--concurrency <n>`            | `4`              | How many scenarios may hold an emulator at once    |
-| `--list`                       | —                | List every scenario and exit                       |
+| `--concurrency <n>`            | `4`              | How many cases may hold an emulator at once        |
+| `--no-split`                   | split            | Run a whole fixture on one emulator, in order      |
 | `--log-level <level>`          | `info`           | Console log level                                  |
-| `--log-dir <path>`             | —                | One log file per scenario                          |
+| `--log-dir <path>`             | —                | One log file per case                              |
 | `--file-log-level <level>`     | `--log-level`    | File log level                                     |
 | `--screenshot-folder-path`     | —                | Save signing screenshots                           |
 | `--speculinho-url <url>`       | `SPECULINHO_URL` | Speculinho operator URL                            |
@@ -93,6 +93,9 @@ requested `--device` is skipped rather than failed.
 | `--rpc-url <url>`              | —                | Solana RPC, required by `solana-programs`          |
 | `--derivation-path <path>`     | `44'/60'/0'/0/0` | Ethereum derivation path                           |
 | `--solana-derivation-path`     | `44'/501'/0'`    | Solana derivation path                             |
+| `--os-version <version>`       | defaults file    | Override the default OS version for a one-off run  |
+| `--app-eth-version <version>`  | defaults file    | Override the default Ethereum app version          |
+| `--app-sol-version <version>`  | defaults file    | Override the default Solana app version            |
 | `--erc7730-files <files...>`   | —                | Inject descriptors; also switches CAL to test mode |
 
 ### Scenario files
@@ -126,10 +129,26 @@ sits in is free — `erc7730/uniswap/` holds one scenario of each group.
 | `osVersion`, `appVersion` | no       | Override the device's pin, together                                          |
 | `options`                 | no       | `blindSigningEnabled`, `skipOriginToken`, `addressBook`, `useRpc`, `distill` |
 
-A file counts as a scenario only once it declares an `action`, so plain data —
-an address book, a fixture kept for manual runs — sits alongside untouched. A
-malformed scenario file fails the run and the unit tests by name rather than
-silently shrinking a selection.
+A case may carry keys prefixed with `_`, which the tester never reads. They are
+notes for whoever maintains the fixture — `_txHash` records the transaction this
+calldata was taken from on chain, so a case can be traced back to a real
+transaction without the tester ever fetching it.
+
+A file counts as a scenario only once it declares an `action`, so plain data
+like an address book sits alongside untouched. A malformed scenario file fails
+the run and the unit tests by name rather than silently shrinking a selection.
+
+A scenario kept in the repo but not run says so, rather than by being
+unreferenced:
+
+```json
+{ "enabled": false }
+```
+
+Disabled scenarios are skipped by every selector, including `all`. Naming one
+explicitly fails with what to do about it, and `cs-tester list` prints them
+under the enabled ones. Nine ship disabled today — alternate-chain fixtures
+nobody wired up, and three descriptors known to be broken.
 
 ## App and OS versions
 
@@ -168,9 +187,13 @@ cases. A unit test fails if a contacts scenario stops pinning its own version,
 and another resolves `default_versions.json` for every scenario and device so a
 bad edit fails in CI rather than while acquiring a pod.
 
-Resolution order is `--os-version` / `--app-eth-version` / `--app-sol-version`
-for a one-off, then the scenario's own pin, then `default_versions.json`. Both CI and a
-local run read the same file, so they cannot disagree.
+Resolution order is the scenario's own pin first, then `--os-version` /
+`--app-eth-version` / `--app-sol-version` for a one-off, then
+`default_versions.json`. A scenario pins itself because the feature exists in no
+other build, so a blanket flag must not drag it onto a build that answers `6e00`
+to the very APDU it tests — the run prints which scenarios it left on their own
+pin. Both CI and a local run read the same defaults file, so they cannot
+disagree.
 
 Bump a pin deliberately: the version has to exist **on Speculinho**, which trails
 coin-apps by up to about an hour after a release. Speculinho exposes no endpoint
@@ -195,7 +218,7 @@ pnpm cs-tester cli test erc7730 --erc7730-files ./d1.json ./d2.json
 # Verbose console output
 pnpm cs-tester cli test core --log-level debug
 
-# One log file per scenario, at debug level
+# One log file per case, at debug level
 pnpm cs-tester cli test all --log-dir /tmp/logs --file-log-level debug
 
 # Silent console, verbose files

@@ -3,6 +3,7 @@ import { join } from "path";
 
 import {
   type Scenario,
+  SCENARIO_DEVICES,
   type ScenarioAction,
   type ScenarioCoinApp,
   type ScenarioDevice,
@@ -16,14 +17,6 @@ const ACTIONS: readonly ScenarioAction[] = [
   "signTypedData",
   "registerContact",
   "solanaProgram",
-];
-const DEVICES: readonly ScenarioDevice[] = [
-  "stax",
-  "nanox",
-  "nanos",
-  "nanos+",
-  "flex",
-  "apex",
 ];
 const COIN_APPS: readonly ScenarioCoinApp[] = ["Ethereum", "Solana"];
 const MODES = ["parallel", "sequential"] as const;
@@ -49,8 +42,9 @@ type Json = Record<string, unknown>;
  * ```
  *
  * Files that are not scenarios live alongside them untouched — an address book,
- * or a fixture kept for manual runs — because a file counts as a scenario only
- * once it declares an `action`.
+ * say — because a file counts as a scenario only once it declares an `action`.
+ * A scenario kept in the repo but not run says so with `"enabled": false`
+ * rather than by being unreferenced.
  */
 export function loadScenarioCatalog(dir: string = SCENARIOS_DIR): Scenario[] {
   const byName = new Map<string, { scenario: Scenario; path: string }>();
@@ -117,6 +111,7 @@ function toScenario(raw: Json, path: string): Scenario {
   const coinApp = raw["coinApp"];
   const devices = raw["devices"];
   const mode = raw["mode"] ?? "parallel";
+  const enabled = raw["enabled"] ?? true;
 
   if (typeof group !== "string" || group === "") fail(`needs a "group".`);
   if (typeof name !== "string" || name === "") fail(`needs a "name".`);
@@ -132,7 +127,7 @@ function toScenario(raw: Json, path: string): Scenario {
     fail(`needs a non-empty "devices" list.`);
   }
   const unknownDevice = (devices as unknown[]).find(
-    (device) => !DEVICES.includes(device as ScenarioDevice),
+    (device) => !SCENARIO_DEVICES.includes(device as ScenarioDevice),
   );
   if (unknownDevice !== undefined) {
     fail(`lists an unknown device ${JSON.stringify(unknownDevice)}.`);
@@ -141,6 +136,9 @@ function toScenario(raw: Json, path: string): Scenario {
     fail(
       `has an unknown "mode" ${JSON.stringify(mode)}; expected parallel or sequential.`,
     );
+  }
+  if (typeof enabled !== "boolean") {
+    fail(`has a non-boolean "enabled" ${JSON.stringify(enabled)}.`);
   }
 
   const scenarioAction = action as ScenarioAction;
@@ -174,10 +172,10 @@ function toScenario(raw: Json, path: string): Scenario {
       ? { appVersion: raw["appVersion"] }
       : {}),
     ...(mode === "sequential" ? { sequential: true } : {}),
+    ...(enabled ? {} : { enabled: false }),
   };
 }
 
-/** Groups present in the catalog, in the order `--list` shows them. */
-export function scenarioGroups(catalog: readonly Scenario[]): string[] {
-  return [...new Set(catalog.map((scenario) => scenario.group))];
-}
+/** Whether a scenario may be selected; `enabled: false` opts out. */
+export const isEnabled = (scenario: Scenario): boolean =>
+  scenario.enabled !== false;

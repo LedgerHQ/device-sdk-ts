@@ -17,52 +17,19 @@
         "primaryType": "AccountUpdate",
         "types": {
           "EIP712Domain": [
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "version",
-              "type": "string"
-            },
-            {
-              "name": "chainId",
-              "type": "uint256"
-            },
-            {
-              "name": "verifyingContract",
-              "type": "address"
-            }
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
           ],
           "AccountUpdate": [
-            {
-              "name": "owner",
-              "type": "address"
-            },
-            {
-              "name": "accountID",
-              "type": "uint32"
-            },
-            {
-              "name": "feeTokenID",
-              "type": "uint32"
-            },
-            {
-              "name": "maxFee",
-              "type": "uint96"
-            },
-            {
-              "name": "publicKey",
-              "type": "uint256"
-            },
-            {
-              "name": "validUntil",
-              "type": "uint32"
-            },
-            {
-              "name": "nonce",
-              "type": "uint32"
-            }
+            { "name": "owner", "type": "address" },
+            { "name": "accountID", "type": "uint32" },
+            { "name": "feeTokenID", "type": "uint32" },
+            { "name": "maxFee", "type": "uint96" },
+            { "name": "publicKey", "type": "uint256" },
+            { "name": "validUntil", "type": "uint32" },
+            { "name": "nonce", "type": "uint32" }
           ]
         },
         "message": {
@@ -88,64 +55,22 @@
         "primaryType": "Withdrawal",
         "types": {
           "EIP712Domain": [
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "version",
-              "type": "string"
-            },
-            {
-              "name": "chainId",
-              "type": "uint256"
-            },
-            {
-              "name": "verifyingContract",
-              "type": "address"
-            }
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
           ],
           "Withdrawal": [
-            {
-              "name": "owner",
-              "type": "address"
-            },
-            {
-              "name": "accountID",
-              "type": "uint32"
-            },
-            {
-              "name": "tokenID",
-              "type": "uint32"
-            },
-            {
-              "name": "amount",
-              "type": "uint248"
-            },
-            {
-              "name": "feeTokenID",
-              "type": "uint32"
-            },
-            {
-              "name": "maxFee",
-              "type": "uint96"
-            },
-            {
-              "name": "to",
-              "type": "address"
-            },
-            {
-              "name": "minGas",
-              "type": "uint248"
-            },
-            {
-              "name": "validUntil",
-              "type": "uint32"
-            },
-            {
-              "name": "storageID",
-              "type": "uint32"
-            }
+            { "name": "owner", "type": "address" },
+            { "name": "accountID", "type": "uint32" },
+            { "name": "tokenID", "type": "uint32" },
+            { "name": "amount", "type": "uint248" },
+            { "name": "feeTokenID", "type": "uint32" },
+            { "name": "maxFee", "type": "uint96" },
+            { "name": "to", "type": "address" },
+            { "name": "minGas", "type": "uint248" },
+            { "name": "validUntil", "type": "uint32" },
+            { "name": "storageID", "type": "uint32" }
           ]
         },
         "message": {
@@ -174,60 +99,21 @@
         "primaryType": "Transfer",
         "types": {
           "EIP712Domain": [
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "version",
-              "type": "string"
-            },
-            {
-              "name": "chainId",
-              "type": "uint256"
-            },
-            {
-              "name": "verifyingContract",
-              "type": "address"
-            }
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
           ],
           "Transfer": [
-            {
-              "name": "owner",
-              "type": "address"
-            },
-            {
-              "name": "accountID",
-              "type": "uint32"
-            },
-            {
-              "name": "tokenID",
-              "type": "uint32"
-            },
-            {
-              "name": "amount",
-              "type": "uint248"
-            },
-            {
-              "name": "feeTokenID",
-              "type": "uint32"
-            },
-            {
-              "name": "maxFee",
-              "type": "uint96"
-            },
-            {
-              "name": "to",
-              "type": "address"
-            },
-            {
-              "name": "validUntil",
-              "type": "uint32"
-            },
-            {
-              "name": "storageID",
-              "type": "uint32"
-            }
+            { "name": "owner", "type": "address" },
+            { "name": "accountID", "type": "uint32" },
+            { "name": "tokenID", "type": "uint32" },
+            { "name": "amount", "type": "uint248" },
+            { "name": "feeTokenID", "type": "uint32" },
+            { "name": "maxFee", "type": "uint96" },
+            { "name": "to", "type": "address" },
+            { "name": "validUntil", "type": "uint32" },
+            { "name": "storageID", "type": "uint32" }
           ]
         },
         "message": {

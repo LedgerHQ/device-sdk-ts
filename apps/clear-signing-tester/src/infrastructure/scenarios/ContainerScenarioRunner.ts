@@ -41,7 +41,10 @@ export type ScenarioRuntime = {
    * so a run using them must not verify against the production PKI root.
    */
   readonly calMode: "prod" | "test";
-  /** Overrides the default_versions.json pin, for a one-off run. */
+  /**
+   * Overrides the default_versions.json pin for a one-off run. A scenario
+   * carrying its own pin keeps it.
+   */
   readonly osVersion?: string;
   readonly ethAppVersion?: string;
   readonly solanaAppVersion?: string;
@@ -78,6 +81,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         run,
         counts: result.counts,
         failures: result.exitCode,
+        failedCases: result.failedCases,
         durationMs: Date.now() - startedAt,
       };
     } catch (error) {
@@ -87,6 +91,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         // A scenario that never ran counts as one failure, not zero, so a
         // missing pod cannot make a run look green.
         failures: 1,
+        failedCases: [],
         durationMs: Date.now() - startedAt,
         errorMessage: error instanceof Error ? error.message : String(error),
       };
@@ -95,7 +100,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
     }
   }
 
-  private buildContainer({ scenario, device }: ScenarioRun): Container {
+  private buildContainer({ scenario, device, slice }: ScenarioRun): Container {
     const pins = pinnedVersions(scenario.coinApp, device);
     const options = scenario.options ?? {};
 
@@ -103,13 +108,17 @@ export class ContainerScenarioRunner implements ScenarioRunner {
       speculinho: {
         device,
         ...(scenario.coinApp === "Solana" ? { appName: "Solana" } : {}),
+        // A scenario that pins itself does so because the feature exists in no
+        // other build, so its pin outranks a blanket --os-version meant for the
+        // default. Otherwise a mixed run would drag it onto a build that
+        // answers 6e00 to the very APDU it tests.
         osVersion:
-          this.runtime.osVersion ?? scenario.osVersion ?? pins.osVersion,
+          scenario.osVersion ?? this.runtime.osVersion ?? pins.osVersion,
         appVersion:
+          scenario.appVersion ??
           (scenario.coinApp === "Solana"
             ? this.runtime.solanaAppVersion
             : this.runtime.ethAppVersion) ??
-          scenario.appVersion ??
           pins.appVersion,
         screenshotPath: this.runtime.screenshotPath,
         speculinhoUrl: this.runtime.speculinhoUrl,
@@ -140,7 +149,12 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         ? {
             file: {
               level: this.runtime.fileLogLevel ?? this.runtime.logLevel,
-              filePath: `${this.runtime.logDir}/${scenario.name.replace(/[:/ ]/g, "-")}-${device}.log`,
+              // One file per case, not per scenario: split cases run at the
+              // same time, so a shared path interleaves them into a log that
+              // cannot be read back for any single case.
+              filePath:
+                `${this.runtime.logDir}/${scenario.name.replace(/[:/ ]/g, "-")}-${device}` +
+                `${slice ? `-case${slice.index}` : ""}.log`,
             },
           }
         : {}),

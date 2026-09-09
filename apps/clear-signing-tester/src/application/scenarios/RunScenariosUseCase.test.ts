@@ -30,6 +30,7 @@ const outcome = (r: ScenarioRun, failures: number): ScenarioOutcome => ({
     error: failures,
   },
   failures,
+  failedCases: [],
   durationMs: 1,
 });
 

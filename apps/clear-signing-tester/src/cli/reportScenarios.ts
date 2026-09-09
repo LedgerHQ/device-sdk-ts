@@ -2,6 +2,7 @@ import {
   type ScenarioOutcome,
   type ScenarioRunReport,
 } from "@root/src/domain/models/ScenarioOutcome";
+import { ResultFormatter } from "@root/src/domain/utils/ResultFormatter";
 
 const seconds = (ms: number): string => `${Math.round(ms / 1000)}s`;
 
@@ -36,8 +37,24 @@ export function reportScenarios(report: ScenarioRunReport): void {
   if (failed.length > 0) {
     console.log("\n❌ FAILED SCENARIOS");
     for (const o of failed) {
-      const why = o.errorMessage ?? `${o.failures} case(s) did not clear-sign`;
-      console.log(`  ${o.run.scenario.name} @ ${o.run.device}: ${why}`);
+      console.log(`  ${o.run.scenario.name} @ ${o.run.device}`);
+      if (o.errorMessage) {
+        console.log(`    did not run: ${o.errorMessage}`);
+        continue;
+      }
+      // Name the cases: with the run spread over many emulators, the scenario
+      // alone does not say which input actually failed.
+      for (const c of o.failedCases) {
+        const detail = c.errorMessage ? `: ${c.errorMessage}` : "";
+        const hash = c.hash ? ` (${c.hash})` : "";
+        console.log(
+          `    ${ResultFormatter.getStatusEmoji(c.status)} ${c.description}${hash}` +
+            ` — ${c.status.replace(/_/g, " ")}${detail}`,
+        );
+      }
+      // A case that never produced a result is counted but cannot be named.
+      const unnamed = o.failures - o.failedCases.length;
+      if (unnamed > 0) console.log(`    ${unnamed} case(s) produced no result`);
     }
   }
 

@@ -17,56 +17,20 @@
         "primaryType": "OrderStructure",
         "types": {
           "EIP712Domain": [
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "version",
-              "type": "string"
-            },
-            {
-              "name": "chainId",
-              "type": "uint256"
-            },
-            {
-              "name": "verifyingContract",
-              "type": "address"
-            }
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
           ],
           "OrderStructure": [
-            {
-              "name": "salt",
-              "type": "uint256"
-            },
-            {
-              "name": "maker",
-              "type": "address"
-            },
-            {
-              "name": "receiver",
-              "type": "address"
-            },
-            {
-              "name": "makerAsset",
-              "type": "address"
-            },
-            {
-              "name": "takerAsset",
-              "type": "address"
-            },
-            {
-              "name": "makingAmount",
-              "type": "uint256"
-            },
-            {
-              "name": "takingAmount",
-              "type": "uint256"
-            },
-            {
-              "name": "makerTraits",
-              "type": "uint256"
-            }
+            { "name": "salt", "type": "uint256" },
+            { "name": "maker", "type": "address" },
+            { "name": "receiver", "type": "address" },
+            { "name": "makerAsset", "type": "address" },
+            { "name": "takerAsset", "type": "address" },
+            { "name": "makingAmount", "type": "uint256" },
+            { "name": "takingAmount", "type": "uint256" },
+            { "name": "makerTraits", "type": "uint256" }
           ]
         },
         "message": {
@@ -93,56 +57,20 @@
         "primaryType": "Order",
         "types": {
           "EIP712Domain": [
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "version",
-              "type": "string"
-            },
-            {
-              "name": "chainId",
-              "type": "uint256"
-            },
-            {
-              "name": "verifyingContract",
-              "type": "address"
-            }
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
           ],
           "Order": [
-            {
-              "name": "salt",
-              "type": "uint256"
-            },
-            {
-              "name": "maker",
-              "type": "address"
-            },
-            {
-              "name": "receiver",
-              "type": "address"
-            },
-            {
-              "name": "makerAsset",
-              "type": "address"
-            },
-            {
-              "name": "takerAsset",
-              "type": "address"
-            },
-            {
-              "name": "makingAmount",
-              "type": "uint256"
-            },
-            {
-              "name": "takingAmount",
-              "type": "uint256"
-            },
-            {
-              "name": "makerTraits",
-              "type": "uint256"
-            }
+            { "name": "salt", "type": "uint256" },
+            { "name": "maker", "type": "address" },
+            { "name": "receiver", "type": "address" },
+            { "name": "makerAsset", "type": "address" },
+            { "name": "takerAsset", "type": "address" },
+            { "name": "makingAmount", "type": "uint256" },
+            { "name": "takingAmount", "type": "uint256" },
+            { "name": "makerTraits", "type": "uint256" }
           ]
         },
         "message": {

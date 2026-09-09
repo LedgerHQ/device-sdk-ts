@@ -10,7 +10,11 @@ import { type DataFileRepository } from "@root/src/domain/repositories/DataFileR
 import { scenarioCases } from "@root/src/infrastructure/repositories/scenarioCases";
 
 /**
- * Raw transaction data structure from JSON file
+ * Raw transaction data structure from JSON file.
+ *
+ * A case may also carry keys prefixed with `_`, such as `_txHash`. Those are
+ * notes for whoever maintains the fixture — where the transaction came from on
+ * chain — and are deliberately absent here, so nothing reads them.
  */
 type RawTransactionData = {
   rawTx: string;

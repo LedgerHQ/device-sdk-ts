@@ -58,10 +58,7 @@ export class TestBatchContactFromFileUseCase {
       if (index < contacts.length - 1) await delay(INTER_CASE_DELAY_MS);
     }
 
-    return ResultFormatter.formatBatchResults(results, contacts.length, {
-      title: "📋 CONTACT RESULTS",
-      summaryTitle: "📊 CONTACT SUMMARY",
-    });
+    return ResultFormatter.formatBatchResults(results, contacts.length);
   }
 
   private async runContact(

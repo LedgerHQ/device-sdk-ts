@@ -17,52 +17,19 @@
         "primaryType": "LoanRequest",
         "types": {
           "EIP712Domain": [
-            {
-              "name": "chainId",
-              "type": "uint256"
-            },
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "verifyingContract",
-              "type": "address"
-            },
-            {
-              "name": "version",
-              "type": "string"
-            }
+            { "name": "chainId", "type": "uint256" },
+            { "name": "name", "type": "string" },
+            { "name": "verifyingContract", "type": "address" },
+            { "name": "version", "type": "string" }
           ],
           "LoanRequest": [
-            {
-              "name": "collateralAddress",
-              "type": "address"
-            },
-            {
-              "name": "initialCollateralAmount",
-              "type": "uint256"
-            },
-            {
-              "name": "loanAmount",
-              "type": "uint256"
-            },
-            {
-              "name": "loanId",
-              "type": "bytes32"
-            },
-            {
-              "name": "loanInterestRate",
-              "type": "uint64"
-            },
-            {
-              "name": "loanTerm",
-              "type": "uint64"
-            },
-            {
-              "name": "underlyingAddress",
-              "type": "address"
-            }
+            { "name": "collateralAddress", "type": "address" },
+            { "name": "initialCollateralAmount", "type": "uint256" },
+            { "name": "loanAmount", "type": "uint256" },
+            { "name": "loanId", "type": "bytes32" },
+            { "name": "loanInterestRate", "type": "uint64" },
+            { "name": "loanTerm", "type": "uint64" },
+            { "name": "underlyingAddress", "type": "address" }
           ]
         },
         "message": {

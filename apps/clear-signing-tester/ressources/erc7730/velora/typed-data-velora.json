@@ -17,56 +17,20 @@
         "primaryType": "Order",
         "types": {
           "EIP712Domain": [
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "version",
-              "type": "string"
-            },
-            {
-              "name": "chainId",
-              "type": "uint256"
-            },
-            {
-              "name": "verifyingContract",
-              "type": "address"
-            }
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
           ],
           "Order": [
-            {
-              "name": "nonceAndMeta",
-              "type": "uint256"
-            },
-            {
-              "name": "expiry",
-              "type": "uint128"
-            },
-            {
-              "name": "makerAsset",
-              "type": "address"
-            },
-            {
-              "name": "takerAsset",
-              "type": "address"
-            },
-            {
-              "name": "maker",
-              "type": "address"
-            },
-            {
-              "name": "taker",
-              "type": "address"
-            },
-            {
-              "name": "makerAmount",
-              "type": "uint256"
-            },
-            {
-              "name": "takerAmount",
-              "type": "uint256"
-            }
+            { "name": "nonceAndMeta", "type": "uint256" },
+            { "name": "expiry", "type": "uint128" },
+            { "name": "makerAsset", "type": "address" },
+            { "name": "takerAsset", "type": "address" },
+            { "name": "maker", "type": "address" },
+            { "name": "taker", "type": "address" },
+            { "name": "makerAmount", "type": "uint256" },
+            { "name": "takerAmount", "type": "uint256" }
           ]
         },
         "message": {
@@ -93,64 +57,22 @@
         "primaryType": "OrderNFT",
         "types": {
           "EIP712Domain": [
-            {
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "name": "version",
-              "type": "string"
-            },
-            {
-              "name": "chainId",
-              "type": "uint256"
-            },
-            {
-              "name": "verifyingContract",
-              "type": "address"
-            }
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
           ],
           "OrderNFT": [
-            {
-              "name": "nonceAndMeta",
-              "type": "uint256"
-            },
-            {
-              "name": "expiry",
-              "type": "uint128"
-            },
-            {
-              "name": "makerAsset",
-              "type": "uint256"
-            },
-            {
-              "name": "makerAssetId",
-              "type": "uint256"
-            },
-            {
-              "name": "takerAsset",
-              "type": "uint256"
-            },
-            {
-              "name": "takerAssetId",
-              "type": "uint256"
-            },
-            {
-              "name": "maker",
-              "type": "address"
-            },
-            {
-              "name": "taker",
-              "type": "address"
-            },
-            {
-              "name": "makerAmount",
-              "type": "uint256"
-            },
-            {
-              "name": "takerAmount",
-              "type": "uint256"
-            }
+            { "name": "nonceAndMeta", "type": "uint256" },
+            { "name": "expiry", "type": "uint128" },
+            { "name": "makerAsset", "type": "uint256" },
+            { "name": "makerAssetId", "type": "uint256" },
+            { "name": "takerAsset", "type": "uint256" },
+            { "name": "takerAssetId", "type": "uint256" },
+            { "name": "maker", "type": "address" },
+            { "name": "taker", "type": "address" },
+            { "name": "makerAmount", "type": "uint256" },
+            { "name": "takerAmount", "type": "uint256" }
           ]
         },
         "message": {

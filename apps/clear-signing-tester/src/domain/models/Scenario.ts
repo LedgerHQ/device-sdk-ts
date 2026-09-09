@@ -3,6 +3,19 @@ import { type SpeculinhoConfig } from "@root/src/domain/models/config/Speculinho
 /** Device a scenario can run on. */
 export type ScenarioDevice = SpeculinhoConfig["device"];
 
+/**
+ * Every device a scenario may name. Listed once so a scenario file and
+ * `--device` cannot accept different sets.
+ */
+export const SCENARIO_DEVICES: readonly ScenarioDevice[] = [
+  "stax",
+  "nanox",
+  "nanos",
+  "nanos+",
+  "flex",
+  "apex",
+];
+
 /** Coin app a scenario exercises. */
 export type ScenarioCoinApp = "Ethereum" | "Solana";
 
@@ -61,6 +74,12 @@ export type Scenario = {
    * as many emulators as the concurrency allows.
    */
   readonly sequential?: boolean;
+  /**
+   * `false` keeps the scenario out of every selection, for cases kept in the
+   * repo but not run — an alternate chain nobody wired up, a descriptor known
+   * to be broken. Absent means enabled.
+   */
+  readonly enabled?: boolean;
 };
 
 /**

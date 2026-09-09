@@ -32,9 +32,8 @@ export type BatchTestConfig = {
  * Configuration for formatting test results
  */
 export type TestFormattingConfig = {
-  readonly title: string;
-  readonly summaryTitle: string;
-  readonly itemName: string; // e.g., "transaction", "typed data"
+  /** What one case is called in the log lines, e.g. "transaction". */
+  readonly itemName: string;
 };
 
 /**
@@ -90,10 +89,7 @@ export class TestBatchFromFileUseCase<T extends SignableInput> {
 
     if (items.length === 0) {
       this.logger.info("Nothing to test in this slice");
-      return ResultFormatter.formatBatchResults([], 0, {
-        title: this.formattingConfig.title,
-        summaryTitle: this.formattingConfig.summaryTitle,
-      });
+      return ResultFormatter.formatBatchResults([], 0);
     }
 
     const results: TestResult[] = [];
@@ -135,10 +131,7 @@ export class TestBatchFromFileUseCase<T extends SignableInput> {
       if (!isLast) await delay(INTER_CASE_DELAY_MS);
     }
 
-    return ResultFormatter.formatBatchResults(results, items.length, {
-      title: this.formattingConfig.title,
-      summaryTitle: this.formattingConfig.summaryTitle,
-    });
+    return ResultFormatter.formatBatchResults(results, items.length);
   }
 
   /**
