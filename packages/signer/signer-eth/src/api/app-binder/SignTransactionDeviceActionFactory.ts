@@ -1,41 +1,11 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import {
-  type DeviceActionStateMachine,
-  type InternalApi,
-  type LoggerPublisherService,
-  type XStateDeviceAction,
-} from "@ledgerhq/device-management-kit";
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
-import {
-  type SignTransactionDAError,
-  type SignTransactionDAInput,
-  type SignTransactionDAIntermediateValue,
-  type SignTransactionDAInternalState,
-  type SignTransactionDAOutput,
-} from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 import { EthersTransactionMapperService } from "@internal/transaction/service/mapper/EthersTransactionMapperService";
 import { TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
-
-type SignTransactionDA = XStateDeviceAction<
-  SignTransactionDAOutput,
-  SignTransactionDAInput,
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue,
-  SignTransactionDAInternalState
-> & {
-  makeStateMachine(
-    internalApi: InternalApi,
-  ): DeviceActionStateMachine<
-    SignTransactionDAOutput,
-    SignTransactionDAInput,
-    SignTransactionDAError,
-    SignTransactionDAIntermediateValue,
-    SignTransactionDAInternalState
-  >;
-};
 
 export const SignTransactionDeviceActionFactory = (args: {
   derivationPath: string;
@@ -45,7 +15,7 @@ export const SignTransactionDeviceActionFactory = (args: {
   options?: TransactionOptions;
   inspect?: boolean;
   loggerFactory?: (tag: string) => LoggerPublisherService;
-}): SignTransactionDA =>
+}) =>
   new SignTransactionDeviceAction({
     input: {
       derivationPath: args.derivationPath,
