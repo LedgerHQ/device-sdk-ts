@@ -37,9 +37,9 @@ jobs:
       solana-tools: ${{ steps.filter.outputs.solana-tools }}
       contacts-kit: ${{ steps.filter.outputs.contacts-kit }}
       cs-tester: ${{ steps.filter.outputs.cs-tester }}
-      should-run-contacts-cs-tester: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.contacts-kit == 'true' || steps.filter.outputs.cs-tester == 'true' }}
-      should-run-ethereum-cs-tester: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.cs-tester == 'true' }}
-      should-run-solana-cs-tester: ${{ steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.cs-tester == 'true' || steps.filter.outputs.solana-tools == 'true' }}
+      # One job covers every clear-signing scenario, so one gate: any package a
+      # clear-signing run exercises.
+      should-run-cs-tester: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.solana-tools == 'true' || steps.filter.outputs.contacts-kit == 'true' || steps.filter.outputs.cs-tester == 'true' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -239,64 +239,31 @@ jobs:
 
   cs-tester:
     needs: [checks, detect-changes]
-    if: needs.detect-changes.outputs.should-run-ethereum-cs-tester == 'true'
-    name: Ethereum Clear Signing Test (${{ matrix.device }})
+    if: needs.detect-changes.outputs.should-run-cs-tester == 'true'
+    name: Clear Signing Test (${{ matrix.device }})
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        device: [stax, nanox]
+        device: [stax, nanox, flex]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # One job per device, running every group that device supports. A scenario
+      # that does not support the device is skipped by name, so the same
+      # selection works for all three: contacts is flex-only, core is Nano and
+      # Stax only.
       - uses: ./.github/actions/cs-tester-composite
         with:
-          scenarios: core
+          scenarios: core contacts solana
           device: ${{ matrix.device }}
-          artifact-prefix: eth-cs-tester-logs
-          summary-prefix: "Ethereum Clear Signing Test"
-          gating-token: ${{ secrets.GATING_TOKEN }}
-
-  contacts-cs-tester:
-    needs: [checks, detect-changes]
-    if: needs.detect-changes.outputs.should-run-contacts-cs-tester == 'true'
-    name: Ethereum Contacts Test (flex)
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      # No device axis: Contacts is unsupported on Nano, and the Address Book
-      # APDUs need the RC firmware pair pinned for flex Ethereum in
-      # apps/clear-signing-tester/default_versions.json.
-      - uses: ./.github/actions/cs-tester-composite
-        with:
-          scenarios: contacts
-          device: flex
-          artifact-prefix: eth-contacts-logs
-          summary-prefix: "Ethereum Contacts Test"
+          # One job now carries what three did, so it holds more emulators at
+          # once to keep the wall clock where it was. Peak pod use still drops,
+          # since there are fewer jobs.
+          concurrency: "10"
+          artifact-prefix: cs-tester-logs
+          summary-prefix: "Clear Signing Test"
           # A device registration flow is hard to diagnose from a bare log.
           enable-file-logging: "true"
-          gating-token: ${{ secrets.GATING_TOKEN }}
-
-  solana-cs-tester:
-    needs: [checks, detect-changes]
-    if: needs.detect-changes.outputs.should-run-solana-cs-tester == 'true'
-    name: Solana Fixture Test (${{ matrix.device }})
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [stax, nanox]
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/cs-tester-composite
-        with:
-          scenarios: solana
-          device: ${{ matrix.device }}
-          artifact-prefix: solana-cs-tester-logs
-          summary-prefix: "Solana Fixture Test"
           gating-token: ${{ secrets.GATING_TOKEN }}

@@ -33,9 +33,9 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
 
-  solana-cs-tester:
+  cs-tester:
     needs: [build-libraries]
-    name: Solana Fixture Test (${{ matrix.device }})
+    name: Solana Clear Signing Test (${{ matrix.device }})
     runs-on: ledgerhq-device-sdk
     permissions:
       contents: read
@@ -45,43 +45,23 @@ jobs:
         device: [stax, nanox, flex]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # Fixtures only: the solana-programs scenarios are disabled, since an
+      # RPC-derived case carries no expectedTexts and so cannot fail the
+      # clear-signing check.
       - uses: ./.github/actions/cs-tester-composite
         with:
           scenarios: solana
           device: ${{ matrix.device }}
+          concurrency: "10"
           log-level: error
           enable-file-logging: "true"
-          artifact-prefix: solana-cs-tester-logs
-          summary-prefix: "Solana Fixture Test"
+          artifact-prefix: solana-nightly-logs
+          summary-prefix: "Solana Clear Signing Test"
           gating-token: ${{ secrets.GATING_TOKEN }}
-
-  solana-program-cs-tester:
-    needs: [build-libraries]
-    name: Solana Program Test (${{ matrix.device }})
-    runs-on: ledgerhq-device-sdk
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [stax, nanox, flex]
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      # The solana-programs scenarios pull live transactions, so they need the RPC.
-      - uses: ./.github/actions/cs-tester-composite
-        with:
-          scenarios: solana-programs
-          device: ${{ matrix.device }}
-          log-level: error
-          enable-file-logging: "true"
-          artifact-prefix: solana-program-cs-tester-logs
-          summary-prefix: "Solana Program Test"
-          gating-token: ${{ secrets.GATING_TOKEN }}
-          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   notify:
     name: Notify Slack
-    needs: [solana-cs-tester, solana-program-cs-tester]
+    needs: [cs-tester]
     if: always()
     runs-on: ubuntu-latest
     steps:
