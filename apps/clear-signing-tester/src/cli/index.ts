@@ -11,13 +11,18 @@ import {
   type CliLogLevel,
   parseLogLevel,
 } from "@root/src/domain/models/config/LoggerConfig";
-import { type ScenarioDevice } from "@root/src/domain/models/Scenario";
-import { SCENARIO_CATALOG } from "@root/src/domain/scenarios/catalog";
-import { planRuns } from "@root/src/domain/scenarios/planRuns";
+import {
+  type Scenario,
+  type ScenarioDevice,
+} from "@root/src/domain/models/Scenario";
+import { expandToCases } from "@root/src/domain/scenarios/expandToCases";
+import { planRuns, selectScenarios } from "@root/src/domain/scenarios/planRuns";
 import {
   ContainerScenarioRunner,
   type ScenarioRuntime,
 } from "@root/src/infrastructure/scenarios/ContainerScenarioRunner";
+import { countCases } from "@root/src/infrastructure/scenarios/countFixtureCases";
+import { loadScenarioCatalog } from "@root/src/infrastructure/scenarios/loadScenarioCatalog";
 import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
 import { LoggerPublisherService } from "@root/src/services/LoggerPublisherService";
 
@@ -56,9 +61,9 @@ const oneOf =
     return value as T;
   };
 
-function listScenarios(): void {
+function listScenarios(catalog: readonly Scenario[]): void {
   const byGroup = new Map<string, string[]>();
-  for (const s of SCENARIO_CATALOG) {
+  for (const s of catalog) {
     const line = `${s.name.padEnd(34)} ${s.devices.join(", ")}`;
     byGroup.set(s.group, [...(byGroup.get(s.group) ?? []), line]);
   }
@@ -67,7 +72,7 @@ function listScenarios(): void {
     for (const line of lines) console.log(`  ${line}`);
   }
   console.log(
-    `\n${SCENARIO_CATALOG.length} scenarios. Select by group, by name, or "all".`,
+    `\n${catalog.length} scenarios. Select by group, by name, or "all".`,
   );
 }
 
@@ -77,6 +82,8 @@ async function runTest(
     device?: ScenarioDevice;
     concurrency: number;
     list?: boolean;
+    /** Commander maps --no-split to split: false, so read the positive name. */
+    split?: boolean;
     logLevel: CliLogLevel;
     fileLogLevel?: CliLogLevel;
     logDir?: string;
@@ -89,16 +96,59 @@ async function runTest(
     derivationPath: string;
     solanaDerivationPath: string;
     erc7730Files?: string[];
+    osVersion?: string;
+    appEthVersion?: string;
+    appSolVersion?: string;
   },
 ): Promise<number> {
+  const catalog = loadScenarioCatalog();
+
   if (options.list) {
-    listScenarios();
+    listScenarios(catalog);
     return 0;
   }
 
-  const runs = planRuns(SCENARIO_CATALOG, selectors, {
+  const selected = selectScenarios(catalog, selectors);
+  const scenarioRuns = planRuns(catalog, selectors, {
     device: options.device,
   });
+
+  // A device filter drops scenarios silently, which reads as "my selection was
+  // ignored". Name them instead.
+  if (options.device) {
+    const dropped = selected.filter(
+      (s) => !s.devices.includes(options.device!),
+    );
+    if (dropped.length > 0) {
+      console.log(
+        `Skipping ${dropped.length} scenario(s) that do not support ${options.device}: ` +
+          dropped.map((s) => s.name).join(", "),
+      );
+    }
+  }
+
+  // The Solana RPC is wired into the container, so a program scenario cannot
+  // even be resolved without it. Say so before acquiring an emulator.
+  const needRpc = scenarioRuns.filter(
+    (r) => r.scenario.action === "solanaProgram",
+  );
+  if (needRpc.length > 0 && !options.rpcUrl) {
+    const names = [...new Set(needRpc.map((r) => r.scenario.name))];
+    throw new Error(
+      `${names.join(", ")} pull live transactions and need --rpc-url <solana rpc>. ` +
+        `Pass it, or exclude the solana-programs group.`,
+    );
+  }
+
+  // A case is the unit of work: split each fixture so its cases can run on
+  // separate emulators, leaving order-dependent scenarios whole.
+  const runs =
+    options.split === false
+      ? scenarioRuns
+      : expandToCases(
+          scenarioRuns,
+          countCases(scenarioRuns.map((r) => r.scenario)),
+        );
 
   if (runs.length === 0) {
     console.log(
@@ -136,11 +186,14 @@ async function runTest(
     samplesPerInstruction: options.samplesPerInstruction,
     originToken: process.env["GATING_TOKEN"] || "test-origin-token",
     calMode: useInjectedDescriptors ? "test" : "prod",
+    osVersion: options.osVersion,
+    ethAppVersion: options.appEthVersion,
+    solanaAppVersion: options.appSolVersion,
   };
 
   console.log(
-    `Running ${runs.length} scenario run(s) on ${options.device ?? "every supported device"}, ` +
-      `${options.concurrency} at a time.`,
+    `Running ${runs.length} case(s) from ${scenarioRuns.length} scenario run(s) on ` +
+      `${options.device ?? "every supported device"}, ${options.concurrency} at a time.`,
   );
 
   try {
@@ -150,7 +203,9 @@ async function runTest(
       concurrency: options.concurrency,
       onOutcome: (outcome, done, total) =>
         console.log(
-          `[${done}/${total}] ${outcome.run.scenario.name} @ ${outcome.run.device} — ` +
+          `[${done}/${total}] ${outcome.run.scenario.name}` +
+            `${outcome.run.slice ? ` case ${outcome.run.slice.index}/${outcome.run.slice.count}` : ""}` +
+            ` @ ${outcome.run.device} — ` +
             (outcome.errorMessage
               ? `did not run: ${outcome.errorMessage}`
               : `${outcome.failures === 0 ? "passed" : `${outcome.failures} failing`}`),
@@ -188,6 +243,10 @@ function buildProgram(): Command {
       4,
     )
     .option("--list", "List every scenario and exit")
+    .option(
+      "--no-split",
+      "Run each scenario's whole fixture on one emulator instead of a case per emulator",
+    )
     .option(
       "--log-level <level>",
       `Console log level: ${CLI_LOG_LEVELS.join(", ")} (default: info)`,
@@ -239,6 +298,18 @@ function buildProgram(): Command {
       "--solana-derivation-path <path>",
       "Solana derivation path",
       "44'/501'/0'",
+    )
+    .option(
+      "--os-version <version>",
+      "Override the OS version pinned in default_versions.json, for a one-off run",
+    )
+    .option(
+      "--app-eth-version <version>",
+      "Override the pinned Ethereum app version",
+    )
+    .option(
+      "--app-sol-version <version>",
+      "Override the pinned Solana app version",
     )
     .option(
       "--erc7730-files <files...>",

@@ -1,6 +1,6 @@
-import versions from "@root/versions.json";
+import versions from "@root/default_versions.json";
 
-/** `versions.json` shape: device > OS version > coin app > app version. */
+/** `default_versions.json` shape: device > OS version > coin app > app version. */
 type VersionTree = Record<string, Record<string, Record<string, string>>>;
 
 export type PinnedVersions = {
@@ -13,11 +13,11 @@ export type PinnedVersions = {
  *
  * Speculinho rejects an acquire that omits either version and resolves no
  * "latest", so every run needs a concrete pair. Reading them from
- * `versions.json` keeps CI and a local run on the same pair.
+ * `default_versions.json` keeps CI and a local run on the same pair.
  *
  * The OS is not passed in: it follows from the app, since an app is pinned under
- * exactly one OS per device. That is why a flex Ethereum run lands on the
- * pre-release pair the Address Book needs, whether or not it touches contacts.
+ * exactly one OS per device. A scenario needing a different pair states it in the
+ * catalog and never reaches here.
  *
  * @param coinApp - Coin app being exercised, as named in coin-apps
  * @param device - Device the run targets
@@ -30,7 +30,7 @@ export function pinnedVersions(
   const byOsVersion = (versions as unknown as VersionTree)[device];
   if (!byOsVersion) {
     throw new Error(
-      `No versions pinned for device "${device}" in versions.json.`,
+      `No versions pinned for device "${device}" in default_versions.json.`,
     );
   }
 
@@ -40,13 +40,13 @@ export function pinnedVersions(
 
   if (matches.length === 0) {
     throw new Error(
-      `No ${coinApp} version pinned for "${device}" in versions.json.`,
+      `No ${coinApp} version pinned for "${device}" in default_versions.json.`,
     );
   }
   if (matches.length > 1) {
     throw new Error(
       `${coinApp} is pinned under several OS versions for "${device}" ` +
-        `(${matches.map(([os]) => os).join(", ")}) in versions.json, so the pair is ambiguous.`,
+        `(${matches.map(([os]) => os).join(", ")}) in default_versions.json, so the pair is ambiguous.`,
     );
   }
 

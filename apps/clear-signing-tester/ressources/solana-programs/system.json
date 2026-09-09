@@ -1,0 +1,12 @@
+{
+  "group": "solana-programs",
+  "name": "system",
+  "action": "solanaProgram",
+  "devices": ["stax", "nanox", "flex"],
+  "coinApp": "Solana",
+  "mode": "parallel",
+  "options": {
+    "useRpc": true,
+    "distill": true
+  }
+}

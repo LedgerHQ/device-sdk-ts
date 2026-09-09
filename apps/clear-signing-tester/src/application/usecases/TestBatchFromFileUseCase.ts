@@ -2,6 +2,7 @@ import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
+import { type ScenarioSlice } from "@root/src/domain/models/Scenario";
 import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
@@ -16,6 +17,11 @@ import {
  */
 export type BatchTestConfig = {
   readonly defaultDerivationPath: string;
+  /**
+   * Run only this slice of the fixture. Slices are taken round-robin, so a
+   * fixture split across emulators spreads uneven case durations evenly.
+   */
+  readonly slice?: ScenarioSlice;
 };
 
 /**
@@ -67,11 +73,24 @@ export class TestBatchFromFileUseCase<T extends SignableInput> {
     );
 
     // Read data from file
-    const items = this.dataFileRepository.readFromFile(filePath);
+    const allItems = this.dataFileRepository.readFromFile(filePath);
+    const { slice } = config;
+    const items = slice
+      ? allItems.filter((_, index) => index % slice.count === slice.index - 1)
+      : allItems;
 
     this.logger.info(
-      `Found ${items.length} ${this.formattingConfig.itemName}${items.length !== 1 ? "s" : ""} to test`,
+      `Found ${items.length} ${this.formattingConfig.itemName}${items.length !== 1 ? "s" : ""} to test` +
+        (slice ? ` (case ${slice.index}/${slice.count})` : ""),
     );
+
+    if (items.length === 0) {
+      this.logger.info("Nothing to test in this slice");
+      return ResultFormatter.formatBatchResults([], 0, {
+        title: this.formattingConfig.title,
+        summaryTitle: this.formattingConfig.summaryTitle,
+      });
+    }
 
     const results: TestResult[] = [];
 

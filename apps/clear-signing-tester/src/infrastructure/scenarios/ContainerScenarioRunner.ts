@@ -10,10 +10,7 @@ import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModule
 import { makeSolanaContainer } from "@root/src/di/solanaContainer";
 import { TYPES } from "@root/src/di/types";
 import { type CliLogLevel } from "@root/src/domain/models/config/LoggerConfig";
-import {
-  type Scenario,
-  type ScenarioRun,
-} from "@root/src/domain/models/Scenario";
+import { type ScenarioRun } from "@root/src/domain/models/Scenario";
 import { type ScenarioOutcome } from "@root/src/domain/models/ScenarioOutcome";
 import {
   SOLANA_SUPPORTED_PROGRAMS,
@@ -44,6 +41,10 @@ export type ScenarioRuntime = {
    * so a run using them must not verify against the production PKI root.
    */
   readonly calMode: "prod" | "test";
+  /** Overrides the default_versions.json pin, for a one-off run. */
+  readonly osVersion?: string;
+  readonly ethAppVersion?: string;
+  readonly solanaAppVersion?: string;
 };
 
 const NO_COUNTS = {
@@ -72,7 +73,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
 
     try {
       await services.start();
-      const result = await this.dispatch(container, run.scenario);
+      const result = await this.dispatch(container, run);
       return {
         run,
         counts: result.counts,
@@ -102,8 +103,14 @@ export class ContainerScenarioRunner implements ScenarioRunner {
       speculinho: {
         device,
         ...(scenario.coinApp === "Solana" ? { appName: "Solana" } : {}),
-        osVersion: pins.osVersion,
-        appVersion: pins.appVersion,
+        osVersion:
+          this.runtime.osVersion ?? scenario.osVersion ?? pins.osVersion,
+        appVersion:
+          (scenario.coinApp === "Solana"
+            ? this.runtime.solanaAppVersion
+            : this.runtime.ethAppVersion) ??
+          scenario.appVersion ??
+          pins.appVersion,
         screenshotPath: this.runtime.screenshotPath,
         speculinhoUrl: this.runtime.speculinhoUrl,
         speculosHttpTimeoutMs: this.runtime.speculosHttpTimeoutMs,
@@ -146,7 +153,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
 
   private dispatch(
     container: Container,
-    scenario: Scenario,
+    { scenario, slice }: ScenarioRun,
   ): Promise<BatchTestResult> {
     const { action, fixture, program, options } = scenario;
     const isSolana = scenario.coinApp === "Solana";
@@ -162,6 +169,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
             defaultDerivationPath: isSolana
               ? this.runtime.solanaDerivationPath
               : this.runtime.ethDerivationPath,
+            slice,
           });
       }
       case "signTypedData":
@@ -171,6 +179,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
           )
           .execute(fixture!, {
             defaultDerivationPath: this.runtime.ethDerivationPath,
+            slice,
           });
       case "registerContact":
         return container

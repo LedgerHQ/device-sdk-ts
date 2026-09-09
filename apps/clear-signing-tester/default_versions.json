@@ -1,0 +1,21 @@
+{
+  "_comment": "Emulator pins, device > OS > coin app > app version. Speculinho demands an explicit app and OS version on every run and resolves no \"latest\", so a run with no --os-version/--app-*-version reads its pair from here; CI and local runs therefore cannot disagree. An app appears under exactly one OS per device, which is what keeps the lookup unambiguous. A scenario needing a different pair pins it itself in the catalog, as the contacts scenarios do for the Address Book pre-release. Bump deliberately: a version has to exist on Speculinho, which trails coin-apps by up to about an hour after a release.",
+  "stax": {
+    "1.10.1": {
+      "Ethereum": "1.22.3",
+      "Solana": "1.16.0"
+    }
+  },
+  "nanox": {
+    "2.7.1": {
+      "Ethereum": "1.22.3",
+      "Solana": "1.16.0"
+    }
+  },
+  "flex": {
+    "1.6.1": {
+      "Ethereum": "1.22.3",
+      "Solana": "1.16.0"
+    }
+  }
+}

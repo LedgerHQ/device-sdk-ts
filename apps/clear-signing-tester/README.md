@@ -27,10 +27,22 @@ pnpm build:libs
 ## Running scenarios
 
 Every test is a **scenario**: a device, a coin app, an action, and its input.
-They live in [`src/domain/scenarios/catalog.ts`](./src/domain/scenarios/catalog.ts),
-so running one is a selection rather than a bespoke command, and scenarios are
-independent — each takes its own emulator, so a run costs about as much wall
-clock as its slowest scenario.
+Each one is a file under [`ressources/`](./ressources) that describes how to run
+itself, so running one is a selection rather than a bespoke command, and adding
+one is a new file rather than a code change.
+
+The unit of work is a **case**, not a scenario. Selected fixtures are flattened
+to their individual cases and spread over as many emulators as `--concurrency`
+allows, each on its own pod, released when the case ends. So an eighteen-case
+fixture is eighteen independent tests rather than one long one: `erc7730:1inch`
+takes about 73s over six pods instead of roughly four minutes on one. A pod that
+dies costs exactly one case rather than every case after it.
+
+Scenarios whose cases depend on each other declare `"mode": "sequential"` and
+run whole on one device — `gating:every-10-tx` counts transactions
+on the device, and `contacts:register` asserts the first contact is still there
+when the second registers. Splitting either would make it pass without testing
+anything.
 
 ```bash
 # everything
@@ -83,34 +95,82 @@ requested `--device` is skipped rather than failed.
 | `--solana-derivation-path`     | `44'/501'/0'`    | Solana derivation path                             |
 | `--erc7730-files <files...>`   | —                | Inject descriptors; also switches CAL to test mode |
 
-Adding a scenario is a catalog entry plus a fixture. A unit test asserts every
-fixture path exists, so a typo fails fast rather than silently shrinking a run.
+### Scenario files
+
+A scenario file carries its own metadata and its cases, so the catalog is
+whatever `ressources/` holds:
+
+```json
+{
+  "group": "core",
+  "name": "erc20",
+  "action": "signTransaction",
+  "devices": ["stax", "nanox"],
+  "coinApp": "Ethereum",
+  "mode": "parallel",
+  "cases": [{ "rawTx": "0x02f8b4…", "expectedTexts": ["USDT", "5000"] }]
+}
+```
+
+The selector is `group:name`, so this file is `core:erc20`. The directory it
+sits in is free — `erc7730/uniswap/` holds one scenario of each group.
+
+| Field                     | Required | Meaning                                                                      |
+| ------------------------- | -------- | ---------------------------------------------------------------------------- |
+| `group`, `name`           | yes      | Selector `group:name`; the group is selectable on its own                    |
+| `action`                  | yes      | `signTransaction`, `signTypedData`, `registerContact`, `solanaProgram`       |
+| `devices`                 | yes      | Devices this scenario supports; a run picks one                              |
+| `coinApp`                 | yes      | `Ethereum` or `Solana`                                                       |
+| `cases`                   | yes\*    | The inputs; `solanaProgram` takes none, its input comes from the RPC         |
+| `mode`                    | no       | `parallel` (default) or `sequential`                                         |
+| `osVersion`, `appVersion` | no       | Override the device's pin, together                                          |
+| `options`                 | no       | `blindSigningEnabled`, `skipOriginToken`, `addressBook`, `useRpc`, `distill` |
+
+A file counts as a scenario only once it declares an `action`, so plain data —
+an address book, a fixture kept for manual runs — sits alongside untouched. A
+malformed scenario file fails the run and the unit tests by name rather than
+silently shrinking a selection.
 
 ## App and OS versions
 
 Speculinho requires an explicit app and OS version on every run and resolves no
-"latest" of its own, so [`versions.json`](./versions.json) pins the pair each run
+"latest" of its own, so [`default_versions.json`](./default_versions.json) pins the pair each run
 asks for, keyed **device > OS > coin app > app version**:
 
 ```json
 {
   "stax": { "1.10.1": { "Ethereum": "1.22.3", "Solana": "1.16.0" } },
-  "flex": {
-    "1.7.0-rc2": { "Ethereum": "1.23.0-dev" },
-    "1.6.1": { "Solana": "1.16.0" }
-  }
+  "flex": { "1.6.1": { "Ethereum": "1.22.3", "Solana": "1.16.0" } }
 }
 ```
 
 The OS is not chosen separately: an app is pinned under exactly one OS per
-device, so `--device flex` plus an Ethereum run resolves `1.7.0-rc2` and
-`1.23.0-dev`. That is deliberate — the Address Book needs the pre-release pair,
-and every flex Ethereum run uses it rather than keeping a contacts-only special
-case. Pin an app under two OS versions for one device and the lookup fails as
-ambiguous rather than guessing.
+device, so `--device flex` plus an Ethereum run resolves `1.6.1` and `1.22.3`.
+Pin an app under two OS versions for one device and the lookup fails as ambiguous
+rather than guessing.
 
-Both CI and a local run read that file, so they cannot disagree. `--os-version`
-and `--app-eth-version`/`--app-sol-version` still override it for a one-off.
+A scenario needing a different pair states it in its own file:
+
+```json
+{
+  "group": "contacts",
+  "name": "sign",
+  "osVersion": "1.7.0-rc2",
+  "appVersion": "1.23.0-dev"
+}
+```
+
+That is how the contacts scenarios reach the Address Book pre-release while the
+rest of flex Ethereum stays on the released app. Keep the exception on the
+scenario — moving it into `default_versions.json` drags every flex Ethereum run
+onto the pre-release, which is what once cost the erc7730 typed-data runs three
+cases. A unit test fails if a contacts scenario stops pinning its own version,
+and another resolves `default_versions.json` for every scenario and device so a
+bad edit fails in CI rather than while acquiring a pod.
+
+Resolution order is `--os-version` / `--app-eth-version` / `--app-sol-version`
+for a one-off, then the scenario's own pin, then `default_versions.json`. Both CI and a
+local run read the same file, so they cannot disagree.
 
 Bump a pin deliberately: the version has to exist **on Speculinho**, which trails
 coin-apps by up to about an hour after a release. Speculinho exposes no endpoint
@@ -204,9 +264,9 @@ Give each case its own recipient address; do not reuse one across cases.
 
 Contacts need an RC firmware pair — the newest _stable_ Ethereum app answers
 `6e00 "CLA not supported"` to the first address-book APDU, and that also drops
-the Speculos session, so every later case fails as `DeviceSessionNotFound`. That
-pair is what [`versions.json`](./versions.json) pins for flex Ethereum, so a
-contacts run only needs `--device flex`. The Address Book HMACs are OS syscalls
+the Speculos session, so every later case fails as `DeviceSessionNotFound`. The
+three contacts scenario files carry that pair themselves, so a contacts run
+only needs `--device flex`. The Address Book HMACs are OS syscalls
 that 1.6.1 does not implement, which is why the OS pin matters as much as the app
 one.
 
@@ -216,8 +276,8 @@ recorded address book stays valid across pods; change those pins and the recorde
 proofs must be re-recorded.
 
 These three flows run on pull requests via the `contacts-cs-tester` job, gated on
-changes to `signer-eth`, `device-contacts-kit` or this app. It resolves versions
-through the same `versions.json`, so CI and a local run agree.
+changes to `signer-eth`, `device-contacts-kit` or this app. It passes no versions
+of its own, so CI and a local run resolve the same pair from the scenario files.
 
 ## Output
 

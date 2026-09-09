@@ -7,6 +7,7 @@ import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCr
 import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
+import { scenarioCases } from "@root/src/infrastructure/repositories/scenarioCases";
 
 /**
  * Raw transaction data structure from JSON file
@@ -44,14 +45,10 @@ export class TransactionFileRepository
   readFromFile(filePath: string): TransactionInput[] {
     const fileContent = this.fileReader.readFileSync(filePath);
 
-    const rawTransactions =
-      this.jsonParser.parse<RawTransactionData[]>(fileContent);
-
-    if (!Array.isArray(rawTransactions)) {
-      throw new Error(
-        `Invalid file format: expected an array of transactions in ${filePath}`,
-      );
-    }
+    const rawTransactions = scenarioCases<RawTransactionData>(
+      this.jsonParser.parse<unknown>(fileContent),
+      filePath,
+    );
 
     return rawTransactions.map((rawTx, index) =>
       this.mapToTransaction(rawTx, index),

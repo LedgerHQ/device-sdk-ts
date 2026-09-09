@@ -1,0 +1,12 @@
+{
+  "group": "solana-programs",
+  "name": "token-2022",
+  "action": "solanaProgram",
+  "devices": ["stax", "nanox", "flex"],
+  "coinApp": "Solana",
+  "mode": "parallel",
+  "options": {
+    "useRpc": true,
+    "distill": true
+  }
+}

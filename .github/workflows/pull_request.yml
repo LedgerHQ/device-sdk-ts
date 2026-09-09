@@ -269,7 +269,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # No device axis: Contacts is unsupported on Nano, and the Address Book
       # APDUs need the RC firmware pair pinned for flex Ethereum in
-      # apps/clear-signing-tester/versions.json.
+      # apps/clear-signing-tester/default_versions.json.
       - uses: ./.github/actions/cs-tester-composite
         with:
           scenarios: contacts

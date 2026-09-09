@@ -21,6 +21,7 @@ export function reportScenarios(report: ScenarioRunReport): void {
   console.table(
     report.outcomes.map((o) => ({
       Scenario: o.run.scenario.name,
+      Case: o.run.slice ? `${o.run.slice.index}/${o.run.slice.count}` : "all",
       Device: o.run.device,
       Verdict: verdict(o),
       Clear: o.counts.clearSigned,

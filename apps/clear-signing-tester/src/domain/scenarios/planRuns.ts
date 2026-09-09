@@ -22,11 +22,18 @@ export type PlanOptions = {
  *
  * @throws If a selector matches nothing, listing what is available
  */
-export function planRuns(
+/**
+ * The scenarios a set of selectors names, deduped and in catalog order.
+ *
+ * Separate from {@link planRuns} so a caller can tell the difference between
+ * "you selected nothing" and "nothing you selected runs on that device".
+ *
+ * @throws If a selector matches nothing, listing what is available
+ */
+export function selectScenarios(
   catalog: readonly Scenario[],
   selectors: readonly string[],
-  options: PlanOptions = {},
-): readonly ScenarioRun[] {
+): readonly Scenario[] {
   const wanted = selectors.length === 0 ? [ALL_SELECTOR] : selectors;
 
   const selected = new Map<string, Scenario>();
@@ -45,9 +52,16 @@ export function planRuns(
     }
     for (const scenario of matches) selected.set(scenario.name, scenario);
   }
+  return [...selected.values()];
+}
 
+export function planRuns(
+  catalog: readonly Scenario[],
+  selectors: readonly string[],
+  options: PlanOptions = {},
+): readonly ScenarioRun[] {
   const runs: ScenarioRun[] = [];
-  for (const scenario of selected.values()) {
+  for (const scenario of selectScenarios(catalog, selectors)) {
     const devices = options.device
       ? scenario.devices.filter((d) => d === options.device)
       : scenario.devices;

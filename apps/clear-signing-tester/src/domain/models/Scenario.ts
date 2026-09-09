@@ -50,10 +50,35 @@ export type Scenario = {
   /** Program name, for `solanaProgram`. */
   readonly program?: string;
   readonly options?: ScenarioOptions;
+  /**
+   * Versions this scenario needs, overriding the device's pin in default_versions.json.
+   * For a feature that only exists in a pre-release build, while everything else
+   * on the device stays on the stable pair.
+   */
+  readonly osVersion?: string;
+  readonly appVersion?: string;
+  /**
+   * Set when the cases depend on each other, so the whole fixture must run on
+   * one device in order. Independent cases are the default and are spread over
+   * as many emulators as the concurrency allows.
+   */
+  readonly sequential?: boolean;
 };
 
-/** A scenario bound to one of its devices: the unit of work a runner takes. */
+/**
+ * One slice of a fixture, taken round-robin so uneven case durations spread out.
+ * `count` of 1 covers the whole fixture.
+ */
+export type ScenarioSlice = {
+  /** 1-based slice number. */
+  readonly index: number;
+  readonly count: number;
+};
+
+/** A scenario bound to a device and a slice: the unit of work a runner takes. */
 export type ScenarioRun = {
   readonly scenario: Scenario;
   readonly device: ScenarioDevice;
+  /** Absent means every case in the fixture. */
+  readonly slice?: ScenarioSlice;
 };
