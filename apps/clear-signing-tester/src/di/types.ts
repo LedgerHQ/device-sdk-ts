@@ -51,7 +51,6 @@ export const TYPES = {
   TestBatchContactFromFileUseCase: Symbol.for(
     "TestBatchContactFromFileUseCase",
   ),
-  TestSolanaTransactionUseCase: Symbol.for("TestSolanaTransactionUseCase"),
   TestBatchSolanaTransactionFromFileUseCase: Symbol.for(
     "TestBatchSolanaTransactionFromFileUseCase",
   ),

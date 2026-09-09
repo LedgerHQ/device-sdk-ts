@@ -20,6 +20,8 @@ export type BatchTestResult = {
     Percentage: string;
   }>;
   readonly exitCode: number;
+  /** Per-status counts, so a caller need not parse the rendered tables. */
+  readonly counts: StatusCounts;
 };
 
 /**
@@ -132,6 +134,7 @@ export class ResultFormatter {
       summaryTitle: config.summaryTitle,
       summaryTable,
       exitCode: totalItems - statusCounts.clearSigned,
+      counts: statusCounts,
     };
   }
 

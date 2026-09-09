@@ -19,96 +19,72 @@ pnpm build:libs
 
 ## Environment variables
 
-| Variable            | Required                      | Default                             | Description             |
-| ------------------- | ----------------------------- | ----------------------------------- | ----------------------- |
-| `ETHERSCAN_API_KEY` | For contract commands         | —                                   | Etherscan API key       |
-| `GATING_TOKEN`      | For CAL origin-gated features | —                                   | Origin token            |
-| `SPECULINHO_URL`    | No                            | `https://speculinho.ledgerlabs.net` | Speculinho operator URL |
+| Variable         | Required                      | Default                             | Description             |
+| ---------------- | ----------------------------- | ----------------------------------- | ----------------------- |
+| `GATING_TOKEN`   | For CAL origin-gated features | —                                   | Origin token            |
+| `SPECULINHO_URL` | No                            | `https://speculinho.ledgerlabs.net` | Speculinho operator URL |
 
-## Ethereum CLI
+## Running scenarios
 
-```
-Usage: pnpm cs-tester cli [options] [command]
-
-Options:
-  --device <device>                Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax)
-  --app-eth-version <version>      Ethereum app version (e.g. 1.19.1). Must match a version available in Speculinho.
-  --os-version <version>           Device OS version (e.g. 1.4.0). Must match a version available in Speculinho.
-                                   The app/OS combination must exist — query available versions with:
-                                   curl https://speculinho.ledgerlabs.net/apps | jq '.[] | select(.device == "stax" and .coin_app == "Ethereum")'
-  --speculinho-url <url>           Speculinho operator URL (overrides SPECULINHO_URL env var)
-  --derivation-path <path>         Derivation path (default: "44'/60'/0'/0/0")
-  --erc7730-files <files...>       ERC7730 JSON files to inject for clear signing testing
-  --screenshot-folder-path <path>  Save screenshots during transaction signing
-  --log-level <level>              Console log level: none, error, warn, info, debug (default: info)
-  --log-file <path>                Log output to a file
-  --file-log-level <level>         File log level (requires --log-file)
-
-Commands:
-  raw-transaction <transaction>    Test a single raw transaction
-  raw-file <file>                  Test multiple raw transactions from a JSON file
-  typed-data <data>                Test a single typed data object (JSON string)
-  typed-data-file <file>           Test multiple typed data objects from a JSON file
-  contract [options] <address>     Test a contract
-  contract-file [options] <file>   Test multiple contracts from a JSON file
-  start-speculos                   Start the Speculos emulator and keep it running (Ctrl+C to stop)
-```
-
-### Examples
+Every test is a **scenario**: a device, a coin app, an action, and its input.
+They live in [`src/domain/scenarios/catalog.ts`](./src/domain/scenarios/catalog.ts),
+so running one is a selection rather than a bespoke command, and scenarios are
+independent — each takes its own emulator, so a run costs about as much wall
+clock as its slowest scenario.
 
 ```bash
-# App and OS versions must be a valid combination available in Speculinho.
-# Query what's available: curl https://speculinho.ledgerlabs.net/apps | jq '.'
-pnpm cs-tester cli \
-  --device stax \
-  --app-eth-version <eth-version> \
-  --os-version <os-version> \
-  raw-file ressources/raw-erc20.json
+# everything
+pnpm cs-tester cli test all
 
-# Override the Speculinho operator URL
-pnpm cs-tester cli \
-  --device stax \
-  --speculinho-url https://my-speculinho.example.com \
-  raw-file ressources/raw-erc20.json
+# one or more groups
+pnpm cs-tester cli test erc7730 gating contacts
 
-# Test typed data
-pnpm cs-tester cli typed-data-file ressources/typed-data-example.json
+# a single scenario
+pnpm cs-tester cli test core:complete
 
-# Test a contract
-pnpm cs-tester cli contract 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497
+# what a CI job runs: one device, everything that supports it
+pnpm cs-tester cli test all --device stax --concurrency 6
 
-# Test with custom ERC7730 descriptors (e.g. for a contract not yet in CAL)
-pnpm cs-tester cli raw-transaction <tx> --erc7730-files ./descriptor.json
+# see what exists
+pnpm cs-tester cli test --list
 ```
 
-### Pre-built test cases
+A selector is `all`, a group name, or a scenario name. Unknown selectors fail
+before any emulator is acquired, and a scenario that does not support the
+requested `--device` is skipped rather than failed.
 
-```bash
-pnpm cs-tester test:raw:complete
-pnpm cs-tester test:raw:multisig
-pnpm cs-tester test:raw:erc20
-pnpm cs-tester test:typed-data:multisig
-```
+### Groups
 
-## Solana CLI
+| Group                | Devices           | What it covers                                |
+| -------------------- | ----------------- | --------------------------------------------- |
+| `core`               | stax, nanox       | Ethereum transaction and typed-data fixtures  |
+| `contacts`           | flex              | Address Book registration and signing         |
+| `gating`             | stax, flex        | Unauthenticated callers fall back to gating   |
+| `erc7730`            | stax, nanox, flex | Per-dapp calldata descriptors                 |
+| `erc7730-typed-data` | stax, nanox, flex | Per-dapp typed-data descriptors               |
+| `solana`             | stax, nanox, flex | Solana transaction fixtures                   |
+| `solana-programs`    | stax, nanox, flex | Live program transactions (needs `--rpc-url`) |
 
-```
-Usage: pnpm cs-tester sol [options] [command]
+### Options
 
-Options:
-  --device <device>                Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax)
-  --app-sol-version <version>      Solana app version. Must match a version available in Speculinho.
-  --os-version <version>           Device OS version. Must match a version available in Speculinho.
-  --speculinho-url <url>           Speculinho operator URL (overrides SPECULINHO_URL env var)
-  --derivation-path <path>         Derivation path (default: "44'/501'/0'")
-  --screenshot-folder-path <path>  Save screenshots during transaction signing
-  --rpc-url <url>                  Solana RPC endpoint (required for program commands)
-  --scan-limit <n>                 Number of recent signatures to scan (default: 500)
-  --samples-per-instruction <n>    Transactions to test per instruction type (default: 1)
-  --log-level <level>              Console log level (default: info)
-  --log-file <path>                Log output to a file
-  --file-log-level <level>         File log level (requires --log-file)
-```
+| Option                         | Default          | Description                                        |
+| ------------------------------ | ---------------- | -------------------------------------------------- |
+| `--device <device>`            | every supported  | Run only scenarios supporting this device          |
+| `--concurrency <n>`            | `4`              | How many scenarios may hold an emulator at once    |
+| `--list`                       | —                | List every scenario and exit                       |
+| `--log-level <level>`          | `info`           | Console log level                                  |
+| `--log-dir <path>`             | —                | One log file per scenario                          |
+| `--file-log-level <level>`     | `--log-level`    | File log level                                     |
+| `--screenshot-folder-path`     | —                | Save signing screenshots                           |
+| `--speculinho-url <url>`       | `SPECULINHO_URL` | Speculinho operator URL                            |
+| `--speculos-http-timeout <ms>` | `0` (none)       | Timeout for Speculos pod requests                  |
+| `--rpc-url <url>`              | —                | Solana RPC, required by `solana-programs`          |
+| `--derivation-path <path>`     | `44'/60'/0'/0/0` | Ethereum derivation path                           |
+| `--solana-derivation-path`     | `44'/501'/0'`    | Solana derivation path                             |
+| `--erc7730-files <files...>`   | —                | Inject descriptors; also switches CAL to test mode |
+
+Adding a scenario is a catalog entry plus a fixture. A unit test asserts every
+fixture path exists, so a typo fails fast rather than silently shrinking a run.
 
 ## App and OS versions
 
@@ -146,47 +122,44 @@ with it — an unavailable version fails with `FileNotFoundError` from the pod.
 Inject custom ERC7730 descriptors to test contracts not yet in the production CAL:
 
 ```bash
-# Single descriptor
-pnpm cs-tester cli raw-transaction <tx> --erc7730-files ./descriptor.json
+# One descriptor, against a single scenario
+pnpm cs-tester cli test erc7730:aave --erc7730-files ./descriptor.json
 
-# Multiple descriptors
-pnpm cs-tester cli raw-transaction <tx> --erc7730-files ./d1.json ./d2.json
-
-# With typed data
-pnpm cs-tester cli typed-data-file ./test-data.json --erc7730-files ./descriptor.json
+# Several descriptors
+pnpm cs-tester cli test erc7730 --erc7730-files ./d1.json ./d2.json
 ```
 
 ## Logging
 
 ```bash
 # Verbose console output
-pnpm cs-tester cli --log-level debug raw-file ./ressources/raw-erc20.json
+pnpm cs-tester cli test core --log-level debug
 
-# Log to file with debug level
-pnpm cs-tester cli --log-file ./output.log --file-log-level debug raw-file ./ressources/raw-erc20.json
+# One log file per scenario, at debug level
+pnpm cs-tester cli test all --log-dir /tmp/logs --file-log-level debug
 
-# Silent console, verbose file
-pnpm cs-tester cli --log-level none --log-file ./debug.log --file-log-level debug raw-file ./ressources/raw-erc20.json
+# Silent console, verbose files
+pnpm cs-tester cli test all --log-level none --log-dir /tmp/logs --file-log-level debug
 ```
 
 ## Screenshots
 
 ```bash
-pnpm cs-tester cli --screenshot-folder-path ./screenshots raw-file ./ressources/raw-erc20.json
+pnpm cs-tester cli test core:erc20 --screenshot-folder-path ./screenshots
 ```
 
 Screenshots are saved as `screenshot_1.png`, `screenshot_2.png`, etc.
 
 ### Contacts (Address Book) Support
 
-Two flows, one command each.
+Two flows, both in the `contacts` group.
 
-**`contact-file`** checks the Ethereum app's Address Book behaviour: it
+**`contacts:register`** checks the Ethereum app's Address Book behaviour: it
 registers each contact with `@ledgerhq/device-contacts-kit` and asserts the
 review screens. No signing.
 
 ```bash
-pnpm cs-tester cli --device flex contact-file ./ressources/contacts/contacts.json
+pnpm cs-tester cli test contacts:register
 ```
 
 ```json
@@ -202,18 +175,17 @@ pnpm cs-tester cli --device flex contact-file ./ressources/contacts/contacts.jso
 ]
 ```
 
-**`--address-book`** checks the signing side: it binds an address book to the
-signer for the whole run, so any signing command reviews against it.
+**`contacts:sign`** checks the signing side: the scenario names an address book,
+which is bound to the signer when it is built, so the review resolves the
+recipient to a contact name.
 
 ```bash
-pnpm cs-tester cli --device flex \
-  --address-book ./ressources/contacts/address-book.json \
-  raw-file ./ressources/contacts/sign-with-contact.json
+pnpm cs-tester cli test contacts:sign
 ```
 
-The proofs in an address-book file are device-issued and seed-bound. `contact-file`
-logs the ones it gets back, which is how `address-book.json` was produced; re-record
-them if the device or seed changes. `address-book-rejected.json` carries a flipped
+The proofs in an address-book file are device-issued and seed-bound.
+`contacts:register` logs the ones it gets back, which is how `address-book.json`
+was produced; re-record them if the pinned device identity or the seed changes. `address-book-rejected.json` carries a flipped
 group handle, so the device answers `0x6982` and the transaction signs against the
 raw address — the guard that a bad book never costs a signature.
 
