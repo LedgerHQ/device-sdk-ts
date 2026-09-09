@@ -238,7 +238,10 @@ jobs:
           echo "All required checks passed."
 
   cs-tester:
-    needs: [checks, detect-changes]
+    # Runs alongside `checks`, not after it: the composite action builds the
+    # clear-signing-tester dependency chain itself, so it never consumed
+    # anything `checks` produced.
+    needs: [setup, detect-changes]
     if: needs.detect-changes.outputs.should-run-cs-tester == 'true'
     name: Clear Signing Test (${{ matrix.device }})
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
