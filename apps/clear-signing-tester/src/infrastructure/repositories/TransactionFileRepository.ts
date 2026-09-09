@@ -14,7 +14,6 @@ import { scenarioCases } from "@root/src/infrastructure/repositories/scenarioCas
  */
 type RawTransactionData = {
   rawTx: string;
-  txHash?: string;
   description?: string;
   expectedTexts?: string[];
   expectBlindSigned?: boolean;
@@ -81,7 +80,6 @@ export class TransactionFileRepository
       kind: SignableInputKind.Transaction,
       rawTx: unsignedRawTx,
       description: rawTx.description || `Transaction ${index + 1}`,
-      txHash: rawTx.txHash,
       expectedTexts: rawTx.expectedTexts,
       expectBlindSigned: rawTx.expectBlindSigned,
     };

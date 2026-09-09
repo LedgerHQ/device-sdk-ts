@@ -8,6 +8,10 @@ import { type DataFileRepository } from "@root/src/domain/repositories/DataFileR
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { TestResult } from "@root/src/domain/types/TestStatus";
 import {
+  delay,
+  INTER_CASE_DELAY_MS,
+} from "@root/src/domain/utils/interCaseDelay";
+import {
   BatchTestResult,
   ResultFormatter,
 } from "@root/src/domain/utils/ResultFormatter";
@@ -96,6 +100,7 @@ export class TestBatchFromFileUseCase<T extends SignableInput> {
 
     // Test each item
     for (const [index, item] of items.entries()) {
+      const isLast = index === items.length - 1;
       this.logger.info(
         `Testing ${this.formattingConfig.itemName} ${index + 1}/${items.length}`,
       );
@@ -125,7 +130,9 @@ export class TestBatchFromFileUseCase<T extends SignableInput> {
         results.push(errorResult);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Only between cases: a case gets a fresh emulator, so there is nothing
+      // to settle after the last one, and the pod would be held for nothing.
+      if (!isLast) await delay(INTER_CASE_DELAY_MS);
     }
 
     return ResultFormatter.formatBatchResults(results, items.length, {

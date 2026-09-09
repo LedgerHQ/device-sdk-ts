@@ -10,20 +10,50 @@
       "primaryType": "Mint721",
       "types": {
         "EIP712Domain": [
-          { "name": "name", "type": "string" },
-          { "name": "version", "type": "string" },
-          { "name": "chainId", "type": "uint256" },
-          { "name": "verifyingContract", "type": "address" }
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "name": "chainId",
+            "type": "uint256"
+          },
+          {
+            "name": "verifyingContract",
+            "type": "address"
+          }
         ],
         "Mint721": [
-          { "name": "tokenId", "type": "uint256" },
-          { "name": "tokenURI", "type": "string" },
-          { "name": "creators", "type": "Part[]" },
-          { "name": "royalties", "type": "Part[]" }
+          {
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "name": "tokenURI",
+            "type": "string"
+          },
+          {
+            "name": "creators",
+            "type": "Part[]"
+          },
+          {
+            "name": "royalties",
+            "type": "Part[]"
+          }
         ],
         "Part": [
-          { "name": "account", "type": "address" },
-          { "name": "value", "type": "uint96" }
+          {
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "name": "value",
+            "type": "uint96"
+          }
         ]
       },
       "message": {
@@ -56,21 +86,54 @@
       "primaryType": "Mint1155",
       "types": {
         "EIP712Domain": [
-          { "name": "name", "type": "string" },
-          { "name": "version", "type": "string" },
-          { "name": "chainId", "type": "uint256" },
-          { "name": "verifyingContract", "type": "address" }
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "name": "chainId",
+            "type": "uint256"
+          },
+          {
+            "name": "verifyingContract",
+            "type": "address"
+          }
         ],
         "Mint1155": [
-          { "name": "tokenId", "type": "uint256" },
-          { "name": "supply", "type": "uint256" },
-          { "name": "tokenURI", "type": "string" },
-          { "name": "creators", "type": "Part[]" },
-          { "name": "royalties", "type": "Part[]" }
+          {
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "name": "supply",
+            "type": "uint256"
+          },
+          {
+            "name": "tokenURI",
+            "type": "string"
+          },
+          {
+            "name": "creators",
+            "type": "Part[]"
+          },
+          {
+            "name": "royalties",
+            "type": "Part[]"
+          }
         ],
         "Part": [
-          { "name": "account", "type": "address" },
-          { "name": "value", "type": "uint96" }
+          {
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "name": "value",
+            "type": "uint96"
+          }
         ]
       },
       "message": {
@@ -104,29 +167,80 @@
       "primaryType": "Order",
       "types": {
         "EIP712Domain": [
-          { "name": "name", "type": "string" },
-          { "name": "version", "type": "string" },
-          { "name": "chainId", "type": "uint256" },
-          { "name": "verifyingContract", "type": "address" }
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "name": "chainId",
+            "type": "uint256"
+          },
+          {
+            "name": "verifyingContract",
+            "type": "address"
+          }
         ],
         "Asset": [
-          { "name": "assetType", "type": "AssetType" },
-          { "name": "value", "type": "uint256" }
+          {
+            "name": "assetType",
+            "type": "AssetType"
+          },
+          {
+            "name": "value",
+            "type": "uint256"
+          }
         ],
         "AssetType": [
-          { "name": "assetClass", "type": "bytes4" },
-          { "name": "data", "type": "bytes" }
+          {
+            "name": "assetClass",
+            "type": "bytes4"
+          },
+          {
+            "name": "data",
+            "type": "bytes"
+          }
         ],
         "Order": [
-          { "name": "maker", "type": "address" },
-          { "name": "makeAsset", "type": "Asset" },
-          { "name": "taker", "type": "address" },
-          { "name": "takeAsset", "type": "Asset" },
-          { "name": "salt", "type": "uint256" },
-          { "name": "start", "type": "uint256" },
-          { "name": "end", "type": "uint256" },
-          { "name": "dataType", "type": "bytes4" },
-          { "name": "data", "type": "bytes" }
+          {
+            "name": "maker",
+            "type": "address"
+          },
+          {
+            "name": "makeAsset",
+            "type": "Asset"
+          },
+          {
+            "name": "taker",
+            "type": "address"
+          },
+          {
+            "name": "takeAsset",
+            "type": "Asset"
+          },
+          {
+            "name": "salt",
+            "type": "uint256"
+          },
+          {
+            "name": "start",
+            "type": "uint256"
+          },
+          {
+            "name": "end",
+            "type": "uint256"
+          },
+          {
+            "name": "dataType",
+            "type": "bytes4"
+          },
+          {
+            "name": "data",
+            "type": "bytes"
+          }
         ]
       },
       "message": {
@@ -166,15 +280,36 @@
       "primaryType": "MetaTransaction",
       "types": {
         "EIP712Domain": [
-          { "name": "name", "type": "string" },
-          { "name": "version", "type": "string" },
-          { "name": "verifyingContract", "type": "address" },
-          { "name": "salt", "type": "bytes32" }
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "name": "verifyingContract",
+            "type": "address"
+          },
+          {
+            "name": "salt",
+            "type": "bytes32"
+          }
         ],
         "MetaTransaction": [
-          { "name": "nonce", "type": "uint256" },
-          { "name": "from", "type": "address" },
-          { "name": "functionSignature", "type": "bytes" }
+          {
+            "name": "nonce",
+            "type": "uint256"
+          },
+          {
+            "name": "from",
+            "type": "address"
+          },
+          {
+            "name": "functionSignature",
+            "type": "bytes"
+          }
         ]
       },
       "message": {

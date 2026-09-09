@@ -6,7 +6,6 @@
   "coinApp": "Solana",
   "mode": "parallel",
   "options": {
-    "useRpc": true,
     "distill": true
   }
 }

@@ -26,8 +26,6 @@ export type ScenarioOptions = {
   readonly addressBook?: string;
   /** Distil program transactions to a single clear-signable instruction. */
   readonly distill?: boolean;
-  /** Pull live transactions from the Solana RPC. */
-  readonly useRpc?: boolean;
 };
 
 /**

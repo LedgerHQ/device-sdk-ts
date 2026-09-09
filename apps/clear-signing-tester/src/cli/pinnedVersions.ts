@@ -1,7 +1,13 @@
-import versions from "@root/default_versions.json";
+import defaultVersions from "@root/default_versions.json";
 
 /** `default_versions.json` shape: device > OS version > coin app > app version. */
 type VersionTree = Record<string, Record<string, Record<string, string>>>;
+
+/**
+ * Typed on the way in, so a malformed edit is a compile error rather than
+ * something the lookup has to cast its way around.
+ */
+const VERSIONS: VersionTree = defaultVersions;
 
 export type PinnedVersions = {
   readonly osVersion: string;
@@ -27,7 +33,7 @@ export function pinnedVersions(
   coinApp: string,
   device: string,
 ): PinnedVersions {
-  const byOsVersion = (versions as unknown as VersionTree)[device];
+  const byOsVersion = VERSIONS[device];
   if (!byOsVersion) {
     throw new Error(
       `No versions pinned for device "${device}" in default_versions.json.`,
