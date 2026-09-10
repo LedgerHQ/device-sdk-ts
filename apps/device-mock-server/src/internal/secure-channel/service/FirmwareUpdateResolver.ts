@@ -447,7 +447,12 @@ export class FirmwareUpdateResolver {
       if (response.status >= 500) {
         throw new Error(`Manager API /${path} returned ${response.status}`);
       }
-      logger.warn(`Manager API /${path} returned ${response.status}`);
+      // A 404 is how a provider says it does not carry this firmware, which is
+      // the fallback's normal path. Callers log their own message once every
+      // provider has answered that.
+      if (response.status !== 404) {
+        logger.warn(`Manager API /${path} returned ${response.status}`);
+      }
       return undefined;
     }
     return (await response.json()) as T;
