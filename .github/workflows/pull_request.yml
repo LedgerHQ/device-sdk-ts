@@ -224,8 +224,10 @@ jobs:
   health-check:
     name: Run health check
     # Aggregates the checks into a single required status so branch protection
-    # only needs to require "Run health check".
-    needs: [checks]
+    # only needs to require "Run health check". `!cancelled()` is what keeps
+    # this running on a PR where cs-tester was skipped: a skipped need is
+    # neither `failure` nor `cancelled`, so it passes without gating.
+    needs: [checks, cs-tester]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     steps:
