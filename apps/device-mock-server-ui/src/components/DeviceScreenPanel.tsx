@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type PointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   type SpeculosAction,
   type SpeculosButton,
@@ -45,6 +51,7 @@ export function DeviceScreenPanel({
   const imageRef = useRef<HTMLImageElement>(null);
   /** Where the finger went down, so the release lands on the same spot. */
   const held = useRef<Point | null>(null);
+  const unmounted = useRef(false);
 
   const releaseObjectUrl = useCallback(() => {
     if (objectUrl.current) {
@@ -58,6 +65,8 @@ export function DeviceScreenPanel({
     inFlight.current = true;
     try {
       const blob = await api.screenshot(token, deviceId);
+      // A frame that arrives after unmount has no cleanup left to revoke it.
+      if (unmounted.current) return;
       releaseObjectUrl();
       objectUrl.current = blob ? URL.createObjectURL(blob) : null;
       setSrc(objectUrl.current);
@@ -88,7 +97,13 @@ export function DeviceScreenPanel({
     };
   }, [refresh]);
 
-  useEffect(() => releaseObjectUrl, [releaseObjectUrl]);
+  useEffect(
+    () => () => {
+      unmounted.current = true;
+      releaseObjectUrl();
+    },
+    [releaseObjectUrl],
+  );
 
   const send = (call: Promise<void>) =>
     void call
@@ -104,22 +119,29 @@ export function DeviceScreenPanel({
   );
 
   const toDevicePoint = (
-    event: React.PointerEvent<HTMLImageElement>,
+    event: PointerEvent<HTMLImageElement>,
   ): Point | null => {
     const image = imageRef.current;
     if (!image?.naturalWidth || !image.naturalHeight) return null;
     const rect = image.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    // The far edge maps to the pixel count itself, which is one past the last
+    // pixel the emulator has.
+    const clamp = (value: number, size: number) =>
+      Math.min(Math.max(Math.round(value), 0), size - 1);
     return {
-      x: Math.round(
+      x: clamp(
         ((event.clientX - rect.left) / rect.width) * image.naturalWidth,
+        image.naturalWidth,
       ),
-      y: Math.round(
+      y: clamp(
         ((event.clientY - rect.top) / rect.height) * image.naturalHeight,
+        image.naturalHeight,
       ),
     };
   };
 
-  const onPointerDown = (event: React.PointerEvent<HTMLImageElement>) => {
+  const onPointerDown = (event: PointerEvent<HTMLImageElement>) => {
     if (!model?.touch || held.current) return;
     const point = toDevicePoint(event);
     if (!point) return;
@@ -130,7 +152,7 @@ export function DeviceScreenPanel({
     send(touch(point.x, point.y, "press"));
   };
 
-  const onPointerUp = (event: React.PointerEvent<HTMLImageElement>) => {
+  const onPointerUp = (event: PointerEvent<HTMLImageElement>) => {
     const point = held.current;
     if (!model?.touch || !point) return;
     held.current = null;
@@ -182,10 +204,16 @@ export function DeviceScreenPanel({
                   key={button}
                   type="button"
                   aria-label={`${label} button`}
-                  onPointerDown={() =>
-                    send(api.pressButton(token, deviceId, button, "press"))
-                  }
+                  onPointerDown={(event) => {
+                    // Capture, so a pointer released off the button still
+                    // releases it here rather than leaving it held down.
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                    send(api.pressButton(token, deviceId, button, "press"));
+                  }}
                   onPointerUp={() =>
+                    send(api.pressButton(token, deviceId, button, "release"))
+                  }
+                  onPointerCancel={() =>
                     send(api.pressButton(token, deviceId, button, "release"))
                   }
                   className="border-muted body-3 text-base bg-muted hover:bg-muted-pressed active:bg-active flex-1 rounded-md border py-8 select-none"
