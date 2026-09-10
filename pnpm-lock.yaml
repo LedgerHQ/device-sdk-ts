@@ -495,8 +495,8 @@ importers:
         specifier: 'catalog:'
         version: 7.7.2
       undici:
-        specifier: ^8.5.0
-        version: 8.6.0
+        specifier: ^8.8.0
+        version: 8.10.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:^
@@ -13731,8 +13731,8 @@ packages:
     resolution: {integrity: sha512-YmfV3YnEDzXRC5lZ2jWtWWHKGUm1zIt8AhesR1tens+HTNv+YZlN/dp6G727LOvMJ8xjP9Be7Y2Sdr96LDm+pg==}
     engines: {node: '>=18.17'}
 
-  undici@8.6.0:
-    resolution: {integrity: sha512-l2FlC6I510GawyEd1qgcE/okihKrzy+BRTEBlu6T0fdbM9m5yxtIH5Oa3ysRsH0zC4EhmWUEaSDsy2QngBeRlw==}
+  undici@8.10.2:
+    resolution: {integrity: sha512-/y4/bH9YNU5hi9NIrpOuvGXFcxrj3CMrV+/AYpowAYTpHn8gX/XPFjNy766FPoYY0miQhdW977JFWKGNhBdwyQ==}
     engines: {node: '>=22.19.0'}
 
   unicode-canonical-property-names-ecmascript@2.0.1:
@@ -27722,7 +27722,7 @@ snapshots:
 
   undici@6.27.0: {}
 
-  undici@8.6.0: {}
+  undici@8.10.2: {}
 
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 

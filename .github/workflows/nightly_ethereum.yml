@@ -63,13 +63,10 @@ jobs:
           test: test:erc7730
           dapp: ${{ matrix.dapp }}
           device: ${{ matrix.device }}
-          coin-app: Ethereum
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: erc7730-calldata-logs
           summary-prefix: "ERC7730 Calldata Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
@@ -103,13 +100,10 @@ jobs:
           test: test:erc7730:typed-data
           dapp: ${{ matrix.dapp }}
           device: ${{ matrix.device }}
-          coin-app: Ethereum
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: erc7730-ethereum-logs
           summary-prefix: "ERC7730 Ethereum Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
@@ -130,13 +124,10 @@ jobs:
           runner: cs-tester
           test: test:gating
           device: ${{ matrix.device }}
-          coin-app: Ethereum
           log-level: error
           enable-file-logging: "true"
           artifact-prefix: ethereum-gating-logs
           summary-prefix: "Ethereum Gating Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 

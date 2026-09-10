@@ -259,11 +259,8 @@ jobs:
           runner: cs-tester
           test: ${{ matrix.test }}
           device: ${{ matrix.device }}
-          coin-app: Ethereum
           artifact-prefix: eth-cs-tester-logs
           summary-prefix: "Ethereum Clear Signing Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
@@ -278,8 +275,8 @@ jobs:
       fail-fast: false
       matrix:
         # No device axis: Contacts is unsupported on Nano, and the Address Book
-        # APDUs need an RC firmware pair that each script pins itself, so `flex`
-        # here only selects which ELFs are checked out of coin-apps.
+        # APDUs need the RC firmware pair pinned under `contacts` in
+        # apps/clear-signing-tester/versions.json.
         test:
           - test:contacts
           - test:contacts:sign
@@ -291,13 +288,10 @@ jobs:
           runner: cs-tester
           test: ${{ matrix.test }}
           device: flex
-          coin-app: Ethereum
           artifact-prefix: eth-contacts-logs
           summary-prefix: "Ethereum Contacts Test"
           # A device registration flow is hard to diagnose from a bare log.
           enable-file-logging: "true"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
@@ -324,10 +318,7 @@ jobs:
           runner: cs-tester:solana
           test: ${{ matrix.test }}
           device: ${{ matrix.device }}
-          coin-app: Solana
           artifact-prefix: solana-cs-tester-logs
           summary-prefix: "Solana Fixture Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}

@@ -36,9 +36,9 @@
     "test:erc7730": "./scripts/test-erc7730-calldata.sh",
     "test:erc7730:typed-data": "./scripts/test-erc7730-typed-data.sh",
     "test:gating": "./scripts/test-gating.sh",
-    "test:contacts": "pnpm cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev contact-file ./ressources/contacts/contacts.json",
-    "test:contacts:sign": "pnpm cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev --address-book ./ressources/contacts/address-book.json raw-file ./ressources/contacts/sign-with-contact.json",
-    "test:contacts:sign-rejected": "pnpm cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev --address-book ./ressources/contacts/address-book-rejected.json raw-file ./ressources/contacts/sign-rejected-contact.json"
+    "test:contacts": "pnpm cli --device flex contact-file ./ressources/contacts/contacts.json",
+    "test:contacts:sign": "pnpm cli --device flex --address-book ./ressources/contacts/address-book.json raw-file ./ressources/contacts/sign-with-contact.json",
+    "test:contacts:sign-rejected": "pnpm cli --device flex --address-book ./ressources/contacts/address-book-rejected.json raw-file ./ressources/contacts/sign-rejected-contact.json"
   },
   "dependencies": {
     "@ledgerhq/cal-interceptor": "workspace:^",
@@ -55,7 +55,7 @@
     "inversify": "catalog:",
     "rxjs": "catalog:",
     "semver": "catalog:",
-    "undici": "^8.5.0"
+    "undici": "^8.8.0"
   },
   "devDependencies": {
     "@ledgerhq/vitest-config-dmk": "workspace:^",
