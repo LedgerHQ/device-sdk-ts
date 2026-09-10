@@ -238,5 +238,69 @@ describe("FirmwareUpdateResolver", () => {
       });
       expect(fetchSpy.mock.calls.length).toBe(callsAfterFirst);
     });
+
+    it("falls back to the model's provider for a release-candidate firmware", async () => {
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockImplementation((input) => {
+          const url = String(input);
+          if (url.includes("/get_device_version")) return json({ id: 135 });
+          if (url.includes("/get_firmware_version")) {
+            // Flex 1.7.0-rc2 is published to provider 82 only.
+            return url.includes("provider=82")
+              ? json({ id: 593 })
+              : Promise.resolve({ ok: false, status: 404 } as Response);
+          }
+          if (url.includes("/get_latest_firmware")) {
+            return json({ result: "null" });
+          }
+          if (url.includes("/firmware_final_versions/593")) {
+            return json({ id: 593, name: "1.7.0-rc2", mcu_versions: [55] });
+          }
+          if (url.includes("/mcu_versions")) {
+            return json([{ id: 55, name: "5.32.3" }]);
+          }
+          throw new Error(`unexpected fetch ${url}`);
+        });
+
+      const resolved = await resolver().resolveCurrentMcuVersion({
+        targetId: 0x33300004,
+        currentVersion: "1.7.0-rc2",
+      });
+
+      expect(resolved.extract()).toBe("5.32.3");
+      const askedLatestOnRcProvider = fetchSpy.mock.calls.some(([input]) => {
+        const url = String(input);
+        return (
+          url.includes("/get_latest_firmware") && url.includes("provider=82")
+        );
+      });
+      expect(askedLatestOnRcProvider).toBe(true);
+    });
+
+    it("keeps the default provider for a released firmware", async () => {
+      const fetchSpy = mockFetch({
+        "/get_device_version": { id: 135 },
+        "/get_firmware_version": { id: 588 },
+        "/get_latest_firmware": { result: "null" },
+        "/firmware_final_versions/588": {
+          id: 588,
+          name: "1.6.1",
+          mcu_versions: [55],
+        },
+        "/mcu_versions": [{ id: 55, name: "5.32.3" }],
+      });
+
+      const resolved = await resolver().resolveCurrentMcuVersion({
+        targetId: 0x33300004,
+        currentVersion: "1.6.1",
+      });
+
+      expect(resolved.extract()).toBe("5.32.3");
+      const askedRcProvider = fetchSpy.mock.calls.some(([input]) =>
+        String(input).includes("provider=82"),
+      );
+      expect(askedRcProvider).toBe(false);
+    });
   });
 });

@@ -42,8 +42,8 @@ export function useDeviceCatalog(
     setState({ status: "loading" });
     const timer = setTimeout(() => {
       Promise.all([
-        firmwareExists(model.mask, version),
-        listCatalogApps(model.mask, version),
+        firmwareExists(model.mask, version, model.rcProvider),
+        listCatalogApps(model.mask, version, model.rcProvider),
       ])
         .then(([exists, apps]) => {
           if (cancelled) return;
