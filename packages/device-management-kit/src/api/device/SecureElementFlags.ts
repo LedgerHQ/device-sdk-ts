@@ -85,12 +85,12 @@ export type WordsInformation = {
 
 /**
  * Onboarding screen encoded in the fourth secure element flag byte.
- * Values follow GET VERSION byte 4 (0x01 to 0x10).
+ * Values follow GET VERSION byte 4 (0x00 to 0x10).
  */
 export enum OnboardingState {
   /**
-   * The byte is 0x00 or an encoding not covered by the specification, which
-   * future firmware versions may introduce.
+   * An encoding not covered by the specification (any byte outside 0x00–0x10),
+   * which future firmware versions may introduce.
    */
   Unknown = "unknown",
   WelcomeScreen1 = "welcome-screen-1",
@@ -99,6 +99,7 @@ export enum OnboardingState {
   WelcomeScreen4 = "welcome-screen-4",
   WelcomeScreenReminder = "welcome-screen-reminder",
   SetupChoice = "setup-choice",
+  Pin = "pin",
   NewDevice = "new-device",
   ConfirmNewDevice = "confirm-new-device",
   RestoreRecoveryPhrase = "restore-recovery-phrase",

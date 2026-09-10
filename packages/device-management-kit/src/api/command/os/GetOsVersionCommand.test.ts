@@ -128,7 +128,7 @@ describe("GetOsVersionCommand", () => {
           hasEndorsementCertificateInSlot2: false,
           numberOfWords: SeedWordCount.TwentyFour,
           currentWordIndex: 0,
-          onboardingState: OnboardingState.Unknown,
+          onboardingState: OnboardingState.WelcomeScreen1,
         });
       });
 
@@ -269,7 +269,7 @@ describe("GetOsVersionCommand", () => {
               hasEndorsementCertificateInSlot2: false,
               numberOfWords: SeedWordCount.TwentyFour,
               currentWordIndex: 0,
-              onboardingState: OnboardingState.Unknown,
+              onboardingState: OnboardingState.WelcomeScreen1,
             },
           },
         });
