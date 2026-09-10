@@ -22,7 +22,7 @@ describe("SecureElementFlagsParser", () => {
       currentWordIndex: 0,
     });
     expect(parser.onboardingStatus()).toEqual({
-      onboardingState: OnboardingState.Unknown,
+      onboardingState: OnboardingState.WelcomeScreen1,
     });
   });
 
@@ -116,13 +116,13 @@ describe("SecureElementFlagsParser", () => {
 
   describe("onboardingStatus", () => {
     it.each([
-      [0x00, OnboardingState.Unknown],
-      [0x01, OnboardingState.WelcomeScreen1],
-      [0x02, OnboardingState.WelcomeScreen2],
-      [0x03, OnboardingState.WelcomeScreen3],
-      [0x04, OnboardingState.WelcomeScreen4],
-      [0x05, OnboardingState.WelcomeScreenReminder],
-      [0x06, OnboardingState.SetupChoice],
+      [0x00, OnboardingState.WelcomeScreen1],
+      [0x01, OnboardingState.WelcomeScreen2],
+      [0x02, OnboardingState.WelcomeScreen3],
+      [0x03, OnboardingState.WelcomeScreen4],
+      [0x04, OnboardingState.WelcomeScreenReminder],
+      [0x05, OnboardingState.SetupChoice],
+      [0x06, OnboardingState.Pin],
       [0x07, OnboardingState.NewDevice],
       [0x08, OnboardingState.ConfirmNewDevice],
       [0x09, OnboardingState.RestoreRecoveryPhrase],
@@ -146,7 +146,7 @@ describe("SecureElementFlagsParser", () => {
 
     it("should always expose a defined onboarding state so it survives serialization", () => {
       const parser = new SecureElementFlagsParser(
-        new Uint8Array([0x00, 0x00, 0x00, 0x00]),
+        new Uint8Array([0x00, 0x00, 0x00, 0x11]),
       );
 
       const status = parser.onboardingStatus();
@@ -158,10 +158,7 @@ describe("SecureElementFlagsParser", () => {
     });
 
     it("should map every documented GET VERSION byte to a distinct OnboardingState", () => {
-      const documentedBytes = Array.from(
-        { length: 0x10 },
-        (_, index) => index + 1,
-      );
+      const documentedBytes = Array.from({ length: 0x11 }, (_, index) => index);
       const parsedStates = documentedBytes.map(
         (value) =>
           new SecureElementFlagsParser(
