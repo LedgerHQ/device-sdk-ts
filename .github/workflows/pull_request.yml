@@ -30,16 +30,7 @@ jobs:
     name: Detect changed packages
     runs-on: ubuntu-22.04
     outputs:
-      context-module: ${{ steps.filter.outputs.context-module }}
-      signer-eth: ${{ steps.filter.outputs.signer-eth }}
-      signer-solana: ${{ steps.filter.outputs.signer-solana }}
-      signer-utils: ${{ steps.filter.outputs.signer-utils }}
-      solana-tools: ${{ steps.filter.outputs.solana-tools }}
-      contacts-kit: ${{ steps.filter.outputs.contacts-kit }}
-      cs-tester: ${{ steps.filter.outputs.cs-tester }}
-      # One job covers every clear-signing scenario, so one gate: any package a
-      # clear-signing run exercises.
-      should-run-cs-tester: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.solana-tools == 'true' || steps.filter.outputs.contacts-kit == 'true' || steps.filter.outputs.cs-tester == 'true' }}
+      cs-scenarios: ${{ steps.select.outputs.scenarios }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -62,6 +53,33 @@ jobs:
             cs-tester:
               - 'apps/clear-signing-tester/**'
               - '.github/**'
+
+      - name: Select clear-signing groups
+        id: select
+        env:
+          # The tester, CI, and the packages both signers share can affect any
+          # group.
+          ALL: ${{ steps.filter.outputs.cs-tester == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' }}
+          # Contacts sign through the eth signer, and a stored contact changes
+          # what the eth review screens display, so the two move together.
+          ETH_SIDE: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.contacts-kit == 'true' }}
+          SOLANA_SIDE: ${{ steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.solana-tools == 'true' }}
+        run: |
+          if [ "$ALL" = "true" ]; then
+            scenarios="core contacts solana"
+          else
+            scenarios=""
+            if [ "$ETH_SIDE" = "true" ]; then
+              scenarios="$scenarios core contacts"
+            fi
+            if [ "$SOLANA_SIDE" = "true" ]; then
+              scenarios="$scenarios solana"
+            fi
+            scenarios="${scenarios# }"
+          fi
+
+          echo "scenarios=$scenarios" >> "$GITHUB_OUTPUT"
+          echo "clear-signing groups: ${scenarios:-<none>}"
 
   setup:
     name: Setup toolchain and dependencies
@@ -224,9 +242,8 @@ jobs:
   health-check:
     name: Run health check
     # Aggregates the checks into a single required status so branch protection
-    # only needs to require "Run health check". `!cancelled()` is what keeps
-    # this running on a PR where cs-tester was skipped: a skipped need is
-    # neither `failure` nor `cancelled`, so it passes without gating.
+    # only needs to require "Run health check". `!cancelled()` is what lets a
+    # skipped cs-tester through instead of skipping this too.
     needs: [checks, cs-tester]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
@@ -240,11 +257,10 @@ jobs:
           echo "All required checks passed."
 
   cs-tester:
-    # Runs alongside `checks`, not after it: the composite action builds the
-    # clear-signing-tester dependency chain itself, so it never consumed
-    # anything `checks` produced.
+    # Runs alongside `checks`, not after it: the composite builds its own
+    # dependency chain, so it never consumed anything `checks` produced.
     needs: [setup, detect-changes]
-    if: needs.detect-changes.outputs.should-run-cs-tester == 'true'
+    if: needs.detect-changes.outputs.cs-scenarios != ''
     name: Clear Signing Test (${{ matrix.device }})
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     permissions:
@@ -255,17 +271,14 @@ jobs:
         device: [stax, nanox, flex]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      # One job per device, running every group that device supports. A scenario
-      # that does not support the device is skipped by name, so the same
-      # selection works for all three: contacts is flex-only, core is Nano and
-      # Stax only.
+      # A scenario that does not support the device is skipped by name, so one
+      # selection serves all three: contacts is flex-only, core is Nano and Stax.
       - uses: ./.github/actions/cs-tester-composite
         with:
-          scenarios: core contacts solana
+          scenarios: ${{ needs.detect-changes.outputs.cs-scenarios }}
           device: ${{ matrix.device }}
           # One job now carries what three did, so it holds more emulators at
-          # once to keep the wall clock where it was. Peak pod use still drops,
-          # since there are fewer jobs.
+          # once to keep the wall clock where it was.
           concurrency: "10"
           artifact-prefix: cs-tester-logs
           summary-prefix: "Clear Signing Test"
