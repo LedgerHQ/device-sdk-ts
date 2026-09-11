@@ -58,6 +58,34 @@ describe("HttpSpeculosOperatorDataSource", () => {
       device: "nanox",
       seed: TEST_SEED,
       run_id: "run-1",
+      route_timeout_seconds: 300,
+    });
+  });
+
+  it("acquires with the configured route timeout", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(jsonResponse({ run_id: "run-1", status: "pending" }));
+
+    await new HttpSpeculosOperatorDataSource({
+      baseUrl: "https://speculinho.test/",
+      routeTimeoutSeconds: 120,
+    })
+      .acquire(
+        {
+          coin_app: "btc",
+          coin_app_version: "2.1.0",
+          device: "nanox",
+          device_os_version: "1.3.0",
+        },
+        "run-1",
+        TEST_SEED,
+      )
+      .run();
+
+    const [, init] = fetchMock.mock.calls[0]!;
+    expect(JSON.parse((init as RequestInit).body as string)).toMatchObject({
+      route_timeout_seconds: 120,
     });
   });
 
