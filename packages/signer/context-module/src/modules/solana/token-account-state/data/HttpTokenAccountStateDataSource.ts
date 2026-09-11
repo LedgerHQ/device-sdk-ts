@@ -1,4 +1,7 @@
-import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -21,6 +24,7 @@ type TokenAccountStateResponseDto = {
   mint?: string;
   owner?: string;
   preBalance?: number;
+  nativePreBalance?: number; // wrappable lamport excess; absent = old backend
   signedDescriptor: string;
   keyId: string;
   keyUsage: string;
@@ -30,12 +34,18 @@ type TokenAccountStateResponseDto = {
 export class HttpTokenAccountStateDataSource
   implements TokenAccountStateDataSource
 {
+  private logger: LoggerPublisherService;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(networkTypes.NetworkClient)
     private readonly http: DmkNetworkClient,
-  ) {}
+  ) {
+    this.logger = loggerFactory("HttpTokenAccountStateDataSource");
+  }
 
   public async getTokenAccountState({
     tokenAccount,
@@ -68,6 +78,14 @@ export class HttpTokenAccountStateDataSource
             ),
           ),
         Right: (validated) => {
+          if (dto.owner !== undefined && dto.mint === undefined) {
+            this.logger.warn(
+              "[getTokenAccountState] response has owner but no mint — " +
+                "canonical-ATA check will fail and the OWNER binding will be dropped by the device",
+              { data: { tokenAccount } },
+            );
+          }
+
           let descriptor: Uint8Array;
           try {
             descriptor = HexStringUtils.hexToBytes(validated.signedDescriptor);
@@ -76,6 +94,13 @@ export class HttpTokenAccountStateDataSource
               new Error(
                 `[ContextModule] HttpTokenAccountStateDataSource: invalid hex in signedDescriptor for ${tokenAccount}: ${(error as Error).message}`,
               ),
+            );
+          }
+
+          if (dto.nativePreBalance === undefined) {
+            this.logger.debug(
+              "[getTokenAccountState] nativePreBalance absent in response — native resets will not attest wrappable excess",
+              { data: { tokenAccount } },
             );
           }
 
