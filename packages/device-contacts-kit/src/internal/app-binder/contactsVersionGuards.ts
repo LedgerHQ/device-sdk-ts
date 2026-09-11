@@ -36,22 +36,25 @@ function isContactsModelSupported(
  * The running-app dimension is intentionally skipped: on the dashboard there is
  * no embedded app to gate on (the running "app" is BOLOS).
  *
+ * The OS `version` is supplied by the caller so it can come from a fresh
+ * `GetOsVersion` result rather than the device session state, whose
+ * `firmwareVersion` is often absent on the dashboard path (the session
+ * refresher and `GoToDashboard` re-read only the running app, never the OS
+ * version). The model comes from the session state, which does not change
+ * under the caller's feet the way a stale/missing OS version would.
+ *
  * @param internalApi - the DeviceAction's internal API for the current session.
+ * @param osVersion - the device OS version, read freshly from the device.
  */
-export function isContactsOsSupportedForSession(
+export function isContactsOsVersionSupportedForSession(
   internalApi: InternalApi,
+  osVersion: string,
 ): boolean {
   const deviceState = internalApi.getDeviceSessionState();
   const requirement = resolveContactsVersionRequirements(
     deviceState.deviceModelId,
   );
   if (!isContactsModelSupported(requirement)) return false;
-
-  const osVersion =
-    "firmwareVersion" in deviceState
-      ? deviceState.firmwareVersion?.os
-      : undefined;
-  if (osVersion === undefined) return false;
 
   return isVersionAtLeast(osVersion, requirement.minOsVersion);
 }
