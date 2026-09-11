@@ -406,7 +406,7 @@ describe("UniswapContextLoader", () => {
         ]);
       });
 
-      it("should return an empty array if the if 2 chain swaps are not supported", async () => {
+      it("should return contexts for split routes (unrelated leg endpoints)", async () => {
         // GIVEN
         const input = {
           data: UNISWAP_EXECUTE_SELECTOR,
@@ -417,33 +417,26 @@ describe("UniswapContextLoader", () => {
         vi.spyOn(Interface.prototype, "parseTransaction").mockReturnValue({
           args: [commands, ["0x0001", "0x0002"]],
         } as TransactionDescription);
-        vi.spyOn(commandDecoderMock, "decode").mockReturnValueOnce([
-          "0x01",
-          "0x02",
-        ]);
-        vi.spyOn(commandDecoderMock, "decode").mockReturnValueOnce([
-          "0x03", // should be 0x02
-          "0x04",
-        ]);
+        vi.spyOn(commandDecoderMock, "decode")
+          .mockReturnValueOnce(["0x01", "0x02"])
+          .mockReturnValueOnce(["0x03", "0x04"]);
+        vi.spyOn(
+          tokenDataSourceMock,
+          "getTokenInfosPayload",
+        ).mockImplementation(({ address }) =>
+          Promise.resolve(Right(`payload-${address}`)),
+        );
 
         // WHEN
         const result = await loader.load(input);
 
-        // THEN
-        expect(commandDecoderMock.decode).toHaveBeenNthCalledWith(
-          1,
-          UniswapSupportedCommand.V2_SWAP_EXACT_IN,
-          "0x0001",
-          0x42,
-        );
-        expect(commandDecoderMock.decode).toHaveBeenNthCalledWith(
-          2,
-          UniswapSupportedCommand.V2_SWAP_EXACT_OUT,
-          "0x0002",
-          0x42,
-        );
-        expect(tokenDataSourceMock.getTokenInfosPayload).not.toHaveBeenCalled();
-        expect(result).toEqual([]);
+        // THEN: the plugin enforces route shape on-device; every token gets a descriptor
+        expect(result).toEqual([
+          { type: "ethereumToken", payload: "payload-0x01" },
+          { type: "ethereumToken", payload: "payload-0x02" },
+          { type: "ethereumToken", payload: "payload-0x03" },
+          { type: "ethereumToken", payload: "payload-0x04" },
+        ]);
       });
 
       it("should return an empty array if no command are returned from parseTransaction", async () => {
@@ -508,7 +501,7 @@ describe("UniswapContextLoader", () => {
         expect(result).toEqual([]);
       });
 
-      it("should return an empty array if the swap is with multiple pool versions", async () => {
+      it("should return contexts for mixed pool version routes", async () => {
         // GIVEN
         const input: UniswapContextInput = {
           data: UNISWAP_EXECUTE_SELECTOR,
@@ -523,31 +516,21 @@ describe("UniswapContextLoader", () => {
           "0x01",
           "0x02",
         ]);
+        vi.spyOn(
+          tokenDataSourceMock,
+          "getTokenInfosPayload",
+        ).mockImplementation(({ address }) =>
+          Promise.resolve(Right(`payload-${address}`)),
+        );
 
         // WHEN
         const result = await loader.load(input);
 
-        // THEN
-        expect(commandDecoderMock.decode).toHaveBeenNthCalledWith(
-          1,
-          UniswapSupportedCommand.V2_SWAP_EXACT_IN,
-          "0x00",
-          0x42,
-        );
-        expect(commandDecoderMock.decode).toHaveBeenNthCalledWith(
-          2,
-          UniswapSupportedCommand.V2_SWAP_EXACT_OUT,
-          "0x01",
-          0x42,
-        );
-        expect(commandDecoderMock.decode).toHaveBeenNthCalledWith(
-          3,
-          UniswapSupportedCommand.V3_SWAP_EXACT_IN,
-          "0x02",
-          0x42,
-        );
-        expect(tokenDataSourceMock.getTokenInfosPayload).not.toHaveBeenCalled();
-        expect(result).toEqual([]);
+        // THEN: mixed pool version routes (V2+V3 here) are supported by the plugin; descriptors are provided
+        expect(result).toEqual([
+          { type: "ethereumToken", payload: "payload-0x01" },
+          { type: "ethereumToken", payload: "payload-0x02" },
+        ]);
       });
 
       it("should return an empty array if the selector is not supported", async () => {
