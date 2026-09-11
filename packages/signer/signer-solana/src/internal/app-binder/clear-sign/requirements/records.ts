@@ -108,9 +108,19 @@ export type ParsedOwnerAssociation = {
   owner: ParsedValue;
 };
 
+export enum ValueKind {
+  SPL_TOKEN = 0x00,
+  NATIVE = 0x01,
+}
+
 export type ParsedAccountReset = {
   accountIndex: number;
   requirePreBalanceZero: boolean;
+  /** Required; a missing or unknown value_kind is a decode error. */
+  valueKind: ValueKind;
+  /** Present when valueKind === ValueKind.SPL_TOKEN. */
+  tokenValue?: ParsedTokenValue;
+  requireNativePreBalanceZero: boolean;
 };
 
 export type ParsedDisplayField = {

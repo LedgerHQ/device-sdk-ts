@@ -8,6 +8,7 @@ import {
   PARAM_TYPE_TOKEN_AMOUNT,
   type ParsedInstruction,
   TokenKind,
+  ValueKind,
   ValueSource,
 } from "@internal/app-binder/clear-sign/requirements/records";
 import { RequirementAccumulator } from "@internal/app-binder/clear-sign/requirements/RequirementAccumulator";
@@ -330,7 +331,14 @@ describe("applyAltResolutionRule", () => {
   it("emits ALT_RESOLUTION for an ALT-backed ACCOUNT_RESET target", () => {
     const parsed: ParsedInstruction = {
       ...emptyParsed(),
-      accountResets: [{ accountIndex: 1, requirePreBalanceZero: false }],
+      accountResets: [
+        {
+          accountIndex: 1,
+          requirePreBalanceZero: false,
+          valueKind: ValueKind.NATIVE,
+          requireNativePreBalanceZero: false,
+        },
+      ],
     };
     const instruction = instructionOf([addr("static"), alt(12)]);
     expect(run(parsed, instruction)).toEqual([
@@ -349,7 +357,14 @@ describe("applyAltResolutionRule", () => {
           tokenValue: { kind: TokenKind.RESOLVE, accountIndex: 0 },
         },
       ],
-      accountResets: [{ accountIndex: 0, requirePreBalanceZero: false }],
+      accountResets: [
+        {
+          accountIndex: 0,
+          requirePreBalanceZero: false,
+          valueKind: ValueKind.NATIVE,
+          requireNativePreBalanceZero: false,
+        },
+      ],
       displayFields: [{ value: accountPath(0) }],
     };
     // Writable, port candidate, port token account, reset target and display
@@ -379,9 +394,66 @@ describe("applyAltResolutionRule", () => {
           tokenValue: { kind: TokenKind.RESOLVE },
         },
       ],
-      accountResets: [{ accountIndex: 9, requirePreBalanceZero: false }],
+      accountResets: [
+        {
+          accountIndex: 9,
+          requirePreBalanceZero: false,
+          valueKind: ValueKind.NATIVE,
+          requireNativePreBalanceZero: false,
+        },
+      ],
       displayFields: [{ value: accountPath(9) }],
     };
     expect(run(parsed, instructionOf([alt(1)]))).toEqual([]);
+  });
+
+  it("emits no ALT_RESOLUTION for an ACCOUNT_RESET tokenValue.value that is CONSTANT (not ACCOUNT_PATH)", () => {
+    // requestValue guards on ACCOUNT_PATH; a CONSTANT source carries no slot index.
+    const parsed: ParsedInstruction = {
+      ...emptyParsed(),
+      accountResets: [
+        {
+          accountIndex: 0,
+          requirePreBalanceZero: false,
+          valueKind: ValueKind.SPL_TOKEN,
+          requireNativePreBalanceZero: false,
+          tokenValue: {
+            kind: TokenKind.RESOLVE,
+            value: {
+              source: ValueSource.CONSTANT,
+              payload: new Uint8Array(32),
+            },
+          },
+        },
+      ],
+    };
+    expect(run(parsed, instructionOf([addr("static")]))).toEqual([]);
+  });
+
+  it("emits ALT_RESOLUTION for an ACCOUNT_RESET tokenValue.value (ACCOUNT_PATH) and fallbackAccountIndex", () => {
+    const parsed: ParsedInstruction = {
+      ...emptyParsed(),
+      accountResets: [
+        {
+          accountIndex: 0,
+          requirePreBalanceZero: false,
+          valueKind: ValueKind.SPL_TOKEN,
+          requireNativePreBalanceZero: false,
+          tokenValue: {
+            kind: TokenKind.RESOLVE,
+            value: {
+              source: ValueSource.ACCOUNT_PATH,
+              payload: Uint8Array.from([1]),
+            },
+            fallbackAccountIndex: 2,
+          },
+        },
+      ],
+    };
+    const instruction = instructionOf([addr("static"), alt(10), alt(11)]);
+    expect(run(parsed, instruction)).toEqual([
+      { altAddress: "ALT", entryIndex: 11 },
+      { altAddress: "ALT", entryIndex: 10 },
+    ]);
   });
 });

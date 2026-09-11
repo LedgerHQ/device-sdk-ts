@@ -1,4 +1,5 @@
 import {
+  fromCalAccountReset,
   fromCalHideRule,
   fromCalOwnerAssociation,
   fromCalTokenValue,
@@ -10,6 +11,7 @@ import {
   HideCondition,
   OptionalAccountStrategy,
   TokenKind,
+  ValueKind,
   ValueSource,
 } from "./records";
 
@@ -177,5 +179,59 @@ describe("fromCalValueFlowPort optional account strategy", () => {
         token_value: { kind: "NATIVE" },
       }),
     ).toThrow(/unknown optional_account_strategy/);
+  });
+});
+
+describe("fromCalAccountReset", () => {
+  it('maps value_kind "native" with no token', () => {
+    const out = fromCalAccountReset({
+      account_index: 2,
+      value_kind: "native",
+    });
+    expect(out.accountIndex).toBe(2);
+    expect(out.valueKind).toBe(ValueKind.NATIVE);
+    expect(out.tokenValue).toBeUndefined();
+    expect(out.requireNativePreBalanceZero).toBe(false);
+    expect(out.requirePreBalanceZero).toBe(false);
+  });
+
+  it('maps value_kind "splToken" with a token reference', () => {
+    const out = fromCalAccountReset({
+      account_index: 1,
+      value_kind: "splToken",
+      token: { kind: "RESOLVE", account_index: 3 },
+      require_pre_balance_zero: true,
+    });
+    expect(out.valueKind).toBe(ValueKind.SPL_TOKEN);
+    expect(out.tokenValue?.kind).toBe(TokenKind.RESOLVE);
+    expect(out.tokenValue?.accountIndex).toBe(3);
+    expect(out.requirePreBalanceZero).toBe(true);
+  });
+
+  it("maps requireNativePreBalanceZero", () => {
+    const out = fromCalAccountReset({
+      account_index: 0,
+      value_kind: "native",
+      require_native_pre_balance_zero: true,
+    });
+    expect(out.requireNativePreBalanceZero).toBe(true);
+  });
+
+  it("rejects a missing value_kind as a decode error", () => {
+    expect(() => fromCalAccountReset({ account_index: 0 })).toThrow(
+      /unknown or missing ACCOUNT_RESET value_kind/,
+    );
+  });
+
+  it("rejects an unknown value_kind as a decode error", () => {
+    expect(() =>
+      fromCalAccountReset({ account_index: 0, value_kind: "erc20" }),
+    ).toThrow(/unknown or missing ACCOUNT_RESET value_kind/);
+  });
+
+  it("rejects splToken without a token field as a decode error", () => {
+    expect(() =>
+      fromCalAccountReset({ account_index: 0, value_kind: "splToken" }),
+    ).toThrow(/missing the required TOKEN field/);
   });
 });
