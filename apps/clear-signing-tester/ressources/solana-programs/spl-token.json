@@ -1,0 +1,11 @@
+{
+  "group": "solana-programs",
+  "name": "spl-token",
+  "action": "solanaProgram",
+  "devices": ["stax", "nanox", "flex"],
+  "coinApp": "Solana",
+  "mode": "parallel",
+  "options": {
+    "distill": true
+  }
+}

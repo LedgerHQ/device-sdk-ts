@@ -3,21 +3,17 @@ export const TYPES = {
   DeviceRepository: Symbol.for("DeviceRepository"),
   TransactionFileRepository: Symbol.for("TransactionFileRepository"),
   TypedDataFileRepository: Symbol.for("TypedDataFileRepository"),
-  ContractFileRepository: Symbol.for("ContractFileRepository"),
-  TransactionContractRepository: Symbol.for("TransactionContractRepository"),
   ContactsRepository: Symbol.for("ContactsRepository"),
   SpeculosContactsRepository: Symbol.for("SpeculosContactsRepository"),
   ContactFileRepository: Symbol.for("ContactFileRepository"),
 
   // Services
-  EtherscanAdapter: Symbol.for("EtherscanAdapter"),
   TransactionCrafter: Symbol.for("TransactionCrafter"),
   ScreenAnalyzerService: Symbol.for("ScreenAnalyzerService"),
   SigningService: Symbol.for("SigningService"),
   SigningFlowOrchestrator: Symbol.for("SigningFlowOrchestrator"),
   SignableInteractions: Symbol.for("SignableInteractions"),
   RetryService: Symbol.for("RetryService"),
-  AppVersionResolver: Symbol.for("AppVersionResolver"),
   DeviceSetupService: Symbol.for("DeviceSetupService"),
   TransactionCraftingService: Symbol.for("TransactionCraftingService"),
 
@@ -31,7 +27,7 @@ export const TYPES = {
   MainServiceController: Symbol.for("MainServiceController"),
   DMKServiceController: Symbol.for("DMKServiceController"),
   SolanaDMKServiceController: Symbol.for("SolanaDMKServiceController"),
-  SpeculosServiceController: Symbol.for("SpeculosServiceController"),
+  SpeculinhoServiceController: Symbol.for("SpeculinhoServiceController"),
   ServiceControllers: Symbol.for("ServiceControllers"),
 
   // Adapters
@@ -39,30 +35,22 @@ export const TYPES = {
   ScreenshotSaver: Symbol.for("ScreenshotSaver"),
   FileReader: Symbol.for("FileReader"),
   JsonParser: Symbol.for("JsonParser"),
-  DockerContainer: Symbol.for("DockerContainer"),
   CalAdapter: Symbol.for("CalAdapter"),
 
   // Device Controllers
   DeviceController: Symbol.for("DeviceController"),
 
   // Use Cases
-  TestTransactionUseCase: Symbol.for("TestTransactionUseCase"),
   TestBatchTransactionFromFileUseCase: Symbol.for(
     "TestBatchTransactionFromFileUseCase",
   ),
-  TestTypedDataUseCase: Symbol.for("TestTypedDataUseCase"),
   TestBatchTypedDataFromFileUseCase: Symbol.for(
     "TestBatchTypedDataFromFileUseCase",
   ),
-  TestContractUseCase: Symbol.for("TestContractUseCase"),
   TestContactUseCase: Symbol.for("TestContactUseCase"),
   TestBatchContactFromFileUseCase: Symbol.for(
     "TestBatchContactFromFileUseCase",
   ),
-  TestBatchContractFromFileUseCase: Symbol.for(
-    "TestBatchContractFromFileUseCase",
-  ),
-  TestSolanaTransactionUseCase: Symbol.for("TestSolanaTransactionUseCase"),
   TestBatchSolanaTransactionFromFileUseCase: Symbol.for(
     "TestBatchSolanaTransactionFromFileUseCase",
   ),
@@ -75,14 +63,13 @@ export const TYPES = {
   TestSolanaProgramUseCase: Symbol.for("TestSolanaProgramUseCase"),
 
   // Config
-  SpeculosConfig: Symbol.for("SpeculosConfig"),
+  SpeculinhoConfig: Symbol.for("SpeculinhoConfig"),
   SignerConfig: Symbol.for("SignerConfig"),
-  EtherscanConfig: Symbol.for("EtherscanConfig"),
   SolanaRpcConfig: Symbol.for("SolanaRpcConfig"),
-  AppsConfig: Symbol.for("AppsConfig"),
   CalConfig: Symbol.for("CalConfig"),
 
   // Logger
   LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),
   LoggerSubscribers: Symbol.for("LoggerSubscribers"),
+  LogLevel: Symbol.for("LogLevel"),
 };

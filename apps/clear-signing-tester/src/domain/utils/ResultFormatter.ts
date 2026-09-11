@@ -3,28 +3,7 @@ import {
   type TestStatus,
 } from "@root/src/domain/types/TestStatus";
 
-/**
- * Common type for batch test results
- */
-export type BatchTestResult = {
-  readonly title: string;
-  readonly resultsTable: Array<{
-    Description: string;
-    Status: string;
-    Hash?: string;
-  }>;
-  readonly summaryTitle: string;
-  readonly summaryTable: Array<{
-    Status: string;
-    Count: number;
-    Percentage: string;
-  }>;
-  readonly exitCode: number;
-};
-
-/**
- * Status counts for batch operations
- */
+/** Status counts for batch operations. */
 export type StatusCounts = {
   readonly clearSigned: number;
   readonly blindSigned: number;
@@ -32,23 +11,30 @@ export type StatusCounts = {
   readonly error: number;
 };
 
-/**
- * Configuration for formatting results
- */
-export type FormatConfig = {
-  readonly title: string;
-  readonly summaryTitle: string;
-  readonly includeHash?: boolean;
+/** A case that did not produce the outcome it asked for. */
+export type FailedCase = {
+  readonly description: string;
+  readonly status: TestStatus;
+  readonly errorMessage?: string;
+  /** Transaction signature, for a case pulled from a live RPC. */
+  readonly hash?: string;
 };
 
-/**
- * Utility class for formatting test results consistently across use cases
- */
-export class ResultFormatter {
+/** What one batch of cases produced. */
+export type BatchTestResult = {
+  /** Cases that did not produce their expected outcome. */
+  readonly exitCode: number;
+  readonly counts: StatusCounts;
   /**
-   * Count statuses from test results
+   * The failing cases themselves. A run spreads over many emulators, so naming
+   * them is the only way to tell which case failed from the summary.
    */
-  static countStatuses(results: TestResult[]): StatusCounts {
+  readonly failedCases: readonly FailedCase[];
+};
+
+export class ResultFormatter {
+  /** Count statuses from test results. */
+  static countStatuses(results: readonly TestResult[]): StatusCounts {
     const counts = {
       clearSigned: 0,
       blindSigned: 0,
@@ -77,67 +63,46 @@ export class ResultFormatter {
   }
 
   /**
-   * Format batch results for CLI display
+   * Reduce a batch of results to its verdict.
+   *
+   * `totalItems` is what the batch set out to run, so a case that produced no
+   * result at all — a crash mid-batch — still counts against the exit code.
    */
   static formatBatchResults(
-    results: TestResult[],
+    results: readonly TestResult[],
     totalItems: number,
-    config: FormatConfig,
   ): BatchTestResult {
-    const statusCounts = this.countStatuses(results);
-
-    const resultsTable = results.map((testResult) => {
-      const statusEmoji = this.getStatusEmoji(testResult.status);
-      const row: { Description: string; Status: string; Hash?: string } = {
-        Description: testResult.input.description || "No description",
-        Status: `${statusEmoji} ${testResult.status.replace(/_/g, " ")}`,
-      };
-
-      if (config.includeHash && "hash" in testResult && testResult.hash) {
-        row.Hash = testResult.hash;
-      }
-
-      return row;
-    });
-
-    const pct = (n: number) =>
-      totalItems > 0 ? `${((n / totalItems) * 100).toFixed(1)}%` : "N/A";
-
-    const summaryTable = [
-      {
-        Status: "✅ Clear Signed",
-        Count: statusCounts.clearSigned,
-        Percentage: pct(statusCounts.clearSigned),
-      },
-      {
-        Status: "⚠️ Partially Clear Signed",
-        Count: statusCounts.partiallyClearSigned,
-        Percentage: pct(statusCounts.partiallyClearSigned),
-      },
-      {
-        Status: "🙈 Blind Signed",
-        Count: statusCounts.blindSigned,
-        Percentage: pct(statusCounts.blindSigned),
-      },
-      {
-        Status: "❌ Errors",
-        Count: statusCounts.error,
-        Percentage: pct(statusCounts.error),
-      },
-    ];
+    const failedCases = results
+      .filter((result) => !this.isAsExpected(result))
+      .map((result) => ({
+        description: result.input.description || "No description",
+        status: result.status,
+        ...(result.errorMessage ? { errorMessage: result.errorMessage } : {}),
+        ...(result.hash ? { hash: result.hash } : {}),
+      }));
 
     return {
-      title: config.title,
-      resultsTable,
-      summaryTitle: config.summaryTitle,
-      summaryTable,
-      exitCode: totalItems - statusCounts.clearSigned,
+      exitCode: totalItems - (results.length - failedCases.length),
+      counts: this.countStatuses(results),
+      failedCases,
     };
   }
 
   /**
-   * Get emoji for signing status
+   * Whether a result is the outcome its case asked for.
+   *
+   * Clear signing is the expectation everywhere except a case that declares
+   * `expectBlindSigned`, which exists to prove the blind-signing fallback is
+   * still detected and so passes only when the device blind-signs.
    */
+  private static isAsExpected(result: TestResult): boolean {
+    const expectsBlind =
+      "expectBlindSigned" in result.input &&
+      result.input.expectBlindSigned === true;
+    return result.status === (expectsBlind ? "blind_signed" : "clear_signed");
+  }
+
+  /** Get emoji for signing status. */
   static getStatusEmoji(status: TestStatus): string {
     switch (status) {
       case "clear_signed":

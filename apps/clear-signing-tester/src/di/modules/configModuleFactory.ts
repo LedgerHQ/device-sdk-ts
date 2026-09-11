@@ -1,31 +1,25 @@
 import { ContainerModule } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
-import { type AppsConfig } from "@root/src/domain/models/config/AppsConfig";
 import { type CalConfig } from "@root/src/domain/models/config/CalConfig";
-import { type EtherscanConfig } from "@root/src/domain/models/config/EtherscanConfig";
 import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SolanaRpcConfig } from "@root/src/domain/models/config/SolanaRpcConfig";
-import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
 
 export type ClearSigningTesterConfig = {
-  speculos: SpeculosConfig;
+  speculinho: SpeculinhoConfig;
   signer: SignerConfig;
   cal: CalConfig;
-  etherscan: EtherscanConfig;
-  apps: AppsConfig;
   solanaRpc?: SolanaRpcConfig;
   onlySpeculos?: boolean;
 };
 
 export const configModuleFactory = (config: ClearSigningTesterConfig) =>
   new ContainerModule(({ bind }) => {
-    bind<SpeculosConfig>(TYPES.SpeculosConfig).toConstantValue(config.speculos);
-    bind<SignerConfig>(TYPES.SignerConfig).toConstantValue(config.signer);
-    bind<EtherscanConfig>(TYPES.EtherscanConfig).toConstantValue(
-      config.etherscan,
+    bind<SpeculinhoConfig>(TYPES.SpeculinhoConfig).toConstantValue(
+      config.speculinho,
     );
-    bind<AppsConfig>(TYPES.AppsConfig).toConstantValue(config.apps);
+    bind<SignerConfig>(TYPES.SignerConfig).toConstantValue(config.signer);
     bind<CalConfig>(TYPES.CalConfig).toConstantValue(config.cal);
     if (config.solanaRpc) {
       bind<SolanaRpcConfig>(TYPES.SolanaRpcConfig).toConstantValue(

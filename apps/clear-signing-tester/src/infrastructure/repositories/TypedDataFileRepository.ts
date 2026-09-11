@@ -7,6 +7,7 @@ import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
+import { scenarioCases } from "@root/src/infrastructure/repositories/scenarioCases";
 
 /**
  * Raw typed data structure from JSON file
@@ -41,14 +42,10 @@ export class TypedDataFileRepository
   readFromFile(filePath: string): TypedDataInput[] {
     const fileContent = this.fileReader.readFileSync(filePath);
 
-    const rawTypedDataArray =
-      this.jsonParser.parse<RawTypedDataData[]>(fileContent);
-
-    if (!Array.isArray(rawTypedDataArray)) {
-      throw new Error(
-        `Invalid file format: expected an array of typed data in ${filePath}`,
-      );
-    }
+    const rawTypedDataArray = scenarioCases<RawTypedDataData>(
+      this.jsonParser.parse<unknown>(fileContent),
+      filePath,
+    );
 
     return rawTypedDataArray.map((rawTypedData, index) =>
       this.mapToInternalTypedData(rawTypedData, index),

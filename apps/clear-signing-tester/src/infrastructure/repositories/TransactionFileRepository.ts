@@ -7,15 +7,20 @@ import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCr
 import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
+import { scenarioCases } from "@root/src/infrastructure/repositories/scenarioCases";
 
 /**
- * Raw transaction data structure from JSON file
+ * Raw transaction data structure from JSON file.
+ *
+ * A case may also carry keys prefixed with `_`, such as `_txHash`. Those are
+ * notes for whoever maintains the fixture — where the transaction came from on
+ * chain — and are deliberately absent here, so nothing reads them.
  */
 type RawTransactionData = {
   rawTx: string;
-  txHash?: string;
   description?: string;
   expectedTexts?: string[];
+  expectBlindSigned?: boolean;
 };
 
 /**
@@ -44,14 +49,10 @@ export class TransactionFileRepository
   readFromFile(filePath: string): TransactionInput[] {
     const fileContent = this.fileReader.readFileSync(filePath);
 
-    const rawTransactions =
-      this.jsonParser.parse<RawTransactionData[]>(fileContent);
-
-    if (!Array.isArray(rawTransactions)) {
-      throw new Error(
-        `Invalid file format: expected an array of transactions in ${filePath}`,
-      );
-    }
+    const rawTransactions = scenarioCases<RawTransactionData>(
+      this.jsonParser.parse<unknown>(fileContent),
+      filePath,
+    );
 
     return rawTransactions.map((rawTx, index) =>
       this.mapToTransaction(rawTx, index),
@@ -83,8 +84,8 @@ export class TransactionFileRepository
       kind: SignableInputKind.Transaction,
       rawTx: unsignedRawTx,
       description: rawTx.description || `Transaction ${index + 1}`,
-      txHash: rawTx.txHash,
       expectedTexts: rawTx.expectedTexts,
+      expectBlindSigned: rawTx.expectBlindSigned,
     };
   }
 }
