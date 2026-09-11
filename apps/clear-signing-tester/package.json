@@ -18,6 +18,7 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:scenarios": "pnpm cli test"
   },
   "dependencies": {
