@@ -28,6 +28,7 @@ export enum SignTypedDataDAStateStep {
   PROVIDE_GENERIC_CONTEXT = "signer.eth.steps.provideGenericContext",
   SIGN_TYPED_DATA = "signer.eth.steps.signTypedData",
   SIGN_TYPED_DATA_LEGACY = "signer.eth.steps.signTypedDataLegacy",
+  SIGN_TYPED_DATA_V2 = "signer.eth.steps.signTypedDataV2",
   DETECT_BLIND_SIGNING = "signer.eth.steps.detectBlindSigning",
 }
 
