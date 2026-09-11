@@ -1,16 +1,6 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import {
-  type LoggerPublisherService,
-  type XStateDeviceAction,
-} from "@ledgerhq/device-management-kit";
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
-import {
-  type SignTransactionDAError,
-  type SignTransactionDAInput,
-  type SignTransactionDAIntermediateValue,
-  type SignTransactionDAInternalState,
-  type SignTransactionDAOutput,
-} from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
@@ -25,13 +15,7 @@ export const SignTransactionDeviceActionFactory = (args: {
   options?: TransactionOptions;
   inspect?: boolean;
   loggerFactory?: (tag: string) => LoggerPublisherService;
-}): XStateDeviceAction<
-  SignTransactionDAOutput,
-  SignTransactionDAInput,
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue,
-  SignTransactionDAInternalState
-> =>
+}) =>
   new SignTransactionDeviceAction({
     input: {
       derivationPath: args.derivationPath,
