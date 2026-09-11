@@ -10,8 +10,7 @@ import { DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
 import { getEmulatorBaseUrl } from "@root/src/domain/utils/getEmulatorBaseUrl";
 
-const DEFAULT_DELAY_MS = 2000;
-const FLEX_DELAY_MS = 5000;
+const SIGN_HOLD_MS = 3000;
 const SETTINGS_NAV_DELAY_MS = 1000;
 
 /**
@@ -24,7 +23,6 @@ const SETTINGS_NAV_DELAY_MS = 1000;
 export class SpeculosTouchscreenController implements DeviceController {
   private readonly logger: LoggerPublisherService;
   private readonly config: SpeculinhoConfig;
-  private readonly delayMs: number;
   private _tap: ReturnType<DeviceControllerClient["tapFactory"]> | null = null;
 
   private get tap(): ReturnType<DeviceControllerClient["tapFactory"]> {
@@ -46,13 +44,12 @@ export class SpeculosTouchscreenController implements DeviceController {
   ) {
     this.config = config;
     this.logger = loggerFactory("touchscreen-controller");
-    this.delayMs = config.device === "flex" ? FLEX_DELAY_MS : DEFAULT_DELAY_MS;
     this.logger.info(`Initialized touchscreen controller for ${config.device}`);
   }
 
   async signTransaction(): Promise<void> {
     this.logger.debug("☝️ (touch) : Performing transaction sign");
-    await this.tap.sign(this.delayMs);
+    await this.tap.sign(SIGN_HOLD_MS);
   }
 
   async rejectTransaction(): Promise<void> {
