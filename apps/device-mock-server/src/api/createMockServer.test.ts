@@ -96,6 +96,22 @@ describe("createMockServer (HTTP contract)", () => {
   });
 
   describe("devices", () => {
+    it("never revalidates GET /devices, so a polling client keeps its list", async () => {
+      const token = await authenticate();
+      await addDevice(token);
+
+      const first = await api("/devices", {}, token);
+      expect(first.headers.get("etag")).toBeNull();
+
+      const again = await api(
+        "/devices",
+        { headers: { "If-None-Match": 'W/"anything"' } },
+        token,
+      );
+      expect(again.status).toBe(200);
+      expect((await again.json()) as unknown[]).toHaveLength(1);
+    });
+
     it("creates, lists, fetches, edits and deletes a device", async () => {
       const token = await authenticate();
 
