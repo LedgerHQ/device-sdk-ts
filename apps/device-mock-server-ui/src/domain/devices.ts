@@ -17,6 +17,11 @@ export interface DeviceModel {
   readonly speculos: boolean;
   /** How the device is driven: a touchscreen, or left/right/both buttons. */
   readonly touch: boolean;
+  /**
+   * Provider carrying this model's release-candidate firmwares, absent for a
+   * model that no longer gets any.
+   */
+  readonly rcProvider?: number;
 }
 
 export const DEVICE_MODELS: DeviceModel[] = [
@@ -39,6 +44,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     icon: Nano,
     speculos: true,
     touch: false,
+    rcProvider: 81,
   },
   {
     value: "nanoX",
@@ -49,6 +55,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     icon: Nano,
     speculos: true,
     touch: false,
+    rcProvider: 80,
   },
   {
     value: "stax",
@@ -59,6 +66,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     icon: Stax,
     speculos: true,
     touch: true,
+    rcProvider: 83,
   },
   {
     value: "flex",
@@ -69,6 +77,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     icon: Flex,
     speculos: true,
     touch: true,
+    rcProvider: 82,
   },
   {
     value: "apexp",
@@ -79,6 +88,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     icon: Apex,
     speculos: false,
     touch: true,
+    rcProvider: 84,
   },
 ];
 
