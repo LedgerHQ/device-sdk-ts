@@ -373,13 +373,13 @@ The standalone server (`src/main.ts`) reads environment variables:
 
 Programmatically, `createMockServer(config)` accepts a `MockServerConfig`:
 
-| Option            | Description                                                                                                             |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `ttlMs`           | Sliding inactivity timeout (refreshed on each authed request).                                                          |
-| `maxLifetimeMs`   | Hard cap on session lifetime regardless of activity.                                                                    |
-| `sweepIntervalMs` | Expired-session sweep interval; `0` disables the sweeper.                                                               |
-| `speculos`        | `{ baseUrl, speculosVersion?, readyTimeoutMs?, pollIntervalMs? }`. When omitted, the server is a pure mock.             |
-| `webUiDir`        | Directory holding the built [configuration UI](#-configuration-ui). When omitted, the server exposes the HTTP API only. |
+| Option            | Description                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `ttlMs`           | Sliding inactivity timeout (refreshed on each authed request).                                                                    |
+| `maxLifetimeMs`   | Hard cap on session lifetime regardless of activity.                                                                              |
+| `sweepIntervalMs` | Expired-session sweep interval; `0` disables the sweeper.                                                                         |
+| `speculos`        | `{ baseUrl, speculosVersion?, readyTimeoutMs?, pollIntervalMs?, routeTimeoutSeconds? }`. When omitted, the server is a pure mock. |
+| `webUiDir`        | Directory holding the built [configuration UI](#-configuration-ui). When omitted, the server exposes the HTTP API only.           |
 
 ## 🔹 HTTP API
 
