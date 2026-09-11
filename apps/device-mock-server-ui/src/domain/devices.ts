@@ -15,6 +15,8 @@ export interface DeviceModel {
   readonly icon: typeof Nano;
   /** Whether Speculinho can start a real Speculos emulator for this model. */
   readonly speculos: boolean;
+  /** How the device is driven: a touchscreen, or left/right/both buttons. */
+  readonly touch: boolean;
 }
 
 export const DEVICE_MODELS: DeviceModel[] = [
@@ -26,6 +28,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     mask: 0x31100000,
     icon: Nano,
     speculos: true,
+    touch: false,
   },
   {
     value: "nanoSP",
@@ -35,6 +38,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     mask: 0x33100000,
     icon: Nano,
     speculos: true,
+    touch: false,
   },
   {
     value: "nanoX",
@@ -44,6 +48,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     mask: 0x33000000,
     icon: Nano,
     speculos: true,
+    touch: false,
   },
   {
     value: "stax",
@@ -53,6 +58,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     mask: 0x33200000,
     icon: Stax,
     speculos: true,
+    touch: true,
   },
   {
     value: "flex",
@@ -62,6 +68,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     mask: 0x33300000,
     icon: Flex,
     speculos: true,
+    touch: true,
   },
   {
     value: "apexp",
@@ -71,6 +78,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     mask: 0x33400000,
     icon: Apex,
     speculos: false,
+    touch: true,
   },
 ];
 
