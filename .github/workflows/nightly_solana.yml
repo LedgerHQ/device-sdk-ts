@@ -45,12 +45,9 @@ jobs:
         device: [stax, nanox, flex]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      # Fixtures only: the solana-programs scenarios are disabled, since an
-      # RPC-derived case carries no expectedTexts and so cannot fail the
-      # clear-signing check.
       - uses: ./.github/actions/cs-tester-composite
         with:
-          scenarios: solana
+          scenarios: solana solana-programs
           device: ${{ matrix.device }}
           concurrency: "10"
           log-level: error
@@ -58,6 +55,7 @@ jobs:
           artifact-prefix: solana-nightly-logs
           summary-prefix: "Solana Clear Signing Test"
           gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   notify:
     name: Notify Slack
