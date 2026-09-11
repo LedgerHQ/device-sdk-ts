@@ -223,6 +223,35 @@ describe("buildRequirements", () => {
     expect(result.tokenAccountStates).toEqual([]);
   });
 
+  it("multiple resets sharing one account_index are each kept (no deduplication)", () => {
+    // CAL spec: one reset per claimed domain; several resets may share one
+    // account_index. Nothing in buildRequirements should deduplicate them.
+    const result = run([
+      matched({
+        accounts: [account("ata")],
+        descriptor: {
+          accountResets: [
+            accountReset({
+              accountIndex: 0,
+              valueKind: "native",
+              requirePreBalanceZero: true,
+            }),
+            accountReset({
+              accountIndex: 0,
+              valueKind: "splToken",
+              requirePreBalanceZero: true,
+              token: { kind: "DIRECT" },
+            }),
+          ],
+        },
+      }),
+    ]);
+    // Both resets target the same account but represent different domains; the
+    // fetched TOKEN_ACCOUNT_STATE is deduped in the accumulator (one fetch),
+    // but the requirement was placed by each reset independently.
+    expect(result.tokenAccountStates).toEqual(["ata"]);
+  });
+
   it("emits ALT_RESOLUTION only for accounts referenced by DISPLAY_FIELD ACCOUNT_PATH or MINT_ASSOC", () => {
     const result = run([
       matched({

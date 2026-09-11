@@ -31,7 +31,10 @@ import { resolvePortAccountIndex } from "@internal/app-binder/clear-sign/require
  * 6. Every `MINT_ASSOCIATION` token-account position, seeded into the
  *    mint-binding map. Mint positions are handled separately as `mintAltRefs`
  *    so they can be paired with a TOKEN_INFO attempt for display.
- * 7. Every `ACCOUNT_RESET` account index.
+ * 7. Every `ACCOUNT_RESET`: the reset account index, its `TOKEN_VALUE.VALUE`
+ *    slot (when `ACCOUNT_PATH`), and its `TOKEN_VALUE.FALLBACK_ACCOUNT`. The
+ *    device dereferences these exactly like a port's token reference; an
+ *    unresolved ALT slot in any of them makes `FINALIZE` refuse.
  * 8. Every `OWNER_ASSOCIATION` pair: the bound token account, and the owner
  *    when it comes from an `ACCOUNT_PATH`.
  * 9. Every `HIDE_RULE.TARGET` from an `ACCOUNT_PATH`.
@@ -106,9 +109,19 @@ export function applyAltResolutionRule(
     requestAccount(accountIndex);
   }
 
-  // 7. ACCOUNT_RESET targets.
-  for (const { accountIndex } of parsed.accountResets) {
-    requestAccount(accountIndex);
+  // 7. ACCOUNT_RESET targets. A reset now also carries a TOKEN_VALUE the device
+  // dereferences exactly like a port's: the VALUE slot and FALLBACK_ACCOUNT must
+  // be resolved or FINALIZE refuses. Gate accountIndex and fallbackAccountIndex on
+  // RESOLVE only — the device ignores those fields for other token kinds, just as
+  // the port rule does.
+  for (const reset of parsed.accountResets) {
+    requestAccount(reset.accountIndex);
+    const tokenValue = reset.tokenValue;
+    if (tokenValue?.kind === TokenKind.RESOLVE) {
+      requestAccount(tokenValue.accountIndex);
+      requestAccount(tokenValue.fallbackAccountIndex);
+    }
+    requestValue(tokenValue?.value);
   }
 
   // 8. OWNER_ASSOCIATION pairs. The device dereferences both halves while

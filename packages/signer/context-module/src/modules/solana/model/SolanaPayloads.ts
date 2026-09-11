@@ -162,6 +162,9 @@ export type SolanaCalOwnerAssociation = {
 export type SolanaCalAccountReset = {
   account_index: number;
   require_pre_balance_zero?: boolean;
+  value_kind?: string;
+  token?: SolanaCalTokenValue;
+  require_native_pre_balance_zero?: boolean;
 };
 
 export type SolanaCalDisplayField = {

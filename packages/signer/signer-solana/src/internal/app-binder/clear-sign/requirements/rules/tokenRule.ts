@@ -9,6 +9,7 @@ import {
   PARAM_TYPE_TOKEN_AMOUNT,
   type ParsedInstruction,
   TokenKind,
+  ValueKind,
   ValueSource,
 } from "@internal/app-binder/clear-sign/requirements/records";
 import { type RequirementAccumulator } from "@internal/app-binder/clear-sign/requirements/RequirementAccumulator";
@@ -36,8 +37,13 @@ import {
  *   needs TOKEN_INFO too — every `fallbackAccount` in the registry names a mint
  *   slot, and it is the only ticker source when both binding sources miss.
  * - DIRECT port: the embedded mint needs TOKEN_INFO.
- * - ACCOUNT_RESET with `requirePreBalanceZero`: mandatory TOKEN_ACCOUNT_STATE
- *   for the reset account (the device must read its pre-balance).
+ * - ACCOUNT_RESET path 2: mandatory TOKEN_ACCOUNT_STATE when `requirePreBalanceZero`
+ *   or `requireNativePreBalanceZero` is set (the device must read the pre-balance
+ *   to validate the reset is applicable).
+ * - ACCOUNT_RESET path 5: TOKEN_ACCOUNT_STATE for an SPL reset whose `TOKEN_VALUE`
+ *   is `RESOLVE`, unless the mint is already bound by a TX-derived `MINT_ASSOC`
+ *   pair or by a `FALLBACK_ACCOUNT`. Without the mint the reset resolves to no
+ *   domain and establishes nothing.
  * - IS_SIGNER hide rule / port activation predicate: TOKEN_ACCOUNT_STATE for the
  *   target unless a TX-derived OWNER_ASSOC binding already covers it. The
  *   device's `IS_SIGNER` predicate matches a token account only through the
@@ -99,9 +105,51 @@ export function applyTokenRule(
   }
 
   for (const reset of parsed.accountResets) {
-    if (!reset.requirePreBalanceZero) continue;
+    if (!reset.requirePreBalanceZero && !reset.requireNativePreBalanceZero)
+      continue;
     const account = accountAddressAt(instruction, reset.accountIndex);
-    if (account !== undefined) accumulator.addTokenAccountState(account);
+    if (account !== undefined) {
+      accumulator.addTokenAccountState(account);
+    } else {
+      requestAltState(
+        accountAltRefAt(instruction, reset.accountIndex),
+        accumulator,
+      );
+    }
+  }
+
+  // Path 5: TOKEN_ACCOUNT_STATE for an SPL reset whose TOKEN_VALUE is RESOLVE,
+  // unless the mint is already bound by a TX-derived MINT_ASSOC pair or by a
+  // FALLBACK_ACCOUNT. Without the mint the reset resolves to no domain.
+  for (const reset of parsed.accountResets) {
+    if (reset.valueKind !== ValueKind.SPL_TOKEN) continue;
+    const tokenValue = reset.tokenValue;
+    if (tokenValue === undefined || tokenValue.kind !== TokenKind.RESOLVE)
+      continue;
+
+    const accountIndex = tokenValue.accountIndex ?? reset.accountIndex;
+    const account = accountAddressAt(instruction, accountIndex);
+
+    if (account !== undefined) {
+      const boundMint = mintBindings.get(account);
+      if (
+        boundMint === undefined &&
+        tokenValue.fallbackAccountIndex === undefined
+      ) {
+        accumulator.addTokenAccountState(account);
+      }
+      if (boundMint !== undefined) {
+        accumulator.addTokenInfo(boundMint);
+      }
+    } else {
+      requestAltState(accountAltRefAt(instruction, accountIndex), accumulator);
+    }
+
+    requestFallbackMint(
+      tokenValue.fallbackAccountIndex,
+      instruction,
+      accumulator,
+    );
   }
 
   applyOwnerAttestationRule(
