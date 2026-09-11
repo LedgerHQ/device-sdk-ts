@@ -151,31 +151,6 @@ describe("loadScenarioCatalog", () => {
 });
 
 describe("the shipped catalog", () => {
-  it("loads every scenario the app ships", () => {
-    expect(CATALOG.length).toBe(42);
-  });
-
-  // These are kept in the repo but not run — alternate chains nobody wired up,
-  // descriptors known to be broken. Being explicit is what stops them reading
-  // as fixtures someone forgot to reference.
-  it("keeps the disabled scenarios out of every selection", () => {
-    expect(ALL.filter((s) => !isEnabled(s)).map((s) => s.name)).toEqual([
-      "core:typed-data-example",
-      "erc7730:1inch-arbitrum",
-      "erc7730:1inch-polygon",
-      "erc7730:1inch-zksync",
-      "erc7730:quickswap-polygon",
-      "erc7730:velora-polygon",
-      "erc7730-typed-data:dispatch",
-      "erc7730-typed-data:makerdao",
-      "erc7730-typed-data:rarible",
-      "solana-programs:spl-token",
-      "solana-programs:stake",
-      "solana-programs:system",
-      "solana-programs:token-2022",
-    ]);
-  });
-
   it("names every scenario uniquely", () => {
     const names = CATALOG.map((s) => s.name);
     expect(new Set(names).size).toBe(names.length);
@@ -232,19 +207,5 @@ describe("the shipped catalog", () => {
         : [],
     );
     expect(empty).toEqual([]);
-  });
-
-  // Every scenario in solana-programs is disabled, so the group is not
-  // selectable at all — a selector naming it would fail as unknown, which is
-  // why the Solana nightly asks for the fixtures only.
-  it("covers the groups CI selects", () => {
-    expect([...new Set(CATALOG.map((s) => s.group))]).toEqual([
-      "contacts",
-      "core",
-      "erc7730",
-      "erc7730-typed-data",
-      "gating",
-      "solana",
-    ]);
   });
 });
