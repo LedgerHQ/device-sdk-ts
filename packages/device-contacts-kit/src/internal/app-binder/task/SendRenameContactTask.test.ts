@@ -3,8 +3,9 @@
 // chunk = 2-byte BE total length + TLV. Tag order: STRUCT_TYPE, STRUCT_VERSION,
 // CONTACT_NAME (new), PREVIOUS_CONTACT_NAME (old), GROUP_HANDLE, HMAC_PROOF —
 // with tags >= 0x80 (0xf0/0xf3/0xf6) encoded as the 2-byte DER form [0x81, tag].
-// No DERIVATION_PATH: the SDK removed tag 0x69 from EDIT_CONTACT_NAME_TAGS on
-// 2026-08-10 and rejects payloads carrying it.
+// DERIVATION_PATH (tag 0x69) is CONDITIONAL (DSDK-1481): omitted by default (the
+// GA payload), and inserted between GROUP_HANDLE and HMAC_PROOF only when the
+// caller passes includeDerivationPath — the shape older OS builds still require.
 import {
   CommandResultFactory,
   type InternalApi,
@@ -77,7 +78,7 @@ describe("SendRenameContactTask", () => {
     );
   });
 
-  it("does not emit a DERIVATION_PATH tag", async () => {
+  it("does not emit a DERIVATION_PATH tag by default", async () => {
     const api = makeApiMock();
     api.sendCommand.mockResolvedValueOnce(
       CommandResultFactory({ data: { hmacProof: HMAC_PROOF_OUT } }),
@@ -90,15 +91,58 @@ describe("SendRenameContactTask", () => {
       hmacProof: HMAC_PROOF_IN,
     }).run();
 
-    // api-level 27 dropped tag 0x69 from EDIT_CONTACT_NAME_TAGS: a payload
-    // carrying it fails to parse and the device answers 0x6a80. HMAC_PROOF
-    // (0x29) therefore follows GROUP_HANDLE directly.
+    // GA payload (includeDerivationPath omitted): newer OS builds reject tag
+    // 0x69, so HMAC_PROOF (0x29) follows GROUP_HANDLE directly.
     const command = api.sendCommand.mock.calls[0]![0] as RenameContactCommand;
     const framedHex = Buffer.from(command.args.data).toString("hex");
-    expect(framedHex).not.toContain("691505");
+    expect(framedHex).not.toContain("6915");
     expect(
       framedHex.endsWith("81f640" + "cc".repeat(64) + "2920" + "dd".repeat(32)),
     ).toBe(true);
+  });
+
+  it("emits the DERIVATION_PATH tag when includeDerivationPath is set", async () => {
+    const api = makeApiMock();
+    api.sendCommand.mockResolvedValueOnce(
+      CommandResultFactory({ data: { hmacProof: HMAC_PROOF_OUT } }),
+    );
+
+    await new SendRenameContactTask(api, {
+      previousContactName: "Alice",
+      newContactName: "Bob",
+      groupHandle: GROUP_HANDLE,
+      hmacProof: HMAC_PROOF_IN,
+      includeDerivationPath: true,
+    }).run();
+
+    // Older OS builds (below the model cutoff) mandate tag 0x69. The path TLV
+    // (fixed m/44'/60'/0'/0/0) sits between GROUP_HANDLE and HMAC_PROOF, and the
+    // framed total length grows by its 23 bytes: 0x0079 -> 0x0090.
+    //   69 15 05 8000002c 8000003c 80000000 00000000 00000000
+    const pathTlv =
+      "6915" +
+      "05" +
+      "8000002c" +
+      "8000003c" +
+      "80000000" +
+      "00000000" +
+      "00000000";
+    const expectedFramed = hexToBytes(
+      "0090" +
+        "01012e" +
+        "020101" +
+        "81f003426f62" +
+        "81f305416c696365" +
+        "81f640" +
+        "cc".repeat(64) +
+        pathTlv +
+        "2920" +
+        "dd".repeat(32),
+    );
+    const command = api.sendCommand.mock.calls[0]![0] as RenameContactCommand;
+    expect(command).toStrictEqual(
+      new RenameContactCommand({ data: expectedFramed, p2: 0x00 }),
+    );
   });
 
   it("propagates command-level errors", async () => {
