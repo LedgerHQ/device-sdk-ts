@@ -55,8 +55,12 @@ import {
   type ProvideEIP712ContextTaskArgs,
   type ProvideEIP712ContextTaskReturnType,
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
+import { SendEIP712V2Task } from "@internal/app-binder/task/SendEIP712V2Task";
 import { SignTypedDataLegacyTask } from "@internal/app-binder/task/SignTypedDataLegacyTask";
-import { MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS } from "@internal/shared/EthAppVersions";
+import {
+  MIN_ETH_APP_VERSION_FOR_EIP712_V2,
+  MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS,
+} from "@internal/shared/EthAppVersions";
 import { normalizeChainId } from "@internal/shared/utils/normalizeChainId";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
@@ -101,6 +105,13 @@ export type MachineDependencies = {
       data: TypedData;
     };
   }) => Promise<CommandResult<Signature, EthErrorCodes>>;
+  readonly signTypedDataV2: (arg0: {
+    input: {
+      derivationPath: string;
+      data: TypedData;
+      parser: TypedDataParserService;
+    };
+  }) => Promise<CommandResult<Signature, EthErrorCodes>>;
   readonly detectBlindSigning: (arg0: {
     input: BlindSigningDetectionTaskArgs;
   }) => Promise<BlindSigningDetectionTaskResult>;
@@ -138,6 +149,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       provideContext,
       signTypedData,
       signTypedDataLegacy,
+      signTypedDataV2,
       detectBlindSigning,
     } = this.extractDependencies(internalApi);
 
@@ -158,6 +170,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         provideContext: fromPromise(provideContext),
         signTypedData: fromPromise(signTypedData),
         signTypedDataLegacy: fromPromise(signTypedDataLegacy),
+        signTypedDataV2: fromPromise(signTypedDataV2),
         detectBlindSigning: fromPromise(detectBlindSigning),
       },
       guards: {
@@ -181,6 +194,14 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
         skipOpenApp: ({ context }) => context.input.skipOpenApp,
+        isEip712V2Supported: ({ context }) =>
+          new ApplicationChecker(
+            internalApi.getDeviceSessionState(),
+            context._internalState.appConfig!,
+            new EthereumApplicationResolver(),
+          )
+            .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_EIP712_V2)
+            .check(),
         hasSignature: ({ context }) =>
           context._internalState.signature !== null,
       },
@@ -301,6 +322,12 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         },
         GetAppConfigResultCheck: {
           always: [
+            // V2 is raw-only, so it needs neither the clear-signing context nor the
+            // signer address the context is built from.
+            {
+              target: "SignTypedDataV2",
+              guard: and(["noInternalError", "isEip712V2Supported"]),
+            },
             {
               target: "Web3ChecksOptIn",
               guard: and([
@@ -529,6 +556,48 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             { target: "DetectBlindSigning" },
           ],
         },
+        SignTypedDataV2: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_V2,
+            },
+          }),
+          invoke: {
+            id: "signTypedDataV2",
+            src: "signTypedDataV2",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              data: context.input.data,
+              parser: context.input.parser,
+            }),
+            // No fallback to the V1 protocol: a V2 failure has to surface as one rather
+            // than be papered over by a second, differently encoded attempt.
+            onDone: {
+              target: "DetectBlindSigning",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        signature: event.output.data,
+                      };
+                    }
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  },
+                }),
+              ],
+            },
+            onError: {
+              target: "DetectBlindSigning",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
         SignTypedDataLegacy: {
           entry: assign({
             intermediateValue: {
@@ -730,6 +799,19 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         this.getLoggerFactory(internalApi),
       ).run();
 
+    const signTypedDataV2 = async (arg0: {
+      input: {
+        derivationPath: string;
+        data: TypedData;
+        parser: TypedDataParserService;
+      };
+    }) =>
+      new SendEIP712V2Task(internalApi, {
+        derivationPath: arg0.input.derivationPath,
+        data: arg0.input.data,
+        parser: arg0.input.parser,
+      }).run();
+
     const detectBlindSigning = async (arg0: {
       input: BlindSigningDetectionTaskArgs;
     }) => new BlindSigningDetectionTask(arg0.input).run();
@@ -742,6 +824,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       provideContext,
       signTypedData,
       signTypedDataLegacy,
+      signTypedDataV2,
       detectBlindSigning,
     };
   }

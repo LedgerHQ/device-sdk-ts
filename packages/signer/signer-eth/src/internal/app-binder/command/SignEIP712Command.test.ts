@@ -9,6 +9,7 @@ import { type EthErrorCodes } from "./utils/ethAppErrors";
 import {
   SignEIP712Command,
   type SignEIP712CommandResponse,
+  SignEIP712Implementation,
 } from "./SignEIP712Command";
 
 const SIGN_EIP712_APDU = Uint8Array.from([
@@ -114,6 +115,63 @@ describe("SignEIP712Command V0", () => {
       });
       const apdu = command.getApdu();
       expect(apdu.getRawApdu()).toStrictEqual(SIGN_EIP712_APDU_V0);
+    });
+  });
+});
+
+describe("SignEIP712Command V2", () => {
+  describe("getApdu", () => {
+    // The derivation path travelled inside EIP712_VALUES, and the app rejects a
+    // non-empty Lc, so the whole command is its header plus a zero length.
+    it("should carry no input data at all", () => {
+      const command = new SignEIP712Command({
+        implementation: SignEIP712Implementation.V2,
+      });
+
+      const apdu = command.getApdu();
+
+      expect(apdu.getRawApdu()).toStrictEqual(
+        Uint8Array.from([0xe0, 0x0c, 0x00, 0x02, 0x00]),
+      );
+    });
+  });
+
+  describe("parseResponse", () => {
+    it("should parse the signature the same way as V1", () => {
+      const command = new SignEIP712Command({
+        implementation: SignEIP712Implementation.V2,
+      });
+
+      const result = command.parseResponse({
+        data: Uint8Array.from([
+          0x1c,
+          ...Array<number>(32).fill(0xaa),
+          ...Array<number>(32).fill(0xbb),
+        ]),
+        statusCode: Uint8Array.from([0x90, 0x00]),
+      });
+
+      if (!isSuccessCommandResult(result)) {
+        throw new Error("Expected a success");
+      }
+      expect(result.data).toStrictEqual({
+        v: 0x1c,
+        r: `0x${"aa".repeat(32)}`,
+        s: `0x${"bb".repeat(32)}`,
+      });
+    });
+
+    it("should surface the app refusing to sign an unprepared message", () => {
+      const command = new SignEIP712Command({
+        implementation: SignEIP712Implementation.V2,
+      });
+
+      const result = command.parseResponse({
+        data: Uint8Array.from([]),
+        statusCode: Uint8Array.from([0x69, 0x86]), // command not allowed
+      });
+
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
   });
 });

@@ -133,6 +133,7 @@ describe("SignTypedDataDeviceAction", () => {
   const provideContextMock = vi.fn();
   const signTypedDataMock = vi.fn();
   const signTypedDataLegacyMock = vi.fn();
+  const signTypedDataV2Mock = vi.fn();
   const getAddressMock = vi.fn();
   const detectBlindSigningMock = vi.fn();
   function extractDependenciesMock() {
@@ -145,6 +146,7 @@ describe("SignTypedDataDeviceAction", () => {
       provideContext: provideContextMock,
       signTypedData: signTypedDataMock,
       signTypedDataLegacy: signTypedDataLegacyMock,
+      signTypedDataV2: signTypedDataV2Mock,
       detectBlindSigning: detectBlindSigningMock,
     };
   }
@@ -1351,5 +1353,159 @@ describe("SignTypedDataDeviceAction", () => {
         }),
       );
     });
+  });
+
+  describe("EIP-712 V2", () => {
+    const readyWithApp = (version: string) => ({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    const v2DeviceAction = () => {
+      const deviceAction = new SignTypedDataDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          data: TEST_MESSAGE,
+          contextModule: mockContextModule as unknown as ContextModule,
+          parser: mockParser,
+          transactionParser: mockTransactionParser,
+          transactionMapper: mockTransactionMapper,
+          skipOpenApp: true,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      return deviceAction;
+    };
+
+    // V2 is raw-only, so it needs neither the clear-signing context nor the
+    // signer address that context is built from.
+    it("should sign through V2 without building a context", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          readyWithApp("1.23.0") as never,
+        );
+        setupAppConfig("1.23.0", true, true);
+        signTypedDataV2Mock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_V2,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(v2DeviceAction(), expectedStates, apiMock, {
+          onError: reject,
+          onDone: () => {
+            expect(signTypedDataV2Mock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: expect.objectContaining({
+                  derivationPath: "44'/60'/0'/0/0",
+                  data: TEST_MESSAGE,
+                  parser: mockParser,
+                }),
+              }),
+            );
+            expect(getAddressMock).not.toHaveBeenCalled();
+            expect(buildContextMock).not.toHaveBeenCalled();
+            expect(provideContextMock).not.toHaveBeenCalled();
+            resolve();
+          },
+        });
+      }));
+
+    it("should surface a V2 failure without retrying through V1", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          readyWithApp("1.23.0") as never,
+        );
+        setupAppConfig("1.23.0", true, true);
+        signTypedDataV2Mock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Invalid data",
+            }),
+          }),
+        );
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_V2,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Invalid data",
+            }),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(v2DeviceAction(), expectedStates, apiMock, {
+          onError: reject,
+          onDone: () => {
+            expect(signTypedDataLegacyMock).not.toHaveBeenCalled();
+            resolve();
+          },
+        });
+      }));
   });
 });
