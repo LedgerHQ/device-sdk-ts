@@ -205,6 +205,76 @@ describe("HttpInstructionInfoDataSource", () => {
     );
   });
 
+  it("returns Left (not a throw) when account_schema.slots is not an array", async () => {
+    // Regression: account_schema was not codec-validated, so a malformed
+    // shape (e.g. `slots` as an object instead of an array) bypassed
+    // validation here and crashed later in the mapper's `.map()` call instead
+    // of degrading gracefully to a per-program error.
+    httpMock.get.mockResolvedValue([
+      {
+        id: programId,
+        chain_id: SolanaTransactionScanChainId.MAINNET,
+        instructions: [
+          {
+            discriminator_hex: "00000000",
+            descriptor: {
+              data: "00010101",
+              signatures: { prod: "prodsig", test: "testsig" },
+            },
+            account_schema: { slots: {} },
+          },
+        ],
+      },
+    ]);
+
+    const result = await datasource.getInstructionInfo({ programId, network });
+
+    expect(result.isLeft()).toBe(true);
+    expect((result.extract() as Error).message).toMatch(
+      new RegExp(
+        String.raw`\[ContextModule\] HttpInstructionInfoDataSource: malformed descriptors for program ${programId}:`,
+      ),
+    );
+  });
+
+  it("returns Right with accountSchema mapped through when it is well-formed", async () => {
+    httpMock.get.mockResolvedValue([
+      {
+        id: programId,
+        chain_id: SolanaTransactionScanChainId.MAINNET,
+        instructions: [
+          {
+            discriminator_hex: "00000000",
+            descriptor: {
+              data: "00010101",
+              signatures: { prod: "prodsig", test: "testsig" },
+            },
+            account_schema: {
+              count_min: 2,
+              count_max: 2,
+              slots: [{ signer: "REQUIRED", writable: "EITHER" }],
+            },
+          },
+        ],
+      },
+    ]);
+
+    const result = await datasource.getInstructionInfo({ programId, network });
+
+    expect(result.isRight()).toBe(true);
+    const { descriptors } = result.unsafeCoerce();
+    expect(descriptors["00000000"]!.unsafeCoerce()).toEqual(
+      expect.objectContaining({
+        accountSchema: {
+          count_min: 2,
+          count_max: 2,
+          remaining_policy: { signer: "EITHER", writable: "EITHER" },
+          slots: [{ signer: "REQUIRED", writable: "EITHER" }],
+        },
+      }),
+    );
+  });
+
   it("returns Left when the HTTP client throws", async () => {
     httpMock.get.mockRejectedValue(new Error("network"));
 

@@ -887,5 +887,44 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
           reject,
         );
       }));
+
+    it("generic build degrades with staleDescriptor → reportSign receives staleDescriptor: true", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+          }),
+        );
+        // ACCOUNT_SCHEMA mismatch: build degrades to mode "none" and flags
+        // staleDescriptor, so the child never gets past CheckContextRecognised
+        // and control falls straight through to BasicClearSign → Report.
+        buildGenericMock.mockResolvedValue({
+          mode: "none",
+          poolContexts: [],
+          instructionInfoContexts: [],
+          unrecognizedProgramIds: [],
+          staleDescriptor: true,
+        });
+        run(
+          withRpc,
+          () => {
+            try {
+              expect(reportSignMock).toHaveBeenCalledOnce();
+              const callArg = reportSignMock.mock.calls[0]![0] as {
+                input: { isBlindSign: boolean; staleDescriptor: boolean };
+              };
+              expect(callArg.input.isBlindSign).toBe(true);
+              expect(callArg.input.staleDescriptor).toBe(true);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
   });
 });

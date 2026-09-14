@@ -86,6 +86,7 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
       instructionInfoContexts: [],
 
       unrecognizedProgramIds: [],
+      staleDescriptor: false,
     });
     provideMock = vi
       .fn()
@@ -122,6 +123,7 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
         instructionInfoContexts: [],
 
         unrecognizedProgramIds: [],
+        staleDescriptor: false,
       });
       run((states) => {
         try {
@@ -131,6 +133,50 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
           ).toEqual(expect.objectContaining({ status: "degraded" }));
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      }, reject);
+    }));
+
+  it("build mode none with staleDescriptor propagates it to the output", () =>
+    new Promise<void>((resolve, reject) => {
+      buildMock.mockResolvedValue({
+        mode: "none",
+        poolContexts: [],
+        instructionInfoContexts: [],
+        unrecognizedProgramIds: [],
+        staleDescriptor: true,
+      });
+      run((states) => {
+        try {
+          expect(provideMock).not.toHaveBeenCalled();
+          expect(finalizeMock).not.toHaveBeenCalled();
+          const last = states[states.length - 1]!;
+          expect(
+            last.status === DeviceActionStatus.Completed && last.output,
+          ).toEqual(
+            expect.objectContaining({
+              status: "degraded",
+              staleDescriptor: true,
+            }),
+          );
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      }, reject);
+    }));
+
+  it("build mode full without staleDescriptor reports it false on the output", () =>
+    new Promise<void>((resolve, reject) => {
+      run((states) => {
+        try {
+          const last = states[states.length - 1]!;
+          expect(
+            last.status === DeviceActionStatus.Completed && last.output,
+          ).toEqual(expect.objectContaining({ staleDescriptor: false }));
           resolve();
         } catch (e) {
           reject(e);

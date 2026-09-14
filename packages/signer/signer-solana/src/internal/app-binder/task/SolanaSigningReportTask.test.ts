@@ -120,6 +120,26 @@ describe("SolanaSigningReportTask", () => {
     });
   });
 
+  it("reports blind-sign with STALE_DESCRIPTOR when staleDescriptor is true", async () => {
+    const signReport = vi.fn().mockResolvedValue(undefined);
+    const contextModule = makeContextModule(signReport);
+
+    await new SolanaSigningReportTask({
+      ...baseArgs,
+      isBlindSign: true,
+      unrecognizedProgramIds: [],
+      staleDescriptor: true,
+      contextModule,
+    }).run();
+
+    expect(signReport).toHaveBeenCalledOnce();
+    const [params] = signReport.mock.calls[0]! as [SolSignReportParams];
+    expect(params).toMatchObject({
+      isBlindSign: true,
+      blindSignReason: BlindSignReason.STALE_DESCRIPTOR,
+    });
+  });
+
   it("reports blind-sign with NO_CLEAR_SIGNING_CONTEXT when no unrecognized programs", async () => {
     const signReport = vi.fn().mockResolvedValue(undefined);
     const contextModule = makeContextModule(signReport);

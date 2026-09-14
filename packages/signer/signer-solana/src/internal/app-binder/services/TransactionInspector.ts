@@ -20,6 +20,8 @@ export type NormalisedCompiledIx = {
   accountKeyIndexes: number[];
   /** Parallel to `accountKeyIndexes`; `true` when the account is writable in this instruction. */
   accountWritable: boolean[];
+  /** Parallel to `accountKeyIndexes`; `true` when the account is a required signer (static slot < numRequiredSignatures; always false for ALT-supplied slots). */
+  accountSigner: boolean[];
   data: Uint8Array;
 };
 
