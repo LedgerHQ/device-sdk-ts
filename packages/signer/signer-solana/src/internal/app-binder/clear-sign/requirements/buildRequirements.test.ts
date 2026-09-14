@@ -28,7 +28,10 @@ import {
   type RequirementAccount,
 } from "./model";
 import { TokenKind } from "./records";
-import { RequirementsDecodeError } from "./RequirementsError";
+import {
+  AccountSchemaMismatchError,
+  RequirementsDecodeError,
+} from "./RequirementsError";
 import { type EnumVariantSelector } from "./rules";
 
 const EMPTY_CACHE: VariantCache = new Map();
@@ -39,7 +42,7 @@ function account(
   altRef?: RequirementAccount["altRef"],
   isWritable = false,
 ): RequirementAccount {
-  return { address, altRef, isWritable };
+  return { address, altRef, isWritable, isSigner: false };
 }
 
 function port(
@@ -431,11 +434,116 @@ describe("buildRequirements", () => {
       expect(error).toBeInstanceOf(RequirementsDecodeError),
     );
   });
+
+  it("no accountSchema on the descriptor: check is skipped, requirements build normally", () => {
+    const result = run([
+      matched({
+        accounts: [account("a"), account("b")],
+        descriptor: { accountSchema: undefined },
+      }),
+    ]);
+    expect(result.instructionInfos).toEqual([
+      { programId: "Prog", discriminator: "00" },
+    ]);
+  });
+
+  it("accountSchema matches the live accounts: requirements build normally", () => {
+    const result = run([
+      matched({
+        accounts: [
+          account("a", undefined, false),
+          account("b", undefined, true),
+        ],
+        descriptor: {
+          accountSchema: {
+            count_min: 2,
+            count_max: 2,
+            remaining_policy: { signer: "EITHER", writable: "EITHER" },
+            slots: [
+              { signer: "EITHER", writable: "FORBIDDEN" },
+              { signer: "EITHER", writable: "REQUIRED" },
+            ],
+          },
+        },
+      }),
+    ]);
+    expect(result.instructionInfos).toEqual([
+      { programId: "Prog", discriminator: "00" },
+    ]);
+  });
+
+  it("accountSchema mismatch: surfaces a typed AccountSchemaMismatchError Left and short-circuits", () => {
+    const broken = matched({
+      discriminator: "AA",
+      accounts: [account("a")],
+      descriptor: {
+        accountSchema: {
+          count_min: 2,
+          count_max: 2,
+          remaining_policy: { signer: "EITHER", writable: "EITHER" },
+          slots: [],
+        },
+      },
+    });
+    const result: Either<unknown, unknown> = buildRequirements([broken], {
+      selectEnumVariants: NO_ENUMS,
+    });
+    expect(result.isLeft()).toBe(true);
+    result.ifLeft((error) => {
+      expect(error).toBeInstanceOf(AccountSchemaMismatchError);
+      expect((error as AccountSchemaMismatchError).originalError.message).toBe(
+        "ACCOUNT_SCHEMA mismatch for (AA): account count 1 below COUNT_MIN 2",
+      );
+    });
+  });
+
+  it("accountSchema mismatch on a later instruction still wins over an earlier unrelated decode error", () => {
+    // Regression: the ACCOUNT_SCHEMA check used to run interleaved with the
+    // per-instruction rules, inside the same loop as the type-pool decode.
+    // A decode failure on an earlier instruction returned Left before the
+    // loop ever reached a later instruction's accountSchema check, so a
+    // stale descriptor was misreported as a plain RequirementsDecodeError
+    // instead of AccountSchemaMismatchError — losing the distinct
+    // STALE_DESCRIPTOR blind-sign reason downstream.
+    const decodeBroken = matched({
+      programId: "P",
+      discriminator: "01",
+      accounts: [],
+      descriptor: {
+        idlDescriptor: {
+          type_pool: [{ index: 0, kind: "NOT_A_KIND" }],
+          root_type: 0,
+        },
+      },
+    });
+    const schemaBroken = matched({
+      discriminator: "AA",
+      accounts: [account("a")],
+      descriptor: {
+        accountSchema: {
+          count_min: 2,
+          count_max: 2,
+          remaining_policy: { signer: "EITHER", writable: "EITHER" },
+          slots: [],
+        },
+      },
+    });
+    const result: Either<unknown, unknown> = buildRequirements(
+      [decodeBroken, schemaBroken],
+      { selectEnumVariants: NO_ENUMS },
+    );
+    expect(result.isLeft()).toBe(true);
+    result.ifLeft((error) =>
+      expect(error).toBeInstanceOf(AccountSchemaMismatchError),
+    );
+  });
+
   it("emits ALT_RESOLUTION for a hide-rule target and an owner association behind an ALT", () => {
     // Gap: the device dereferences HIDE_RULE.TARGET and both OWNER_ASSOC halves
     // at finalize and refuses to sign when an ALT slot is unresolved.
     const alt = (entryIndex: number): RequirementAccount => ({
       isWritable: false,
+      isSigner: false,
       altRef: { altAddress: "ALT", entryIndex },
     });
     const result = run([

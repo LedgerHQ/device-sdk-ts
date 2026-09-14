@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { type CalInstructionDescriptorDto } from "./InstructionInfoDto";
 import {
   toAccountResets,
+  toAccountSchema,
   toDisplayFields,
   toHideRules,
   toInstructionInfoPayload,
@@ -235,6 +236,60 @@ describe("InstructionInfoMapper", () => {
     });
   });
 
+  describe("toAccountSchema", () => {
+    it("returns undefined for undefined input (no ACCOUNT_SCHEMA check)", () => {
+      expect(toAccountSchema(undefined)).toBeUndefined();
+    });
+
+    it("maps count bounds, remaining_policy, and per-slot constraints", () => {
+      expect(
+        toAccountSchema({
+          count_min: 2,
+          count_max: 4,
+          remaining_policy: { signer: "FORBIDDEN", writable: "EITHER" },
+          slots: [
+            { signer: "REQUIRED", writable: "EITHER" },
+            { signer: "EITHER", writable: "REQUIRED" },
+          ],
+        }),
+      ).toEqual({
+        count_min: 2,
+        count_max: 4,
+        remaining_policy: { signer: "FORBIDDEN", writable: "EITHER" },
+        slots: [
+          { signer: "REQUIRED", writable: "EITHER" },
+          { signer: "EITHER", writable: "REQUIRED" },
+        ],
+      });
+    });
+
+    it("defaults count_min to 0, count_max to 255 (COUNT_UNBOUNDED), remaining_policy and slots to EITHER/empty", () => {
+      expect(toAccountSchema({})).toEqual({
+        count_min: 0,
+        count_max: 255,
+        remaining_policy: { signer: "EITHER", writable: "EITHER" },
+        slots: [],
+      });
+    });
+
+    it("defaults an unknown or missing per-field constraint value to EITHER (fails open, unlike ACCOUNT_RESET's value_kind)", () => {
+      expect(
+        toAccountSchema({
+          count_min: 1,
+          count_max: 1,
+          // @ts-expect-error exercising a malformed/unexpected value from CAL
+          remaining_policy: { signer: "NOT_A_VALUE", writable: undefined },
+          slots: [{ signer: "REQUIRED" } as never],
+        }),
+      ).toEqual({
+        count_min: 1,
+        count_max: 1,
+        remaining_policy: { signer: "EITHER", writable: "EITHER" },
+        slots: [{ signer: "REQUIRED", writable: "EITHER" }],
+      });
+    });
+  });
+
   describe("toInstructionInfoPayload", () => {
     it("surfaces CAL's decoded JSON (type pool, mint assoc, ports, resets, fields) and ordered substructures", () => {
       const dto = makeDescriptor({
@@ -282,6 +337,11 @@ describe("InstructionInfoMapper", () => {
             require_pre_balance_zero: true,
           },
         ],
+        account_schema: {
+          count_min: 2,
+          count_max: 2,
+          slots: [{ signer: "REQUIRED", writable: "EITHER" }],
+        },
       });
 
       const payload = toInstructionInfoPayload(
@@ -324,6 +384,12 @@ describe("InstructionInfoMapper", () => {
           },
         ],
         accountResets: [{ account_index: 1, require_pre_balance_zero: true }],
+        accountSchema: {
+          count_min: 2,
+          count_max: 2,
+          remaining_policy: { signer: "EITHER", writable: "EITHER" },
+          slots: [{ signer: "REQUIRED", writable: "EITHER" }],
+        },
         displayFields: [
           {
             name: "New Account",

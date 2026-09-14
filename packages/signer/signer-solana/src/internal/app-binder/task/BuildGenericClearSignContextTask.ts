@@ -60,6 +60,14 @@ export type GenericClearSignContext = {
   readonly challengeBoundRequirements: ChallengeBoundRequirements;
   /** Programs that had no matching CAL descriptor. */
   readonly unrecognizedProgramIds: string[];
+  /**
+   * `true` when `mode` is `"none"` specifically because an instruction failed
+   * its `ACCOUNT_SCHEMA` pre-check (a stale/incompatible CAL descriptor for a
+   * program that has since changed its account layout) — as opposed to any
+   * other reason clear-signing was skipped. Lets the caller report a distinct
+   * blind-sign reason instead of the generic `NO_CLEAR_SIGNING_CONTEXT`.
+   */
+  readonly staleDescriptor: boolean;
 };
 
 export type BuildGenericClearSignContextTaskArgs = {
@@ -104,6 +112,7 @@ export class BuildGenericClearSignContextTask {
         mintAltRefs: [],
       },
       unrecognizedProgramIds: [],
+      staleDescriptor: false,
     };
 
     // --- Parse + CAL lookup + match (Stage 1) ---
@@ -184,6 +193,7 @@ export class BuildGenericClearSignContextTask {
             message,
             ix.accountKeyIndexes,
             ix.accountWritable,
+            ix.accountSigner,
           ),
           data: ix.data,
         },
@@ -238,10 +248,12 @@ export class BuildGenericClearSignContextTask {
       selectEnumVariants: this.args.selectEnumVariants,
     });
     if (requirementsResult.isLeft()) {
+      const error = requirementsResult.extract();
+      const staleDescriptor = error._tag === "AccountSchemaMismatchError";
       this.logger.warn("[run] requirement build failed; falling back", {
-        data: { error: requirementsResult.extract() },
+        data: { error, staleDescriptor },
       });
-      return { ...none, unrecognizedProgramIds: [] };
+      return { ...none, unrecognizedProgramIds: [], staleDescriptor };
     }
     const requirements = requirementsResult.unsafeCoerce();
 
@@ -327,6 +339,7 @@ export class BuildGenericClearSignContextTask {
       instructionInfoContexts,
       challengeBoundRequirements,
       unrecognizedProgramIds: [],
+      staleDescriptor: false,
     };
   }
 
@@ -487,6 +500,7 @@ export class BuildGenericClearSignContextTask {
       displayFields: payload.displayFields,
       hideRules: payload.hideRules,
       enumCache: this.toEnumCache(payload.enumVariants),
+      accountSchema: payload.accountSchema,
     };
   }
 
@@ -509,20 +523,27 @@ export class BuildGenericClearSignContextTask {
     message: NormalizedMessage,
     accountKeyIndexes: number[],
     accountWritable: boolean[],
+    accountSigner: boolean[],
   ): RequirementAccount[] {
     return accountKeyIndexes.map((keyIdx, slot) => {
       const isWritable = accountWritable[slot] ?? false;
+      const isSigner = accountSigner[slot] ?? false;
       const altRef = message.addressLookupRefs?.[keyIdx];
       if (altRef) {
         return {
           isWritable,
+          isSigner,
           altRef: {
             altAddress: altRef.altAddress.toBase58(),
             entryIndex: altRef.entryIndex,
           },
         };
       }
-      return { isWritable, address: message.allKeys[keyIdx]?.toBase58() };
+      return {
+        isWritable,
+        isSigner,
+        address: message.allKeys[keyIdx]?.toBase58(),
+      };
     });
   }
 }

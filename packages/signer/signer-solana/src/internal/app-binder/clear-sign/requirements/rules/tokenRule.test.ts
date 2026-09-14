@@ -72,7 +72,7 @@ function makeInstruction(
 ): RequirementInstruction {
   return {
     programId,
-    accounts: addresses.map((address) => ({ address, isWritable: false })),
+    accounts: addresses.map((address) => ({ address, isWritable: false, isSigner: false })),
     data: new Uint8Array(),
   };
 }
@@ -86,6 +86,7 @@ function withAltSlot(
   const accounts = [...instruction.accounts];
   accounts[altIndex] = {
     isWritable: false,
+    isSigner: false,
     altRef: { altAddress: "ALT", entryIndex },
   };
   return { ...instruction, accounts };

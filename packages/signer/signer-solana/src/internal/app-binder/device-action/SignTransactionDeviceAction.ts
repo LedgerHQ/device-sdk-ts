@@ -249,6 +249,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           serializedForTxCheck: undefined,
           clearSignPrepared: false,
           unrecognizedProgramIds: [],
+          staleDescriptor: false,
         },
       }),
       states: {
@@ -451,6 +452,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                       ...context._internalState,
                       clearSignPrepared: outcome.status === "prepared",
                       unrecognizedProgramIds: outcome.unrecognizedProgramIds,
+                      staleDescriptor: outcome.staleDescriptor,
                     }),
                     // Left never occurs (the prepare phase has no UI), but stay
                     // defensive and surface it.
@@ -590,6 +592,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 messageBytes: context._internalState.messageBytes,
                 unrecognizedProgramIds:
                   context._internalState.unrecognizedProgramIds,
+                staleDescriptor: context._internalState.staleDescriptor,
                 contextModule: context.input.contextModule,
                 signerAppVersion: context._internalState.appConfig!.version,
                 deviceModelId: sessionState.deviceModelId,
