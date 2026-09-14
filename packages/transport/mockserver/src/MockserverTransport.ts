@@ -32,6 +32,7 @@ import {
   mergeMap,
   type Observable,
   of,
+  scan,
   switchMap,
   timer,
 } from "rxjs";
@@ -53,6 +54,43 @@ const DISCOVERY_POLL_INTERVAL_MS = 1000;
 
 /** Interval (ms) at which a connected device is polled for its liveness. */
 const DISCONNECT_POLL_INTERVAL_MS = 1000;
+
+interface DiscoveryState {
+  /** Everything the previous poll reported, whether or not it was emitted. */
+  readonly seenIds: ReadonlySet<DeviceId>;
+  /** What that poll emitted: the reported devices, minus any held back. */
+  readonly devices: TransportDiscoveredDevice[];
+}
+
+/**
+ * A consumer diffing discovered devices by id (e.g. to fire connect/disconnect
+ * callbacks) needs a removal to be observable before the replacement's
+ * addition, or the net-zero id-set change of a same-tick swap (one session
+ * import replacing a device, say) never registers as either. An arrival
+ * landing alongside a removal is therefore held back for a poll.
+ *
+ * Weighing arrivals against what the previous poll *reported*, rather than
+ * against what it emitted, is what bounds that to a single poll: a held device
+ * was reported last time, so next time it no longer counts as an arrival and
+ * goes out even if other devices are still leaving.
+ */
+function deferSameTickArrivals(
+  previous: DiscoveryState,
+  devices: TransportDiscoveredDevice[],
+): DiscoveryState {
+  const currentIds = new Set(devices.map((device) => device.id));
+  const isRemoval = previous.devices.some(
+    (device) => !currentIds.has(device.id),
+  );
+  const arrivals = devices.filter((device) => !previous.seenIds.has(device.id));
+  return {
+    seenIds: currentIds,
+    devices:
+      isRemoval && arrivals.length > 0
+        ? devices.filter((device) => previous.seenIds.has(device.id))
+        : devices,
+  };
+}
 
 export class MockTransport implements Transport {
   private logger: LoggerPublisherService;
@@ -98,6 +136,11 @@ export class MockTransport implements Transport {
           }),
         ),
       ),
+      scan<TransportDiscoveredDevice[], DiscoveryState>(deferSameTickArrivals, {
+        seenIds: new Set(),
+        devices: [],
+      }),
+      map((state) => state.devices),
     );
   }
 
