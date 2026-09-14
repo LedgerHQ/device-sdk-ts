@@ -140,6 +140,36 @@ describe("mockserverTransportFactory", () => {
       ]);
     });
 
+    it("holds back a same-tick replacement so the removal is observed first", async () => {
+      vi.useFakeTimers();
+      const listDevices = mockListDevices(() => Promise.resolve([]));
+      listDevices
+        .mockResolvedValueOnce([aDevice()])
+        .mockResolvedValueOnce([aDevice({ id: "device-2", name: "Stax" })])
+        .mockResolvedValueOnce([aDevice({ id: "device-2", name: "Stax" })]);
+      const transport = mockserverTransportFactory("http://localhost:8080")(
+        transportArgs,
+      );
+
+      const polled = firstValueFrom(
+        transport.listenToAvailableDevices().pipe(take(3), toArray()),
+      );
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 2);
+      const emissions = await polled;
+
+      expect(emissions[0]).toEqual([
+        expect.objectContaining({ id: "device-1" }),
+      ]);
+      // device-1 leaves and device-2 arrives in the same poll: device-2 is
+      // held back so this tick surfaces as a plain removal.
+      expect(emissions[1]).toEqual([]);
+      // Only on the next poll, no longer alongside a removal, does device-2
+      // appear as a fresh addition.
+      expect(emissions[2]).toEqual([
+        expect.objectContaining({ id: "device-2" }),
+      ]);
+    });
+
     it("emits an empty list when the mock server is unreachable", async () => {
       mockListDevices(() => Promise.reject(new Error("offline")));
       const transport = mockserverTransportFactory("http://localhost:8080")(

@@ -32,6 +32,7 @@ import {
   mergeMap,
   type Observable,
   of,
+  scan,
   switchMap,
   timer,
 } from "rxjs";
@@ -53,6 +54,40 @@ const DISCOVERY_POLL_INTERVAL_MS = 1000;
 
 /** Interval (ms) at which a connected device is polled for its liveness. */
 const DISCONNECT_POLL_INTERVAL_MS = 1000;
+
+interface DiscoveryState {
+  readonly knownIds: ReadonlySet<DeviceId>;
+  readonly devices: TransportDiscoveredDevice[];
+}
+
+/**
+ * A consumer diffing discovered devices by id (e.g. to fire connect/disconnect
+ * callbacks) needs a removal to be observable before the replacement's
+ * addition, or the net-zero id-set change of a same-tick swap (one session
+ * import replacing a device, say) never registers as either. Held-back
+ * arrivals surface on the very next poll, since by then they are no longer
+ * arriving alongside a removal.
+ */
+function deferSameTickArrivals(
+  previous: DiscoveryState,
+  devices: TransportDiscoveredDevice[],
+): DiscoveryState {
+  const currentIds = new Set(devices.map((device) => device.id));
+  const isRemoval = [...previous.knownIds].some((id) => !currentIds.has(id));
+  const arrivals = devices.filter(
+    (device) => !previous.knownIds.has(device.id),
+  );
+  if (isRemoval && arrivals.length > 0) {
+    const settled = devices.filter((device) =>
+      previous.knownIds.has(device.id),
+    );
+    return {
+      knownIds: new Set(settled.map((device) => device.id)),
+      devices: settled,
+    };
+  }
+  return { knownIds: currentIds, devices };
+}
 
 export class MockTransport implements Transport {
   private logger: LoggerPublisherService;
@@ -98,6 +133,11 @@ export class MockTransport implements Transport {
           }),
         ),
       ),
+      scan<TransportDiscoveredDevice[], DiscoveryState>(deferSameTickArrivals, {
+        knownIds: new Set(),
+        devices: [],
+      }),
+      map((state) => state.devices),
     );
   }
 
