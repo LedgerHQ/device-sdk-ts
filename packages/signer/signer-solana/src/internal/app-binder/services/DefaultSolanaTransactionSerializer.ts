@@ -3,6 +3,7 @@ import { type SolanaTransactionSerializer } from "./SolanaTransactionSerializer"
 const SOLANA_SIGNATURE_LENGTH = 64;
 const SOLANA_MAX_SIGNATURES = 64;
 const VERSIONED_MESSAGE_PREFIX_MASK = 0x80;
+const V1_VERSION_BYTE = 0x81;
 const SHORTVEC_CONTINUATION_BIT = 0x80;
 const SHORTVEC_DATA_MASK = 0x7f;
 const SHORTVEC_DATA_BITS = 7;
@@ -17,9 +18,30 @@ export class DefaultSolanaTransactionSerializer
     serializedTransactionForTransactionCheck?: Uint8Array,
   ): Uint8Array {
     const numRequiredSignatures = this.readNumRequiredSignatures(message);
-    const sigCount = this.encodeShortVec(numRequiredSignatures);
     const placeholdersLength = numRequiredSignatures * SOLANA_SIGNATURE_LENGTH;
 
+    if (message[0] === V1_VERSION_BYTE) {
+      // SIMD-0385 "Transaction V1": no leading signature-count field —
+      // signatures are appended after the message, sized only by
+      // `numRequiredSignatures` (already read from the message header).
+      const wrapped = new Uint8Array(message.length + placeholdersLength);
+      wrapped.set(message, 0);
+
+      for (const [index, signature] of this.recoverSignaturesV1(
+        message,
+        numRequiredSignatures,
+        serializedTransactionForTransactionCheck,
+      )) {
+        wrapped.set(
+          signature,
+          message.length + index * SOLANA_SIGNATURE_LENGTH,
+        );
+      }
+
+      return wrapped;
+    }
+
+    const sigCount = this.encodeShortVec(numRequiredSignatures);
     const wrapped = new Uint8Array(
       sigCount.length + placeholdersLength + message.length,
     );
@@ -35,6 +57,37 @@ export class DefaultSolanaTransactionSerializer
     }
 
     return wrapped;
+  }
+
+  /**
+   * Same intent as {@link recoverSignatures}, but for the v1 wire shape:
+   * `serialized` is `message` followed directly by `numRequiredSignatures`
+   * signatures, with no leading count field to decode.
+   */
+  private recoverSignaturesV1(
+    message: Uint8Array,
+    numRequiredSignatures: number,
+    serialized: Uint8Array | undefined,
+  ): Map<number, Uint8Array> {
+    const none = new Map<number, Uint8Array>();
+    if (!serialized || serialized.length === 0) return none;
+
+    const expectedLength =
+      message.length + numRequiredSignatures * SOLANA_SIGNATURE_LENGTH;
+    if (serialized.length !== expectedLength) return none;
+    if (!this.bytesEqual(serialized.subarray(0, message.length), message))
+      return none;
+
+    const recovered = new Map<number, Uint8Array>();
+    for (let i = 0; i < numRequiredSignatures; i++) {
+      const start = message.length + i * SOLANA_SIGNATURE_LENGTH;
+      const signature = serialized.subarray(
+        start,
+        start + SOLANA_SIGNATURE_LENGTH,
+      );
+      if (!this.isPlaceholderSignature(signature)) recovered.set(i, signature);
+    }
+    return recovered;
   }
 
   private recoverSignatures(

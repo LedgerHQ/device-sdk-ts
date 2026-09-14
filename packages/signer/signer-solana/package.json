@@ -41,6 +41,7 @@
   "dependencies": {
     "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/signer-utils": "workspace:^",
+    "@solana/transaction-messages": "catalog:",
     "@solana/web3.js": "catalog:",
     "bs58": "catalog:",
     "buffer": "catalog:",
@@ -57,6 +58,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "@solana/kit": "catalog:",
     "@types/semver": "catalog:",
     "rxjs": "catalog:",
     "ts-node": "catalog:"

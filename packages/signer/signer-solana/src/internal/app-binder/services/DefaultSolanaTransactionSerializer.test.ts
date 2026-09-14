@@ -1,6 +1,59 @@
+import {
+  AccountRole,
+  appendTransactionMessageInstructions,
+  blockhash,
+  createTransactionMessage,
+  generateKeyPairSigner,
+  getTransactionEncoder,
+  type Instruction,
+  pipe,
+  setTransactionMessageFeePayerSigner,
+  setTransactionMessageLifetimeUsingBlockhash,
+  signTransactionMessageWithSigners,
+} from "@solana/kit";
+
 import { DefaultSolanaTransactionSerializer } from "./DefaultSolanaTransactionSerializer";
 
 const SIG_LEN = 64;
+
+async function buildRandomInstruction(): Promise<Instruction> {
+  const program = await generateKeyPairSigner();
+  const account = await generateKeyPairSigner();
+  const data = new Uint8Array(1 + Math.floor(Math.random() * 16));
+  crypto.getRandomValues(data);
+  return {
+    programAddress: program.address,
+    accounts: [{ address: account.address, role: AccountRole.WRITABLE }],
+    data,
+  };
+}
+
+/** Builds and signs a real v1 (SIMD-0385) transaction via `@solana/kit`. */
+async function buildRandomV1Transaction() {
+  const feePayer = await generateKeyPairSigner();
+  const blockhashHolder = await generateKeyPairSigner();
+  const instruction = await buildRandomInstruction();
+
+  const message = pipe(
+    createTransactionMessage({ version: 1 }),
+    (m) => setTransactionMessageFeePayerSigner(feePayer, m),
+    (m) =>
+      setTransactionMessageLifetimeUsingBlockhash(
+        {
+          blockhash: blockhash(blockhashHolder.address),
+          lastValidBlockHeight: 1000n,
+        },
+        m,
+      ),
+    (m) => appendTransactionMessageInstructions([instruction], m),
+  );
+
+  const signedTx = await signTransactionMessageWithSigners(message);
+  const messageBytes = new Uint8Array(signedTx.messageBytes);
+  const wireBytes = getTransactionEncoder().encode(signedTx) as Uint8Array;
+
+  return { messageBytes, wireBytes };
+}
 
 let serializer: DefaultSolanaTransactionSerializer;
 
@@ -195,6 +248,76 @@ describe("DefaultSolanaTransactionSerializer", () => {
       );
       const sigBytes = payload.slice(1, 1 + SIG_LEN);
       expect(sigBytes.every((b) => b === 0)).toBe(true);
+    });
+  });
+
+  describe("wrapMessageAsTransaction — v1 (SIMD-0385, built with @solana/kit)", () => {
+    it("wraps a v1 message with the message first and a zero-filled signature appended, no leading count field", async () => {
+      const { messageBytes } = await buildRandomV1Transaction();
+
+      const payload = serializer.wrapMessageAsTransaction(messageBytes);
+
+      expect(payload.length).toBe(messageBytes.length + SIG_LEN);
+      expect(Array.from(payload.slice(0, messageBytes.length))).toEqual(
+        Array.from(messageBytes),
+      );
+      const sigSlot = payload.slice(messageBytes.length);
+      expect(sigSlot.every((b) => b === 0)).toBe(true);
+    });
+
+    it("recovers a real signature from serializedTransactionForTransactionCheck at the correct tail offset", async () => {
+      const { messageBytes, wireBytes } = await buildRandomV1Transaction();
+
+      const payload = serializer.wrapMessageAsTransaction(
+        messageBytes,
+        wireBytes,
+      );
+
+      expect(Array.from(payload)).toEqual(Array.from(wireBytes));
+    });
+
+    it("falls back to zero-fill when the serialized message region doesn't match (stale blockhash case)", async () => {
+      const { messageBytes, wireBytes } = await buildRandomV1Transaction();
+      const { messageBytes: differentMessageBytes } =
+        await buildRandomV1Transaction();
+
+      // Same signer/signature-count shape, but the serialized message
+      // portion no longer matches `messageBytes` byte-for-byte.
+      const mismatched = new Uint8Array(wireBytes.length);
+      mismatched.set(differentMessageBytes.subarray(0, messageBytes.length));
+      mismatched.set(
+        wireBytes.subarray(messageBytes.length),
+        messageBytes.length,
+      );
+
+      const payload = serializer.wrapMessageAsTransaction(
+        messageBytes,
+        mismatched,
+      );
+      const sigSlot = payload.slice(messageBytes.length);
+      expect(sigSlot.every((b) => b === 0)).toBe(true);
+    });
+
+    it("falls back to zero-fill when the serialized blob is truncated", async () => {
+      const { messageBytes, wireBytes } = await buildRandomV1Transaction();
+      const truncated = wireBytes.subarray(0, wireBytes.length - 10);
+
+      const payload = serializer.wrapMessageAsTransaction(
+        messageBytes,
+        truncated,
+      );
+      const sigSlot = payload.slice(messageBytes.length);
+      expect(sigSlot.every((b) => b === 0)).toBe(true);
+    });
+
+    it("does not fall through to the legacy shortvec-prefixed shape for a v1 message", async () => {
+      const { messageBytes } = await buildRandomV1Transaction();
+
+      const payload = serializer.wrapMessageAsTransaction(messageBytes);
+
+      // A legacy/v0 wrap would prepend a shortvec count byte before the
+      // message; a v1 wrap must not, since v1 has no such leading field.
+      expect(payload[0]).toBe(messageBytes[0]);
     });
   });
 });
