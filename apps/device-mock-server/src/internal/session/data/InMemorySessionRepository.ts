@@ -425,7 +425,8 @@ export class InMemorySessionRepository implements SessionRepository {
     };
   }
 
-  importSession(record: SessionRecord, snapshot: SessionExport): SessionExport {
+  evictDevices(record: SessionRecord): SpeculosProxySession[] {
+    const evicted = [...record.speculos.values()];
     record.devices.clear();
     record.deviceMocks.clear();
     record.deviceMockCursors.clear();
@@ -435,10 +436,7 @@ export class InMemorySessionRepository implements SessionRepository {
     record.pendingFirmwareOperations.clear();
     record.pendingLanguageOperations.clear();
     record.onboarding.clear();
-    for (const device of snapshot.devices) {
-      this.addDevice(record, device);
-    }
-    return this.exportSession(record);
+    return evicted;
   }
 
   // --- Helpers --------------------------------------------------------------

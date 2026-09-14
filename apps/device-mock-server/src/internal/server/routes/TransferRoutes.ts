@@ -1,5 +1,5 @@
 import { type Response, Router } from "express";
-import { inject, injectable } from "inversify";
+import { inject, injectable, optional } from "inversify";
 
 import { logger } from "@internal/logger/logger";
 import {
@@ -10,6 +10,8 @@ import {
 import { decodeSessionImport } from "@internal/server/validation/requests";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
+import { type SpeculosOperatorDataSource } from "@internal/speculos/data/SpeculosOperatorDataSource";
+import { speculosTypes } from "@internal/speculos/di/speculosTypes";
 
 /**
  * Session-scoped import/export of the devices snapshot (each device carrying its
@@ -20,6 +22,9 @@ export class TransferRoutes {
   constructor(
     @inject(sessionTypes.Repository)
     private readonly repository: SessionRepository,
+    @optional()
+    @inject(speculosTypes.OperatorDataSource)
+    private readonly operator?: SpeculosOperatorDataSource,
   ) {}
 
   build(): Router {
@@ -72,12 +77,18 @@ export class TransferRoutes {
      */
     router.post("/import", (req: AuthedRequest, res: Response) => {
       decodeSessionImport(req.body).caseOf({
-        Left: (error) => res.status(400).json({ error }),
+        Left: (error) => {
+          res.status(400).json({ error });
+        },
         Right: (snapshot) => {
-          const result = this.repository.importSession(
-            getSession(req),
-            snapshot,
-          );
+          const record = getSession(req);
+          const evicted = this.repository.evictDevices(record);
+          for (const proxy of evicted)
+            void this.operator?.release(proxy.runId).run();
+          for (const device of snapshot.devices) {
+            this.repository.addDevice(record, device);
+          }
+          const result = this.repository.exportSession(record);
           const mockCount = result.devices.reduce(
             (total, device) => total + (device.mocks?.length ?? 0),
             0,
@@ -85,7 +96,7 @@ export class TransferRoutes {
           logger.info(
             `Session imported: ${result.devices.length} device(s), ${mockCount} mock(s)`,
           );
-          return res.json(result);
+          res.json(result);
         },
       });
     });

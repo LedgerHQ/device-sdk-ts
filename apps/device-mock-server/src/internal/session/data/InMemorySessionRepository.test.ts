@@ -154,26 +154,46 @@ describe("InMemorySessionRepository", () => {
     expect(snapshot.devices[0]).not.toHaveProperty("id");
   });
 
-  it("imports a snapshot, replacing devices and their mocks", () => {
+  it("evicts every device (disconnected and deleted) so a snapshot can be imported in their place", () => {
     const { repo, record } = newSession();
     const old = repo.addDevice(record, { name: "Old", device_type: "nanoX" });
     repo.addMock(record, old.id, { prefix: "aa", responses: ["00"] });
 
-    const result = repo.importSession(record, {
-      devices: [
-        {
-          name: "Imported",
-          device_type: "flex",
-          mocks: [{ prefix: "ff", responses: ["11", "22"] }],
-        },
-      ],
+    repo.evictDevices(record);
+    expect(repo.listDevices(record)).toHaveLength(0);
+    expect(repo.listMocks(record, old.id).isNothing()).toBe(true);
+
+    repo.addDevice(record, {
+      name: "Imported",
+      device_type: "flex",
+      mocks: [{ prefix: "ff", responses: ["11", "22"] }],
     });
 
     const devices = repo.listDevices(record);
     expect(devices).toHaveLength(1);
     expect(devices[0]?.name).toBe("Imported");
-    expect(result.devices[0]?.mocks).toEqual([
+    expect(repo.exportSession(record).devices[0]?.mocks).toEqual([
       { prefix: "ff", responses: ["11", "22"] },
+    ]);
+  });
+
+  it("returns the evicted devices' speculos proxies so they can be released before importing", () => {
+    const { repo, record } = newSession();
+    const old = repo.addDevice(record, { name: "Old", device_type: "nanoX" });
+    repo.setProxy(record, old.id, {
+      runId: "run-1",
+      speculosUrl: "https://run-1.speculos.test",
+      appName: "Bitcoin",
+    });
+
+    const evicted = repo.evictDevices(record);
+
+    expect(evicted).toEqual([
+      {
+        runId: "run-1",
+        speculosUrl: "https://run-1.speculos.test",
+        appName: "Bitcoin",
+      },
     ]);
   });
 

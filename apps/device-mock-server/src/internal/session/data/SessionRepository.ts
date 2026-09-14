@@ -169,5 +169,6 @@ export interface SessionRepository {
 
   // --- Import / Export ------------------------------------------------------
   exportSession(record: SessionRecord): SessionExport;
-  importSession(record: SessionRecord, snapshot: SessionExport): SessionExport;
+  /** Disconnect and delete every device; returns the Speculos proxies they held. */
+  evictDevices(record: SessionRecord): SpeculosProxySession[];
 }
