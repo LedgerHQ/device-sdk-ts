@@ -7,6 +7,15 @@ import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleCon
 import { HttpTokenAccountStateDataSource } from "./HttpTokenAccountStateDataSource";
 import { type TokenAccountStateDataSource } from "./TokenAccountStateDataSource";
 
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+const mockLoggerFactory = () => mockLogger;
+
 describe("HttpTokenAccountStateDataSource", () => {
   let datasource: TokenAccountStateDataSource;
   let httpMock: { get: ReturnType<typeof vi.fn> };
@@ -21,6 +30,7 @@ describe("HttpTokenAccountStateDataSource", () => {
     httpMock = { get: vi.fn() };
     datasource = new HttpTokenAccountStateDataSource(
       config,
+      mockLoggerFactory,
       httpMock as unknown as DmkNetworkClient,
     );
   });
@@ -110,5 +120,63 @@ describe("HttpTokenAccountStateDataSource", () => {
         ),
       ),
     );
+  });
+
+  it("logs debug when nativePreBalance is absent", async () => {
+    httpMock.get.mockResolvedValue({
+      signedDescriptor: "deadbeef",
+      keyId: "k",
+      keyUsage: "u",
+    });
+
+    await datasource.getTokenAccountState({ tokenAccount, challenge });
+
+    expect(mockLogger.debug).toHaveBeenCalledWith(
+      expect.stringContaining("nativePreBalance absent"),
+      expect.objectContaining({ data: { tokenAccount } }),
+    );
+  });
+
+  it("does not log debug when nativePreBalance is present", async () => {
+    httpMock.get.mockResolvedValue({
+      signedDescriptor: "deadbeef",
+      keyId: "k",
+      keyUsage: "u",
+      nativePreBalance: 1000,
+    });
+
+    await datasource.getTokenAccountState({ tokenAccount, challenge });
+
+    expect(mockLogger.debug).not.toHaveBeenCalled();
+  });
+
+  it("logs warn when owner is present but mint is absent", async () => {
+    httpMock.get.mockResolvedValue({
+      signedDescriptor: "deadbeef",
+      keyId: "k",
+      keyUsage: "u",
+      owner: "OwnerPubkeyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    });
+
+    await datasource.getTokenAccountState({ tokenAccount, challenge });
+
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("owner but no mint"),
+      expect.objectContaining({ data: { tokenAccount } }),
+    );
+  });
+
+  it("does not log warn when both owner and mint are present", async () => {
+    httpMock.get.mockResolvedValue({
+      signedDescriptor: "deadbeef",
+      keyId: "k",
+      keyUsage: "u",
+      owner: "OwnerPubkeyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+      mint: "MintPubkeyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    });
+
+    await datasource.getTokenAccountState({ tokenAccount, challenge });
+
+    expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 });
