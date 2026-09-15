@@ -140,6 +140,65 @@ describe("mockserverTransportFactory", () => {
       ]);
     });
 
+    it("holds back a same-tick replacement so the removal is observed first", async () => {
+      vi.useFakeTimers();
+      const listDevices = mockListDevices(() => Promise.resolve([]));
+      listDevices
+        .mockResolvedValueOnce([aDevice()])
+        .mockResolvedValueOnce([aDevice({ id: "device-2", name: "Stax" })])
+        .mockResolvedValueOnce([aDevice({ id: "device-2", name: "Stax" })]);
+      const transport = mockserverTransportFactory("http://localhost:8080")(
+        transportArgs,
+      );
+
+      const polled = firstValueFrom(
+        transport.listenToAvailableDevices().pipe(take(3), toArray()),
+      );
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 2);
+      const emissions = await polled;
+
+      expect(emissions[0]).toEqual([
+        expect.objectContaining({ id: "device-1" }),
+      ]);
+      // device-1 leaves and device-2 arrives in the same poll: device-2 is
+      // held back so this tick surfaces as a plain removal.
+      expect(emissions[1]).toEqual([]);
+      // Only on the next poll, no longer alongside a removal, does device-2
+      // appear as a fresh addition.
+      expect(emissions[2]).toEqual([
+        expect.objectContaining({ id: "device-2" }),
+      ]);
+    });
+
+    it("releases a held arrival on the next poll even when another device leaves", async () => {
+      vi.useFakeTimers();
+      const stax = aDevice({ id: "stax", name: "Stax" });
+      const listDevices = mockListDevices(() => Promise.resolve([]));
+      listDevices
+        .mockResolvedValueOnce([aDevice({ id: "a" }), stax])
+        .mockResolvedValueOnce([aDevice({ id: "b" }), stax])
+        .mockResolvedValueOnce([aDevice({ id: "b" }), aDevice({ id: "c" })]);
+      const transport = mockserverTransportFactory("http://localhost:8080")(
+        transportArgs,
+      );
+
+      const polled = firstValueFrom(
+        transport.listenToAvailableDevices().pipe(take(3), toArray()),
+      );
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 2);
+      const emissions = await polled;
+
+      expect(emissions[0]).toEqual([
+        expect.objectContaining({ id: "a" }),
+        expect.objectContaining({ id: "stax" }),
+      ]);
+      // "a" leaves as "b" arrives, so "b" waits a poll.
+      expect(emissions[1]).toEqual([expect.objectContaining({ id: "stax" })]);
+      // "stax" now leaves as "c" arrives: that defers "c", but must not defer
+      // "b" a second time, so "b" surfaces here as promised.
+      expect(emissions[2]).toEqual([expect.objectContaining({ id: "b" })]);
+    });
+
     it("emits an empty list when the mock server is unreachable", async () => {
       mockListDevices(() => Promise.reject(new Error("offline")));
       const transport = mockserverTransportFactory("http://localhost:8080")(
