@@ -1,32 +1,40 @@
-[
-  {
-    "data": {
-      "domain": {
-        "name": "Lombard Staked Bitcoin",
-        "version": "1",
-        "chainId": 1,
-        "verifyingContract": "0x8236a87084f8B84306f72007F36F2618A5634494"
+{
+  "group": "erc7730-typed-data",
+  "name": "lombard",
+  "action": "signTypedData",
+  "devices": ["stax", "nanox", "flex"],
+  "coinApp": "Ethereum",
+  "mode": "parallel",
+  "cases": [
+    {
+      "data": {
+        "domain": {
+          "name": "Lombard Staked Bitcoin",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0x8236a87084f8B84306f72007F36F2618A5634494"
+        },
+        "primaryType": "feeApproval",
+        "types": {
+          "EIP712Domain": [
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
+          ],
+          "feeApproval": [
+            { "name": "chainId", "type": "uint256" },
+            { "name": "fee", "type": "uint256" },
+            { "name": "expiry", "type": "uint256" }
+          ]
+        },
+        "message": {
+          "chainId": 1,
+          "fee": "50000",
+          "expiry": 1735689600
+        }
       },
-      "primaryType": "feeApproval",
-      "types": {
-        "EIP712Domain": [
-          { "name": "name", "type": "string" },
-          { "name": "version", "type": "string" },
-          { "name": "chainId", "type": "uint256" },
-          { "name": "verifyingContract", "type": "address" }
-        ],
-        "feeApproval": [
-          { "name": "chainId", "type": "uint256" },
-          { "name": "fee", "type": "uint256" },
-          { "name": "expiry", "type": "uint256" }
-        ]
-      },
-      "message": {
-        "chainId": 1,
-        "fee": "50000",
-        "expiry": 1735689600
-      }
-    },
-    "description": "Lombard: Network Fee Authorization (mainnet)"
-  }
-]
+      "description": "Lombard: Network Fee Authorization (mainnet)"
+    }
+  ]
+}

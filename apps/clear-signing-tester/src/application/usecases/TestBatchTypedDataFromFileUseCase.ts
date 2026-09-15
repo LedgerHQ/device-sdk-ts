@@ -33,11 +33,7 @@ export class TestBatchTypedDataFromFileUseCase extends TestBatchFromFileUseCase<
       deviceRepository,
       (deviceRepo, input, derivationPath) =>
         deviceRepo.performSign(input, derivationPath),
-      {
-        title: "📋 TYPED DATA TEST RESULTS",
-        summaryTitle: "📊 TYPED DATA BATCH SUMMARY",
-        itemName: "typed data",
-      },
+      { itemName: "typed data" },
       loggerFactory,
       "test-batch-typed-data",
     );

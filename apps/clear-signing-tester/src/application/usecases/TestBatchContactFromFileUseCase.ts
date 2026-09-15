@@ -5,15 +5,16 @@ import { TYPES } from "@root/src/di/types";
 import { type ContactInput } from "@root/src/domain/models/ContactInput";
 import { type TestResult } from "@root/src/domain/types/TestStatus";
 import {
+  delay,
+  INTER_CASE_DELAY_MS,
+} from "@root/src/domain/utils/interCaseDelay";
+import {
   type BatchTestResult,
   ResultFormatter,
 } from "@root/src/domain/utils/ResultFormatter";
 import { type ContactFileRepository } from "@root/src/infrastructure/repositories/ContactFileRepository";
 
 import { TestContactUseCase } from "./TestContactUseCase";
-
-/** Pause between cases, matching the transaction batch loop. */
-const INTER_CASE_DELAY_MS = 2000;
 
 /**
  * Register every contact in a file.
@@ -52,13 +53,12 @@ export class TestBatchContactFromFileUseCase {
 
       results.push(await this.runContact(contact, index));
 
-      await new Promise((resolve) => setTimeout(resolve, INTER_CASE_DELAY_MS));
+      // Contacts always share one emulator, since a later case asserts an
+      // earlier registration survived. No delay is owed after the last.
+      if (index < contacts.length - 1) await delay(INTER_CASE_DELAY_MS);
     }
 
-    return ResultFormatter.formatBatchResults(results, contacts.length, {
-      title: "📋 CONTACT RESULTS",
-      summaryTitle: "📊 CONTACT SUMMARY",
-    });
+    return ResultFormatter.formatBatchResults(results, contacts.length);
   }
 
   private async runContact(

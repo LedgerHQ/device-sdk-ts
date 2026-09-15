@@ -16,6 +16,8 @@ export interface SpeculosOperatorConfig {
   readonly speculosVersion?: string;
   /** Max acquire-to-ready wait before giving up. */
   readonly readyTimeoutMs?: number;
+  /** How long the operator keeps an instance's route alive between requests. */
+  readonly routeTimeoutSeconds?: number;
   /** Status poll cadence while waiting for readiness. */
   readonly pollIntervalMs?: number;
 }

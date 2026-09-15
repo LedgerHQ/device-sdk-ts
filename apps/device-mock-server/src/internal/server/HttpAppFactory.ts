@@ -30,6 +30,10 @@ export class HttpAppFactory {
   build(): Express {
     const app = express();
 
+    // Clients poll this API; a 304 on an unchanged device list reads as an
+    // error to them, so never let a response be revalidated.
+    app.set("etag", false);
+
     app.use(requestLogger());
     app.use(express.json());
 

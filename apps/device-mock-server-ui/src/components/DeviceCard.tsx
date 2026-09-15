@@ -20,16 +20,18 @@ import {
 import { api } from "@/api/client";
 import { ConsolePanel } from "@/components/ConsolePanel";
 import { CopyButton } from "@/components/CopyButton";
+import { DeviceScreenPanel } from "@/components/DeviceScreenPanel";
 import { LabeledRow } from "@/components/LabeledRow";
 import { MocksPanel } from "@/components/MocksPanel";
 import { findModel } from "@/domain/devices";
 
-type Tab = "overview" | "mocks" | "console";
+type Tab = "overview" | "mocks" | "console" | "screen";
 
 const TABS: { value: Tab; label: string }[] = [
   { value: "overview", label: "Overview" },
   { value: "mocks", label: "Mocks" },
   { value: "console", label: "APDU console" },
+  { value: "screen", label: "Screen" },
 ];
 
 interface DeviceCardProps {
@@ -277,6 +279,15 @@ export function DeviceCard({
               token={token}
               device={device}
               onDeviceMayHaveChanged={onChanged}
+              onError={onError}
+            />
+          ) : null}
+
+          {tab === "screen" ? (
+            <DeviceScreenPanel
+              token={token}
+              deviceId={device.id}
+              model={model}
               onError={onError}
             />
           ) : null}

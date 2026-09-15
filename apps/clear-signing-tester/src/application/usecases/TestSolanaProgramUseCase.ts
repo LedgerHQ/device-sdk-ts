@@ -53,11 +53,7 @@ export class TestSolanaProgramUseCase {
       console.warn(
         `No clear-signable transactions found for program "${config.programName}"`,
       );
-      return ResultFormatter.formatBatchResults([], 0, {
-        title: `SOLANA PROGRAM TEST RESULTS (${config.programName})`,
-        summaryTitle: `SOLANA PROGRAM SUMMARY — ${config.programName} (Total: 0)`,
-        includeHash: true,
-      });
+      return ResultFormatter.formatBatchResults([], 0);
     }
 
     this.logger.info(
@@ -70,7 +66,6 @@ export class TestSolanaProgramUseCase {
       const transaction: TransactionInput = {
         kind: SignableInputKind.Transaction,
         rawTx: tx.rawTx,
-        txHash: tx.signature,
         description: `[${config.programName}:${tx.category}] ${tx.signature.slice(0, 16)}...`,
         skipCraft: config.skipCraft,
       };
@@ -101,10 +96,6 @@ export class TestSolanaProgramUseCase {
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
-    return ResultFormatter.formatBatchResults(results, txs.length, {
-      title: `SOLANA PROGRAM TEST RESULTS (${config.programName})`,
-      summaryTitle: `SOLANA PROGRAM SUMMARY — ${config.programName} (Total: ${txs.length})`,
-      includeHash: true,
-    });
+    return ResultFormatter.formatBatchResults(results, txs.length);
   }
 }

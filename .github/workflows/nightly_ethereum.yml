@@ -16,26 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  setup:
-    name: Setup toolchain and dependencies
-    runs-on: ledgerhq-device-sdk
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
-
-  build-libraries:
-    name: Build libraries
-    needs: [setup]
-    runs-on: ledgerhq-device-sdk
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
-
-  erc7730-calldata-tests:
-    needs: [build-libraries]
-    name: ERC7730 Calldata Test (${{ matrix.device }} - ${{ matrix.dapp }})
+  cs-tester:
+    name: Clear Signing Test (${{ matrix.device }})
     runs-on: ledgerhq-device-sdk
     permissions:
       contents: read
@@ -43,107 +25,25 @@ jobs:
       fail-fast: false
       matrix:
         device: [stax, nanox, flex]
-        dapp:
-          - 1inch
-          - aave
-          - ethena
-          - lido
-          - lombard
-          - poap
-          - swissborg
-          - tether
-          - uniswap
-          - velora
-          - yieldxyz
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # One job per device, running every Ethereum group that device supports.
+      # Gating is touchscreen-only, so it is skipped by name on nanox rather
+      # than needing an axis of its own.
       - uses: ./.github/actions/cs-tester-composite
         with:
-          runner: cs-tester
-          test: test:erc7730
-          dapp: ${{ matrix.dapp }}
+          scenarios: erc7730 erc7730-typed-data gating
           device: ${{ matrix.device }}
-          coin-app: Ethereum
+          concurrency: "10"
           log-level: error
           enable-file-logging: "true"
-          artifact-prefix: erc7730-calldata-logs
-          summary-prefix: "ERC7730 Calldata Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          artifact-prefix: eth-nightly-logs
+          summary-prefix: "Clear Signing Test"
           gating-token: ${{ secrets.GATING_TOKEN }}
-          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
-
-  erc7730-ethereum-tests:
-    needs: [build-libraries]
-    name: ERC7730 Ethereum Test (${{ matrix.device }} - ${{ matrix.dapp }})
-    runs-on: ledgerhq-device-sdk
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [stax, nanox, flex]
-        dapp:
-          - 1inch
-          - degate
-          - ledgerquest
-          - lens
-          - lombard
-          - opensea
-          - permit
-          - smartcredit
-          - tally
-          - uniswap
-          - velora
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/cs-tester-composite
-        with:
-          runner: cs-tester
-          test: test:erc7730:typed-data
-          dapp: ${{ matrix.dapp }}
-          device: ${{ matrix.device }}
-          coin-app: Ethereum
-          log-level: error
-          enable-file-logging: "true"
-          artifact-prefix: erc7730-ethereum-logs
-          summary-prefix: "ERC7730 Ethereum Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-          gating-token: ${{ secrets.GATING_TOKEN }}
-          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
-
-  ethereum-gating-tests:
-    needs: [build-libraries]
-    name: Ethereum Gating Test (${{ matrix.device }})
-    runs-on: ledgerhq-device-sdk
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [stax, flex]
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: ./.github/actions/cs-tester-composite
-        with:
-          runner: cs-tester
-          test: test:gating
-          device: ${{ matrix.device }}
-          coin-app: Ethereum
-          log-level: error
-          enable-file-logging: "true"
-          artifact-prefix: ethereum-gating-logs
-          summary-prefix: "Ethereum Gating Test"
-          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
-          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-          gating-token: ${{ secrets.GATING_TOKEN }}
-          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   notify:
     name: Notify Slack
-    needs:
-      [erc7730-calldata-tests, erc7730-ethereum-tests, ethereum-gating-tests]
+    needs: [cs-tester]
     if: always()
     runs-on: ubuntu-latest
     steps:

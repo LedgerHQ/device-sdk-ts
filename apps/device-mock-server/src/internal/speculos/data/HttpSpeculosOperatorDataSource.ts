@@ -14,6 +14,7 @@ import {
 
 const DEFAULT_READY_TIMEOUT_MS = 120_000;
 const DEFAULT_POLL_INTERVAL_MS = 1_000;
+const DEFAULT_ROUTE_TIMEOUT_SECONDS = 300;
 /** Liveness probe budget: a gone pod is refused well within this. */
 const LIVENESS_TIMEOUT_MS = 2_000;
 
@@ -49,6 +50,7 @@ export class HttpSpeculosOperatorDataSource
   private readonly speculosVersion?: string;
   private readonly readyTimeoutMs: number;
   private readonly pollIntervalMs: number;
+  private readonly routeTimeoutSeconds: number;
 
   constructor(
     @inject(speculosTypes.OperatorConfig) config: SpeculosOperatorConfig,
@@ -57,6 +59,8 @@ export class HttpSpeculosOperatorDataSource
     this.speculosVersion = config.speculosVersion;
     this.readyTimeoutMs = config.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS;
     this.pollIntervalMs = config.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
+    this.routeTimeoutSeconds =
+      config.routeTimeoutSeconds ?? DEFAULT_ROUTE_TIMEOUT_SECONDS;
   }
 
   acquire(
@@ -69,6 +73,7 @@ export class HttpSpeculosOperatorDataSource
         ...req,
         seed,
         run_id: runId,
+        route_timeout_seconds: this.routeTimeoutSeconds,
       };
       if (this.speculosVersion) body["speculos_version"] = this.speculosVersion;
       let res: Response;

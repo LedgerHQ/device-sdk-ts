@@ -13,9 +13,22 @@ const LIVE_COMMON_VERSION = "36.2.0";
 
 /**
  * Default provider (1 = Ledger). Mirrors `FORCE_PROVIDER`'s default in
- * ledger-live; the mock does not model alternative firmware providers.
+ * ledger-live.
  */
 const DEFAULT_PROVIDER = 1;
+
+/**
+ * Provider carrying a model's release-candidate firmwares, by target id: an RC
+ * is published there only. Ledger Live needs `FORCE_PROVIDER` set to the same
+ * value to see such a device.
+ */
+const RC_PROVIDER_BY_TARGET_ID: Record<number, number> = {
+  0x33000004: 80, // Nano X
+  0x33100004: 81, // Nano S Plus
+  0x33200004: 83, // Stax
+  0x33300004: 82, // Flex
+  0x33400004: 84, // Apex
+};
 
 /**
  * Rollout salt the Manager API uses to gate staged firmware releases. In
@@ -164,26 +177,16 @@ export class FirmwareUpdateResolver {
     currentVersion: string;
     providerId: number;
   }): Promise<LanguagePackageDto[]> {
-    const deviceVersion = await this.get<DeviceVersionDto>(
-      "get_device_version",
-      { provider: providerId, target_id: targetId },
-    );
-    if (deviceVersion?.id === undefined) {
-      logger.warn(`Manager API: unknown target_id ${targetId}`);
-      return [];
-    }
-    const firmware = await this.get<FinalFirmwareDto>("get_firmware_version", {
-      device_version: deviceVersion.id,
-      version_name: currentVersion,
-      provider: providerId,
+    const current = await this.fetchCurrentFirmware({
+      targetId,
+      currentVersion,
+      providerId,
     });
-    if (firmware?.id === undefined) {
-      logger.warn(`Manager API: unknown firmware ${currentVersion}`);
-      return [];
-    }
+    if (!current) return [];
+
     const packs = await this.get<LanguagePackageDto[]>("language-packages", {
-      device_version: deviceVersion.id,
-      current_se_firmware_final_version: firmware.id,
+      device_version: current.deviceVersionId,
+      current_se_firmware_final_version: current.firmwareId,
     });
     return packs ?? [];
   }
@@ -239,33 +242,18 @@ export class FirmwareUpdateResolver {
     // Transient errors (network failure, 5xx) are left to propagate so the
     // caching layer can evict them; only deterministic outcomes reach the
     // `Maybe.empty()` returns below and are safe to cache.
-    const deviceVersion = await this.get<DeviceVersionDto>(
-      "get_device_version",
-      { provider: providerId, target_id: targetId },
-    );
-    if (deviceVersion?.id === undefined) {
-      logger.warn(`Manager API: unknown target_id ${targetId}`);
-      return Maybe.empty();
-    }
-
-    const currentFirmware = await this.get<FinalFirmwareDto>(
-      "get_firmware_version",
-      {
-        device_version: deviceVersion.id,
-        version_name: currentVersion,
-        provider: providerId,
-      },
-    );
-    if (currentFirmware?.id === undefined) {
-      logger.warn(`Manager API: unknown firmware ${currentVersion}`);
-      return Maybe.empty();
-    }
+    const current = await this.fetchCurrentFirmware({
+      targetId,
+      currentVersion,
+      providerId,
+    });
+    if (!current) return Maybe.empty();
 
     const latest = await this.get<LatestFirmwareDto>("get_latest_firmware", {
       salt: ROLLOUT_SALT,
-      current_se_firmware_final_version: currentFirmware.id,
-      device_version: deviceVersion.id,
-      provider: providerId,
+      current_se_firmware_final_version: current.firmwareId,
+      device_version: current.deviceVersionId,
+      provider: current.provider,
     });
     const osu = latest?.se_firmware_osu_version;
     // When an update is available use the next firmware's MCU list so LLD's
@@ -277,7 +265,7 @@ export class FirmwareUpdateResolver {
       latest?.result !== "null" &&
       osu?.next_se_firmware_final_version !== undefined
         ? osu.next_se_firmware_final_version
-        : currentFirmware.id;
+        : current.firmwareId;
 
     const firmware = await this.get<FinalFirmwareDto>(
       `firmware_final_versions/${firmwareId}`,
@@ -339,33 +327,18 @@ export class FirmwareUpdateResolver {
     // Transient errors (network failure, 5xx) are left to propagate so the
     // caching layer can evict them; only deterministic outcomes reach the
     // `Maybe.empty()` returns below and are safe to cache.
-    const deviceVersion = await this.get<DeviceVersionDto>(
-      "get_device_version",
-      { provider: providerId, target_id: targetId },
-    );
-    if (deviceVersion?.id === undefined) {
-      logger.warn(`Manager API: unknown target_id ${targetId}`);
-      return Maybe.empty();
-    }
-
-    const currentFirmware = await this.get<FinalFirmwareDto>(
-      "get_firmware_version",
-      {
-        device_version: deviceVersion.id,
-        version_name: currentVersion,
-        provider: providerId,
-      },
-    );
-    if (currentFirmware?.id === undefined) {
-      logger.warn(`Manager API: unknown firmware ${currentVersion}`);
-      return Maybe.empty();
-    }
+    const current = await this.fetchCurrentFirmware({
+      targetId,
+      currentVersion,
+      providerId,
+    });
+    if (!current) return Maybe.empty();
 
     const latest = await this.get<LatestFirmwareDto>("get_latest_firmware", {
       salt: ROLLOUT_SALT,
-      current_se_firmware_final_version: currentFirmware.id,
-      device_version: deviceVersion.id,
-      provider: providerId,
+      current_se_firmware_final_version: current.firmwareId,
+      device_version: current.deviceVersionId,
+      provider: current.provider,
     });
     const osu = latest?.se_firmware_osu_version;
     if (
@@ -390,6 +363,72 @@ export class FirmwareUpdateResolver {
     return Maybe.of(final);
   }
 
+  private providersFor(
+    targetId: string | number,
+    providerId: number,
+  ): number[] {
+    const rcProvider = RC_PROVIDER_BY_TARGET_ID[Number(targetId)];
+    return rcProvider === undefined || rcProvider === providerId
+      ? [providerId]
+      : [providerId, rcProvider];
+  }
+
+  /**
+   * `get_device_version` -> `get_firmware_version` over each provider in turn.
+   * Resolves the provider that answered so the rest of a chain stays on it: the
+   * update and language packs of an RC firmware live on its provider too.
+   */
+  private async fetchCurrentFirmware({
+    targetId,
+    currentVersion,
+    providerId,
+  }: {
+    targetId: string | number;
+    currentVersion: string;
+    providerId: number;
+  }): Promise<
+    | {
+        provider: number;
+        deviceVersionId: number;
+        firmwareId: number;
+        firmware: FinalFirmwareDto;
+      }
+    | undefined
+  > {
+    let targetKnown = false;
+    for (const provider of this.providersFor(targetId, providerId)) {
+      const deviceVersion = await this.get<DeviceVersionDto>(
+        "get_device_version",
+        { provider, target_id: targetId },
+      );
+      if (deviceVersion?.id === undefined) continue;
+      targetKnown = true;
+
+      const firmware = await this.get<FinalFirmwareDto>(
+        "get_firmware_version",
+        {
+          device_version: deviceVersion.id,
+          version_name: currentVersion,
+          provider,
+        },
+      );
+      if (firmware?.id !== undefined) {
+        return {
+          provider,
+          deviceVersionId: deviceVersion.id,
+          firmwareId: firmware.id,
+          firmware,
+        };
+      }
+    }
+    logger.warn(
+      targetKnown
+        ? `Manager API: unknown firmware ${currentVersion}`
+        : `Manager API: unknown target_id ${targetId}`,
+    );
+    return undefined;
+  }
+
   private async get<T>(
     path: string,
     query: Record<string, string | number> = {},
@@ -408,7 +447,12 @@ export class FirmwareUpdateResolver {
       if (response.status >= 500) {
         throw new Error(`Manager API /${path} returned ${response.status}`);
       }
-      logger.warn(`Manager API /${path} returned ${response.status}`);
+      // A 404 is how a provider says it does not carry this firmware, which is
+      // the fallback's normal path. Callers log their own message once every
+      // provider has answered that.
+      if (response.status !== 404) {
+        logger.warn(`Manager API /${path} returned ${response.status}`);
+      }
       return undefined;
     }
     return (await response.json()) as T;

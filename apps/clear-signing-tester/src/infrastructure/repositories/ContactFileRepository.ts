@@ -4,6 +4,7 @@ import { TYPES } from "@root/src/di/types";
 import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { type ContactInput } from "@root/src/domain/models/ContactInput";
+import { scenarioCases } from "@root/src/infrastructure/repositories/scenarioCases";
 
 /** One entry of a contact case file, before validation. */
 type RawContact = {
@@ -27,15 +28,10 @@ export class ContactFileRepository {
   ) {}
 
   readFromFile(filePath: string): ContactInput[] {
-    const raw = this.jsonParser.parse<RawContact[]>(
-      this.fileReader.readFileSync(filePath),
+    const raw = scenarioCases<RawContact>(
+      this.jsonParser.parse<unknown>(this.fileReader.readFileSync(filePath)),
+      filePath,
     );
-
-    if (!Array.isArray(raw)) {
-      throw new Error(
-        `Invalid file format: expected an array of contacts in ${filePath}`,
-      );
-    }
 
     return raw.map((entry, index) => this.mapToContact(entry, index));
   }

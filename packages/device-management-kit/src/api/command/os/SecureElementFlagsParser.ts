@@ -8,12 +8,13 @@ import {
 } from "@api/device/SecureElementFlags";
 
 const ONBOARDING_STATE_BY_VALUE: Readonly<Record<number, OnboardingState>> = {
-  0x01: OnboardingState.WelcomeScreen1,
-  0x02: OnboardingState.WelcomeScreen2,
-  0x03: OnboardingState.WelcomeScreen3,
-  0x04: OnboardingState.WelcomeScreen4,
-  0x05: OnboardingState.WelcomeScreenReminder,
-  0x06: OnboardingState.SetupChoice,
+  0x00: OnboardingState.WelcomeScreen1,
+  0x01: OnboardingState.WelcomeScreen2,
+  0x02: OnboardingState.WelcomeScreen3,
+  0x03: OnboardingState.WelcomeScreen4,
+  0x04: OnboardingState.WelcomeScreenReminder,
+  0x05: OnboardingState.SetupChoice,
+  0x06: OnboardingState.Pin,
   0x07: OnboardingState.NewDevice,
   0x08: OnboardingState.ConfirmNewDevice,
   0x09: OnboardingState.RestoreRecoveryPhrase,

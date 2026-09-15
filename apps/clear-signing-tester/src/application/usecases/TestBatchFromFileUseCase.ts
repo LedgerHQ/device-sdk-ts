@@ -2,10 +2,15 @@ import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
+import { type ScenarioSlice } from "@root/src/domain/models/Scenario";
 import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { TestResult } from "@root/src/domain/types/TestStatus";
+import {
+  delay,
+  INTER_CASE_DELAY_MS,
+} from "@root/src/domain/utils/interCaseDelay";
 import {
   BatchTestResult,
   ResultFormatter,
@@ -16,15 +21,19 @@ import {
  */
 export type BatchTestConfig = {
   readonly defaultDerivationPath: string;
+  /**
+   * Run only this slice of the fixture. Slices are taken round-robin, so a
+   * fixture split across emulators spreads uneven case durations evenly.
+   */
+  readonly slice?: ScenarioSlice;
 };
 
 /**
  * Configuration for formatting test results
  */
 export type TestFormattingConfig = {
-  readonly title: string;
-  readonly summaryTitle: string;
-  readonly itemName: string; // e.g., "transaction", "typed data"
+  /** What one case is called in the log lines, e.g. "transaction". */
+  readonly itemName: string;
 };
 
 /**
@@ -67,16 +76,27 @@ export class TestBatchFromFileUseCase<T extends SignableInput> {
     );
 
     // Read data from file
-    const items = this.dataFileRepository.readFromFile(filePath);
+    const allItems = this.dataFileRepository.readFromFile(filePath);
+    const { slice } = config;
+    const items = slice
+      ? allItems.filter((_, index) => index % slice.count === slice.index - 1)
+      : allItems;
 
     this.logger.info(
-      `Found ${items.length} ${this.formattingConfig.itemName}${items.length !== 1 ? "s" : ""} to test`,
+      `Found ${items.length} ${this.formattingConfig.itemName}${items.length !== 1 ? "s" : ""} to test` +
+        (slice ? ` (case ${slice.index}/${slice.count})` : ""),
     );
+
+    if (items.length === 0) {
+      this.logger.info("Nothing to test in this slice");
+      return ResultFormatter.formatBatchResults([], 0);
+    }
 
     const results: TestResult[] = [];
 
     // Test each item
     for (const [index, item] of items.entries()) {
+      const isLast = index === items.length - 1;
       this.logger.info(
         `Testing ${this.formattingConfig.itemName} ${index + 1}/${items.length}`,
       );
@@ -106,13 +126,12 @@ export class TestBatchFromFileUseCase<T extends SignableInput> {
         results.push(errorResult);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Only between cases: a case gets a fresh emulator, so there is nothing
+      // to settle after the last one, and the pod would be held for nothing.
+      if (!isLast) await delay(INTER_CASE_DELAY_MS);
     }
 
-    return ResultFormatter.formatBatchResults(results, items.length, {
-      title: this.formattingConfig.title,
-      summaryTitle: this.formattingConfig.summaryTitle,
-    });
+    return ResultFormatter.formatBatchResults(results, items.length);
   }
 
   /**

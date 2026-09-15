@@ -12,7 +12,7 @@ import {
 
 import {
   isContactsAppVersionSupportedForSession,
-  isContactsOsSupportedForSession,
+  isContactsOsVersionSupportedForSession,
   type RunningApp,
 } from "./contactsVersionGuards";
 
@@ -130,46 +130,57 @@ describe("isContactsAppVersionSupportedForSession", () => {
   });
 });
 
-describe("isContactsOsSupportedForSession", () => {
-  it("returns true when the model and OS version meet the minimums", () => {
+describe("isContactsOsVersionSupportedForSession", () => {
+  it("returns true when the model and the caller's OS version meet the minimums", () => {
     const api = createInternalApi(createReadyState());
-    expect(isContactsOsSupportedForSession(api)).toBe(true);
+    expect(isContactsOsVersionSupportedForSession(api, MIN_OS_VERSION)).toBe(
+      true,
+    );
   });
 
   it("returns false on an unsupported device model", () => {
     const api = createInternalApi(
       createReadyState({ modelId: DeviceModelId.NANO_S }),
     );
-    expect(isContactsOsSupportedForSession(api)).toBe(false);
+    expect(isContactsOsVersionSupportedForSession(api, MIN_OS_VERSION)).toBe(
+      false,
+    );
   });
 
-  it("returns false when the OS version is below the minimum", () => {
-    const api = createInternalApi(
-      createReadyState({ osVersion: BELOW_ANY_VERSION }),
+  it("returns false when the caller's OS version is below the minimum", () => {
+    const api = createInternalApi(createReadyState());
+    expect(isContactsOsVersionSupportedForSession(api, BELOW_ANY_VERSION)).toBe(
+      false,
     );
-    expect(isContactsOsSupportedForSession(api)).toBe(false);
   });
 
   it("returns true for a release candidate of the minimum OS version", () => {
-    const api = createInternalApi(
-      createReadyState({ osVersion: `${MIN_OS_VERSION}-rc2` }),
-    );
-    expect(isContactsOsSupportedForSession(api)).toBe(true);
+    const api = createInternalApi(createReadyState());
+    expect(
+      isContactsOsVersionSupportedForSession(api, `${MIN_OS_VERSION}-rc2`),
+    ).toBe(true);
   });
 
   it("returns false for a release candidate below the minimum OS version", () => {
-    const api = createInternalApi(
-      createReadyState({ osVersion: `${BELOW_ANY_VERSION}-rc2` }),
-    );
-    expect(isContactsOsSupportedForSession(api)).toBe(false);
+    const api = createInternalApi(createReadyState());
+    expect(
+      isContactsOsVersionSupportedForSession(api, `${BELOW_ANY_VERSION}-rc2`),
+    ).toBe(false);
   });
 
-  it("returns false when the device session has no firmware version", () => {
+  it("never reads the OS version from the device session state", () => {
+    // A session with no firmwareVersion at all: the guard must rely solely on
+    // the caller-supplied version and still resolve support.
     const api = createInternalApi({
       sessionStateType: DeviceSessionStateType.Connected,
       deviceStatus: DeviceStatus.CONNECTED,
       deviceModelId: DeviceModelId.FLEX,
     });
-    expect(isContactsOsSupportedForSession(api)).toBe(false);
+    expect(isContactsOsVersionSupportedForSession(api, MIN_OS_VERSION)).toBe(
+      true,
+    );
+    expect(isContactsOsVersionSupportedForSession(api, BELOW_ANY_VERSION)).toBe(
+      false,
+    );
   });
 });

@@ -5,7 +5,13 @@
  */
 const MANAGER_API_URL = "https://manager.api.live.ledger.com/api";
 
-const PROVIDER = "1";
+const DEFAULT_PROVIDER = 1;
+
+/** A release candidate is published to its model's own provider only. */
+const providersFor = (rcProvider?: number): number[] =>
+  rcProvider === undefined || rcProvider === DEFAULT_PROVIDER
+    ? [DEFAULT_PROVIDER]
+    : [DEFAULT_PROVIDER, rcProvider];
 
 export interface CatalogApp {
   readonly name: string;
@@ -53,25 +59,29 @@ const get = async (path: string, params: Record<string, string>) => {
 export async function listCatalogApps(
   mask: number,
   firmwareVersion: string,
+  rcProvider?: number,
 ): Promise<CatalogApp[]> {
   const targetId = targetIdForMask(mask);
   const key = `${targetId}:${firmwareVersion}`;
   const cached = appsCache.get(key);
   if (cached) return cached;
 
-  const response = await get("v2/apps/by-target", {
-    target_id: String(targetId),
-    provider: PROVIDER,
-    firmware_version_name: firmwareVersion,
-  });
-  if (!response.ok) {
-    throw new ManagerApiError(
-      `The Manager API answered ${response.status} for the app list`,
-    );
+  let entries: CatalogApp[] = [];
+  for (const provider of providersFor(rcProvider)) {
+    const response = await get("v2/apps/by-target", {
+      target_id: String(targetId),
+      provider: String(provider),
+      firmware_version_name: firmwareVersion,
+    });
+    if (!response.ok) {
+      throw new ManagerApiError(
+        `The Manager API answered ${response.status} for the app list`,
+      );
+    }
+    entries = toEntries((await response.json()) as ApplicationDto[]);
+    if (entries.length > 0) break;
   }
 
-  const apps = (await response.json()) as ApplicationDto[];
-  const entries = toEntries(apps);
   appsCache.set(key, entries);
   return entries;
 }
@@ -84,6 +94,7 @@ export async function listCatalogApps(
 export async function firmwareExists(
   mask: number,
   firmwareVersion: string,
+  rcProvider?: number,
 ): Promise<boolean> {
   const targetId = targetIdForMask(mask);
   const key = `${targetId}:${firmwareVersion}`;
@@ -91,20 +102,27 @@ export async function firmwareExists(
   if (cached !== undefined) return cached;
 
   const deviceVersion = await resolveDeviceVersion(targetId);
-  const response = await get("get_firmware_version", {
-    device_version: String(deviceVersion),
-    version_name: firmwareVersion,
-    provider: PROVIDER,
-  });
-  // 404 is the answer "no such OS version", not a failure.
-  if (!response.ok && response.status !== 404) {
-    throw new ManagerApiError(
-      `The Manager API answered ${response.status} for the OS version`,
-    );
+  let exists = false;
+  for (const provider of providersFor(rcProvider)) {
+    const response = await get("get_firmware_version", {
+      device_version: String(deviceVersion),
+      version_name: firmwareVersion,
+      provider: String(provider),
+    });
+    // 404 is the answer "no such OS version", not a failure.
+    if (!response.ok && response.status !== 404) {
+      throw new ManagerApiError(
+        `The Manager API answered ${response.status} for the OS version`,
+      );
+    }
+    if (response.ok) {
+      exists = true;
+      break;
+    }
   }
 
-  firmwareCache.set(key, response.ok);
-  return response.ok;
+  firmwareCache.set(key, exists);
+  return exists;
 }
 
 async function resolveDeviceVersion(targetId: number): Promise<number> {
@@ -113,7 +131,7 @@ async function resolveDeviceVersion(targetId: number): Promise<number> {
 
   const response = await get("get_device_version", {
     target_id: String(targetId),
-    provider: PROVIDER,
+    provider: String(DEFAULT_PROVIDER),
   });
   if (!response.ok) {
     throw new ManagerApiError("The Manager API does not know this model");

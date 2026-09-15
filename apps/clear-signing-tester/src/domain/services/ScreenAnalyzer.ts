@@ -56,6 +56,13 @@ export interface ScreenAnalyzerService {
   screenContains(marker: string): Promise<boolean>;
 
   /**
+   * Check if the Web3 Checks opt-in modal has rendered before sending touchScreen events.
+   * If the rendering is not done, this can cause misclick on the "Quit app" zone.
+   * @returns Promise<boolean> - True if the Web3 Checks opt-in modal is shown
+   */
+  isWeb3ChecksOptInScreen(): Promise<boolean>;
+
+  /**
    * Analyze all accumulated screen texts for expected texts
    *
    * Clears the accumulated buffer, so each call scopes its assertion to the

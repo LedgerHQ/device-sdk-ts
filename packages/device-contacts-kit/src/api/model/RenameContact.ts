@@ -8,9 +8,11 @@
  * name proof needs re-persisting.
  *
  * Proof material (`groupHandle`, `hmacProof`) is passed and returned as raw
- * bytes; the host owns persistence and address-book state. `derivationPath` is
- * kit-internal and not exposed: the Ethereum app requires a path on the wire
- * (a default m/44'/60'/0'/0/0 is sent), but the rename itself is name-only.
+ * bytes; the host owns persistence and address-book state. The rename itself is
+ * name-only, so no derivation path is exposed. As a temporary compatibility
+ * shim (DSDK-1481), the kit sends a fixed `m/44'/60'/0'/0/0` on the wire only
+ * for OS builds below the model's cutoff, which still mandate it; newer builds
+ * send nothing. Either way the host never chooses this.
  */
 
 export type RenameContactInput = {

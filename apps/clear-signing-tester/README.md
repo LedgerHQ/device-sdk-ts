@@ -1,294 +1,262 @@
-# Ethereum Clear Signing Tester
+# Clear Signing Tester
 
-This TypeScript CLI application tests Ethereum transactions and typed data using the Ledger Device Management Kit and Signer Kit with Speculos transport. It uses the `@ledgerhq/speculos-device-controller` package for controlling simulated Ledger devices via percentage-based coordinates.
+TypeScript CLI that tests Ethereum and Solana transactions using the Ledger Device Management Kit with a [Speculinho](https://ledgerhq.atlassian.net/wiki/spaces/PE/pages/7100399635)-provisioned Speculos emulator.
+
+## How it works
+
+The tester acquires a remote Speculos pod from Speculinho, runs signing tests against it, then releases it. No Docker, no local coin apps required.
 
 ## Prerequisites
 
-### Tools
-
-- **Docker**: Required to run Speculos
-- **Speculos Simulator**: Required to emulate a device signer application
-
-You can get it using the command `docker pull ghcr.io/ledgerhq/speculos:latest`
-
-- **Node.js**: Version 20 or higher
-- **Coin Apps**: Required to run apps
-
-### Environment variable
-
-- `ETHERSCAN_API_KEY`: Etherscan API key (required for some features)
-- `GATING_TOKEN`: Origin token for gated features
-- `COIN_APPS_PATH`: Path to the coin apps repository to access app files
+- **Node.js** 20+
 
 ## Installation
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Build dependencies
 pnpm build:libs
 ```
 
-## Usage
+## Environment variables
 
-The CLI provides several commands for testing different types of Ethereum operations:
+| Variable         | Required                      | Default                             | Description             |
+| ---------------- | ----------------------------- | ----------------------------------- | ----------------------- |
+| `GATING_TOKEN`   | For CAL origin-gated features | —                                   | Origin token            |
+| `SPECULINHO_URL` | No                            | `https://speculinho.ledgerlabs.net` | Speculinho operator URL |
 
-```bash
-Usage: pnpm cs-tester cli [options] [command]
+## Running scenarios
 
-Ethereum Transaction Tester CLI - Clean Architecture Edition
+Every test is a **scenario**: a device, a coin app, an action, and its input.
+Each one is a file under [`ressources/`](./ressources) that describes how to run
+itself, so running one is a selection rather than a bespoke command, and adding
+one is a new file rather than a code change.
 
-Options:
-  -V, --version                  output the version number
+The unit of work is a **case**, not a scenario. Selected fixtures are flattened
+to their individual cases and spread over as many emulators as `--concurrency`
+allows, each on its own pod, released when the case ends. So an eighteen-case
+fixture is eighteen independent tests rather than one long one: `erc7730:1inch`
+takes about 73s over six pods instead of roughly four minutes on one. A pod that
+dies costs exactly one case rather than every case after it.
 
-  # @config.speculos
-  --speculos-url <url>           Speculos server URL (default: http://localhost)
-  --speculos-port <port>         Speculos server port (random port if not provided)
-  --docker-image-tag <tag>       Docker image tag for Speculos (default: latest)
-  --device <device>              Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax)
-  --app-eth-version <version>    Ethereum app version (e.g., 1.19.1). If not specified, uses latest version for the device.
-  --os-version <version>         Device OS version (e.g., 1.8.1). If not specified, uses latest OS version for the device.
-  --plugin <plugin>              Plugin to use (e.g., Paraswap). If not specified, uses no plugin.
-  --plugin-version <version>     Plugin version to use. If not specified, uses latest version.
-  --screenshot-folder-path <path>  Save screenshots to a folder during transaction signing
-  --custom-app <path>            Custom app file path (relative to COIN_APPS_PATH or absolute). Bypasses automatic Ethereum app version resolution.
-
-  # @config.signer
-  --derivation-path <path>       Derivation path (default: "44'/60'/0'/0/0")
-  --erc7730-files <files...>     One or more ERC7730 JSON files to inject for clear signing testing
-
-  # @config.logger
-  --log-level <level>            Console log level: none, error, warn, info, debug (default: info)
-  --log-file <path>              Log output to a file
-  --file-log-level <level>       File log level: none, error, warn, info, debug (requires --log-file)
-
-  -h, --help                     display help for command
-
-Commands:
-  raw-transaction <transaction>  Test a single raw transaction
-  raw-file <file>                Test multiple raw transactions from a JSON file
-  typed-data <data>              Test a single typed data object (JSON string)
-  typed-data-file <file>         Test multiple typed data objects from a JSON file
-  contract [options] <address>   Test a contract
-  help [command]                 display help for command
-```
-
-Alternatively, you can run test cases directly:
+Scenarios whose cases depend on each other declare `"mode": "sequential"` and
+run whole on one device — `gating:every-10-tx` counts transactions
+on the device, and `contacts:register` asserts the first contact is still there
+when the second registers. Splitting either would make it pass without testing
+anything.
 
 ```bash
-pnpm cs-tester test:raw:complete
-pnpm cs-tester test:raw:multisig
-pnpm cs-tester test:raw:erc20
-pnpm cs-tester test:typed-data:multisig
+# everything
+pnpm cs-tester cli test all
+
+# one or more groups
+pnpm cs-tester cli test erc7730 gating contacts
+
+# a single scenario
+pnpm cs-tester cli test core:complete
+
+# what a CI job runs: one device, everything that supports it
+pnpm cs-tester cli test all --device stax --concurrency 6
+
+# see what exists
+pnpm cs-tester cli list
 ```
 
-### Commands
+A selector is `all`, a group name, or a scenario name. Unknown selectors fail
+before any emulator is acquired, and a scenario that does not support the
+requested `--device` is skipped rather than failed.
 
-#### 1. Test Single Raw Transaction
+### Groups
 
-```bash
-pnpm cs-tester cli raw-transaction 0x02f8b4018325554c847735940085022d0b7c608307a12094dac17f958d2ee523a2206206994597c13d831ec780b844a9059cbb000000000000000000000000920ab45225b3057293e760a3c2d74643ad696a1b000000000000000000000000000000000000000000000000000000012a05f200c080a009e2ef5a2c4b7a1d7f0d868388f3949a00a1bdc5669c59b73e57b2a4e7c5e29fa0754aa9f4f1acc99561678492a20c31e01da27d648e69665f7768f96db39220ca
-```
+| Group                | Devices           | What it covers                                  |
+| -------------------- | ----------------- | ----------------------------------------------- |
+| `core`               | stax, nanox       | Ethereum transaction and typed-data fixtures    |
+| `contacts`           | flex              | Address Book registration and signing           |
+| `gating`             | stax, flex        | Unauthenticated callers fall back to gating     |
+| `erc7730`            | stax, nanox, flex | Per-dapp calldata descriptors                   |
+| `erc7730-typed-data` | stax, nanox, flex | Per-dapp typed-data descriptors                 |
+| `solana`             | stax, nanox, flex | Solana transaction fixtures                     |
+| `solana-programs`    | —                 | Live program transactions — disabled, see below |
 
-#### 2. Test Multiple Raw Transactions from File
+The `solana-programs` group is **disabled**. Its cases pull transactions from an
+RPC rather than a fixture, so they carry no `expectedTexts` — and a case with
+nothing to assert cannot fail the clear-signing check, since the check passes
+when every expected text is found and there are none. A blind signature would
+report as clear-signed.
 
-Create a JSON file with raw transactions:
+Re-enabling it needs a way for an RPC-derived case to assert what the device
+showed. Two smaller obstacles are worth knowing first: the default endpoint
+answers the Stake program's address with `-32602 Address is not supported`, and
+a public endpoint answers a scan of this size with `429`.
+
+Note develop reports these scenarios green. That is not evidence they work —
+develop exits 0 when a scan finds nothing at all.
+
+### Options
+
+| Option                         | Default          | Description                                        |
+| ------------------------------ | ---------------- | -------------------------------------------------- |
+| `--device <device>`            | every supported  | Run only scenarios supporting this device          |
+| `--concurrency <n>`            | `4`              | How many cases may hold an emulator at once        |
+| `--no-split`                   | split            | Run a whole fixture on one emulator, in order      |
+| `--log-level <level>`          | `info`           | Console log level                                  |
+| `--log-dir <path>`             | —                | One log file per case                              |
+| `--file-log-level <level>`     | `--log-level`    | File log level                                     |
+| `--screenshot-folder-path`     | —                | Save signing screenshots                           |
+| `--speculinho-url <url>`       | `SPECULINHO_URL` | Speculinho operator URL                            |
+| `--speculos-http-timeout <ms>` | `0` (none)       | Timeout for Speculos pod requests                  |
+| `--rpc-url <url>`              | Ledger endpoint  | Solana RPC, unused while `solana-programs` is off  |
+| `--derivation-path <path>`     | `44'/60'/0'/0/0` | Ethereum derivation path                           |
+| `--solana-derivation-path`     | `44'/501'/0'`    | Solana derivation path                             |
+| `--os-version <version>`       | defaults file    | Override the default OS version for a one-off run  |
+| `--app-eth-version <version>`  | defaults file    | Override the default Ethereum app version          |
+| `--app-sol-version <version>`  | defaults file    | Override the default Solana app version            |
+| `--erc7730-files <files...>`   | —                | Inject descriptors; also switches CAL to test mode |
+
+### Scenario files
+
+A scenario file carries its own metadata and its cases, so the catalog is
+whatever `ressources/` holds:
 
 ```json
-[
-  {
-    "txHash": "0x5f5f13a49b282221223235a51cc3cb9fe6356321600310a2b97646bed757b352",
-    "rawTx": "0x02f870012b83059f6884ae9f364882520894dfaa75323fb721e5f29d43859390f62cc4b600b8874652436b698acb80c001a0bebdd83d9bc034e4824367e3f1cc0e8b8e4b24871eeba9ef8d36130d25c96129a04608841b2945b0ed090bc3c6fe56aef0077d6a5eb6b3416212fe727e7e2b68e1",
-    "description": "Simple ETH transfer",
-    "expectedTexts": ["Text 1", "Text 2"]
-  }
-]
+{
+  "group": "core",
+  "name": "erc20",
+  "action": "signTransaction",
+  "devices": ["stax", "nanox"],
+  "coinApp": "Ethereum",
+  "mode": "parallel",
+  "cases": [{ "rawTx": "0x02f8b4…", "expectedTexts": ["USDT", "5000"] }]
+}
 ```
 
-Run the test:
+The selector is `group:name`, so this file is `core:erc20`. The directory it
+sits in is free — `erc7730/uniswap/` holds one scenario of each group.
 
-```bash
-pnpm cs-tester cli raw-file ressources/raw-erc20.json
-```
+| Field                     | Required | Meaning                                                                      |
+| ------------------------- | -------- | ---------------------------------------------------------------------------- |
+| `group`, `name`           | yes      | Selector `group:name`; the group is selectable on its own                    |
+| `action`                  | yes      | `signTransaction`, `signTypedData`, `registerContact`, `solanaProgram`       |
+| `devices`                 | yes      | Devices this scenario supports; a run picks one                              |
+| `coinApp`                 | yes      | `Ethereum` or `Solana`                                                       |
+| `cases`                   | yes\*    | The inputs; `solanaProgram` takes none, its input comes from the RPC         |
+| `mode`                    | no       | `parallel` (default) or `sequential`                                         |
+| `osVersion`, `appVersion` | no       | Override the device's pin, together                                          |
+| `options`                 | no       | `blindSigningEnabled`, `skipOriginToken`, `addressBook`, `useRpc`, `distill` |
 
-#### 3. Test Single Typed Data
+A case may carry keys prefixed with `_`, which the tester never reads. They are
+notes for whoever maintains the fixture — `_txHash` records the transaction this
+calldata was taken from on chain, so a case can be traced back to a real
+transaction without the tester ever fetching it.
 
-```bash
-pnpm cs-tester cli typed-data '{"domain":{"name":"USD Coin","verifyingContract":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","chainId":1,"version":"2"},"primaryType":"Permit","message":{"deadline":1718992051,"nonce":0,"spender":"0x111111125421ca6dc452d289314280a0f8842a65","owner":"0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d","value":"115792089237316195423570985008687907853269984665640564039457584007913129639935"},"types":{"EIP712Domain":[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint256"},{"name":"verifyingContract","type":"address"}],"Permit":[{"name":"owner","type":"address"},{"name":"spender","type":"address"},{"name":"value","type":"uint256"},{"name":"nonce","type":"uint256"},{"name":"deadline","type":"uint256"}]}}'
-```
+A file counts as a scenario only once it declares an `action`, so plain data
+like an address book sits alongside untouched. A malformed scenario file fails
+the run and the unit tests by name rather than silently shrinking a selection.
 
-#### 4. Test Multiple Typed Data from File
-
-Create a JSON file with typed data objects:
+A scenario kept in the repo but not run says so, rather than by being
+unreferenced:
 
 ```json
-[
-  {
-    "data": {
-      "domain": {
-        "name": "USD Coin",
-        "verifyingContract": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-        "chainId": 1,
-        "version": "2"
-      },
-      "primaryType": "Permit",
-      "message": {
-        "owner": "0x...",
-        "spender": "0x...",
-        "value": "1000000",
-        "nonce": 0,
-        "deadline": 1234567890
-      }
-    },
-    "description": "USDC permit signature example"
-  }
-]
+{ "enabled": false }
 ```
 
-Run the test:
+Disabled scenarios are skipped by every selector, including `all`. Naming one
+explicitly fails with what to do about it, and `cs-tester list` prints them
+under the enabled ones. Nine ship disabled today — alternate-chain fixtures
+nobody wired up, and three descriptors known to be broken.
+
+## App and OS versions
+
+Speculinho requires an explicit app and OS version on every run and resolves no
+"latest" of its own, so [`default_versions.json`](./default_versions.json) pins the pair each run
+asks for, keyed **device > OS > coin app > app version**:
+
+```json
+{
+  "stax": { "1.10.1": { "Ethereum": "1.22.3", "Solana": "1.16.0" } },
+  "flex": { "1.6.1": { "Ethereum": "1.22.3", "Solana": "1.16.0" } }
+}
+```
+
+The OS is not chosen separately: an app is pinned under exactly one OS per
+device, so `--device flex` plus an Ethereum run resolves `1.6.1` and `1.22.3`.
+Pin an app under two OS versions for one device and the lookup fails as ambiguous
+rather than guessing.
+
+A scenario needing a different pair states it in its own file:
+
+```json
+{
+  "group": "contacts",
+  "name": "sign",
+  "osVersion": "1.7.0-rc2",
+  "appVersion": "1.23.0-dev"
+}
+```
+
+That is how the contacts scenarios reach the Address Book pre-release while the
+rest of flex Ethereum stays on the released app. Keep the exception on the
+scenario — moving it into `default_versions.json` drags every flex Ethereum run
+onto the pre-release, which is what once cost the erc7730 typed-data runs three
+cases. A unit test fails if a contacts scenario stops pinning its own version,
+and another resolves `default_versions.json` for every scenario and device so a
+bad edit fails in CI rather than while acquiring a pod.
+
+Resolution order is the scenario's own pin first, then `--os-version` /
+`--app-eth-version` / `--app-sol-version` for a one-off, then
+`default_versions.json`. A scenario pins itself because the feature exists in no
+other build, so a blanket flag must not drag it onto a build that answers `6e00`
+to the very APDU it tests — the run prints which scenarios it left on their own
+pin. Both CI and a local run read the same defaults file, so they cannot
+disagree.
+
+Bump a pin deliberately: the version has to exist **on Speculinho**, which trails
+coin-apps by up to about an hour after a release. Speculinho exposes no endpoint
+listing what it holds, so the only way to check a candidate is to acquire a pod
+with it — an unavailable version fails with `FileNotFoundError` from the pod.
+
+## ERC7730 Clear Signing Support
+
+Inject custom ERC7730 descriptors to test contracts not yet in the production CAL:
 
 ```bash
-pnpm cs-tester cli typed-data-file ressources/typed-data-example.json
+# One descriptor, against a single scenario
+pnpm cs-tester cli test erc7730:aave --erc7730-files ./descriptor.json
+
+# Several descriptors
+pnpm cs-tester cli test erc7730 --erc7730-files ./d1.json ./d2.json
 ```
 
-#### 5. Test Contract
-
-Test all transactions associated with a specific contract address. The CLI will fetch and test recent transactions for the contract:
+## Logging
 
 ```bash
-pnpm cs-tester cli contract 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497
+# Verbose console output
+pnpm cs-tester cli test core --log-level debug
+
+# One log file per case, at debug level
+pnpm cs-tester cli test all --log-dir /tmp/logs --file-log-level debug
+
+# Silent console, verbose files
+pnpm cs-tester cli test all --log-level none --log-dir /tmp/logs --file-log-level debug
 ```
 
-Options:
-
-- `--chain-id <number>`: Chain id to use (default to 1)
-- `--skip-cal`: Skip CAL (Crypto Asset List) filtering and fetch random transactions directly from Etherscan instead of only CAL-registered transactions
-
-### Logging
-
-The tester supports configurable logging levels for both console and file output:
+## Screenshots
 
 ```bash
-# Default: console at info level
-pnpm cs-tester cli raw-file ./ressources/raw-erc20.json
-
-# Verbose console output (debug level)
-pnpm cs-tester cli --log-level debug raw-file ./ressources/raw-erc20.json
-
-# Quiet mode (errors only)
-pnpm cs-tester cli --log-level error raw-file ./ressources/raw-erc20.json
-
-# Log to file with debug level (console stays at info)
-pnpm cs-tester cli --log-file ./output.log --file-log-level debug raw-file ./ressources/raw-erc20.json
-
-# Silent console, verbose file
-pnpm cs-tester cli --log-level none --log-file ./debug.log --file-log-level debug raw-file ./ressources/raw-erc20.json
+pnpm cs-tester cli test core:erc20 --screenshot-folder-path ./screenshots
 ```
 
-**Log Levels:**
-
-- `none` - No logging
-- `error` - Errors only
-- `warn` - Errors and warnings
-- `info` - Errors, warnings, and info (default)
-- `debug` - All messages including debug
-
-### Screenshots
-
-Save screenshots of each screen during transaction signing:
-
-```bash
-# Save screenshots to a folder
-pnpm cs-tester cli --screenshot-folder-path ./screenshots raw-file ./ressources/raw-erc20.json
-```
-
-Screenshots are saved as `screenshot_1.png`, `screenshot_2.png`, etc. in the specified folder.
-
-### Plugin Support
-
-The tester supports running Ethereum transactions with plugins (e.g., Paraswap, 1inch, etc.). When a plugin is specified, Speculos will run the plugin app with the Ethereum app loaded as a library using the `-l` flag.
-
-#### Using Plugins
-
-```bash
-# Test with a specific plugin and version
-pnpm cs-tester cli raw-transaction <tx> --plugin Paraswap --plugin-version 5.24.0
-
-# Test with a plugin (automatically resolves latest version)
-pnpm cs-tester cli raw-transaction <tx> --plugin Paraswap
-
-# Test with plugin and specific OS/Ethereum app versions
-pnpm cs-tester cli raw-transaction <tx> \
-  --plugin Paraswap \
-  --plugin-version 5.24.0 \
-  --app-eth-version 1.19.1 \
-  --os-version 1.8.1 \
-  --device stax
-```
-
-**Important Notes:**
-
-- Both the plugin and Ethereum app must be available in your `COIN_APPS_PATH` directory
-- The directory structure should be: `COIN_APPS_PATH/<device>/<os-version>/<app-name>/app_<version>.elf`
-- If `--plugin-version` is not specified, the tester will automatically resolve the latest available plugin version
-- The plugin and Ethereum app must be compatible with the same OS version
-
-### ERC7730 Clear Signing Support
-
-The tester supports injecting custom ERC7730 descriptors for testing clear signing with contracts that may not yet be in the production CAL (Crypto Assets List). This is useful for testing new contracts or dApps during development.
-
-#### Using ERC7730 Files
-
-```bash
-# Test with a single ERC7730 descriptor file
-pnpm cs-tester cli raw-transaction <tx> --erc7730-files ./path/to/descriptor.json
-
-# Test with multiple ERC7730 descriptor files
-pnpm cs-tester cli raw-transaction <tx> --erc7730-files ./descriptor1.json ./descriptor2.json
-
-# Test typed data with ERC7730 descriptors
-pnpm cs-tester cli typed-data-file ./test-data.json --erc7730-files ./descriptor.json
-
-# Test a contract with custom descriptors
-pnpm cs-tester cli contract 0x1234... --erc7730-files ./descriptor.json
-```
-
-### Custom App Support
-
-The tester supports running Speculos with a custom app file, bypassing the automatic Ethereum app version resolution. This is useful for testing development builds of apps or non-Ethereum apps.
-
-#### Using Custom App
-
-```bash
-# Use a custom app file (path relative to COIN_APPS_PATH)
-pnpm cs-tester cli start-speculos --custom-app stax/1.8.1/MyApp/app_1.0.0.elf
-
-# Use an absolute path on your host machine (will be mounted automatically)
-pnpm cs-tester cli start-speculos --custom-app /home/user/builds/my_app.elf
-
-# Test transactions with a custom app
-pnpm cs-tester cli raw-transaction <tx> --custom-app stax/1.8.1/Ethereum/app_dev.elf
-```
-
-**Important Notes:**
-
-- When using `--custom-app`, the `--app-eth-version` and `--os-version` options are ignored
-- **Relative paths** (e.g., `stax/1.8.1/MyApp/app.elf`) are resolved relative to `COIN_APPS_PATH` (mounted at `/apps` in the container)
-- **Absolute paths** (e.g., `/home/user/builds/my_app.elf`) are automatically mounted into the container at `/custom-app/app.elf`
-- Plugin options (`--plugin`, `--plugin-version`) are also ignored when using a custom app
+Screenshots are saved as `screenshot_1.png`, `screenshot_2.png`, etc.
 
 ### Contacts (Address Book) Support
 
-Two flows, one command each.
+Two flows, both in the `contacts` group.
 
-**`contact-file`** checks the Ethereum app's Address Book behaviour: it
+**`contacts:register`** checks the Ethereum app's Address Book behaviour: it
 registers each contact with `@ledgerhq/device-contacts-kit` and asserts the
 review screens. No signing.
 
 ```bash
-pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev \
-  contact-file ./ressources/contacts/contacts.json
+pnpm cs-tester cli test contacts:register
 ```
 
 ```json
@@ -304,18 +272,17 @@ pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0
 ]
 ```
 
-**`--address-book`** checks the signing side: it binds an address book to the
-signer for the whole run, so any signing command reviews against it.
+**`contacts:sign`** checks the signing side: the scenario names an address book,
+which is bound to the signer when it is built, so the review resolves the
+recipient to a contact name.
 
 ```bash
-pnpm cs-tester cli --device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev \
-  --address-book ./ressources/contacts/address-book.json \
-  raw-file ./ressources/contacts/sign-with-contact.json
+pnpm cs-tester cli test contacts:sign
 ```
 
-The proofs in an address-book file are device-issued and seed-bound. `contact-file`
-logs the ones it gets back, which is how `address-book.json` was produced; re-record
-them if the device or seed changes. `address-book-rejected.json` carries a flipped
+The proofs in an address-book file are device-issued and seed-bound.
+`contacts:register` logs the ones it gets back, which is how `address-book.json`
+was produced; re-record them if the pinned device identity or the seed changes. `address-book-rejected.json` carries a flipped
 group handle, so the device answers `0x6982` and the transaction signs against the
 raw address — the guard that a bad book never costs a signature.
 
@@ -334,28 +301,59 @@ Give each case its own recipient address; do not reuse one across cases.
 
 Contacts need an RC firmware pair — the newest _stable_ Ethereum app answers
 `6e00 "CLA not supported"` to the first address-book APDU, and that also drops
-the Speculos session, so every later case fails as `DeviceSessionNotFound`. Run
-with `--device flex --os-version 1.7.0-rc2 --app-eth-version 1.23.0-dev`. The
-Address Book HMACs are OS syscalls, so the Speculos image must be recent enough
-to implement them.
+the Speculos session, so every later case fails as `DeviceSessionNotFound`. The
+three contacts scenario files carry that pair themselves, so a contacts run
+only needs `--device flex`. The Address Book HMACs are OS syscalls
+that 1.6.1 does not implement, which is why the OS pin matters as much as the app
+one.
+
+The proofs are also bound to the emulator's user and attestation keys, which
+Speculos regenerates on every boot. `SpeculinhoServiceController` pins them so a
+recorded address book stays valid across pods; change those pins and the recorded
+proofs must be re-recorded.
 
 These three flows run on pull requests via the `contacts-cs-tester` job, gated on
-changes to `signer-eth`, `device-contacts-kit` or this app. The job inherits the
-firmware pin from the scripts above; it depends on the Speculos image the shared
-CI action pulls, which is not pinned per job.
+changes to `signer-eth`, `device-contacts-kit` or this app. It passes no versions
+of its own, so CI and a local run resolve the same pair from the scenario files.
+
+## Cancelling a run
+
+A Speculinho pod stays `ready` until someone posts `/release`, so an interrupted
+run has to hand back what it holds. `SIGINT` (Ctrl+C), `SIGTERM` and `SIGHUP`
+release every emulator in flight, refuse to acquire more, and exit `130`:
+
+```
+^C
+SIGINT received, releasing emulators…
+Released 6 emulator(s).
+```
+
+Anything that kills the process outright — `SIGKILL`, a crashed machine, a
+runner reaped mid-job — cannot run that, and strands one pod per worker. Those
+have to be released by run id:
+
+```bash
+curl -X POST https://speculinho.ledgerlabs.net/release \
+  -H 'Content-Type: application/json' -d '{"run_id":"cs-tester-…"}'
+```
+
+The ids are in the run's own output, on the `Acquiring Speculinho pod` lines.
 
 ## Output
 
-The application outputs test results to the console and uses exit codes to indicate success/failure:
+### Exit codes
 
-### Exit Codes
-
-- **`0`**: All tests passed (clear signed successfully)
+- **`0`**: All tests passed
 - **Non-zero**: Number of failed tests
 
-### Status Types
+### Status types
 
-- **✅ `clear_signed`**: Transaction/typed data was clear signed successfully – all expected texts were found on screen
-- **⚠️ `partially_clear_signed`**: Transaction was signed successfully but at least one expected text is not visible
-- **🙈 `blind_signed`**: Transaction was signed with blind signing (fallback mode when clear signing is not possible)
-- **❌ `error`**: Operation failed with an error (e.g., device communication failure, parsing error, timeout)
+- **✅ `clear_signed`**: Transaction/typed data was clear signed – all expected texts found on screen
+- **⚠️ `partially_clear_signed`**: Signed successfully but at least one expected text was not visible
+- **🙈 `blind_signed`**: Signed with blind signing (clear signing not available)
+- **❌ `error`**: Operation failed (device communication failure, parsing error, timeout, etc.)
+
+Clear signing is what every case expects, except one that sets
+`"expectBlindSigned": true`. Such a case exists to prove the blind-signing
+fallback is still detected, so it passes on `blind_signed` — shown as
+`🙈 blind signed (expected)` — and fails if it ever clear-signs or errors.
