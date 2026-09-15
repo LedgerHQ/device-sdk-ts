@@ -96,10 +96,16 @@ export function ownerAssociation(
 export function accountReset(opts: {
   accountIndex: number;
   requirePreBalanceZero?: boolean;
+  valueKind?: CalAccountReset["value_kind"];
+  token?: CalAccountReset["token"];
+  requireNativePreBalanceZero?: boolean;
 }): CalAccountReset {
   return {
     account_index: opts.accountIndex,
     require_pre_balance_zero: opts.requirePreBalanceZero,
+    value_kind: opts.valueKind ?? "native",
+    token: opts.token,
+    require_native_pre_balance_zero: opts.requireNativePreBalanceZero,
   };
 }
 

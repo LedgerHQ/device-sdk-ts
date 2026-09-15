@@ -94,6 +94,9 @@ export type CalHideRuleDto = CalSubstructureDto & {
 export type CalAccountResetDto = CalSubstructureDto & {
   account_index?: number;
   require_pre_balance_zero?: boolean;
+  value_kind?: string;
+  token?: CalTokenValueDto;
+  require_native_pre_balance_zero?: boolean;
 };
 
 export type CalDisplayFieldDto = CalSubstructureDto & {
