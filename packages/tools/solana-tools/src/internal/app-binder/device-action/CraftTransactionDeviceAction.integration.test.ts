@@ -5,6 +5,18 @@ import {
   type InternalApi,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
+import { address } from "@solana/addresses";
+import { blockhash as toBlockhash } from "@solana/rpc-types";
+import {
+  appendTransactionMessageInstructions,
+  compileTransactionMessage,
+  createTransactionMessage,
+  decompileTransactionMessage,
+  getCompiledTransactionMessageDecoder,
+  getCompiledTransactionMessageEncoder,
+  setTransactionMessageFeePayer,
+  setTransactionMessageLifetimeUsingBlockhash,
+} from "@solana/transaction-messages";
 import {
   PublicKey,
   SystemProgram,
@@ -147,6 +159,46 @@ function craftedStaticKeys(output: string): string[] {
   return message.staticAccountKeys.map((key) => key.toBase58());
 }
 
+// v1 (SIMD-0385) fixtures, built with @solana/transaction-messages since
+// @solana/web3.js has no v1 support at all.
+const v1RecentBlockhash = toBlockhash(blockhash);
+const v1OldPayer = address(oldPayer.toBase58());
+const v1Recipient = address(recipient.toBase58());
+const systemProgram = address("11111111111111111111111111111111");
+
+function v1TransferMessage(): string {
+  const withFeePayer = setTransactionMessageFeePayer(
+    v1OldPayer,
+    createTransactionMessage({ version: 1 }),
+  );
+  const withLifetime = setTransactionMessageLifetimeUsingBlockhash(
+    { blockhash: v1RecentBlockhash, lastValidBlockHeight: 1000n },
+    withFeePayer,
+  );
+  const withInstructions = appendTransactionMessageInstructions(
+    [
+      {
+        programAddress: systemProgram,
+        accounts: [{ address: v1Recipient, role: 1 }],
+        data: new Uint8Array([2, 0, 0, 0, 0x40, 0x42, 0x0f, 0, 0, 0, 0, 0]),
+      },
+    ],
+    withLifetime,
+  );
+  const bytes = getCompiledTransactionMessageEncoder().encode(
+    compileTransactionMessage(withInstructions),
+  );
+  return Buffer.from(bytes).toString("base64");
+}
+
+function craftedV1FeePayer(output: string): string {
+  const bytes = new Uint8Array(Buffer.from(output, "base64"));
+  const message = decompileTransactionMessage(
+    getCompiledTransactionMessageDecoder().decode(bytes),
+  );
+  return (message as { feePayer: { address: string } }).feePayer.address;
+}
+
 describe("CraftTransactionDeviceAction integration (real resolver + crafter)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -197,5 +249,15 @@ describe("CraftTransactionDeviceAction integration (real resolver + crafter)", (
     expect(keys).toContain(newPayer.toBase58());
     expect(keys).not.toContain(oldPayer.toBase58());
     expect(keys).toContain(secondSigner.toBase58());
+  });
+
+  it("v1 (SIMD-0385): re-points the payer of a v1 transfer end to end, without touching ALT resolution", async () => {
+    const input = makeInput({ serialisedTransaction: v1TransferMessage() });
+
+    const finalState = await runToCompletion(input);
+
+    expect(finalState.status).toBe(DeviceActionStatus.Completed);
+    const output = (finalState as { output: string }).output;
+    expect(craftedV1FeePayer(output)).toBe(newPayer.toBase58());
   });
 });

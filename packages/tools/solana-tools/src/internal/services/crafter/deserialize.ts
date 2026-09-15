@@ -63,6 +63,17 @@ function tryDeserializeMessage(bytes: Uint8Array): VersionedMessage | null {
   return null;
 }
 
+/**
+ * True when `transactionBase64` decodes as a full serialized transaction
+ * (message + signatures) rather than a bare message. Used by the crafter to
+ * decide whether to re-wrap the crafted message with placeholder signatures
+ * on output, mirroring the shape it was given.
+ */
+export function isFullTransaction(transactionBase64: string): boolean {
+  const bytes = base64StringToBuffer(transactionBase64);
+  return bytes !== null && tryDeserializeTransaction(bytes) !== null;
+}
+
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
   if (a.length !== b.length) {
     return false;

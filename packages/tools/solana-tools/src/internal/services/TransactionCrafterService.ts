@@ -3,6 +3,7 @@ import {
   type AddressLookupTableAccount,
   PublicKey,
   TransactionMessage,
+  VersionedTransaction,
 } from "@solana/web3.js";
 
 import {
@@ -11,7 +12,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@internal/services/utils/splToken";
 
-import { deserializeToMessage } from "./crafter/deserialize";
+import { deserializeToMessage, isFullTransaction } from "./crafter/deserialize";
 
 export type CraftOptions = {
   /**
@@ -55,13 +56,17 @@ export class TransactionCrafterService {
    * Re-point the chosen accounts of a fetched transaction to new addresses and
    * return the crafted message as base64.
    *
-   * The input is either a serialized message or a full serialized transaction
-   * (signatures are dropped). The message is decompiled with the supplied
-   * lookup tables, the replacement set is applied on real public keys, and the
-   * message is recompiled. Replaced ALT-supplied accounts fall out of their
-   * tables and are promoted into the static keys; untouched accounts keep using
-   * their tables. The original recent blockhash is reused verbatim so that
-   * durable-nonce values are preserved.
+   * The input is either a serialized message or a full serialized transaction.
+   * The output shape mirrors the input: a bare message in yields a bare
+   * message out, and a full transaction in yields a full transaction out
+   * (re-wrapped with placeholder all-zero signatures — the original
+   * signatures are invalid once accounts are re-pointed anyway). The message
+   * is decompiled with the supplied lookup tables, the replacement set is
+   * applied on real public keys, and the message is recompiled. Replaced
+   * ALT-supplied accounts fall out of their tables and are promoted into the
+   * static keys; untouched accounts keep using their tables. The original
+   * recent blockhash is reused verbatim so that durable-nonce values are
+   * preserved.
    *
    * Synchronous and side-effect free: it never touches the network. Resolved
    * lookup tables must be passed in via options.addressLookupTableAccounts.
@@ -120,7 +125,16 @@ export class TransactionCrafterService {
       );
     }
 
-    return bufferToBase64String(serialized);
+    // Mirror the input shape: a full transaction in gets re-wrapped with
+    // placeholder (all-zero) signatures on the way out. `VersionedTransaction`
+    // defaults every signature slot to 64 zero bytes when none are supplied,
+    // which is fine here since re-pointing accounts invalidates any original
+    // signature regardless.
+    const output = isFullTransaction(transactionBase64)
+      ? new VersionedTransaction(crafted).serialize()
+      : serialized;
+
+    return bufferToBase64String(output);
   }
 
   private buildReplacements(

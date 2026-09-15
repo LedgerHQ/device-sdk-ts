@@ -36,6 +36,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@solana/addresses": "catalog:",
+    "@solana/transaction-messages": "catalog:",
     "@solana/web3.js": "catalog:",
     "bs58": "catalog:",
     "buffer": "catalog:",
@@ -52,6 +54,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
     "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@solana/rpc-types": "catalog:",
     "rxjs": "catalog:"
   },
   "peerDependencies": {
