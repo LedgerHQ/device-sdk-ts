@@ -46,7 +46,7 @@ catalogs:
       specifier: ^0.45.0
       version: 0.45.0
     '@playwright/test':
-      specifier: ^1.49.0
+      specifier: 1.49.0
       version: 1.49.0
     '@react-native-community/cli':
       specifier: 15.0.1
@@ -100,7 +100,7 @@ catalogs:
       specifier: 6.19.7
       version: 6.19.7
     '@sentry/nextjs':
-      specifier: ^9.33.0
+      specifier: 9.33.0
       version: 9.33.0
     '@solana/web3.js':
       specifier: ^1.98.2
@@ -381,6 +381,7 @@ catalogs:
 
 overrides:
   zod@>=4.4.0: 4.3.6
+  parse-diff: 0.7.1
 
 importers:
 
