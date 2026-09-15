@@ -15,3 +15,12 @@ export const MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER = "1.14.0";
  * newer than this version (withMinVersionExclusive), i.e. 1.16.0 or above.
  */
 export const MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS = "1.15.0";
+
+/**
+ * Version threshold for the EIP-712 V2 protocol (EIP712_SCHEMA + EIP712_VALUES + a bare
+ * SIGN), checked exclusively so only 1.23.0-dev and above match. The app configuration
+ * carries no capability flag for it, so the version is the only signal available.
+ *
+ * Bump to 1.23.0 once V2 ships in a released app.
+ */
+export const MIN_ETH_APP_VERSION_FOR_EIP712_V2 = "1.22.0";
