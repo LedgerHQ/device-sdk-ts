@@ -1,5 +1,7 @@
 import {
   type DeviceActionStateMachine,
+  GetOsVersionCommand,
+  type GetOsVersionCommandResult,
   GoToDashboardDeviceAction,
   type InternalApi,
   isSuccessCommandResult,
@@ -18,7 +20,7 @@ import {
   type RenameContactDAInternalState,
   type RenameContactDAOutput,
 } from "@api/app-binder/RenameContactDeviceActionTypes";
-import { isContactsOsSupportedForSession } from "@internal/app-binder/contactsVersionGuards";
+import { isContactsOsVersionSupportedForSession } from "@internal/app-binder/contactsVersionGuards";
 import { ContactsVersionRequirementError } from "@internal/app-binder/model/contactsErrors";
 import {
   type RenameContactProof,
@@ -28,7 +30,8 @@ import {
 import { validateRenameContactInput } from "./validateRenameContactInput";
 
 export type RenameContactMachineDependencies = {
-  readonly isOsSupported: () => boolean;
+  readonly getOsVersion: () => Promise<GetOsVersionCommandResult>;
+  readonly isOsVersionSupported: (osVersion: string) => boolean;
   readonly renameContact: (
     input: RenameContactDAInput,
   ) => Promise<Awaited<ReturnType<SendRenameContactTask["run"]>>>;
@@ -58,7 +61,7 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
       RenameContactDAInternalState
     >;
 
-    const { isOsSupported, renameContact } =
+    const { getOsVersion, isOsVersionSupported, renameContact } =
       this.extractDependencies(internalApi);
 
     return setup({
@@ -74,13 +77,21 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
         goToDashboardStateMachine: new GoToDashboardDeviceAction({
           input: {},
         }).makeStateMachine(internalApi),
+        getOsVersion: fromPromise(getOsVersion),
         renameContact: fromPromise(
           ({ input }: { input: RenameContactDAInput }) => renameContact(input),
         ),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
-        contactsOsSupported: () => isOsSupported(),
+        // Gate on the OS version read freshly via `GetOsVersion`, never the
+        // session state. `osVersion` is populated by the GetOsVersion step
+        // that precedes this guard; a command failure short-circuits to Error
+        // before we get here, so a null here would be a machine-wiring bug.
+        contactsOsSupported: ({ context }) => {
+          const { osVersion } = context._internalState;
+          return osVersion !== null && isOsVersionSupported(osVersion);
+        },
       },
       actions: {
         assignValidationError: assign({
@@ -118,6 +129,7 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
         },
         _internalState: {
           error: null,
+          osVersion: null,
           proof: null,
         },
       }),
@@ -171,12 +183,55 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
         ValidateInput: {
           entry: "assignValidationError",
           always: [
+            { target: "GetOsVersion", guard: "noInternalError" },
+            { target: "Error" },
+          ],
+        },
+        // Read the OS version freshly from the device now that the dashboard
+        // (BOLOS) is reached, so the version guard evaluates real firmware
+        // rather than the session state — whose `firmwareVersion` is often
+        // absent on this path (GoToDashboard re-reads only the running app).
+        GetOsVersion: {
+          // Clear the stale interaction GoToDashboard leaves behind (e.g.
+          // UnlockDevice) so this internal command step asks the user for
+          // nothing. This is the one `pending / none` step of the phase.
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
+          invoke: {
+            id: "getOsVersion",
+            src: "getOsVersion",
+            onDone: {
+              target: "GetOsVersionResultCheck",
+              actions: assign({
+                _internalState: ({ event, context }) =>
+                  isSuccessCommandResult(event.output)
+                    ? {
+                        ...context._internalState,
+                        osVersion: event.output.data.seVersion,
+                      }
+                    : // A command failure surfaces as itself, never as a
+                      // ContactsVersionRequirementError.
+                      { ...context._internalState, error: event.output.error },
+              }),
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        GetOsVersionResultCheck: {
+          always: [
             { target: "VersionGuard", guard: "noInternalError" },
             { target: "Error" },
           ],
         },
         // OS-only version guard: rename is served by the device OS, so only the
         // device model and OS version are checked (no embedded-app version).
+        // The OS version comes from the fresh GetOsVersion result above.
         VersionGuard: {
           always: [
             { target: "RenameContact", guard: "contactsOsSupported" },
@@ -244,7 +299,11 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
   extractDependencies(
     internalApi: InternalApi,
   ): RenameContactMachineDependencies {
-    const isOsSupported = () => isContactsOsSupportedForSession(internalApi);
+    const getOsVersion = (): Promise<GetOsVersionCommandResult> =>
+      internalApi.sendCommand(new GetOsVersionCommand());
+
+    const isOsVersionSupported = (osVersion: string) =>
+      isContactsOsVersionSupportedForSession(internalApi, osVersion);
 
     const renameContact = (
       input: RenameContactDAInput,
@@ -256,7 +315,7 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
         hmacProof: input.hmacProof,
       }).run();
 
-    return { isOsSupported, renameContact };
+    return { getOsVersion, isOsVersionSupported, renameContact };
   }
 }
 
