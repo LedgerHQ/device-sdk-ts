@@ -20,6 +20,7 @@ import {
   type RenameContactDAInternalState,
   type RenameContactDAOutput,
 } from "@api/app-binder/RenameContactDeviceActionTypes";
+import { renameRequiresDerivationPath } from "@api/model/ContactsVersionRequirements";
 import { isContactsOsVersionSupportedForSession } from "@internal/app-binder/contactsVersionGuards";
 import { ContactsVersionRequirementError } from "@internal/app-binder/model/contactsErrors";
 import {
@@ -34,6 +35,7 @@ export type RenameContactMachineDependencies = {
   readonly isOsVersionSupported: (osVersion: string) => boolean;
   readonly renameContact: (
     input: RenameContactDAInput,
+    includeDerivationPath: boolean,
   ) => Promise<Awaited<ReturnType<SendRenameContactTask["run"]>>>;
 };
 
@@ -63,6 +65,10 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
 
     const { getOsVersion, isOsVersionSupported, renameContact } =
       this.extractDependencies(internalApi);
+    // Device model is stable for the session; the fresh OS version comes from
+    // the GetOsVersion step. Together they decide whether the rename payload
+    // must still carry the DERIVATION_PATH (DSDK-1481).
+    const { deviceModelId } = internalApi.getDeviceSessionState();
 
     return setup({
       types: {
@@ -79,7 +85,14 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
         }).makeStateMachine(internalApi),
         getOsVersion: fromPromise(getOsVersion),
         renameContact: fromPromise(
-          ({ input }: { input: RenameContactDAInput }) => renameContact(input),
+          ({
+            input,
+          }: {
+            input: {
+              args: RenameContactDAInput;
+              includeDerivationPath: boolean;
+            };
+          }) => renameContact(input.args, input.includeDerivationPath),
         ),
       },
       guards: {
@@ -252,7 +265,16 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "renameContact",
             src: "renameContact",
-            input: ({ context }) => context.input,
+            input: ({ context }) => ({
+              args: context.input,
+              // Fresh OS version (from GetOsVersion) is guaranteed set here: a
+              // null would have failed the VersionGuard before this state. The
+              // ?? "" is a defensive no-path fallback that can never trigger.
+              includeDerivationPath: renameRequiresDerivationPath(
+                deviceModelId,
+                context._internalState.osVersion ?? "",
+              ),
+            }),
             onDone: {
               target: "RenameContactResultCheck",
               actions: assign({
@@ -307,12 +329,14 @@ export class RenameContactDeviceAction extends XStateDeviceAction<
 
     const renameContact = (
       input: RenameContactDAInput,
+      includeDerivationPath: boolean,
     ): Promise<Awaited<ReturnType<SendRenameContactTask["run"]>>> =>
       new SendRenameContactTask(internalApi, {
         previousContactName: input.previousContactName,
         newContactName: input.newContactName,
         groupHandle: input.groupHandle,
         hmacProof: input.hmacProof,
+        includeDerivationPath,
       }).run();
 
     return { getOsVersion, isOsVersionSupported, renameContact };

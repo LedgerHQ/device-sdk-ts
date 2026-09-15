@@ -14,7 +14,6 @@ import {
   type CommandResult,
   CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
@@ -23,8 +22,7 @@ import {
   SUB_CMD_PROVIDE_CONTACT,
 } from "@internal/app-binder/model/contactsConstants";
 import {
-  CONTACTS_APP_ERRORS,
-  contactsCommandErrorFactory,
+  ContactsCommandErrorHelper,
   type ContactsErrorCodes,
 } from "@internal/app-binder/model/contactsErrors";
 
@@ -47,10 +45,8 @@ export class ProvideContactCommand
 {
   readonly name = "provideContact";
   readonly args: ProvideContactCommandArgs;
-  private readonly errorHelper = new CommandErrorHelper<
-    ProvideContactCommandResponse,
-    ContactsErrorCodes
-  >(CONTACTS_APP_ERRORS, contactsCommandErrorFactory);
+  private readonly errorHelper =
+    new ContactsCommandErrorHelper<ProvideContactCommandResponse>();
 
   constructor(args: ProvideContactCommandArgs) {
     this.args = args;

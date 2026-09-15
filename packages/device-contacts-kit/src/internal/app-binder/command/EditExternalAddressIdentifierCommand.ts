@@ -14,7 +14,6 @@ import {
   CommandResultFactory,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
@@ -24,8 +23,7 @@ import {
   SUB_CMD_EDIT_IDENTIFIER,
 } from "@internal/app-binder/model/contactsConstants";
 import {
-  CONTACTS_APP_ERRORS,
-  contactsCommandErrorFactory,
+  ContactsCommandErrorHelper,
   type ContactsErrorCodes,
 } from "@internal/app-binder/model/contactsErrors";
 import { STRUCT_TYPE_EDIT_IDENTIFIER } from "@internal/app-binder/services/contactsTlvSerializer";
@@ -72,10 +70,8 @@ export class EditExternalAddressIdentifierCommand
 {
   readonly name = "editExternalAddressIdentifier";
   readonly args: EditExternalAddressIdentifierCommandArgs;
-  private readonly errorHelper = new CommandErrorHelper<
-    EditExternalAddressIdentifierCommandResponse,
-    ContactsErrorCodes
-  >(CONTACTS_APP_ERRORS, contactsCommandErrorFactory);
+  private readonly errorHelper =
+    new ContactsCommandErrorHelper<EditExternalAddressIdentifierCommandResponse>();
 
   constructor(args: EditExternalAddressIdentifierCommandArgs) {
     this.args = args;
