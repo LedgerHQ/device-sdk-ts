@@ -221,6 +221,15 @@ export class ProvideGenericClearSignContextTask {
         }),
         ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
       );
+      if (contexts.length === 0) {
+        // No descriptor at all — not even a minimal no-mint/owner response
+        // (valid for path 2's ephemeral WSOL ATA case). The port this account
+        // backs stays unresolved and pins its instruction (G-051).
+        this.logger.warn(
+          "[run] TOKEN_ACCOUNT_STATE fetch returned no descriptor; instruction may be pinned",
+          { data: { tokenAccount } },
+        );
+      }
       for (const ctx of contexts) {
         if (
           ctx.type === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE &&
@@ -259,15 +268,33 @@ export class ProvideGenericClearSignContextTask {
         }),
         ClearSignContextType.SOLANA_ALT_RESOLUTION,
       );
+      if (altContexts.length === 0) {
+        // Unresolved ALT_RESOLUTION for a MINT_ASSOC entry pins the
+        // instruction (G-051): the mint stays undisplayed and the merge
+        // cannot compact it away.
+        this.logger.warn(
+          "[run] ALT_RESOLUTION fetch failed for a MINT_ASSOC ref; instruction may be pinned",
+          { data: { altAddress, entryIndex } },
+        );
+        continue;
+      }
       for (const altCtx of altContexts) {
         if (
           altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
           !isSolanaContextSuccess(altCtx)
-        )
+        ) {
           continue;
+        }
         const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
           .payload.resolvedAddress;
-        if (resolvedAddress && !streamedMints.has(resolvedAddress)) {
+        if (!resolvedAddress) {
+          this.logger.warn(
+            "[run] ALT_RESOLUTION for a MINT_ASSOC ref resolved to no address; instruction may be pinned",
+            { data: { altAddress, entryIndex } },
+          );
+          continue;
+        }
+        if (!streamedMints.has(resolvedAddress)) {
           streamedMints.add(resolvedAddress);
           await this.fetchAndStreamTokenInfo(resolvedAddress, deviceModelId);
         }
@@ -288,15 +315,33 @@ export class ProvideGenericClearSignContextTask {
         }),
         ClearSignContextType.SOLANA_ALT_RESOLUTION,
       );
+      if (altContexts.length === 0) {
+        // Unresolved ALT_RESOLUTION for a TOKEN_AMOUNT.TOKEN ref pins the
+        // instruction (G-051): the amount's token cannot be displayed and
+        // the merge cannot compact it away.
+        this.logger.warn(
+          "[run] ALT_RESOLUTION fetch failed for a TOKEN_AMOUNT.TOKEN ref; instruction may be pinned",
+          { data: { altAddress, entryIndex } },
+        );
+        continue;
+      }
       for (const altCtx of altContexts) {
         if (
           altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
           !isSolanaContextSuccess(altCtx)
-        )
+        ) {
           continue;
+        }
         const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
           .payload.resolvedAddress;
-        if (!resolvedAddress || streamedMints.has(resolvedAddress)) continue;
+        if (!resolvedAddress) {
+          this.logger.warn(
+            "[run] ALT_RESOLUTION for a TOKEN_AMOUNT.TOKEN ref resolved to no address; instruction may be pinned",
+            { data: { altAddress, entryIndex } },
+          );
+          continue;
+        }
+        if (streamedMints.has(resolvedAddress)) continue;
 
         // Optimistic: resolved address is a mint.
         const tokenInfoContexts = await this.args.contextModule.getContexts(
@@ -322,11 +367,24 @@ export class ProvideGenericClearSignContextTask {
           }),
           ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
         );
-        if (!stateCtx || !isSolanaContextSuccess(stateCtx)) continue;
+        if (!stateCtx || !isSolanaContextSuccess(stateCtx)) {
+          this.logger.warn(
+            "[run] TOKEN_ACCOUNT_STATE fetch failed for a resolved TOKEN_AMOUNT.TOKEN ATA; instruction may be pinned",
+            { data: { tokenAccount: resolvedAddress } },
+          );
+          continue;
+        }
 
         const mint = (stateCtx as SolanaTokenAccountStateContextSuccess).payload
           .mint;
-        if (!mint || streamedMints.has(mint)) continue;
+        if (!mint) {
+          this.logger.warn(
+            "[run] TOKEN_ACCOUNT_STATE for a resolved TOKEN_AMOUNT.TOKEN ATA carried no mint; instruction may be pinned",
+            { data: { tokenAccount: resolvedAddress } },
+          );
+          continue;
+        }
+        if (streamedMints.has(mint)) continue;
 
         const mintTokenInfoContexts = await this.args.contextModule.getContexts(
           { deviceModelId, mints: [mint], network: this.network },
@@ -335,7 +393,13 @@ export class ProvideGenericClearSignContextTask {
         const mintTokenInfoCtx = mintTokenInfoContexts.find(
           (c) => c.type === ClearSignContextType.SOLANA_TOKEN_INFO,
         );
-        if (!mintTokenInfoCtx) continue;
+        if (!mintTokenInfoCtx) {
+          this.logger.warn(
+            "[run] TOKEN_INFO fetch failed for a resolved TOKEN_AMOUNT.TOKEN mint; instruction may be pinned",
+            { data: { mint } },
+          );
+          continue;
+        }
 
         streamedTokenAccounts.add(resolvedAddress);
         await this.provideDescriptor(stateCtx);
@@ -361,15 +425,32 @@ export class ProvideGenericClearSignContextTask {
         }),
         ClearSignContextType.SOLANA_ALT_RESOLUTION,
       );
+      if (altContexts.length === 0) {
+        // Unresolved ALT_RESOLUTION for an owner/mint-map target pins the
+        // instruction (G-051): neither the IS_SIGNER hide nor the mint
+        // display can be established for it.
+        this.logger.warn(
+          "[run] ALT_RESOLUTION fetch failed for a TOKEN_ACCOUNT_STATE ref; instruction may be pinned",
+          { data: { altAddress, entryIndex } },
+        );
+        continue;
+      }
       for (const altCtx of altContexts) {
         if (
           altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
           !isSolanaContextSuccess(altCtx)
-        )
+        ) {
           continue;
+        }
         const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
           .payload.resolvedAddress;
-        if (!resolvedAddress) continue;
+        if (!resolvedAddress) {
+          this.logger.warn(
+            "[run] ALT_RESOLUTION for a TOKEN_ACCOUNT_STATE ref resolved to no address; instruction may be pinned",
+            { data: { altAddress, entryIndex } },
+          );
+          continue;
+        }
         if (streamedTokenAccounts.has(resolvedAddress)) continue;
 
         const stateCtx = await this.fetchChallengeBoundDescriptorOnly(
@@ -493,10 +574,21 @@ export class ProvideGenericClearSignContextTask {
       { deviceModelId, mints: [mint], network: this.network },
       [ClearSignContextType.SOLANA_TOKEN_INFO],
     );
+    let found = false;
     for (const ctx of contexts) {
       if (ctx.type === ClearSignContextType.SOLANA_TOKEN_INFO) {
+        found = true;
         await this.provideDescriptor(ctx);
       }
+    }
+    if (!found) {
+      // No TOKEN_INFO descriptor at all (as opposed to a streamed-but-failed
+      // one, which provideDescriptor already logs): the mint pins the
+      // instruction it belongs to (G-051) instead of merging or hiding.
+      this.logger.warn(
+        "[run] TOKEN_INFO fetch returned no descriptor; instruction may be pinned",
+        { data: { mint } },
+      );
     }
   }
 
