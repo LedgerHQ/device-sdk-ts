@@ -5,25 +5,25 @@
 ### Patch Changes
 
 - [#1864](https://github.com/LedgerHQ/device-sdk-ts/pull/1864) [`3b8b2a0`](https://github.com/LedgerHQ/device-sdk-ts/commit/3b8b2a00bba274239ecd2f7690dddb06899c3dc6) Thanks [@daniel-choinski-ledger](https://github.com/daniel-choinski-ledger)! - Fix Rename Contact failing with 0x686A on OS builds that still require the EDIT
-CONTACT NAME derivation path (e.g. Flex 1.7.0-rc2). The kit now sends the
-`DERIVATION_PATH` (tag 0x69) conditionally, based on the device OS version read
-freshly from the device: OS builds below the model's cutoff
-(`renameDerivationPathRequiredBelowOsVersion`, e.g. `1.7.0-rc3` for Flex) get the
-path they require, while the cutoff build and later (rc3, final, GA) get the
-path-free payload they expect — so no build ever receives the wrong shape. The
-cutoff lives as data in `ContactsVersionRequirements` and can be removed in one
-commit once no in-the-field OS predates it.
+  CONTACT NAME derivation path (e.g. Flex 1.7.0-rc2). The kit now sends the
+  `DERIVATION_PATH` (tag 0x69) conditionally, based on the device OS version read
+  freshly from the device: OS builds below the model's cutoff
+  (`renameDerivationPathRequiredBelowOsVersion`, e.g. `1.7.0-rc3` for Flex) get the
+  path they require, while the cutoff build and later (rc3, final, GA) get the
+  path-free payload they expect — so no build ever receives the wrong shape. The
+  cutoff lives as data in `ContactsVersionRequirements` and can be removed in one
+  commit once no in-the-field OS predates it.
 
 Also map 0x686A to an actionable message, and give every address-book command a
 sane default for unmapped status words, so a host never receives a bare
 `UnknownDeviceExchangeError`.
 
 - [#1863](https://github.com/LedgerHQ/device-sdk-ts/pull/1863) [`d133b46`](https://github.com/LedgerHQ/device-sdk-ts/commit/d133b469fe8f8d93d9f08bf27859e9169b0c49f9) Thanks [@daniel-choinski-ledger](https://github.com/daniel-choinski-ledger)! - Fix Rename Contact failing with a false version-requirement error. The OS
-version guard now reads the firmware version freshly via `GetOsVersion` after
-reaching the dashboard, instead of the device session state (whose
-`firmwareVersion` is often absent when an app was open at start). A
-`GetOsVersion` failure surfaces as the command error itself, not a
-`ContactsVersionRequirementError`.
+  version guard now reads the firmware version freshly via `GetOsVersion` after
+  reaching the dashboard, instead of the device session state (whose
+  `firmwareVersion` is often absent when an app was open at start). A
+  `GetOsVersion` failure surfaces as the command error itself, not a
+  `ContactsVersionRequirementError`.
 
 ## 0.4.0
 
