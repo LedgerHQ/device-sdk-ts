@@ -21,7 +21,7 @@ vi.mock("@ledgerhq/device-management-kit", () => ({
   },
 }));
 
-import { deserializeToMessage } from "./deserialize";
+import { deserializeToMessage, isFullTransaction } from "./deserialize";
 
 const payer = new PublicKey("2cHm11EeTGQixAkyaqNRFczpi1XB1n6rK7bSwNiZbCdB");
 const recipient = new PublicKey("7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2");
@@ -121,5 +121,34 @@ describe("deserializeToMessage", () => {
     expect(() => deserializeToMessage(garbage)).toThrow(
       "Input is neither a valid serialized message nor a valid serialized transaction.",
     );
+  });
+});
+
+describe("isFullTransaction", () => {
+  it("is false for a bare legacy message", () => {
+    expect(isFullTransaction(toBase64(buildLegacyMessageBytes()))).toBe(false);
+  });
+
+  it("is false for a bare v0 message", () => {
+    expect(isFullTransaction(toBase64(buildV0MessageBytes()))).toBe(false);
+  });
+
+  it("is true for a full legacy transaction", () => {
+    expect(isFullTransaction(toBase64(buildLegacyTransactionBytes()))).toBe(
+      true,
+    );
+  });
+
+  it("is true for a full v0 transaction", () => {
+    expect(isFullTransaction(toBase64(buildV0TransactionBytes()))).toBe(true);
+  });
+
+  it("is false for invalid base64", () => {
+    expect(isFullTransaction("!!!not base64!!!")).toBe(false);
+  });
+
+  it("is false for garbage binary input", () => {
+    const garbage = toBase64(new Uint8Array([0xff, 0xff, 0xff, 0xff]));
+    expect(isFullTransaction(garbage)).toBe(false);
   });
 });

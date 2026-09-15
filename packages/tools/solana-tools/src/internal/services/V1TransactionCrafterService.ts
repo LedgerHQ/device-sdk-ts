@@ -7,6 +7,7 @@ import {
   compileTransactionMessage,
   type DecompiledV1Message,
   deserializeV1ToMessage,
+  isV1FullTransaction,
 } from "./crafter/deserializeV1";
 import {
   getAssociatedTokenAddressSync,
@@ -85,7 +86,30 @@ export class V1TransactionCrafterService {
       );
     }
 
-    return bufferToBase64String(new Uint8Array(encoded));
+    // Mirror the input shape: a full transaction in gets re-wrapped with
+    // placeholder (all-zero) signatures on the way out — re-pointing accounts
+    // invalidates any original signature regardless. v1 has no leading
+    // shortvec signature-count field, so the placeholder slots are appended
+    // straight after the message with no extra framing.
+    const messageBytes = new Uint8Array(encoded);
+    const output = isV1FullTransaction(transactionBase64)
+      ? this.appendEmptySignatures(messageBytes, numRequiredSignatures)
+      : messageBytes;
+
+    return bufferToBase64String(output);
+  }
+
+  private appendEmptySignatures(
+    messageBytes: Uint8Array,
+    numRequiredSignatures: number,
+  ): Uint8Array {
+    // `Uint8Array` is zero-initialized, so the signature slots default to the
+    // all-zero placeholder without writing them explicitly.
+    const wrapped = new Uint8Array(
+      messageBytes.length + numRequiredSignatures * SIGNATURE_LENGTH,
+    );
+    wrapped.set(messageBytes, 0);
+    return wrapped;
   }
 
   private buildReplacements(

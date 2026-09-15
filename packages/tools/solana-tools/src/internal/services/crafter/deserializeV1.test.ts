@@ -28,7 +28,7 @@ vi.mock("@ledgerhq/device-management-kit", () => ({
   },
 }));
 
-import { deserializeV1ToMessage } from "./deserializeV1";
+import { deserializeV1ToMessage, isV1FullTransaction } from "./deserializeV1";
 
 const payer = address("2cHm11EeTGQixAkyaqNRFczpi1XB1n6rK7bSwNiZbCdB");
 const recipient = address("7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2");
@@ -109,5 +109,39 @@ describe("deserializeV1ToMessage", () => {
     const legacyLikeBytes = new Uint8Array([1, 0, 3, 0xaa, 0xbb]);
 
     expect(() => deserializeV1ToMessage(toBase64(legacyLikeBytes))).toThrow();
+  });
+});
+
+describe("isV1FullTransaction", () => {
+  it("is false for a bare v1 message", () => {
+    expect(isV1FullTransaction(toBase64(buildV1MessageBytes()))).toBe(false);
+  });
+
+  it("is true for a message with exactly one trailing signature slot (numRequiredSignatures = 1)", () => {
+    const messageBytes = buildV1MessageBytes();
+    const withSignature = new Uint8Array(messageBytes.length + 64);
+    withSignature.set(messageBytes, 0);
+    withSignature.fill(0xab, messageBytes.length);
+
+    expect(isV1FullTransaction(toBase64(withSignature))).toBe(true);
+  });
+
+  it("is false when trailing bytes don't match a signature-slot count", () => {
+    const messageBytes = buildV1MessageBytes();
+    // 32 bytes: not a multiple of the 64-byte signature length.
+    const withPartialTrailer = new Uint8Array(messageBytes.length + 32);
+    withPartialTrailer.set(messageBytes, 0);
+    withPartialTrailer.fill(0xab, messageBytes.length);
+
+    expect(isV1FullTransaction(toBase64(withPartialTrailer))).toBe(false);
+  });
+
+  it("is false for invalid base64", () => {
+    expect(isV1FullTransaction("!!!not base64!!!")).toBe(false);
+  });
+
+  it("is false for garbage binary input", () => {
+    const garbage = toBase64(new Uint8Array([0xff, 0xff, 0xff, 0xff]));
+    expect(isV1FullTransaction(garbage)).toBe(false);
   });
 });

@@ -256,13 +256,38 @@ describe("V1TransactionCrafterService", () => {
   });
 
   describe("full transaction input", () => {
-    it("should drop signatures and emit the crafted message", () => {
+    it("should re-wrap the crafted message with placeholder signatures", () => {
       const message = transferMessageBytes();
+      // numRequiredSignatures is 1 for this fixture (single fee-payer signer).
       const withTrailingSignature = new Uint8Array(message.length + 64);
       withTrailingSignature.set(message, 0);
       withTrailingSignature.fill(0xab, message.length);
 
-      const crafted = craft(toBase64(withTrailingSignature), {
+      const craftedBytes = fromBase64(
+        crafter.getCraftedTransaction(toBase64(withTrailingSignature), {
+          payer: newPayer,
+        }),
+      );
+      const crafted = decompileTransactionMessage(
+        getCompiledTransactionMessageDecoder().decode(craftedBytes),
+      ) as DecompiledV1Message;
+      const craftedMessageBytes = new Uint8Array(
+        getCompiledTransactionMessageEncoder().encode(
+          compileTransactionMessage(crafted),
+        ),
+      );
+
+      expect(crafted.feePayer.address).toBe(newPayer);
+      // Re-pointing the payer invalidates the original signature: the output
+      // carries the same one slot, zeroed out rather than the old 0xab bytes.
+      expect(craftedBytes.length).toBe(craftedMessageBytes.length + 64);
+      expect(craftedBytes.subarray(craftedMessageBytes.length)).toEqual(
+        new Uint8Array(64),
+      );
+    });
+
+    it("should emit a bare message when given a bare message", () => {
+      const crafted = craft(toBase64(transferMessageBytes()), {
         payer: newPayer,
       });
 

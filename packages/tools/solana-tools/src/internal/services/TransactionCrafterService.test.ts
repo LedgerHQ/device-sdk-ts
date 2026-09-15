@@ -322,7 +322,7 @@ describe("TransactionCrafterService", () => {
   });
 
   describe("full transaction input", () => {
-    it("should drop signatures and emit the crafted message", () => {
+    function transferTransaction(): VersionedTransaction {
       const message = new TransactionMessage({
         payerKey: oldPayer,
         recentBlockhash: BLOCKHASH,
@@ -334,9 +334,34 @@ describe("TransactionCrafterService", () => {
           }),
         ],
       }).compileToV0Message();
-      const transaction = new VersionedTransaction(message);
+      return new VersionedTransaction(message);
+    }
 
-      const crafted = craft(toBase64(transaction.serialize()), {
+    it("should re-wrap the crafted message with placeholder signatures", () => {
+      const transaction = transferTransaction();
+
+      const craftedBytes = fromBase64(
+        crafter.getCraftedTransaction(toBase64(transaction.serialize()), {
+          payer: newPayer.toBase58(),
+        }),
+      );
+      const crafted = VersionedTransaction.deserialize(craftedBytes);
+
+      const keys = crafted.message.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(newPayer.toBase58());
+      expect(keys).not.toContain(oldPayer.toBase58());
+      // The original signature(s) are invalid once the payer changes: the
+      // output carries the same number of slots, all zeroed out.
+      expect(crafted.signatures).toHaveLength(transaction.signatures.length);
+      for (const signature of crafted.signatures) {
+        expect(signature).toEqual(new Uint8Array(64));
+      }
+    });
+
+    it("should emit a bare message when given a bare message", () => {
+      const transaction = transferTransaction();
+
+      const crafted = craft(toBase64(transaction.message.serialize()), {
         payer: newPayer.toBase58(),
       });
 
