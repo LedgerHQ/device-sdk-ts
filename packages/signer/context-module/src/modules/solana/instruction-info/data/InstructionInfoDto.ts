@@ -99,6 +99,18 @@ export type CalAccountResetDto = CalSubstructureDto & {
   require_native_pre_balance_zero?: boolean;
 };
 
+export type CalSlotConstraintDto = {
+  signer: string;
+  writable: string;
+};
+
+export type CalAccountSchemaDto = {
+  count_min?: number;
+  count_max?: number;
+  remaining_policy?: CalSlotConstraintDto;
+  slots?: CalSlotConstraintDto[];
+};
+
 export type CalDisplayFieldDto = CalSubstructureDto & {
   name?: string;
   param?: { type: string; value?: CalValueDto; token?: CalValueDto };
@@ -119,6 +131,8 @@ export type CalInstructionDescriptorDto = {
   value_flow_ports?: CalValueFlowPortDto[];
   hide_rules?: CalHideRuleDto[];
   account_resets?: CalAccountResetDto[];
+  /** Absent means "no ACCOUNT_SCHEMA check". */
+  account_schema?: CalAccountSchemaDto;
 };
 
 // One program object of the `solana_programs` response: the program `id`, its
@@ -154,6 +168,18 @@ const calSubstructureCodec = Codec.interface({
   descriptor: string,
 });
 
+const calSlotConstraintCodec = Codec.interface({
+  signer: string,
+  writable: string,
+});
+
+const calAccountSchemaCodec = Codec.interface({
+  count_min: optional(number),
+  count_max: optional(number),
+  remaining_policy: optional(calSlotConstraintCodec),
+  slots: optional(array(calSlotConstraintCodec)),
+});
+
 const calInstructionDescriptorCodec = Codec.interface({
   discriminator_hex: optional(string),
   descriptor: calSignedDescriptorCodec,
@@ -162,6 +188,7 @@ const calInstructionDescriptorCodec = Codec.interface({
   value_flow_ports: optional(array(calSubstructureCodec)),
   hide_rules: optional(array(calSubstructureCodec)),
   account_resets: optional(array(calSubstructureCodec)),
+  account_schema: optional(calAccountSchemaCodec),
 });
 
 /**

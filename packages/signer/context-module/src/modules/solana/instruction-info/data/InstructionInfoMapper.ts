@@ -7,9 +7,11 @@ import { type Either, Left, Right } from "purify-ts";
 
 import {
   type SolanaCalAccountReset,
+  type SolanaCalAccountSchema,
   type SolanaCalDisplayField,
   type SolanaCalHideRule,
   type SolanaCalOwnerAssociation,
+  type SolanaCalSlotConstraint,
   type SolanaCalValueFlowPort,
   type SolanaInstructionEnumVariant,
   type SolanaInstructionInfoPayload,
@@ -20,11 +22,13 @@ import { u16Codec } from "@/shared/utils/uIntCodec";
 
 import {
   type CalAccountResetDto,
+  type CalAccountSchemaDto,
   type CalDisplayFieldDto,
   type CalHideRuleDto,
   type CalInstructionDescriptorDto,
   type CalOwnerAssociationDto,
   type CalSignatures,
+  type CalSlotConstraintDto,
   type CalValueFlowPortDto,
 } from "./InstructionInfoDto";
 
@@ -101,6 +105,40 @@ export function toOwnerAssociations(
   if (dto === undefined) return [];
   if (dto.account_index === undefined || dto.owner === undefined) return [];
   return [{ account_index: dto.account_index, owner: dto.owner }];
+}
+
+const VALID_CONSTRAINT_VALUES = new Set(["FORBIDDEN", "EITHER", "REQUIRED"]);
+
+/**
+ * Unlike `value_kind` on `ACCOUNT_RESET` (an unknown value is a decode
+ * error), an unknown/missing `signer` or `writable` here deliberately fails
+ * open to `"EITHER"` — i.e. that slot is left unchecked rather than the whole
+ * descriptor rejected. ACCOUNT_SCHEMA is only a host-side optimization (the
+ * device is the authority at FINALIZE), so the worst outcome of a malformed
+ * value is a missed early exit, not an incorrect signature.
+ */
+function toSlotConstraint(dto: CalSlotConstraintDto): SolanaCalSlotConstraint {
+  const signer = VALID_CONSTRAINT_VALUES.has(dto.signer)
+    ? (dto.signer as SolanaCalSlotConstraint["signer"])
+    : "EITHER";
+  const writable = VALID_CONSTRAINT_VALUES.has(dto.writable)
+    ? (dto.writable as SolanaCalSlotConstraint["writable"])
+    : "EITHER";
+  return { signer, writable };
+}
+
+export function toAccountSchema(
+  dto: CalAccountSchemaDto | undefined,
+): SolanaCalAccountSchema | undefined {
+  if (dto === undefined) return undefined;
+  return {
+    count_min: dto.count_min ?? 0,
+    count_max: dto.count_max ?? 255,
+    remaining_policy: dto.remaining_policy
+      ? toSlotConstraint(dto.remaining_policy)
+      : { signer: "EITHER", writable: "EITHER" },
+    slots: (dto.slots ?? []).map(toSlotConstraint),
+  };
 }
 
 export function toDisplayFields(
@@ -222,5 +260,6 @@ export function toInstructionInfoPayload(
     accountResets: toAccountResets(dto.account_resets),
     displayFields: toDisplayFields(dto.display_fields),
     hideRules: toHideRules(dto.hide_rules),
+    accountSchema: toAccountSchema(dto.account_schema),
   });
 }

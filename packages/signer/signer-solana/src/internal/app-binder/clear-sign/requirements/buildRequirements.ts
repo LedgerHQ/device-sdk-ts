@@ -6,6 +6,7 @@ import {
   DefaultBs58Encoder,
 } from "@internal/app-binder/services/bs58Encoder";
 
+import { checkAccountSchema } from "./accountSchema";
 import {
   type DescriptorRequirements,
   type MatchedInstruction,
@@ -15,6 +16,7 @@ import { parseInstructionDescriptor } from "./parseInstruction";
 import { type ParsedInstruction } from "./records";
 import { RequirementAccumulator } from "./RequirementAccumulator";
 import {
+  AccountSchemaMismatchError,
   RequirementsDecodeError,
   type RequirementsError,
 } from "./RequirementsError";
@@ -88,6 +90,28 @@ export function buildRequirements(
     options.selectEnumVariants ?? findSelectedEnumVariants;
   const bs58Encoder = options.bs58Encoder ?? DefaultBs58Encoder;
   try {
+    // ACCOUNT_SCHEMA pre-check: validate every matched instruction's live
+    // accounts against its descriptor's schema *before* parsing or binding
+    // anything else. Doing this in its own pass over the whole transaction
+    // (rather than interleaved with the per-instruction rules below) means a
+    // stale descriptor is always reported as AccountSchemaMismatchError, even
+    // when an earlier instruction would otherwise fail first for an unrelated
+    // reason (e.g. a decode error) and short-circuit the main loop.
+    for (const match of matched) {
+      if (match.descriptor.accountSchema === undefined) continue;
+      const schemaMismatch = checkAccountSchema(
+        match.descriptor.accountSchema,
+        match.instruction.accounts,
+      );
+      if (schemaMismatch !== null) {
+        return Left(
+          new AccountSchemaMismatchError(
+            `ACCOUNT_SCHEMA mismatch for (${match.descriptor.discriminator}): ${schemaMismatch}`,
+          ),
+        );
+      }
+    }
+
     const accumulator = new RequirementAccumulator();
     const instructions = matched.map((match) => ({
       match,

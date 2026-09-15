@@ -29,7 +29,7 @@ function run(
   };
   const instruction: RequirementInstruction = {
     programId: "P",
-    accounts: addresses.map((address) => ({ address, isWritable: false })),
+    accounts: addresses.map((address) => ({ address, isWritable: false, isSigner: false })),
     data: new Uint8Array(),
   };
   const accumulator = new RequirementAccumulator();

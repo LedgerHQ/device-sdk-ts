@@ -57,6 +57,7 @@ function buildMessage(
     programIdIndex: intern(ix.programId),
     accountKeyIndexes: ix.accounts.map(intern),
     accountWritable: ix.accounts.map(() => false),
+    accountSigner: ix.accounts.map(() => false),
     data: ix.data,
   }));
 
@@ -322,6 +323,7 @@ describe("classify", () => {
             programIdIndex: 99, // out of range
             accountKeyIndexes: [],
             accountWritable: [],
+            accountSigner: [],
             data: new Uint8Array([3]),
           },
         ],

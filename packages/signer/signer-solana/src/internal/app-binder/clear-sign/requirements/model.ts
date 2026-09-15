@@ -2,6 +2,7 @@ import { type VariantCache } from "@internal/app-binder/clear-sign/idl-type-pool
 
 import {
   type CalAccountReset,
+  type CalAccountSchema,
   type CalDisplayField,
   type CalHideRule,
   type CalIdlDescriptor,
@@ -28,6 +29,8 @@ export type RequirementAccount = {
   address?: string;
   altRef?: AltEntryKey;
   isWritable: boolean;
+  /** `true` when the slot is a required signer (keyIdx < numRequiredSignatures in the message header). Always `false` for ALT-supplied slots. */
+  isSigner: boolean;
 };
 
 export type RequirementInstruction = {
@@ -50,6 +53,8 @@ export type InstructionDescriptor = {
   displayFields: CalDisplayField[];
   hideRules: CalHideRule[];
   enumCache: VariantCache;
+  /** Absent means "no ACCOUNT_SCHEMA check". */
+  accountSchema?: CalAccountSchema;
 };
 
 /**
