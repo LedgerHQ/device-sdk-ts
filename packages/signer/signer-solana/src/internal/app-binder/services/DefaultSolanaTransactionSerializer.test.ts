@@ -55,6 +55,57 @@ async function buildRandomV1Transaction() {
   return { messageBytes, wireBytes };
 }
 
+/**
+ * Builds a real v1 transaction with exactly 2 required signers (fee payer +
+ * one co-signer, both referenced by their `TransactionSigner`, not just
+ * their address). Deterministic in signer count, unlike
+ * `buildRandomV1Transaction` which only ever produces a single signer —
+ * needed to exercise recoverSignaturesV1's multi-slot indexing and the
+ * numRequiredSignatures * 64 tail boundary with more than one signature.
+ */
+async function buildTwoSignerV1Transaction() {
+  const feePayer = await generateKeyPairSigner();
+  const coSigner = await generateKeyPairSigner();
+  const program = await generateKeyPairSigner();
+
+  const instruction = {
+    programAddress: program.address,
+    accounts: [
+      {
+        address: feePayer.address,
+        role: AccountRole.WRITABLE_SIGNER,
+        signer: feePayer,
+      },
+      {
+        address: coSigner.address,
+        role: AccountRole.READONLY_SIGNER,
+        signer: coSigner,
+      },
+    ],
+    data: new Uint8Array([1, 2, 3]),
+  } as const;
+
+  const message = pipe(
+    createTransactionMessage({ version: 1 }),
+    (m) => setTransactionMessageFeePayerSigner(feePayer, m),
+    (m) =>
+      setTransactionMessageLifetimeUsingBlockhash(
+        {
+          blockhash: blockhash(coSigner.address),
+          lastValidBlockHeight: 1000n,
+        },
+        m,
+      ),
+    (m) => appendTransactionMessageInstructions([instruction], m),
+  );
+
+  const signedTx = await signTransactionMessageWithSigners(message);
+  const messageBytes = new Uint8Array(signedTx.messageBytes);
+  const wireBytes = getTransactionEncoder().encode(signedTx) as Uint8Array;
+
+  return { messageBytes, wireBytes, numRequiredSignatures: messageBytes[1]! };
+}
+
 let serializer: DefaultSolanaTransactionSerializer;
 
 beforeEach(() => {
@@ -318,6 +369,76 @@ describe("DefaultSolanaTransactionSerializer", () => {
       // A legacy/v0 wrap would prepend a shortvec count byte before the
       // message; a v1 wrap must not, since v1 has no such leading field.
       expect(payload[0]).toBe(messageBytes[0]);
+    });
+
+    it("recovers both real signatures at their correct tail offsets for a 2-required-signer transaction", async () => {
+      const { messageBytes, wireBytes, numRequiredSignatures } =
+        await buildTwoSignerV1Transaction();
+      expect(numRequiredSignatures).toBe(2);
+
+      const payload = serializer.wrapMessageAsTransaction(
+        messageBytes,
+        wireBytes,
+      );
+
+      expect(Array.from(payload)).toEqual(Array.from(wireBytes));
+
+      const slot0 = payload.slice(
+        messageBytes.length,
+        messageBytes.length + SIG_LEN,
+      );
+      const slot1 = payload.slice(
+        messageBytes.length + SIG_LEN,
+        messageBytes.length + 2 * SIG_LEN,
+      );
+      const expectedSlot0 = wireBytes.slice(
+        messageBytes.length,
+        messageBytes.length + SIG_LEN,
+      );
+      const expectedSlot1 = wireBytes.slice(
+        messageBytes.length + SIG_LEN,
+        messageBytes.length + 2 * SIG_LEN,
+      );
+
+      // both slots are real (non-placeholder) signatures, and land at the
+      // right index — a co-signer offset regression would fail this.
+      expect(Array.from(slot0)).toEqual(Array.from(expectedSlot0));
+      expect(Array.from(slot1)).toEqual(Array.from(expectedSlot1));
+      expect(slot0.every((b) => b === 0)).toBe(false);
+      expect(slot1.every((b) => b === 0)).toBe(false);
+    });
+
+    it("preserves the co-signer's real signature at slot 1 while slot 0 stays a zero placeholder", async () => {
+      const { messageBytes, wireBytes } = await buildTwoSignerV1Transaction();
+      // Simulate a partially-signed multisig blob: fee payer hasn't signed
+      // yet, co-signer has.
+      const partiallySigned = new Uint8Array(wireBytes);
+      partiallySigned.fill(
+        0,
+        messageBytes.length,
+        messageBytes.length + SIG_LEN,
+      );
+
+      const payload = serializer.wrapMessageAsTransaction(
+        messageBytes,
+        partiallySigned,
+      );
+
+      const slot0 = payload.slice(
+        messageBytes.length,
+        messageBytes.length + SIG_LEN,
+      );
+      const slot1 = payload.slice(
+        messageBytes.length + SIG_LEN,
+        messageBytes.length + 2 * SIG_LEN,
+      );
+      const expectedSlot1 = wireBytes.slice(
+        messageBytes.length + SIG_LEN,
+        messageBytes.length + 2 * SIG_LEN,
+      );
+
+      expect(slot0.every((b) => b === 0)).toBe(true);
+      expect(Array.from(slot1)).toEqual(Array.from(expectedSlot1));
     });
   });
 });

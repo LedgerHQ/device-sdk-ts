@@ -101,6 +101,56 @@ async function buildRandomV1Transaction(options?: { withConfig?: boolean }) {
   return { messageBytes, wireBytes };
 }
 
+/**
+ * Builds a real v1 transaction with exactly 2 required signers (fee payer +
+ * one co-signer, both referenced by their `TransactionSigner`, not just
+ * their address, so `signTransactionMessageWithSigners` signs for both).
+ * Deterministic in signer count (always 2), unlike `buildRandomV1Transaction`
+ * which only ever produces a single (fee-payer) signer.
+ */
+async function buildTwoSignerV1Transaction() {
+  const feePayer = await generateKeyPairSigner();
+  const coSigner = await generateKeyPairSigner();
+  const program = await generateKeyPairSigner();
+
+  const instruction = {
+    programAddress: program.address,
+    accounts: [
+      {
+        address: feePayer.address,
+        role: AccountRole.WRITABLE_SIGNER,
+        signer: feePayer,
+      },
+      {
+        address: coSigner.address,
+        role: AccountRole.READONLY_SIGNER,
+        signer: coSigner,
+      },
+    ],
+    data: new Uint8Array([1, 2, 3]),
+  } as const;
+
+  const message = pipe(
+    createTransactionMessage({ version: 1 }),
+    (m) => setTransactionMessageFeePayerSigner(feePayer, m),
+    (m) =>
+      setTransactionMessageLifetimeUsingBlockhash(
+        {
+          blockhash: blockhash(coSigner.address),
+          lastValidBlockHeight: 1000n,
+        },
+        m,
+      ),
+    (m) => appendTransactionMessageInstructions([instruction], m),
+  );
+
+  const signedTx = await signTransactionMessageWithSigners(message);
+  const messageBytes = new Uint8Array(signedTx.messageBytes);
+  const wireBytes = getTransactionEncoder().encode(signedTx) as Uint8Array;
+
+  return { messageBytes, wireBytes, numRequiredSignatures: messageBytes[1]! };
+}
+
 describe("TransactionInputNormaliser", () => {
   let normaliser: TransactionInputNormaliser;
 
@@ -203,6 +253,20 @@ describe("TransactionInputNormaliser", () => {
 
       expect(Array.from(result.messageBytes)).toEqual(Array.from(messageBytes));
       expect(result.serializedForTxCheck).toBe(wireBytes);
+    });
+
+    it("extracts message bytes correctly for a v1 transaction with 2 required signers", async () => {
+      const { messageBytes, wireBytes, numRequiredSignatures } =
+        await buildTwoSignerV1Transaction();
+      expect(numRequiredSignatures).toBe(2);
+
+      const result = normaliser.normalize(wireBytes);
+
+      expect(Array.from(result.messageBytes)).toEqual(Array.from(messageBytes));
+      expect(result.serializedForTxCheck).toBe(wireBytes);
+      // the tail is exactly 2 signatures, not 1 — proves the
+      // numRequiredSignatures * 64 boundary is computed from the real count.
+      expect(wireBytes.length - result.messageBytes.length).toBe(2 * 64);
     });
 
     it("handles multiple random instructions with varying account/data sizes", async () => {

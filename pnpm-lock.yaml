@@ -102,7 +102,13 @@ catalogs:
     '@sentry/nextjs':
       specifier: ^9.33.0
       version: 9.33.0
+    '@solana/addresses':
+      specifier: ^8.3.0
+      version: 8.3.0
     '@solana/kit':
+      specifier: ^8.3.0
+      version: 8.3.0
+    '@solana/rpc-types':
       specifier: ^8.3.0
       version: 8.3.0
     '@solana/transaction-messages':
@@ -2352,6 +2358,12 @@ importers:
 
   packages/tools/solana-tools:
     dependencies:
+      '@solana/addresses':
+        specifier: 'catalog:'
+        version: 8.3.0(typescript@5.9.2)
+      '@solana/transaction-messages':
+        specifier: 'catalog:'
+        version: 8.3.0(typescript@5.9.2)
       '@solana/web3.js':
         specifier: 'catalog:'
         version: 1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.2)(utf-8-validate@5.0.10)
@@ -2395,6 +2407,9 @@ importers:
       '@ledgerhq/vitest-config-dmk':
         specifier: workspace:*
         version: link:../../config/vitest
+      '@solana/rpc-types':
+        specifier: 'catalog:'
+        version: 8.3.0(typescript@5.9.2)
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
