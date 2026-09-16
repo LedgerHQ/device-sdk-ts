@@ -76,6 +76,7 @@ requested `--device` is skipped rather than failed.
 | `erc7730-typed-data` | stax, nanox, flex | Per-dapp typed-data descriptors                 |
 | `solana`             | stax, nanox, flex | Solana transaction fixtures                     |
 | `solana-programs`    | —                 | Live program transactions — disabled, see below |
+| `tron`               | stax, nanox, flex | TRC10 and TRC20 transfer fixtures               |
 
 The `solana-programs` group is **disabled**. Its cases pull transactions from an
 RPC rather than a fixture, so they carry no `expectedTexts` — and a case with
@@ -93,24 +94,26 @@ develop exits 0 when a scan finds nothing at all.
 
 ### Options
 
-| Option                         | Default          | Description                                        |
-| ------------------------------ | ---------------- | -------------------------------------------------- |
-| `--device <device>`            | every supported  | Run only scenarios supporting this device          |
-| `--concurrency <n>`            | `4`              | How many cases may hold an emulator at once        |
-| `--no-split`                   | split            | Run a whole fixture on one emulator, in order      |
-| `--log-level <level>`          | `info`           | Console log level                                  |
-| `--log-dir <path>`             | —                | One log file per case                              |
-| `--file-log-level <level>`     | `--log-level`    | File log level                                     |
-| `--screenshot-folder-path`     | —                | Save signing screenshots                           |
-| `--speculinho-url <url>`       | `SPECULINHO_URL` | Speculinho operator URL                            |
-| `--speculos-http-timeout <ms>` | `0` (none)       | Timeout for Speculos pod requests                  |
-| `--rpc-url <url>`              | Ledger endpoint  | Solana RPC, unused while `solana-programs` is off  |
-| `--derivation-path <path>`     | `44'/60'/0'/0/0` | Ethereum derivation path                           |
-| `--solana-derivation-path`     | `44'/501'/0'`    | Solana derivation path                             |
-| `--os-version <version>`       | defaults file    | Override the default OS version for a one-off run  |
-| `--app-eth-version <version>`  | defaults file    | Override the default Ethereum app version          |
-| `--app-sol-version <version>`  | defaults file    | Override the default Solana app version            |
-| `--erc7730-files <files...>`   | —                | Inject descriptors; also switches CAL to test mode |
+| Option                         | Default           | Description                                        |
+| ------------------------------ | ----------------- | -------------------------------------------------- |
+| `--device <device>`            | every supported   | Run only scenarios supporting this device          |
+| `--concurrency <n>`            | `4`               | How many cases may hold an emulator at once        |
+| `--no-split`                   | split             | Run a whole fixture on one emulator, in order      |
+| `--log-level <level>`          | `info`            | Console log level                                  |
+| `--log-dir <path>`             | —                 | One log file per case                              |
+| `--file-log-level <level>`     | `--log-level`     | File log level                                     |
+| `--screenshot-folder-path`     | —                 | Save signing screenshots                           |
+| `--speculinho-url <url>`       | `SPECULINHO_URL`  | Speculinho operator URL                            |
+| `--speculos-http-timeout <ms>` | `0` (none)        | Timeout for Speculos pod requests                  |
+| `--rpc-url <url>`              | Ledger endpoint   | Solana RPC, unused while `solana-programs` is off  |
+| `--derivation-path <path>`     | `44'/60'/0'/0/0`  | Ethereum derivation path                           |
+| `--solana-derivation-path`     | `44'/501'/0'`     | Solana derivation path                             |
+| `--tron-derivation-path`       | `44'/195'/0'/0/0` | Tron derivation path                               |
+| `--os-version <version>`       | defaults file     | Override the default OS version for a one-off run  |
+| `--app-eth-version <version>`  | defaults file     | Override the default Ethereum app version          |
+| `--app-sol-version <version>`  | defaults file     | Override the default Solana app version            |
+| `--app-trx-version <version>`  | defaults file     | Override the default Tron app version              |
+| `--erc7730-files <files...>`   | —                 | Inject descriptors; also switches CAL to test mode |
 
 ### Scenario files
 
