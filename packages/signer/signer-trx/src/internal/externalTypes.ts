@@ -3,4 +3,5 @@ export const externalTypes = {
   SessionId: Symbol.for("SessionId"),
   DmkLoggerFactory: Symbol.for("DmkLoggerFactory"),
   AddressBook: Symbol.for("AddressBook"),
+  ContextModule: Symbol.for("ContextModule"),
 } as const;
