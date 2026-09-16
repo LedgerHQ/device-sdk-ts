@@ -1,0 +1,29 @@
+{
+  "group": "tron",
+  "name": "trc20",
+  "action": "signTransaction",
+  "devices": ["flex", "stax", "nanox"],
+  "coinApp": "Tron",
+  "mode": "parallel",
+  "cases": [
+    {
+      "description": "TRC20 USDT transfer names the token from the app's built-in table",
+      "rawTx": "0a023dce220895da42177db005074080d095ffbc315aae01081f12a9010a31747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e54726967676572536d617274436f6e747261637412740a1541c8599111f29c1e1e061265b4af93ea1f274ad78a121541a614f803b6fd780986a42c78ec9c7f77e6ded13c2244a9059cbb00000000000000000000000014183f3bbca4ae9fc1de55b9bbe2d071942dc1a60000000000000000000000000000000000000000000000000000000000bc614e70a0fb91ffbc31900180c2d72f",
+      "expectedTexts": [
+        "Review Transaction",
+        "Token",
+        "USDT",
+        "Amount",
+        "12.345678",
+        "TBoTZcARzWVgnNuB9SyE3S5g1RwsXoQL16"
+      ],
+      "unexpectedTexts": ["12345678"]
+    },
+    {
+      "description": "An 18-decimal TRC20 scales correctly",
+      "rawTx": "0a023dce220895da42177db005074080d095ffbc315aae01081f12a9010a31747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e54726967676572536d617274436f6e747261637412740a1541c8599111f29c1e1e061265b4af93ea1f274ad78a12154118fd0626daf3af02389aef3ed87db9c33f638ffa2244a9059cbb00000000000000000000000014183f3bbca4ae9fc1de55b9bbe2d071942dc1a600000000000000000000000000000000000000000000000014d1120d7b16000070a0fb91ffbc31900180c2d72f",
+      "expectedTexts": ["JST", "1.5"],
+      "unexpectedTexts": ["USDT"]
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import {
 const RUNTIME: ScenarioRuntime = {
   ethDerivationPath: "44'/60'/0'/0/0",
   solanaDerivationPath: "44'/501'/0'",
+  tronDerivationPath: "44'/195'/0'/0/0",
   logLevel: "none",
   originToken: "test-origin-token",
   calMode: "prod",

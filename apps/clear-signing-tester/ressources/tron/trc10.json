@@ -1,0 +1,29 @@
+{
+  "group": "tron",
+  "name": "trc10",
+  "action": "signTransaction",
+  "devices": ["flex", "stax", "nanox"],
+  "coinApp": "Tron",
+  "mode": "parallel",
+  "cases": [
+    {
+      "description": "TRC10 BitTorrent transfer shows the token name and scaled amount",
+      "rawTx": "0a023dce220895da42177db005074080d095ffbc315a75080212710a32747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e736665724173736574436f6e7472616374123b0a0731303032303030121541c8599111f29c1e1e061265b4af93ea1f274ad78a1a154114183f3bbca4ae9fc1de55b9bbe2d071942dc1a62087ad4b70a0fb91ffbc31",
+      "expectedTexts": [
+        "Review Transaction",
+        "Token",
+        "BitTorrent[1002000]",
+        "Amount",
+        "1.234567",
+        "TBoTZcARzWVgnNuB9SyE3S5g1RwsXoQL16"
+      ],
+      "unexpectedTexts": ["1234567"]
+    },
+    {
+      "description": "A second TRC10 resolves independently",
+      "rawTx": "0a023dce220895da42177db005074080d095ffbc315a76080212720a32747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e736665724173736574436f6e7472616374123c0a0731303032363338121541c8599111f29c1e1e061265b4af93ea1f274ad78a1a154114183f3bbca4ae9fc1de55b9bbe2d071942dc1a620a0cb980170a0fb91ffbc31",
+      "expectedTexts": ["OTNcoin[1002638]", "2.5"],
+      "unexpectedTexts": ["BitTorrent", "2500000"]
+    }
+  ]
+}

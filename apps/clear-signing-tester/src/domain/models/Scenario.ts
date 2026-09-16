@@ -17,7 +17,7 @@ export const SCENARIO_DEVICES: readonly ScenarioDevice[] = [
 ];
 
 /** Coin app a scenario exercises. */
-export type ScenarioCoinApp = "Ethereum" | "Solana";
+export type ScenarioCoinApp = "Ethereum" | "Solana" | "Tron";
 
 /**
  * What a scenario asks the device to do. The action decides which flow runs;
