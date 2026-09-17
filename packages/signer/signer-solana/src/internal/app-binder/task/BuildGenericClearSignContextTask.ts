@@ -42,6 +42,8 @@ export type ChallengeBoundRequirements = Pick<
   tokenAccountStateAltRefs: AltEntryKey[];
   /** ALT-backed MINT entries from MINT_ASSOCIATIONS; require TOKEN_INFO via hold-and-conditionally-stream. */
   mintAltRefs: AltEntryKey[];
+  /** ALT-supplied slots targeted by a trusted-name display field; see {@link DescriptorRequirements.trustedNameAltRefs}. */
+  trustedNameAltRefs: AltEntryKey[];
 };
 
 /**
@@ -110,6 +112,7 @@ export class BuildGenericClearSignContextTask {
         tokenAmountAltRefs: [],
         tokenAccountStateAltRefs: [],
         mintAltRefs: [],
+        trustedNameAltRefs: [],
       },
       unrecognizedProgramIds: [],
       staleDescriptor: false,
@@ -316,6 +319,7 @@ export class BuildGenericClearSignContextTask {
       tokenAmountAltRefs: requirements.tokenAmountAltRefs,
       tokenAccountStateAltRefs: requirements.tokenAccountStateAltRefs,
       mintAltRefs: requirements.mintAltRefs,
+      trustedNameAltRefs: requirements.trustedNameAltRefs,
     };
 
     this.logger.debug("[run] built clear-sign context", {

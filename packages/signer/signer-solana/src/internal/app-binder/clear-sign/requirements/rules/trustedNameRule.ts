@@ -5,7 +5,10 @@ import {
   type ParsedInstruction,
 } from "@internal/app-binder/clear-sign/requirements/records";
 import { type RequirementAccumulator } from "@internal/app-binder/clear-sign/requirements/RequirementAccumulator";
-import { resolvePubkeyValue } from "@internal/app-binder/clear-sign/requirements/valueResolution";
+import {
+  altRefForPubkeyValue,
+  resolvePubkeyValue,
+} from "@internal/app-binder/clear-sign/requirements/valueResolution";
 import {
   type Bs58Encoder,
   DefaultBs58Encoder,
@@ -16,6 +19,12 @@ import {
  * that may have a CAL name. For `PARAM_ACCOUNT` this is best-effort: the device
  * shows the name if a descriptor is found and falls back to the base58 address
  * otherwise.
+ *
+ * A field targeting an ALT-supplied slot has no address yet at build time —
+ * `resolvePubkeyValue` misses — so it is recorded as a `trustedNameAltRef`
+ * instead: `altResolutionRule` already requests this slot's `ALT_RESOLUTION`,
+ * and the provide phase fetches the TRUSTED_NAME once that resolution comes
+ * back.
  */
 export function applyTrustedNameRule(
   parsed: ParsedInstruction,
@@ -32,6 +41,13 @@ export function applyTrustedNameRule(
       continue;
     }
     const target = resolvePubkeyValue(field.value, instruction, bs58Encoder);
-    if (target !== undefined) accumulator.addTrustedName(target);
+    if (target !== undefined) {
+      accumulator.addTrustedName(target);
+      continue;
+    }
+    const altRef = altRefForPubkeyValue(field.value, instruction);
+    if (altRef !== undefined) {
+      accumulator.addTrustedNameAltRef(altRef.altAddress, altRef.entryIndex);
+    }
   }
 }

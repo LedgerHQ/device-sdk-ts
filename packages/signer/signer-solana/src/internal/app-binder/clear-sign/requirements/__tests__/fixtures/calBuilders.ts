@@ -103,7 +103,7 @@ export function accountReset(opts: {
   return {
     account_index: opts.accountIndex,
     require_pre_balance_zero: opts.requirePreBalanceZero,
-    value_kind: opts.valueKind ?? "native",
+    value_kind: opts.valueKind ?? "NATIVE",
     token: opts.token,
     require_native_pre_balance_zero: opts.requireNativePreBalanceZero,
   };

@@ -189,7 +189,29 @@ export class ProvideGenericClearSignContextTask {
       tokenAmountAltRefs,
       tokenAccountStateAltRefs,
       mintAltRefs,
+      trustedNameAltRefs,
     } = this.args.challengeBoundRequirements;
+
+    // Marker set for `trustedNameAltRefs`: these entries request no
+    // ALT_RESOLUTION of their own (one of the four loops below already covers
+    // the slot). Once any loop resolves a matching entry, its address also
+    // gets a TRUSTED_NAME fetch, alongside the static `trustedNames` below.
+    const trustedNameAltKeys = new Set(
+      trustedNameAltRefs.map(
+        ({ altAddress, entryIndex }) => `${altAddress}:${entryIndex}`,
+      ),
+    );
+    const altTrustedNameAddresses = new Set<string>();
+    const collectAltTrustedName = (
+      altAddress: string,
+      entryIndex: number,
+      resolvedAddress: string | undefined,
+    ): void => {
+      if (!resolvedAddress) return;
+      if (trustedNameAltKeys.has(`${altAddress}:${entryIndex}`)) {
+        altTrustedNameAddresses.add(resolvedAddress);
+      }
+    };
 
     // Track mints already streamed (from pre-fetched pool contexts) to avoid duplicates.
     const streamedMints = new Set<string>();
@@ -247,20 +269,6 @@ export class ProvideGenericClearSignContextTask {
     }
 
     for (const { altAddress, entryIndex } of altResolutions) {
-      await this.provideChallengeBoundDescriptor(
-        (challenge) => ({
-          deviceModelId,
-          requests: [{ altAddress, entryIndex, challenge }],
-        }),
-        ClearSignContextType.SOLANA_ALT_RESOLUTION,
-      );
-    }
-
-    // ALT-backed MINT entries from MINT_ASSOCIATIONS. The device needs the
-    // resolved mint pubkey at finalize (to build the MINT_ASSOC binding map),
-    // so ALT_RESOLUTION is always streamed. TOKEN_INFO is attempted afterwards
-    // for display purposes only, failure is silent (shows ??? but finalize passes).
-    for (const { altAddress, entryIndex } of mintAltRefs) {
       const altContexts = await this.provideChallengeBoundDescriptorAndReturn(
         (challenge) => ({
           deviceModelId,
@@ -268,16 +276,7 @@ export class ProvideGenericClearSignContextTask {
         }),
         ClearSignContextType.SOLANA_ALT_RESOLUTION,
       );
-      if (altContexts.length === 0) {
-        // Unresolved ALT_RESOLUTION for a MINT_ASSOC entry pins the
-        // instruction (G-051): the mint stays undisplayed and the merge
-        // cannot compact it away.
-        this.logger.warn(
-          "[run] ALT_RESOLUTION fetch failed for a MINT_ASSOC ref; instruction may be pinned",
-          { data: { altAddress, entryIndex } },
-        );
-        continue;
-      }
+      if (!trustedNameAltKeys.has(`${altAddress}:${entryIndex}`)) continue;
       for (const altCtx of altContexts) {
         if (
           altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
@@ -285,20 +284,34 @@ export class ProvideGenericClearSignContextTask {
         ) {
           continue;
         }
-        const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
-          .payload.resolvedAddress;
-        if (!resolvedAddress) {
-          this.logger.warn(
-            "[run] ALT_RESOLUTION for a MINT_ASSOC ref resolved to no address; instruction may be pinned",
-            { data: { altAddress, entryIndex } },
-          );
-          continue;
-        }
-        if (!streamedMints.has(resolvedAddress)) {
-          streamedMints.add(resolvedAddress);
-          await this.fetchAndStreamTokenInfo(resolvedAddress, deviceModelId);
-        }
+        collectAltTrustedName(
+          altAddress,
+          entryIndex,
+          (altCtx as SolanaAltResolutionContextSuccess).payload.resolvedAddress,
+        );
       }
+    }
+
+    // ALT-backed MINT entries from MINT_ASSOCIATIONS. The device needs the
+    // resolved mint pubkey at finalize (to build the MINT_ASSOC binding map),
+    // so ALT_RESOLUTION is always streamed. TOKEN_INFO is attempted afterwards
+    // for display purposes only, failure is silent (shows ??? but finalize passes).
+    for (const { altAddress, entryIndex } of mintAltRefs) {
+      const resolvedAddress = await this.resolveAltRefAddress(
+        altAddress,
+        entryIndex,
+        deviceModelId,
+        collectAltTrustedName,
+        {
+          empty:
+            "[run] ALT_RESOLUTION fetch failed for a MINT_ASSOC ref; instruction may be pinned",
+          unresolved:
+            "[run] ALT_RESOLUTION for a MINT_ASSOC ref resolved to no address; instruction may be pinned",
+        },
+      );
+      if (!resolvedAddress || streamedMints.has(resolvedAddress)) continue;
+      streamedMints.add(resolvedAddress);
+      await this.fetchAndStreamTokenInfo(resolvedAddress, deviceModelId);
     }
 
     // ALT-backed PARAM_TOKEN_AMOUNT.TOKEN refs. The device needs the resolved
@@ -308,104 +321,82 @@ export class ProvideGenericClearSignContextTask {
     // then TOKEN_ACCOUNT_STATE + TOKEN_INFO (fallback: address is an ATA).
     // If both fail, finalize still passes, the device will just show ???.
     for (const { altAddress, entryIndex } of tokenAmountAltRefs) {
-      const altContexts = await this.provideChallengeBoundDescriptorAndReturn(
+      const resolvedAddress = await this.resolveAltRefAddress(
+        altAddress,
+        entryIndex,
+        deviceModelId,
+        collectAltTrustedName,
+        {
+          empty:
+            "[run] ALT_RESOLUTION fetch failed for a TOKEN_AMOUNT.TOKEN ref; instruction may be pinned",
+          unresolved:
+            "[run] ALT_RESOLUTION for a TOKEN_AMOUNT.TOKEN ref resolved to no address; instruction may be pinned",
+        },
+      );
+      if (!resolvedAddress || streamedMints.has(resolvedAddress)) continue;
+
+      // Optimistic: resolved address is a mint.
+      const tokenInfoContexts = await this.args.contextModule.getContexts(
+        { deviceModelId, mints: [resolvedAddress], network: this.network },
+        [ClearSignContextType.SOLANA_TOKEN_INFO],
+      );
+      const tokenInfoCtx = tokenInfoContexts.find(
+        (c) => c.type === ClearSignContextType.SOLANA_TOKEN_INFO,
+      );
+      if (tokenInfoCtx) {
+        streamedMints.add(resolvedAddress);
+        await this.provideDescriptor(tokenInfoCtx);
+        continue;
+      }
+
+      // Fallback: resolved address may be an ATA, fetch TOKEN_ACCOUNT_STATE
+      // to get the mint, then stream both if TOKEN_INFO is available.
+      if (streamedTokenAccounts.has(resolvedAddress)) continue;
+      const stateCtx = await this.fetchChallengeBoundDescriptorOnly(
         (challenge) => ({
           deviceModelId,
-          requests: [{ altAddress, entryIndex, challenge }],
+          requests: [{ tokenAccount: resolvedAddress, challenge }],
         }),
-        ClearSignContextType.SOLANA_ALT_RESOLUTION,
+        ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
       );
-      if (altContexts.length === 0) {
-        // Unresolved ALT_RESOLUTION for a TOKEN_AMOUNT.TOKEN ref pins the
-        // instruction (G-051): the amount's token cannot be displayed and
-        // the merge cannot compact it away.
+      if (!stateCtx || !isSolanaContextSuccess(stateCtx)) {
         this.logger.warn(
-          "[run] ALT_RESOLUTION fetch failed for a TOKEN_AMOUNT.TOKEN ref; instruction may be pinned",
-          { data: { altAddress, entryIndex } },
+          "[run] TOKEN_ACCOUNT_STATE fetch failed for a resolved TOKEN_AMOUNT.TOKEN ATA; instruction may be pinned",
+          { data: { tokenAccount: resolvedAddress } },
         );
         continue;
       }
-      for (const altCtx of altContexts) {
-        if (
-          altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
-          !isSolanaContextSuccess(altCtx)
-        ) {
-          continue;
-        }
-        const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
-          .payload.resolvedAddress;
-        if (!resolvedAddress) {
-          this.logger.warn(
-            "[run] ALT_RESOLUTION for a TOKEN_AMOUNT.TOKEN ref resolved to no address; instruction may be pinned",
-            { data: { altAddress, entryIndex } },
-          );
-          continue;
-        }
-        if (streamedMints.has(resolvedAddress)) continue;
 
-        // Optimistic: resolved address is a mint.
-        const tokenInfoContexts = await this.args.contextModule.getContexts(
-          { deviceModelId, mints: [resolvedAddress], network: this.network },
-          [ClearSignContextType.SOLANA_TOKEN_INFO],
+      const mint = (stateCtx as SolanaTokenAccountStateContextSuccess).payload
+        .mint;
+      if (!mint) {
+        this.logger.warn(
+          "[run] TOKEN_ACCOUNT_STATE for a resolved TOKEN_AMOUNT.TOKEN ATA carried no mint; instruction may be pinned",
+          { data: { tokenAccount: resolvedAddress } },
         );
-        const tokenInfoCtx = tokenInfoContexts.find(
-          (c) => c.type === ClearSignContextType.SOLANA_TOKEN_INFO,
-        );
-        if (tokenInfoCtx) {
-          streamedMints.add(resolvedAddress);
-          await this.provideDescriptor(tokenInfoCtx);
-          continue;
-        }
-
-        // Fallback: resolved address may be an ATA, fetch TOKEN_ACCOUNT_STATE
-        // to get the mint, then stream both if TOKEN_INFO is available.
-        if (streamedTokenAccounts.has(resolvedAddress)) continue;
-        const stateCtx = await this.fetchChallengeBoundDescriptorOnly(
-          (challenge) => ({
-            deviceModelId,
-            requests: [{ tokenAccount: resolvedAddress, challenge }],
-          }),
-          ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
-        );
-        if (!stateCtx || !isSolanaContextSuccess(stateCtx)) {
-          this.logger.warn(
-            "[run] TOKEN_ACCOUNT_STATE fetch failed for a resolved TOKEN_AMOUNT.TOKEN ATA; instruction may be pinned",
-            { data: { tokenAccount: resolvedAddress } },
-          );
-          continue;
-        }
-
-        const mint = (stateCtx as SolanaTokenAccountStateContextSuccess).payload
-          .mint;
-        if (!mint) {
-          this.logger.warn(
-            "[run] TOKEN_ACCOUNT_STATE for a resolved TOKEN_AMOUNT.TOKEN ATA carried no mint; instruction may be pinned",
-            { data: { tokenAccount: resolvedAddress } },
-          );
-          continue;
-        }
-        if (streamedMints.has(mint)) continue;
-
-        const mintTokenInfoContexts = await this.args.contextModule.getContexts(
-          { deviceModelId, mints: [mint], network: this.network },
-          [ClearSignContextType.SOLANA_TOKEN_INFO],
-        );
-        const mintTokenInfoCtx = mintTokenInfoContexts.find(
-          (c) => c.type === ClearSignContextType.SOLANA_TOKEN_INFO,
-        );
-        if (!mintTokenInfoCtx) {
-          this.logger.warn(
-            "[run] TOKEN_INFO fetch failed for a resolved TOKEN_AMOUNT.TOKEN mint; instruction may be pinned",
-            { data: { mint } },
-          );
-          continue;
-        }
-
-        streamedTokenAccounts.add(resolvedAddress);
-        await this.provideDescriptor(stateCtx);
-        streamedMints.add(mint);
-        await this.provideDescriptor(mintTokenInfoCtx);
+        continue;
       }
+      if (streamedMints.has(mint)) continue;
+
+      const mintTokenInfoContexts = await this.args.contextModule.getContexts(
+        { deviceModelId, mints: [mint], network: this.network },
+        [ClearSignContextType.SOLANA_TOKEN_INFO],
+      );
+      const mintTokenInfoCtx = mintTokenInfoContexts.find(
+        (c) => c.type === ClearSignContextType.SOLANA_TOKEN_INFO,
+      );
+      if (!mintTokenInfoCtx) {
+        this.logger.warn(
+          "[run] TOKEN_INFO fetch failed for a resolved TOKEN_AMOUNT.TOKEN mint; instruction may be pinned",
+          { data: { mint } },
+        );
+        continue;
+      }
+
+      streamedTokenAccounts.add(resolvedAddress);
+      await this.provideDescriptor(stateCtx);
+      streamedMints.add(mint);
+      await this.provideDescriptor(mintTokenInfoCtx);
     }
 
     // ALT-backed accounts needing an attested TOKEN_ACCOUNT_STATE: IS_SIGNER
@@ -418,69 +409,56 @@ export class ProvideGenericClearSignContextTask {
     // was a mint, not a token account, after all) — which is what makes this
     // bucket subsume the two below it in build()'s priority order.
     for (const { altAddress, entryIndex } of tokenAccountStateAltRefs) {
-      const altContexts = await this.provideChallengeBoundDescriptorAndReturn(
-        (challenge) => ({
-          deviceModelId,
-          requests: [{ altAddress, entryIndex, challenge }],
-        }),
-        ClearSignContextType.SOLANA_ALT_RESOLUTION,
+      const resolvedAddress = await this.resolveAltRefAddress(
+        altAddress,
+        entryIndex,
+        deviceModelId,
+        collectAltTrustedName,
+        {
+          empty:
+            "[run] ALT_RESOLUTION fetch failed for a TOKEN_ACCOUNT_STATE ref; instruction may be pinned",
+          unresolved:
+            "[run] ALT_RESOLUTION for a TOKEN_ACCOUNT_STATE ref resolved to no address; instruction may be pinned",
+        },
       );
-      if (altContexts.length === 0) {
-        // Unresolved ALT_RESOLUTION for an owner/mint-map target pins the
-        // instruction (G-051): neither the IS_SIGNER hide nor the mint
-        // display can be established for it.
-        this.logger.warn(
-          "[run] ALT_RESOLUTION fetch failed for a TOKEN_ACCOUNT_STATE ref; instruction may be pinned",
-          { data: { altAddress, entryIndex } },
-        );
+      if (!resolvedAddress || streamedTokenAccounts.has(resolvedAddress)) {
         continue;
       }
-      for (const altCtx of altContexts) {
-        if (
-          altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
-          !isSolanaContextSuccess(altCtx)
-        ) {
-          continue;
-        }
-        const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
-          .payload.resolvedAddress;
-        if (!resolvedAddress) {
-          this.logger.warn(
-            "[run] ALT_RESOLUTION for a TOKEN_ACCOUNT_STATE ref resolved to no address; instruction may be pinned",
-            { data: { altAddress, entryIndex } },
-          );
-          continue;
-        }
-        if (streamedTokenAccounts.has(resolvedAddress)) continue;
 
-        const stateCtx = await this.fetchChallengeBoundDescriptorOnly(
-          (challenge) => ({
-            deviceModelId,
-            requests: [{ tokenAccount: resolvedAddress, challenge }],
-          }),
-          ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
-        );
-        if (stateCtx && isSolanaContextSuccess(stateCtx)) {
-          streamedTokenAccounts.add(resolvedAddress);
-          await this.provideDescriptor(stateCtx);
-          const mint = (stateCtx as SolanaTokenAccountStateContextSuccess)
-            .payload.mint;
-          if (mint && !streamedMints.has(mint)) {
-            streamedMints.add(mint);
-            await this.fetchAndStreamTokenInfo(mint, deviceModelId);
-          }
-          continue;
+      const stateCtx = await this.fetchChallengeBoundDescriptorOnly(
+        (challenge) => ({
+          deviceModelId,
+          requests: [{ tokenAccount: resolvedAddress, challenge }],
+        }),
+        ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+      );
+      if (stateCtx && isSolanaContextSuccess(stateCtx)) {
+        streamedTokenAccounts.add(resolvedAddress);
+        await this.provideDescriptor(stateCtx);
+        const mint = (stateCtx as SolanaTokenAccountStateContextSuccess).payload
+          .mint;
+        if (mint && !streamedMints.has(mint)) {
+          streamedMints.add(mint);
+          await this.fetchAndStreamTokenInfo(mint, deviceModelId);
         }
+        continue;
+      }
 
-        // No attested state: the resolved address may be a mint itself.
-        if (!streamedMints.has(resolvedAddress)) {
-          streamedMints.add(resolvedAddress);
-          await this.fetchAndStreamTokenInfo(resolvedAddress, deviceModelId);
-        }
+      // No attested state: the resolved address may be a mint itself.
+      if (!streamedMints.has(resolvedAddress)) {
+        streamedMints.add(resolvedAddress);
+        await this.fetchAndStreamTokenInfo(resolvedAddress, deviceModelId);
       }
     }
 
-    for (const address of trustedNames) {
+    // Fetched last, after every ALT_RESOLUTION loop above has had a chance to
+    // populate `altTrustedNameAddresses`. Deduped against the static
+    // `trustedNames`: the same account can be named statically by one
+    // instruction and reached only through an ALT by another.
+    const namesToFetch = new Set(trustedNames);
+    for (const address of altTrustedNameAddresses) namesToFetch.add(address);
+
+    for (const address of namesToFetch) {
       await this.provideChallengeBoundDescriptor(
         (challenge) => ({
           deviceModelId,
@@ -555,6 +533,58 @@ export class ProvideGenericClearSignContextTask {
       }
     }
     return matched;
+  }
+
+  /**
+   * Shared by the MINT_ASSOC, TOKEN_AMOUNT.TOKEN and TOKEN_ACCOUNT_STATE
+   * alt-ref loops in {@link streamChallengeBoundDescriptors}: streams the
+   * ALT_RESOLUTION descriptor for a single ref, feeds any resolved address to
+   * `collectAltTrustedName`, and returns that address — or `undefined` if the
+   * ref could not be resolved, having already logged the matching G-051
+   * pinning warning (`warnings.empty` when no descriptor came back at all,
+   * `warnings.unresolved` when it came back with no `resolvedAddress`).
+   */
+  private async resolveAltRefAddress(
+    altAddress: string,
+    entryIndex: number,
+    deviceModelId: DeviceModelId,
+    collectAltTrustedName: (
+      altAddress: string,
+      entryIndex: number,
+      resolvedAddress: string | undefined,
+    ) => void,
+    warnings: { empty: string; unresolved: string },
+  ): Promise<string | undefined> {
+    const altContexts = await this.provideChallengeBoundDescriptorAndReturn(
+      (challenge) => ({
+        deviceModelId,
+        requests: [{ altAddress, entryIndex, challenge }],
+      }),
+      ClearSignContextType.SOLANA_ALT_RESOLUTION,
+    );
+    if (altContexts.length === 0) {
+      this.logger.warn(warnings.empty, { data: { altAddress, entryIndex } });
+      return undefined;
+    }
+    for (const altCtx of altContexts) {
+      if (
+        altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
+        !isSolanaContextSuccess(altCtx)
+      ) {
+        continue;
+      }
+      const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
+        .payload.resolvedAddress;
+      collectAltTrustedName(altAddress, entryIndex, resolvedAddress);
+      if (!resolvedAddress) {
+        this.logger.warn(warnings.unresolved, {
+          data: { altAddress, entryIndex },
+        });
+        return undefined;
+      }
+      return resolvedAddress;
+    }
+    return undefined;
   }
 
   /** `GET CHALLENGE`, then fetch the descriptor bound to it, then stream it (best-effort). */

@@ -183,10 +183,10 @@ describe("fromCalValueFlowPort optional account strategy", () => {
 });
 
 describe("fromCalAccountReset", () => {
-  it('maps value_kind "native" with no token', () => {
+  it('maps value_kind "NATIVE" with no token', () => {
     const out = fromCalAccountReset({
       account_index: 2,
-      value_kind: "native",
+      value_kind: "NATIVE",
     });
     expect(out.accountIndex).toBe(2);
     expect(out.valueKind).toBe(ValueKind.NATIVE);
@@ -195,10 +195,10 @@ describe("fromCalAccountReset", () => {
     expect(out.requirePreBalanceZero).toBe(false);
   });
 
-  it('maps value_kind "splToken" with a token reference', () => {
+  it('maps value_kind "SPL_TOKEN" with a token reference', () => {
     const out = fromCalAccountReset({
       account_index: 1,
-      value_kind: "splToken",
+      value_kind: "SPL_TOKEN",
       token: { kind: "RESOLVE", account_index: 3 },
       require_pre_balance_zero: true,
     });
@@ -211,7 +211,7 @@ describe("fromCalAccountReset", () => {
   it("maps requireNativePreBalanceZero", () => {
     const out = fromCalAccountReset({
       account_index: 0,
-      value_kind: "native",
+      value_kind: "NATIVE",
       require_native_pre_balance_zero: true,
     });
     expect(out.requireNativePreBalanceZero).toBe(true);
@@ -229,9 +229,9 @@ describe("fromCalAccountReset", () => {
     ).toThrow(/unknown or missing ACCOUNT_RESET value_kind/);
   });
 
-  it("rejects splToken without a token field as a decode error", () => {
+  it("rejects SPL_TOKEN without a token field as a decode error", () => {
     expect(() =>
-      fromCalAccountReset({ account_index: 0, value_kind: "splToken" }),
+      fromCalAccountReset({ account_index: 0, value_kind: "SPL_TOKEN" }),
     ).toThrow(/missing the required TOKEN field/);
   });
 });

@@ -27,6 +27,24 @@ describe("RequirementAccumulator", () => {
     expect(result.trustedNames).toEqual(["name"]);
   });
 
+  it("trustedNameAltRefs is deduplicated but never stripped by the ALT priority dedup", () => {
+    const accumulator = new RequirementAccumulator();
+    accumulator.addTrustedNameAltRef("ALT", 5);
+    accumulator.addTrustedNameAltRef("ALT", 5);
+    // The same entry also requested through a higher-priority ALT bucket:
+    // trustedNameAltRefs is a marker set, so it must survive build()'s
+    // cross-bucket strip untouched.
+    accumulator.addTokenAccountStateAltRef("ALT", 5);
+
+    const result = accumulator.build();
+    expect(result.trustedNameAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 5 },
+    ]);
+    expect(result.tokenAccountStateAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 5 },
+    ]);
+  });
+
   it("preserves first-seen insertion order", () => {
     const accumulator = new RequirementAccumulator();
     accumulator.addTokenInfo("c");
@@ -137,6 +155,7 @@ describe("RequirementAccumulator", () => {
       tokenAccountStates: [],
       altResolutions: [],
       trustedNames: [],
+      trustedNameAltRefs: [],
       tokenAmountRefs: [],
       tokenAmountAltRefs: [],
       tokenAccountStateAltRefs: [],

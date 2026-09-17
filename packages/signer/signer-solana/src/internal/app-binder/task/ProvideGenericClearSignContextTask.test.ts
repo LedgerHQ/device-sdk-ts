@@ -30,6 +30,7 @@ const NO_CHALLENGE_BOUND: ChallengeBoundRequirements = {
   tokenAmountAltRefs: [],
   tokenAccountStateAltRefs: [],
   mintAltRefs: [],
+  trustedNameAltRefs: [],
 };
 
 function tokenInfoContext(): ClearSignContext {
@@ -60,6 +61,12 @@ function makeTask(
   challengeBoundRequirements: ChallengeBoundRequirements = NO_CHALLENGE_BOUND,
   getContexts: Mock = vi.fn(async () => []),
 ) {
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  };
   const api = {
     sendCommand: vi.fn(async (cmd: unknown) =>
       cmd instanceof GetChallengeCommand ? challenge : success,
@@ -74,11 +81,10 @@ function makeTask(
     instructionInfoContexts,
     challengeBoundRequirements,
     contextModule,
-    loggerFactory: () =>
-      ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) as any,
+    loggerFactory: () => logger as any,
     normaliser: {} as any,
   });
-  return { task, api, getContexts };
+  return { task, api, getContexts, logger };
 }
 
 describe("ProvideGenericClearSignContextTask", () => {
@@ -137,6 +143,7 @@ describe("ProvideGenericClearSignContextTask", () => {
         tokenAmountAltRefs: [],
         tokenAccountStateAltRefs: [],
         mintAltRefs: [],
+        trustedNameAltRefs: [],
       },
       // Empty fetch: assert the challenge + fetch protocol, not handler internals.
       vi.fn(async () => []),
@@ -203,6 +210,7 @@ describe("ProvideGenericClearSignContextTask", () => {
         tokenAmountAltRefs: [],
         tokenAccountStateAltRefs: [],
         mintAltRefs: [],
+        trustedNameAltRefs: [],
       },
       vi.fn(async () => []),
     );
@@ -524,6 +532,65 @@ describe("ProvideGenericClearSignContextTask", () => {
     );
   });
 
+  it("tokenAmountAltRefs: resolved address is directly a mint, streams TOKEN_INFO without an ATA fallback", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("MINT_DIRECT")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return [tokenInfoCtxFor("MINT_DIRECT")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAmountAltRefs: [{ altAddress: "ALT2", entryIndex: 1 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({ mints: ["MINT_DIRECT"] }),
+      [ClearSignContextType.SOLANA_TOKEN_INFO],
+    );
+    // No ATA fallback: resolved directly as a mint.
+    const stateFetches = getContexts.mock.calls.filter(
+      (c) => c[1]?.[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+    );
+    expect(stateFetches).toHaveLength(0);
+  });
+
+  it("tokenAmountAltRefs: skips a resolved address whose mint was already streamed", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) =>
+        types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION
+          ? [altResolutionCtx("MINT_SEEN")]
+          : [],
+    );
+    const { task } = makeTask(
+      [tokenInfoCtxFor("MINT_SEEN")],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAmountAltRefs: [{ altAddress: "ALT2", entryIndex: 1 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    // Already streamed from the pool: no TOKEN_INFO/TOKEN_ACCOUNT_STATE probe.
+    const tokenInfoCalls = getContexts.mock.calls.filter(
+      (c) => c[1]?.[0] === ClearSignContextType.SOLANA_TOKEN_INFO,
+    );
+    expect(tokenInfoCalls).toHaveLength(0);
+  });
+
   it("tokenAccountStateAltRefs: streams ALT_RESOLUTION, then TOKEN_ACCOUNT_STATE, then TOKEN_INFO for the attested mint", async () => {
     // The IS_SIGNER / RESOLVE case: the state payload is the point (it seeds the
     // device's owner and mint maps), so no TOKEN_INFO is probed on the resolved
@@ -645,6 +712,340 @@ describe("ProvideGenericClearSignContextTask", () => {
       (c) => c[1]?.[0] === ClearSignContextType.SOLANA_TOKEN_INFO,
     );
     expect(mintFetches).toHaveLength(1);
+  });
+
+  it("trustedNameAltRefs: fetches TRUSTED_NAME for the address the plain altResolutions loop resolves", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("RESOLVED_ADDR")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        altResolutions: [{ altAddress: "ALT9", entryIndex: 7 }],
+        trustedNameAltRefs: [{ altAddress: "ALT9", entryIndex: 7 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requests: [
+          expect.objectContaining({
+            address: "RESOLVED_ADDR",
+            types: ["token", "smart_contract"],
+            sources: ["crypto_asset_list"],
+          }),
+        ],
+      }),
+      [ClearSignContextType.SOLANA_TRUSTED_NAME],
+    );
+  });
+
+  it("trustedNameAltRefs: dedupes against a statically-named trustedNames address", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("SAME")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        trustedNames: ["SAME"],
+        altResolutions: [{ altAddress: "ALT10", entryIndex: 0 }],
+        trustedNameAltRefs: [{ altAddress: "ALT10", entryIndex: 0 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    const trustedNameCalls = getContexts.mock.calls.filter(
+      (c) => c[1]?.[0] === ClearSignContextType.SOLANA_TRUSTED_NAME,
+    );
+    expect(trustedNameCalls).toHaveLength(1);
+  });
+
+  it("trustedNameAltRefs: an ALT ref that is not a trusted-name target fetches no TRUSTED_NAME", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("UNRELATED")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        altResolutions: [{ altAddress: "ALT11", entryIndex: 0 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    const trustedNameCalls = getContexts.mock.calls.filter(
+      (c) => c[1]?.[0] === ClearSignContextType.SOLANA_TRUSTED_NAME,
+    );
+    expect(trustedNameCalls).toHaveLength(0);
+  });
+
+  // --- G-051 pinning warnings on unresolved descriptors ---
+
+  it("tokenAccountStates: warns when TOKEN_ACCOUNT_STATE fetch returns no descriptor at all", async () => {
+    const getContexts = vi.fn(async () => []);
+    const { task, logger } = makeTask(
+      [],
+      [],
+      { ...NO_CHALLENGE_BOUND, tokenAccountStates: ["ATA1"] },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] TOKEN_ACCOUNT_STATE fetch returned no descriptor; instruction may be pinned",
+      { data: { tokenAccount: "ATA1" } },
+    );
+  });
+
+  it("mintAltRefs: warns and skips when ALT_RESOLUTION fetch returns no descriptor", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, _types: ClearSignContextType[]) => [],
+    );
+    const { task, logger } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        mintAltRefs: [{ altAddress: "ALT1", entryIndex: 0 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] ALT_RESOLUTION fetch failed for a MINT_ASSOC ref; instruction may be pinned",
+      { data: { altAddress: "ALT1", entryIndex: 0 } },
+    );
+    const tokenInfoCalls = getContexts.mock.calls.filter(
+      (c) => c[1]?.[0] === ClearSignContextType.SOLANA_TOKEN_INFO,
+    );
+    expect(tokenInfoCalls).toHaveLength(0);
+  });
+
+  it("mintAltRefs: warns and skips when ALT_RESOLUTION resolves to no address", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx(undefined as unknown as string)];
+        return [];
+      },
+    );
+    const { task, logger } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        mintAltRefs: [{ altAddress: "ALT1", entryIndex: 0 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] ALT_RESOLUTION for a MINT_ASSOC ref resolved to no address; instruction may be pinned",
+      { data: { altAddress: "ALT1", entryIndex: 0 } },
+    );
+  });
+
+  it("tokenAmountAltRefs: warns and skips when ALT_RESOLUTION fetch returns no descriptor", async () => {
+    const getContexts = vi.fn(async () => []);
+    const { task, logger } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAmountAltRefs: [{ altAddress: "ALT2", entryIndex: 1 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] ALT_RESOLUTION fetch failed for a TOKEN_AMOUNT.TOKEN ref; instruction may be pinned",
+      { data: { altAddress: "ALT2", entryIndex: 1 } },
+    );
+  });
+
+  it("tokenAmountAltRefs: warns when the resolved ATA's TOKEN_ACCOUNT_STATE fetch fails", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("ATA2")];
+        // TOKEN_INFO misses (not a mint) and TOKEN_ACCOUNT_STATE misses too.
+        return [];
+      },
+    );
+    const { task, logger } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAmountAltRefs: [{ altAddress: "ALT2", entryIndex: 1 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] TOKEN_ACCOUNT_STATE fetch failed for a resolved TOKEN_AMOUNT.TOKEN ATA; instruction may be pinned",
+      { data: { tokenAccount: "ATA2" } },
+    );
+  });
+
+  it("tokenAmountAltRefs: warns when the attested state carries no mint", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("ATA2")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [tokenAccountStateCtx(undefined as unknown as string)];
+        return [];
+      },
+    );
+    const { task, logger } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAmountAltRefs: [{ altAddress: "ALT2", entryIndex: 1 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] TOKEN_ACCOUNT_STATE for a resolved TOKEN_AMOUNT.TOKEN ATA carried no mint; instruction may be pinned",
+      { data: { tokenAccount: "ATA2" } },
+    );
+  });
+
+  it("tokenAmountAltRefs: warns when TOKEN_INFO fetch fails for the attested mint", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("ATA2")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [tokenAccountStateCtx("MINT3")];
+        // TOKEN_INFO: optimistic probe on "ATA2" misses; the fallback probe
+        // on the attested mint "MINT3" misses too.
+        return [];
+      },
+    );
+    const { task, logger } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAmountAltRefs: [{ altAddress: "ALT2", entryIndex: 1 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] TOKEN_INFO fetch failed for a resolved TOKEN_AMOUNT.TOKEN mint; instruction may be pinned",
+      { data: { mint: "MINT3" } },
+    );
+  });
+
+  it("tokenAccountStateAltRefs: warns and skips when ALT_RESOLUTION fetch returns no descriptor", async () => {
+    const getContexts = vi.fn(async () => []);
+    const { task, logger } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAccountStateAltRefs: [{ altAddress: "ALT5", entryIndex: 4 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] ALT_RESOLUTION fetch failed for a TOKEN_ACCOUNT_STATE ref; instruction may be pinned",
+      { data: { altAddress: "ALT5", entryIndex: 4 } },
+    );
+  });
+
+  it("tokenAccountStateAltRefs: warns and skips when ALT_RESOLUTION resolves to no address", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx(undefined as unknown as string)];
+        return [];
+      },
+    );
+    const { task, logger } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAccountStateAltRefs: [{ altAddress: "ALT5", entryIndex: 4 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] ALT_RESOLUTION for a TOKEN_ACCOUNT_STATE ref resolved to no address; instruction may be pinned",
+      { data: { altAddress: "ALT5", entryIndex: 4 } },
+    );
+  });
+
+  it("fetchAndStreamTokenInfo: warns when TOKEN_INFO fetch returns no descriptor for a directly-streamed mint", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [tokenAccountStateCtx("MINT1")];
+        return [];
+      },
+    );
+    const { task, logger } = makeTask(
+      [],
+      [],
+      { ...NO_CHALLENGE_BOUND, tokenAccountStates: ["ATA1"] },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[run] TOKEN_INFO fetch returned no descriptor; instruction may be pinned",
+      { data: { mint: "MINT1" } },
+    );
   });
 
   it("returns a failed CommandResult when the device rejects GENERIC PREVIEW", async () => {
