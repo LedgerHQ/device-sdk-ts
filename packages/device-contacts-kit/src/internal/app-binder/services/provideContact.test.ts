@@ -69,12 +69,12 @@ describe("buildProvideContactPayload", () => {
   it("omits CHAIN_ID for a family that does not carry one", () => {
     const payload = buildProvideContactPayload({
       ...INPUT,
-      blockchainFamily: "bitcoin",
+      blockchainFamily: "tron",
       chainId: undefined,
     });
 
     expect(bufferToHexaString(payload, false)).toContain(
-      GROUP_HANDLE_TLV + "510100",
+      GROUP_HANDLE_TLV + "510106",
     );
   });
 

@@ -7,6 +7,7 @@ import {
   isVersionBelow,
   renameRequiresDerivationPath,
   resolveContactsVersionRequirements,
+  TRON_APP_NAME,
 } from "./ContactsVersionRequirements";
 
 describe("ContactsVersionRequirements", () => {
@@ -27,38 +28,41 @@ describe("ContactsVersionRequirements", () => {
     // the release whose changelog introduces the Address Book feature, so a
     // change here has to be a deliberate one, reviewed against that release.
     it("pins the minimum OS and app versions of every supported model", () => {
-      const ethereum = { [ETHEREUM_APP_NAME]: "1.23.0" };
+      const appVersions = {
+        [ETHEREUM_APP_NAME]: "1.23.0",
+        [TRON_APP_NAME]: "0.8.0",
+      };
 
       expect(CONTACTS_VERSION_REQUIREMENTS).toEqual({
         [DeviceModelId.NANO_S]: { supported: false },
         [DeviceModelId.NANO_SP]: {
           supported: true,
           minOsVersion: "1.7.0",
-          minAppVersion: ethereum,
+          minAppVersion: appVersions,
           renameDerivationPathRequiredBelowOsVersion: "1.7.0-rc3",
         },
         [DeviceModelId.NANO_X]: {
           supported: true,
           minOsVersion: "2.8.0",
-          minAppVersion: ethereum,
+          minAppVersion: appVersions,
           renameDerivationPathRequiredBelowOsVersion: "2.8.0-rc3",
         },
         [DeviceModelId.STAX]: {
           supported: true,
           minOsVersion: "1.11.0",
-          minAppVersion: ethereum,
+          minAppVersion: appVersions,
           renameDerivationPathRequiredBelowOsVersion: "1.11.0-rc3",
         },
         [DeviceModelId.FLEX]: {
           supported: true,
           minOsVersion: "1.7.0",
-          minAppVersion: ethereum,
+          minAppVersion: appVersions,
           renameDerivationPathRequiredBelowOsVersion: "1.7.0-rc3",
         },
         [DeviceModelId.APEX]: {
           supported: true,
           minOsVersion: "1.2.0",
-          minAppVersion: ethereum,
+          minAppVersion: appVersions,
           renameDerivationPathRequiredBelowOsVersion: "1.2.0-rc3",
         },
       });

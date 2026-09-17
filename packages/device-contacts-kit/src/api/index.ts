@@ -45,6 +45,7 @@ export {
   ETHEREUM_APP_NAME,
   isVersionAtLeast,
   resolveContactsVersionRequirements,
+  TRON_APP_NAME,
 } from "@api/model/ContactsVersionRequirements";
 export {
   type EditExternalAddressIdentifierInput,
