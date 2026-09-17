@@ -26,9 +26,12 @@ export class MockDeviceDriver {
   async connect(transport: string = "MOCKSERVER"): Promise<void> {
     await this.page.goto(BASE_URL);
     await this.page.getByTestId(`CTA_select-device-${transport}`).click();
+    // The session refresher flips the status to BUSY for the length of every
+    // poll, so a connected device reads CONNECTED or BUSY depending on when it
+    // is sampled. Matched whole so "NOT CONNECTED" is not read as connected.
     await expect(
       this.page.getByTestId("text_device-connection-status").first(),
-    ).toContainText("CONNECTED", { timeout: 15_000 });
+    ).toHaveText(/^(?:CONNECTED|BUSY)$/, { timeout: 15_000 });
   }
 
   /** Attach a device and immediately connect to it. */
