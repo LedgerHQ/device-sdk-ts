@@ -8,9 +8,16 @@ import { pinnedVersions } from "@root/src/cli/pinnedVersions";
 import { makeEthereumContainer } from "@root/src/di/ethereumContainer";
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { makeSolanaContainer } from "@root/src/di/solanaContainer";
+import { makeTronContainer } from "@root/src/di/tronContainer";
 import { TYPES } from "@root/src/di/types";
-import { type CliLogLevel } from "@root/src/domain/models/config/LoggerConfig";
-import { type ScenarioRun } from "@root/src/domain/models/Scenario";
+import {
+  type CliLogLevel,
+  type LoggerConfig,
+} from "@root/src/domain/models/config/LoggerConfig";
+import {
+  type ScenarioCoinApp,
+  type ScenarioRun,
+} from "@root/src/domain/models/Scenario";
 import { type ScenarioOutcome } from "@root/src/domain/models/ScenarioOutcome";
 import {
   SOLANA_SUPPORTED_PROGRAMS,
@@ -25,6 +32,7 @@ import { readAddressBookFile } from "@root/src/infrastructure/repositories/readA
 export type ScenarioRuntime = {
   readonly ethDerivationPath: string;
   readonly solanaDerivationPath: string;
+  readonly tronDerivationPath: string;
   readonly logLevel: CliLogLevel;
   readonly fileLogLevel?: CliLogLevel;
   /** Directory for per-scenario log files; each scenario gets its own. */
@@ -48,6 +56,7 @@ export type ScenarioRuntime = {
   readonly osVersion?: string;
   readonly ethAppVersion?: string;
   readonly solanaAppVersion?: string;
+  readonly tronAppVersion?: string;
 };
 
 const NO_COUNTS = {
@@ -56,6 +65,45 @@ const NO_COUNTS = {
   blindSigned: 0,
   error: 0,
 } as const;
+
+/**
+ * Everything that differs between coin apps; the rest of a run is shared.
+ *
+ * Held as a record so adding a coin app is one entry rather than another branch
+ * in each of the four places a run has to know which chain it is on.
+ */
+type CoinAppSlice = {
+  readonly makeContainer: (args: {
+    config: ClearSigningTesterConfig;
+    logger: LoggerConfig;
+  }) => Container;
+  /** Batch use case for `signTransaction`; each chain reads its own fixtures. */
+  readonly transactionUseCase: symbol;
+  readonly derivationPath: (runtime: ScenarioRuntime) => string;
+  /** The `--app-*-version` flag, which outranks the pin but not a scenario's own. */
+  readonly appVersionOverride: (runtime: ScenarioRuntime) => string | undefined;
+};
+
+const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {
+  Ethereum: {
+    makeContainer: makeEthereumContainer,
+    transactionUseCase: TYPES.TestBatchTransactionFromFileUseCase,
+    derivationPath: (runtime) => runtime.ethDerivationPath,
+    appVersionOverride: (runtime) => runtime.ethAppVersion,
+  },
+  Solana: {
+    makeContainer: makeSolanaContainer,
+    transactionUseCase: TYPES.TestBatchSolanaTransactionFromFileUseCase,
+    derivationPath: (runtime) => runtime.solanaDerivationPath,
+    appVersionOverride: (runtime) => runtime.solanaAppVersion,
+  },
+  Tron: {
+    makeContainer: makeTronContainer,
+    transactionUseCase: TYPES.TestBatchTronTransactionFromFileUseCase,
+    derivationPath: (runtime) => runtime.tronDerivationPath,
+    appVersionOverride: (runtime) => runtime.tronAppVersion,
+  },
+};
 
 /**
  * Runs a scenario in its own container, so it gets its own emulator.
@@ -139,12 +187,15 @@ export class ContainerScenarioRunner implements ScenarioRunner {
 
   private buildContainer({ scenario, device, slice }: ScenarioRun): Container {
     const pins = pinnedVersions(scenario.coinApp, device);
+    const coinApp = COIN_APP_SLICES[scenario.coinApp];
     const options = scenario.options ?? {};
 
     const config: ClearSigningTesterConfig = {
       speculinho: {
         device,
-        ...(scenario.coinApp === "Solana" ? { appName: "Solana" } : {}),
+        // Named for every chain, since a scenario's coin app is exactly the app
+        // name Speculinho and coin-apps use.
+        appName: scenario.coinApp,
         // A scenario that pins itself does so because the feature exists in no
         // other build, so its pin outranks a blanket --os-version meant for the
         // default. Otherwise a mixed run would drag it onto a build that
@@ -153,9 +204,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
           scenario.osVersion ?? this.runtime.osVersion ?? pins.osVersion,
         appVersion:
           scenario.appVersion ??
-          (scenario.coinApp === "Solana"
-            ? this.runtime.solanaAppVersion
-            : this.runtime.ethAppVersion) ??
+          coinApp.appVersionOverride(this.runtime) ??
           pins.appVersion,
         screenshotPath: this.runtime.screenshotPath,
         speculinhoUrl: this.runtime.speculinhoUrl,
@@ -197,9 +246,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         : {}),
     };
 
-    return scenario.coinApp === "Solana"
-      ? makeSolanaContainer({ config, logger })
-      : makeEthereumContainer({ config, logger });
+    return coinApp.makeContainer({ config, logger });
   }
 
   private dispatch(
@@ -207,22 +254,16 @@ export class ContainerScenarioRunner implements ScenarioRunner {
     { scenario, slice }: ScenarioRun,
   ): Promise<BatchTestResult> {
     const { action, fixture, program, options } = scenario;
-    const isSolana = scenario.coinApp === "Solana";
+    const coinApp = COIN_APP_SLICES[scenario.coinApp];
 
     switch (action) {
-      case "signTransaction": {
-        const token = isSolana
-          ? TYPES.TestBatchSolanaTransactionFromFileUseCase
-          : TYPES.TestBatchTransactionFromFileUseCase;
+      case "signTransaction":
         return container
-          .get<TestBatchTransactionFromFileUseCase>(token)
+          .get<TestBatchTransactionFromFileUseCase>(coinApp.transactionUseCase)
           .execute(fixture!, {
-            defaultDerivationPath: isSolana
-              ? this.runtime.solanaDerivationPath
-              : this.runtime.ethDerivationPath,
+            defaultDerivationPath: coinApp.derivationPath(this.runtime),
             slice,
           });
-      }
       case "signTypedData":
         return container
           .get<TestBatchTypedDataFromFileUseCase>(

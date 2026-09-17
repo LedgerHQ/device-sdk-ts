@@ -18,7 +18,7 @@ const ACTIONS: readonly ScenarioAction[] = [
   "registerContact",
   "solanaProgram",
 ];
-const COIN_APPS: readonly ScenarioCoinApp[] = ["Ethereum", "Solana"];
+const COIN_APPS: readonly ScenarioCoinApp[] = ["Ethereum", "Solana", "Tron"];
 const MODES = ["parallel", "sequential"] as const;
 
 type Json = Record<string, unknown>;
