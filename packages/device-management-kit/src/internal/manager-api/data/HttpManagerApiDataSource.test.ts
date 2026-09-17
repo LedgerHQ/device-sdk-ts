@@ -557,6 +557,39 @@ describe("HttpManagerApiDataSource", () => {
       // then
       expect(response).toEqual(Left(new HttpFetchApiError(error)));
     });
+    it("should request the firmware params without the legacy livecommonversion param", async () => {
+      // given
+      api = new HttpManagerApiDataSource({
+        managerApiUrl: "http://localhost",
+        provider: 82,
+        firmwareDistributionSalt: "distribution-salt",
+      } as DmkConfig);
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            result: "null",
+            se_firmware_osu_version: null,
+          }),
+        ),
+      );
+
+      // when
+      await api.getLatestFirmwareVersion({
+        currentFinalFirmwareId: 200,
+        deviceId: 42,
+      });
+
+      // then
+      const requestUrl = new URL(String(fetchSpy.mock.calls[0]![0]));
+      expect(requestUrl.pathname).toEqual("/get_latest_firmware");
+      expect(requestUrl.searchParams.has("livecommonversion")).toEqual(false);
+      expect(Object.fromEntries(requestUrl.searchParams)).toEqual({
+        current_se_firmware_final_version: "200",
+        device_version: "42",
+        provider: "82",
+        salt: "distribution-salt",
+      });
+    });
   });
 
   describe("getOsuFirmwareVersion", () => {

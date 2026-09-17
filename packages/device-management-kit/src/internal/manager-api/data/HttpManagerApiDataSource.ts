@@ -170,7 +170,6 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
   getLatestFirmwareVersion(
     params: GetLatestFirmwareVersionParams,
   ): EitherAsync<HttpFetchApiError, Maybe<OsuFirmware>> {
-    const livecommonversion = "34.27.0"; // Legacy parameter that should just be a too old
     const { currentFinalFirmwareId, deviceId } = params;
     return EitherAsync(() =>
       this.http.get("/get_latest_firmware", {
@@ -179,7 +178,6 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
           device_version: deviceId,
           provider: this._provider,
           salt: this._firmwareDistributionSalt,
-          livecommonversion,
         },
       }),
     )
