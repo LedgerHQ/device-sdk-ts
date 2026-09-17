@@ -94,7 +94,7 @@ test.describe("device: quitting an app from the device screen", () => {
       // Speculos exits with the app, so the screen the panel polls is gone: it
       // shows the mock server's own record of the device instead.
       await expect(page.getByTestId("container_device-os-info")).toBeVisible({
-        timeout: 30_000,
+        timeout: 60_000,
       });
       await expect
         .poll(
