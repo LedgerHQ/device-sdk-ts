@@ -10,8 +10,7 @@ import { coerce, gte, lt, valid } from "semver";
  *   device dashboard), which are served by the device OS.
  * - `minAppVersion` gates app-owned operations (registering / editing external
  *   addresses and Ledger accounts), which are served by the embedded app. It is
- *   keyed by app name because the required version differs per app; v1 ships
- *   Ethereum only.
+ *   keyed by app name because the required version differs per app.
  */
 export type ContactsModelSupport = {
   readonly supported: true;
@@ -50,8 +49,9 @@ export type ContactsVersionRequirements = Readonly<
   Record<DeviceModelId, ContactsModelRequirement>
 >;
 
-/** The name of the Ethereum embedded app (the only app supported in v1). */
+/** Names of embedded apps supporting Contacts. */
 export const ETHEREUM_APP_NAME = "Ethereum";
+export const TRON_APP_NAME = "Tron";
 
 const UNSUPPORTED: ContactsModelUnsupported = { supported: false };
 
@@ -62,6 +62,12 @@ const MIN_OS_VERSION_NANO_X = "2.8.0";
 const MIN_OS_VERSION_NANO_SP = "1.7.0";
 
 const MIN_ETHEREUM_APP_VERSION = "1.23.0";
+const MIN_TRON_APP_VERSION = "0.8.0";
+
+const MIN_APP_VERSION = {
+  [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION,
+  [TRON_APP_NAME]: MIN_TRON_APP_VERSION,
+};
 
 // TEMPORARY (DSDK-1481) — per-model cutoff below which the OS still requires the
 // EDIT CONTACT NAME derivation path. Each model's Address-Book-introducing OS
@@ -84,31 +90,31 @@ export const CONTACTS_VERSION_REQUIREMENTS: ContactsVersionRequirements = {
   [DeviceModelId.NANO_SP]: {
     supported: true,
     minOsVersion: MIN_OS_VERSION_NANO_SP,
-    minAppVersion: { [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION },
+    minAppVersion: MIN_APP_VERSION,
     renameDerivationPathRequiredBelowOsVersion: RENAME_PATH_CUTOFF_NANO_SP,
   },
   [DeviceModelId.NANO_X]: {
     supported: true,
     minOsVersion: MIN_OS_VERSION_NANO_X,
-    minAppVersion: { [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION },
+    minAppVersion: MIN_APP_VERSION,
     renameDerivationPathRequiredBelowOsVersion: RENAME_PATH_CUTOFF_NANO_X,
   },
   [DeviceModelId.STAX]: {
     supported: true,
     minOsVersion: MIN_OS_VERSION_STAX,
-    minAppVersion: { [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION },
+    minAppVersion: MIN_APP_VERSION,
     renameDerivationPathRequiredBelowOsVersion: RENAME_PATH_CUTOFF_STAX,
   },
   [DeviceModelId.FLEX]: {
     supported: true,
     minOsVersion: MIN_OS_VERSION_FLEX,
-    minAppVersion: { [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION },
+    minAppVersion: MIN_APP_VERSION,
     renameDerivationPathRequiredBelowOsVersion: RENAME_PATH_CUTOFF_FLEX,
   },
   [DeviceModelId.APEX]: {
     supported: true,
     minOsVersion: MIN_OS_VERSION_APEX,
-    minAppVersion: { [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION },
+    minAppVersion: MIN_APP_VERSION,
     renameDerivationPathRequiredBelowOsVersion: RENAME_PATH_CUTOFF_APEX,
   },
 };

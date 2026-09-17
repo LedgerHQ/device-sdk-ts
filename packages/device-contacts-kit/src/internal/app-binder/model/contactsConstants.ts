@@ -54,8 +54,8 @@ export const HMAC_NAME_BYTES = 32;
 
 /**
  * Blockchain-family byte encoded in the `BLOCKCHAIN_FAMILY` TLV, keyed by a
- * lowercase family name. v1 ships Ethereum only; the remaining families are
- * listed for completeness and will be enabled as their chains are supported.
+ * lowercase family name. Values follow the BOLOS Address Book family enum
+ * (`BlockchainFamily` in ragger / ledger-secure-sdk).
  */
 export const BLOCKCHAIN_FAMILY_BY_NAME: Readonly<Record<string, number>> = {
   bitcoin: 0x00,
@@ -64,4 +64,5 @@ export const BLOCKCHAIN_FAMILY_BY_NAME: Readonly<Record<string, number>> = {
   polkadot: 0x03,
   cosmos: 0x04,
   cardano: 0x05,
+  tron: 0x06,
 };
