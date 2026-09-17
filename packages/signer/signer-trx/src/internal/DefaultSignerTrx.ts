@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -32,6 +33,7 @@ import { type SignTransactionUseCase } from "@internal/use-cases/transaction/Sig
 type DefaultSignerTrxConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  contextModule: ContextModule;
   addressBook?: TronAddressBook;
 };
 
@@ -41,9 +43,15 @@ export class DefaultSignerTrx implements SignerTrx {
   constructor({
     dmk,
     sessionId,
+    contextModule,
     addressBook,
   }: DefaultSignerTrxConstructorArgs) {
-    this._container = makeContainer({ dmk, sessionId, addressBook });
+    this._container = makeContainer({
+      dmk,
+      sessionId,
+      contextModule,
+      addressBook,
+    });
   }
 
   getAddress(

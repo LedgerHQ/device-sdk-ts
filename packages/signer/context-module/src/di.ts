@@ -33,6 +33,7 @@ import { tokenModuleFactory as solanaTokenModuleFactory } from "@/modules/solana
 import { tokenAccountStateModuleFactory } from "@/modules/solana/token-account-state/di/tokenAccountStateModuleFactory";
 import { tokenInfoModuleFactory } from "@/modules/solana/token-info/di/tokenInfoModuleFactory";
 import { solanaTrustedNameModuleFactory } from "@/modules/solana/trusted-name/di/trustedNameModuleFactory";
+import { tokenModuleFactory as tronTokenModuleFactory } from "@/modules/tron/token/di/tokenModuleFactory";
 import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import { networkModuleFactory } from "@/shared/network/di/networkModuleFactory";
 
@@ -95,6 +96,11 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
         nanoPkiModuleFactory(),
         accountOwnershipModuleFactory(),
       );
+      break;
+    case ContextModuleChainID.Tron:
+      // No PKI module: the TRC10 descriptor is checked against a key built into
+      // the Tron app, so it carries no certificate.
+      container.loadSync(tronTokenModuleFactory());
       break;
     default: {
       // ensure exhaustive check at compile time when new chains are added

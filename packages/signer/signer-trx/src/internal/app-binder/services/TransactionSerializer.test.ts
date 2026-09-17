@@ -71,4 +71,78 @@ describe("serializeTransaction", () => {
       serializeTransaction(encodeDerivationPath(PATH), fromHex(oversized)),
     ).toThrow("Too many bytes to encode.");
   });
+
+  describe("with TRC10 token frames", () => {
+    const TOKEN_A = fromHex("aa".repeat(10));
+    const TOKEN_B = fromHex("bb".repeat(10));
+
+    it("appends one token frame to a single-frame transaction", () => {
+      const rawTxHex = "0a0100";
+
+      const frames = serializeTransaction(
+        encodeDerivationPath(PATH),
+        fromHex(rawTxHex),
+        [TOKEN_A],
+      );
+
+      // The lone transaction frame is no longer the signing frame, so it drops
+      // from SINGLE (0x10) to FIRST (0x00).
+      expect(frames.map((f) => f.p1)).toEqual([0x00, 0xa8]);
+      expect(toHex(frames[0]!.payload)).toBe(PATH_HEX + rawTxHex);
+      expect(frames[1]!.payload).toEqual(TOKEN_A);
+    });
+
+    it("appends two token frames to a single-frame transaction", () => {
+      const frames = serializeTransaction(
+        encodeDerivationPath(PATH),
+        fromHex("0a0100"),
+        [TOKEN_A, TOKEN_B],
+      );
+
+      expect(frames.map((f) => f.p1)).toEqual([0x00, 0xa0, 0xa9]);
+      expect(frames[1]!.payload).toEqual(TOKEN_A);
+      expect(frames[2]!.payload).toEqual(TOKEN_B);
+    });
+
+    it("demotes the last transaction frame from LAST to SUBSEQUENT", () => {
+      const rawTxHex = "0801".repeat(200);
+
+      const frames = serializeTransaction(
+        encodeDerivationPath(PATH),
+        fromHex(rawTxHex),
+        [TOKEN_A],
+      );
+
+      // Without tokens this transaction frames as [0x00, 0x90].
+      expect(frames.map((f) => f.p1)).toEqual([0x00, 0x80, 0xa8]);
+      const reassembled = frames
+        .slice(0, 2)
+        .map((f) => toHex(f.payload))
+        .join("")
+        .slice(PATH_HEX.length);
+      expect(reassembled).toBe(rawTxHex);
+    });
+
+    it("indexes token frames after a multi-frame transaction", () => {
+      const frames = serializeTransaction(
+        encodeDerivationPath(PATH),
+        fromHex("0801".repeat(400)),
+        [TOKEN_A, TOKEN_B],
+      );
+
+      expect(frames.map((f) => f.p1)).toEqual([
+        0x00, 0x80, 0x80, 0x80, 0xa0, 0xa9,
+      ]);
+    });
+
+    it("frames a transaction unchanged when no token payload is given", () => {
+      const rawTxHex = "0a0100";
+
+      expect(
+        serializeTransaction(encodeDerivationPath(PATH), fromHex(rawTxHex), []),
+      ).toEqual(
+        serializeTransaction(encodeDerivationPath(PATH), fromHex(rawTxHex)),
+      );
+    });
+  });
 });

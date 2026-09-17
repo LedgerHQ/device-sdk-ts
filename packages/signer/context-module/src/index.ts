@@ -96,6 +96,7 @@ export * from "./modules/solana/token-info/domain/TokenInfoContextLoader";
 export * from "./modules/solana/trusted-name/data/HttpTrustedNameDataSource";
 export * from "./modules/solana/trusted-name/data/TrustedNameDataSource";
 export * from "./modules/solana/trusted-name/domain/TrustedNameContextLoader";
+export * from "./modules/tron/model/TronTransactionContext";
 export * from "./shared/domain/ContextFieldLoader";
 export * from "./shared/domain/ContextLoader";
 export * from "./shared/domain/ContextModuleChainID";

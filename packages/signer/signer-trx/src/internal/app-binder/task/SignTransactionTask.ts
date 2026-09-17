@@ -18,6 +18,7 @@ import {
 type SignTransactionTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
+  tokenPayloads: Uint8Array[];
 };
 
 export class SignTransactionTask {
@@ -27,7 +28,7 @@ export class SignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, TronAppErrorCodes>> {
-    const { derivationPath, transaction } = this.args;
+    const { derivationPath, transaction, tokenPayloads } = this.args;
 
     // Serialization can throw (e.g. a single protobuf field exceeds the APDU
     // chunk size). Convert that into a typed command error instead of letting
@@ -37,6 +38,7 @@ export class SignTransactionTask {
       frames = serializeTransaction(
         encodeDerivationPath(derivationPath),
         transaction,
+        tokenPayloads,
       );
     } catch (error) {
       return DmkResultFactory({

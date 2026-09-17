@@ -49,6 +49,7 @@ describe("SignTransactionTask", () => {
     const result = await new SignTransactionTask(api, {
       derivationPath: PATH,
       transaction: fromHex(rawTxHex),
+      tokenPayloads: [],
     }).run();
 
     // THEN a single frame is sent with the path header and the signature returned
@@ -70,6 +71,7 @@ describe("SignTransactionTask", () => {
     const result = await new SignTransactionTask(api, {
       derivationPath: PATH,
       transaction: fromHex(rawTxHex),
+      tokenPayloads: [],
     }).run();
 
     // THEN both frames are sent in order with the expected start bytes
@@ -95,6 +97,7 @@ describe("SignTransactionTask", () => {
     const result = await new SignTransactionTask(api, {
       derivationPath: PATH,
       transaction: fromHex(rawTxHex),
+      tokenPayloads: [],
     }).run();
 
     // THEN no further frame is sent and the error is returned unchanged
@@ -120,6 +123,7 @@ describe("SignTransactionTask", () => {
     const result = await new SignTransactionTask(api, {
       derivationPath: PATH,
       transaction: fromHex(rawTxHex),
+      tokenPayloads: [],
     }).run();
 
     // THEN the rejection is propagated
@@ -134,6 +138,7 @@ describe("SignTransactionTask", () => {
     const result = await new SignTransactionTask(api, {
       derivationPath: PATH,
       transaction: fromHex("0afb01"),
+      tokenPayloads: [],
     }).run();
 
     // THEN no command is sent and the failure is a typed command error
@@ -155,6 +160,7 @@ describe("SignTransactionTask", () => {
     const result = await new SignTransactionTask(api, {
       derivationPath: PATH,
       transaction: fromHex("0a0100"),
+      tokenPayloads: [],
     }).run();
 
     // THEN the empty signature is treated as an error, not a success
@@ -163,5 +169,51 @@ describe("SignTransactionTask", () => {
       !isSuccessCommandResult(result) &&
         (result.error as { originalError?: Error }).originalError?.message,
     ).toBe("No signature returned by the device");
+  });
+
+  describe("TRC10 token names", () => {
+    const rawTxHex = "0a0100";
+
+    const run = (tokenPayloads: Uint8Array[]) =>
+      new SignTransactionTask(api, {
+        derivationPath: PATH,
+        transaction: fromHex(rawTxHex),
+        tokenPayloads,
+      }).run();
+
+    it("sends an extra frame carrying the token name", async () => {
+      // GIVEN one resolved TRC10 token descriptor
+      sendCommandMock
+        .mockResolvedValueOnce(CommandResultFactory({ data: new Uint8Array() }))
+        .mockResolvedValueOnce(CommandResultFactory({ data: SIGNATURE }));
+
+      // WHEN
+      const result = await run([fromHex("aabbcc")]);
+
+      // THEN the token frame follows the transaction frame, which is demoted
+      // from SINGLE to FIRST
+      expect(sendCommandMock).toHaveBeenCalledTimes(2);
+      expect(sentCommand(0).args.p1).toBe(0x00);
+      expect(toHex(sentCommand(0).args.payload)).toBe(PATH_HEX + rawTxHex);
+      expect(sentCommand(1).args.p1).toBe(0xa8);
+      expect(toHex(sentCommand(1).args.payload)).toBe("aabbcc");
+      expect(isSuccessCommandResult(result) && result.data).toEqual(SIGNATURE);
+    });
+
+    it("signs exactly as today when no token name was resolved", async () => {
+      // GIVEN no token name to provide
+      sendCommandMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: SIGNATURE }),
+      );
+
+      // WHEN
+      const result = await run([]);
+
+      // THEN the APDUs are byte-identical to the blind-signing path
+      expect(sendCommandMock).toHaveBeenCalledTimes(1);
+      expect(sentCommand(0).args.p1).toBe(0x10);
+      expect(toHex(sentCommand(0).args.payload)).toBe(PATH_HEX + rawTxHex);
+      expect(isSuccessCommandResult(result) && result.data).toEqual(SIGNATURE);
+    });
   });
 });

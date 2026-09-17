@@ -44,7 +44,15 @@ export const SIGN_TRANSACTION_P1 = {
   SUBSEQUENT: 0x80,
   // Last continuation frame.
   LAST: 0x90,
+  // TRC10 token-name frame; the frame index is OR-ed into the low 3 bits.
+  TRC10_NAME: 0xa0,
+  // Marks the final TRC10 token-name frame, on which the device signs.
+  LAST_TOKEN_FLAG: 0x08,
 } as const;
+
+// The Tron app rejects a TRC10 token-name frame whose index exceeds 1, so at
+// most two token names can ever be provided for a single transaction.
+export const MAX_TOKEN_FRAMES = 2;
 
 /**
  * P1 values for the SIGN_PERSONAL_MESSAGE instruction.
