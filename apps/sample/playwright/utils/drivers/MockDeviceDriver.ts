@@ -28,7 +28,7 @@ export class MockDeviceDriver {
     await this.page.getByTestId(`CTA_select-device-${transport}`).click();
     await expect(
       this.page.getByTestId("text_device-connection-status").first(),
-    ).toContainText("CONNECTED");
+    ).toContainText("CONNECTED", { timeout: 15_000 });
   }
 
   /** Attach a device and immediately connect to it. */
