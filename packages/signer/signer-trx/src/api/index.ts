@@ -41,6 +41,7 @@ export { type MessageOptions } from "@api/model/MessageOptions";
 export { type Signature } from "@api/model/Signature";
 export { type TransactionOptions } from "@api/model/TransactionOptions";
 export {
+  EMPTY_TRON_ADDRESS_BOOK,
   type TronAddressBook,
   type TronContactGroup,
   type TronExternalAddress,

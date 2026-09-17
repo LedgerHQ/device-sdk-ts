@@ -38,7 +38,10 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ledgerhq/device-contacts-kit": "workspace:^",
     "@ledgerhq/signer-utils": "workspace:^",
+    "@noble/hashes": "^1.8.0",
+    "bs58": "catalog:",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",

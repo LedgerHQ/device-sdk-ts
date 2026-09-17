@@ -20,16 +20,25 @@ import {
   type SignTransactionDAOutput,
   SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
+import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { type TronAppErrorCodes } from "@internal/app-binder/command/utils/tronApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { GetTokenPayloadsTask } from "@internal/app-binder/task/GetTokenPayloadsTask";
+import { ProvideContactTask } from "@internal/app-binder/task/ProvideContactTask";
 import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
 
 export type MachineDependencies = {
+  readonly getAppConfig: () => Promise<
+    CommandResult<AppConfiguration, TronAppErrorCodes>
+  >;
   readonly buildContext: (arg0: {
     input: { transaction: Uint8Array };
   }) => Promise<Uint8Array[]>;
+  readonly provideContact: (arg0: {
+    input: { transaction: Uint8Array; appConfig: AppConfiguration | null };
+  }) => Promise<void>;
   readonly signTransaction: (arg0: {
     input: { transaction: Uint8Array; tokenPayloads: Uint8Array[] };
   }) => Promise<CommandResult<Signature, TronAppErrorCodes>>;
@@ -64,7 +73,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       SignTransactionDAInternalState
     >;
 
-    const { buildContext, signTransaction } =
+    const { getAppConfig, buildContext, provideContact, signTransaction } =
       this.extractDependencies(internalApi);
 
     return setup({
@@ -74,7 +83,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         output: {} as types["output"],
       },
       actors: {
+        getAppConfig: fromPromise(getAppConfig),
         buildContext: fromPromise(buildContext),
+        provideContact: fromPromise(provideContact),
         signTransaction: fromPromise(signTransaction),
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
@@ -107,6 +118,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         _internalState: {
           error: null,
+          appConfig: null,
           tokenPayloads: null,
           signature: null,
         },
@@ -114,7 +126,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       states: {
         InitialState: {
           always: [
-            { target: "BuildContext", guard: "skipOpenApp" },
+            { target: "GetAppConfig", guard: "skipOpenApp" },
             "OpenAppDeviceAction",
           ],
         },
@@ -145,9 +157,33 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         CheckOpenAppDeviceActionResult: {
           always: [
-            { target: "BuildContext", guard: "noInternalError" },
+            { target: "GetAppConfig", guard: "noInternalError" },
             "Error",
           ],
+        },
+        GetAppConfig: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+          }),
+          invoke: {
+            id: "getAppConfig",
+            src: "getAppConfig",
+            onDone: {
+              target: "BuildContext",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  appConfig: isSuccessCommandResult(event.output)
+                    ? event.output.data
+                    : null,
+                }),
+              }),
+            },
+            onError: { target: "BuildContext" },
+          },
         },
         BuildContext: {
           entry: assign({
@@ -163,7 +199,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               transaction: context.input.transaction,
             }),
             onDone: {
-              target: "SignTransaction",
+              target: "ProvideContact",
               actions: assign({
                 _internalState: ({ event, context }) => ({
                   ...context._internalState,
@@ -175,7 +211,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             // rejection is a host-side fault: review without the token name
             // rather than fail the signature.
             onError: {
-              target: "SignTransaction",
+              target: "ProvideContact",
               actions: assign({
                 _internalState: ({ context }) => ({
                   ...context._internalState,
@@ -183,6 +219,24 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 }),
               }),
             },
+          },
+        },
+        ProvideContact: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTACT,
+            },
+          }),
+          invoke: {
+            id: "provideContact",
+            src: "provideContact",
+            input: ({ context }) => ({
+              transaction: context.input.transaction,
+              appConfig: context._internalState.appConfig,
+            }),
+            onDone: { target: "SignTransaction" },
+            onError: { target: "SignTransaction" },
           },
         },
         SignTransaction: {
@@ -237,13 +291,26 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const { contextModule, derivationPath } = this.input;
+    const { addressBook, contextModule, derivationPath } = this.input;
 
     return {
+      getAppConfig: () =>
+        internalApi.sendCommand(new GetAppConfigurationCommand()),
       buildContext: (arg0: { input: { transaction: Uint8Array } }) =>
         new GetTokenPayloadsTask({
           contextModule,
           transaction: arg0.input.transaction,
+        }).run(),
+      provideContact: (arg0: {
+        input: {
+          transaction: Uint8Array;
+          appConfig: AppConfiguration | null;
+        };
+      }) =>
+        new ProvideContactTask(internalApi, {
+          addressBook,
+          transaction: arg0.input.transaction,
+          appConfig: arg0.input.appConfig,
         }).run(),
       signTransaction: (arg0: {
         input: { transaction: Uint8Array; tokenPayloads: Uint8Array[] };

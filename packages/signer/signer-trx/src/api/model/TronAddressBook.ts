@@ -13,8 +13,8 @@
  * one for Ethereum.
  */
 export type TronAddressBook = {
-  contactGroups: TronContactGroup[];
-  ledgerAccounts: TronLedgerAccountContact[];
+  contactGroups: readonly TronContactGroup[];
+  ledgerAccounts: readonly TronLedgerAccountContact[];
 };
 
 /**
@@ -28,7 +28,7 @@ export type TronContactGroup = {
   contactName: string;
   groupHandle: Uint8Array;
   hmacProof: Uint8Array;
-  externalAddresses: TronExternalAddress[];
+  externalAddresses: readonly TronExternalAddress[];
 };
 
 /**
@@ -53,3 +53,12 @@ export type TronLedgerAccountContact = {
   derivationPath: string;
   hmacProof: Uint8Array;
 };
+
+/**
+ * The book bound when the host supplies none. Matches nothing, and is frozen
+ * because every signer in the process shares this one instance.
+ */
+export const EMPTY_TRON_ADDRESS_BOOK: TronAddressBook = Object.freeze({
+  contactGroups: Object.freeze([]),
+  ledgerAccounts: Object.freeze([]),
+});
