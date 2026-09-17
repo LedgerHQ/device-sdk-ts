@@ -15,6 +15,10 @@ import { type GetECDHSecretDAReturnType } from "@api/app-binder/GetECDHSecretDev
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTransactionHashDAReturnType } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
+import {
+  EMPTY_TRON_ADDRESS_BOOK,
+  type TronAddressBook,
+} from "@api/model/TronAddressBook";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { GetECDHSecretCommand } from "@internal/app-binder/command/GetECDHSecretCommand";
@@ -33,6 +37,8 @@ export class TronAppBinder {
     private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
     @inject(externalTypes.ContextModule)
     private contextModule: ContextModule,
+    @inject(externalTypes.AddressBook)
+    private addressBook: TronAddressBook = EMPTY_TRON_ADDRESS_BOOK,
   ) {}
 
   getAddress(args: {
@@ -71,6 +77,7 @@ export class TronAppBinder {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
           contextModule: this.contextModule,
+          addressBook: this.addressBook,
           skipOpenApp: args.skipOpenApp ?? false,
         },
         logger: this.dmkLoggerFactory("SignTransactionDeviceAction"),

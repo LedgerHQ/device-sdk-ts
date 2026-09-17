@@ -48,6 +48,47 @@ const { observable: ecdhObservable } = signer.getECDHSecret(
 );
 ```
 
+### Address book
+
+Give the signer the user's address book to have the device show a saved contact
+name in place of the raw recipient address when it reviews a transaction:
+
+```typescript
+const signer = new SignerTrxBuilder({ dmk, sessionId })
+  .withAddressBook({
+    contactGroups: [
+      {
+        contactName: "Alice",
+        groupHandle, // returned when the contact was registered on the device
+        hmacProof,
+        externalAddresses: [
+          {
+            scope: "Tron",
+            address: "T...",
+            hmacRest,
+          },
+        ],
+      },
+    ],
+    ledgerAccounts: [],
+  })
+  .build();
+```
+
+Points to know:
+
+- The snapshot must be complete, and it is read as-is: the signer neither
+  mutates nor persists it. Build a new signer to pick up later changes.
+- Only Tron entries belong here. Filter by blockchain family before you build
+  the snapshot.
+- A contact matches on the raw address only (Tron has no chain id). Only the
+  transaction recipient is matched: `to_address` on Transfer / TransferAsset,
+  `contract_address` on TriggerSmartContract.
+- Nothing here can break a signature. An address book you do not supply, a
+  recipient that does not match, an app too old to support contacts, or a
+  contact the device rejects all leave the transaction signing as before,
+  against the raw address.
+
 ### Get address
 
 Derives the Tron address and public key for a BIP32 derivation path (Tron uses
