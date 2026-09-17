@@ -26,7 +26,6 @@ export class CommandsDriver {
     await this.page.waitForURL("http://localhost:3000/commands", {
       timeout: 10_000,
     });
-    await this.page.waitForLoadState("networkidle");
   }
 
   /** Open the command drawer, fill its inputs and click Send. */

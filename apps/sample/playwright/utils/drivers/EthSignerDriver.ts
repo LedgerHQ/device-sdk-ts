@@ -25,7 +25,6 @@ export class EthSignerDriver {
     await this.page.waitForURL("http://localhost:3000/signers");
     await this.page.getByTestId("CTA_command-Ethereum").click();
     await this.page.waitForURL("http://localhost:3000/signers/ethereum");
-    await this.page.waitForLoadState("networkidle");
   }
 
   /**
