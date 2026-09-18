@@ -605,13 +605,18 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
       {
         title: `${SECURE_CHANNEL_ICON} Flash MCU`,
         description:
-          "Wait for the device to reach bootloader mode, then flash the MCU or bootloader matching the given final firmware",
-        executeDeviceAction: ({ finalFirmwareJson }, inspect) => {
-          const finalFirmware = JSON.parse(finalFirmwareJson) as FinalFirmware;
+          "Wait for the device to reach bootloader mode, then flash the MCU or bootloader matching the given final firmware, or the one the device reports in bootloader recovery mode",
+        executeDeviceAction: (
+          { bootloaderRecovery, finalFirmwareJson },
+          inspect,
+        ) => {
           const deviceAction = new FlashMcuDeviceAction({
-            input: {
-              finalFirmware,
-            },
+            input: bootloaderRecovery
+              ? { mode: "bootloaderRecovery" }
+              : {
+                  mode: "osUpdate",
+                  finalFirmware: JSON.parse(finalFirmwareJson) as FinalFirmware,
+                },
             inspect,
           });
           return dmk.executeDeviceAction({
@@ -620,6 +625,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
+          bootloaderRecovery: false,
           finalFirmwareJson: JSON.stringify({
             id: 0,
             perso: "perso_11",
@@ -632,10 +638,15 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
           } satisfies FinalFirmware),
         },
         labelSelector: {
+          bootloaderRecovery:
+            "Bootloader recovery (resolve the MCU from the device, ignoring the final firmware below)",
           finalFirmwareJson:
             "Final firmware (JSON: the finalFirmware of a Resolve OS update path entry)",
         },
-        validateValues: ({ finalFirmwareJson }) => {
+        validateValues: ({ bootloaderRecovery, finalFirmwareJson }) => {
+          if (bootloaderRecovery) {
+            return true;
+          }
           try {
             const parsed = JSON.parse(
               finalFirmwareJson,
@@ -649,6 +660,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
       } satisfies DeviceActionProps<
         void,
         {
+          bootloaderRecovery: boolean;
           finalFirmwareJson: string;
         },
         FlashMcuDAError,
