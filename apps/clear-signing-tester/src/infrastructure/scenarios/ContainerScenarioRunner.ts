@@ -14,6 +14,7 @@ import {
   type CliLogLevel,
   type LoggerConfig,
 } from "@root/src/domain/models/config/LoggerConfig";
+import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import {
   type ScenarioCoinApp,
   type ScenarioRun,
@@ -26,7 +27,10 @@ import {
 import { type ScenarioRunner } from "@root/src/domain/services/ScenarioRunner";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { type BatchTestResult } from "@root/src/domain/utils/ResultFormatter";
-import { readAddressBookFile } from "@root/src/infrastructure/repositories/readAddressBookFile";
+import {
+  readAddressBookFile,
+  readTronAddressBookFile,
+} from "@root/src/infrastructure/repositories/readAddressBookFile";
 
 /** Settings that belong to the run as a whole, not to any one scenario. */
 export type ScenarioRuntime = {
@@ -82,6 +86,8 @@ type CoinAppSlice = {
   readonly derivationPath: (runtime: ScenarioRuntime) => string;
   /** The `--app-*-version` flag, which outranks the pin but not a scenario's own. */
   readonly appVersionOverride: (runtime: ScenarioRuntime) => string | undefined;
+  /** Absent on a chain whose signer takes no address book. */
+  readonly readAddressBook?: (path: string) => Partial<SignerConfig>;
 };
 
 const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {
@@ -90,6 +96,7 @@ const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {
     transactionUseCase: TYPES.TestBatchTransactionFromFileUseCase,
     derivationPath: (runtime) => runtime.ethDerivationPath,
     appVersionOverride: (runtime) => runtime.ethAppVersion,
+    readAddressBook: (path) => ({ addressBook: readAddressBookFile(path) }),
   },
   Solana: {
     makeContainer: makeSolanaContainer,
@@ -102,8 +109,22 @@ const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {
     transactionUseCase: TYPES.TestBatchTronTransactionFromFileUseCase,
     derivationPath: (runtime) => runtime.tronDerivationPath,
     appVersionOverride: (runtime) => runtime.tronAppVersion,
+    readAddressBook: (path) => ({
+      tronAddressBook: readTronAddressBookFile(path),
+    }),
   },
 };
+
+function readAddressBook(
+  slice: CoinAppSlice,
+  coinApp: ScenarioCoinApp,
+  path: string,
+): Partial<SignerConfig> {
+  if (!slice.readAddressBook) {
+    throw new Error(`${coinApp} scenarios cannot name an address book`);
+  }
+  return slice.readAddressBook(path);
+}
 
 /**
  * Runs a scenario in its own container, so it gets its own emulator.
@@ -216,7 +237,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         // withAddressBook() is build-time, so the book belongs to the signer
         // rather than to the batch that runs against it.
         ...(options.addressBook
-          ? { addressBook: readAddressBookFile(options.addressBook) }
+          ? readAddressBook(coinApp, scenario.coinApp, options.addressBook)
           : {}),
       },
       cal: {

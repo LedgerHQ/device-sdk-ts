@@ -1,0 +1,21 @@
+{
+  "group": "tron",
+  "name": "contacts-sign-rejected",
+  "action": "signTransaction",
+  "devices": ["flex"],
+  "coinApp": "Tron",
+  "osVersion": "1.7.0-rc2",
+  "appVersion": "0.8.0-dev2",
+  "mode": "parallel",
+  "options": {
+    "addressBook": "./ressources/tron/address-book-rejected.json"
+  },
+  "cases": [
+    {
+      "description": "A contact the device refuses costs no signature; the raw address reviews instead",
+      "rawTx": "0a023dce220895da42177db005074080d095ffbc315a67080112630a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412320a1541c8599111f29c1e1e061265b4af93ea1f274ad78a121541a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b31887ad4b70a0fb91ffbc31",
+      "expectedTexts": ["TQcYkNR861VZVLMDfr2RG8CG9bTyDF7jhN"],
+      "unexpectedTexts": ["Alice"]
+    }
+  ]
+}
