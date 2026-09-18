@@ -1,0 +1,24 @@
+{
+  "group": "tron",
+  "name": "contacts-register",
+  "action": "registerContact",
+  "devices": ["flex"],
+  "coinApp": "Tron",
+  "osVersion": "1.7.0-rc2",
+  "appVersion": "0.8.0-dev2",
+  "mode": "sequential",
+  "cases": [
+    {
+      "description": "Registering a Tron address shows the contact name and its base58 address",
+      "contactName": "Alice",
+      "scope": "Tron",
+      "address": "TBoTZcARzWVgnNuB9SyE3S5g1RwsXoQL16",
+      "expectedTexts": [
+        "Review contact details",
+        "Alice",
+        "TBoTZcARzWVgnNuB9SyE3S5g1RwsXoQL16",
+        "Saved to your Contacts"
+      ]
+    }
+  ]
+}

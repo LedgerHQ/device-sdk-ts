@@ -1,5 +1,6 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { type EvmAddressBook } from "@ledgerhq/device-signer-kit-ethereum";
+import { type TronAddressBook } from "@ledgerhq/device-signer-kit-tron";
 import { readFileSync } from "fs";
 
 /**
@@ -45,6 +46,28 @@ export function readAddressBookFile(filePath: string): EvmAddressBook {
         chainId: BigInt(
           required(entry.chainId, index, "externalAddresses[].chainId"),
         ),
+        hmacRest: bytes(entry.hmacRest, index, "externalAddresses[].hmacRest"),
+      })),
+    })),
+    ledgerAccounts: [],
+  };
+}
+
+/**
+ * Read a Tron address book: the same file, with base58 addresses and no chain
+ * id.
+ */
+export function readTronAddressBookFile(filePath: string): TronAddressBook {
+  const raw = JSON.parse(readFileSync(filePath, "utf-8")) as RawAddressBook;
+
+  return {
+    contactGroups: (raw.contactGroups ?? []).map((group, index) => ({
+      contactName: required(group.contactName, index, "contactName"),
+      groupHandle: bytes(group.groupHandle, index, "groupHandle"),
+      hmacProof: bytes(group.hmacProof, index, "hmacProof"),
+      externalAddresses: (group.externalAddresses ?? []).map((entry) => ({
+        scope: required(entry.scope, index, "externalAddresses[].scope"),
+        address: required(entry.address, index, "externalAddresses[].address"),
         hmacRest: bytes(entry.hmacRest, index, "externalAddresses[].hmacRest"),
       })),
     })),

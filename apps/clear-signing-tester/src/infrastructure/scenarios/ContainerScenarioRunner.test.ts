@@ -52,4 +52,20 @@ describe("ContainerScenarioRunner", () => {
     // Counted as a failure, so a cancelled run cannot report as green.
     expect(outcome.failures).toBe(1);
   });
+
+  // Naming one elsewhere would run the scenario as if it had none.
+  it("refuses an address book on a coin app whose signer takes none", async () => {
+    const run: ScenarioRun = {
+      scenario: {
+        ...RUN.scenario,
+        coinApp: "Solana",
+        options: { addressBook: "./ressources/tron/address-book.json" },
+      },
+      device: "stax",
+    };
+
+    await expect(new ContainerScenarioRunner(RUNTIME).run(run)).rejects.toThrow(
+      "Solana scenarios cannot name an address book",
+    );
+  });
 });

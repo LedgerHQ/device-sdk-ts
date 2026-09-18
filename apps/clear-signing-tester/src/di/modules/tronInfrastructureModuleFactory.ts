@@ -1,12 +1,17 @@
 import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
+import { decodeTronAddress } from "@ledgerhq/device-signer-kit-tron";
 import { ContainerModule } from "inversify";
 
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
+import { type ContactsChain } from "@root/src/domain/models/ContactsChain";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type ContactsRepository } from "@root/src/domain/repositories/ContactsRepository";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { type SigningService } from "@root/src/domain/services/SigningService";
+import { ContactFileRepository } from "@root/src/infrastructure/repositories/ContactFileRepository";
+import { SpeculosContactsRepository } from "@root/src/infrastructure/repositories/SpeculosContactsRepository";
 import { TronTransactionFileRepository } from "@root/src/infrastructure/repositories/TronTransactionFileRepository";
 import { TronDMKServiceController } from "@root/src/infrastructure/service-controllers/TronDMKServiceController";
 import { TronSigningService } from "@root/src/infrastructure/services/TronSigningService";
@@ -23,6 +28,23 @@ export const tronInfrastructureModuleFactory = (
     bind<DataFileRepository<TransactionInput>>(TYPES.TransactionFileRepository)
       .to(TronTransactionFileRepository)
       .inSingletonScope();
+    bind<ContactFileRepository>(TYPES.ContactFileRepository)
+      .to(ContactFileRepository)
+      .inSingletonScope();
+    bind<SpeculosContactsRepository>(TYPES.SpeculosContactsRepository)
+      .to(SpeculosContactsRepository)
+      .inSingletonScope();
+    bind<ContactsRepository>(TYPES.ContactsRepository).toDynamicValue(
+      (context) =>
+        context.get<SpeculosContactsRepository>(
+          TYPES.SpeculosContactsRepository,
+        ),
+    );
+    bind<ContactsChain>(TYPES.ContactsChain).toConstantValue({
+      blockchainFamily: "tron",
+      toIdentifier: decodeTronAddress,
+      hasChainId: false,
+    });
 
     // Signing
     bind<SigningService>(TYPES.SigningService)
