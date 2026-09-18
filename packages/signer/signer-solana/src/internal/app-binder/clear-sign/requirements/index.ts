@@ -53,6 +53,7 @@ export {
   type ParsedValue,
   type ParsedValueFlowPort,
   TokenKind,
+  ValueKind,
   ValueSource,
 } from "./records";
 export {

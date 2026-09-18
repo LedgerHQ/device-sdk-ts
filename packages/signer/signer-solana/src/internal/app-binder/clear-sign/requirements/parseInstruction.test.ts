@@ -17,6 +17,7 @@ import {
   PARAM_TYPE_TOKEN_AMOUNT,
   PARAM_TYPE_TRUSTED_NAME,
   TokenKind,
+  ValueKind,
 } from "./records";
 
 describe("parseInstructionDescriptor", () => {
@@ -40,7 +41,13 @@ describe("parseInstructionDescriptor", () => {
     expect(parsed.valueFlowPorts).toHaveLength(1);
     expect(parsed.valueFlowPorts[0]!.tokenValue?.kind).toBe(TokenKind.NATIVE);
     expect(parsed.accountResets).toEqual([
-      { accountIndex: 1, requirePreBalanceZero: true },
+      {
+        accountIndex: 1,
+        requirePreBalanceZero: true,
+        valueKind: ValueKind.NATIVE,
+        tokenValue: undefined,
+        requireNativePreBalanceZero: false,
+      },
     ]);
     expect(parsed.displayFields[0]!.paramType).toBe(PARAM_TYPE_TRUSTED_NAME);
   });

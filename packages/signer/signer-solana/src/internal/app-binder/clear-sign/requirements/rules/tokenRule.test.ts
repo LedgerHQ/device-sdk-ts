@@ -13,6 +13,7 @@ import {
   type ParsedValue,
   type ParsedValueFlowPort,
   TokenKind,
+  ValueKind,
   ValueSource,
 } from "@internal/app-binder/clear-sign/requirements/records";
 import { RequirementAccumulator } from "@internal/app-binder/clear-sign/requirements/RequirementAccumulator";
@@ -309,7 +310,31 @@ describe("applyTokenRule", () => {
     it("forces TOKEN_ACCOUNT_STATE when requirePreBalanceZero is set", () => {
       const result = run(
         parsed({
-          accountResets: [{ accountIndex: 0, requirePreBalanceZero: true }],
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: true,
+              valueKind: ValueKind.NATIVE,
+              requireNativePreBalanceZero: false,
+            },
+          ],
+        }),
+        makeInstruction(["ata"]),
+      );
+      expect(result.tokenAccountStates).toEqual(["ata"]);
+    });
+
+    it("forces TOKEN_ACCOUNT_STATE when requireNativePreBalanceZero is set", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.NATIVE,
+              requireNativePreBalanceZero: true,
+            },
+          ],
         }),
         makeInstruction(["ata"]),
       );
@@ -319,7 +344,14 @@ describe("applyTokenRule", () => {
     it("does nothing without the flag or for an out-of-bounds index", () => {
       const noFlag = run(
         parsed({
-          accountResets: [{ accountIndex: 0, requirePreBalanceZero: false }],
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.NATIVE,
+              requireNativePreBalanceZero: false,
+            },
+          ],
         }),
         makeInstruction(["ata"]),
       );
@@ -327,11 +359,188 @@ describe("applyTokenRule", () => {
 
       const oob = run(
         parsed({
-          accountResets: [{ accountIndex: 9, requirePreBalanceZero: true }],
+          accountResets: [
+            {
+              accountIndex: 9,
+              requirePreBalanceZero: true,
+              valueKind: ValueKind.NATIVE,
+              requireNativePreBalanceZero: false,
+            },
+          ],
         }),
         makeInstruction(["ata"]),
       );
       expect(oob.tokenAccountStates).toEqual([]);
+    });
+
+    it("path 5: adds TOKEN_ACCOUNT_STATE for splToken+RESOLVE reset with no binding and no fallback", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.SPL_TOKEN,
+              requireNativePreBalanceZero: false,
+              tokenValue: { kind: TokenKind.RESOLVE },
+            },
+          ],
+        }),
+        makeInstruction(["ata"]),
+      );
+      expect(result.tokenAccountStates).toEqual(["ata"]);
+    });
+
+    it("path 5: skips TOKEN_ACCOUNT_STATE when mint is already bound, emits TOKEN_INFO instead", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.SPL_TOKEN,
+              requireNativePreBalanceZero: false,
+              tokenValue: { kind: TokenKind.RESOLVE },
+            },
+          ],
+        }),
+        makeInstruction(["ata"]),
+        new Map([["ata", "MINT"]]),
+      );
+      expect(result.tokenAccountStates).toEqual([]);
+      expect(result.tokenInfos).toContain("MINT");
+    });
+
+    it("path 5: skips TOKEN_ACCOUNT_STATE when fallbackAccountIndex is set", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.SPL_TOKEN,
+              requireNativePreBalanceZero: false,
+              tokenValue: { kind: TokenKind.RESOLVE, fallbackAccountIndex: 1 },
+            },
+          ],
+        }),
+        makeInstruction(["ata", "MINT"]),
+      );
+      expect(result.tokenAccountStates).toEqual([]);
+      expect(result.tokenInfos).toContain("MINT");
+    });
+
+    it("path 5: does not trigger for a native reset", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.NATIVE,
+              requireNativePreBalanceZero: false,
+              tokenValue: { kind: TokenKind.RESOLVE },
+            },
+          ],
+        }),
+        makeInstruction(["ata"]),
+      );
+      // native reset with no pre-balance flags emits nothing from path 5
+      expect(result.tokenAccountStates).toEqual([]);
+    });
+
+    it("path 5: does not trigger when tokenValue is absent", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.SPL_TOKEN,
+              requireNativePreBalanceZero: false,
+            },
+          ],
+        }),
+        makeInstruction(["ata"]),
+      );
+      expect(result.tokenAccountStates).toEqual([]);
+    });
+
+    it("path 5: does not trigger for a splToken reset with a DIRECT token value", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.SPL_TOKEN,
+              requireNativePreBalanceZero: false,
+              tokenValue: { kind: TokenKind.DIRECT },
+            },
+          ],
+        }),
+        makeInstruction(["ata"]),
+      );
+      expect(result.tokenAccountStates).toEqual([]);
+    });
+
+    it("path 5: uses tokenValue.accountIndex instead of reset.accountIndex when set", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.SPL_TOKEN,
+              requireNativePreBalanceZero: false,
+              tokenValue: { kind: TokenKind.RESOLVE, accountIndex: 1 },
+            },
+          ],
+        }),
+        makeInstruction(["wrong", "rightAta"]),
+      );
+      expect(result.tokenAccountStates).toEqual(["rightAta"]);
+    });
+
+    it("path 5: routes an ALT-backed token account to tokenAccountStateAltRefs", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.SPL_TOKEN,
+              requireNativePreBalanceZero: false,
+              tokenValue: { kind: TokenKind.RESOLVE },
+            },
+          ],
+        }),
+        withAltSlot(makeInstruction([undefined]), 0, 7),
+      );
+      expect(result.tokenAccountStateAltRefs).toEqual([
+        { altAddress: "ALT", entryIndex: 7 },
+      ]);
+      expect(result.tokenAccountStates).toEqual([]);
+    });
+
+    it("path 2: an ALT-backed account with a pre-balance flag set produces a TAS ALT ref requirement", () => {
+      const result = run(
+        parsed({
+          accountResets: [
+            {
+              accountIndex: 0,
+              requirePreBalanceZero: false,
+              valueKind: ValueKind.NATIVE,
+              requireNativePreBalanceZero: true,
+            },
+          ],
+        }),
+        withAltSlot(makeInstruction([undefined]), 0, 5),
+      );
+      expect(result.tokenAccountStates).toEqual([]);
+      expect(result.tokenAccountStateAltRefs).toEqual([
+        { altAddress: "ALT", entryIndex: 5 },
+      ]);
     });
   });
 

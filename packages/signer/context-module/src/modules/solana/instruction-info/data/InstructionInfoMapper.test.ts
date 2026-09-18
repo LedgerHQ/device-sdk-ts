@@ -162,6 +162,30 @@ describe("InstructionInfoMapper", () => {
       ).toEqual([{ account_index: 2, require_pre_balance_zero: true }]);
     });
 
+    it("passes through value_kind, token, and require_native_pre_balance_zero", () => {
+      expect(
+        toAccountResets([
+          {
+            descriptor: "ar1",
+            account_index: 3,
+            value_kind: "splToken",
+            token: {
+              kind: "RESOLVE",
+              account_index: 4,
+            },
+            require_native_pre_balance_zero: true,
+          },
+        ]),
+      ).toEqual([
+        {
+          account_index: 3,
+          value_kind: "splToken",
+          token: { kind: "RESOLVE", account_index: 4 },
+          require_native_pre_balance_zero: true,
+        },
+      ]);
+    });
+
     it("drops entries missing account_index instead of defaulting to slot 0", () => {
       expect(
         toAccountResets([
