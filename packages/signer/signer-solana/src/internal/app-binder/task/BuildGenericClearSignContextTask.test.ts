@@ -67,6 +67,7 @@ function instructionInfoContext(
   programId: string,
   discriminator: string,
   infoHex: string = INFO_HEX,
+  overrides: { accountSchema?: unknown; idlDescriptor?: unknown } = {},
 ): ClearSignContext {
   return {
     type: ClearSignContextType.SOLANA_INSTRUCTION_INFO,
@@ -83,6 +84,7 @@ function instructionInfoContext(
       accountResets: [],
       displayFields: [],
       hideRules: [],
+      ...overrides,
     },
   } as any;
 }
@@ -207,5 +209,46 @@ describe("BuildGenericClearSignContextTask", () => {
     expect(result.mode).toBe("none");
     expect(result.unrecognizedProgramIds).toEqual([]);
     expect(getContexts).not.toHaveBeenCalled();
+  });
+
+  it("sets staleDescriptor when an ACCOUNT_SCHEMA mismatch degrades to mode `none`", async () => {
+    // makeIx compiles a single-account instruction; a schema requiring 2
+    // accounts can never match it, simulating a stale CAL descriptor for a
+    // program whose account layout has since changed.
+    const tx = makeRawTx([makeIx(KNOWN_PROGRAM, [0x01, 0x02, 0xaa])]);
+    const { task } = makeTask(tx, [
+      instructionInfoContext(KNOWN_PROGRAM.toBase58(), "0102", INFO_HEX, {
+        accountSchema: {
+          count_min: 2,
+          count_max: 2,
+          remaining_policy: { signer: "EITHER", writable: "EITHER" },
+          slots: [],
+        },
+      }),
+    ]);
+
+    const result = await task.run();
+
+    expect(result.mode).toBe("none");
+    expect(result.staleDescriptor).toBe(true);
+    expect(result.unrecognizedProgramIds).toEqual([]);
+  });
+
+  it("leaves staleDescriptor false for other requirement-build failures", async () => {
+    const tx = makeRawTx([makeIx(KNOWN_PROGRAM, [0x01, 0x02, 0xaa])]);
+    // A malformed type pool fails decode for a reason unrelated to ACCOUNT_SCHEMA.
+    const { task } = makeTask(tx, [
+      instructionInfoContext(KNOWN_PROGRAM.toBase58(), "0102", INFO_HEX, {
+        idlDescriptor: {
+          typePool: [{ index: 0, kind: "NOT_A_KIND" }],
+          rootType: 0,
+        },
+      }),
+    ]);
+
+    const result = await task.run();
+
+    expect(result.mode).toBe("none");
+    expect(result.staleDescriptor).toBe(false);
   });
 });

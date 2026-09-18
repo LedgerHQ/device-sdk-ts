@@ -26,6 +26,8 @@ import { type ChallengeBoundRequirements } from "@internal/app-binder/task/Build
 export type ProvisionGenericClearSignDAOutput = {
   status: "prepared" | "degraded";
   unrecognizedProgramIds: string[];
+  /** `true` when `"degraded"` specifically because an ACCOUNT_SCHEMA pre-check failed (stale CAL descriptor). */
+  staleDescriptor: boolean;
 };
 
 export type ProvisionGenericClearSignDAInput = {
@@ -47,4 +49,5 @@ export type ProvisionGenericClearSignDAInternalState = {
   readonly instructionInfoContexts: ClearSignContext[] | null;
   readonly challengeBoundRequirements: ChallengeBoundRequirements | null;
   readonly unrecognizedProgramIds: string[];
+  readonly staleDescriptor: boolean;
 };

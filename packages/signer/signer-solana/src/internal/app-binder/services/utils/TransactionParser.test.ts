@@ -166,6 +166,39 @@ describe("TransactionParser", () => {
       expect(ix.accountWritable[destSlot]).toBe(true);
     });
 
+    it("derives signer flags from the message header (fee-payer is a signer; recipient is not)", async () => {
+      const payer = Keypair.generate();
+      const dest = Keypair.generate().publicKey;
+
+      const raw = makeSignedRawTx(
+        [
+          SystemProgram.transfer({
+            fromPubkey: payer.publicKey,
+            toPubkey: dest,
+            lamports: 1_000,
+          }),
+        ],
+        payer,
+      );
+
+      const parser = new TransactionParser();
+      const { message } = (await parser.parse(raw).run()).unsafeCoerce();
+      const ix = message.compiledInstructions[0]!;
+
+      expect(ix.accountSigner).toHaveLength(ix.accountKeyIndexes.length);
+      // The fee payer is the only required signer.
+      const payerIdx = message.allKeys.findIndex((k) =>
+        k.equals(payer.publicKey),
+      );
+      const payerSlot = ix.accountKeyIndexes.indexOf(payerIdx);
+      expect(ix.accountSigner[payerSlot]).toBe(true);
+
+      // The destination account is writable but not a signer.
+      const destIdx = message.allKeys.findIndex((k) => k.equals(dest));
+      const destSlot = ix.accountKeyIndexes.indexOf(destIdx);
+      expect(ix.accountSigner[destSlot]).toBe(false);
+    });
+
     it("preserves instruction count across multiple instructions", async () => {
       const payer = Keypair.generate();
 
@@ -442,6 +475,11 @@ describe("TransactionParser", () => {
       const altReadonlySlot = ix.accountKeyIndexes.indexOf(staticLen + 1);
       expect(ix.accountWritable[altWritableSlot]).toBe(true);
       expect(ix.accountWritable[altReadonlySlot]).toBe(false);
+
+      // ALT-supplied slots are never required signers, regardless of the
+      // writable/readonly split — only static slots can be.
+      expect(ix.accountSigner[altWritableSlot]).toBe(false);
+      expect(ix.accountSigner[altReadonlySlot]).toBe(false);
     });
 
     it("does not preserve raw refs by default (no resolver, no opt-in)", async () => {

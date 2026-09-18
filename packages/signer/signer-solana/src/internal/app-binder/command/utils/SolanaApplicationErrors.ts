@@ -31,6 +31,8 @@ export const SOLANA_APP_ERRORS: CommandErrors<SolanaAppErrorCodes> = {
   "6f11": { message: "Delayed signing hash mismatch" },
   "6f12": { message: "Delayed signing length mismatch" },
   "6f13": { message: "Delayed signing derivation mismatch" },
+  // TODO: add stale-descriptor SW once the app team confirms the value
+  // "????": { message: "Stale or incompatible instruction descriptor (ACCOUNT_SCHEMA mismatch)" },
 };
 
 export const SOLANA_APP_COMMAND_ERROR_TAG = "SolanaAppCommandError";

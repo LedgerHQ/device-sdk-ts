@@ -18,13 +18,14 @@ const instruction: RequirementInstruction = {
   programId: "P",
   data: new Uint8Array(),
   accounts: [
-    { address: "first", isWritable: false },
+    { address: "first", isWritable: false, isSigner: false },
     {
       address: undefined,
       altRef: { altAddress: "ALT", entryIndex: 5 },
       isWritable: false,
+      isSigner: false,
     },
-    { address: "third", isWritable: false },
+    { address: "third", isWritable: false, isSigner: false },
   ],
 };
 
@@ -155,8 +156,8 @@ describe("resolvePortAccountIndex", () => {
     programId: "P",
     data: new Uint8Array(),
     accounts: [
-      { address: "P", isWritable: false },
-      { address: "second", isWritable: false },
+      { address: "P", isWritable: false, isSigner: false },
+      { address: "second", isWritable: false, isSigner: false },
     ],
   };
 

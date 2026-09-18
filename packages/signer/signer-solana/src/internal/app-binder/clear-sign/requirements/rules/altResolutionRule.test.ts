@@ -32,12 +32,16 @@ function emptyParsed(): ParsedInstruction {
 
 /** An ALT-backed slot at `entryIndex` of the "ALT" table. */
 function alt(entryIndex: number, isWritable = false): RequirementAccount {
-  return { altRef: { altAddress: "ALT", entryIndex }, isWritable };
+  return {
+    altRef: { altAddress: "ALT", entryIndex },
+    isWritable,
+    isSigner: false,
+  };
 }
 
 /** A statically resolved slot. */
 function addr(address: string, isWritable = false): RequirementAccount {
-  return { address, isWritable };
+  return { address, isWritable, isSigner: false };
 }
 
 function accountPath(index: number) {
