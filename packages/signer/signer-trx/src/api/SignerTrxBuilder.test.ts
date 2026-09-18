@@ -1,7 +1,10 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 
-import { type TronAddressBook } from "@api/model/TronAddressBook";
+import {
+  EMPTY_TRON_ADDRESS_BOOK,
+  type TronAddressBook,
+} from "@api/model/TronAddressBook";
 import { SignerTrxBuilder } from "@api/SignerTrxBuilder";
 import { APP_NAME, INS, LEDGER_CLA } from "@internal/app-binder/constants";
 import { DefaultSignerTrx } from "@internal/DefaultSignerTrx";
@@ -54,7 +57,7 @@ describe("SignerTrxBuilder", () => {
 
     expect(
       signer["_container"].get<TronAddressBook>(externalTypes.AddressBook),
-    ).toEqual({ contactGroups: [], ledgerAccounts: [] });
+    ).toEqual(EMPTY_TRON_ADDRESS_BOOK);
   });
 
   test("should build with a custom address book", () => {

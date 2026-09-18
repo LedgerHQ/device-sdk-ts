@@ -6,7 +6,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
-import { type TronAddressBook } from "@api/model/TronAddressBook";
+import {
+  EMPTY_TRON_ADDRESS_BOOK,
+  type TronAddressBook,
+} from "@api/model/TronAddressBook";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { externalTypes } from "@internal/externalTypes";
 import { addressModuleFactory } from "@internal/use-cases/address/di/addressModule";
@@ -41,7 +44,7 @@ export const makeContainer = ({
   // matches, so consumers never have to handle `undefined`.
   container
     .bind<TronAddressBook>(externalTypes.AddressBook)
-    .toConstantValue(addressBook ?? { contactGroups: [], ledgerAccounts: [] });
+    .toConstantValue(addressBook ?? EMPTY_TRON_ADDRESS_BOOK);
 
   container
     .bind<

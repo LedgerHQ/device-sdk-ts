@@ -41,6 +41,7 @@ export { type MessageOptions } from "@api/model/MessageOptions";
 export { type Signature } from "@api/model/Signature";
 export { type TransactionOptions } from "@api/model/TransactionOptions";
 export {
+  EMPTY_TRON_ADDRESS_BOOK,
   type TronAddressBook,
   type TronContactGroup,
   type TronExternalAddress,
@@ -49,3 +50,7 @@ export {
 export { type SignerTrx } from "@api/SignerTrx";
 export { SignerTrxBuilder } from "@api/SignerTrxBuilder";
 export { type TronAppErrorCodes } from "@internal/app-binder/command/utils/tronApplicationErrors";
+export {
+  decodeTronAddress,
+  encodeTronAddress,
+} from "@internal/shared/utils/tronBase58Check";

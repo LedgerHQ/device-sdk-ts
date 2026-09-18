@@ -41,6 +41,7 @@ import {
   type SignTransactionHashDAIntermediateValue,
   type SignTransactionHashDAOutput,
 } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
+import { EMPTY_TRON_ADDRESS_BOOK } from "@api/model/TronAddressBook";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { GetECDHSecretCommand } from "@internal/app-binder/command/GetECDHSecretCommand";
@@ -213,6 +214,7 @@ describe("TronAppBinder", () => {
   describe("signTransaction", () => {
     const derivationPath = "44'/195'/0'/0/0";
     const transaction = Uint8Array.from([0x0a, 0x01, 0x00]);
+    const addressBook = EMPTY_TRON_ADDRESS_BOOK;
 
     it("should return the signature", () =>
       new Promise<void>((resolve, reject) => {
@@ -239,6 +241,7 @@ describe("TronAppBinder", () => {
           "sessionId",
           loggerFactoryMock,
           contextModuleMock,
+          addressBook,
         );
         const { observable } = binder.signTransaction({
           derivationPath,
@@ -285,6 +288,7 @@ describe("TronAppBinder", () => {
           "sessionId",
           loggerFactoryMock,
           contextModuleMock,
+          addressBook,
         );
         binder.signTransaction({
           derivationPath,
@@ -297,6 +301,7 @@ describe("TronAppBinder", () => {
         expect(deviceAction.input.derivationPath).toBe(derivationPath);
         expect(deviceAction.input.transaction).toBe(transaction);
         expect(deviceAction.input.contextModule).toBe(contextModuleMock);
+        expect(deviceAction.input.addressBook).toBe(addressBook);
         expect(deviceAction.input.skipOpenApp).toBe(true);
       });
 
