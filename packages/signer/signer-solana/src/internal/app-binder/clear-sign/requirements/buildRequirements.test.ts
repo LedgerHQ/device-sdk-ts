@@ -236,12 +236,12 @@ describe("buildRequirements", () => {
           accountResets: [
             accountReset({
               accountIndex: 0,
-              valueKind: "native",
+              valueKind: "NATIVE",
               requirePreBalanceZero: true,
             }),
             accountReset({
               accountIndex: 0,
-              valueKind: "splToken",
+              valueKind: "SPL_TOKEN",
               requirePreBalanceZero: true,
               token: { kind: "DIRECT" },
             }),

@@ -2,6 +2,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  hexaStringToBuffer,
   isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
@@ -82,6 +83,38 @@ describe("provideInstructionInfoContext", () => {
 
     const sub1 = api.sendCommand.mock.calls[3]![0];
     expect(sub1.args.payload).toStrictEqual(new Uint8Array([0x01, 0xee]));
+  });
+
+  it("sends exactly one ProvideInstructionSubstructureCommand per substructure, never batched", async () => {
+    api.sendCommand.mockResolvedValue(success);
+    const result = makeResult();
+    result.payload.substructures = [
+      { kind: 0x00, data: "aa" },
+      { kind: 0x01, data: "bb" },
+      { kind: 0x02, data: "cc" },
+    ];
+
+    await provideInstructionInfoContext(result as any, deps);
+
+    const substructureCalls = api.sendCommand.mock.calls
+      .map((call) => call[0])
+      .filter(
+        (command) => command instanceof ProvideInstructionSubstructureCommand,
+      );
+
+    // One exchange per substructure — the device's SUBSTRUCTURES_HASH commits
+    // to each substructure framed individually, so two must never be packed
+    // into a single PROVIDE INSTRUCTION SUBSTRUCTURE (0x25) exchange.
+    expect(substructureCalls).toHaveLength(result.payload.substructures.length);
+    substructureCalls.forEach((command, index) => {
+      const substructure = result.payload.substructures[index]!;
+      expect((command as any).args.payload).toStrictEqual(
+        Uint8Array.of(
+          substructure.kind,
+          ...hexaStringToBuffer(substructure.data)!,
+        ),
+      );
+    });
   });
 
   it("returns success without sending any command when payload is absent", async () => {

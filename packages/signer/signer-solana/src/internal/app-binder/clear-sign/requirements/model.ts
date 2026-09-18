@@ -94,6 +94,15 @@ export type DescriptorRequirements = {
   altResolutions: AltEntryKey[];
   trustedNames: string[];
   /**
+   * ALT-supplied slots targeted by a `PARAM_TRUSTED_NAME` / `PARAM_ACCOUNT`
+   * display field. A marker set, not an ALT_RESOLUTION requester: the slot's
+   * resolution is already requested by whichever of `altResolutions` /
+   * `tokenAmountAltRefs` / `tokenAccountStateAltRefs` / `mintAltRefs` covers
+   * it. Once the provide phase resolves the entry, it fetches a TRUSTED_NAME
+   * for the resulting address too.
+   */
+  trustedNameAltRefs: AltEntryKey[];
+  /**
    * PARAM_TOKEN_AMOUNT.TOKEN refs (ACCOUNT_PATH, non-ALT, not in mintBindings).
    * Try TOKEN_INFO first at fetch time; fall back to TOKEN_ACCOUNT_STATE if it fails.
    */

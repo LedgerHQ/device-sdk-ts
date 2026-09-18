@@ -140,4 +140,62 @@ describe("applyTrustedNameRule", () => {
     );
     expect(unresolved).toEqual([]);
   });
+
+  it("falls back to trustedNameAltRefs for an ALT-supplied slot", () => {
+    const parsed: ParsedInstruction = {
+      info: {
+        typePool: [],
+        rootType: 0,
+        mintAssociations: [],
+        ownerAssociations: [],
+      },
+      valueFlowPorts: [],
+      accountResets: [],
+      displayFields: [
+        {
+          paramType: PARAM_TYPE_TRUSTED_NAME,
+          value: {
+            source: ValueSource.ACCOUNT_PATH,
+            payload: Uint8Array.of(0),
+          },
+        },
+      ],
+      hideRules: [],
+    };
+    const instruction: RequirementInstruction = {
+      programId: "P",
+      accounts: [
+        {
+          address: undefined,
+          altRef: { altAddress: "ALT", entryIndex: 2 },
+          isWritable: false,
+          isSigner: false,
+        },
+      ],
+      data: new Uint8Array(),
+    };
+    const accumulator = new RequirementAccumulator();
+    applyTrustedNameRule(parsed, instruction, accumulator);
+    const result = accumulator.build();
+    expect(result.trustedNames).toEqual([]);
+    expect(result.trustedNameAltRefs).toEqual([
+      { altAddress: "ALT", entryIndex: 2 },
+    ]);
+  });
+
+  it("does not record an ALT ref for a CONSTANT or ARGUMENT_PATH value", () => {
+    const result = run(
+      [
+        {
+          paramType: PARAM_TYPE_TRUSTED_NAME,
+          value: {
+            source: ValueSource.ARGUMENT_PATH,
+            payload: new Uint8Array(),
+          },
+        },
+      ],
+      [],
+    );
+    expect(result).toEqual([]);
+  });
 });

@@ -20,6 +20,7 @@ export class RequirementAccumulator {
   private readonly tokenAmountAltRefs = new OrderedSet<AltEntryKey>();
   private readonly mintAltRefs = new OrderedSet<AltEntryKey>();
   private readonly tokenAccountStateAltRefs = new OrderedSet<AltEntryKey>();
+  private readonly trustedNameAltRefs = new OrderedSet<AltEntryKey>();
 
   addInstructionInfo(programId: string, discriminator: string): void {
     this.instructionInfos.add(`${programId}:${discriminator}`, {
@@ -57,6 +58,21 @@ export class RequirementAccumulator {
 
   addTrustedName(address: string): void {
     this.trustedNames.add(address, address);
+  }
+
+  /**
+   * Marks `(altAddress, entryIndex)` as a trusted-name target for an
+   * ALT-supplied slot. This is not a fifth ALT_RESOLUTION requester: the slot
+   * is already covered by `altResolutionRule`'s DISPLAY_FIELD pass (or by a
+   * higher-priority ALT bucket), so this set is consulted, not stripped, in
+   * the provide phase — once any of the other loops resolves the entry, its
+   * address gets a TRUSTED_NAME fetch too.
+   */
+  addTrustedNameAltRef(altAddress: string, entryIndex: number): void {
+    this.trustedNameAltRefs.add(`${altAddress}:${entryIndex}`, {
+      altAddress,
+      entryIndex,
+    });
   }
 
   addTokenAmountRef(address: string): void {
@@ -126,6 +142,7 @@ export class RequirementAccumulator {
             !tokenAmountKeys.has(altKey(k)),
         ),
       trustedNames: this.trustedNames.values(),
+      trustedNameAltRefs: this.trustedNameAltRefs.values(),
       tokenAmountRefs: this.tokenAmountRefs
         .values()
         .filter((address) => !tokenAccountKeys.has(address)),

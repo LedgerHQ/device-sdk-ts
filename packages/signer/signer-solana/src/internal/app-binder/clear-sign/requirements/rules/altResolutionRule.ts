@@ -47,10 +47,12 @@ import { resolvePortAccountIndex } from "@internal/app-binder/clear-sign/require
  *
  * Deliberately excluded, to keep device heap use down: read-only ALT accounts
  * that no port, token reference, display field, association or reset names. The
- * only site that reads them is `collect_all_accounts`, and a slot missing there
- * only weakens `condition_account_used_elsewhere` — it cannot cost merge
- * compaction, it can only make the device show more screens, never fewer and
- * never a wrong value.
+ * only site that reads them is `collect_all_accounts`, and `ACCOUNT_USED_ELSEWHERE`
+ * is the only predicate that consults it — and that predicate is not
+ * unresolvable (it is never three-valued, unlike a port left unresolved by a
+ * missing descriptor, see spec/device/tlv_structs.md#unevaluable-predicates,
+ * G-051), so a slot missing there can only make the device show more screens,
+ * never fewer and never a wrong value. It cannot cost merge compaction.
  */
 export function applyAltResolutionRule(
   parsed: ParsedInstruction,

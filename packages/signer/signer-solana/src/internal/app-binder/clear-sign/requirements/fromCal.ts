@@ -212,8 +212,8 @@ export function fromCalOwnerAssociation(
 }
 
 const VALUE_KIND_BY_NAME: Readonly<Record<string, ValueKind>> = {
-  splToken: ValueKind.SPL_TOKEN,
-  native: ValueKind.NATIVE,
+  SPL_TOKEN: ValueKind.SPL_TOKEN,
+  NATIVE: ValueKind.NATIVE,
 };
 
 export function fromCalAccountReset(
@@ -233,7 +233,7 @@ export function fromCalAccountReset(
   }
   if (valueKind === ValueKind.SPL_TOKEN && !reset.token) {
     decodeError(
-      "ACCOUNT_RESET with value_kind 'splToken' is missing the required TOKEN field",
+      "ACCOUNT_RESET with value_kind 'SPL_TOKEN' is missing the required TOKEN field",
     );
   }
   return {
