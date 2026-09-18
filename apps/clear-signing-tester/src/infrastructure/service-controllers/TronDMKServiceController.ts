@@ -4,6 +4,10 @@ import {
   ContextModuleChainID,
 } from "@ledgerhq/context-module";
 import {
+  ContactsManagerBuilder,
+  TRON_APP_NAME,
+} from "@ledgerhq/device-contacts-kit";
+import {
   DeviceManagementKit,
   DeviceManagementKitBuilder,
   DiscoveredDevice,
@@ -27,6 +31,7 @@ import { type SpeculinhoConfig } from "@root/src/domain/models/config/Speculinho
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { getEmulatorBaseUrl } from "@root/src/domain/utils/getEmulatorBaseUrl";
+import { SpeculosContactsRepository } from "@root/src/infrastructure/repositories/SpeculosContactsRepository";
 import { TronSigningService } from "@root/src/infrastructure/services/TronSigningService";
 
 export class TronDMKServiceController implements ServiceController {
@@ -40,6 +45,8 @@ export class TronDMKServiceController implements ServiceController {
   constructor(
     @inject(TYPES.SigningService)
     private readonly signingService: TronSigningService,
+    @inject(TYPES.SpeculosContactsRepository)
+    private readonly contactsRepository: SpeculosContactsRepository,
     @inject(TYPES.RetryService)
     private readonly retryService: RetryService,
     @inject(TYPES.SpeculinhoConfig)
@@ -104,15 +111,14 @@ export class TronDMKServiceController implements ServiceController {
                   this.logger.debug("Device connected", {
                     data: { sessionId: this.sessionId },
                   });
-                  this.signer = new SignerTrxBuilder({
-                    dmk: this.dmk!,
-                    sessionId: sessionId,
-                    originToken: this.signerConfig.originToken,
-                  })
-                    .withContextModule(this.contextModule!)
-                    .build();
-
-                  this.signingService.setSigner(this.signer);
+                  this.contactsRepository.setContactsManager(
+                    new ContactsManagerBuilder({
+                      dmk: this.dmk!,
+                      sessionId,
+                      appName: TRON_APP_NAME,
+                    }).build(),
+                  );
+                  this.buildSigner(sessionId);
 
                   resolve();
                 })
@@ -137,6 +143,26 @@ export class TronDMKServiceController implements ServiceController {
     );
 
     this.logger.info("Tron DMK started successfully");
+  }
+
+  private buildSigner(sessionId: string): void {
+    const builder = new SignerTrxBuilder({
+      dmk: this.dmk!,
+      sessionId,
+      originToken: this.signerConfig.originToken,
+    }).withContextModule(this.contextModule!);
+
+    const { tronAddressBook } = this.signerConfig;
+    if (tronAddressBook) {
+      builder.withAddressBook(tronAddressBook);
+    }
+
+    this.signer = builder.build();
+    this.signingService.setSigner(this.signer);
+
+    this.logger.debug("Signer built", {
+      data: { contactGroups: tronAddressBook?.contactGroups.length ?? 0 },
+    });
   }
 
   async stop(): Promise<void> {

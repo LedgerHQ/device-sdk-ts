@@ -66,7 +66,8 @@ jobs:
           # what the eth review screens display, so the two move together.
           ETH_SIDE: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.contacts-kit == 'true' }}
           SOLANA_SIDE: ${{ steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.solana-tools == 'true' }}
-          TRON_SIDE: ${{ steps.filter.outputs.signer-trx == 'true' }}
+          # Tron signs contacts too, so the kit moves the Tron group as well.
+          TRON_SIDE: ${{ steps.filter.outputs.signer-trx == 'true' || steps.filter.outputs.contacts-kit == 'true' }}
         run: |
           if [ "$ALL" = "true" ]; then
             scenarios="core contacts solana tron"
