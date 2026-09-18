@@ -1,0 +1,2773 @@
+{
+  "_comment": "Golden vectors for the EIP-712 V2 TLV payloads, produced by the Ethereum app's own ragger test client (client/src/ledger_app_clients/ethereum/eip712/json_to_tlv.py) over tests/functional/eip712_input_files/*-data.json.",
+  "derivationPath": "44'/60'/0'/0/0",
+  "vectors": [
+    {
+      "name": "00-simple_mail",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Simple Mail",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "contents": "Hello, Bob!",
+          "from": {
+            "name": "Cow",
+            "wallets": [
+              "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
+              "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
+            ]
+          },
+          "to": {
+            "name": "Bob",
+            "wallets": [
+              "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+              "0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57",
+              "0xB0B0b0b0b0b0B000000000000000000000000000"
+            ]
+          }
+        },
+        "primaryType": "Mail",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Mail": [
+            {
+              "name": "from",
+              "type": "Person"
+            },
+            {
+              "name": "to",
+              "type": "Person"
+            },
+            {
+              "name": "contents",
+              "type": "string"
+            }
+          ],
+          "Person": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "wallets",
+              "type": "address[]"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103014500010101044d61696c0214000101010466726f6d0201000506506572736f6e02120001010102746f0201000506506572736f6e02100001010108636f6e74656e7473020105012c0001010106506572736f6e020c00010101046e616d650201050211000101010777616c6c6574730201030400",
+      "values": "00010101044d61696c02148000002c8000003c8000000000000000000000000329000b53696d706c65204d61696c0001310001010014cccccccccccccccccccccccccccccccccccccccc04818d01330003436f77012c0014cd2a3d9f938e13cd947ec05abc7fe734df8dd8260014deadbeefdeadbeefdeadbeefdeadbeefdeadbeef01490003426f6201420014bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0014b0bdabea57b0bdabea57b0bdabea57b0bdabea570014b0b0b0b0b0b0b000000000000000000000000000000b48656c6c6f2c20426f6221"
+    },
+    {
+      "name": "01-addresses_array_mail",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Addresses Array Mail",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "contents": "Hello, Bob!",
+          "from": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
+          "to": [
+            "0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57",
+            "0xb1a22cc48f6784f629a994917cd6474923630c48"
+          ],
+          "id": 7
+        },
+        "primaryType": "Mail",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Mail": [
+            {
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "name": "to",
+              "type": "address[]"
+            },
+            {
+              "name": "contents",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103013700010101044d61696c020c000101010466726f6d020103020c0001010102746f020103040002100001010108636f6e74656e7473020105",
+      "values": "00010101044d61696c02148000002c8000003c80000000000000000000000003320014416464726573736573204172726179204d61696c0001310001010014cccccccccccccccccccccccccccccccccccccccc04510014cd2a3d9f938e13cd947ec05abc7fe734df8dd826012c0014b0bdabea57b0bdabea57b0bdabea57b0bdabea570014b1a22cc48f6784f629a994917cd6474923630c48000b48656c6c6f2c20426f6221"
+    },
+    {
+      "name": "02-recipients_array_mail",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Recipients Array Mail",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "contents": "Hello, Bob!",
+          "from": {
+            "name": "Cow",
+            "wallets": [
+              "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
+              "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
+            ]
+          },
+          "to": [
+            {
+              "name": "Alice",
+              "wallets": [
+                "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+                "0xB0B0b0b0b0b0B000000000000000000000000000"
+              ]
+            },
+            {
+              "name": "Bob",
+              "wallets": ["0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57"]
+            }
+          ]
+        },
+        "primaryType": "Mail",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Mail": [
+            {
+              "name": "from",
+              "type": "Person"
+            },
+            {
+              "name": "to",
+              "type": "Person[]"
+            },
+            {
+              "name": "contents",
+              "type": "string"
+            }
+          ],
+          "Person": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "wallets",
+              "type": "address[]"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103014700010101044d61696c0214000101010466726f6d0201000506506572736f6e02140001010102746f02010004000506506572736f6e02100001010108636f6e74656e7473020105012c0001010106506572736f6e020c00010101046e616d650201050211000101010777616c6c6574730201030400",
+      "values": "00010101044d61696c02148000002c8000003c80000000000000000000000003330015526563697069656e7473204172726179204d61696c0001310001010014cccccccccccccccccccccccccccccccccccccccc04819a01330003436f77012c0014cd2a3d9f938e13cd947ec05abc7fe734df8dd8260014deadbeefdeadbeefdeadbeefdeadbeefdeadbeef015601350005416c696365012c0014bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0014b0b0b0b0b0b0b000000000000000000000000000011d0003426f6201160014b0bdabea57b0bdabea57b0bdabea57b0bdabea57000b48656c6c6f2c20426f6221"
+    },
+    {
+      "name": "03-long_string",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Long String Mail",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "contents": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam fermentum interdum tortor, nec elementum enim dignissim ac. Proin at leo sit amet nisl ultrices mollis quis a nunc. Aliquam lobortis a libero non lobortis. Morbi elementum eleifend ante et malesuada. Proin eget fermentum risus. Vestibulum cursus dignissim mollis. In viverra, mi ac accumsan elementum, tellus metus dictum nisi, vel tincidunt odio erat in odio. Aenean nec lorem auctor, tempor ante eget, aliquet purus. Donec fringilla felis iaculis, venenatis ligula egestas, dignissim orci. Aliquam id rhoncus ante, cursus consectetur mauris. Nunc porttitor urna urna, et tristique eros maximus vestibulum. Curabitur pretium a est non porttitor. Cras mollis efficitur sem ut porta. Proin commodo volutpat iaculis. Maecenas ut nulla mi. Aenean ultrices sollicitudin enim, non luctus magna efficitur et. Sed varius sem odio, in sodales erat porta in. Nunc blandit finibus maximus. Mauris nunc tellus, interdum non laoreet sed, aliquet non.",
+          "from": {
+            "name": "Cow",
+            "wallets": [
+              "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
+              "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
+            ]
+          },
+          "to": [
+            {
+              "name": "Bob",
+              "wallets": [
+                "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+                "0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57",
+                "0xB0B0b0b0b0b0B000000000000000000000000000"
+              ]
+            }
+          ]
+        },
+        "primaryType": "Mail",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Mail": [
+            {
+              "name": "from",
+              "type": "Person"
+            },
+            {
+              "name": "to",
+              "type": "Person[]"
+            },
+            {
+              "name": "contents",
+              "type": "string"
+            }
+          ],
+          "Person": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "wallets",
+              "type": "address[]"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103014700010101044d61696c0214000101010466726f6d0201000506506572736f6e02140001010102746f02010004000506506572736f6e02100001010108636f6e74656e7473020105012c0001010106506572736f6e020c00010101046e616d650201050211000101010777616c6c6574730201030400",
+      "values": "00010101044d61696c02148000002c8000003c800000000000000000000000032e00104c6f6e6720537472696e67204d61696c0001310001010014cccccccccccccccccccccccccccccccccccccccc0482046f01330003436f77012c0014cd2a3d9f938e13cd947ec05abc7fe734df8dd8260014deadbeefdeadbeefdeadbeefdeadbeefdeadbeef014b01490003426f6201420014bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0014b0bdabea57b0bdabea57b0bdabea57b0bdabea570014b0b0b0b0b0b0b000000000000000000000000000008203e94c6f72656d20697073756d20646f6c6f722073697420616d65742c20636f6e73656374657475722061646970697363696e6720656c69742e20457469616d206665726d656e74756d20696e74657264756d20746f72746f722c206e656320656c656d656e74756d20656e696d206469676e697373696d2061632e2050726f696e206174206c656f2073697420616d6574206e69736c20756c747269636573206d6f6c6c697320717569732061206e756e632e20416c697175616d206c6f626f727469732061206c696265726f206e6f6e206c6f626f727469732e204d6f72626920656c656d656e74756d20656c656966656e6420616e7465206574206d616c6573756164612e2050726f696e2065676574206665726d656e74756d2072697375732e20566573746962756c756d20637572737573206469676e697373696d206d6f6c6c69732e20496e20766976657272612c206d6920616320616363756d73616e20656c656d656e74756d2c2074656c6c7573206d657475732064696374756d206e6973692c2076656c2074696e636964756e74206f64696f206572617420696e206f64696f2e2041656e65616e206e6563206c6f72656d20617563746f722c2074656d706f7220616e746520656765742c20616c69717565742070757275732e20446f6e6563206672696e67696c6c612066656c697320696163756c69732c2076656e656e61746973206c6967756c6120656765737461732c206469676e697373696d206f7263692e20416c697175616d2069642072686f6e63757320616e74652c2063757273757320636f6e7365637465747572206d61757269732e204e756e6320706f72747469746f722075726e612075726e612c206574207472697374697175652065726f73206d6178696d757320766573746962756c756d2e20437572616269747572207072657469756d206120657374206e6f6e20706f72747469746f722e2043726173206d6f6c6c6973206566666963697475722073656d20757420706f7274612e2050726f696e20636f6d6d6f646f20766f6c757470617420696163756c69732e204d616563656e6173207574206e756c6c61206d692e2041656e65616e20756c74726963657320736f6c6c696369747564696e20656e696d2c206e6f6e206c7563747573206d61676e61206566666963697475722065742e20536564207661726975732073656d206f64696f2c20696e20736f64616c6573206572617420706f72746120696e2e204e756e6320626c616e6469742066696e69627573206d6178696d75732e204d6175726973206e756e632074656c6c75732c20696e74657264756d206e6f6e206c616f72656574207365642c20616c6971756574206e6f6e2e"
+    },
+    {
+      "name": "04-long_bytes",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Long Bytes Mail",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "contents": "0x11223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900",
+          "from": {
+            "name": "Cow",
+            "wallets": [
+              "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
+              "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
+            ]
+          },
+          "to": [
+            {
+              "name": "Bob",
+              "wallets": [
+                "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+                "0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57",
+                "0xB0B0b0b0b0b0B000000000000000000000000000"
+              ]
+            }
+          ]
+        },
+        "primaryType": "Mail",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Mail": [
+            {
+              "name": "from",
+              "type": "Person"
+            },
+            {
+              "name": "to",
+              "type": "Person[]"
+            },
+            {
+              "name": "contents",
+              "type": "bytes"
+            }
+          ],
+          "Person": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "wallets",
+              "type": "address[]"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103014700010101044d61696c0214000101010466726f6d0201000506506572736f6e02140001010102746f02010004000506506572736f6e02100001010108636f6e74656e7473020107012c0001010106506572736f6e020c00010101046e616d650201050211000101010777616c6c6574730201030400",
+      "values": "00010101044d61696c02148000002c8000003c800000000000000000000000032d000f4c6f6e67204279746573204d61696c0001310001010014cccccccccccccccccccccccccccccccccccccccc0482021601330003436f77012c0014cd2a3d9f938e13cd947ec05abc7fe734df8dd8260014deadbeefdeadbeefdeadbeefdeadbeefdeadbeef014b01490003426f6201420014bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0014b0bdabea57b0bdabea57b0bdabea57b0bdabea570014b0b0b0b0b0b0b0000000000000000000000000000082019011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900112233445566778899001122334455667788990011223344556677889900"
+    },
+    {
+      "name": "05-signed_ints",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Signed Ints test",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "neg256": "-256",
+          "pos256": "256",
+          "neg248": "-248",
+          "pos248": "248",
+          "neg240": "-240",
+          "pos240": "240",
+          "neg232": "-232",
+          "pos232": "232",
+          "neg224": "-224",
+          "pos224": "224",
+          "neg216": "-216",
+          "pos216": "216",
+          "neg208": "-208",
+          "pos208": "208",
+          "neg200": "-200",
+          "pos200": "200",
+          "neg192": "-192",
+          "pos192": "192",
+          "neg184": "-184",
+          "pos184": "184",
+          "neg176": "-176",
+          "pos176": "176",
+          "neg168": "-168",
+          "pos168": "168",
+          "neg160": "-160",
+          "pos160": "160",
+          "neg152": "-152",
+          "pos152": "152",
+          "neg144": "-144",
+          "pos144": "144",
+          "neg136": "-136",
+          "pos136": "136",
+          "neg128": "-128",
+          "pos128": "128",
+          "neg120": "-120",
+          "pos120": "120",
+          "neg112": "-112",
+          "pos112": "112",
+          "neg104": "-104",
+          "pos104": "104",
+          "neg96": "-96",
+          "pos96": "96",
+          "neg88": "-88",
+          "pos88": "88",
+          "neg80": "-80",
+          "pos80": "80",
+          "neg72": "-72",
+          "pos72": "72",
+          "neg64": "-64",
+          "pos64": "64",
+          "neg56": "-56",
+          "pos56": "56",
+          "neg48": "-48",
+          "pos48": "48",
+          "neg40": "-40",
+          "pos40": "40",
+          "neg32": "-32",
+          "pos32": "32",
+          "neg24": "-24",
+          "pos24": "24",
+          "neg16": "-16",
+          "pos16": "16",
+          "neg8": "-8",
+          "pos8": "8"
+        },
+        "primaryType": "Test",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Test": [
+            {
+              "name": "neg256",
+              "type": "int256"
+            },
+            {
+              "name": "pos256",
+              "type": "int256"
+            },
+            {
+              "name": "neg248",
+              "type": "int248"
+            },
+            {
+              "name": "pos248",
+              "type": "int248"
+            },
+            {
+              "name": "neg240",
+              "type": "int240"
+            },
+            {
+              "name": "pos240",
+              "type": "int240"
+            },
+            {
+              "name": "neg232",
+              "type": "int232"
+            },
+            {
+              "name": "pos232",
+              "type": "int232"
+            },
+            {
+              "name": "neg224",
+              "type": "int224"
+            },
+            {
+              "name": "pos224",
+              "type": "int224"
+            },
+            {
+              "name": "neg216",
+              "type": "int216"
+            },
+            {
+              "name": "pos216",
+              "type": "int216"
+            },
+            {
+              "name": "neg208",
+              "type": "int208"
+            },
+            {
+              "name": "pos208",
+              "type": "int208"
+            },
+            {
+              "name": "neg200",
+              "type": "int200"
+            },
+            {
+              "name": "pos200",
+              "type": "int200"
+            },
+            {
+              "name": "neg192",
+              "type": "int192"
+            },
+            {
+              "name": "pos192",
+              "type": "int192"
+            },
+            {
+              "name": "neg184",
+              "type": "int184"
+            },
+            {
+              "name": "pos184",
+              "type": "int184"
+            },
+            {
+              "name": "neg176",
+              "type": "int176"
+            },
+            {
+              "name": "pos176",
+              "type": "int176"
+            },
+            {
+              "name": "neg168",
+              "type": "int168"
+            },
+            {
+              "name": "pos168",
+              "type": "int168"
+            },
+            {
+              "name": "neg160",
+              "type": "int160"
+            },
+            {
+              "name": "pos160",
+              "type": "int160"
+            },
+            {
+              "name": "neg152",
+              "type": "int152"
+            },
+            {
+              "name": "pos152",
+              "type": "int152"
+            },
+            {
+              "name": "neg144",
+              "type": "int144"
+            },
+            {
+              "name": "pos144",
+              "type": "int144"
+            },
+            {
+              "name": "neg136",
+              "type": "int136"
+            },
+            {
+              "name": "pos136",
+              "type": "int136"
+            },
+            {
+              "name": "neg128",
+              "type": "int128"
+            },
+            {
+              "name": "pos128",
+              "type": "int128"
+            },
+            {
+              "name": "neg120",
+              "type": "int120"
+            },
+            {
+              "name": "pos120",
+              "type": "int120"
+            },
+            {
+              "name": "neg112",
+              "type": "int112"
+            },
+            {
+              "name": "pos112",
+              "type": "int112"
+            },
+            {
+              "name": "neg104",
+              "type": "int104"
+            },
+            {
+              "name": "pos104",
+              "type": "int104"
+            },
+            {
+              "name": "neg96",
+              "type": "int96"
+            },
+            {
+              "name": "pos96",
+              "type": "int96"
+            },
+            {
+              "name": "neg88",
+              "type": "int88"
+            },
+            {
+              "name": "pos88",
+              "type": "int88"
+            },
+            {
+              "name": "neg80",
+              "type": "int80"
+            },
+            {
+              "name": "pos80",
+              "type": "int80"
+            },
+            {
+              "name": "neg72",
+              "type": "int72"
+            },
+            {
+              "name": "pos72",
+              "type": "int72"
+            },
+            {
+              "name": "neg64",
+              "type": "int64"
+            },
+            {
+              "name": "pos64",
+              "type": "int64"
+            },
+            {
+              "name": "neg56",
+              "type": "int56"
+            },
+            {
+              "name": "pos56",
+              "type": "int56"
+            },
+            {
+              "name": "neg48",
+              "type": "int48"
+            },
+            {
+              "name": "pos48",
+              "type": "int48"
+            },
+            {
+              "name": "neg40",
+              "type": "int40"
+            },
+            {
+              "name": "pos40",
+              "type": "int40"
+            },
+            {
+              "name": "neg32",
+              "type": "int32"
+            },
+            {
+              "name": "pos32",
+              "type": "int32"
+            },
+            {
+              "name": "neg24",
+              "type": "int24"
+            },
+            {
+              "name": "pos24",
+              "type": "int24"
+            },
+            {
+              "name": "neg16",
+              "type": "int16"
+            },
+            {
+              "name": "pos16",
+              "type": "int16"
+            },
+            {
+              "name": "neg8",
+              "type": "int8"
+            },
+            {
+              "name": "pos8",
+              "type": "int8"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103018204af000101010454657374021100010101066e656732353602010103012002110001010106706f73323536020101030120021100010101066e656732343802010103011f02110001010106706f7332343802010103011f021100010101066e656732343002010103011e02110001010106706f7332343002010103011e021100010101066e656732333202010103011d02110001010106706f7332333202010103011d021100010101066e656732323402010103011c02110001010106706f7332323402010103011c021100010101066e656732313602010103011b02110001010106706f7332313602010103011b021100010101066e656732303802010103011a02110001010106706f7332303802010103011a021100010101066e656732303002010103011902110001010106706f73323030020101030119021100010101066e656731393202010103011802110001010106706f73313932020101030118021100010101066e656731383402010103011702110001010106706f73313834020101030117021100010101066e656731373602010103011602110001010106706f73313736020101030116021100010101066e656731363802010103011502110001010106706f73313638020101030115021100010101066e656731363002010103011402110001010106706f73313630020101030114021100010101066e656731353202010103011302110001010106706f73313532020101030113021100010101066e656731343402010103011202110001010106706f73313434020101030112021100010101066e656731333602010103011102110001010106706f73313336020101030111021100010101066e656731323802010103011002110001010106706f73313238020101030110021100010101066e656731323002010103010f02110001010106706f7331323002010103010f021100010101066e656731313202010103010e02110001010106706f7331313202010103010e021100010101066e656731303402010103010d02110001010106706f7331303402010103010d021000010101056e6567393602010103010c02100001010105706f73393602010103010c021000010101056e6567383802010103010b02100001010105706f73383802010103010b021000010101056e6567383002010103010a02100001010105706f73383002010103010a021000010101056e6567373202010103010902100001010105706f733732020101030109021000010101056e6567363402010103010802100001010105706f733634020101030108021000010101056e6567353602010103010702100001010105706f733536020101030107021000010101056e6567343802010103010602100001010105706f733438020101030106021000010101056e6567343002010103010502100001010105706f733430020101030105021000010101056e6567333202010103010402100001010105706f733332020101030104021000010101056e6567323402010103010302100001010105706f733234020101030103021000010101056e6567313602010103010202100001010105706f733136020101030102020f00010101046e656738020101030101020f0001010104706f7338020101030101",
+      "values": "00010101045465737402148000002c8000003c800000000000000000000000032e00105369676e656420496e747320746573740001310001010014cccccccccccccccccccccccccccccccccccccccc048202b10020ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000020100001fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff080001f8001effffffffffffffffffffffffffffffffffffffffffffffffffffffffff100001f0001dffffffffffffffffffffffffffffffffffffffffffffffffffffffff180001e8001cffffffffffffffffffffffffffffffffffffffffffffffffffffff200001e0001bffffffffffffffffffffffffffffffffffffffffffffffffffff280001d8001affffffffffffffffffffffffffffffffffffffffffffffffff300001d00019ffffffffffffffffffffffffffffffffffffffffffffffff380001c80018ffffffffffffffffffffffffffffffffffffffffffffff400001c00017ffffffffffffffffffffffffffffffffffffffffffff480001b80016ffffffffffffffffffffffffffffffffffffffffff500001b00015ffffffffffffffffffffffffffffffffffffffff580001a80014ffffffffffffffffffffffffffffffffffffff600001a00013ffffffffffffffffffffffffffffffffffff680001980012ffffffffffffffffffffffffffffffffff700001900011ffffffffffffffffffffffffffffffff780001880010ffffffffffffffffffffffffffffff80000180000fffffffffffffffffffffffffffff88000178000effffffffffffffffffffffffff90000170000dffffffffffffffffffffffff98000168000cffffffffffffffffffffffa0000160000bffffffffffffffffffffa8000158000affffffffffffffffffb00001500009ffffffffffffffffb80001480008ffffffffffffffc00001400007ffffffffffffc80001380006ffffffffffd00001300005ffffffffd80001280004ffffffe00001200003ffffe80001180002fff00001100001f8000108"
+    },
+    {
+      "name": "06-boolean",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Boolean test",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "Bueno": true,
+          "NoBueno": false
+        },
+        "primaryType": "Test",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Test": [
+            {
+              "name": "Bueno",
+              "type": "bool"
+            },
+            {
+              "name": "NoBueno",
+              "type": "bool"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030129000101010454657374020d00010101054275656e6f020104020f00010101074e6f4275656e6f020104",
+      "values": "00010101045465737402148000002c8000003c800000000000000000000000032a000c426f6f6c65616e20746573740001310001010014cccccccccccccccccccccccccccccccccccccccc0406000101000100"
+    },
+    {
+      "name": "07-fixed_bytes",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Fixed bytes test",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "val1": "0xae",
+          "val4": "0x973bb640",
+          "val8": "0xac3608fa074a22a0",
+          "val16": "0x24e62129cc3ed3df6f8f3cd1e95b812a",
+          "val32": "0xb5d679d10bf948280080e802ce9fde218b0f8c442c47bf4ab05657d8da04d1da"
+        },
+        "primaryType": "Test",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Test": [
+            {
+              "name": "val1",
+              "type": "bytes1"
+            },
+            {
+              "name": "val4",
+              "type": "bytes4"
+            },
+            {
+              "name": "val8",
+              "type": "bytes8"
+            },
+            {
+              "name": "val16",
+              "type": "bytes16"
+            },
+            {
+              "name": "val32",
+              "type": "bytes32"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030160000101010454657374020f000101010476616c31020106030101020f000101010476616c34020106030104020f000101010476616c380201060301080210000101010576616c31360201060301100210000101010576616c3332020106030120",
+      "values": "00010101045465737402148000002c8000003c800000000000000000000000032e0010466978656420627974657320746573740001310001010014cccccccccccccccccccccccccccccccccccccccc04470001ae0004973bb6400008ac3608fa074a22a0001024e62129cc3ed3df6f8f3cd1e95b812a0020b5d679d10bf948280080e802ce9fde218b0f8c442c47bf4ab05657d8da04d1da"
+    },
+    {
+      "name": "08-opensea",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Wyvern Exchange Contract",
+          "verifyingContract": "0x7f268357a8c2552623316e2562d90e642bb538e5",
+          "version": "2.3"
+        },
+        "message": {
+          "basePrice": "2000000000000000000",
+          "calldata": "0x96809f90000000000000000000000000112f0732e59e7600768dfc35ba744b89f2356cd80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000495f947276749ce646f68ac8c248420045cb7b5ebdf2657ffc1fadfd73cf0a8cde95d50b62d3df8c0000000000000700000000320000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000000",
+          "exchange": "0x7f268357a8c2552623316e2562d90e642bb538e5",
+          "expirationTime": "1646089435",
+          "extra": "0",
+          "feeMethod": 1,
+          "feeRecipient": "0x5b3256965e7c3cf26e11fcaf296dfc8807c01073",
+          "howToCall": 1,
+          "listingTime": "1645484541",
+          "maker": "0x112f0732e59e7600768dfc35ba744b89f2356cd8",
+          "makerProtocolFee": "0",
+          "makerRelayerFee": "1250",
+          "nonce": 0,
+          "paymentToken": "0x0000000000000000000000000000000000000000",
+          "replacementPattern": "0x000000000000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "saleKind": 0,
+          "salt": "21014297276898013168171430966355369260039074692095359200549020767078729356431",
+          "side": 1,
+          "staticExtradata": "0x",
+          "staticTarget": "0x0000000000000000000000000000000000000000",
+          "taker": "0x0000000000000000000000000000000000000000",
+          "takerProtocolFee": "0",
+          "takerRelayerFee": "0",
+          "target": "0xbaf2127b49fc93cbca6269fade0f7f31df4c88a7"
+        },
+        "primaryType": "Order",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Order": [
+            {
+              "name": "exchange",
+              "type": "address"
+            },
+            {
+              "name": "maker",
+              "type": "address"
+            },
+            {
+              "name": "taker",
+              "type": "address"
+            },
+            {
+              "name": "makerRelayerFee",
+              "type": "uint256"
+            },
+            {
+              "name": "takerRelayerFee",
+              "type": "uint256"
+            },
+            {
+              "name": "makerProtocolFee",
+              "type": "uint256"
+            },
+            {
+              "name": "takerProtocolFee",
+              "type": "uint256"
+            },
+            {
+              "name": "feeRecipient",
+              "type": "address"
+            },
+            {
+              "name": "feeMethod",
+              "type": "uint8"
+            },
+            {
+              "name": "side",
+              "type": "uint8"
+            },
+            {
+              "name": "saleKind",
+              "type": "uint8"
+            },
+            {
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "name": "howToCall",
+              "type": "uint8"
+            },
+            {
+              "name": "calldata",
+              "type": "bytes"
+            },
+            {
+              "name": "replacementPattern",
+              "type": "bytes"
+            },
+            {
+              "name": "staticTarget",
+              "type": "address"
+            },
+            {
+              "name": "staticExtradata",
+              "type": "bytes"
+            },
+            {
+              "name": "paymentToken",
+              "type": "address"
+            },
+            {
+              "name": "basePrice",
+              "type": "uint256"
+            },
+            {
+              "name": "extra",
+              "type": "uint256"
+            },
+            {
+              "name": "listingTime",
+              "type": "uint256"
+            },
+            {
+              "name": "expirationTime",
+              "type": "uint256"
+            },
+            {
+              "name": "salt",
+              "type": "uint256"
+            },
+            {
+              "name": "nonce",
+              "type": "uint256"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030182021500010101054f726465720210000101010865786368616e6765020103020d00010101056d616b6572020103020d000101010574616b6572020103021a000101010f6d616b657252656c61796572466565020102030120021a000101010f74616b657252656c61796572466565020102030120021b00010101106d616b657250726f746f636f6c466565020102030120021b000101011074616b657250726f746f636f6c4665650201020301200214000101010c666565526563697069656e74020103021400010101096665654d6574686f64020102030101020f0001010104736964650201020301010213000101010873616c654b696e64020102030101020e000101010674617267657402010302140001010109686f77546f43616c6c0201020301010210000101010863616c6c64617461020107021a00010101127265706c6163656d656e745061747465726e0201070214000101010c7374617469635461726765740201030217000101010f7374617469634578747261646174610201070214000101010c7061796d656e74546f6b656e020103021400010101096261736550726963650201020301200210000101010565787472610201020301200216000101010b6c697374696e6754696d650201020301200219000101010e65787069726174696f6e54696d65020102030120020f000101010473616c74020102030120021000010101056e6f6e6365020102030120",
+      "values": "00010101054f7264657202148000002c8000003c8000000000000000000000000338001857797665726e2045786368616e676520436f6e74726163740003322e3300010100147f268357a8c2552623316e2562d90e642bb538e50482030300147f268357a8c2552623316e2562d90e642bb538e50014112f0732e59e7600768dfc35ba744b89f2356cd800140000000000000000000000000000000000000000000204e200010000010000010000145b3256965e7c3cf26e11fcaf296dfc8807c010730001010001010001000014baf2127b49fc93cbca6269fade0f7f31df4c88a70001010082010496809f90000000000000000000000000112f0732e59e7600768dfc35ba744b89f2356cd80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000495f947276749ce646f68ac8c248420045cb7b5ebdf2657ffc1fadfd73cf0a8cde95d50b62d3df8c0000000000000700000000320000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000000820104000000000000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000081bc16d674ec800000001000004621419fd0004621d54db00202e75abb71e521c4b779c983758c31b6078a3823ddf7414d8cf5658c81423948f000100"
+    },
+    {
+      "name": "09-rarible",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Exchange",
+          "verifyingContract": "0x9757f2d2b135150bbeb65308d4a91804107cd8d6",
+          "version": "2"
+        },
+        "message": {
+          "data": "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000001cf0df2a5a20cd61d68d4489eebbf85b8d39e18a00000000000000000000000000000000000000000000000000000000000000fa",
+          "dataType": "0x23d235ef",
+          "end": 0,
+          "makeAsset": {
+            "assetType": {
+              "assetClass": "0x973bb640",
+              "data": "0x000000000000000000000000495f947276749ce646f68ac8c248420045cb7b5ebdf2657ffc1fadfd73cf0a8cde95d50b62d3df8c000000000000070000000032"
+            },
+            "value": "1"
+          },
+          "maker": "0x112f0732e59e7600768dfc35ba744b89f2356cd8",
+          "salt": "0xdbf0f98bc1746711579dcce549a4cc4e866fb71bf2e185bfefbb7d32f325972e",
+          "start": 0,
+          "takeAsset": {
+            "assetType": {
+              "assetClass": "0xaaaebeba",
+              "data": "0x"
+            },
+            "value": "2000000000000000000"
+          },
+          "taker": "0x0000000000000000000000000000000000000000"
+        },
+        "primaryType": "Order",
+        "types": {
+          "Asset": [
+            {
+              "name": "assetType",
+              "type": "AssetType"
+            },
+            {
+              "name": "value",
+              "type": "uint256"
+            }
+          ],
+          "AssetType": [
+            {
+              "name": "assetClass",
+              "type": "bytes4"
+            },
+            {
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Order": [
+            {
+              "name": "maker",
+              "type": "address"
+            },
+            {
+              "name": "makeAsset",
+              "type": "Asset"
+            },
+            {
+              "name": "taker",
+              "type": "address"
+            },
+            {
+              "name": "takeAsset",
+              "type": "Asset"
+            },
+            {
+              "name": "salt",
+              "type": "uint256"
+            },
+            {
+              "name": "start",
+              "type": "uint256"
+            },
+            {
+              "name": "end",
+              "type": "uint256"
+            },
+            {
+              "name": "dataType",
+              "type": "bytes4"
+            },
+            {
+              "name": "data",
+              "type": "bytes"
+            }
+          ]
+        }
+      },
+      "schema": "000101013a00010101054173736574021c000101010961737365745479706502010005094173736574547970650210000101010576616c7565020102030120013300010101094173736574547970650215000101010a6173736574436c617373020106030104020c000101010464617461020107015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030181b200010101054f72646572020d00010101056d616b6572020103021800010101096d616b65417373657402010005054173736574020d000101010574616b65720201030218000101010974616b65417373657402010005054173736574020f000101010473616c74020102030120021000010101057374617274020102030120020e0001010103656e64020102030120021300010101086461746154797065020106030104020c000101010464617461020107",
+      "values": "00010101054f7264657202148000002c8000003c8000000000000000000000000326000845786368616e676500013200010100149757f2d2b135150bbeb65308d4a91804107cd8d6048201c30014112f0732e59e7600768dfc35ba744b89f2356cd8014d01480004973bb6400040000000000000000000000000495f947276749ce646f68ac8c248420045cb7b5ebdf2657ffc1fadfd73cf0a8cde95d50b62d3df8c00000000000007000000003200010100140000000000000000000000000000000000000000011401080004aaaebeba000000081bc16d674ec800000020dbf0f98bc1746711579dcce549a4cc4e866fb71bf2e185bfefbb7d32f325972e000100000100000423d235ef008201000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000001cf0df2a5a20cd61d68d4489eebbf85b8d39e18a00000000000000000000000000000000000000000000000000000000000000fa"
+    },
+    {
+      "name": "10-multidimensional_arrays",
+      "data": {
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Test": [
+            {
+              "type": "uint8[][][][]",
+              "name": "depthy"
+            }
+          ]
+        },
+        "primaryType": "Test",
+        "domain": {
+          "chainId": 1,
+          "name": "Depth Test",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "depthy": [[[["1", "2"], ["3"]], [["4", "5", "6"]]]]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030124000101010454657374021900010101066465707468790201020301010400040004000400",
+      "values": "00010101045465737402148000002c8000003c8000000000000000000000000328000a446570746820546573740001310001010014cccccccccccccccccccccccccccccccccccccccc0420011e011c010d01060001010001020103000103010b0109000104000105000106"
+    },
+    {
+      "name": "11-complex_structs",
+      "data": {
+        "domain": {
+          "chainId": 1,
+          "name": "Complex Structs Mail",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "contents": "Hello, Bob!",
+          "from": {
+            "name": "Cow",
+            "wallets": [
+              "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
+              "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
+            ]
+          },
+          "to": {
+            "name": "test list",
+            "members": [
+              {
+                "name": "Bob",
+                "wallets": [
+                  "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB",
+                  "0xB0B0b0b0b0b0B000000000000000000000000000"
+                ]
+              },
+              {
+                "name": "Alice",
+                "wallets": ["0xB0BdaBea57B0BDABeA57b0bdABEA57b0BDabEa57"]
+              }
+            ]
+          },
+          "attach": {
+            "list": [
+              {
+                "name": "first",
+                "size": "100"
+              },
+              {
+                "name": "second",
+                "size": "3400"
+              }
+            ]
+          }
+        },
+        "primaryType": "Mail",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Attachment": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "size",
+              "type": "uint16"
+            }
+          ],
+          "Attachments": [
+            {
+              "name": "list",
+              "type": "Attachment[]"
+            }
+          ],
+          "MailingList": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "members",
+              "type": "Person[]"
+            }
+          ],
+          "Mail": [
+            {
+              "name": "from",
+              "type": "Person"
+            },
+            {
+              "name": "to",
+              "type": "MailingList"
+            },
+            {
+              "name": "contents",
+              "type": "string"
+            },
+            {
+              "name": "attach",
+              "type": "Attachments"
+            }
+          ],
+          "Person": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "wallets",
+              "type": "address[]"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103012e000101010a4174746163686d656e74020c00010101046e616d65020105020f000101010473697a65020102030102012c000101010b4174746163686d656e7473021a00010101046c6973740201000400050a4174746163686d656e740139000101010b4d61696c696e674c697374020c00010101046e616d65020105021900010101076d656d6265727302010004000506506572736f6e016700010101044d61696c0214000101010466726f6d0201000506506572736f6e02170001010102746f020100050b4d61696c696e674c69737402100001010108636f6e74656e7473020105021b0001010106617474616368020100050b4174746163686d656e7473012c0001010106506572736f6e020c00010101046e616d650201050211000101010777616c6c6574730201030400",
+      "values": "00010101044d61696c02148000002c8000003c80000000000000000000000003320014436f6d706c65782053747275637473204d61696c0001310001010014cccccccccccccccccccccccccccccccccccccccc0481c501330003436f77012c0014cd2a3d9f938e13cd947ec05abc7fe734df8dd8260014deadbeefdeadbeefdeadbeefdeadbeefdeadbeef0163000974657374206c697374015601330003426f62012c0014bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0014b0b0b0b0b0b0b000000000000000000000000000011f0005416c69636501160014b0bdabea57b0bdabea57b0bdabea57b0bdabea57000b48656c6c6f2c20426f6221011c011a010a00056669727374000164010c00067365636f6e6400020d48"
+    },
+    {
+      "name": "12-sign_in",
+      "data": {
+        "domain": {
+          "name": "Who are You?",
+          "version": "1"
+        },
+        "message": {
+          "banner": "Please sign this message with your wallet",
+          "curDate": 1660659773,
+          "id": 38
+        },
+        "primaryType": "Auth",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            }
+          ],
+          "Auth": [
+            {
+              "name": "banner",
+              "type": "string"
+            },
+            {
+              "name": "curDate",
+              "type": "uint32"
+            },
+            {
+              "name": "id",
+              "type": "uint8"
+            }
+          ]
+        }
+      },
+      "schema": "0001010130000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e020105013c000101010441757468020e000101010662616e6e65720201050212000101010763757244617465020102030104020d00010101026964020102030101",
+      "values": "00010101044175746802148000002c8000003c8000000000000000000000000311000c57686f2061726520596f753f00013104340029506c65617365207369676e2074686973206d657373616765207769746820796f75722077616c6c6574000462fba83d000126"
+    },
+    {
+      "name": "13-empty_arrays",
+      "data": {
+        "domain": {
+          "chainId": 5,
+          "name": "Empty Arrays",
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+          "version": "1"
+        },
+        "message": {
+          "test1": [],
+          "test2": [["one", "two"], [], ["three", "four"]],
+          "test3": [
+            {
+              "sub": [
+                {
+                  "sub": [],
+                  "value": 3
+                }
+              ],
+              "value": 1
+            }
+          ],
+          "test4": [
+            {
+              "sub": [],
+              "value": 2
+            }
+          ],
+          "test5": []
+        },
+        "primaryType": "Struct",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Struct": [
+            {
+              "name": "test1",
+              "type": "uint8[]"
+            },
+            {
+              "name": "test2",
+              "type": "string[][]"
+            },
+            {
+              "name": "test3",
+              "type": "Top[]"
+            },
+            {
+              "name": "test4",
+              "type": "Top[]"
+            },
+            {
+              "name": "test5",
+              "type": "Top[]"
+            }
+          ],
+          "Bottom": [
+            {
+              "name": "value",
+              "type": "uint8"
+            }
+          ],
+          "Mid": [
+            {
+              "name": "sub",
+              "type": "Bottom[]"
+            },
+            {
+              "name": "value",
+              "type": "uint8"
+            }
+          ],
+          "Top": [
+            {
+              "name": "sub",
+              "type": "Mid[]"
+            },
+            {
+              "name": "value",
+              "type": "uint8"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030174000101010653747275637402120001010105746573743102010203010104000211000101010574657374320201050400040002140001010105746573743302010004000503546f7002140001010105746573743402010004000503546f7002140001010105746573743502010004000503546f70011d0001010106426f74746f6d0210000101010576616c7565020102030101013100010101034d69640215000101010373756202010004000506426f74746f6d0210000101010576616c7565020102030101012e0001010103546f7002120001010103737562020100040005034d69640210000101010576616c7565020102030101",
+      "values": "000101010653747275637402148000002c8000003c800000000000000000000000032a000c456d707479204172726179730001310001050014cccccccccccccccccccccccccccccccccccccccc043c0100011d010a00036f6e65000374776f0100010d000574687265650004666f7572010e010c0107010501000001030001010107010501000001020100"
+    },
+    {
+      "name": "14-rabby_bug",
+      "data": {
+        "types": {
+          "BatchSignedERC721Orders": [
+            {
+              "type": "address",
+              "name": "maker"
+            },
+            {
+              "type": "uint256",
+              "name": "listingTime"
+            },
+            {
+              "type": "uint256",
+              "name": "expiryTime"
+            },
+            {
+              "type": "uint256",
+              "name": "startNonce"
+            },
+            {
+              "type": "address",
+              "name": "erc20Token"
+            },
+            {
+              "type": "address",
+              "name": "platformFeeRecipient"
+            },
+            {
+              "type": "BasicCollection[]",
+              "name": "basicCollections"
+            },
+            {
+              "type": "Collection[]",
+              "name": "collections"
+            },
+            {
+              "type": "uint256",
+              "name": "hashNonce"
+            }
+          ],
+          "BasicCollection": [
+            {
+              "type": "address",
+              "name": "nftAddress"
+            },
+            {
+              "type": "bytes32",
+              "name": "fee"
+            },
+            {
+              "type": "bytes32[]",
+              "name": "items"
+            }
+          ],
+          "Collection": [
+            {
+              "type": "address",
+              "name": "nftAddress"
+            },
+            {
+              "type": "bytes32",
+              "name": "fee"
+            },
+            {
+              "type": "OrderItem[]",
+              "name": "items"
+            }
+          ],
+          "OrderItem": [
+            {
+              "type": "uint256",
+              "name": "erc20TokenAmount"
+            },
+            {
+              "type": "uint256",
+              "name": "nftId"
+            }
+          ],
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ]
+        },
+        "domain": {
+          "name": "ElementEx",
+          "version": "1.0.0",
+          "chainId": "5000",
+          "verifyingContract": "0x2fa13cf695ec51ded5b8e45ad0bef838ab17e2af"
+        },
+        "primaryType": "BatchSignedERC721Orders",
+        "message": {
+          "maker": "0x6d3b90747dbf5883bf88ff7eb5fcc86f408b5409",
+          "listingTime": "1706688449",
+          "expiryTime": "1709280466",
+          "startNonce": "7",
+          "erc20Token": "0x09bc4e0d864854c6afb6eb9a9cdf58ac190d0df9",
+          "platformFeeRecipient": "0x07538262ae993ca117a0e481f908209137a4626e",
+          "basicCollections": [
+            {
+              "nftAddress": "0xaaaea1fb9f3de3f70e89f37b69ab11b47eb9ce6f",
+              "fee": "0x000000000000000000c80000000000000000000000000000000000000000000",
+              "items": [
+                "0x000000000000000020c8558000000000000000000000000000000000000005d"
+              ]
+            }
+          ],
+          "collections": [],
+          "hashNonce": "0"
+        }
+      },
+      "schema": "00010101820109000101011742617463685369676e65644552433732314f7264657273020d00010101056d616b65720201030216000101010b6c697374696e6754696d650201020301200215000101010a65787069727954696d650201020301200215000101010a73746172744e6f6e63650201020301200212000101010a6572633230546f6b656e020103021c0001010114706c6174666f726d466565526563697069656e74020103022b00010101106261736963436f6c6c656374696f6e730201000400050f4261736963436f6c6c656374696f6e0221000101010b636f6c6c656374696f6e730201000400050a436f6c6c656374696f6e02140001010109686173684e6f6e6365020102030120014c000101010f4261736963436f6c6c656374696f6e0212000101010a6e667441646472657373020103020e0001010103666565020106030120021200010101056974656d730201060301200400014f000101010a436f6c6c656374696f6e0212000101010a6e667441646472657373020103020e0001010103666565020106030120021a00010101056974656d73020100040005094f726465724974656d013d00010101094f726465724974656d021b00010101106572633230546f6b656e416d6f756e74020102030120021000010101056e66744964020102030120015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103",
+      "values": "000101011742617463685369676e65644552433732314f726465727302148000002c8000003c800000000000000000000000032c0009456c656d656e7445780005312e302e300002138800142fa13cf695ec51ded5b8e45ad0bef838ab17e2af0481b600146d3b90747dbf5883bf88ff7eb5fcc86f408b5409000465b9ffc1000465e18cd2000107001409bc4e0d864854c6afb6eb9a9cdf58ac190d0df9001407538262ae993ca117a0e481f908209137a4626e015e015c0014aaaea1fb9f3de3f70e89f37b69ab11b47eb9ce6f00200000000000000000000c80000000000000000000000000000000000000000000012200200000000000000000020c8558000000000000000000000000000000000000005d0100000100"
+    },
+    {
+      "name": "15-opensea_bulkorder",
+      "data": {
+        "message": {
+          "tree": [
+            {
+              "offerer": "0x75a4e55e17aae2e68fcdfd2e0bf40899c7795195",
+              "zone": "0x000056f7000000ece9003ca63978907a00ffd100",
+              "offer": [
+                {
+                  "itemType": 2,
+                  "token": "0xfba6b20e81527a4ca21c614e800d914eac88ff1c",
+                  "identifierOrCriteria": "1103",
+                  "startAmount": "1",
+                  "endAmount": "1"
+                }
+              ],
+              "consideration": [
+                {
+                  "itemType": 0,
+                  "token": "0x0000000000000000000000000000000000000000",
+                  "identifierOrCriteria": "0",
+                  "startAmount": "92000000000000",
+                  "endAmount": "92000000000000",
+                  "recipient": "0x75a4e55e17aae2e68fcdfd2e0bf40899c7795195"
+                },
+                {
+                  "itemType": 0,
+                  "token": "0x0000000000000000000000000000000000000000",
+                  "identifierOrCriteria": "0",
+                  "startAmount": "1000000000000",
+                  "endAmount": "1000000000000",
+                  "recipient": "0x0000a26b00c1f0df003000390027140000faa719"
+                },
+                {
+                  "itemType": 0,
+                  "token": "0x0000000000000000000000000000000000000000",
+                  "identifierOrCriteria": "0",
+                  "startAmount": "7000000000000",
+                  "endAmount": "7000000000000",
+                  "recipient": "0xbf1df6baaf9817134d7abd44e8914d1754e61e67"
+                }
+              ],
+              "orderType": 2,
+              "startTime": "1772546508",
+              "endTime": "1780322508",
+              "zoneHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "salt": "27855337018906766782546881864045825683096516384821792734247185506128700112109",
+              "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
+              "counter": "0"
+            },
+            {
+              "offerer": "0x75a4e55e17aae2e68fcdfd2e0bf40899c7795195",
+              "zone": "0x000056f7000000ece9003ca63978907a00ffd100",
+              "offer": [
+                {
+                  "itemType": 2,
+                  "token": "0xfba6b20e81527a4ca21c614e800d914eac88ff1c",
+                  "identifierOrCriteria": "693",
+                  "startAmount": "1",
+                  "endAmount": "1"
+                }
+              ],
+              "consideration": [
+                {
+                  "itemType": 0,
+                  "token": "0x0000000000000000000000000000000000000000",
+                  "identifierOrCriteria": "0",
+                  "startAmount": "92000000000000",
+                  "endAmount": "92000000000000",
+                  "recipient": "0x75a4e55e17aae2e68fcdfd2e0bf40899c7795195"
+                },
+                {
+                  "itemType": 0,
+                  "token": "0x0000000000000000000000000000000000000000",
+                  "identifierOrCriteria": "0",
+                  "startAmount": "1000000000000",
+                  "endAmount": "1000000000000",
+                  "recipient": "0x0000a26b00c1f0df003000390027140000faa719"
+                },
+                {
+                  "itemType": 0,
+                  "token": "0x0000000000000000000000000000000000000000",
+                  "identifierOrCriteria": "0",
+                  "startAmount": "7000000000000",
+                  "endAmount": "7000000000000",
+                  "recipient": "0xbf1df6baaf9817134d7abd44e8914d1754e61e67"
+                }
+              ],
+              "orderType": 2,
+              "startTime": "1772546508",
+              "endTime": "1780322508",
+              "zoneHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+              "salt": "27855337018906766782546881864045825683096516384821792734245852948813453455747",
+              "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
+              "counter": "0"
+            }
+          ]
+        },
+        "domain": {
+          "name": "Seaport",
+          "version": "1.6",
+          "chainId": 1,
+          "verifyingContract": "0x0000000000000068f116a894984e2db1123eb395"
+        },
+        "primaryType": "BulkOrder",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "BulkOrder": [
+            {
+              "name": "tree",
+              "type": "OrderComponents[2]"
+            }
+          ],
+          "OrderComponents": [
+            {
+              "name": "offerer",
+              "type": "address"
+            },
+            {
+              "name": "zone",
+              "type": "address"
+            },
+            {
+              "name": "offer",
+              "type": "OfferItem[]"
+            },
+            {
+              "name": "consideration",
+              "type": "ConsiderationItem[]"
+            },
+            {
+              "name": "orderType",
+              "type": "uint8"
+            },
+            {
+              "name": "startTime",
+              "type": "uint256"
+            },
+            {
+              "name": "endTime",
+              "type": "uint256"
+            },
+            {
+              "name": "zoneHash",
+              "type": "bytes32"
+            },
+            {
+              "name": "salt",
+              "type": "uint256"
+            },
+            {
+              "name": "conduitKey",
+              "type": "bytes32"
+            },
+            {
+              "name": "counter",
+              "type": "uint256"
+            }
+          ],
+          "OfferItem": [
+            {
+              "name": "itemType",
+              "type": "uint8"
+            },
+            {
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "name": "identifierOrCriteria",
+              "type": "uint256"
+            },
+            {
+              "name": "startAmount",
+              "type": "uint256"
+            },
+            {
+              "name": "endAmount",
+              "type": "uint256"
+            }
+          ],
+          "ConsiderationItem": [
+            {
+              "name": "itemType",
+              "type": "uint8"
+            },
+            {
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "name": "identifierOrCriteria",
+              "type": "uint256"
+            },
+            {
+              "name": "startAmount",
+              "type": "uint256"
+            },
+            {
+              "name": "endAmount",
+              "type": "uint256"
+            },
+            {
+              "name": "recipient",
+              "type": "address"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030130000101010942756c6b4f726465720220000101010474726565020100040102050f4f72646572436f6d706f6e656e74730182010c000101010f4f72646572436f6d706f6e656e7473020f00010101076f666665726572020103020c00010101047a6f6e65020103021a00010101056f66666572020100040005094f666665724974656d022a000101010d636f6e73696465726174696f6e02010004000511436f6e73696465726174696f6e4974656d021400010101096f726465725479706502010203010102140001010109737461727454696d6502010203012002120001010107656e6454696d65020102030120021300010101087a6f6e6548617368020106030120020f000101010473616c740201020301200215000101010a636f6e647569744b657902010603012002120001010107636f756e74657202010203012001818100010101094f666665724974656d021300010101086974656d54797065020102030101020d0001010105746f6b656e020103021f00010101146964656e7469666965724f7243726974657269610201020301200216000101010b7374617274416d6f756e7402010203012002140001010109656e64416d6f756e7402010203012001819c0001010111436f6e73696465726174696f6e4974656d021300010101086974656d54797065020102030101020d0001010105746f6b656e020103021f00010101146964656e7469666965724f7243726974657269610201020301200216000101010b7374617274416d6f756e7402010203012002140001010109656e64416d6f756e7402010203012002110001010109726563697069656e74020103",
+      "values": "000101010942756c6b4f7264657202148000002c8000003c80000000000000000000000003270007536561706f72740003312e3600010100140000000000000068f116a894984e2db1123eb3950482033c0182033801820198001475a4e55e17aae2e68fcdfd2e0bf40899c77951950014000056f7000000ece9003ca63978907a00ffd100012501230001020014fba6b20e81527a4ca21c614e800d914eac88ff1c0002044f0001010001010181ca014200010000140000000000000000000000000000000000000000000100000653ac6b51c000000653ac6b51c000001475a4e55e17aae2e68fcdfd2e0bf40899c77951950140000100001400000000000000000000000000000000000000000001000005e8d4a510000005e8d4a5100000140000a26b00c1f0df003000390027140000faa7190142000100001400000000000000000000000000000000000000000001000006065dd08370000006065dd08370000014bf1df6baaf9817134d7abd44e8914d1754e61e67000102000469a6e9cc00046a1d90cc0020000000000000000000000000000000000000000000000000000000000000000000203d958fe20000000000000000000000000000000000000000b8808508490ffced00200000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f000000010001820198001475a4e55e17aae2e68fcdfd2e0bf40899c77951950014000056f7000000ece9003ca63978907a00ffd100012501230001020014fba6b20e81527a4ca21c614e800d914eac88ff1c000202b50001010001010181ca014200010000140000000000000000000000000000000000000000000100000653ac6b51c000000653ac6b51c000001475a4e55e17aae2e68fcdfd2e0bf40899c77951950140000100001400000000000000000000000000000000000000000001000005e8d4a510000005e8d4a5100000140000a26b00c1f0df003000390027140000faa7190142000100001400000000000000000000000000000000000000000001000006065dd08370000006065dd08370000014bf1df6baaf9817134d7abd44e8914d1754e61e67000102000469a6e9cc00046a1d90cc0020000000000000000000000000000000000000000000000000000000000000000000203d958fe20000000000000000000000000000000000000000a6025336deeff18300200000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000000100"
+    },
+    {
+      "name": "24-seaport_bulkorder_nested_2x2",
+      "data": {
+        "domain": {
+          "name": "Seaport",
+          "version": "1.6",
+          "chainId": 1,
+          "verifyingContract": "0x0000000000000068F116a894984e2DB1123eB395"
+        },
+        "message": {
+          "tree": [
+            [
+              {
+                "offerer": "0x076c74c7b1f6775C33f3762263CC7B37BD982D88",
+                "zone": "0x0000000000000000000000000000000000000000",
+                "offer": [
+                  {
+                    "itemType": "2",
+                    "token": "0x81C9ce55E8214Fd0f5181FD3D38f52fD8c33Ec38",
+                    "identifierOrCriteria": "2254",
+                    "startAmount": "1",
+                    "endAmount": "1"
+                  }
+                ],
+                "consideration": [
+                  {
+                    "itemType": "0",
+                    "token": "0x0000000000000000000000000000000000000000",
+                    "identifierOrCriteria": "0",
+                    "startAmount": "975000000000000000",
+                    "endAmount": "975000000000000000",
+                    "recipient": "0x076c74c7b1f6775C33f3762263CC7B37BD982D88"
+                  },
+                  {
+                    "itemType": "0",
+                    "token": "0x0000000000000000000000000000000000000000",
+                    "identifierOrCriteria": "0",
+                    "startAmount": "25000000000000000",
+                    "endAmount": "25000000000000000",
+                    "recipient": "0x0000a26b00c1F0DF003000390027140000fAa719"
+                  }
+                ],
+                "orderType": "0",
+                "startTime": "0",
+                "endTime": "1796941844",
+                "zoneHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "salt": "101",
+                "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
+                "counter": "0"
+              },
+              {
+                "offerer": "0x076c74c7b1f6775C33f3762263CC7B37BD982D88",
+                "zone": "0x0000000000000000000000000000000000000000",
+                "offer": [
+                  {
+                    "itemType": "2",
+                    "token": "0x81C9ce55E8214Fd0f5181FD3D38f52fD8c33Ec38",
+                    "identifierOrCriteria": "3232",
+                    "startAmount": "1",
+                    "endAmount": "1"
+                  }
+                ],
+                "consideration": [
+                  {
+                    "itemType": "0",
+                    "token": "0x0000000000000000000000000000000000000000",
+                    "identifierOrCriteria": "0",
+                    "startAmount": "975000000000000000",
+                    "endAmount": "975000000000000000",
+                    "recipient": "0x076c74c7b1f6775C33f3762263CC7B37BD982D88"
+                  },
+                  {
+                    "itemType": "0",
+                    "token": "0x0000000000000000000000000000000000000000",
+                    "identifierOrCriteria": "0",
+                    "startAmount": "25000000000000000",
+                    "endAmount": "25000000000000000",
+                    "recipient": "0x0000a26b00c1F0DF003000390027140000fAa719"
+                  }
+                ],
+                "orderType": "0",
+                "startTime": "0",
+                "endTime": "1796941844",
+                "zoneHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "salt": "102",
+                "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
+                "counter": "0"
+              }
+            ],
+            [
+              {
+                "offerer": "0x076c74c7b1f6775C33f3762263CC7B37BD982D88",
+                "zone": "0x0000000000000000000000000000000000000000",
+                "offer": [
+                  {
+                    "itemType": "2",
+                    "token": "0x81C9ce55E8214Fd0f5181FD3D38f52fD8c33Ec38",
+                    "identifierOrCriteria": "2254",
+                    "startAmount": "1",
+                    "endAmount": "1"
+                  }
+                ],
+                "consideration": [
+                  {
+                    "itemType": "0",
+                    "token": "0x0000000000000000000000000000000000000000",
+                    "identifierOrCriteria": "0",
+                    "startAmount": "975000000000000000",
+                    "endAmount": "975000000000000000",
+                    "recipient": "0x076c74c7b1f6775C33f3762263CC7B37BD982D88"
+                  },
+                  {
+                    "itemType": "0",
+                    "token": "0x0000000000000000000000000000000000000000",
+                    "identifierOrCriteria": "0",
+                    "startAmount": "25000000000000000",
+                    "endAmount": "25000000000000000",
+                    "recipient": "0x0000a26b00c1F0DF003000390027140000fAa719"
+                  }
+                ],
+                "orderType": "0",
+                "startTime": "0",
+                "endTime": "1796941844",
+                "zoneHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "salt": "103",
+                "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
+                "counter": "0"
+              },
+              {
+                "offerer": "0x076c74c7b1f6775C33f3762263CC7B37BD982D88",
+                "zone": "0x0000000000000000000000000000000000000000",
+                "offer": [
+                  {
+                    "itemType": "2",
+                    "token": "0x81C9ce55E8214Fd0f5181FD3D38f52fD8c33Ec38",
+                    "identifierOrCriteria": "3232",
+                    "startAmount": "1",
+                    "endAmount": "1"
+                  }
+                ],
+                "consideration": [
+                  {
+                    "itemType": "0",
+                    "token": "0x0000000000000000000000000000000000000000",
+                    "identifierOrCriteria": "0",
+                    "startAmount": "975000000000000000",
+                    "endAmount": "975000000000000000",
+                    "recipient": "0x076c74c7b1f6775C33f3762263CC7B37BD982D88"
+                  },
+                  {
+                    "itemType": "0",
+                    "token": "0x0000000000000000000000000000000000000000",
+                    "identifierOrCriteria": "0",
+                    "startAmount": "25000000000000000",
+                    "endAmount": "25000000000000000",
+                    "recipient": "0x0000a26b00c1F0DF003000390027140000fAa719"
+                  }
+                ],
+                "orderType": "0",
+                "startTime": "0",
+                "endTime": "1796941844",
+                "zoneHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "salt": "104",
+                "conduitKey": "0x0000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000",
+                "counter": "0"
+              }
+            ]
+          ]
+        },
+        "primaryType": "BulkOrder",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "BulkOrder": [
+            {
+              "name": "tree",
+              "type": "OrderComponents[2][2]"
+            }
+          ],
+          "OrderComponents": [
+            {
+              "name": "offerer",
+              "type": "address"
+            },
+            {
+              "name": "zone",
+              "type": "address"
+            },
+            {
+              "name": "offer",
+              "type": "OfferItem[]"
+            },
+            {
+              "name": "consideration",
+              "type": "ConsiderationItem[]"
+            },
+            {
+              "name": "orderType",
+              "type": "uint8"
+            },
+            {
+              "name": "startTime",
+              "type": "uint256"
+            },
+            {
+              "name": "endTime",
+              "type": "uint256"
+            },
+            {
+              "name": "zoneHash",
+              "type": "bytes32"
+            },
+            {
+              "name": "salt",
+              "type": "uint256"
+            },
+            {
+              "name": "conduitKey",
+              "type": "bytes32"
+            },
+            {
+              "name": "counter",
+              "type": "uint256"
+            }
+          ],
+          "OfferItem": [
+            {
+              "name": "itemType",
+              "type": "uint8"
+            },
+            {
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "name": "identifierOrCriteria",
+              "type": "uint256"
+            },
+            {
+              "name": "startAmount",
+              "type": "uint256"
+            },
+            {
+              "name": "endAmount",
+              "type": "uint256"
+            }
+          ],
+          "ConsiderationItem": [
+            {
+              "name": "itemType",
+              "type": "uint8"
+            },
+            {
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "name": "identifierOrCriteria",
+              "type": "uint256"
+            },
+            {
+              "name": "startAmount",
+              "type": "uint256"
+            },
+            {
+              "name": "endAmount",
+              "type": "uint256"
+            },
+            {
+              "name": "recipient",
+              "type": "address"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030133000101010942756c6b4f726465720223000101010474726565020100040102040102050f4f72646572436f6d706f6e656e74730182010c000101010f4f72646572436f6d706f6e656e7473020f00010101076f666665726572020103020c00010101047a6f6e65020103021a00010101056f66666572020100040005094f666665724974656d022a000101010d636f6e73696465726174696f6e02010004000511436f6e73696465726174696f6e4974656d021400010101096f726465725479706502010203010102140001010109737461727454696d6502010203012002120001010107656e6454696d65020102030120021300010101087a6f6e6548617368020106030120020f000101010473616c740201020301200215000101010a636f6e647569744b657902010603012002120001010107636f756e74657202010203012001818100010101094f666665724974656d021300010101086974656d54797065020102030101020d0001010105746f6b656e020103021f00010101146964656e7469666965724f7243726974657269610201020301200216000101010b7374617274416d6f756e7402010203012002140001010109656e64416d6f756e7402010203012001819c0001010111436f6e73696465726174696f6e4974656d021300010101086974656d54797065020102030101020d0001010105746f6b656e020103021f00010101146964656e7469666965724f7243726974657269610201020301200216000101010b7374617274416d6f756e7402010203012002140001010109656e64416d6f756e7402010203012002110001010109726563697069656e74020103",
+      "values": "000101010942756c6b4f7264657202148000002c8000003c80000000000000000000000003270007536561706f72740003312e3600010100140000000000000068f116a894984e2db1123eb39504820504018205000182027c0182013a0014076c74c7b1f6775c33f3762263cc7b37bd982d880014000000000000000000000000000000000000000001250123000102001481c9ce55e8214fd0f5181fd3d38f52fd8c33ec38000208ce00010100010101818e01460001000014000000000000000000000000000000000000000000010000080d87e5559001800000080d87e555900180000014076c74c7b1f6775c33f3762263cc7b37bd982d88014400010000140000000000000000000000000000000000000000000100000758d15e17628000000758d15e1762800000140000a26b00c1f0df003000390027140000faa71900010000010000046b1b28140020000000000000000000000000000000000000000000000000000000000000000000016500200000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f00000001000182013a0014076c74c7b1f6775c33f3762263cc7b37bd982d880014000000000000000000000000000000000000000001250123000102001481c9ce55e8214fd0f5181fd3d38f52fd8c33ec3800020ca000010100010101818e01460001000014000000000000000000000000000000000000000000010000080d87e5559001800000080d87e555900180000014076c74c7b1f6775c33f3762263cc7b37bd982d88014400010000140000000000000000000000000000000000000000000100000758d15e17628000000758d15e1762800000140000a26b00c1f0df003000390027140000faa71900010000010000046b1b28140020000000000000000000000000000000000000000000000000000000000000000000016600200000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f00000001000182027c0182013a0014076c74c7b1f6775c33f3762263cc7b37bd982d880014000000000000000000000000000000000000000001250123000102001481c9ce55e8214fd0f5181fd3d38f52fd8c33ec38000208ce00010100010101818e01460001000014000000000000000000000000000000000000000000010000080d87e5559001800000080d87e555900180000014076c74c7b1f6775c33f3762263cc7b37bd982d88014400010000140000000000000000000000000000000000000000000100000758d15e17628000000758d15e1762800000140000a26b00c1f0df003000390027140000faa71900010000010000046b1b28140020000000000000000000000000000000000000000000000000000000000000000000016700200000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f00000001000182013a0014076c74c7b1f6775c33f3762263cc7b37bd982d880014000000000000000000000000000000000000000001250123000102001481c9ce55e8214fd0f5181fd3d38f52fd8c33ec3800020ca000010100010101818e01460001000014000000000000000000000000000000000000000000010000080d87e5559001800000080d87e555900180000014076c74c7b1f6775c33f3762263cc7b37bd982d88014400010000140000000000000000000000000000000000000000000100000758d15e17628000000758d15e1762800000140000a26b00c1f0df003000390027140000faa71900010000010000046b1b28140020000000000000000000000000000000000000000000000000000000000000000000016800200000007b02230091a7ed01230072f7006a004d60a8d4e71d599b8104250f0000000100"
+    },
+    {
+      "name": "37-bugB_small_2x2",
+      "data": {
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Root": [
+            {
+              "name": "g",
+              "type": "Small[2][2]"
+            }
+          ],
+          "Small": [
+            {
+              "name": "x",
+              "type": "uint256"
+            },
+            {
+              "name": "y",
+              "type": "address"
+            }
+          ]
+        },
+        "primaryType": "Root",
+        "domain": {
+          "name": "Ledger EIP712 parity",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+        },
+        "message": {
+          "g": [
+            [
+              {
+                "x": "1",
+                "y": "0x2222222222222222222222222222222222222222"
+              },
+              {
+                "x": "2",
+                "y": "0x2222222222222222222222222222222222222222"
+              }
+            ],
+            [
+              {
+                "x": "3",
+                "y": "0x2222222222222222222222222222222222222222"
+              },
+              {
+                "x": "4",
+                "y": "0x2222222222222222222222222222222222222222"
+              }
+            ]
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e747261637402010301210001010104526f6f7402160001010101670201000401020401020505536d616c6c01230001010105536d616c6c020c0001010101780201020301200209000101010179020103",
+      "values": "0001010104526f6f7402148000002c8000003c800000000000000000000000033200144c656467657220454950373132207061726974790001310001010014cccccccccccccccccccccccccccccccccccccccc0472017001360119000101001422222222222222222222222222222222222222220119000102001422222222222222222222222222222222222222220136011900010300142222222222222222222222222222222222222222011900010400142222222222222222222222222222222222222222"
+    },
+    {
+      "name": "40-classR_structfirst_fixed2",
+      "data": {
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Root": [
+            {
+              "name": "arr",
+              "type": "Outer[2]"
+            }
+          ],
+          "Outer": [
+            {
+              "name": "head",
+              "type": "Inner"
+            },
+            {
+              "name": "tail",
+              "type": "uint256"
+            }
+          ],
+          "Inner": [
+            {
+              "name": "z",
+              "type": "uint256"
+            }
+          ]
+        },
+        "primaryType": "Root",
+        "domain": {
+          "name": "Ledger EIP712 parity",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+        },
+        "message": {
+          "arr": [
+            {
+              "head": {
+                "z": "11"
+              },
+              "tail": "12"
+            },
+            {
+              "head": {
+                "z": "21"
+              },
+              "tail": "22"
+            }
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e747261637402010301200001010104526f6f740215000101010361727202010004010205054f75746572013000010101054f7574657202130001010104686561640201000505496e6e6572020f00010101047461696c02010203012001180001010105496e6e6572020c00010101017a020102030120",
+      "values": "0001010104526f6f7402148000002c8000003c800000000000000000000000033200144c656467657220454950373132207061726974790001310001010014cccccccccccccccccccccccccccccccccccccccc041601140108010300010b00010c01080103000115000116"
+    },
+    {
+      "name": "42-classC_custom_emptyarr_then_struct",
+      "data": {
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Batch": [
+            {
+              "name": "calls",
+              "type": "Call[]"
+            },
+            {
+              "name": "meta",
+              "type": "Meta"
+            }
+          ],
+          "Call": [
+            {
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "Meta": [
+            {
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256"
+            }
+          ]
+        },
+        "primaryType": "Batch",
+        "domain": {
+          "name": "Ledger EIP712 parity",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+        },
+        "message": {
+          "calls": [],
+          "meta": {
+            "nonce": "1",
+            "deadline": "1700000000"
+          }
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030135000101010542617463680215000101010563616c6c730201000400050443616c6c021200010101046d65746102010005044d6574610123000101010443616c6c020a0001010102746f020103020c000101010464617461020107013000010101044d657461021000010101056e6f6e636502010203012002130001010108646561646c696e65020102030120",
+      "values": "0001010105426174636802148000002c8000003c800000000000000000000000033200144c656467657220454950373132207061726974790001310001010014cccccccccccccccccccccccccccccccccccccccc040d0100010900010100046553f100"
+    },
+    {
+      "name": "44-classC_control_nonempty_then_struct",
+      "data": {
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Batch": [
+            {
+              "name": "calls",
+              "type": "Call[]"
+            },
+            {
+              "name": "meta",
+              "type": "Meta"
+            }
+          ],
+          "Call": [
+            {
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "Meta": [
+            {
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256"
+            }
+          ]
+        },
+        "primaryType": "Batch",
+        "domain": {
+          "name": "Ledger EIP712 parity",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+        },
+        "message": {
+          "calls": [
+            {
+              "to": "0x2222222222222222222222222222222222222222",
+              "data": "0x"
+            }
+          ],
+          "meta": {
+            "nonce": "1",
+            "deadline": "1700000000"
+          }
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e74726163740201030135000101010542617463680215000101010563616c6c730201000400050443616c6c021200010101046d65746102010005044d6574610123000101010443616c6c020a0001010102746f020103020c000101010464617461020107013000010101044d657461021000010101056e6f6e636502010203012002130001010108646561646c696e65020102030120",
+      "values": "0001010105426174636802148000002c8000003c800000000000000000000000033200144c656467657220454950373132207061726974790001310001010014cccccccccccccccccccccccccccccccccccccccc0427011a0118001422222222222222222222222222222222222222220000010900010100046553f100"
+    },
+    {
+      "name": "50-gapA_structfirst_fixed_2x2",
+      "data": {
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Child": [
+            {
+              "name": "x",
+              "type": "uint256"
+            }
+          ],
+          "Elem": [
+            {
+              "name": "c",
+              "type": "Child"
+            },
+            {
+              "name": "n",
+              "type": "uint256"
+            }
+          ],
+          "Root": [
+            {
+              "name": "a",
+              "type": "Elem[2][2]"
+            }
+          ]
+        },
+        "primaryType": "Root",
+        "domain": {
+          "name": "Ledger EIP712 parity",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+        },
+        "message": {
+          "a": [
+            [
+              {
+                "c": {
+                  "x": "1"
+                },
+                "n": "10"
+              },
+              {
+                "c": {
+                  "x": "2"
+                },
+                "n": "20"
+              }
+            ],
+            [
+              {
+                "c": {
+                  "x": "3"
+                },
+                "n": "30"
+              },
+              {
+                "c": {
+                  "x": "4"
+                },
+                "n": "40"
+              }
+            ]
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103011800010101054368696c64020c00010101017802010203012001290001010104456c656d021000010101016302010005054368696c64020c00010101016e02010203012001200001010104526f6f7402150001010101610201000401020401020504456c656d",
+      "values": "0001010104526f6f7402148000002c8000003c800000000000000000000000033200144c656467657220454950373132207061726974790001310001010014cccccccccccccccccccccccccccccccccccccccc042e012c01140108010300010100010a0108010300010200011401140108010300010300011e01080103000104000128"
+    },
+    {
+      "name": "58-gapB_mixed_empty_nonempty",
+      "data": {
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Leaf": [
+            {
+              "name": "a",
+              "type": "uint256"
+            },
+            {
+              "name": "b",
+              "type": "address"
+            }
+          ],
+          "Root": [
+            {
+              "name": "x",
+              "type": "Leaf[][]"
+            }
+          ]
+        },
+        "primaryType": "Root",
+        "domain": {
+          "name": "Ledger EIP712 parity",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+        },
+        "message": {
+          "x": [
+            [],
+            [
+              {
+                "a": "7",
+                "b": "0x2222222222222222222222222222222222222222"
+              }
+            ],
+            []
+          ]
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103012200010101044c656166020c0001010101610201020301200209000101010162020103011e0001010104526f6f7402130001010101780201000400040005044c656166",
+      "values": "0001010104526f6f7402148000002c8000003c800000000000000000000000033200144c656467657220454950373132207061726974790001310001010014cccccccccccccccccccccccccccccccccccccccc042301210100011b0119000107001422222222222222222222222222222222222222220100"
+    },
+    {
+      "name": "60-max_depth_struct_chain",
+      "data": {
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "L0": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L1"
+            }
+          ],
+          "L1": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L2"
+            }
+          ],
+          "L2": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L3"
+            }
+          ],
+          "L3": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L4"
+            }
+          ],
+          "L4": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L5"
+            }
+          ],
+          "L5": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L6"
+            }
+          ],
+          "L6": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L7"
+            }
+          ],
+          "L7": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L8"
+            }
+          ],
+          "L8": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L9"
+            }
+          ],
+          "L9": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L10"
+            }
+          ],
+          "L10": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L11"
+            }
+          ],
+          "L11": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L12"
+            }
+          ],
+          "L12": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L13"
+            }
+          ],
+          "L13": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L14"
+            }
+          ],
+          "L14": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "nested",
+              "type": "L15"
+            }
+          ],
+          "L15": [
+            {
+              "name": "depth",
+              "type": "uint256"
+            },
+            {
+              "name": "leaf",
+              "type": "uint256"
+            }
+          ]
+        },
+        "primaryType": "L0",
+        "domain": {
+          "name": "EIP712 max depth",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+        },
+        "message": {
+          "depth": "0",
+          "nested": {
+            "depth": "1",
+            "nested": {
+              "depth": "2",
+              "nested": {
+                "depth": "3",
+                "nested": {
+                  "depth": "4",
+                  "nested": {
+                    "depth": "5",
+                    "nested": {
+                      "depth": "6",
+                      "nested": {
+                        "depth": "7",
+                        "nested": {
+                          "depth": "8",
+                          "nested": {
+                            "depth": "9",
+                            "nested": {
+                              "depth": "10",
+                              "nested": {
+                                "depth": "11",
+                                "nested": {
+                                  "depth": "12",
+                                  "nested": {
+                                    "depth": "13",
+                                    "nested": {
+                                      "depth": "14",
+                                      "nested": {
+                                        "depth": "15",
+                                        "leaf": "999"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "schema": "000101015f000101010c454950373132446f6d61696e020c00010101046e616d65020105020f000101010776657273696f6e02010502120001010107636861696e496402010203012002190001010111766572696679696e67436f6e7472616374020103012d00010101024c30021000010101056465707468020102030120021200010101066e657374656402010005024c31012d00010101024c31021000010101056465707468020102030120021200010101066e657374656402010005024c32012d00010101024c32021000010101056465707468020102030120021200010101066e657374656402010005024c33012d00010101024c33021000010101056465707468020102030120021200010101066e657374656402010005024c34012d00010101024c34021000010101056465707468020102030120021200010101066e657374656402010005024c35012d00010101024c35021000010101056465707468020102030120021200010101066e657374656402010005024c36012d00010101024c36021000010101056465707468020102030120021200010101066e657374656402010005024c37012d00010101024c37021000010101056465707468020102030120021200010101066e657374656402010005024c38012d00010101024c38021000010101056465707468020102030120021200010101066e657374656402010005024c39012e00010101024c39021000010101056465707468020102030120021300010101066e657374656402010005034c3130012f00010101034c3130021000010101056465707468020102030120021300010101066e657374656402010005034c3131012f00010101034c3131021000010101056465707468020102030120021300010101066e657374656402010005034c3132012f00010101034c3132021000010101056465707468020102030120021300010101066e657374656402010005034c3133012f00010101034c3133021000010101056465707468020102030120021300010101066e657374656402010005034c3134012f00010101034c3134021000010101056465707468020102030120021300010101066e657374656402010005034c3135012b00010101034c3135021000010101056465707468020102030120020f00010101046c656166020102030120",
+      "values": "00010101024c3002148000002c8000003c800000000000000000000000032e0010454950373132206d61782064657074680001310001010014cccccccccccccccccccccccccccccccccccccccc0452000100014d00010101480001020143000103013e00010401390001050134000106012f000107012a0001080125000109012000010a011b00010b011600010c011100010d010c00010e010700010f000203e7"
+    }
+  ]
+}
