@@ -50,3 +50,7 @@ export {
 export { type SignerTrx } from "@api/SignerTrx";
 export { SignerTrxBuilder } from "@api/SignerTrxBuilder";
 export { type TronAppErrorCodes } from "@internal/app-binder/command/utils/tronApplicationErrors";
+export {
+  decodeTronAddress,
+  encodeTronAddress,
+} from "@internal/shared/utils/tronBase58Check";

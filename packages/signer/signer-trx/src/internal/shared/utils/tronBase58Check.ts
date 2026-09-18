@@ -14,6 +14,7 @@ export function encodeTronAddress(rawAddress: Uint8Array): string {
   return bs58.encode(encoded);
 }
 
+/** `undefined` when the address is malformed, a bad checksum included. */
 export function decodeTronAddress(address: string): Uint8Array | undefined {
   let decoded: Uint8Array;
   try {
