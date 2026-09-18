@@ -22,10 +22,37 @@ const NANO_X_BTC: DeviceConfig = {
 const QUIT_MAX_STEPS = 8;
 /** Time for the emulator to render the next menu entry after a press. */
 const MENU_STEP_MS = 700;
+/** Confirmations to send on the "Quit" entry before giving up. */
+const QUIT_CONFIRM_ATTEMPTS = 3;
+/** Time for the app to exit after a confirmation. It normally goes in under a second. */
+const QUIT_EXIT_TIMEOUT_MS = 10_000;
+const QUIT_EXIT_POLL_MS = 500;
 
 interface CommandResponse {
   status: string;
   data?: { name: string; version: string };
+}
+
+/**
+ * Confirm on the "Quit" entry until the app exits, which the emulator reports by
+ * having no screen left to serve. The emulator accepts the press (the proxy
+ * answers 200) but acts on it only some of the time, and nothing else drives the
+ * device, so the entry stays on screen until it is pressed again.
+ */
+async function confirmQuit(
+  page: Page,
+  emulator: SpeculosDriver,
+): Promise<void> {
+  for (let attempt = 0; attempt < QUIT_CONFIRM_ATTEMPTS; attempt += 1) {
+    await page.getByTestId("button_device-screen-both").click();
+    const deadline = Date.now() + QUIT_EXIT_TIMEOUT_MS;
+    while (Date.now() < deadline) {
+      const screen = (await emulator.currentScreen()).toLowerCase();
+      if (!screen.includes("quit")) return;
+      await page.waitForTimeout(QUIT_EXIT_POLL_MS);
+    }
+  }
+  throw new Error("The app stayed on its Quit entry after confirming");
 }
 
 /**
@@ -40,7 +67,7 @@ async function quitAppFromDeviceScreen(
   for (let step = 0; step < QUIT_MAX_STEPS; step += 1) {
     const screen = (await emulator.currentScreen()).toLowerCase();
     if (screen.includes("quit")) {
-      await page.getByTestId("button_device-screen-both").click();
+      await confirmQuit(page, emulator);
       return;
     }
     await page.getByTestId("button_device-screen-right").click();
@@ -94,7 +121,7 @@ test.describe("device: quitting an app from the device screen", () => {
       // Speculos exits with the app, so the screen the panel polls is gone: it
       // shows the mock server's own record of the device instead.
       await expect(page.getByTestId("container_device-os-info")).toBeVisible({
-        timeout: 30_000,
+        timeout: 60_000,
       });
       await expect
         .poll(

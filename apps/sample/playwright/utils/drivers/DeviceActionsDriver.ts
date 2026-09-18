@@ -28,7 +28,6 @@ export class DeviceActionsDriver {
     await this.page.waitForURL("http://localhost:3000/device-actions", {
       timeout: 10_000,
     });
-    await this.page.waitForLoadState("networkidle");
   }
 
   /**

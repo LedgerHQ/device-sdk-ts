@@ -192,8 +192,10 @@ jobs:
         continue-on-error: true
         run: pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
 
+      # Playwright exits 0 once a retry passes, so uploading only on failure
+      # loses the traces of flaky tests, which are the ones worth reading.
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        if: ${{ !cancelled() && steps.playwright.outcome == 'failure' }}
+        if: ${{ !cancelled() && steps.playwright.outcome != 'skipped' }}
         with:
           name: sample-playwright-traces
           path: apps/sample/test-results
