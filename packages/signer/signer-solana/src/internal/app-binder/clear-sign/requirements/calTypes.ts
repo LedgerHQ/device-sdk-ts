@@ -1,5 +1,6 @@
 import {
   type SolanaCalAccountReset,
+  type SolanaCalAccountSchema,
   type SolanaCalActiveWhenPredicate,
   type SolanaCalDisplayField,
   type SolanaCalHideRule,
@@ -21,6 +22,7 @@ export type CalValue = SolanaCalValue;
 export type CalTokenValue = SolanaCalTokenValue;
 export type CalValueFlowPort = SolanaCalValueFlowPort;
 export type CalAccountReset = SolanaCalAccountReset;
+export type CalAccountSchema = SolanaCalAccountSchema;
 export type CalDisplayField = SolanaCalDisplayField;
 export type CalMintAssociation = SolanaCalMintAssociation;
 export type CalOwnerAssociation = SolanaCalOwnerAssociation;

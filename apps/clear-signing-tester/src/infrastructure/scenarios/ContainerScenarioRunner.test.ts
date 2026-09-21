@@ -13,6 +13,7 @@ import {
 const RUNTIME: ScenarioRuntime = {
   ethDerivationPath: "44'/60'/0'/0/0",
   solanaDerivationPath: "44'/501'/0'",
+  tronDerivationPath: "44'/195'/0'/0/0",
   logLevel: "none",
   originToken: "test-origin-token",
   calMode: "prod",
@@ -50,5 +51,21 @@ describe("ContainerScenarioRunner", () => {
     expect(outcome.durationMs).toBe(0);
     // Counted as a failure, so a cancelled run cannot report as green.
     expect(outcome.failures).toBe(1);
+  });
+
+  // Naming one elsewhere would run the scenario as if it had none.
+  it("refuses an address book on a coin app whose signer takes none", async () => {
+    const run: ScenarioRun = {
+      scenario: {
+        ...RUN.scenario,
+        coinApp: "Solana",
+        options: { addressBook: "./ressources/tron/address-book.json" },
+      },
+      device: "stax",
+    };
+
+    await expect(new ContainerScenarioRunner(RUNTIME).run(run)).rejects.toThrow(
+      "Solana scenarios cannot name an address book",
+    );
   });
 });

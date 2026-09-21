@@ -181,15 +181,25 @@ describe("the shipped catalog", () => {
     }
   });
 
-  // Contacts needs a pre-release app. Folding that into default_versions.json
-  // would drag every other flex Ethereum scenario onto the pre-release too,
-  // which is what broke the erc7730 typed-data runs.
-  it("keeps the contacts scenarios on their own app version", () => {
-    const contacts = CATALOG.filter((s) => s.group === "contacts");
+  // Contacts needs a pre-release app on every chain that has it. Folding that
+  // into default_versions.json would drag every other scenario on the same
+  // device onto the pre-release too, which is what broke the erc7730
+  // typed-data runs.
+  it("keeps every Contacts scenario on its own app version", () => {
+    const contacts = CATALOG.filter(
+      (s) => s.action === "registerContact" || s.options?.addressBook,
+    );
     expect(contacts.length).toBeGreaterThan(0);
     for (const s of contacts) {
       expect(s.appVersion, s.name).toBeTruthy();
     }
+  });
+
+  it("points every address book at a file that exists", () => {
+    const missing = CATALOG.filter(
+      (s) => s.options?.addressBook && !existsSync(s.options.addressBook),
+    ).map((s) => `${s.name} -> ${s.options?.addressBook}`);
+    expect(missing).toEqual([]);
   });
 
   // `_txHash` traces a case back to a real transaction. An empty one traces

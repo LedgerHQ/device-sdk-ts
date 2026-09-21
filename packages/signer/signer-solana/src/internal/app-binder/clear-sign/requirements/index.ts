@@ -1,9 +1,11 @@
+export { checkAccountSchema } from "./accountSchema";
 export {
   buildRequirements,
   type BuildRequirementsOptions,
 } from "./buildRequirements";
 export {
   type CalAccountReset,
+  type CalAccountSchema,
   type CalActiveWhenPredicate,
   type CalDisplayField,
   type CalHideRule,
@@ -53,9 +55,11 @@ export {
   type ParsedValue,
   type ParsedValueFlowPort,
   TokenKind,
+  ValueKind,
   ValueSource,
 } from "./records";
 export {
+  AccountSchemaMismatchError,
   RequirementsDecodeError,
   type RequirementsError,
 } from "./RequirementsError";

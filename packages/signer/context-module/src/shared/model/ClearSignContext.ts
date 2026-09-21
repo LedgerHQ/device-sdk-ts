@@ -30,6 +30,7 @@ export enum ClearSignContextType {
   SOLANA_TOKEN_INFO = "solanaTokenInfo",
   SOLANA_TOKEN_ACCOUNT_STATE = "solanaTokenAccountState",
   SOLANA_ALT_RESOLUTION = "solanaAltResolution",
+  TRON_TOKEN = "tronToken",
 }
 
 export type ClearSignContextSuccessType = Exclude<

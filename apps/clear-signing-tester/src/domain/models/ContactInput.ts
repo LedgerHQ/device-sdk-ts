@@ -11,8 +11,9 @@ export type ContactInput = {
   readonly contactName: string;
   /** Free-text context shown next to the address, e.g. "Ethereum". */
   readonly scope: string;
-  readonly address: `0x${string}`;
-  readonly chainId: bigint;
+  /** Hex for Ethereum, base58 for Tron. */
+  readonly address: string;
+  readonly chainId?: bigint;
   readonly expectedTexts?: string[];
   readonly unexpectedTexts?: string[];
 };

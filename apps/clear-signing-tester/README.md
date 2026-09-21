@@ -70,12 +70,13 @@ requested `--device` is skipped rather than failed.
 | Group                | Devices           | What it covers                                  |
 | -------------------- | ----------------- | ----------------------------------------------- |
 | `core`               | stax, nanox       | Ethereum transaction and typed-data fixtures    |
-| `contacts`           | flex              | Address Book registration and signing           |
+| `contacts`           | flex              | Ethereum Address Book registration and signing  |
 | `gating`             | stax, flex        | Unauthenticated callers fall back to gating     |
 | `erc7730`            | stax, nanox, flex | Per-dapp calldata descriptors                   |
 | `erc7730-typed-data` | stax, nanox, flex | Per-dapp typed-data descriptors                 |
 | `solana`             | stax, nanox, flex | Solana transaction fixtures                     |
 | `solana-programs`    | —                 | Live program transactions — disabled, see below |
+| `tron`               | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex |
 
 The `solana-programs` group is **disabled**. Its cases pull transactions from an
 RPC rather than a fixture, so they carry no `expectedTexts` — and a case with
@@ -93,24 +94,26 @@ develop exits 0 when a scan finds nothing at all.
 
 ### Options
 
-| Option                         | Default          | Description                                        |
-| ------------------------------ | ---------------- | -------------------------------------------------- |
-| `--device <device>`            | every supported  | Run only scenarios supporting this device          |
-| `--concurrency <n>`            | `4`              | How many cases may hold an emulator at once        |
-| `--no-split`                   | split            | Run a whole fixture on one emulator, in order      |
-| `--log-level <level>`          | `info`           | Console log level                                  |
-| `--log-dir <path>`             | —                | One log file per case                              |
-| `--file-log-level <level>`     | `--log-level`    | File log level                                     |
-| `--screenshot-folder-path`     | —                | Save signing screenshots                           |
-| `--speculinho-url <url>`       | `SPECULINHO_URL` | Speculinho operator URL                            |
-| `--speculos-http-timeout <ms>` | `0` (none)       | Timeout for Speculos pod requests                  |
-| `--rpc-url <url>`              | Ledger endpoint  | Solana RPC, unused while `solana-programs` is off  |
-| `--derivation-path <path>`     | `44'/60'/0'/0/0` | Ethereum derivation path                           |
-| `--solana-derivation-path`     | `44'/501'/0'`    | Solana derivation path                             |
-| `--os-version <version>`       | defaults file    | Override the default OS version for a one-off run  |
-| `--app-eth-version <version>`  | defaults file    | Override the default Ethereum app version          |
-| `--app-sol-version <version>`  | defaults file    | Override the default Solana app version            |
-| `--erc7730-files <files...>`   | —                | Inject descriptors; also switches CAL to test mode |
+| Option                         | Default           | Description                                        |
+| ------------------------------ | ----------------- | -------------------------------------------------- |
+| `--device <device>`            | every supported   | Run only scenarios supporting this device          |
+| `--concurrency <n>`            | `4`               | How many cases may hold an emulator at once        |
+| `--no-split`                   | split             | Run a whole fixture on one emulator, in order      |
+| `--log-level <level>`          | `info`            | Console log level                                  |
+| `--log-dir <path>`             | —                 | One log file per case                              |
+| `--file-log-level <level>`     | `--log-level`     | File log level                                     |
+| `--screenshot-folder-path`     | —                 | Save signing screenshots                           |
+| `--speculinho-url <url>`       | `SPECULINHO_URL`  | Speculinho operator URL                            |
+| `--speculos-http-timeout <ms>` | `0` (none)        | Timeout for Speculos pod requests                  |
+| `--rpc-url <url>`              | Ledger endpoint   | Solana RPC, unused while `solana-programs` is off  |
+| `--derivation-path <path>`     | `44'/60'/0'/0/0`  | Ethereum derivation path                           |
+| `--solana-derivation-path`     | `44'/501'/0'`     | Solana derivation path                             |
+| `--tron-derivation-path`       | `44'/195'/0'/0/0` | Tron derivation path                               |
+| `--os-version <version>`       | defaults file     | Override the default OS version for a one-off run  |
+| `--app-eth-version <version>`  | defaults file     | Override the default Ethereum app version          |
+| `--app-sol-version <version>`  | defaults file     | Override the default Solana app version            |
+| `--app-trx-version <version>`  | defaults file     | Override the default Tron app version              |
+| `--erc7730-files <files...>`   | —                 | Inject descriptors; also switches CAL to test mode |
 
 ### Scenario files
 
@@ -137,7 +140,7 @@ sits in is free — `erc7730/uniswap/` holds one scenario of each group.
 | `group`, `name`           | yes      | Selector `group:name`; the group is selectable on its own                    |
 | `action`                  | yes      | `signTransaction`, `signTypedData`, `registerContact`, `solanaProgram`       |
 | `devices`                 | yes      | Devices this scenario supports; a run picks one                              |
-| `coinApp`                 | yes      | `Ethereum` or `Solana`                                                       |
+| `coinApp`                 | yes      | `Ethereum`, `Solana` or `Tron`                                               |
 | `cases`                   | yes\*    | The inputs; `solanaProgram` takes none, its input comes from the RPC         |
 | `mode`                    | no       | `parallel` (default) or `sequential`                                         |
 | `osVersion`, `appVersion` | no       | Override the device's pin, together                                          |
@@ -286,6 +289,25 @@ was produced; re-record them if the pinned device identity or the seed changes. 
 group handle, so the device answers `0x6982` and the transaction signs against the
 raw address — the guard that a bad book never costs a signature.
 
+#### Tron
+
+The same three flows exist for Tron, in the `tron` group:
+`tron:contacts-register`, `tron:contacts-sign` and `tron:contacts-sign-rejected`,
+with their own books under [`ressources/tron/`](./ressources/tron). They read
+the same file shape, except that a Tron contact is a base58 address and carries
+no chain id — the firmware specification has one for Ethereum only. The chain a
+scenario's coin app names decides the family byte, how an address becomes the
+identifier the device proves over, and whether a chain id is required, so a
+fixture states neither.
+
+```bash
+pnpm cs-tester cli test tron:contacts-sign
+```
+
+Tron Contacts need app `0.8.0-dev2`, the first build with the Address Book
+APDU — the released apps answer `6a80`/`6e00` to it — so the three scenarios
+pin it alongside OS `1.7.0-rc2`.
+
 `chainId` is a decimal string or number, since JSON has no bigint.
 `unexpectedTexts` asserts a text is **absent**; the negative cases need it, because
 "the raw address renders" only means something alongside "the contact name does
@@ -293,7 +315,7 @@ not". It works on any signing case, not just contacts ones.
 
 #### Case isolation
 
-The Ethereum app caches provided contacts in RAM for the whole app session, so a
+A coin app caches provided contacts in RAM for the whole app session, so a
 name provided by one case stays resolvable for every later case in the same run.
 Give each case its own recipient address; do not reuse one across cases.
 
@@ -312,9 +334,11 @@ Speculos regenerates on every boot. `SpeculinhoServiceController` pins them so a
 recorded address book stays valid across pods; change those pins and the recorded
 proofs must be re-recorded.
 
-These three flows run on pull requests via the `contacts-cs-tester` job, gated on
-changes to `signer-eth`, `device-contacts-kit` or this app. It passes no versions
-of its own, so CI and a local run resolve the same pair from the scenario files.
+All six flows run on pull requests via the `cs-tester` job: the Ethereum ones
+with the `contacts` group, gated on changes to `signer-eth`,
+`device-contacts-kit` or this app, and the Tron ones with the `tron` group,
+gated on `signer-trx` or `device-contacts-kit`. The job passes no versions of
+its own, so CI and a local run resolve the same pair from the scenario files.
 
 ## Cancelling a run
 

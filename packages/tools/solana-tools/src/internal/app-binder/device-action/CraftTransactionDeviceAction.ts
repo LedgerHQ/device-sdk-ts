@@ -1,4 +1,5 @@
 import {
+  base64StringToBuffer,
   type CommandResult,
   type DeviceActionStateMachine,
   type InternalApi,
@@ -26,9 +27,11 @@ import {
 } from "@api/app-binder/CraftTransactionDeviceActionTypes";
 import { Web3SolanaTransactionDataSource } from "@internal/data-source/Web3SolanaTransactionDataSource";
 import { deserializeToMessage } from "@internal/services/crafter/deserialize";
+import { isV1Transaction } from "@internal/services/crafter/version";
 import { DefaultAltResolverService } from "@internal/services/DefaultAltResolverService";
 import { DefaultTransactionFetcherService } from "@internal/services/DefaultTransactionFetcherService";
 import { TransactionCrafterService } from "@internal/services/TransactionCrafterService";
+import { V1TransactionCrafterService } from "@internal/services/V1TransactionCrafterService";
 
 export type MachineDependencies = {
   readonly getPublicKey: (arg0: {
@@ -368,6 +371,33 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
       const { publicKey, serialisedTransaction, rpcUrl, replacements } =
         arg0.input;
 
+      const replacementsMap = replacements
+        ? new Map(Object.entries(replacements))
+        : undefined;
+
+      // SIMD-0385 "Transaction V1" has no support at all in @solana/web3.js
+      // (not just decoding — its whole decompile/compile object model), so
+      // it gets a dedicated crafter built on @solana/transaction-messages.
+      // v1 also has no address lookup tables, so this path never resolves
+      // ALTs at all.
+      if (isV1Transaction(serialisedTransaction)) {
+        const bytes = base64StringToBuffer(serialisedTransaction);
+        const numRequiredSignatures = bytes?.[1] ?? 0;
+        if (numRequiredSignatures > 1) {
+          internalApi
+            .loggerFactory?.("CraftTransactionDeviceAction")
+            .warn(
+              "Transaction requires multiple signatures. A single device can sign for only one of them, so the crafted transaction cannot be fully co-signed.",
+            );
+        }
+
+        const v1Crafter = new V1TransactionCrafterService();
+        return v1Crafter.getCraftedTransaction(serialisedTransaction, {
+          payer: publicKey,
+          replacements: replacementsMap,
+        });
+      }
+
       // Deserialize once to resolve the transaction's lookup tables. Legacy and
       // no-ALT messages resolve to an empty list, so this path is safe for every
       // transaction kind, not only v0 transactions with lookup tables.
@@ -390,9 +420,7 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
       const crafter = new TransactionCrafterService();
       return crafter.getCraftedTransaction(serialisedTransaction, {
         payer: publicKey,
-        replacements: replacements
-          ? new Map(Object.entries(replacements))
-          : undefined,
+        replacements: replacementsMap,
         addressLookupTableAccounts,
       });
     };

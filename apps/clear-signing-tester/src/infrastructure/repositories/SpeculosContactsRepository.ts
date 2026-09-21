@@ -4,7 +4,6 @@ import {
 } from "@ledgerhq/device-contacts-kit";
 import {
   DeviceActionStatus,
-  hexaStringToBuffer,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
@@ -13,15 +12,13 @@ import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type ContactInput } from "@root/src/domain/models/ContactInput";
+import { type ContactsChain } from "@root/src/domain/models/ContactsChain";
 import {
   type ContactProofs,
   type ContactsRepository,
 } from "@root/src/domain/repositories/ContactsRepository";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
-
-/** The only blockchain family Contacts supports in v1. */
-const BLOCKCHAIN_FAMILY = "ethereum";
 
 /** The review is a handful of pages; 20 taps is a generous ceiling. */
 const REVIEW_MAX_ATTEMPTS = 20;
@@ -59,6 +56,8 @@ export class SpeculosContactsRepository implements ContactsRepository {
     private readonly retryService: RetryService,
     @inject(TYPES.ScreenshotSaver)
     private readonly screenshotSaver: ScreenshotSaver,
+    @inject(TYPES.ContactsChain)
+    private readonly chain: ContactsChain,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -73,7 +72,7 @@ export class SpeculosContactsRepository implements ContactsRepository {
   /** {@inheritDoc ContactsRepository.registerContact} */
   async registerContact(contact: ContactInput): Promise<ContactProofs> {
     this.logger.info(
-      `Registering contact "${contact.contactName}" for ${contact.address} on chain ${contact.chainId}`,
+      `Registering ${this.chain.blockchainFamily} contact "${contact.contactName}" for ${contact.address}`,
     );
 
     await this.screenshotSaver.save();
@@ -134,7 +133,7 @@ export class SpeculosContactsRepository implements ContactsRepository {
       throw new Error("Contacts repository not connected to a device session");
     }
 
-    const identifier = hexaStringToBuffer(contact.address);
+    const identifier = this.chain.toIdentifier(contact.address);
     if (!identifier) {
       throw new Error(`Invalid contact address: ${contact.address}`);
     }
@@ -143,7 +142,7 @@ export class SpeculosContactsRepository implements ContactsRepository {
       contactName: contact.contactName,
       scope: contact.scope,
       identifier,
-      blockchainFamily: BLOCKCHAIN_FAMILY,
+      blockchainFamily: this.chain.blockchainFamily,
       chainId: contact.chainId,
       // The tester connects with the app already open; the version guard on the
       // running app still runs.

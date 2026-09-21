@@ -35,6 +35,7 @@ import { tokenTypes as solanaTokenTypes } from "@/modules/solana/token/di/tokenT
 import { tokenAccountStateTypes } from "@/modules/solana/token-account-state/di/tokenAccountStateTypes";
 import { tokenInfoTypes } from "@/modules/solana/token-info/di/tokenInfoTypes";
 import { solanaTrustedNameTypes } from "@/modules/solana/trusted-name/di/trustedNameTypes";
+import { tokenTypes as tronTokenTypes } from "@/modules/tron/token/di/tokenTypes";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
@@ -158,6 +159,10 @@ export class DefaultContextModule implements ContextModule {
           this._container.get<ContextLoader>(
             accountOwnershipTypes.AccountOwnershipContextLoader,
           ),
+        ];
+      case ContextModuleChainID.Tron:
+        return [
+          this._container.get<ContextLoader>(tronTokenTypes.TokenContextLoader),
         ];
       default: {
         const exhaustiveCheck: never = chain;

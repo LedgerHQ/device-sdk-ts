@@ -1,13 +1,19 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 
-import { type TronAddressBook } from "@api/model/TronAddressBook";
+import {
+  EMPTY_TRON_ADDRESS_BOOK,
+  type TronAddressBook,
+} from "@api/model/TronAddressBook";
 import { SignerTrxBuilder } from "@api/SignerTrxBuilder";
 import { APP_NAME, INS, LEDGER_CLA } from "@internal/app-binder/constants";
 import { DefaultSignerTrx } from "@internal/DefaultSignerTrx";
 import { externalTypes } from "@internal/externalTypes";
 
 describe("SignerTrxBuilder", () => {
-  const dmk = {} as DeviceManagementKit;
+  const dmk = {
+    getLoggerFactory: vi.fn().mockReturnValue(vi.fn()),
+  } as unknown as DeviceManagementKit;
   const defaultConstructorArgs = { dmk, sessionId: "" };
 
   test("should be an instance of SignerTrxBuilder", () => {
@@ -23,6 +29,27 @@ describe("SignerTrxBuilder", () => {
 
     expect(signer).toBeInstanceOf(DefaultSignerTrx);
   });
+  test("should build with a default Tron context module", () => {
+    const builder = new SignerTrxBuilder(defaultConstructorArgs);
+
+    const signer = builder.build();
+
+    expect(
+      signer["_container"].get<ContextModule>(externalTypes.ContextModule),
+    ).toBeDefined();
+  });
+
+  test("should build with a custom context module", () => {
+    const contextModule = { getContexts: vi.fn() } as unknown as ContextModule;
+    const builder = new SignerTrxBuilder(defaultConstructorArgs);
+
+    const signer = builder.withContextModule(contextModule).build();
+
+    expect(
+      signer["_container"].get<ContextModule>(externalTypes.ContextModule),
+    ).toBe(contextModule);
+  });
+
   test("should build with an empty address book by default", () => {
     const builder = new SignerTrxBuilder(defaultConstructorArgs);
 
@@ -30,7 +57,7 @@ describe("SignerTrxBuilder", () => {
 
     expect(
       signer["_container"].get<TronAddressBook>(externalTypes.AddressBook),
-    ).toEqual({ contactGroups: [], ledgerAccounts: [] });
+    ).toEqual(EMPTY_TRON_ADDRESS_BOOK);
   });
 
   test("should build with a custom address book", () => {

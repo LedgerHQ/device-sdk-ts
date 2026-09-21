@@ -118,11 +118,13 @@ export class TransactionParser {
     const allKeys = [...message.accountKeys];
     const logicalKeyCount = allKeys.length;
     const writableMap = buildWritableMap(message, logicalKeyCount);
+    const signerMap = buildSignerMap(message, logicalKeyCount);
 
     return buildCompiledInstructions(
       message.compiledInstructions,
       writableMap,
       logicalKeyCount,
+      signerMap,
     ).map((compiledInstructions) => ({
       compiledInstructions,
       allKeys,
@@ -137,6 +139,7 @@ export class TransactionParser {
       const altCount = message.numAccountKeysFromLookups;
       const logicalKeyCount = staticKeys.length + altCount;
       const writableMap = buildWritableMap(message, logicalKeyCount);
+      const signerMap = buildSignerMap(message, logicalKeyCount);
 
       let allKeys: PublicKey[];
       let addressLookupRefs: (AddressLookupRef | undefined)[] | undefined;
@@ -167,6 +170,7 @@ export class TransactionParser {
           message.compiledInstructions,
           writableMap,
           logicalKeyCount,
+          signerMap,
         ),
       );
 
@@ -256,6 +260,17 @@ function buildWritableMap(
   return writable;
 }
 
+function buildSignerMap(
+  message: Message | MessageV0,
+  logicalKeyCount: number,
+): boolean[] {
+  const signer: boolean[] = [];
+  for (let i = 0; i < logicalKeyCount; i++) {
+    signer.push(message.isAccountSigner(i));
+  }
+  return signer;
+}
+
 function buildAltRefs(message: MessageV0): AddressLookupRef[] {
   const writableRefs: AddressLookupRef[] = [];
   const readonlyRefs: AddressLookupRef[] = [];
@@ -279,6 +294,7 @@ export function buildCompiledInstructions(
   }>,
   writableMap: boolean[],
   logicalKeyCount: number,
+  signerMap?: boolean[],
 ): Either<ParserError, NormalisedCompiledIx[]> {
   if (compiledInstructions.length === 0) {
     return Left(new EmptyInstructionsError());
@@ -303,6 +319,7 @@ export function buildCompiledInstructions(
       );
     }
     const accountWritable: boolean[] = [];
+    const accountSigner: boolean[] = [];
     for (let slot = 0; slot < ci.accountKeyIndexes.length; slot++) {
       const keyIdx = ci.accountKeyIndexes[slot]!;
       if (keyIdx >= logicalKeyCount) {
@@ -311,6 +328,7 @@ export function buildCompiledInstructions(
         );
       }
       accountWritable.push(writableMap[keyIdx] ?? false);
+      accountSigner.push(signerMap?.[keyIdx] ?? false);
     }
 
     const data =
@@ -324,6 +342,7 @@ export function buildCompiledInstructions(
       programIdIndex: ci.programIdIndex,
       accountKeyIndexes: [...ci.accountKeyIndexes],
       accountWritable,
+      accountSigner,
       data,
     });
   }

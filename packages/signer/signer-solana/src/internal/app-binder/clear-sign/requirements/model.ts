@@ -2,6 +2,7 @@ import { type VariantCache } from "@internal/app-binder/clear-sign/idl-type-pool
 
 import {
   type CalAccountReset,
+  type CalAccountSchema,
   type CalDisplayField,
   type CalHideRule,
   type CalIdlDescriptor,
@@ -28,6 +29,8 @@ export type RequirementAccount = {
   address?: string;
   altRef?: AltEntryKey;
   isWritable: boolean;
+  /** `true` when the slot is a required signer (keyIdx < numRequiredSignatures in the message header). Always `false` for ALT-supplied slots. */
+  isSigner: boolean;
 };
 
 export type RequirementInstruction = {
@@ -50,6 +53,8 @@ export type InstructionDescriptor = {
   displayFields: CalDisplayField[];
   hideRules: CalHideRule[];
   enumCache: VariantCache;
+  /** Absent means "no ACCOUNT_SCHEMA check". */
+  accountSchema?: CalAccountSchema;
 };
 
 /**
@@ -88,6 +93,15 @@ export type DescriptorRequirements = {
   tokenAccountStates: string[];
   altResolutions: AltEntryKey[];
   trustedNames: string[];
+  /**
+   * ALT-supplied slots targeted by a `PARAM_TRUSTED_NAME` / `PARAM_ACCOUNT`
+   * display field. A marker set, not an ALT_RESOLUTION requester: the slot's
+   * resolution is already requested by whichever of `altResolutions` /
+   * `tokenAmountAltRefs` / `tokenAccountStateAltRefs` / `mintAltRefs` covers
+   * it. Once the provide phase resolves the entry, it fetches a TRUSTED_NAME
+   * for the resulting address too.
+   */
+  trustedNameAltRefs: AltEntryKey[];
   /**
    * PARAM_TOKEN_AMOUNT.TOKEN refs (ACCOUNT_PATH, non-ALT, not in mintBindings).
    * Try TOKEN_INFO first at fetch time; fall back to TOKEN_ACCOUNT_STATE if it fails.

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- [#1902](https://github.com/LedgerHQ/device-sdk-ts/pull/1902) [`698f5e7`](https://github.com/LedgerHQ/device-sdk-ts/commit/698f5e72a568bb1bd65d4d25b30d9b5a10139b96) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Show a saved contact name in place of the raw recipient address when reviewing a Tron transaction, matched against the address book given to `withAddressBook`. Only the transaction recipient is matched, and a contact the device rejects never costs the signature. `encodeTronAddress` and `decodeTronAddress` are exported alongside, since registering a contact through the contacts kit takes the raw address bytes an address book holds as base58.
+
+- [#1893](https://github.com/LedgerHQ/device-sdk-ts/pull/1893) [`7ea891a`](https://github.com/LedgerHQ/device-sdk-ts/commit/7ea891a8d637d481de39bc20f6e4c0a0404d5199) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Provide TRC10 token names to the device when signing a transaction, so TRC10 transfers are clear-signed instead of blind-signed
+
+### Patch Changes
+
+- Updated dependencies [[`acf298b`](https://github.com/LedgerHQ/device-sdk-ts/commit/acf298b8deadbed10c516553d4b824015618a0d3), [`ac41ccc`](https://github.com/LedgerHQ/device-sdk-ts/commit/ac41ccc40158ac1edd3493bf88a7d7c25f2c60b9), [`5030e85`](https://github.com/LedgerHQ/device-sdk-ts/commit/5030e85dea4f36a2307609dcabe20eee607f08ab), [`1fe060e`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe060e78f76b03960c0a23c6bb93fa54cad8915), [`f275d1e`](https://github.com/LedgerHQ/device-sdk-ts/commit/f275d1ea15dc3a4fd58379c47a5219b1f84967de), [`c6a2056`](https://github.com/LedgerHQ/device-sdk-ts/commit/c6a205652ebb21f154b26f6dda2b22d7119ccbaa), [`f4a3bee`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4a3beea6aa3c3764771fbb01caee16c0d2becb7), [`856461c`](https://github.com/LedgerHQ/device-sdk-ts/commit/856461cb582efdcb52ddd371797a646ee20264fe), [`acd0c05`](https://github.com/LedgerHQ/device-sdk-ts/commit/acd0c050d9fbf6f306cd4bf43ad3594272da6b20), [`762139e`](https://github.com/LedgerHQ/device-sdk-ts/commit/762139ee3348882aef30bc17a07328b697c9725f)]:
+  - @ledgerhq/device-contacts-kit@0.5.0
+  - @ledgerhq/context-module@2.6.0
+  - @ledgerhq/device-management-kit@1.9.1
+
 All notable changes to this project will be documented in this file.
 
 ## 0.2.0

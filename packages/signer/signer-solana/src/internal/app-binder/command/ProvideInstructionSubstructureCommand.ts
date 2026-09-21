@@ -48,8 +48,11 @@ export type ProvideInstructionSubstructureCommandArgs = {
  * HIDE_RULE / ACCOUNT_RESET) referenced by the current `INSTRUCTION_INFO`.
  *
  * The caller pre-builds the wire payload — a 1-byte substructure-type selector
- * followed by the substructure TLV (no length prefix; the device recovers the
- * total length from the chunk flags) — and splits it into ≤255-byte chunks.
+ * followed by the substructure TLV — and splits it into ≤255-byte chunks. The
+ * `SUBSTRUCT_TYPE ‖ uint32be length ‖ TLV` framing is absent on the wire (the
+ * device recovers the total length from the chunk flags) but the device still
+ * folds that framing into the running `SUBSTRUCTURES_HASH`, so each call must
+ * carry exactly one substructure — never two packed together.
  */
 export class ProvideInstructionSubstructureCommand
   implements

@@ -1,10 +1,14 @@
-import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
+import {
+  hexaStringToBuffer,
+  UserInteractionRequired,
+} from "@ledgerhq/device-management-kit";
 import { ContainerModule } from "inversify";
 
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
 import { type CalAdapter } from "@root/src/domain/adapters/CalAdapter";
 import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCrafter";
+import { type ContactsChain } from "@root/src/domain/models/ContactsChain";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type ContactsRepository } from "@root/src/domain/repositories/ContactsRepository";
@@ -50,6 +54,14 @@ export const ethereumInfrastructureModuleFactory = (
           TYPES.SpeculosContactsRepository,
         ),
     );
+    bind<ContactsChain>(TYPES.ContactsChain).toConstantValue({
+      blockchainFamily: "ethereum",
+      toIdentifier: (address) =>
+        /^0x[0-9a-fA-F]{40}$/.test(address)
+          ? (hexaStringToBuffer(address) ?? undefined)
+          : undefined,
+      hasChainId: true,
+    });
 
     // Signing
     bind<SigningService>(TYPES.SigningService)

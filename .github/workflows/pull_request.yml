@@ -44,6 +44,8 @@ jobs:
               - 'packages/signer/signer-eth/**'
             signer-solana:
               - 'packages/signer/signer-solana/**'
+            signer-trx:
+              - 'packages/signer/signer-trx/**'
             signer-utils:
               - 'packages/signer/signer-utils/**'
             solana-tools:
@@ -57,16 +59,18 @@ jobs:
       - name: Select clear-signing groups
         id: select
         env:
-          # The tester, CI, and the packages both signers share can affect any
+          # The tester, CI, and the packages every signer shares can affect any
           # group.
           ALL: ${{ steps.filter.outputs.cs-tester == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' }}
           # Contacts sign through the eth signer, and a stored contact changes
           # what the eth review screens display, so the two move together.
           ETH_SIDE: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.contacts-kit == 'true' }}
           SOLANA_SIDE: ${{ steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.solana-tools == 'true' }}
+          # Tron signs contacts too, so the kit moves the Tron group as well.
+          TRON_SIDE: ${{ steps.filter.outputs.signer-trx == 'true' || steps.filter.outputs.contacts-kit == 'true' }}
         run: |
           if [ "$ALL" = "true" ]; then
-            scenarios="core contacts solana"
+            scenarios="core contacts solana tron"
           else
             scenarios=""
             if [ "$ETH_SIDE" = "true" ]; then
@@ -74,6 +78,9 @@ jobs:
             fi
             if [ "$SOLANA_SIDE" = "true" ]; then
               scenarios="$scenarios solana"
+            fi
+            if [ "$TRON_SIDE" = "true" ]; then
+              scenarios="$scenarios tron"
             fi
             scenarios="${scenarios# }"
           fi

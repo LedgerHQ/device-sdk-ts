@@ -4,6 +4,7 @@ import { TYPES } from "@root/src/di/types";
 import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { type ContactInput } from "@root/src/domain/models/ContactInput";
+import { type ContactsChain } from "@root/src/domain/models/ContactsChain";
 import { scenarioCases } from "@root/src/infrastructure/repositories/scenarioCases";
 
 /** One entry of a contact case file, before validation. */
@@ -25,6 +26,8 @@ export class ContactFileRepository {
     private readonly fileReader: FileReader,
     @inject(TYPES.JsonParser)
     private readonly jsonParser: JsonParser,
+    @inject(TYPES.ContactsChain)
+    private readonly chain: ContactsChain,
   ) {}
 
   readFromFile(filePath: string): ContactInput[] {
@@ -39,13 +42,17 @@ export class ContactFileRepository {
   private mapToContact(raw: RawContact, index: number): ContactInput {
     const { contactName, scope, address, chainId } = raw;
 
-    if (!contactName || !scope || !address || chainId === undefined) {
+    if (!contactName || !scope || !address) {
       throw new Error(
-        `Contact at index ${index} is missing one of 'contactName', 'scope', 'address', 'chainId'`,
+        `Contact at index ${index} is missing one of 'contactName', 'scope', 'address'`,
       );
     }
 
-    if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+    if (this.chain.hasChainId && chainId === undefined) {
+      throw new Error(`Contact at index ${index} is missing 'chainId'`);
+    }
+
+    if (!this.chain.toIdentifier(address)) {
       throw new Error(`Contact at index ${index} has an invalid 'address'`);
     }
 
@@ -53,8 +60,8 @@ export class ContactFileRepository {
       description: raw.description || `Contact ${index + 1}`,
       contactName,
       scope,
-      address: address as `0x${string}`,
-      chainId: BigInt(chainId),
+      address,
+      ...(chainId === undefined ? {} : { chainId: BigInt(chainId) }),
       expectedTexts: raw.expectedTexts,
       unexpectedTexts: raw.unexpectedTexts,
     };

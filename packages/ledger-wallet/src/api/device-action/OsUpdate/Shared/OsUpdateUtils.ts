@@ -17,19 +17,26 @@ const EXCLUDED_FROM_BOOTLOADER_VERSIONS = new Set([
   "",
 ]);
 
-export const bestCompatibleMcu = (
-  mcuList: McuFirmware[],
-  finalFirmware: FinalFirmware,
-  provider: number = DEFAULT_MANAGER_API_PROVIDER,
-): McuFirmware | null =>
-  mcuList
-    .filter(
-      (mcu) =>
-        finalFirmware.mcuVersions.includes(mcu.id) &&
-        mcu.providers.includes(provider) &&
-        !EXCLUDED_FROM_BOOTLOADER_VERSIONS.has(mcu.fromBootloaderVersion),
-    )
-    .reduce<(McuFirmware & { version: string }) | null>((latestMcu, mcu) => {
+/*
+ * The MCU catalog and the devices do not agree on how many segments a
+ * bootloader version has ("1.16" against "1.16.0"), so compare them coerced and
+ * only fall back to the raw strings when either side is not valid semver.
+ */
+export const isSameBootloaderVersion = (
+  bootloaderVersion: string,
+  otherBootloaderVersion: string,
+): boolean => {
+  const coerced = coerce(bootloaderVersion)?.version;
+  const otherCoerced = coerce(otherBootloaderVersion)?.version;
+
+  return coerced !== undefined && otherCoerced !== undefined
+    ? coerced === otherCoerced
+    : bootloaderVersion === otherBootloaderVersion;
+};
+
+const highestMcu = (mcuList: McuFirmware[]): McuFirmware | null =>
+  mcuList.reduce<(McuFirmware & { version: string }) | null>(
+    (latestMcu, mcu) => {
       const version = coerce(mcu.name)?.version;
 
       if (!version) {
@@ -44,4 +51,38 @@ export const bestCompatibleMcu = (
       }
 
       return latestMcu;
-    }, null);
+    },
+    null,
+  );
+
+export const bestCompatibleMcu = (
+  mcuList: McuFirmware[],
+  finalFirmware: FinalFirmware,
+  provider: number = DEFAULT_MANAGER_API_PROVIDER,
+): McuFirmware | null =>
+  highestMcu(
+    mcuList.filter(
+      (mcu) =>
+        finalFirmware.mcuVersions.includes(mcu.id) &&
+        mcu.providers.includes(provider) &&
+        !EXCLUDED_FROM_BOOTLOADER_VERSIONS.has(mcu.fromBootloaderVersion),
+    ),
+  );
+
+/*
+ * Fallback for devices that report no secure element firmware: without a final
+ * firmware to aim at, the only usable hint is the bootloader they start from.
+ */
+export const bestMcuForBootloaderVersion = (
+  mcuList: McuFirmware[],
+  bootloaderVersion: string,
+  provider: number = DEFAULT_MANAGER_API_PROVIDER,
+): McuFirmware | null =>
+  highestMcu(
+    mcuList.filter(
+      (mcu) =>
+        mcu.providers.includes(provider) &&
+        !EXCLUDED_FROM_BOOTLOADER_VERSIONS.has(mcu.fromBootloaderVersion) &&
+        isSameBootloaderVersion(mcu.fromBootloaderVersion, bootloaderVersion),
+    ),
+  );

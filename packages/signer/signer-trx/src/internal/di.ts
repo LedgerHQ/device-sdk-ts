@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -5,7 +6,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
-import { type TronAddressBook } from "@api/model/TronAddressBook";
+import {
+  EMPTY_TRON_ADDRESS_BOOK,
+  type TronAddressBook,
+} from "@api/model/TronAddressBook";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { externalTypes } from "@internal/externalTypes";
 import { addressModuleFactory } from "@internal/use-cases/address/di/addressModule";
@@ -17,17 +21,22 @@ import { transactionModuleFactory } from "@internal/use-cases/transaction/di/tra
 type MakeContainerProps = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  contextModule: ContextModule;
   addressBook?: TronAddressBook;
 };
 
 export const makeContainer = ({
   dmk,
   sessionId,
+  contextModule,
   addressBook,
 }: MakeContainerProps) => {
   const container = new Container();
 
   container.bind<DeviceManagementKit>(externalTypes.Dmk).toConstantValue(dmk);
+  container
+    .bind<ContextModule>(externalTypes.ContextModule)
+    .toConstantValue(contextModule);
   container
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
@@ -35,7 +44,7 @@ export const makeContainer = ({
   // matches, so consumers never have to handle `undefined`.
   container
     .bind<TronAddressBook>(externalTypes.AddressBook)
-    .toConstantValue(addressBook ?? { contactGroups: [], ledgerAccounts: [] });
+    .toConstantValue(addressBook ?? EMPTY_TRON_ADDRESS_BOOK);
 
   container
     .bind<

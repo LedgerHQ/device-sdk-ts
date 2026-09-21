@@ -50,10 +50,12 @@ type TestOptions = {
   samplesPerInstruction?: number;
   derivationPath: string;
   solanaDerivationPath: string;
+  tronDerivationPath: string;
   erc7730Files?: string[];
   osVersion?: string;
   appEthVersion?: string;
   appSolVersion?: string;
+  appTrxVersion?: string;
 };
 
 /**
@@ -184,7 +186,10 @@ function reportOwnPins(
   options: TestOptions,
 ): void {
   const overriding =
-    options.osVersion ?? options.appEthVersion ?? options.appSolVersion;
+    options.osVersion ??
+    options.appEthVersion ??
+    options.appSolVersion ??
+    options.appTrxVersion;
   if (!overriding) return;
   const pinned = selected.filter((s) => s.osVersion ?? s.appVersion);
   if (pinned.length > 0) {
@@ -202,6 +207,7 @@ function buildRuntime(
   return {
     ethDerivationPath: options.derivationPath,
     solanaDerivationPath: options.solanaDerivationPath,
+    tronDerivationPath: options.tronDerivationPath,
     logLevel: options.logLevel,
     fileLogLevel: options.fileLogLevel,
     logDir: options.logDir,
@@ -213,6 +219,10 @@ function buildRuntime(
     samplesPerInstruction: options.samplesPerInstruction,
     originToken: process.env["GATING_TOKEN"] || "test-origin-token",
     calMode,
+    osVersion: options.osVersion,
+    ethAppVersion: options.appEthVersion,
+    solanaAppVersion: options.appSolVersion,
+    tronAppVersion: options.appTrxVersion,
   };
 }
 
@@ -401,6 +411,11 @@ function buildProgram(): Command {
       "44'/501'/0'",
     )
     .option(
+      "--tron-derivation-path <path>",
+      "Tron derivation path",
+      "44'/195'/0'/0/0",
+    )
+    .option(
       "--os-version <version>",
       "Override the OS version from default_versions.json, for a one-off run",
     )
@@ -411,6 +426,10 @@ function buildProgram(): Command {
     .option(
       "--app-sol-version <version>",
       "Override the default Solana app version",
+    )
+    .option(
+      "--app-trx-version <version>",
+      "Override the default Tron app version",
     )
     .option(
       "--erc7730-files <files...>",

@@ -1,0 +1,17 @@
+{
+  "_comment": "Proofs are device-issued. The device mints them with its user and attestation keys, which Speculos regenerates on every boot unless pinned, so SpeculinhoServiceController pins them (--user-private-key, --attestation-key, --deterministic-rng) to keep these valid across pods. Recorded from a `tron:contacts-register` run; re-record them there if the pinned identity, the seed or the device changes.",
+  "contactGroups": [
+    {
+      "contactName": "Alice",
+      "groupHandle": "0x8a2954489a0abcd50e18a844ac5bf38e4cd72d9b0942e506c433afcda3847f2dccb1b2963a16feda62ff6aeaec0f0b96e20c6e77dc49e44407e637cd884b60fe",
+      "hmacProof": "0xa1f73f9e79fe605b1aedb8d27499319a4a1732ffbe079e3822b812f9a69431ed",
+      "externalAddresses": [
+        {
+          "scope": "Tron",
+          "address": "TBoTZcARzWVgnNuB9SyE3S5g1RwsXoQL16",
+          "hmacRest": "0xa45f3bce26d9f8a0ce8ed2f8a1179fb989f1a5abe9c88fa8c9b608aca08c7026"
+        }
+      ]
+    }
+  ]
+}

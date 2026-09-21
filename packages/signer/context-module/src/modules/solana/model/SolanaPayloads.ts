@@ -80,6 +80,7 @@ export type SolanaInstructionInfoPayload = {
   accountResets: SolanaCalAccountReset[];
   displayFields: SolanaCalDisplayField[];
   hideRules: SolanaCalHideRule[];
+  accountSchema?: SolanaCalAccountSchema;
 };
 
 export enum SolanaInstructionSubstructureKind {
@@ -162,6 +163,22 @@ export type SolanaCalOwnerAssociation = {
 export type SolanaCalAccountReset = {
   account_index: number;
   require_pre_balance_zero?: boolean;
+  value_kind?: string;
+  token?: SolanaCalTokenValue;
+  require_native_pre_balance_zero?: boolean;
+};
+
+export type SolanaCalSlotConstraint = {
+  signer: "FORBIDDEN" | "EITHER" | "REQUIRED";
+  writable: "FORBIDDEN" | "EITHER" | "REQUIRED";
+};
+
+export type SolanaCalAccountSchema = {
+  count_min: number;
+  /** 255 = COUNT_UNBOUNDED (no upper limit). */
+  count_max: number;
+  remaining_policy: SolanaCalSlotConstraint;
+  slots: SolanaCalSlotConstraint[];
 };
 
 export type SolanaCalDisplayField = {

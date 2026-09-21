@@ -1,0 +1,53 @@
+name: "[Tests] Tron Nightly"
+on:
+  schedule:
+    # Run every day at 4:00 AM UTC (offset from the Ethereum and Solana nightlies
+    # at 2:00 and 3:00 AM, so the three do not compete for emulators)
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: "1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cs-tester:
+    name: Tron Clear Signing Test (${{ matrix.device }})
+    runs-on: ledgerhq-device-sdk
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox, flex]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          scenarios: tron
+          device: ${{ matrix.device }}
+          concurrency: "10"
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: tron-nightly-logs
+          summary-prefix: "Tron Clear Signing Test"
+          gating-token: ${{ secrets.GATING_TOKEN }}
+
+  notify:
+    name: Notify Slack
+    needs: [cs-tester]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/slack-notify-composite
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}
+          results: ${{ join(needs.*.result, ',') }}

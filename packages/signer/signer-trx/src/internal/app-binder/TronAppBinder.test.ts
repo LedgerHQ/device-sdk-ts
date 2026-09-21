@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CallTaskInAppDeviceAction,
   type DeviceActionState,
@@ -40,12 +41,14 @@ import {
   type SignTransactionHashDAIntermediateValue,
   type SignTransactionHashDAOutput,
 } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
+import { EMPTY_TRON_ADDRESS_BOOK } from "@api/model/TronAddressBook";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { GetECDHSecretCommand } from "@internal/app-binder/command/GetECDHSecretCommand";
 import { SignTransactionHashCommand } from "@internal/app-binder/command/SignTransactionHashCommand";
 import { type TronAppCommandError } from "@internal/app-binder/command/utils/tronApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 
 import { TronAppBinder } from "./TronAppBinder";
 
@@ -59,6 +62,9 @@ describe("TronAppBinder", () => {
     debug: vi.fn(),
   } as unknown as LoggerPublisherService;
   const loggerFactoryMock = vi.fn().mockReturnValue(loggerMock);
+  const contextModuleMock = {
+    getContexts: vi.fn().mockResolvedValue([]),
+  } as unknown as ContextModule;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -69,6 +75,7 @@ describe("TronAppBinder", () => {
       {} as DeviceManagementKit,
       {} as DeviceSessionId,
       loggerFactoryMock,
+      contextModuleMock,
     );
     expect(binder).toBeDefined();
   });
@@ -101,6 +108,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         const { observable } = binder.getAddress({
           derivationPath: "44'/195'/0'/0/0",
@@ -139,6 +147,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         binder.getAddress({
           derivationPath,
@@ -172,6 +181,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         binder.getAddress({
           derivationPath,
@@ -204,6 +214,7 @@ describe("TronAppBinder", () => {
   describe("signTransaction", () => {
     const derivationPath = "44'/195'/0'/0/0";
     const transaction = Uint8Array.from([0x0a, 0x01, 0x00]);
+    const addressBook = EMPTY_TRON_ADDRESS_BOOK;
 
     it("should return the signature", () =>
       new Promise<void>((resolve, reject) => {
@@ -229,6 +240,8 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
+          addressBook,
         );
         const { observable } = binder.signTransaction({
           derivationPath,
@@ -258,26 +271,24 @@ describe("TronAppBinder", () => {
       }));
 
     describe("calls executeDeviceAction with the correct params", () => {
-      // The task closure breaks reference equality, so the device action is
-      // asserted field by field instead of with toHaveBeenCalledWith.
+      // The logger the binder attaches breaks reference equality, hence the
+      // field by field assertions instead of toHaveBeenCalledWith.
       const executedDeviceAction = () => {
         const args = vi.mocked(mockedDmk.executeDeviceAction).mock
           .calls[0]![0]!;
         expect(args.sessionId).toBe("sessionId");
-        expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
-        return args.deviceAction as CallTaskInAppDeviceAction<
-          SignTransactionDAOutput,
-          TronAppCommandError,
-          UserInteractionRequired.SignTransaction
-        >;
+        expect(args.deviceAction).toBeInstanceOf(SignTransactionDeviceAction);
+        return args.deviceAction as SignTransactionDeviceAction;
       };
 
-      it("requires the SignTransaction interaction", () => {
+      it("passes the transaction and the context module resolving its tokens", () => {
         // WHEN
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
+          addressBook,
         );
         binder.signTransaction({
           derivationPath,
@@ -287,10 +298,10 @@ describe("TronAppBinder", () => {
 
         // THEN
         const deviceAction = executedDeviceAction();
-        expect(deviceAction.input.appName).toBe(APP_NAME);
-        expect(deviceAction.input.requiredUserInteraction).toBe(
-          UserInteractionRequired.SignTransaction,
-        );
+        expect(deviceAction.input.derivationPath).toBe(derivationPath);
+        expect(deviceAction.input.transaction).toBe(transaction);
+        expect(deviceAction.input.contextModule).toBe(contextModuleMock);
+        expect(deviceAction.input.addressBook).toBe(addressBook);
         expect(deviceAction.input.skipOpenApp).toBe(true);
       });
 
@@ -300,6 +311,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         binder.signTransaction({ derivationPath, transaction });
 
@@ -339,6 +351,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         const { observable } = binder.signTransactionHash({
           derivationPath,
@@ -374,6 +387,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         binder.signTransactionHash({
           derivationPath,
@@ -408,6 +422,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         binder.signTransactionHash({ derivationPath, transactionHash });
 
@@ -463,6 +478,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         const { observable } = binder.signPersonalMessage({
           derivationPath,
@@ -512,6 +528,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         binder.signPersonalMessage({
           derivationPath,
@@ -534,6 +551,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         binder.signPersonalMessage({ derivationPath, message });
 
@@ -575,6 +593,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         const { observable } = binder.getAppConfiguration();
 
@@ -606,6 +625,7 @@ describe("TronAppBinder", () => {
         mockedDmk,
         "sessionId",
         loggerFactoryMock,
+        contextModuleMock,
       );
       binder.getAppConfiguration();
 
@@ -655,6 +675,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         const { observable } = binder.getECDHSecret({
           derivationPath,
@@ -690,6 +711,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         binder.getECDHSecret({ derivationPath, publicKey, skipOpenApp: true });
 
@@ -720,6 +742,7 @@ describe("TronAppBinder", () => {
           mockedDmk,
           "sessionId",
           loggerFactoryMock,
+          contextModuleMock,
         );
         binder.getECDHSecret({ derivationPath, publicKey });
 

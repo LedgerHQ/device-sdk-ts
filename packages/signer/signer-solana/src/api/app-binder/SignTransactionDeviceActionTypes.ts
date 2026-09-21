@@ -108,6 +108,9 @@ export type SignTransactionDAInternalState = {
   readonly clearSignPrepared: boolean;
   // Unrecognized program IDs from generic clear-sign, used for blind-sign reporting.
   readonly unrecognizedProgramIds: string[];
+  // Set when generic clear-sign degraded specifically due to an ACCOUNT_SCHEMA
+  // pre-check failure (stale CAL descriptor), used for blind-sign reporting.
+  readonly staleDescriptor: boolean;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { type CalInstructionDescriptorDto } from "./InstructionInfoDto";
 import {
   toAccountResets,
+  toAccountSchema,
   toDisplayFields,
   toHideRules,
   toInstructionInfoPayload,
@@ -162,6 +163,30 @@ describe("InstructionInfoMapper", () => {
       ).toEqual([{ account_index: 2, require_pre_balance_zero: true }]);
     });
 
+    it("passes through value_kind, token, and require_native_pre_balance_zero", () => {
+      expect(
+        toAccountResets([
+          {
+            descriptor: "ar1",
+            account_index: 3,
+            value_kind: "splToken",
+            token: {
+              kind: "RESOLVE",
+              account_index: 4,
+            },
+            require_native_pre_balance_zero: true,
+          },
+        ]),
+      ).toEqual([
+        {
+          account_index: 3,
+          value_kind: "splToken",
+          token: { kind: "RESOLVE", account_index: 4 },
+          require_native_pre_balance_zero: true,
+        },
+      ]);
+    });
+
     it("drops entries missing account_index instead of defaulting to slot 0", () => {
       expect(
         toAccountResets([
@@ -208,6 +233,60 @@ describe("InstructionInfoMapper", () => {
       expect(toDisplayFields([{ descriptor: "df1" }])).toEqual([
         { name: undefined, param: { type: "" } },
       ]);
+    });
+  });
+
+  describe("toAccountSchema", () => {
+    it("returns undefined for undefined input (no ACCOUNT_SCHEMA check)", () => {
+      expect(toAccountSchema(undefined)).toBeUndefined();
+    });
+
+    it("maps count bounds, remaining_policy, and per-slot constraints", () => {
+      expect(
+        toAccountSchema({
+          count_min: 2,
+          count_max: 4,
+          remaining_policy: { signer: "FORBIDDEN", writable: "EITHER" },
+          slots: [
+            { signer: "REQUIRED", writable: "EITHER" },
+            { signer: "EITHER", writable: "REQUIRED" },
+          ],
+        }),
+      ).toEqual({
+        count_min: 2,
+        count_max: 4,
+        remaining_policy: { signer: "FORBIDDEN", writable: "EITHER" },
+        slots: [
+          { signer: "REQUIRED", writable: "EITHER" },
+          { signer: "EITHER", writable: "REQUIRED" },
+        ],
+      });
+    });
+
+    it("defaults count_min to 0, count_max to 255 (COUNT_UNBOUNDED), remaining_policy and slots to EITHER/empty", () => {
+      expect(toAccountSchema({})).toEqual({
+        count_min: 0,
+        count_max: 255,
+        remaining_policy: { signer: "EITHER", writable: "EITHER" },
+        slots: [],
+      });
+    });
+
+    it("defaults an unknown or missing per-field constraint value to EITHER (fails open, unlike ACCOUNT_RESET's value_kind)", () => {
+      expect(
+        toAccountSchema({
+          count_min: 1,
+          count_max: 1,
+          // @ts-expect-error exercising a malformed/unexpected value from CAL
+          remaining_policy: { signer: "NOT_A_VALUE", writable: undefined },
+          slots: [{ signer: "REQUIRED" } as never],
+        }),
+      ).toEqual({
+        count_min: 1,
+        count_max: 1,
+        remaining_policy: { signer: "EITHER", writable: "EITHER" },
+        slots: [{ signer: "REQUIRED", writable: "EITHER" }],
+      });
     });
   });
 
@@ -258,6 +337,11 @@ describe("InstructionInfoMapper", () => {
             require_pre_balance_zero: true,
           },
         ],
+        account_schema: {
+          count_min: 2,
+          count_max: 2,
+          slots: [{ signer: "REQUIRED", writable: "EITHER" }],
+        },
       });
 
       const payload = toInstructionInfoPayload(
@@ -300,6 +384,12 @@ describe("InstructionInfoMapper", () => {
           },
         ],
         accountResets: [{ account_index: 1, require_pre_balance_zero: true }],
+        accountSchema: {
+          count_min: 2,
+          count_max: 2,
+          remaining_policy: { signer: "EITHER", writable: "EITHER" },
+          slots: [{ signer: "REQUIRED", writable: "EITHER" }],
+        },
         displayFields: [
           {
             name: "New Account",

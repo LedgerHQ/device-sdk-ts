@@ -135,6 +135,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
           instructionInfoContexts: null,
           challengeBoundRequirements: null,
           unrecognizedProgramIds: [],
+          staleDescriptor: false,
         },
       }),
       states: {
@@ -165,6 +166,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
                   challengeBoundRequirements:
                     event.output.challengeBoundRequirements,
                   unrecognizedProgramIds: event.output.unrecognizedProgramIds,
+                  staleDescriptor: event.output.staleDescriptor,
                 }),
               }),
             },
@@ -209,6 +211,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
                 tokenAmountAltRefs: [],
                 tokenAccountStateAltRefs: [],
                 mintAltRefs: [],
+                trustedNameAltRefs: [],
               },
             }),
             onDone: [
@@ -298,6 +301,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
         Right({
           status: context._internalState.outcome ?? "degraded",
           unrecognizedProgramIds: context._internalState.unrecognizedProgramIds,
+          staleDescriptor: context._internalState.staleDescriptor,
         }),
     });
   }

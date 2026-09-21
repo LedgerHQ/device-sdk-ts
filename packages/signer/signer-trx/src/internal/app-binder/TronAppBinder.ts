@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CallTaskInAppDeviceAction,
   type DeviceManagementKit,
@@ -14,13 +15,17 @@ import { type GetECDHSecretDAReturnType } from "@api/app-binder/GetECDHSecretDev
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTransactionHashDAReturnType } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
+import {
+  EMPTY_TRON_ADDRESS_BOOK,
+  type TronAddressBook,
+} from "@api/model/TronAddressBook";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { GetECDHSecretCommand } from "@internal/app-binder/command/GetECDHSecretCommand";
 import { SignTransactionHashCommand } from "@internal/app-binder/command/SignTransactionHashCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 import { SignPersonalMessageTask } from "@internal/app-binder/task/SignPersonalMessageTask";
-import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
 import { externalTypes } from "@internal/externalTypes";
 
 @injectable()
@@ -30,6 +35,10 @@ export class TronAppBinder {
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
     @inject(externalTypes.DmkLoggerFactory)
     private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(externalTypes.ContextModule)
+    private contextModule: ContextModule,
+    @inject(externalTypes.AddressBook)
+    private addressBook: TronAddressBook = EMPTY_TRON_ADDRESS_BOOK,
   ) {}
 
   getAddress(args: {
@@ -63,18 +72,15 @@ export class TronAppBinder {
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new CallTaskInAppDeviceAction({
+      deviceAction: new SignTransactionDeviceAction({
         input: {
-          task: async (internalApi) =>
-            new SignTransactionTask(internalApi, {
-              derivationPath: args.derivationPath,
-              transaction: args.transaction,
-            }).run(),
-          appName: APP_NAME,
-          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          derivationPath: args.derivationPath,
+          transaction: args.transaction,
+          contextModule: this.contextModule,
+          addressBook: this.addressBook,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("SignTransactionTask"),
+        logger: this.dmkLoggerFactory("SignTransactionDeviceAction"),
       }),
     });
   }
