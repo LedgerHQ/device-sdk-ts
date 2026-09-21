@@ -1,5 +1,17 @@
 # @ledgerhq/device-management-kit
 
+## 1.9.1
+
+### Patch Changes
+
+- [#1868](https://github.com/LedgerHQ/device-sdk-ts/pull/1868) [`f4a3bee`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4a3beea6aa3c3764771fbb01caee16c0d2becb7) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Fix off-by-one in the SE flags onboarding state byte mapping: `0x00` now correctly maps to `OnboardingState.WelcomeScreen1` instead of `OnboardingState.Unknown`. Add missing `OnboardingState.Pin` at `0x06`.
+
+- [#1847](https://github.com/LedgerHQ/device-sdk-ts/pull/1847) [`856461c`](https://github.com/LedgerHQ/device-sdk-ts/commit/856461cb582efdcb52ddd371797a646ee20264fe) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Expose parsed endorsement, seed word, and onboarding information from the secure element flags returned by `GetOsVersionCommand`. Onboarding status is mapped to the `OnboardingState` string enum (`0x01`–`0x10`); unmapped bytes including `0x00` become `OnboardingState.Unknown`.
+
+- [#1855](https://github.com/LedgerHQ/device-sdk-ts/pull/1855) [`acd0c05`](https://github.com/LedgerHQ/device-sdk-ts/commit/acd0c050d9fbf6f306cd4bf43ad3594272da6b20) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Expose `SeedWordCount` as named numeric values (`12`, `18`, `24`) on `GetOsVersionCommand` seed word information. The public type remains the union `12 | 18 | 24` (const object, not a numeric enum). Reserved encodings remain `undefined`.
+
+- [#1900](https://github.com/LedgerHQ/device-sdk-ts/pull/1900) [`762139e`](https://github.com/LedgerHQ/device-sdk-ts/commit/762139ee3348882aef30bc17a07328b697c9725f) Thanks [@benruseau](https://github.com/benruseau)! - Remove hardcoded livecommonversion in HttpManagerApiDataSource
+
 ## 1.9.0
 
 ### Minor Changes

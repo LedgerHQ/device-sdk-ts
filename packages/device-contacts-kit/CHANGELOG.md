@@ -1,5 +1,16 @@
 # @ledgerhq/device-contacts-kit
 
+## 0.5.0
+
+### Minor Changes
+
+- [#1902](https://github.com/LedgerHQ/device-sdk-ts/pull/1902) [`acf298b`](https://github.com/LedgerHQ/device-sdk-ts/commit/acf298b8deadbed10c516553d4b824015618a0d3) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add Tron blockchain family and app version requirements for Contacts.
+
+### Patch Changes
+
+- Updated dependencies [[`f4a3bee`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4a3beea6aa3c3764771fbb01caee16c0d2becb7), [`856461c`](https://github.com/LedgerHQ/device-sdk-ts/commit/856461cb582efdcb52ddd371797a646ee20264fe), [`acd0c05`](https://github.com/LedgerHQ/device-sdk-ts/commit/acd0c050d9fbf6f306cd4bf43ad3594272da6b20), [`762139e`](https://github.com/LedgerHQ/device-sdk-ts/commit/762139ee3348882aef30bc17a07328b697c9725f)]:
+  - @ledgerhq/device-management-kit@1.9.1
+
 ## 0.4.1
 
 ### Patch Changes
