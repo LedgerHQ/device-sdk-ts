@@ -13,7 +13,6 @@ import {
 } from "@ledgerhq/lumen-ui-react";
 import {
   ExitLogout,
-  LedgerLogo,
   Plus,
   Refresh,
   Trash,
@@ -24,6 +23,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { DeviceCard } from "@/components/DeviceCard";
 import { DeviceDialog } from "@/components/DeviceDialog";
 import { LabeledRow } from "@/components/LabeledRow";
+import { MockServerLogo } from "@/components/MockServerLogo";
 import { Panel } from "@/components/Panel";
 import { SeedPanel } from "@/components/SeedPanel";
 import { ServerStatus } from "@/components/ServerStatus";
@@ -99,7 +99,7 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
     <>
       <header className="border-muted bg-canvas sticky top-0 z-10 border-b">
         <div className="mx-auto flex max-w-[1040px] flex-wrap items-center gap-12 px-24 py-16">
-          <LedgerLogo size={24} className="text-base" />
+          <MockServerLogo size={24} className="text-base" />
           <p className="body-2-semi-bold text-base">Device Mock Server</p>
           <ServerStatus />
           <div className="ml-auto flex items-center gap-8">
