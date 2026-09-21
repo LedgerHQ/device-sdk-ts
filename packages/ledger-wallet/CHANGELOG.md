@@ -5,9 +5,9 @@
 ### Minor Changes
 
 - [#1901](https://github.com/LedgerHQ/device-sdk-ts/pull/1901) [`b5fc8f0`](https://github.com/LedgerHQ/device-sdk-ts/commit/b5fc8f0d39bfe71741265a4be220eb59b8625e71) Thanks [@benruseau](https://github.com/benruseau)! - Add a bootloader recovery mode to `FlashMcuDeviceAction`. `FlashMcuDAInput` now
-takes a `mode`: `{ mode: "osUpdate", finalFirmware }` keeps the previous
-behaviour, while `{ mode: "bootloaderRecovery" }` resolves the MCU from what the
-device reports, for a device stuck in bootloader mode with no known update path.
+  takes a `mode`: `{ mode: "osUpdate", finalFirmware }` keeps the previous
+  behaviour, while `{ mode: "bootloaderRecovery" }` resolves the MCU from what the
+  device reports, for a device stuck in bootloader mode with no known update path.
 
 The forced MCU versions are now per mode, matching the two legacy flows: an OS
 update only aliases a bootloader reporting no version, and resolves everything
