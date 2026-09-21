@@ -1,5 +1,23 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.13.1
+
+### Patch Changes
+
+- [#1889](https://github.com/LedgerHQ/device-sdk-ts/pull/1889) [`2a313be`](https://github.com/LedgerHQ/device-sdk-ts/commit/2a313be056dd59c0bb3eb0e4e76db8bb0c876ad2) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Support blind-signing Solana v1 transactions
+
+- [#1888](https://github.com/LedgerHQ/device-sdk-ts/pull/1888) [`9ff5a40`](https://github.com/LedgerHQ/device-sdk-ts/commit/9ff5a4006756a7b6429116b15f2ff0f7f4481b34) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Lock in substructure framing + warn on pinned skips
+
+- [#1877](https://github.com/LedgerHQ/device-sdk-ts/pull/1877) [`ac41ccc`](https://github.com/LedgerHQ/device-sdk-ts/commit/ac41ccc40158ac1edd3493bf88a7d7c25f2c60b9) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Plumb ACCOUNT_RESET domain fields + TOKEN_ACCOUNT_STATE paths 2 & 5 + ALT for resets
+
+- [#1886](https://github.com/LedgerHQ/device-sdk-ts/pull/1886) [`5030e85`](https://github.com/LedgerHQ/device-sdk-ts/commit/5030e85dea4f36a2307609dcabe20eee607f08ab) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add ACCOUNT_SCHEMA host pre-check for stale CAL descriptors
+
+- [#1834](https://github.com/LedgerHQ/device-sdk-ts/pull/1834) [`fd2c61d`](https://github.com/LedgerHQ/device-sdk-ts/commit/fd2c61d88c41747aca78d24c5a4a77a7ab936ef4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix generic clear-signing when a hide-rule target, an owner association or a token-value fallback account is supplied by an Address Lookup Table.
+
+- Updated dependencies [[`ac41ccc`](https://github.com/LedgerHQ/device-sdk-ts/commit/ac41ccc40158ac1edd3493bf88a7d7c25f2c60b9), [`5030e85`](https://github.com/LedgerHQ/device-sdk-ts/commit/5030e85dea4f36a2307609dcabe20eee607f08ab), [`1fe060e`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe060e78f76b03960c0a23c6bb93fa54cad8915), [`f275d1e`](https://github.com/LedgerHQ/device-sdk-ts/commit/f275d1ea15dc3a4fd58379c47a5219b1f84967de), [`c6a2056`](https://github.com/LedgerHQ/device-sdk-ts/commit/c6a205652ebb21f154b26f6dda2b22d7119ccbaa), [`f4a3bee`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4a3beea6aa3c3764771fbb01caee16c0d2becb7), [`856461c`](https://github.com/LedgerHQ/device-sdk-ts/commit/856461cb582efdcb52ddd371797a646ee20264fe), [`acd0c05`](https://github.com/LedgerHQ/device-sdk-ts/commit/acd0c050d9fbf6f306cd4bf43ad3594272da6b20), [`762139e`](https://github.com/LedgerHQ/device-sdk-ts/commit/762139ee3348882aef30bc17a07328b697c9725f)]:
+  - @ledgerhq/context-module@2.6.0
+  - @ledgerhq/device-management-kit@1.9.1
+
 ## 1.13.0
 
 ### Minor Changes

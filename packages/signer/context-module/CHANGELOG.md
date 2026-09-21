@@ -1,5 +1,24 @@
 # @ledgerhq/context-module
 
+## 2.6.0
+
+### Minor Changes
+
+- [#1893](https://github.com/LedgerHQ/device-sdk-ts/pull/1893) [`1fe060e`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe060e78f76b03960c0a23c6bb93fa54cad8915) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add a Tron chain with a TRC10 token loader, resolving the token descriptor from the transaction alone
+
+- [#1834](https://github.com/LedgerHQ/device-sdk-ts/pull/1834) [`f275d1e`](https://github.com/LedgerHQ/device-sdk-ts/commit/f275d1ea15dc3a4fd58379c47a5219b1f84967de) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Surface the Solana CAL instruction-descriptor fields the requirement builder was dropping: `hide_rules` and `owner_association`, plus `TOKEN_VALUE.FALLBACK_ACCOUNT` and `VALUE_FLOW_PORT.ACTIVE_WHEN` on the port shapes.
+
+### Patch Changes
+
+- [#1877](https://github.com/LedgerHQ/device-sdk-ts/pull/1877) [`ac41ccc`](https://github.com/LedgerHQ/device-sdk-ts/commit/ac41ccc40158ac1edd3493bf88a7d7c25f2c60b9) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Plumb ACCOUNT_RESET domain fields + TOKEN_ACCOUNT_STATE paths 2 & 5 + ALT for resets
+
+- [#1886](https://github.com/LedgerHQ/device-sdk-ts/pull/1886) [`5030e85`](https://github.com/LedgerHQ/device-sdk-ts/commit/5030e85dea4f36a2307609dcabe20eee607f08ab) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add ACCOUNT_SCHEMA host pre-check for stale CAL descriptors
+
+- [#1881](https://github.com/LedgerHQ/device-sdk-ts/pull/1881) [`c6a2056`](https://github.com/LedgerHQ/device-sdk-ts/commit/c6a205652ebb21f154b26f6dda2b22d7119ccbaa) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - nativePreBalance DTO + owner-without-mint warn for TOKEN_ACCOUNT_STATE
+
+- Updated dependencies [[`f4a3bee`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4a3beea6aa3c3764771fbb01caee16c0d2becb7), [`856461c`](https://github.com/LedgerHQ/device-sdk-ts/commit/856461cb582efdcb52ddd371797a646ee20264fe), [`acd0c05`](https://github.com/LedgerHQ/device-sdk-ts/commit/acd0c050d9fbf6f306cd4bf43ad3594272da6b20), [`762139e`](https://github.com/LedgerHQ/device-sdk-ts/commit/762139ee3348882aef30bc17a07328b697c9725f)]:
+  - @ledgerhq/device-management-kit@1.9.1
+
 ## 2.5.0
 
 ### Minor Changes

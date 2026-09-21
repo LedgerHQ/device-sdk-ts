@@ -1,5 +1,26 @@
 # @ledgerhq/dmk-ledger-wallet
 
+## 0.6.0
+
+### Minor Changes
+
+- [#1901](https://github.com/LedgerHQ/device-sdk-ts/pull/1901) [`b5fc8f0`](https://github.com/LedgerHQ/device-sdk-ts/commit/b5fc8f0d39bfe71741265a4be220eb59b8625e71) Thanks [@benruseau](https://github.com/benruseau)! - Add a bootloader recovery mode to `FlashMcuDeviceAction`. `FlashMcuDAInput` now
+  takes a `mode`: `{ mode: "osUpdate", finalFirmware }` keeps the previous
+  behaviour, while `{ mode: "bootloaderRecovery" }` resolves the MCU from what the
+  device reports, for a device stuck in bootloader mode with no known update path.
+
+The forced MCU versions are now per mode, matching the two legacy flows: an OS
+update only aliases a bootloader reporting no version, and resolves everything
+else from the MCU catalog constrained by the firmware being installed, while a
+recovery keeps the full set of hops. An OS update on a device reporting
+bootloader `0.6`, `0.7` or `0.9` previously skipped the catalog and ignored the
+final firmware.
+
+### Patch Changes
+
+- Updated dependencies [[`f4a3bee`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4a3beea6aa3c3764771fbb01caee16c0d2becb7), [`856461c`](https://github.com/LedgerHQ/device-sdk-ts/commit/856461cb582efdcb52ddd371797a646ee20264fe), [`acd0c05`](https://github.com/LedgerHQ/device-sdk-ts/commit/acd0c050d9fbf6f306cd4bf43ad3594272da6b20), [`762139e`](https://github.com/LedgerHQ/device-sdk-ts/commit/762139ee3348882aef30bc17a07328b697c9725f)]:
+  - @ledgerhq/device-management-kit@1.9.1
+
 ## 0.5.0
 
 ### Minor Changes
