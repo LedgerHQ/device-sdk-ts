@@ -16,7 +16,9 @@ import { type RequirementAccumulator } from "@internal/app-binder/clear-sign/req
 import {
   accountAddressAt,
   accountAltRefAt,
+  accountIsSignerAt,
   altRefForPubkeyValue,
+  pubkeyValueAccountIndex,
   resolvePortAccountIndex,
   resolvePubkeyValue,
 } from "@internal/app-binder/clear-sign/requirements/valueResolution";
@@ -45,11 +47,12 @@ import {
  *   pair or by a `FALLBACK_ACCOUNT`. Without the mint the reset resolves to no
  *   domain and establishes nothing.
  * - IS_SIGNER hide rule / port activation predicate: TOKEN_ACCOUNT_STATE for the
- *   target unless a TX-derived OWNER_ASSOC binding already covers it. The
- *   device's `IS_SIGNER` predicate matches a token account only through the
- *   owner map, which it seeds from OWNER_ASSOC pairs first and from attested
- *   `TOKEN_ACCOUNT_STATE.OWNER` second. An ALT-backed target goes to
- *   `tokenAccountStateAltRefs`, the post-ALT_RESOLUTION equivalent.
+ *   target unless a TX-derived OWNER_ASSOC binding already covers it, or the
+ *   header already marks the slot a signer. The device's `IS_SIGNER` predicate
+ *   reaches a token account only through the owner map, which it seeds from
+ *   OWNER_ASSOC pairs first and from attested `TOKEN_ACCOUNT_STATE.OWNER`
+ *   second. An ALT-backed target goes to `tokenAccountStateAltRefs`, the
+ *   post-ALT_RESOLUTION equivalent.
  * - PARAM_TOKEN_AMOUNT display field: the amount formatter's token needs
  *   TOKEN_INFO. For CONSTANT source: always a mint. For ACCOUNT_PATH source:
  *   if covered by a TX-derived MINT_ASSOC binding, use the bound mint. If not,
@@ -233,18 +236,32 @@ function requestFallbackMint(
 
 /**
  * `TOKEN_ACCOUNT_STATE` trigger path 3: an `IS_SIGNER` predicate — on a
- * `HIDE_RULE` target or on a port's `ACTIVE_WHEN` — matches a token account only
- * if the device can bind it to an owner. A TX-derived `OWNER_ASSOC` pair covers
- * that binding; otherwise the only source is the attested
- * `TOKEN_ACCOUNT_STATE.OWNER`, so request one.
+ * `HIDE_RULE` target or on a port's `ACTIVE_WHEN`.
+ *
+ * The device answers `IS_SIGNER` by deriving the address from its own seed and
+ * comparing, which needs no help for a plain key. A token account defeats that:
+ * its address is a program derivation the seed never produces, so the device
+ * first dereferences the account to its owner — from a TX-derived `OWNER_ASSOC`
+ * pair, else from an attested `TOKEN_ACCOUNT_STATE.OWNER` — and derives against
+ * that instead. The descriptor is therefore worth fetching only where the target
+ * may be a token account; anywhere else there is nothing to dereference and the
+ * fetch buys no answer the device could not already reach.
+ *
+ * A slot the message header marks as a signer is one case the host can settle
+ * for free: it produced an ed25519 signature, so it is a plain key and never a
+ * program-owned token account. Requesting state for it asks the backend to
+ * attest an address that is not a token account — and a descriptor that comes
+ * back anyway seeds the device's owner map with a binding that has no business
+ * being there, turning a wasted round trip into a wrong answer.
  *
  * An ALT-backed target has no host-side address, so neither the binding lookup
- * nor a build-time fetch is possible: it goes to `tokenAccountStateAltRefs` and
- * the provide phase fetches the state once `ALT_RESOLUTION` names the address.
- * Skipping it would leave the owner map unseeded and the predicate false. And
- * ALT-supplied slots are never message signers, so a target reached through one
- * can only ever satisfy `IS_SIGNER` *through* the owner map — making the
- * attestation the sole path to a true answer rather than a second opinion.
+ * nor the signer check nor a build-time fetch is possible: it goes to
+ * `tokenAccountStateAltRefs` and the provide phase fetches the state once
+ * `ALT_RESOLUTION` names the address. Skipping it would leave a token account's
+ * owner map unseeded and the predicate false. ALT-supplied slots are never
+ * message signers, so the check below cannot pre-empt that fetch the way it does
+ * for a static slot: a plain key reached through an ALT still costs one fetch
+ * that finds nothing.
  *
  * `IS_SIGNER` is the only predicate worth a descriptor. The structural ones
  * (`CREATED_IN_TRANSACTION`, `ACCOUNT_USED_ELSEWHERE`,
@@ -253,11 +270,6 @@ function requestFallbackMint(
  * without the binding it falls through to a header signer check, which a
  * program-owned token account can never pass, so the answer is `false` either
  * way and the descriptor changes nothing.
- *
- * The host cannot tell a token account from a plain wallet key, so a predicate
- * targeting the signer's own key costs one fetch that finds nothing. That is the
- * cheap side of the trade: without the descriptor the predicate silently
- * evaluates false and the device shows plumbing screens that should be hidden.
  */
 function applyOwnerAttestationRule(
   parsed: ParsedInstruction,
@@ -266,9 +278,20 @@ function applyOwnerAttestationRule(
   accumulator: RequirementAccumulator,
   bs58Encoder: Bs58Encoder,
 ): void {
-  const request = (address: string | undefined): void => {
+  // `accountIndex` is the slot the target was reached through, when it was
+  // reached through one — a `CONSTANT` target carries its address inline and
+  // names no slot, so it cannot be signer-checked.
+  const request = (
+    address: string | undefined,
+    accountIndex: number | undefined,
+  ): void => {
     if (address === undefined) return;
     if (bindings.owners.has(address)) return;
+    if (
+      accountIndex !== undefined &&
+      accountIsSignerAt(instruction, accountIndex)
+    )
+      return;
     accumulator.addTokenAccountState(address);
   };
 
@@ -278,7 +301,7 @@ function applyOwnerAttestationRule(
     if (target === undefined) continue;
     const address = resolvePubkeyValue(target, instruction, bs58Encoder);
     if (address !== undefined) {
-      request(address);
+      request(address, pubkeyValueAccountIndex(target));
     } else {
       requestAltState(altRefForPubkeyValue(target, instruction), accumulator);
     }
@@ -289,7 +312,7 @@ function applyOwnerAttestationRule(
     const accountIndex = resolvePortAccountIndex(port, instruction);
     const address = accountAddressAt(instruction, accountIndex);
     if (address !== undefined) {
-      request(address);
+      request(address, accountIndex);
     } else {
       requestAltState(accountAltRefAt(instruction, accountIndex), accumulator);
     }
