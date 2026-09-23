@@ -12,6 +12,7 @@ import {
   type RegisterExternalAddressOutput,
   type RenameContactOutput,
 } from "@ledgerhq/device-contacts-kit";
+import { bufferToHexaString } from "@ledgerhq/device-management-kit";
 import { Button, Flex, Tag, Text } from "@ledgerhq/react-ui";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -24,17 +25,22 @@ import {
   applyEditScope,
   applyRegister,
   applyRename,
-  bytesToHex,
+  chainIdForFamily,
   type ContactGroup,
+  CONTACTS_FAMILY_OPTIONS,
+  type ContactsFamily,
   emptyAddressBook,
   type ExternalAddress,
   externalAddressesForGroup,
   findGroupById,
-  hexToBytes,
+  formatIdentifier,
   loadAddressBook,
+  parseHexField,
+  parseIdentifier,
   saveAddressBook,
+  toContactsFamily,
 } from "@/lib/contacts/addressBook";
-import { useContactsManager } from "@/providers/ContactsProvider";
+import { useContactsManagers } from "@/providers/ContactsProvider";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 // Example first-account Ethereum address (no 0x prefix).
@@ -55,6 +61,18 @@ function last<T>(items: T[]): T | undefined {
 function truncateHex(hex: string): string {
   return hex.length > 20 ? `${hex.slice(0, 12)}…${hex.slice(-8)}` : hex;
 }
+
+/** A stored address in its family's human-readable form (base58 for Tron). */
+function displayAddress(address: ExternalAddress): string {
+  return formatIdentifier(
+    address.blockchainFamily,
+    parseHexField(address.address, "address"),
+  );
+}
+
+// Family is a dropdown on every app-owned operation: it selects both the
+// BLOCKCHAIN_FAMILY byte and the embedded app the operation runs in.
+const familyValueSelector = { blockchainFamily: CONTACTS_FAMILY_OPTIONS };
 
 /**
  * Host-side address-book store for the Contacts playground. Holds the canonical
@@ -203,10 +221,13 @@ const RegisterExternalAddressOutputView: React.FC<{
     ["scope", output.scope],
     ["blockchainFamily", output.blockchainFamily],
     ["chainId", output.chainId?.toString() ?? "—"],
-    ["identifier", bytesToHex(output.identifier)],
-    ["groupHandle", bytesToHex(output.groupHandle)],
-    ["hmacProof", bytesToHex(output.hmacProof)],
-    ["hmacRest", bytesToHex(output.hmacRest)],
+    [
+      "identifier",
+      formatIdentifier(output.blockchainFamily, output.identifier),
+    ],
+    ["groupHandle", bufferToHexaString(output.groupHandle, false)],
+    ["hmacProof", bufferToHexaString(output.hmacProof, false)],
+    ["hmacRest", bufferToHexaString(output.hmacRest, false)],
   ];
 
   return <SavedProofRows rows={rows} />;
@@ -223,8 +244,8 @@ const RenameContactOutputView: React.FC<{
   const rows: Array<[string, string]> = [
     ["previousContactName", output.previousContactName],
     ["contactName", output.contactName],
-    ["groupHandle", bytesToHex(output.groupHandle)],
-    ["hmacProof", bytesToHex(output.hmacProof)],
+    ["groupHandle", bufferToHexaString(output.groupHandle, false)],
+    ["hmacProof", bufferToHexaString(output.hmacProof, false)],
   ];
 
   return <SavedProofRows rows={rows} />;
@@ -241,13 +262,19 @@ const EditExternalAddressIdentifierOutputView: React.FC<{
   const rows: Array<[string, string]> = [
     ["contactName", output.contactName],
     ["scope", output.scope],
-    ["previousIdentifier", bytesToHex(output.previousIdentifier)],
-    ["identifier", bytesToHex(output.identifier)],
+    [
+      "previousIdentifier",
+      formatIdentifier(output.blockchainFamily, output.previousIdentifier),
+    ],
+    [
+      "identifier",
+      formatIdentifier(output.blockchainFamily, output.identifier),
+    ],
     ["blockchainFamily", output.blockchainFamily],
     ["chainId", output.chainId?.toString() ?? "—"],
-    ["groupHandle", bytesToHex(output.groupHandle)],
-    ["hmacProof", bytesToHex(output.hmacProof)],
-    ["hmacRest", bytesToHex(output.hmacRest)],
+    ["groupHandle", bufferToHexaString(output.groupHandle, false)],
+    ["hmacProof", bufferToHexaString(output.hmacProof, false)],
+    ["hmacRest", bufferToHexaString(output.hmacRest, false)],
   ];
 
   return <SavedProofRows rows={rows} />;
@@ -265,12 +292,15 @@ const EditExternalAddressScopeOutputView: React.FC<{
     ["contactName", output.contactName],
     ["previousScope", output.previousScope],
     ["scope", output.scope],
-    ["identifier", bytesToHex(output.identifier)],
+    [
+      "identifier",
+      formatIdentifier(output.blockchainFamily, output.identifier),
+    ],
     ["blockchainFamily", output.blockchainFamily],
     ["chainId", output.chainId?.toString() ?? "—"],
-    ["groupHandle", bytesToHex(output.groupHandle)],
-    ["hmacProof", bytesToHex(output.hmacProof)],
-    ["hmacRest", bytesToHex(output.hmacRest)],
+    ["groupHandle", bufferToHexaString(output.groupHandle, false)],
+    ["hmacProof", bufferToHexaString(output.hmacProof, false)],
+    ["hmacRest", bufferToHexaString(output.hmacRest, false)],
   ];
 
   return <SavedProofRows rows={rows} />;
@@ -290,13 +320,13 @@ const AddressRow: React.FC<{ address: ExternalAddress }> = ({ address }) => (
         {address.scope}
       </Tag>
       <Text variant="paragraph" style={{ wordBreak: "break-all" }}>
-        {address.address}
+        {displayAddress(address)}
       </Text>
     </Flex>
     <Text variant="tiny" color="neutral.c70">
       {address.blockchainFamily}
       {address.chainId !== undefined ? ` · chainId ${address.chainId}` : ""} ·
-      hmacRest {truncateHex(bytesToHex(address.hmacRest))}
+      hmacRest {truncateHex(bufferToHexaString(address.hmacRest, false))}
     </Text>
   </Flex>
 );
@@ -313,8 +343,8 @@ const GroupCard: React.FC<{
   >
     <Text variant="large">{group.contactName}</Text>
     <Text variant="tiny" color="neutral.c70">
-      groupHandle {truncateHex(bytesToHex(group.groupHandle))} · hmacProof{" "}
-      {truncateHex(bytesToHex(group.hmacProof))}
+      groupHandle {truncateHex(bufferToHexaString(group.groupHandle, false))} ·
+      hmacProof {truncateHex(bufferToHexaString(group.hmacProof, false))}
     </Text>
     <Flex flexDirection="column" rowGap={2}>
       {addresses.length === 0 ? (
@@ -416,7 +446,7 @@ type RegisterInput = {
   contactName: string;
   scope: string;
   identifier: string;
-  blockchainFamily: string;
+  blockchainFamily: ContactsFamily;
   chainId: string;
   existingGroupHandle: string;
   existingHmacProof: string;
@@ -435,7 +465,7 @@ type EditExternalAddressIdentifierInputForm = {
   scope: string;
   previousIdentifier: string;
   newIdentifier: string;
-  blockchainFamily: string;
+  blockchainFamily: ContactsFamily;
   chainId: string;
   groupHandle: string;
   hmacProof: string;
@@ -448,7 +478,7 @@ type EditExternalAddressScopeInputForm = {
   previousScope: string;
   newScope: string;
   identifier: string;
-  blockchainFamily: string;
+  blockchainFamily: ContactsFamily;
   chainId: string;
   groupHandle: string;
   hmacProof: string;
@@ -458,7 +488,7 @@ type EditExternalAddressScopeInputForm = {
 
 const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
   const dmk = useDmk();
-  const contactsManager = useContactsManager();
+  const contactsManagers = useContactsManagers();
   const { book } = useAddressBookStore();
 
   const deviceModelId = dmk.getConnectedDevice({ sessionId }).modelId;
@@ -481,7 +511,7 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
       {
         title: "Register External Address",
         description:
-          "Register an external address on the device — creating a new contact group, or adding the address to an existing one by providing its group handle and name proof.",
+          "Register an external address on the device — creating a new contact group, or adding the address to an existing one by providing its group handle and name proof. The family selects the embedded app the operation runs in (Ethereum or Tron). Identifier: hex for Ethereum, a base58 T… address for Tron. chainId is sent for Ethereum only.",
         executeDeviceAction: ({
           contactName,
           scope,
@@ -492,24 +522,34 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
           existingHmacProof,
           skipOpenApp,
         }: RegisterInput) => {
-          if (!contactsManager) {
+          if (!contactsManagers) {
             throw new Error("Contacts manager not initialized");
           }
           const existingContactGroup =
             existingGroupHandle.trim().length > 0 &&
             existingHmacProof.trim().length > 0
               ? {
-                  groupHandle: hexToBytes(existingGroupHandle.trim()),
-                  hmacProof: hexToBytes(existingHmacProof.trim()),
+                  groupHandle: parseHexField(
+                    existingGroupHandle,
+                    "existingGroupHandle",
+                  ),
+                  hmacProof: parseHexField(
+                    existingHmacProof,
+                    "existingHmacProof",
+                  ),
                 }
               : undefined;
 
-          return contactsManager.registerExternalAddress({
+          return contactsManagers[blockchainFamily].registerExternalAddress({
             contactName,
             scope,
-            identifier: hexToBytes(identifier.trim()),
+            identifier: parseIdentifier(
+              blockchainFamily,
+              identifier,
+              "identifier",
+            ),
             blockchainFamily,
-            chainId: chainId.trim().length > 0 ? BigInt(chainId) : undefined,
+            chainId: chainIdForFamily(blockchainFamily, chainId),
             existingContactGroup,
             skipOpenApp,
           });
@@ -527,11 +567,14 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
           // Pre-fill the "link to existing group" fields from the latest group,
           // so adding a second address to it is one click away.
           existingGroupHandle: lastGroup
-            ? bytesToHex(lastGroup.groupHandle)
+            ? bufferToHexaString(lastGroup.groupHandle, false)
             : "",
-          existingHmacProof: lastGroup ? bytesToHex(lastGroup.hmacProof) : "",
+          existingHmacProof: lastGroup
+            ? bufferToHexaString(lastGroup.hmacProof, false)
+            : "",
           skipOpenApp: false,
         },
+        valueSelector: familyValueSelector,
         OutputComponent: RegisterExternalAddressOutputView,
         deviceModelId,
       },
@@ -545,15 +588,15 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
           groupHandle,
           hmacProof,
         }: RenameContactInputForm) => {
-          if (!contactsManager) {
+          if (!contactsManagers) {
             throw new Error("Contacts manager not initialized");
           }
 
-          return contactsManager.renameContact({
+          return contactsManagers.ethereum.renameContact({
             previousContactName,
             newContactName,
-            groupHandle: hexToBytes(groupHandle.trim()),
-            hmacProof: hexToBytes(hmacProof.trim()),
+            groupHandle: parseHexField(groupHandle, "groupHandle"),
+            hmacProof: parseHexField(hmacProof, "hmacProof"),
           });
         },
         validateValues: ({
@@ -569,8 +612,12 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
         initialValues: {
           previousContactName: lastGroup?.contactName ?? "Alice",
           newContactName: "Bob",
-          groupHandle: lastGroup ? bytesToHex(lastGroup.groupHandle) : "",
-          hmacProof: lastGroup ? bytesToHex(lastGroup.hmacProof) : "",
+          groupHandle: lastGroup
+            ? bufferToHexaString(lastGroup.groupHandle, false)
+            : "",
+          hmacProof: lastGroup
+            ? bufferToHexaString(lastGroup.hmacProof, false)
+            : "",
         },
         OutputComponent: RenameContactOutputView,
         deviceModelId,
@@ -591,20 +638,30 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
           hmacRest,
           skipOpenApp,
         }: EditExternalAddressIdentifierInputForm) => {
-          if (!contactsManager) {
+          if (!contactsManagers) {
             throw new Error("Contacts manager not initialized");
           }
 
-          return contactsManager.editExternalAddressIdentifier({
+          return contactsManagers[
+            blockchainFamily
+          ].editExternalAddressIdentifier({
             contactName,
             scope,
-            previousIdentifier: hexToBytes(previousIdentifier.trim()),
-            newIdentifier: hexToBytes(newIdentifier.trim()),
+            previousIdentifier: parseIdentifier(
+              blockchainFamily,
+              previousIdentifier,
+              "previousIdentifier",
+            ),
+            newIdentifier: parseIdentifier(
+              blockchainFamily,
+              newIdentifier,
+              "newIdentifier",
+            ),
             blockchainFamily,
-            chainId: chainId.trim().length > 0 ? BigInt(chainId) : undefined,
-            groupHandle: hexToBytes(groupHandle.trim()),
-            hmacProof: hexToBytes(hmacProof.trim()),
-            hmacRest: hexToBytes(hmacRest.trim()),
+            chainId: chainIdForFamily(blockchainFamily, chainId),
+            groupHandle: parseHexField(groupHandle, "groupHandle"),
+            hmacProof: parseHexField(hmacProof, "hmacProof"),
+            hmacRest: parseHexField(hmacRest, "hmacRest"),
             skipOpenApp,
           });
         },
@@ -627,17 +684,24 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
         initialValues: {
           contactName: lastAddressGroup?.contactName ?? "Alice",
           scope: lastAddress?.scope ?? "Eth main",
-          previousIdentifier: lastAddress?.address ?? DEFAULT_IDENTIFIER,
+          previousIdentifier: lastAddress
+            ? displayAddress(lastAddress)
+            : DEFAULT_IDENTIFIER,
           newIdentifier: DEFAULT_NEW_IDENTIFIER,
-          blockchainFamily: lastAddress?.blockchainFamily ?? "ethereum",
+          blockchainFamily: toContactsFamily(lastAddress?.blockchainFamily),
           chainId: lastAddress?.chainId?.toString() ?? "1",
-          groupHandle: lastAddress ? bytesToHex(lastAddress.groupHandle) : "",
-          hmacProof: lastAddressGroup
-            ? bytesToHex(lastAddressGroup.hmacProof)
+          groupHandle: lastAddress
+            ? bufferToHexaString(lastAddress.groupHandle, false)
             : "",
-          hmacRest: lastAddress ? bytesToHex(lastAddress.hmacRest) : "",
+          hmacProof: lastAddressGroup
+            ? bufferToHexaString(lastAddressGroup.hmacProof, false)
+            : "",
+          hmacRest: lastAddress
+            ? bufferToHexaString(lastAddress.hmacRest, false)
+            : "",
           skipOpenApp: false,
         },
+        valueSelector: familyValueSelector,
         OutputComponent: EditExternalAddressIdentifierOutputView,
         deviceModelId,
       },
@@ -657,20 +721,24 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
           hmacRest,
           skipOpenApp,
         }: EditExternalAddressScopeInputForm) => {
-          if (!contactsManager) {
+          if (!contactsManagers) {
             throw new Error("Contacts manager not initialized");
           }
 
-          return contactsManager.editExternalAddressScope({
+          return contactsManagers[blockchainFamily].editExternalAddressScope({
             contactName,
             previousScope,
             newScope,
-            identifier: hexToBytes(identifier.trim()),
+            identifier: parseIdentifier(
+              blockchainFamily,
+              identifier,
+              "identifier",
+            ),
             blockchainFamily,
-            chainId: chainId.trim().length > 0 ? BigInt(chainId) : undefined,
-            groupHandle: hexToBytes(groupHandle.trim()),
-            hmacProof: hexToBytes(hmacProof.trim()),
-            hmacRest: hexToBytes(hmacRest.trim()),
+            chainId: chainIdForFamily(blockchainFamily, chainId),
+            groupHandle: parseHexField(groupHandle, "groupHandle"),
+            hmacProof: parseHexField(hmacProof, "hmacProof"),
+            hmacRest: parseHexField(hmacRest, "hmacRest"),
             skipOpenApp,
           });
         },
@@ -694,21 +762,28 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
           contactName: lastAddressGroup?.contactName ?? "Alice",
           previousScope: lastAddress?.scope ?? "Eth main",
           newScope: DEFAULT_NEW_SCOPE,
-          identifier: lastAddress?.address ?? DEFAULT_IDENTIFIER,
-          blockchainFamily: lastAddress?.blockchainFamily ?? "ethereum",
+          identifier: lastAddress
+            ? displayAddress(lastAddress)
+            : DEFAULT_IDENTIFIER,
+          blockchainFamily: toContactsFamily(lastAddress?.blockchainFamily),
           chainId: lastAddress?.chainId?.toString() ?? "1",
-          groupHandle: lastAddress ? bytesToHex(lastAddress.groupHandle) : "",
-          hmacProof: lastAddressGroup
-            ? bytesToHex(lastAddressGroup.hmacProof)
+          groupHandle: lastAddress
+            ? bufferToHexaString(lastAddress.groupHandle, false)
             : "",
-          hmacRest: lastAddress ? bytesToHex(lastAddress.hmacRest) : "",
+          hmacProof: lastAddressGroup
+            ? bufferToHexaString(lastAddressGroup.hmacProof, false)
+            : "",
+          hmacRest: lastAddress
+            ? bufferToHexaString(lastAddress.hmacRest, false)
+            : "",
           skipOpenApp: false,
         },
+        valueSelector: familyValueSelector,
         OutputComponent: EditExternalAddressScopeOutputView,
         deviceModelId,
       },
     ],
-    [contactsManager, deviceModelId, lastGroup, lastAddress, lastAddressGroup],
+    [contactsManagers, deviceModelId, lastGroup, lastAddress, lastAddressGroup],
   );
 
   return (

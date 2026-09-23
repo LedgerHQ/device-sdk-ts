@@ -22,10 +22,22 @@
 import {
   type EditExternalAddressIdentifierOutput,
   type EditExternalAddressScopeOutput,
+  ETHEREUM_APP_NAME,
   type ProvideContactInput,
   type RegisterExternalAddressOutput,
   type RenameContactOutput,
+  TRON_APP_NAME,
 } from "@ledgerhq/device-contacts-kit";
+import {
+  bufferToHexaString,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
+import {
+  decodeTronAddress,
+  encodeTronAddress,
+  type TronAddressBook,
+  type TronContactGroup,
+} from "@ledgerhq/device-signer-kit-tron";
 
 export type AddressBook = {
   contactGroups: ContactGroup[];
@@ -50,7 +62,11 @@ export type ExternalAddress = {
   /** Copy of the owning group's canonical handle; must match the linked group. */
   groupHandle: Uint8Array;
   scope: string;
-  /** Hex of the identifier bytes (no `0x`) — for Ethereum, the 20-byte address. */
+  /**
+   * Hex of the identifier bytes (no `0x`) — for Ethereum the 20-byte address,
+   * for Tron the 21-byte `0x41`-prefixed address. See {@link formatIdentifier}
+   * for the family's human-readable form.
+   */
   address: string;
   blockchainFamily: string;
   chainId?: bigint;
@@ -160,29 +176,93 @@ export function addSampleContacts(book: AddressBook): AddressBook {
   };
 }
 
+// --- blockchain families ----------------------------------------------------
+//
+// The families the playground can register, and the embedded app that serves
+// each one's app-owned Contacts operations (Register / Edit Identifier / Edit
+// Scope). Rename is an OS operation and ignores the app.
+
+export type ContactsFamily = "ethereum" | "tron";
+
+export const CONTACTS_APP_BY_FAMILY: Readonly<Record<ContactsFamily, string>> =
+  {
+    ethereum: ETHEREUM_APP_NAME,
+    tron: TRON_APP_NAME,
+  };
+
+export const CONTACTS_FAMILY_OPTIONS: Array<{
+  label: string;
+  value: ContactsFamily;
+}> = [
+  { label: "Ethereum", value: "ethereum" },
+  { label: "Tron", value: "tron" },
+];
+
+/** Narrow a stored family string, falling back to Ethereum for unknown ones. */
+export function toContactsFamily(family: string | undefined): ContactsFamily {
+  return family === "tron" ? "tron" : "ethereum";
+}
+
+const TRON_ADDRESS_BYTES = 21;
+const TRON_ADDRESS_PREFIX = 0x41;
+
+/** Only Ethereum carries a CHAIN_ID; the kit would send one for any family. */
+export function chainIdForFamily(
+  family: string,
+  chainId: string,
+): bigint | undefined {
+  return family === "ethereum" && chainId.trim().length > 0
+    ? BigInt(chainId.trim())
+    : undefined;
+}
+
 // --- byte / hex helpers -----------------------------------------------------
 
-export function hexToBytes(hex: string): Uint8Array {
-  const raw = hex.startsWith("0x") || hex.startsWith("0X") ? hex.slice(2) : hex;
-  if (raw.length % 2 !== 0) {
-    throw new Error(`Hex value has an odd length: "${hex}"`);
-  }
-  if (!/^[0-9a-fA-F]*$/.test(raw)) {
-    // Fail fast — otherwise parseInt would coerce non-hex to NaN → 0, silently
-    // producing wrong bytes and confusing downstream device errors.
-    throw new Error(`Hex value contains non-hex characters: "${hex}"`);
-  }
-  const bytes = new Uint8Array(raw.length / 2);
-  for (let i = 0; i < raw.length; i += 2) {
-    bytes[i / 2] = parseInt(raw.slice(i, i + 2), 16);
+/**
+ * Parse a hex form field (optional `0x`) into bytes, naming the field on
+ * failure so a typo surfaces here instead of as an opaque device error.
+ */
+export function parseHexField(value: string, field: string): Uint8Array {
+  const bytes = hexaStringToBuffer(value.trim());
+  if (bytes === null) {
+    throw new Error(`${field} is not a valid hex string: "${value}"`);
   }
   return bytes;
 }
 
-export function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+/**
+ * Parse an identifier form field into the identifier bytes the device signs
+ * over. Tron takes a base58 `T…` address (or its 21-byte hex); every other
+ * family takes hex.
+ */
+export function parseIdentifier(
+  family: string,
+  value: string,
+  field: string,
+): Uint8Array {
+  if (family !== "tron") return parseHexField(value, field);
+
+  const trimmed = value.trim();
+  const bytes = trimmed.startsWith("T")
+    ? decodeTronAddress(trimmed)
+    : hexaStringToBuffer(trimmed);
+  if (
+    !bytes ||
+    bytes.length !== TRON_ADDRESS_BYTES ||
+    bytes[0] !== TRON_ADDRESS_PREFIX
+  ) {
+    throw new Error(
+      `${field} is not a valid Tron address (base58 "T…" or 21-byte hex starting with 41): "${value}"`,
+    );
+  }
+  return bytes;
+}
+
+/** The family's human-readable form of identifier bytes (base58 for Tron). */
+export function formatIdentifier(family: string, bytes: Uint8Array): string {
+  return family === "tron"
+    ? encodeTronAddress(bytes)
+    : bufferToHexaString(bytes, false);
 }
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
@@ -245,7 +325,7 @@ export function applyRegister(
   book: AddressBook,
   output: RegisterExternalAddressOutput,
 ): AddressBook {
-  const addressHex = bytesToHex(output.identifier);
+  const addressHex = bufferToHexaString(output.identifier, false);
 
   let group = findGroupByHandle(book, output.groupHandle);
   let contactGroups = book.contactGroups;
@@ -331,8 +411,8 @@ export function applyEditIdentifier(
   book: AddressBook,
   output: EditExternalAddressIdentifierOutput,
 ): AddressBook {
-  const previousHex = bytesToHex(output.previousIdentifier);
-  const nextHex = bytesToHex(output.identifier);
+  const previousHex = bufferToHexaString(output.previousIdentifier, false);
+  const nextHex = bufferToHexaString(output.identifier, false);
   return {
     ...book,
     externalAddresses: book.externalAddresses.map((a) =>
@@ -352,7 +432,7 @@ export function applyEditScope(
   book: AddressBook,
   output: EditExternalAddressScopeOutput,
 ): AddressBook {
-  const identifierHex = bytesToHex(output.identifier);
+  const identifierHex = bufferToHexaString(output.identifier, false);
   return {
     ...book,
     externalAddresses: book.externalAddresses.map((a) =>
@@ -391,13 +471,39 @@ export function toProvideContactInput(
   return {
     contactName: group.contactName,
     scope: address.scope,
-    identifier: hexToBytes(address.address),
+    identifier: parseHexField(address.address, "address"),
     groupHandle: group.groupHandle,
     hmacProof: group.hmacProof,
     hmacRest: address.hmacRest,
     blockchainFamily: address.blockchainFamily,
     chainId: address.chainId,
   };
+}
+
+/**
+ * Project the book onto the {@link TronAddressBook} snapshot the Tron signer
+ * takes via `withAddressBook`: Tron-family addresses only, nested under their
+ * group, with the address in base58. Groups with no Tron address are dropped.
+ */
+export function toTronAddressBook(book: AddressBook): TronAddressBook {
+  const contactGroups: TronContactGroup[] = [];
+  for (const group of book.contactGroups) {
+    const externalAddresses = externalAddressesForGroup(book, group.id)
+      .filter((a) => a.blockchainFamily === "tron")
+      .map((a) => ({
+        scope: a.scope,
+        address: encodeTronAddress(parseHexField(a.address, "address")),
+        hmacRest: a.hmacRest,
+      }));
+    if (externalAddresses.length === 0) continue;
+    contactGroups.push({
+      contactName: group.contactName,
+      groupHandle: group.groupHandle,
+      hmacProof: group.hmacProof,
+      externalAddresses,
+    });
+  }
+  return { contactGroups, ledgerAccounts: [] };
 }
 
 // --- serialization + storage ------------------------------------------------
@@ -433,18 +539,18 @@ export function serializeAddressBook(book: AddressBook): SerializedAddressBook {
     contactGroups: book.contactGroups.map((g) => ({
       id: g.id,
       contactName: g.contactName,
-      groupHandle: bytesToHex(g.groupHandle),
-      hmacProof: bytesToHex(g.hmacProof),
+      groupHandle: bufferToHexaString(g.groupHandle, false),
+      hmacProof: bufferToHexaString(g.hmacProof, false),
     })),
     externalAddresses: book.externalAddresses.map((a) => ({
       id: a.id,
       contactGroupId: a.contactGroupId,
-      groupHandle: bytesToHex(a.groupHandle),
+      groupHandle: bufferToHexaString(a.groupHandle, false),
       scope: a.scope,
       address: a.address,
       blockchainFamily: a.blockchainFamily,
       ...(a.chainId !== undefined ? { chainId: a.chainId.toString() } : {}),
-      hmacRest: bytesToHex(a.hmacRest),
+      hmacRest: bufferToHexaString(a.hmacRest, false),
     })),
   };
 }
@@ -456,18 +562,18 @@ export function deserializeAddressBook(
     contactGroups: (raw.contactGroups ?? []).map((g) => ({
       id: g.id,
       contactName: g.contactName,
-      groupHandle: hexToBytes(g.groupHandle),
-      hmacProof: hexToBytes(g.hmacProof),
+      groupHandle: parseHexField(g.groupHandle, "groupHandle"),
+      hmacProof: parseHexField(g.hmacProof, "hmacProof"),
     })),
     externalAddresses: (raw.externalAddresses ?? []).map((a) => ({
       id: a.id,
       contactGroupId: a.contactGroupId,
-      groupHandle: hexToBytes(a.groupHandle),
+      groupHandle: parseHexField(a.groupHandle, "groupHandle"),
       scope: a.scope,
       address: a.address,
       blockchainFamily: a.blockchainFamily,
       chainId: a.chainId !== undefined ? BigInt(a.chainId) : undefined,
-      hmacRest: hexToBytes(a.hmacRest),
+      hmacRest: parseHexField(a.hmacRest, "hmacRest"),
     })),
   };
 }
