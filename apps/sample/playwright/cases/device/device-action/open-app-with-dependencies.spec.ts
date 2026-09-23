@@ -48,6 +48,10 @@ test.describe("device action: open app with dependencies", () => {
     device,
     deviceActions,
   }) => {
+    // Opening the app provisions a real Speculos instance. The mock server
+    // alone waits up to 120s for the pod, so the budget here is larger.
+    test.setTimeout(180_000);
+
     await test.step("Given a connected device with only the dashboard", async () => {
       await device.addAndConnect(NANO_X);
     });
@@ -78,6 +82,8 @@ test.describe("device action: open app with dependencies", () => {
     device,
     deviceActions,
   }) => {
+    test.setTimeout(180_000);
+
     await test.step("Given a connected device that already has the 1inch dependency installed", async () => {
       await device.addAndConnect(NANO_X);
       await deviceActions.goto();
@@ -124,6 +130,8 @@ test.describe("device action: open app with dependencies", () => {
     device,
     deviceActions,
   }) => {
+    test.setTimeout(180_000);
+
     await test.step("Given a connected device that already has Ethereum and 1inch installed", async () => {
       await device.addAndConnect(NANO_X);
       await deviceActions.goto();
@@ -160,6 +168,10 @@ test.describe("device action: open app with dependencies", () => {
     device,
     deviceActions,
   }) => {
+    // Four secure-channel installs before the open, so this one waits 180s on
+    // the response alone.
+    test.setTimeout(240_000);
+
     const FOUR_DEPENDENCIES = "1inch,Uniswap,Paraswap,Angle";
 
     await test.step("Given a connected device with only the dashboard", async () => {
@@ -202,6 +214,8 @@ test.describe("device action: open app with dependencies", () => {
     deviceActions,
     mockClient,
   }) => {
+    test.setTimeout(120_000);
+
     let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
 
     await test.step("Given a connected device that declines the secure connection", async () => {
@@ -229,6 +243,8 @@ test.describe("device action: open app with dependencies", () => {
     deviceActions,
     mockClient,
   }) => {
+    test.setTimeout(120_000);
+
     let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
 
     await test.step("Given a connected device that runs out of memory while installing", async () => {
