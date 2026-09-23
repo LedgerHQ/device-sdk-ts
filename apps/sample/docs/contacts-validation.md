@@ -22,8 +22,11 @@ key **`dmk-sample-address-book`** and reloaded on page load.
     Ethereum 1.23.0-dev**.
   - **Rename** needs the OS `EDIT CONTACT NAME` dashboard command, which ships in
     a later OS RC (~mid-Sept 2025). On older OS it returns `686A` — expected.
+- For Tron (section 5): **app-tron ≥ 0.8.0** (test provider **P4**).
 - Device connected (USB), unlocked, session selected in the sample app.
-- Contacts served by the **Ethereum** embedded app (see `ContactsProvider`).
+- The **family** dropdown on Register / Edit Identifier / Edit Scope picks the
+  embedded app the operation runs in: `ethereum` → Ethereum, `tron` → Tron (see
+  `ContactsProvider`). Rename runs on the dashboard, whatever the family.
 - Open the sample app → **Contacts** in the left menu.
 
 Each method renders its progress / intermediate states and any error through the
@@ -97,6 +100,22 @@ device-registered contacts only.
 3. **Expect** a **new** `hmacRest`; `hmacProof` echoes **unchanged**.
 4. **Panel**: that address shows the new scope + rotated `hmacRest`; its
    identifier, the group name and `hmacProof` are unchanged.
+
+## 5. Tron — register, then clear-sign a transfer
+
+1. Open **Register External Address**, set family to `tron`, and enter the
+   recipient as a base58 `T…` address (a 21-byte `41…` hex also works).
+   `chainId` is ignored for Tron. Execute; the Tron app opens — approve.
+2. **Expect** `blockchainFamily: tron`; the panel lists the address in base58.
+3. Build an unsigned TRX transfer (`TransferContract`) to that address — e.g.
+   TronGrid Shasta/Nile `wallet/createtransaction` → `raw_data_hex`.
+4. Open **Signers → Tron** (re-open it after registering: the signer reads the
+   book once, when the page mounts) → **Sign transaction** with that hex.
+5. **Expect** the device review to show the contact name + scope instead of the
+   raw address.
+6. **Negative**: an unregistered recipient shows the raw address; app-tron
+   < 0.8.0 or a Nano S skips the contact step. For TRC20 (`TriggerSmartContract`)
+   the signer matches the token contract address, not the token recipient.
 
 ---
 
