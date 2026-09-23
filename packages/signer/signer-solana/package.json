@@ -39,8 +39,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/context-module": "workspace:^",
-    "@ledgerhq/signer-utils": "workspace:^",
+    "@ledgerhq/context-module": "^2.6.0",
+    "@ledgerhq/signer-utils": "^1.3.0",
     "@solana/transaction-messages": "catalog:",
     "@solana/web3.js": "catalog:",
     "bs58": "catalog:",
@@ -64,6 +64,6 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/device-management-kit": "^1.9.1"
   }
 }
