@@ -25,7 +25,6 @@ export class BtcSignerDriver {
     await this.page.waitForURL("http://localhost:3000/signers");
     await this.page.getByTestId("CTA_command-Bitcoin").click();
     await this.page.waitForURL("http://localhost:3000/signers/bitcoin");
-    await this.page.waitForLoadState("networkidle");
   }
 
   /**

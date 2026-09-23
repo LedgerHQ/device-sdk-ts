@@ -1,8 +1,9 @@
 /**
  * src/components/DeviceScreen/DeviceScreenButtons.tsx
  *
- * The physical buttons of a button-driven device, held for as long as the
- * pointer or key is down, since some flows require a long press.
+ * The physical buttons of a button-driven device. A click is sent whole; only a
+ * pointer or key held past the threshold becomes a press the device has to wait
+ * to see released, since some flows require a long press.
  */
 "use client";
 
@@ -54,6 +55,20 @@ const BUTTONS: { button: SpeculosButton; label: string }[] = [
 
 const isActivationKey = (key: string) => key === " " || key === "Enter";
 
+/**
+ * How long the pointer stays down before the interaction counts as a hold.
+ * A click sent as a separate press and release is two requests the device can
+ * receive in either order, and a chord of both buttons is only seen when they
+ * are down together as its event loop samples them, so a click that beats the
+ * loop is dropped. One press-and-release leaves the timing to the emulator.
+ */
+const HOLD_THRESHOLD_MS = 150;
+
+interface Held {
+  button: SpeculosButton;
+  pressed: boolean;
+}
+
 interface DeviceScreenButtonsProps {
   onPress: (button: SpeculosButton, action: SpeculosAction) => void;
 }
@@ -61,25 +76,48 @@ interface DeviceScreenButtonsProps {
 export const DeviceScreenButtons: React.FC<DeviceScreenButtonsProps> = ({
   onPress,
 }) => {
-  const held = useRef<SpeculosButton | null>(null);
+  const held = useRef<Held | null>(null);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressRef = useRef(onPress);
   pressRef.current = onPress;
 
+  const clearHoldTimer = useCallback(() => {
+    if (!holdTimer.current) return;
+    clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+  }, []);
+
   const hold = useCallback((button: SpeculosButton) => {
     if (held.current) return;
-    held.current = button;
-    pressRef.current(button, "press");
+    const entry: Held = { button, pressed: false };
+    held.current = entry;
+    holdTimer.current = setTimeout(() => {
+      entry.pressed = true;
+      pressRef.current(button, "press");
+    }, HOLD_THRESHOLD_MS);
   }, []);
 
   const release = useCallback(() => {
-    const button = held.current;
-    if (!button) return;
+    const entry = held.current;
+    if (!entry) return;
     held.current = null;
-    pressRef.current(button, "release");
-  }, []);
+    clearHoldTimer();
+    pressRef.current(
+      entry.button,
+      entry.pressed ? "release" : "press-and-release",
+    );
+  }, [clearHoldTimer]);
 
   // Never leave a button down if the row disappears mid-hold.
-  useEffect(() => release, [release]);
+  useEffect(
+    () => () => {
+      const entry = held.current;
+      held.current = null;
+      clearHoldTimer();
+      if (entry?.pressed) pressRef.current(entry.button, "release");
+    },
+    [clearHoldTimer],
+  );
 
   return (
     <Row>

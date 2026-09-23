@@ -96,6 +96,16 @@ function withAltSlot(
   return { ...instruction, accounts };
 }
 
+/** An instruction whose slot `signerIndex` is a required signer in the header. */
+function withSignerSlot(
+  instruction: RequirementInstruction,
+  signerIndex: number,
+): RequirementInstruction {
+  const accounts = [...instruction.accounts];
+  accounts[signerIndex] = { ...accounts[signerIndex]!, isSigner: true };
+  return { ...instruction, accounts };
+}
+
 function accountPathValue(index: number): ParsedValue {
   return {
     source: ValueSource.ACCOUNT_PATH,
@@ -788,6 +798,65 @@ describe("applyTokenRule", () => {
         makeInstruction(["portAccount"]),
       );
       expect(result.tokenAccountStates).toEqual([]);
+    });
+
+    it("skips a hide-rule target the header marks as a signer", () => {
+      // A header signer produced an ed25519 signature, so it is a plain key and
+      // never a token account: the device derives it from its own seed and the
+      // owner map has nothing to add. Asking the backend to attest a non-token
+      // address risks a descriptor that binds an owner that should not exist.
+      const result = run(
+        parsed({ hideRules: [isSignerRule(accountPathValue(0))] }),
+        withSignerSlot(makeInstruction(["walletKey"]), 0),
+      );
+      expect(result.tokenAccountStates).toEqual([]);
+    });
+
+    it("skips an IS_SIGNER ACTIVE_WHEN port whose account is a header signer", () => {
+      const result = run(
+        parsed({
+          valueFlowPorts: [
+            port({
+              accountIndex: 1,
+              activeWhen: [ActiveWhenPredicate.IS_SIGNER],
+              tokenValue: { kind: TokenKind.NATIVE },
+            }),
+          ],
+        }),
+        withSignerSlot(makeInstruction(["other", "walletKey"]), 1),
+      );
+      expect(result.tokenAccountStates).toEqual([]);
+    });
+
+    it("guards per slot: a non-signer target alongside a signer one still fetches", () => {
+      const result = run(
+        parsed({
+          hideRules: [
+            isSignerRule(accountPathValue(0)),
+            isSignerRule(accountPathValue(1)),
+          ],
+        }),
+        withSignerSlot(makeInstruction(["walletKey", "maybeAta"]), 0),
+      );
+      expect(result.tokenAccountStates).toEqual(["maybeAta"]);
+    });
+
+    it("still fetches for a signer's candidate port when the port resolves to a non-signer slot", () => {
+      // `resolvePortAccountIndex` picks the first provided candidate; the guard
+      // has to read the slot that was actually chosen, not the first listed.
+      const result = run(
+        parsed({
+          valueFlowPorts: [
+            port({
+              accountIndices: [5, 1],
+              activeWhen: [ActiveWhenPredicate.IS_SIGNER],
+              tokenValue: { kind: TokenKind.NATIVE },
+            }),
+          ],
+        }),
+        withSignerSlot(makeInstruction(["walletKey", "maybeAta"]), 0),
+      );
+      expect(result.tokenAccountStates).toEqual(["maybeAta"]);
     });
   });
 });

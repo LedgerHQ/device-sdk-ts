@@ -1,5 +1,11 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.13.2
+
+### Patch Changes
+
+- [#1912](https://github.com/LedgerHQ/device-sdk-ts/pull/1912) [`3ce19ab`](https://github.com/LedgerHQ/device-sdk-ts/commit/3ce19ab6f6cdb7194516ba2a3c588a1463c2283d) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Stop requesting TOKEN_ACCOUNT_STATE for IS_SIGNER predicate targets that the message header already marks as signers
+
 ## 1.13.1
 
 ### Patch Changes

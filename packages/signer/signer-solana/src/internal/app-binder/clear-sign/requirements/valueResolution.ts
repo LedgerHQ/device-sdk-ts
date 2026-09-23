@@ -61,6 +61,32 @@ export function resolvePortAccountIndex(
 }
 
 /**
+ * Whether a slot is a required signer in the message header, bounds-checked.
+ * Out-of-range answers `false`: a slot that is not there signed nothing.
+ */
+export function accountIsSignerAt(
+  instruction: RequirementInstruction,
+  index: number,
+): boolean {
+  if (index < 0 || index >= instruction.accounts.length) return false;
+  return instruction.accounts[index]!.isSigner;
+}
+
+/**
+ * The account slot a pubkey-bearing VALUE reads, when it reads one. A
+ * `CONSTANT` carries its address inline and an `ARGUMENT_PATH` names no slot,
+ * so both yield `undefined` — the value is an address with no slot behind it
+ * to ask anything else about.
+ */
+export function pubkeyValueAccountIndex(
+  value: ParsedValue,
+): number | undefined {
+  if (value.source !== ValueSource.ACCOUNT_PATH) return undefined;
+  if (value.payload.length === 0) return undefined;
+  return value.payload[0]!;
+}
+
+/**
  * The ALT reference behind a pubkey-bearing VALUE — the complement of
  * {@link resolvePubkeyValue} for an `ACCOUNT_PATH` into an unresolved slot.
  * A `CONSTANT` is already an address and an `ARGUMENT_PATH` names no slot, so
@@ -70,9 +96,9 @@ export function altRefForPubkeyValue(
   value: ParsedValue,
   instruction: RequirementInstruction,
 ): AltEntryKey | undefined {
-  if (value.source !== ValueSource.ACCOUNT_PATH) return undefined;
-  if (value.payload.length === 0) return undefined;
-  return accountAltRefAt(instruction, value.payload[0]!);
+  const index = pubkeyValueAccountIndex(value);
+  if (index === undefined) return undefined;
+  return accountAltRefAt(instruction, index);
 }
 
 /**
