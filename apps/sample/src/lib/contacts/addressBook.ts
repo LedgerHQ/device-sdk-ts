@@ -33,6 +33,10 @@ import {
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
 import {
+  type EvmAddressBook,
+  type EvmContactGroup,
+} from "@ledgerhq/device-signer-kit-ethereum";
+import {
   decodeTronAddress,
   encodeTronAddress,
   type TronAddressBook,
@@ -506,6 +510,41 @@ export function toTronAddressBook(book: AddressBook): TronAddressBook {
   return { contactGroups, ledgerAccounts: [] };
 }
 
+/**
+ * Project the book onto the {@link EvmAddressBook} snapshot the Ethereum signer
+ * takes via `withAddressBook`: Ethereum-family addresses that carry a chainId
+ * (the EVM signer matches on address + chainId), nested under their group, with
+ * a `0x`-prefixed address. Groups with no such address are dropped.
+ */
+export function toEvmAddressBook(book: AddressBook): EvmAddressBook {
+  const contactGroups: EvmContactGroup[] = [];
+  for (const group of book.contactGroups) {
+    const externalAddresses = externalAddressesForGroup(book, group.id).flatMap(
+      (a) =>
+        a.blockchainFamily === "ethereum" && a.chainId !== undefined
+          ? [
+              {
+                scope: a.scope,
+                address: bufferToHexaString(
+                  parseHexField(a.address, "address"),
+                ),
+                chainId: a.chainId,
+                hmacRest: a.hmacRest,
+              },
+            ]
+          : [],
+    );
+    if (externalAddresses.length === 0) continue;
+    contactGroups.push({
+      contactName: group.contactName,
+      groupHandle: group.groupHandle,
+      hmacProof: group.hmacProof,
+      externalAddresses,
+    });
+  }
+  return { contactGroups, ledgerAccounts: [] };
+}
+
 // --- serialization + storage ------------------------------------------------
 //
 // Uint8Array (hex) and bigint (decimal string) are not JSON-native, so the book
@@ -589,15 +628,38 @@ export function loadAddressBook(): AddressBook {
   }
 }
 
+// Same-tab change notification: the `storage` event only reaches OTHER tabs,
+// and the signer providers outlive the Contacts page, so they need their own
+// signal to rebuild with the latest book.
+const ADDRESS_BOOK_CHANGED_EVENT = "dmk-sample-address-book-changed";
+
 export function saveAddressBook(book: AddressBook): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(
-    ADDRESS_BOOK_STORAGE_KEY,
-    JSON.stringify(serializeAddressBook(book)),
-  );
+  const raw = JSON.stringify(serializeAddressBook(book));
+  if (window.localStorage.getItem(ADDRESS_BOOK_STORAGE_KEY) === raw) return;
+  window.localStorage.setItem(ADDRESS_BOOK_STORAGE_KEY, raw);
+  window.dispatchEvent(new Event(ADDRESS_BOOK_CHANGED_EVENT));
 }
 
 export function clearAddressBook(): void {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(ADDRESS_BOOK_STORAGE_KEY);
+  window.dispatchEvent(new Event(ADDRESS_BOOK_CHANGED_EVENT));
+}
+
+/**
+ * Call `listener` whenever the stored book changes, in this tab or another.
+ * Returns the unsubscribe function.
+ */
+export function subscribeToAddressBook(listener: () => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === ADDRESS_BOOK_STORAGE_KEY) listener();
+  };
+  window.addEventListener(ADDRESS_BOOK_CHANGED_EVENT, listener);
+  window.addEventListener("storage", onStorage);
+  return () => {
+    window.removeEventListener(ADDRESS_BOOK_CHANGED_EVENT, listener);
+    window.removeEventListener("storage", onStorage);
+  };
 }

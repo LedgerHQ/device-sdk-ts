@@ -113,9 +113,24 @@ device-registered contacts only.
    book once, when the page mounts) → **Sign transaction** with that hex.
 5. **Expect** the device review to show the contact name + scope instead of the
    raw address.
-6. **Negative**: an unregistered recipient shows the raw address; app-tron
-   < 0.8.0 or a Nano S skips the contact step. For TRC20 (`TriggerSmartContract`)
-   the signer matches the token contract address, not the token recipient.
+6. **TRC20**: a `transfer(address,uint256)` (or `approve`) of a known TRC20
+   token (e.g. USDT) to the registered address also shows the contact name —
+   the signer matches the token recipient, as the Tron app does, not the token
+   contract.
+7. **Negative**: an unregistered recipient shows the raw address; app-tron
+   < 0.8.0 or a Nano S skips the contact step.
+
+## 6. Ethereum — clear-sign a transfer to a contact
+
+1. Register an Ethereum contact (section 1) with the chainId you will sign on.
+2. Open **Signers → Ethereum** → **Sign transaction** with an unsigned native
+   transfer whose `to` is that address and whose chainId matches. The signer is
+   rebuilt automatically whenever the book changes — no reload needed.
+3. **Expect** the device review to show the contact name + scope for the
+   recipient.
+4. **Negative**: a different chainId, an unregistered `to`, or Ethereum app
+   < 1.23.0 shows the raw address. An ERC-20 `transfer` recipient (in calldata)
+   is not matched by the Ethereum signer by design — only the transaction `to`.
 
 ---
 
