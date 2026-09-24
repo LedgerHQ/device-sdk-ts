@@ -2,7 +2,14 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { type DeviceSessionId } from "@ledgerhq/device-management-kit";
-import { Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
+import {
+  Button,
+  Flex,
+  Icons,
+  IconsLegacy,
+  Link,
+  Text,
+} from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled, { type DefaultTheme } from "styled-components";
 
@@ -22,6 +29,8 @@ import {
 } from "@/state/sessions/selectors";
 import { setSelectedSession } from "@/state/sessions/slice";
 import {
+  selectMockServerSessionToken,
+  selectMockServerUrl,
   selectPollingInterval,
   selectTransportType,
 } from "@/state/settings/selectors";
@@ -51,16 +60,33 @@ const VersionText = styled(Text)`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c50};
 `;
 
-const SessionStatusRow = styled(Flex)`
+const MockSessionCard = styled(Flex).attrs({
+  p: 5,
+  borderRadius: 2,
+  rowGap: 4,
+})`
+  flex-direction: column;
+  background: ${({ theme }: { theme: DefaultTheme }) =>
+    theme.colors.neutral.c30};
+`;
+
+const MockSessionIcon = styled(Flex).attrs({ p: 3, mr: 3, borderRadius: 100 })`
+  position: relative;
+  justify-content: center;
   align-items: center;
-  column-gap: 6px;
+  background: ${({ theme }: { theme: DefaultTheme }) =>
+    theme.colors.neutral.c40};
 `;
 
 const StatusDot = styled.span<{ $active: boolean }>`
-  width: 8px;
-  height: 8px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  flex-shrink: 0;
+  border: 2px solid
+    ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c30};
   background-color: ${({
     theme,
     $active,
@@ -70,31 +96,96 @@ const StatusDot = styled.span<{ $active: boolean }>`
   }) => ($active ? theme.colors.success.c50 : theme.colors.error.c50)};
 `;
 
-const MockServerSessionIndicator: React.FC = () => {
-  const { status, session, shared } = useMockServerSession();
+const MockServerSessionCard: React.FC = () => {
+  const { status, session } = useMockServerSession();
+  const mockServerUrl = useSelector(selectMockServerUrl);
+  const sessionToken = useSelector(selectMockServerSessionToken);
+  const [copied, setCopied] = useState(false);
+
+  const openMockServerUi = useCallback(() => {
+    // The Mock Server UI joins the session given in the URL fragment.
+    window.open(
+      `${mockServerUrl.replace(/\/$/, "")}/#token=${sessionToken}`,
+      "_blank",
+      "noopener",
+    );
+  }, [mockServerUrl, sessionToken]);
+
+  const copyToken = useCallback(() => {
+    navigator.clipboard
+      .writeText(sessionToken)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      })
+      .catch((error: unknown) => {
+        console.error("Failed to copy the session token", error);
+      });
+  }, [sessionToken]);
 
   if (status === "disabled") return null;
 
+  const active = status === "active" && session !== null;
   const expiresInMinutes = session
     ? Math.max(0, Math.round((session.expires_at - Date.now()) / 60000))
     : 0;
 
-  const label =
+  const details =
     status === "checking"
-      ? "Mock session: checking…"
-      : status === "active" && session
-        ? `Mock session: ${session.id.slice(0, 8)} · ${expiresInMinutes}m · ${
-            shared ? "shared" : "auto"
-          }`
-        : "Mock session: none (server unreachable)";
+      ? "Connecting…"
+      : active
+        ? `Session ${session.id.slice(0, 8)} · ${expiresInMinutes} min left`
+        : "Server unreachable";
 
   return (
-    <SessionStatusRow>
-      <StatusDot $active={status === "active"} />
-      <Text variant="tiny" color="neutral.c70">
-        {label}
-      </Text>
-    </SessionStatusRow>
+    <MockSessionCard data-testid="card_mock-session">
+      <Flex alignItems="center">
+        <MockSessionIcon>
+          <Icons.LedgerDevices size="S" />
+          <StatusDot $active={active} />
+        </MockSessionIcon>
+        <Flex flexDirection="column" flex={1} minWidth={0}>
+          <Text variant="body">Mock server</Text>
+          <Text
+            variant="small"
+            color="neutral.c70"
+            whiteSpace="nowrap"
+            overflow="hidden"
+            textOverflow="ellipsis"
+          >
+            {details}
+          </Text>
+        </Flex>
+      </Flex>
+      {active && (
+        <Flex columnGap={3}>
+          <Button
+            data-testid="CTA_open-mock-server-ui"
+            size="xs"
+            variant="shade"
+            outline
+            flex={1}
+            Icon={IconsLegacy.ExternalLinkMedium}
+            onClick={openMockServerUi}
+          >
+            Open UI
+          </Button>
+          <Button
+            data-testid="CTA_copy-mock-session-token"
+            size="xs"
+            variant="shade"
+            outline
+            flex={1}
+            Icon={
+              copied ? IconsLegacy.CheckAloneMedium : IconsLegacy.CopyMedium
+            }
+            onClick={copyToken}
+          >
+            {copied ? "Copied" : "Copy token"}
+          </Button>
+        </Flex>
+      )}
+    </MockSessionCard>
   );
 };
 
@@ -167,7 +258,7 @@ export const Sidebar: React.FC = () => {
         {transportType === "mockserver" && <span> (MOCKED)</span>}
       </Link>
 
-      <MockServerSessionIndicator />
+      <MockServerSessionCard />
 
       <Flex data-testid="container_devices" rowGap={4} flexDirection="column">
         <Text variant={"tiny"}>

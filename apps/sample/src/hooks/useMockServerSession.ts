@@ -24,8 +24,6 @@ export type MockServerSessionStatus =
 export type MockServerSessionState = {
   status: MockServerSessionStatus;
   session: Session | null;
-  /** Whether the session token is shared via settings (vs auto-provisioned). */
-  shared: boolean;
 };
 
 const REFRESH_INTERVAL_MS = 5000;
@@ -133,5 +131,5 @@ export function useMockServerSession(): MockServerSessionState {
     };
   }, [enabled, token, url, client, dispatch]);
 
-  return { status, session, shared: Boolean(token) };
+  return { status, session };
 }
