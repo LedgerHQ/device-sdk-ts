@@ -95,17 +95,6 @@ export class BlockhashService {
 
   /**
    * Return a copy of the serialised message with the `recentBlockhash`
-   * field replaced by 32 zero bytes. The original is not mutated.
-   */
-  zeroBlockhash(serializedMessage: Uint8Array): Uint8Array {
-    const offset = this.locateBlockhashOffset(serializedMessage);
-    const output = new Uint8Array(serializedMessage);
-    output.fill(0, offset, offset + BLOCKHASH_LENGTH);
-    return output;
-  }
-
-  /**
-   * Return a copy of the serialised message with the `recentBlockhash`
    * field replaced by `newBlockhash`. The original is not mutated.
    *
    * @param newBlockhash - Must be exactly 32 bytes.

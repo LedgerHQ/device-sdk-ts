@@ -16,7 +16,6 @@ const loggerFactory = () =>
 let blockhashService: {
   fetchLatestBlockhash: ReturnType<typeof vi.fn>;
   patchBlockhash: ReturnType<typeof vi.fn>;
-  zeroBlockhash: ReturnType<typeof vi.fn>;
 };
 
 function task(args: {
@@ -38,7 +37,6 @@ describe("RefreshBlockhashTask", () => {
     blockhashService = {
       fetchLatestBlockhash: vi.fn().mockResolvedValue(exampleBlockhash),
       patchBlockhash: vi.fn().mockReturnValue(patchedTx),
-      zeroBlockhash: vi.fn(),
     };
   });
 

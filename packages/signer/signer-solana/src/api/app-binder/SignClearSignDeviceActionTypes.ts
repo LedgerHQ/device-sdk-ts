@@ -16,7 +16,6 @@ import { type BlockhashService } from "@internal/app-binder/services/BlockhashSe
  * as the single `FETCH_BLOCKHASH` step.
  */
 export const signClearSignDAStateSteps = Object.freeze({
-  ZERO_BLOCKHASH: "signer.sol.steps.zeroBlockhash",
   PREVIEW_TRANSACTION: "signer.sol.steps.previewTransaction",
   FETCH_BLOCKHASH: "signer.sol.steps.fetchBlockhash",
   PROMPT_UI_DISPLAY: "signer.sol.steps.promptUiDisplay",

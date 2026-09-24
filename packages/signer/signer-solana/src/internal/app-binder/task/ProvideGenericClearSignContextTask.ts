@@ -20,7 +20,6 @@ import {
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { SignMessageGenericPreviewCommand } from "@internal/app-binder/command/SignMessageGenericPreviewCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
 import {
   DefaultSolanaMessageNormaliser,
   type SolanaMessageNormaliser,
@@ -65,7 +64,6 @@ export type ProvideGenericClearSignContextTaskArgs = {
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
   readonly network?: string;
   readonly normaliser?: SolanaMessageNormaliser;
-  readonly blockhashService?: BlockhashService;
 };
 
 /**
@@ -82,7 +80,6 @@ export class ProvideGenericClearSignContextTask {
   private readonly logger: LoggerPublisherService;
   private readonly deps: ProvideContextDeps;
   private readonly network: string;
-  private readonly blockhashService: BlockhashService;
 
   constructor(
     private readonly api: InternalApi,
@@ -90,7 +87,6 @@ export class ProvideGenericClearSignContextTask {
   ) {
     this.logger = args.loggerFactory("ProvideGenericClearSignContextTask");
     this.network = args.network ?? DEFAULT_NETWORK;
-    this.blockhashService = args.blockhashService ?? new BlockhashService();
     this.deps = {
       api,
       logger: this.logger,
@@ -626,26 +622,13 @@ export class ProvideGenericClearSignContextTask {
   private async streamGenericPreview(): Promise<
     CommandResult<void, SolanaAppErrorCodes>
   > {
-    // The device arms its fingerprint over the message with the blockhash
-    // zeroed, so the preview streams a zeroed-blockhash copy; the real (or
-    // freshly fetched) blockhash is supplied later at SIGN MESSAGE DELAYED.
-    // Best-effort: if the blockhash can't be located we stream the original
-    // (the device zeroes it anyway when computing the fingerprint).
-    let previewTransaction = this.args.transaction;
-    try {
-      previewTransaction = this.blockhashService.zeroBlockhash(
-        this.args.transaction,
-      );
-    } catch (error) {
-      this.logger.debug(
-        "[streamGenericPreview] could not zero blockhash; streaming original",
-        { data: { error: String(error) } },
-      );
-    }
-
+    // Stream the original message: the device checks the transaction-check
+    // report's TX_HASH against these exact bytes (blockhash included), and
+    // leaves the blockhash out of its own delayed-sign fingerprint, so the
+    // blockhash can still be refreshed at SIGN MESSAGE DELAYED.
     const result = await new SignDataTask<void>(this.api, {
       derivationPath: this.args.derivationPath,
-      sendingData: previewTransaction,
+      sendingData: this.args.transaction,
       commandFactory: (chunkArgs) =>
         new SignMessageGenericPreviewCommand({
           serializedMessage: chunkArgs.chunkedData,

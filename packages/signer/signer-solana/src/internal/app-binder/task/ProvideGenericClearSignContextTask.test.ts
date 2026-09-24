@@ -14,7 +14,6 @@ import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCo
 import { ProvideInstructionInfoCommand } from "@internal/app-binder/command/ProvideInstructionInfoCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
 import { SignMessageGenericPreviewCommand } from "@internal/app-binder/command/SignMessageGenericPreviewCommand";
-import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
 
 import { type ChallengeBoundRequirements } from "./BuildGenericClearSignContextTask";
 import { ProvideGenericClearSignContextTask } from "./ProvideGenericClearSignContextTask";
@@ -111,25 +110,18 @@ describe("ProvideGenericClearSignContextTask", () => {
     expect(infoIdx).toBeGreaterThan(tokenIdx); // Phase B after Phase A
   });
 
-  it("streams the GENERIC PREVIEW with the blockhash zeroed", async () => {
-    const zeroed = new Uint8Array([9, 9, 9]);
-    const zeroSpy = vi
-      .spyOn(BlockhashService.prototype, "zeroBlockhash")
-      .mockReturnValue(zeroed);
+  it("streams the GENERIC PREVIEW with the original transaction (blockhash untouched)", async () => {
     const made = makeTask([], []);
 
     await made.task.run();
 
-    expect(zeroSpy).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]));
     const preview = made.api.sendCommand.mock.calls
       .map((c) => c[0])
       .find((c) => c instanceof SignMessageGenericPreviewCommand) as any;
     // The streamed payload is `[signers, pathCount, ...paths, ...tx]`; its tail
-    // is the zeroed transaction, not the original.
+    // is the original transaction, as the device checks TX_HASH over it.
     const msg: Uint8Array = preview.args.serializedMessage;
-    expect(Array.from(msg.slice(-3))).toEqual([9, 9, 9]);
-
-    zeroSpy.mockRestore();
+    expect(Array.from(msg.slice(-3))).toEqual([1, 2, 3]);
   });
 
   it("fetches each challenge-bound descriptor with a fresh GET CHALLENGE, after the pool and before the templates", async () => {

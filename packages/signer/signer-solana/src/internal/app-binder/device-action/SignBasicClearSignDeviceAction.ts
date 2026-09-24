@@ -61,9 +61,6 @@ export type MachineDependencies = {
       userInputType?: UserInputType;
     };
   }) => Promise<CommandResult<Maybe<Signature>, SolanaAppErrorCodes>>;
-  readonly zeroBlockhashFn: (arg0: {
-    input: { transaction: Uint8Array };
-  }) => Promise<Uint8Array>;
 };
 
 const USER_REJECTION_CODE: SolanaAppErrorCodes = "6985";
@@ -88,8 +85,8 @@ function applySignatureResult(
 
 /**
  * Terminal sign for the legacy (non-generic) path. With a blockhash source it
- * runs the two-step delayed flow — `ZeroBlockhash` then `PreviewTransaction`
- * (0x08) to arm, a best-effort blockhash refresh (shared
+ * runs the two-step delayed flow — `PreviewTransaction` (0x08) of the original
+ * transaction to arm, a best-effort blockhash refresh (shared
  * `RefreshBlockhashTask`), then `DelayedSign` (0x09). Without a source (or when
  * arming degrades) it falls back to a one-shot `Sign` (0x06).
  */
@@ -122,7 +119,6 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
       refreshBlockhash,
       delayedSignTransaction,
       signTransaction,
-      zeroBlockhashFn,
     } = this.extractDependencies(internalApi);
 
     const logger = this.getLoggerFactory(internalApi)(
@@ -140,7 +136,6 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
         refreshBlockhash: fromPromise(refreshBlockhash),
         delayedSignTransaction: fromPromise(delayedSignTransaction),
         signTransaction: fromPromise(signTransaction),
-        zeroBlockhashFn: fromPromise(zeroBlockhashFn),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
@@ -168,12 +163,11 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
         input,
         intermediateValue: {
           requiredUserInteraction: UserInteractionRequired.None,
-          step: signClearSignDAStateSteps.ZERO_BLOCKHASH,
+          step: signClearSignDAStateSteps.PREVIEW_TRANSACTION,
         },
         _internalState: {
           error: null,
           signature: null,
-          zeroedTransaction: null,
           previewFallback: false,
           transactionToSign: null,
         },
@@ -183,43 +177,9 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
         // - no source: one-shot SIGN (0x06) on the original transaction
         Entry: {
           always: [
-            { target: "ZeroBlockhash", guard: "hasBlockhashSource" },
+            { target: "PreviewTransaction", guard: "hasBlockhashSource" },
             { target: "Sign" },
           ],
-        },
-        ZeroBlockhash: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signClearSignDAStateSteps.ZERO_BLOCKHASH,
-            }),
-          }),
-          invoke: {
-            id: "zeroBlockhashFn",
-            src: "zeroBlockhashFn",
-            input: ({ context }) => ({
-              transaction: context.input.transaction,
-            }),
-            onDone: {
-              target: "PreviewTransaction",
-              actions: assign({
-                _internalState: ({ event, context }) => ({
-                  ...context._internalState,
-                  zeroedTransaction: event.output,
-                }),
-              }),
-            },
-            // Best-effort: a host-side zeroing failure must not block signing;
-            // degrade to a plain one-shot sign of the original transaction.
-            onError: {
-              target: "Sign",
-              actions: ({ event }) =>
-                logger.info(
-                  "[SigningOps] blockhash zeroing failed, signing original transaction",
-                  { data: { error: String(event.error) } },
-                ),
-            },
-          },
         },
         PreviewTransaction: {
           entry: assign({
@@ -233,7 +193,7 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
             src: "previewTransaction",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              serializedTransaction: context._internalState.zeroedTransaction!,
+              serializedTransaction: context.input.transaction,
               userInputType: context.input.userInputType,
             }),
             onDone: {
@@ -495,11 +455,6 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
         loggerFactory,
       }).run();
 
-    const zeroBlockhashFn = async (arg0: {
-      input: { transaction: Uint8Array };
-    }) =>
-      Promise.resolve(blockhashService.zeroBlockhash(arg0.input.transaction));
-
     const refreshBlockhash = async (arg0: {
       input: {
         transaction: Uint8Array;
@@ -520,7 +475,6 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
       refreshBlockhash,
       delayedSignTransaction,
       signTransaction,
-      zeroBlockhashFn,
     };
   }
 }
