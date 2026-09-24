@@ -85,52 +85,6 @@ describe("BlockhashService", () => {
     });
   });
 
-  describe("zeroBlockhash", () => {
-    it("should zero the blockhash in a legacy message", () => {
-      const msg = buildLegacyMessage();
-      const offset = service.locateBlockhashOffset(msg);
-
-      const zeroed = service.zeroBlockhash(msg);
-
-      const zeroedBlockhash = zeroed.slice(offset, offset + 32);
-      expect(zeroedBlockhash).toEqual(new Uint8Array(32));
-    });
-
-    it("should zero the blockhash in a v0 message", () => {
-      const msg = buildV0Message();
-      const offset = service.locateBlockhashOffset(msg);
-
-      const zeroed = service.zeroBlockhash(msg);
-
-      const zeroedBlockhash = zeroed.slice(offset, offset + 32);
-      expect(zeroedBlockhash).toEqual(new Uint8Array(32));
-    });
-
-    it("should not modify bytes outside the blockhash region", () => {
-      const msg = buildLegacyMessage();
-      const offset = service.locateBlockhashOffset(msg);
-
-      const zeroed = service.zeroBlockhash(msg);
-
-      const beforeOriginal = msg.slice(0, offset);
-      const beforeZeroed = zeroed.slice(0, offset);
-      expect(beforeZeroed).toEqual(beforeOriginal);
-
-      const afterOriginal = msg.slice(offset + 32);
-      const afterZeroed = zeroed.slice(offset + 32);
-      expect(afterZeroed).toEqual(afterOriginal);
-    });
-
-    it("should not mutate the original message", () => {
-      const msg = buildLegacyMessage();
-      const originalCopy = new Uint8Array(msg);
-
-      service.zeroBlockhash(msg);
-
-      expect(msg).toEqual(originalCopy);
-    });
-  });
-
   describe("patchBlockhash", () => {
     it("should replace the blockhash in a legacy message", () => {
       const msg = buildLegacyMessage();
@@ -189,19 +143,6 @@ describe("BlockhashService", () => {
       expect(() => service.patchBlockhash(msg, new Uint8Array(64))).toThrow(
         "newBlockhash must be 32 bytes",
       );
-    });
-  });
-
-  describe("zeroBlockhash + patchBlockhash roundtrip", () => {
-    it("should restore the original message after zero then patch with original blockhash", () => {
-      const msg = buildLegacyMessage();
-      const offset = service.locateBlockhashOffset(msg);
-      const originalBlockhash = msg.slice(offset, offset + 32);
-
-      const zeroed = service.zeroBlockhash(msg);
-      const restored = service.patchBlockhash(zeroed, originalBlockhash);
-
-      expect(restored).toEqual(msg);
     });
   });
 

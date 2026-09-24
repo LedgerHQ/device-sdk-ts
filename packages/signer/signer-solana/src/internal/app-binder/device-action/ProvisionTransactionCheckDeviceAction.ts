@@ -35,7 +35,6 @@ export type MachineDependencies = {
       derivationPath: string;
       transaction: Uint8Array;
       contextModule: ContextModule;
-      isBlockhashRefreshNeeded: boolean;
       serializedForTxCheck?: Uint8Array;
     };
   }) => Promise<void>;
@@ -192,8 +191,6 @@ export class ProvisionTransactionCheckDeviceAction extends XStateDeviceAction<
               derivationPath: context.input.derivationPath,
               transaction: context.input.transaction,
               contextModule: context.input.contextModule,
-              isBlockhashRefreshNeeded:
-                context.input.isBlockhashRefreshNeeded ?? false,
               serializedForTxCheck: context.input.serializedForTxCheck,
             }),
             onDone: { target: "Done" },
@@ -221,7 +218,6 @@ export class ProvisionTransactionCheckDeviceAction extends XStateDeviceAction<
         derivationPath: string;
         transaction: Uint8Array;
         contextModule: ContextModule;
-        isBlockhashRefreshNeeded: boolean;
         serializedForTxCheck?: Uint8Array;
       };
     }) =>
@@ -229,7 +225,6 @@ export class ProvisionTransactionCheckDeviceAction extends XStateDeviceAction<
         derivationPath: arg0.input.derivationPath,
         transactionBytes: arg0.input.transaction,
         contextModule: arg0.input.contextModule,
-        isBlockhashRefreshNeeded: arg0.input.isBlockhashRefreshNeeded,
         serializedTransactionForTransactionCheck:
           arg0.input.serializedForTxCheck,
         loggerFactory: this.getLoggerFactory(internalApi),

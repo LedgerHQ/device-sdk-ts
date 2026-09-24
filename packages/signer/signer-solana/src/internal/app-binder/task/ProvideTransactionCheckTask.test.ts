@@ -13,7 +13,6 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { GetPubKeyCommand } from "@internal/app-binder/command/GetPubKeyCommand";
 import { ProvideTransactionCheckCommand } from "@internal/app-binder/command/ProvideTransactionCheckCommand";
-import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
 import { type SolanaTransactionSerializer } from "@internal/app-binder/services/SolanaTransactionSerializer";
 
 import { ProvideTransactionCheckTask } from "./ProvideTransactionCheckTask";
@@ -48,7 +47,6 @@ const txCheckContext = {
 function makeTask(
   getContexts: Mock = vi.fn(async () => [txCheckContext]),
   transactionBytes: Uint8Array = TX,
-  isBlockhashRefreshNeeded = true,
   serializedTransactionForTransactionCheck?: Uint8Array,
   transactionSerializer: SolanaTransactionSerializer = {
     wrapMessageAsTransaction: vi.fn().mockReturnValue(WRAPPED),
@@ -69,7 +67,6 @@ function makeTask(
     derivationPath: "44'/501'/0'",
     transactionBytes,
     contextModule,
-    isBlockhashRefreshNeeded,
     serializedTransactionForTransactionCheck,
     transactionSerializer,
     loggerFactory: () =>
@@ -108,42 +105,13 @@ describe("ProvideTransactionCheckTask", () => {
     );
   });
 
-  it("zeroes the blockhash before wrapping when the sign will refresh it (delayed path)", async () => {
-    const message = buildLegacyMessage();
-    const expected = new BlockhashService().zeroBlockhash(message);
-    const getContexts = vi.fn(async () => [txCheckContext]);
-    const serializerMock: SolanaTransactionSerializer = {
-      wrapMessageAsTransaction: vi.fn().mockReturnValue(WRAPPED),
-    };
-    const { task } = makeTask(
-      getContexts,
-      message,
-      true,
-      undefined,
-      serializerMock,
-    );
-
-    await task.run();
-
-    expect(serializerMock.wrapMessageAsTransaction).toHaveBeenCalledWith(
-      expected,
-      undefined,
-    );
-  });
-
-  it("wraps the original bytes when the sign will not refresh the blockhash (one-shot path)", async () => {
+  it("wraps the original message, blockhash included (the device checks TX_HASH over it)", async () => {
     const message = buildLegacyMessage();
     const getContexts = vi.fn(async () => [txCheckContext]);
     const serializerMock: SolanaTransactionSerializer = {
       wrapMessageAsTransaction: vi.fn().mockReturnValue(WRAPPED),
     };
-    const { task } = makeTask(
-      getContexts,
-      message,
-      false,
-      undefined,
-      serializerMock,
-    );
+    const { task } = makeTask(getContexts, message, undefined, serializerMock);
 
     await task.run();
 
@@ -159,30 +127,12 @@ describe("ProvideTransactionCheckTask", () => {
     const serializerMock: SolanaTransactionSerializer = {
       wrapMessageAsTransaction: vi.fn().mockReturnValue(WRAPPED),
     };
-    const { task } = makeTask(getContexts, TX, false, blob, serializerMock);
+    const { task } = makeTask(getContexts, TX, blob, serializerMock);
 
     await task.run();
 
     expect(serializerMock.wrapMessageAsTransaction).toHaveBeenCalledWith(
       TX,
-      blob,
-    );
-  });
-
-  it("zeroes transactionBytes before wrapping when isBlockhashRefreshNeeded and serializedTransactionForTransactionCheck is supplied", async () => {
-    const message = buildLegacyMessage();
-    const blob = new Uint8Array([0xde, 0xad]);
-    const getContexts = vi.fn(async () => [txCheckContext]);
-    const serializerMock: SolanaTransactionSerializer = {
-      wrapMessageAsTransaction: vi.fn().mockReturnValue(WRAPPED),
-    };
-    const { task } = makeTask(getContexts, message, true, blob, serializerMock);
-
-    await task.run();
-
-    const expected = new BlockhashService().zeroBlockhash(message);
-    expect(serializerMock.wrapMessageAsTransaction).toHaveBeenCalledWith(
-      expected,
       blob,
     );
   });
