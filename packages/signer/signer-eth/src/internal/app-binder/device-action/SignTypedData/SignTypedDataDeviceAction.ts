@@ -472,7 +472,10 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               target: "ProvideContextResultCheck",
             },
             onError: {
-              target: "Error",
+              // Thrown errors (e.g. transport failures while streaming a
+              // large payload) take the same fallback route as failed
+              // command results.
+              target: "ProvideContextResultCheck",
               actions: "assignErrorFromEvent",
             },
           },
@@ -517,7 +520,9 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "DetectBlindSigning",
+              // Same fallback route as failed command results, so a thrown
+              // error can still be recovered by legacy signing.
+              target: "SignTypedDataResultCheck",
               actions: "assignErrorFromEvent",
             },
           },
