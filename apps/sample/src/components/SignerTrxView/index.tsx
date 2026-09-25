@@ -25,6 +25,7 @@ import {
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { loadAddressBook, toTronAddressBook } from "@/lib/contacts/addressBook";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 const DEFAULT_DERIVATION_PATH = "44'/195'/0'/0/0";
@@ -33,8 +34,14 @@ export const SignerTrxView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
   const dmk = useDmk();
+  // Tron contacts registered on the Contacts page are provided to the device
+  // before signing, so a transfer to one of them shows its name. The book is
+  // read once per mount: re-open this page after registering a contact.
   const signer = useMemo(
-    () => new SignerTrxBuilder({ dmk, sessionId }).build(),
+    () =>
+      new SignerTrxBuilder({ dmk, sessionId })
+        .withAddressBook(toTronAddressBook(loadAddressBook()))
+        .build(),
     [dmk, sessionId],
   );
 

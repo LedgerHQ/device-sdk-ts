@@ -13,18 +13,26 @@ import {
   ContactsManagerBuilder,
 } from "@ledgerhq/device-contacts-kit";
 
+import {
+  CONTACTS_APP_BY_FAMILY,
+  type ContactsFamily,
+} from "@/lib/contacts/addressBook";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
-// Contacts v1 is served by the Ethereum embedded app.
-const CONTACTS_APP_NAME = "Ethereum";
+/**
+ * One manager per blockchain family: app-owned Contacts operations must run in
+ * the embedded app that serves the family (Ethereum, Tron). Rename is a
+ * dashboard operation, so any of them serves it.
+ */
+type ContactsManagers = Readonly<Record<ContactsFamily, ContactsManager>>;
 
 type ContactsContextType = {
-  contactsManager: ContactsManager | null;
+  contactsManagers: ContactsManagers | null;
 };
 
 const initialState: ContactsContextType = {
-  contactsManager: null,
+  contactsManagers: null,
 };
 
 const ContactsContext = createContext<ContactsContextType>(initialState);
@@ -33,31 +41,31 @@ export const ContactsProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const dmk = useDmk();
   const sessionId = useSelector(selectSelectedSessionId);
 
-  const [contactsManager, setContactsManager] =
-    useState<ContactsManager | null>(null);
+  const [contactsManagers, setContactsManagers] =
+    useState<ContactsManagers | null>(null);
 
   useEffect(() => {
     if (!sessionId || !dmk) {
-      setContactsManager(null);
+      setContactsManagers(null);
       return;
     }
 
-    setContactsManager(
-      new ContactsManagerBuilder({
-        dmk,
-        sessionId,
-        appName: CONTACTS_APP_NAME,
-      }).build(),
-    );
+    const build = (appName: string) =>
+      new ContactsManagerBuilder({ dmk, sessionId, appName }).build();
+
+    setContactsManagers({
+      ethereum: build(CONTACTS_APP_BY_FAMILY.ethereum),
+      tron: build(CONTACTS_APP_BY_FAMILY.tron),
+    });
   }, [dmk, sessionId]);
 
   return (
-    <ContactsContext.Provider value={{ contactsManager }}>
+    <ContactsContext.Provider value={{ contactsManagers }}>
       {children}
     </ContactsContext.Provider>
   );
 };
 
-export const useContactsManager = (): ContactsManager | null => {
-  return useContext(ContactsContext).contactsManager;
+export const useContactsManagers = (): ContactsManagers | null => {
+  return useContext(ContactsContext).contactsManagers;
 };
