@@ -1,7 +1,10 @@
 import { type HexaString, isHexaString } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { UniswapSupportedCommand } from "@/modules/ethereum/uniswap/constants/uniswap";
+import {
+  UNISWAP_V4_ACTIONS,
+  UniswapSupportedCommand,
+} from "@/modules/ethereum/uniswap/constants/uniswap";
 import {
   WETH_ADDRESS_BY_CHAIN_ID,
   WETHSupportedChainId,
@@ -13,6 +16,18 @@ import { type AbiDecoderDataSource } from "./AbiDecoderDataSource";
 
 const ADDRESS_LENGTH = 20 * 2;
 const FEE_LENGTH = 3 * 2;
+
+// V4 pools quote the native currency as address zero: no ERC-20 descriptor exists.
+const NATIVE_CURRENCY = "0x0000000000000000000000000000000000000000";
+
+const V4_PATHKEY =
+  "tuple(address intermediateCurrency, uint24 fee, int24 tickSpacing, address hooks, bytes hookData)";
+// Universal Router 2.0 swap params, and the 2.1.1 layout which inserts a
+// minHopPriceX36 array between the path and the amounts.
+const V4_SWAP_PARAMS_LAYOUTS = [
+  `tuple(address currency, ${V4_PATHKEY}[] path, uint128 amountSpecified, uint128 amountLimit)`,
+  `tuple(address currency, ${V4_PATHKEY}[] path, uint256[] minHopPriceX36, uint128 amountSpecified, uint128 amountLimit)`,
+];
 
 @injectable()
 export class DefaultCommandDecoderDataSource {
@@ -35,6 +50,8 @@ export class DefaultCommandDecoderDataSource {
         return this._decodeSwapV3(input);
       case UniswapSupportedCommand.V3_SWAP_EXACT_OUT:
         return this._decodeSwapV3(input);
+      case UniswapSupportedCommand.V4_SWAP:
+        return this._decodeSwapV4(input);
       case UniswapSupportedCommand.WRAP_ETH:
         return this._decodeWrappedEth(input, chainId);
       case UniswapSupportedCommand.UNWRAP_ETH:
@@ -91,6 +108,70 @@ export class DefaultCommandDecoderDataSource {
     return tokens
       .map((token) => token.toLowerCase())
       .map((token) => `0x${token}` as HexaString);
+  }
+
+  /**
+   * Decodes a V4_SWAP command input: abi.encode(bytes actions, bytes[] params),
+   * a nested action program. The route currencies live in the path-form swap
+   * actions (SWAP_EXACT_IN / SWAP_EXACT_OUT): the leading currency plus each
+   * PathKey's intermediateCurrency. SETTLE / TAKE actions only move currencies
+   * already named by a swap path, so they contribute no extra addresses.
+   * The native currency (address zero) has no ERC-20 descriptor and is skipped.
+   */
+  private _decodeSwapV4(input: HexaString): HexaString[] {
+    const [actions, params] = this.abiDecoder.decode(
+      ["bytes", "bytes[]"],
+      input,
+    );
+
+    if (!isHexaString(actions) || !Array.isArray(params)) {
+      return [];
+    }
+
+    const actionBytes = actions.slice(2).match(/../g) ?? [];
+    const tokens: HexaString[] = [];
+    for (const [index, action] of actionBytes.entries()) {
+      const opcode = parseInt(action, 16);
+      if (
+        opcode !== UNISWAP_V4_ACTIONS.SWAP_EXACT_IN &&
+        opcode !== UNISWAP_V4_ACTIONS.SWAP_EXACT_OUT
+      ) {
+        continue;
+      }
+      const param: unknown = params[index];
+      if (!isHexaString(param)) {
+        return [];
+      }
+      tokens.push(...this._decodeV4SwapCurrencies(param));
+    }
+
+    return tokens;
+  }
+
+  private _decodeV4SwapCurrencies(param: HexaString): HexaString[] {
+    for (const layout of V4_SWAP_PARAMS_LAYOUTS) {
+      const [decoded] = this.abiDecoder.decode([layout], param);
+      if (!Array.isArray(decoded)) {
+        continue;
+      }
+      const [currency, path] = decoded as unknown[];
+      if (!isHexaString(currency) || !Array.isArray(path)) {
+        continue;
+      }
+      const currencies = [
+        currency,
+        ...path.map((pathKey: unknown) =>
+          Array.isArray(pathKey) ? (pathKey as unknown[])[0] : undefined,
+        ),
+      ];
+      if (!currencies.every(isHexaString)) {
+        continue;
+      }
+      return currencies
+        .map((address) => address.toLowerCase() as HexaString)
+        .filter((address) => address !== NATIVE_CURRENCY);
+    }
+    return [];
   }
 
   private _isSupportedChainId(
