@@ -2431,6 +2431,9 @@ importers:
 
   packages/transport/mockserver:
     dependencies:
+      '@ledgerhq/device-mockserver-client':
+        specifier: workspace:^
+        version: link:../../mockserver-client
       '@sentry/minimal':
         specifier: 'catalog:'
         version: 6.19.7
@@ -2441,9 +2444,6 @@ importers:
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
         version: link:../../device-management-kit
-      '@ledgerhq/device-mockserver-client':
-        specifier: workspace:^
-        version: link:../../mockserver-client
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:^
         version: link:../../config/eslint
