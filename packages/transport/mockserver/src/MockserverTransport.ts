@@ -27,6 +27,7 @@ import {
 import { type Either, Left, Right } from "purify-ts";
 import {
   catchError,
+  defer,
   from,
   map,
   mergeMap,
@@ -60,7 +61,7 @@ export class MockTransport implements Transport {
   private readonly identifier: TransportIdentifier = mockserverIdentifier;
   private readonly disconnectPolls = new Map<
     DeviceId,
-    ReturnType<typeof setInterval>
+    { poll: ReturnType<typeof setInterval>; onDisconnect: DisconnectHandler }
   >();
 
   constructor(
@@ -82,23 +83,39 @@ export class MockTransport implements Transport {
 
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
     this.logger.debug("listenToAvailableDevices");
-    return timer(0, DISCOVERY_POLL_INTERVAL_MS).pipe(
-      switchMap(() =>
-        // Recovery belongs to the request, not to the pipeline: a catchError
-        // on the outer chain replaces the timer along with the failed poll, so
-        // one unreachable moment would end discovery for the rest of the
-        // subscription and no device added later could ever be found.
-        from(this.mockClient.listDevices()).pipe(
-          map((devices) => this.mapToDiscoveredDevices(devices)),
-          catchError((error) => {
-            this.logger.error("listenToAvailableDevices failed", {
-              data: { error },
-            });
-            return of<TransportDiscoveredDevice[]>([]);
-          }),
+    return defer(() => {
+      let previous: TransportDiscoveredDevice[] = [];
+      return timer(0, DISCOVERY_POLL_INTERVAL_MS).pipe(
+        switchMap(() =>
+          // Recovery belongs to the request, not to the pipeline: a catchError
+          // on the outer chain replaces the timer along with the failed poll,
+          // so one unreachable moment would end discovery for the rest of the
+          // subscription and no device added later could ever be found.
+          from(this.mockClient.listDevices()).pipe(
+            map((devices) => this.mapToDiscoveredDevices(devices)),
+            mergeMap((devices) => {
+              const kept = previous.filter((device) =>
+                devices.some(({ id }) => id === device.id),
+              );
+              const removed = previous.filter(
+                (device) => !devices.some(({ id }) => id === device.id),
+              );
+              previous = devices;
+              removed.forEach(({ id }) => this.reportDisconnect(id));
+              return removed.length > 0 && devices.length > kept.length
+                ? of(kept, devices)
+                : of(devices);
+            }),
+            catchError((error) => {
+              this.logger.error("listenToAvailableDevices failed", {
+                data: { error },
+              });
+              return of<TransportDiscoveredDevice[]>([]);
+            }),
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   startDiscovering(): Observable<TransportDiscoveredDevice> {
@@ -201,20 +218,15 @@ export class MockTransport implements Transport {
         .then((devices) => {
           // clearInterval leaves a request in flight; only the poll still
           // registered may report.
-          if (this.disconnectPolls.get(deviceId) !== poll) {
+          if (this.disconnectPolls.get(deviceId)?.poll !== poll) {
             return;
           }
           const present = devices.some(
             (device) => device.id === deviceId && device.connected !== false,
           );
-          if (present) {
-            return;
+          if (!present) {
+            this.reportDisconnect(deviceId);
           }
-          this.logger.info(
-            `Device ${deviceId} is no longer connected, disconnecting`,
-          );
-          this.clearDisconnectPoll(deviceId);
-          onDisconnect(deviceId);
         })
         .catch((error) => {
           // An unreachable server is not proof the device left; the next tick
@@ -222,15 +234,27 @@ export class MockTransport implements Transport {
           this.logger.error("disconnect poll failed", { data: { error } });
         });
     }, DISCONNECT_POLL_INTERVAL_MS);
-    this.disconnectPolls.set(deviceId, poll);
+    this.disconnectPolls.set(deviceId, { poll, onDisconnect });
+  }
+
+  private reportDisconnect(deviceId: DeviceId): void {
+    const entry = this.disconnectPolls.get(deviceId);
+    if (entry === undefined) {
+      return;
+    }
+    this.logger.info(
+      `Device ${deviceId} is no longer connected, disconnecting`,
+    );
+    this.clearDisconnectPoll(deviceId);
+    entry.onDisconnect(deviceId);
   }
 
   private clearDisconnectPoll(deviceId: DeviceId): void {
-    const poll = this.disconnectPolls.get(deviceId);
-    if (poll === undefined) {
+    const entry = this.disconnectPolls.get(deviceId);
+    if (entry === undefined) {
       return;
     }
-    clearInterval(poll);
+    clearInterval(entry.poll);
     this.disconnectPolls.delete(deviceId);
   }
 
