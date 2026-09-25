@@ -16,6 +16,7 @@ const loggerFactory = () =>
 let blockhashService: {
   fetchLatestBlockhash: ReturnType<typeof vi.fn>;
   patchBlockhash: ReturnType<typeof vi.fn>;
+  getRefreshBlocker: ReturnType<typeof vi.fn>;
 };
 
 function task(args: {
@@ -37,6 +38,7 @@ describe("RefreshBlockhashTask", () => {
     blockhashService = {
       fetchLatestBlockhash: vi.fn().mockResolvedValue(exampleBlockhash),
       patchBlockhash: vi.fn().mockReturnValue(patchedTx),
+      getRefreshBlocker: vi.fn().mockReturnValue(null),
     };
   });
 
@@ -68,6 +70,24 @@ describe("RefreshBlockhashTask", () => {
     expect(blockhashService.patchBlockhash).not.toHaveBeenCalled();
     expect(result).toStrictEqual(exampleTx);
   });
+
+  it.each(["durableNonce", "multipleSigners", "undecodable"] as const)(
+    "refresh blocked (%s): returns the original tx without fetching or patching",
+    async (blocker) => {
+      blockhashService.getRefreshBlocker.mockReturnValue(blocker);
+      const fetchBlockhash = vi.fn().mockResolvedValue(exampleBlockhash);
+
+      const result = await task({ rpcUrl, fetchBlockhash }).run();
+
+      expect(blockhashService.getRefreshBlocker).toHaveBeenCalledWith(
+        exampleTx,
+      );
+      expect(fetchBlockhash).not.toHaveBeenCalled();
+      expect(blockhashService.fetchLatestBlockhash).not.toHaveBeenCalled();
+      expect(blockhashService.patchBlockhash).not.toHaveBeenCalled();
+      expect(result).toStrictEqual(exampleTx);
+    },
+  );
 
   it("fetch failure: best-effort, returns the original tx (no patch)", async () => {
     blockhashService.fetchLatestBlockhash.mockRejectedValue(
