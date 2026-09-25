@@ -39,12 +39,12 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
+    "@ledgerhq/device-mockserver-client": "workspace:^",
     "@sentry/minimal": "catalog:",
     "purify-ts": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
-    "@ledgerhq/device-mockserver-client": "workspace:^",
     "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
