@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { type Device, type Mock } from "@ledgerhq/device-mockserver-client";
+import { MockServerDevice } from "@ledgerhq/device-mockserver-react";
 import {
   Button,
   IconButton,
@@ -20,7 +21,6 @@ import {
 import { api } from "@/api/client";
 import { ConsolePanel } from "@/components/ConsolePanel";
 import { CopyButton } from "@/components/CopyButton";
-import { DeviceScreenPanel } from "@/components/DeviceScreenPanel";
 import { LabeledRow } from "@/components/LabeledRow";
 import { MocksPanel } from "@/components/MocksPanel";
 import { findModel } from "@/domain/devices";
@@ -284,11 +284,10 @@ export function DeviceCard({
           ) : null}
 
           {tab === "screen" ? (
-            <DeviceScreenPanel
+            <MockServerDevice
+              url={window.location.origin}
               token={token}
               deviceId={device.id}
-              model={model}
-              onError={onError}
             />
           ) : null}
         </div>

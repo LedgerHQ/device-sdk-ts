@@ -45,6 +45,7 @@ Use these short names in the `--packages` flag. The user may use either aliases 
 | `transport-mockserver`  | `@ledgerhq/device-transport-kit-mockserver`                    |
 | `transport-speculos`    | `@ledgerhq/device-transport-kit-speculos`                      |
 | `mockserver-client`     | `@ledgerhq/device-mockserver-client`                           |
+| `mockserver-react`      | `@ledgerhq/device-mockserver-react`                            |
 | `speculos-controller`   | `@ledgerhq/speculos-device-controller`                         |
 | `keyring-protocol`      | `@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol`     |
 | `ledger-wallet`         | `@ledgerhq/dmk-ledger-wallet`                                  |

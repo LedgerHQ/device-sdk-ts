@@ -20,7 +20,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 # ── bundle ────────────────────────────────────────────────────────────────────
 FROM install AS builder
 # Build workspace deps so their lib/ output is available for esbuild to bundle
-RUN pnpm --filter @ledgerhq/device-mockserver-client... build
+RUN pnpm --filter @ledgerhq/device-mockserver-client... --filter @ledgerhq/device-mockserver-react... build
 
 # Build the configuration UI the server serves at its root URL
 RUN pnpm --filter @ledgerhq/device-mock-server-ui build

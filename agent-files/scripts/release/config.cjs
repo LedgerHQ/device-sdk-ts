@@ -5,6 +5,7 @@ require("zx/globals");
 const ALIASES = {
   dmk: "@ledgerhq/device-management-kit",
   "mockserver-client": "@ledgerhq/device-mockserver-client",
+  "mockserver-react": "@ledgerhq/device-mockserver-react",
   "context-module": "@ledgerhq/context-module",
   "contacts-kit": "@ledgerhq/device-contacts-kit",
   "signer-btc": "@ledgerhq/device-signer-kit-bitcoin",
@@ -45,6 +46,7 @@ const ALIASES = {
 const DISPLAY_NAMES = {
   "@ledgerhq/device-management-kit": "DMK",
   "@ledgerhq/device-mockserver-client": "Mockserver Client",
+  "@ledgerhq/device-mockserver-react": "Mockserver React",
   "@ledgerhq/context-module": "Context Module",
   "@ledgerhq/device-contacts-kit": "Contacts Kit",
   "@ledgerhq/device-signer-kit-bitcoin": "Signer BTC",
