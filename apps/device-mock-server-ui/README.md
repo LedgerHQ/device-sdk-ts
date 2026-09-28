@@ -23,10 +23,9 @@ It is a plain HTTP consumer: everything it does goes through the server's [docum
 **Session** — everything the session owns:
 
 - The **server URL and token** to hand to Ledger Live or a DMK app, plus the session's expiry, and a way to delete it.
-- **Devices**: add, edit and remove them (model, name, firmware, connectivity, installed apps, onboarded or not), connect and disconnect them. The firmware field says whether that OS version was ever released for the model, and the app picker lists what the Manager API reports for it — both asked of the Manager API directly, debounced, whenever the model or firmware changes, because an app's version is tied to a firmware version and Speculos cannot open one built for another. The picker leads with the apps DMK ships a signer kit for; the couple of hundred others are behind its search. Each device expands into three tabs:
-  - _Overview_ — id, memory mask, onboarding state, installed apps.
-  - _Mocks_ — the device's canned APDU replies, with ready-made scenarios (locked device, app not installed, user refusal).
-  - _APDU console_ — send any APDU and read the answer with its status word decoded; quick buttons for the handshake, Open App per installed app, Close App, and the onboarding walkthrough for a device that is not onboarded.
+- **Devices**: add, edit and remove them (model, name, firmware, connectivity, installed apps, onboarded or not), connect and disconnect them. The firmware field says whether that OS version was ever released for the model, and the app picker lists what the Manager API reports for it — both asked of the Manager API directly, debounced, whenever the model or firmware changes, because an app's version is tied to a firmware version and Speculos cannot open one built for another. The picker leads with the apps DMK ships a signer kit for; the couple of hundred others are behind its search. Each device card sums the device up on one line (model, firmware, connectivity, app count), with its Connected switch, and its settings open the edit dialog, which also shows the device id and removes the device.
+- **Mocks**: each card's collapsible Mocks row holds the device's canned APDU replies and the form to add one; ready-made scenarios (locked device, app not installed, user refusal) are a dialog away.
+- **Interact**: opens the device's live screen in a floating window, from [`@ledgerhq/device-mockserver-react`](../../packages/mockserver-device-react). One device at a time: interacting with another replaces it.
 - **Save and load**: export the session to JSON and import one back, from a file or pasted.
 - **Speculos seed**: the mnemonic the emulator derives from, with the plain-text warning it deserves.
 
@@ -71,9 +70,9 @@ Built with [Lumen](https://ldls.vercel.app) (`@ledgerhq/lumen-ui-react` + `@ledg
 
 ## 🔹 Structure
 
-| Path             | Contents                                                                                              |
-| ---------------- | ----------------------------------------------------------------------------------------------------- |
-| `src/api`        | The typed `fetch` client for the mock server, its route list, and the catalog hook.                   |
-| `src/pages`      | The two screens: `LandingPage`, `SessionPage`.                                                        |
-| `src/components` | The pieces they compose: device card and dialog, mocks panel, APDU console, transfer and seed panels. |
-| `src/domain`     | Knowledge with no UI: device models, APDU builders and status words, mock presets, remembered tokens. |
+| Path             | Contents                                                                                |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| `src/api`        | The typed `fetch` client for the mock server, its route list, and the catalog hook.     |
+| `src/pages`      | The two screens: `LandingPage`, `SessionPage`.                                          |
+| `src/components` | The pieces they compose: device card and dialog, mocks panel, transfer and seed panels. |
+| `src/domain`     | Knowledge with no UI: device models, hex validation, mock presets, remembered tokens.   |

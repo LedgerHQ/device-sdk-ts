@@ -30,6 +30,7 @@ import {
 import { LedgerDevices, Plus, Trash } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { type DeviceCatalog, useDeviceCatalog } from "@/api/useDeviceCatalog";
+import { CopyButton } from "@/components/CopyButton";
 import {
   CONNECTIVITY_TYPES,
   DEVICE_MODELS,
@@ -44,6 +45,8 @@ interface DeviceDialogProps {
   readonly existingNames: string[];
   readonly onClose: () => void;
   readonly onSubmit: (config: DeviceConfig) => Promise<void>;
+  /** Only for an existing device. */
+  readonly onRemove?: () => Promise<void>;
 }
 
 interface FormState {
@@ -86,11 +89,13 @@ export function DeviceDialog({
   existingNames,
   onClose,
   onSubmit,
+  onRemove,
 }: DeviceDialogProps) {
   const [form, setForm] = useState<FormState>(() =>
     initialState(device, existingNames),
   );
   const [saving, setSaving] = useState(false);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const model = findModel(form.deviceType);
@@ -131,6 +136,20 @@ export function DeviceDialog({
     (catalog.status === "loaded" ? catalog.apps : []).find(
       (entry) => entry.name === app.name && entry.version === app.version,
     )?.hash ?? app.hash;
+
+  const remove = async () => {
+    if (!onRemove) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await onRemove();
+      onClose();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -177,6 +196,16 @@ export function DeviceDialog({
                 title="The server rejected this device"
                 description={error}
               />
+            ) : null}
+
+            {device ? (
+              <div className="flex items-center gap-8">
+                <p className="body-4 text-muted">Device id</p>
+                <span className="body-4 text-base font-mono break-all">
+                  {device.id}
+                </span>
+                <CopyButton value={device.id} label="Copy device id" />
+              </div>
             ) : null}
 
             <Field
@@ -330,6 +359,45 @@ export function DeviceDialog({
                 </div>
               </div>
             </Field>
+
+            {onRemove ? (
+              <div className="border-muted flex items-center gap-12 rounded-md border p-16">
+                <p className="body-3 text-base flex-1">
+                  {confirmingRemove
+                    ? "Remove this device and its mocks?"
+                    : "Remove this device from the session."}
+                </p>
+                {confirmingRemove ? (
+                  <>
+                    <Button
+                      appearance="no-background"
+                      size="sm"
+                      disabled={saving}
+                      onClick={() => setConfirmingRemove(false)}
+                    >
+                      Keep
+                    </Button>
+                    <Button
+                      appearance="red"
+                      size="sm"
+                      loading={saving}
+                      onClick={() => void remove()}
+                    >
+                      Remove
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    appearance="gray"
+                    size="sm"
+                    icon={Trash}
+                    onClick={() => setConfirmingRemove(true)}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            ) : null}
           </div>
         </DialogBody>
         <DialogFooter>
