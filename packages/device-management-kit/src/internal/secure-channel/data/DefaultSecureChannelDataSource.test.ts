@@ -223,4 +223,59 @@ describe("Secure Channel Data Source", () => {
       );
     });
   });
+
+  describe("Given a configured WebSocket base URL", () => {
+    let api: DefaultSecureChannelDataSource;
+
+    beforeEach(() => {
+      api = new DefaultSecureChannelDataSource({
+        webSocketUrl: "wss://test-websocket-url",
+      } as DmkConfig);
+      vi.spyOn(api, "_connectWebSocket").mockReturnValue(
+        Right({} as WebSocket),
+      );
+    });
+
+    afterEach(() => {
+      vi.clearAllMocks();
+    });
+
+    describe("When getWebSocketUrl is called", () => {
+      it("Then it should return the configured URL", () => {
+        expect(api.getWebSocketUrl()).toBe("wss://test-websocket-url");
+      });
+    });
+
+    describe("When setWebSocketUrl is called with a different URL", () => {
+      it("Then it should use the new URL for subsequent connections", () => {
+        api.setWebSocketUrl("wss://overridden-websocket-url");
+
+        api.genuineCheck({
+          targetId: "targetId",
+          perso: "perso",
+        });
+
+        expect(api.getWebSocketUrl()).toBe("wss://overridden-websocket-url");
+        expect(api._connectWebSocket).toHaveBeenCalledWith(
+          "wss://overridden-websocket-url/genuine?targetId=targetId&perso=perso",
+        );
+      });
+    });
+
+    describe("When setWebSocketUrl is called with an empty string", () => {
+      it("Then it should keep the current URL", () => {
+        api.setWebSocketUrl("");
+
+        expect(api.getWebSocketUrl()).toBe("wss://test-websocket-url");
+      });
+    });
+
+    describe("When setWebSocketUrl is called with the same URL", () => {
+      it("Then it should keep the current URL", () => {
+        api.setWebSocketUrl("wss://test-websocket-url");
+
+        expect(api.getWebSocketUrl()).toBe("wss://test-websocket-url");
+      });
+    });
+  });
 });

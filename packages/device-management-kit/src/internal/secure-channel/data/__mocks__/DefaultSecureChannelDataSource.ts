@@ -7,4 +7,6 @@ export class DefaultSecureChannelDataSource implements SecureChannelDataSource {
   updateFirmware = vi.fn();
   installApp = vi.fn();
   uninstallApp = vi.fn();
+  setWebSocketUrl = vi.fn();
+  getWebSocketUrl = vi.fn();
 }

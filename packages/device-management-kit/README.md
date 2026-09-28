@@ -114,6 +114,27 @@ getProvider function will return the current provider set within the Device Mana
 dmk.getProvider();
 ```
 
+### Override the secure channel WebSocket URL
+
+The ScriptRunner WebSocket base URL can be set in two ways:
+
+- At build time:
+
+```ts
+export const sdk = new DeviceManagementKitBuilder()
+  .addLogger(new ConsoleLogger())
+  .addTransport(webHidTransportFactory)
+  .addConfig({ webSocketUrl: "wss://scriptrunner.example.com/update" })
+  .build();
+```
+
+- At runtime:
+
+```ts
+dmk.setWebSocketUrl("wss://scriptrunner.example.com/update");
+dmk.getWebSocketUrl();
+```
+
 ### Connecting to a Device
 
 There are two steps to connecting to a device:

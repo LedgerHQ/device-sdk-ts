@@ -22,6 +22,7 @@ import { SpeculosDeviceModelSetting } from "./SpeculosDeviceModelSetting";
 import { SpeculosToggleSetting } from "./SpeculosToggleSetting";
 import { SpeculosUrlSetting } from "./SpeculosUrlSetting";
 import { Web3ChecksUrlSetting } from "./Web3ChecksUrlSetting";
+import { WebSocketUrlSetting } from "./WebSocketUrlSetting";
 
 const SectionContainer = Block;
 
@@ -32,6 +33,7 @@ export const SettingsView: React.FC = () => {
         <SectionContainer>
           <SectionTitle>Device Management Kit</SectionTitle>
           <AppProviderSetting />
+          <WebSocketUrlSetting />
           <PollingIntervalSetting />
           <BypassIntentQueueSetting />
         </SectionContainer>
