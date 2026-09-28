@@ -39,7 +39,7 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@ledgerhq/device-mockserver-client": "workspace:^",
+    "@ledgerhq/device-mockserver-client": "^1.3.0",
     "@sentry/minimal": "catalog:",
     "purify-ts": "catalog:"
   },
