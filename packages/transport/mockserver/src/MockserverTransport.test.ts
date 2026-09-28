@@ -466,6 +466,51 @@ describe("mockserverTransportFactory", () => {
       expect(onDisconnect).toHaveBeenCalledWith("device-1");
     });
 
+    it("reports a replaced device as unplugged before listing its replacement", async () => {
+      let serverDevices = [aDevice()];
+      const { transport, onDisconnect } = await connectTo(
+        vi.fn(() => Promise.resolve(serverDevices)),
+      );
+      const events: unknown[] = [];
+      onDisconnect.mockImplementation((id) => events.push(`disconnect ${id}`));
+      transport
+        .listenToAvailableDevices()
+        .subscribe((devices) => events.push(devices.map(({ id }) => id)));
+      await vi.advanceTimersByTimeAsync(0);
+
+      serverDevices = [aDevice({ id: "device-2" })];
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+
+      expect(events).toEqual([
+        ["device-1"],
+        "disconnect device-1",
+        [],
+        ["device-2"],
+      ]);
+    });
+
+    it("reports the disconnect from discovery before the next liveness tick", async () => {
+      let serverDevices = [aDevice()];
+      mockClientImpl({
+        connect: vi.fn(() =>
+          Promise.resolve({ device: aDevice(), connected: true }),
+        ),
+        listDevices: vi.fn(() => Promise.resolve(serverDevices)),
+      });
+      const transport = mockserverTransportFactory("http://localhost:8080")(
+        transportArgs,
+      );
+      const onDisconnect = vi.fn();
+      transport.listenToAvailableDevices().subscribe();
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS / 2);
+      await transport.connect({ deviceId: "device-1", onDisconnect });
+
+      serverDevices = [];
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS / 2);
+
+      expect(onDisconnect).toHaveBeenCalledOnce();
+    });
+
     it("calls onDisconnect when the server reports the device as disconnected", async () => {
       const listDevices = vi.fn(() =>
         Promise.resolve([aDevice({ connected: false })]),

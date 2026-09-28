@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { createContext, type PropsWithChildren, useContext } from "react";
 import { useSelector } from "react-redux";
 import {
@@ -18,6 +18,7 @@ import { type TransportConfig } from "@/state/settings/schema";
 import {
   selectAppProvider,
   selectTransportConfig,
+  selectWebSocketUrl,
 } from "@/state/settings/selectors";
 
 import { getTransportFactoriesForConfig } from "./transportConfig";
@@ -54,6 +55,7 @@ function buildDmk(transportConfig: TransportConfig) {
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const transportConfig = useSelector(selectTransportConfig);
   const appProvider = useSelector(selectAppProvider);
+  const webSocketUrl = useSelector(selectWebSocketUrl);
 
   const dmk = useMemo(() => buildDmk(transportConfig), [transportConfig]);
 
@@ -63,15 +65,19 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
     return () => inspector.destroy();
   }, [dmk]);
 
-  // Sync appProvider to DMK when it changes
-  const isFirstRender = useRef(true);
+  // Sync settings overrides onto the current DMK instance.
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
     dmk.setProvider(appProvider);
   }, [appProvider, dmk]);
+
+  // Mock server already points the secure channel at its ScriptRunner. Skip
+  // the settings override so that URL is not replaced.
+  useEffect(() => {
+    if (transportConfig.type === "mockserver") {
+      return;
+    }
+    dmk.setWebSocketUrl(webSocketUrl);
+  }, [webSocketUrl, dmk, transportConfig.type]);
 
   // Cleanup on DMK change
   useEffect(() => {

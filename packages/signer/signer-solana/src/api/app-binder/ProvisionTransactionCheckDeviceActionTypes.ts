@@ -12,7 +12,6 @@ export type ProvisionTransactionCheckDAInput = {
   readonly contextModule: ContextModule;
   // Supplied at invoke time (depends on parent's runtime state)
   readonly appConfig?: AppConfiguration;
-  readonly isBlockhashRefreshNeeded?: boolean;
   readonly serializedForTxCheck?: Uint8Array;
 };
 

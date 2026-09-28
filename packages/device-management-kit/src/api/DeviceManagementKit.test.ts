@@ -6,6 +6,7 @@ import { configTypes } from "@internal/config/di/configTypes";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
+import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
 import { sendTypes } from "@internal/send/di/sendTypes";
 import pkg from "@root/package.json";
 import { StubUseCase } from "@root/src/di.stub";
@@ -86,6 +87,20 @@ describe("DeviceManagementKit", () => {
 
     it("should have setProvider method", () => {
       expect(dmk.setProvider).toBeDefined();
+    });
+
+    it("should have setWebSocketUrl method", () => {
+      expect(dmk.setWebSocketUrl).toBeDefined();
+    });
+
+    it("should have getWebSocketUrl method", () => {
+      expect(dmk.getWebSocketUrl).toBeDefined();
+    });
+
+    it("should update and return the WebSocket URL", () => {
+      dmk.setWebSocketUrl("wss://custom-websocket.url/update");
+
+      expect(dmk.getWebSocketUrl()).toBe("wss://custom-websocket.url/update");
     });
 
     it("should have isEnvironmentSupported method", () => {
@@ -203,6 +218,7 @@ describe("DeviceManagementKit", () => {
       [discoveryTypes.ListConnectedDevicesUseCase],
       [discoveryTypes.ListenToConnectedDeviceUseCase],
       [managerApiTypes.SetProviderUseCase],
+      [secureChannelTypes.SetWebSocketUrlUseCase],
     ])(
       "should have %s use case",
       (diSymbol: ServiceIdentifier<StubUseCase>) => {

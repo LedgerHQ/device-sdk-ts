@@ -1,10 +1,7 @@
 import React from "react";
-import { useSelector } from "react-redux";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
-
-import { selectTransportType } from "@/state/settings/selectors";
 
 const MenuItem = styled(Flex).attrs({ p: 3, pl: 5 })`
   align-items: center;
@@ -18,7 +15,6 @@ const MenuTitle = styled(Link).attrs({
 
 export const Menu: React.FC = () => {
   const router = useRouter();
-  const transportType = useSelector(selectTransportType);
 
   return (
     <>
@@ -111,17 +107,6 @@ export const Menu: React.FC = () => {
         <Icons.SettingsAlt2 />
         <MenuTitle onClick={() => router.push("/settings")}>Settings</MenuTitle>
       </MenuItem>
-      {transportType === "mockserver" && (
-        <MenuItem>
-          <Icons.Settings />
-          <MenuTitle
-            data-testid="CTA_route-to-/mock-settings"
-            onClick={() => router.push("/mock")}
-          >
-            Mock Settings
-          </MenuTitle>
-        </MenuItem>
-      )}
     </>
   );
 };

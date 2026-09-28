@@ -13,8 +13,9 @@ export type RefreshBlockhashTaskArgs = {
 /**
  * Best-effort blockhash refresh shared by the terminal signing machines: fetch
  * the latest blockhash and patch it into the transaction. Pure host-side (no
- * device interaction). A missing source, a fetch failure, or a patch failure
- * all degrade to the original transaction rather than throwing, so `run` always
+ * device interaction). A missing source, a transaction whose blockhash must be
+ * kept (see `BlockhashService.getRefreshBlocker`), a fetch failure, or a patch
+ * failure all degrade to the original transaction rather than throwing, so `run` always
  * resolves to the bytes to sign (patched on success, original otherwise).
  */
 export class RefreshBlockhashTask {
@@ -31,6 +32,17 @@ export class RefreshBlockhashTask {
 
     // No source: nothing to refresh, sign the original transaction.
     if (!rpcUrl && !fetchBlockhash) {
+      return transaction;
+    }
+
+    // Unsafe to refresh (durable nonce, co-signers, unparsable message): sign
+    // the original transaction without fetching.
+    const blocker = this.blockhashService.getRefreshBlocker(transaction);
+    if (blocker !== null) {
+      this.logger.info(
+        "[RefreshBlockhash] refresh not allowed, signing original blockhash",
+        { data: { reason: blocker } },
+      );
       return transaction;
     }
 

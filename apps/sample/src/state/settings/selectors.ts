@@ -58,6 +58,8 @@ export const selectTransportConfig = createSelector(
 // DMK settings selectors
 export const selectAppProvider = (state: RootState) =>
   state.settings.appProvider;
+export const selectWebSocketUrl = (state: RootState) =>
+  state.settings.webSocketUrl;
 export const selectPollingInterval = (state: RootState) =>
   state.settings.pollingInterval;
 export const selectBypassIntentQueue = (state: RootState) =>

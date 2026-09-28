@@ -19,7 +19,6 @@ export type SignBasicClearSignDAOutput = Signature;
 export type SignBasicClearSignDAInternalState = {
   readonly error: SignBasicClearSignDAError | null;
   readonly signature: Signature | null;
-  readonly zeroedTransaction: Uint8Array | null;
   readonly previewFallback: boolean;
   readonly transactionToSign: Uint8Array | null;
 };

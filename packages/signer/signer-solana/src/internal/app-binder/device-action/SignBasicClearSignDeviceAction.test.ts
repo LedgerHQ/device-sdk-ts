@@ -19,7 +19,6 @@ import { SignBasicClearSignDeviceAction } from "./SignBasicClearSignDeviceAction
 
 const defaultDerivation = "44'/501'/0'/0'";
 const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
-const zeroedTx = new Uint8Array([0x00, 0x00, 0x00, 0x00]);
 const patchedTx = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
 const exampleSignature = new Uint8Array([0xaa, 0xbb]);
 const rpcUrl = "https://api.devnet.solana.com";
@@ -29,7 +28,6 @@ let previewMock: ReturnType<typeof vi.fn>;
 let refreshBlockhashMock: ReturnType<typeof vi.fn>;
 let delayedSignMock: ReturnType<typeof vi.fn>;
 let signMock: ReturnType<typeof vi.fn>;
-let zeroBlockhashMock: ReturnType<typeof vi.fn>;
 
 function extractDeps() {
   return {
@@ -37,7 +35,6 @@ function extractDeps() {
     refreshBlockhash: refreshBlockhashMock,
     delayedSignTransaction: delayedSignMock,
     signTransaction: signMock,
-    zeroBlockhashFn: zeroBlockhashMock,
   };
 }
 
@@ -84,7 +81,6 @@ describe("SignBasicClearSignDeviceAction", () => {
       .mockResolvedValue(
         CommandResultFactory({ data: Just(exampleSignature) }),
       );
-    zeroBlockhashMock = vi.fn().mockResolvedValue(zeroedTx);
     // Mirror the real task: patched tx when a blockhash source exists, original
     // otherwise.
     refreshBlockhashMock = vi
@@ -107,6 +103,11 @@ describe("SignBasicClearSignDeviceAction", () => {
         (states) => {
           try {
             expect(previewMock).toHaveBeenCalledTimes(1);
+            // The preview carries the original tx (blockhash untouched): the
+            // device checks the transaction-check TX_HASH over these bytes.
+            expect(
+              previewMock.mock.calls[0]![0].input.serializedTransaction,
+            ).toStrictEqual(exampleTx);
             expect(delayedSignMock).toHaveBeenCalledTimes(1);
             expect(signMock).not.toHaveBeenCalled();
             expect(
@@ -234,32 +235,6 @@ describe("SignBasicClearSignDeviceAction", () => {
             expect(
               signMock.mock.calls[0]![0].input.serializedTransaction,
             ).toStrictEqual(exampleTx);
-            const last = states[states.length - 1]!;
-            expect(
-              last.status === DeviceActionStatus.Completed && last.output,
-            ).toStrictEqual(exampleSignature);
-            resolve();
-          } catch (e) {
-            reject(e);
-          }
-        },
-        reject,
-      );
-    }));
-
-  it("zero-blockhash failure: degrades to a one-shot sign of the original tx", () =>
-    new Promise<void>((resolve, reject) => {
-      zeroBlockhashMock.mockRejectedValue(new Error("zero boom"));
-      run(
-        {
-          derivationPath: defaultDerivation,
-          transaction: exampleTx,
-          rpcUrl,
-        },
-        (states) => {
-          try {
-            expect(previewMock).not.toHaveBeenCalled();
-            expect(signMock).toHaveBeenCalledTimes(1);
             const last = states[states.length - 1]!;
             expect(
               last.status === DeviceActionStatus.Completed && last.output,

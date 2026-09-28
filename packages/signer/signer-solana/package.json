@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-signer-kit-solana",
-  "version": "1.13.2",
+  "version": "1.13.3",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
@@ -64,6 +64,6 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.9.1"
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

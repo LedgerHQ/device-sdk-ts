@@ -19,13 +19,24 @@ import { SecureChannelDataSource } from "./SecureChannelDataSource";
 
 @injectable()
 export class DefaultSecureChannelDataSource implements SecureChannelDataSource {
-  private readonly webSocketBaseUrl: string;
+  private webSocketBaseUrl: string;
 
   constructor(
     @inject(secureChannelTypes.DmkConfig)
     { webSocketUrl }: DmkConfig,
   ) {
     this.webSocketBaseUrl = webSocketUrl;
+  }
+
+  setWebSocketUrl(webSocketUrl: string): void {
+    if (this.webSocketBaseUrl === webSocketUrl || webSocketUrl.length === 0) {
+      return;
+    }
+    this.webSocketBaseUrl = webSocketUrl;
+  }
+
+  getWebSocketUrl(): string {
+    return this.webSocketBaseUrl;
   }
 
   genuineCheck(

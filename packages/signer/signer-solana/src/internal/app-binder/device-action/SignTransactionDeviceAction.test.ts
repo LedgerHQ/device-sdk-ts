@@ -74,7 +74,6 @@ let previewMock: ReturnType<typeof vi.fn>;
 let delayedSignMock: ReturnType<typeof vi.fn>;
 let signMock: ReturnType<typeof vi.fn>;
 let refreshBlockhashMock: ReturnType<typeof vi.fn>;
-let zeroBlockhashMock: ReturnType<typeof vi.fn>;
 
 let parentSpy: ReturnType<typeof vi.spyOn>;
 let genericSpy: ReturnType<typeof vi.spyOn>;
@@ -148,7 +147,6 @@ function spyChildren() {
       refreshBlockhash: refreshBlockhashMock,
       delayedSignTransaction: delayedSignMock,
       signTransaction: signMock,
-      zeroBlockhashFn: zeroBlockhashMock,
     } as any) as any;
   /* eslint-enable @typescript-eslint/no-explicit-any */
 }
@@ -261,7 +259,6 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     provideBasicMock = vi.fn().mockResolvedValue(undefined);
 
     // Terminal/delayed child: every path resolves to a signature.
-    zeroBlockhashMock = vi.fn().mockResolvedValue(exampleTx);
     previewMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: Nothing }));
@@ -685,7 +682,6 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
               signTransactionDAStateSteps.INSPECT_TRANSACTION,
               signTransactionDAStateSteps.BUILD_BASIC_CLEAR_SIGN_CONTEXT,
               signTransactionDAStateSteps.PROVIDE_BASIC_CLEAR_SIGN_CONTEXT,
-              signClearSignDAStateSteps.ZERO_BLOCKHASH,
               signClearSignDAStateSteps.PREVIEW_TRANSACTION,
               signClearSignDAStateSteps.FETCH_BLOCKHASH,
               signClearSignDAStateSteps.DELAYED_SIGN,

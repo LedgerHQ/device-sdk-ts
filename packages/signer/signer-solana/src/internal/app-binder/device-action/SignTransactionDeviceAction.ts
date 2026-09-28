@@ -387,22 +387,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "transactionCheckStateMachine",
             src: "transactionCheckStateMachine",
-            input: ({ context }) => {
-              // The scan descriptor must hash the same message the device will
-              // sign. The terminal sign only zeroes the blockhash when it
-              // refreshes it (delayed signing); otherwise it signs the original.
-              const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
-              return {
-                appConfig: context._internalState.appConfig!,
-                derivationPath: context.input.derivationPath,
-                transaction: context._internalState.messageBytes,
-                contextModule: context.input.contextModule,
-                isBlockhashRefreshNeeded:
-                  rpcUrl !== undefined || fetchBlockhash !== undefined,
-                serializedForTxCheck:
-                  context._internalState.serializedForTxCheck,
-              };
-            },
+            // The scan descriptor must hash the exact message the device
+            // reviews, i.e. the original bytes (blockhash included).
+            input: ({ context }) => ({
+              appConfig: context._internalState.appConfig!,
+              derivationPath: context.input.derivationPath,
+              transaction: context._internalState.messageBytes,
+              contextModule: context.input.contextModule,
+              serializedForTxCheck: context._internalState.serializedForTxCheck,
+            }),
             onSnapshot: {
               actions: assign({
                 intermediateValue: ({ event }) =>

@@ -53,6 +53,9 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import { type SetProviderUseCase } from "@internal/manager-api/use-case/SetProviderUseCase";
+import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
+import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
+import { type SetWebSocketUrlUseCase } from "@internal/secure-channel/use-case/SetWebSocketUrlUseCase";
 import { sendTypes } from "@internal/send/di/sendTypes";
 import { type SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
@@ -349,6 +352,26 @@ export class DeviceManagementKit {
     return this.container
       .get<ManagerApiDataSource>(managerApiTypes.ManagerApiDataSource)
       .getProvider();
+  }
+
+  /**
+   * Sets the secure channel WebSocket base URL.
+   *
+   * @param {string} webSocketUrl - The WebSocket base URL to set.
+   */
+  setWebSocketUrl(webSocketUrl: string): void {
+    return this.container
+      .get<SetWebSocketUrlUseCase>(secureChannelTypes.SetWebSocketUrlUseCase)
+      .execute(webSocketUrl);
+  }
+
+  /**
+   * Returns the current secure channel WebSocket base URL.
+   */
+  getWebSocketUrl(): string {
+    return this.container
+      .get<SecureChannelDataSource>(secureChannelTypes.SecureChannelDataSource)
+      .getWebSocketUrl();
   }
 
   /**

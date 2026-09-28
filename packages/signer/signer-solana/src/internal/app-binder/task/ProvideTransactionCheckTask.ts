@@ -12,7 +12,6 @@ import {
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { GetPubKeyCommand } from "@internal/app-binder/command/GetPubKeyCommand";
-import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
 import { DefaultSolanaTransactionSerializer } from "@internal/app-binder/services/DefaultSolanaTransactionSerializer";
 import { type SolanaTransactionSerializer } from "@internal/app-binder/services/SolanaTransactionSerializer";
 import { DefaultSolanaMessageNormaliser } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
@@ -24,15 +23,6 @@ export type ProvideTransactionCheckTaskArgs = {
   readonly transactionBytes: Uint8Array;
   readonly contextModule: ContextModule;
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
-  /**
-   * Whether the terminal sign will refresh the blockhash (delayed signing). The
-   * device computes its transaction-check fingerprint over the exact message it signs:
-   * the delayed path previews a blockhash-zeroed message, while the one-shot
-   * path signs the original message. The scan descriptor must be fetched over
-   * the matching bytes, so we only zero the blockhash when the sign will.
-   */
-  readonly isBlockhashRefreshNeeded: boolean;
-  readonly blockhashService?: BlockhashService;
   readonly serializedTransactionForTransactionCheck?: Uint8Array;
   readonly transactionSerializer?: SolanaTransactionSerializer;
 };
@@ -44,7 +34,6 @@ export type ProvideTransactionCheckTaskArgs = {
  */
 export class ProvideTransactionCheckTask {
   private readonly logger: LoggerPublisherService;
-  private readonly blockhashService: BlockhashService;
   private readonly transactionSerializer: SolanaTransactionSerializer;
 
   constructor(
@@ -52,7 +41,6 @@ export class ProvideTransactionCheckTask {
     private readonly args: ProvideTransactionCheckTaskArgs,
   ) {
     this.logger = args.loggerFactory("ProvideTransactionCheckTask");
-    this.blockhashService = args.blockhashService ?? new BlockhashService();
     this.transactionSerializer =
       args.transactionSerializer ?? new DefaultSolanaTransactionSerializer();
   }
@@ -81,28 +69,14 @@ export class ProvideTransactionCheckTask {
       return;
     }
 
-    // Fetch the scan descriptor over the exact bytes the device fingerprints:
-    // the delayed path previews a blockhash-zeroed message, the one-shot path
-    // signs the original. Mismatching makes the device show "Transaction Check
-    // unavailable". Best-effort: if the blockhash can't be located, fall back to
-    // the original (the signer degrades to a one-shot sign of it too).
-    let transactionBytes = this.args.transactionBytes;
-    if (this.args.isBlockhashRefreshNeeded) {
-      try {
-        transactionBytes = this.blockhashService.zeroBlockhash(
-          this.args.transactionBytes,
-        );
-      } catch (error) {
-        this.logger.debug(
-          "[run] could not zero blockhash; using original transaction",
-          { data: { error: String(error) } },
-        );
-      }
-    }
-
+    // The device checks the report's TX_HASH against the exact message it
+    // reviews (as streamed at preview / generic session start), blockhash
+    // included, so the scan is fetched over the original bytes. A later
+    // delayed-sign blockhash refresh does not matter here: the device leaves the
+    // blockhash out of its own preview / delayed-sign fingerprint.
     const wrappedTransactionBytes =
       this.transactionSerializer.wrapMessageAsTransaction(
-        transactionBytes,
+        this.args.transactionBytes,
         this.args.serializedTransactionForTransactionCheck,
       );
 
