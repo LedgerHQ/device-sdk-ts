@@ -74,4 +74,16 @@ export interface SecureChannelDataSource {
   updateMcu(
     params: UpdateMcuParams,
   ): Either<WebSocketConnectionError, WebSocket>;
+
+  /**
+   * Sets the secure channel WebSocket base URL at runtime.
+   *
+   * @param webSocketUrl - The WebSocket base URL to use for subsequent connections.
+   */
+  setWebSocketUrl(webSocketUrl: string): void;
+
+  /**
+   * Returns the current secure channel WebSocket base URL.
+   */
+  getWebSocketUrl(): string;
 }

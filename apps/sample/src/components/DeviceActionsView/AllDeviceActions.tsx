@@ -490,8 +490,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
       {
         title: "Resolve OS update path",
         description: "Resolve the OS update path for the given device",
-        executeDeviceAction: ({ provider, unlockTimeout }) => {
-          dmk.setProvider(provider);
+        executeDeviceAction: ({ unlockTimeout }) => {
           const deviceAction = new ResolveOsUpdatePathDeviceAction({
             input: { unlockTimeout },
           });
@@ -500,11 +499,11 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             deviceAction,
           });
         },
-        initialValues: { provider: 1, unlockTimeout: UNLOCK_TIMEOUT },
+        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
         deviceModelId,
       } satisfies DeviceActionProps<
         ResolveOsUpdatePathDAOutput,
-        ResolveOsUpdatePathDAInput & { provider: number },
+        ResolveOsUpdatePathDAInput,
         ResolveOsUpdatePathDAError,
         ResolveOsUpdatePathDAIntermediateValue
       >,
