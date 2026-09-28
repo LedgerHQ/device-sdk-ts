@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 1.10.0
+
+### Minor Changes
+
+- [#1927](https://github.com/LedgerHQ/device-sdk-ts/pull/1927) [`a22cb77`](https://github.com/LedgerHQ/device-sdk-ts/commit/a22cb77690d23e0d800c8336d6aca1d2b8ee8964) Thanks [@benruseau](https://github.com/benruseau)! - Add setWebSocketUrl and getWebSocketUrl to override the secure channel WebSocket base URL at runtime
+
 ## 1.9.1
 
 ### Patch Changes

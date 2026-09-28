@@ -1,5 +1,16 @@
 # @ledgerhq/device-transport-kit-mockserver
 
+## 1.1.2
+
+### Patch Changes
+
+- [#1922](https://github.com/LedgerHQ/device-sdk-ts/pull/1922) [`3286f45`](https://github.com/LedgerHQ/device-sdk-ts/commit/3286f4515768dd7761feed5d61c51f4841f0ef03) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Declare @ledgerhq/device-mockserver-client as a runtime dependency
+
+- [#1923](https://github.com/LedgerHQ/device-sdk-ts/pull/1923) [`dabb414`](https://github.com/LedgerHQ/device-sdk-ts/commit/dabb414d5b33fe054f79bf7dfaceec27ee6d4704) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Report a device replaced by an import as unplugged before listing its replacement
+
+- Updated dependencies [[`a22cb77`](https://github.com/LedgerHQ/device-sdk-ts/commit/a22cb77690d23e0d800c8336d6aca1d2b8ee8964)]:
+  - @ledgerhq/device-management-kit@1.10.0
+
 ## 1.1.1
 
 ### Patch Changes

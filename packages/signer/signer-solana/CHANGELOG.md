@@ -1,5 +1,16 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.13.3
+
+### Patch Changes
+
+- [#1918](https://github.com/LedgerHQ/device-sdk-ts/pull/1918) [`b0e5f6d`](https://github.com/LedgerHQ/device-sdk-ts/commit/b0e5f6d4e4fbac5c9a4968f6e3df3bd40eb4e634) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Keep the original blockhash on delayed signing for durable-nonce transactions, transactions with other required signers, and undecodable messages; locate the blockhash correctly in V1 transactions
+
+- [#1916](https://github.com/LedgerHQ/device-sdk-ts/pull/1916) [`c19d65c`](https://github.com/LedgerHQ/device-sdk-ts/commit/c19d65cba2f40bd9396da60b2c219ba826acf0ee) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Stop zeroing the blockhash before provisioning: the transaction check and the previews now use the original transaction, fixing "Transaction Check unavailable" on generic clear signing
+
+- Updated dependencies [[`a22cb77`](https://github.com/LedgerHQ/device-sdk-ts/commit/a22cb77690d23e0d800c8336d6aca1d2b8ee8964)]:
+  - @ledgerhq/device-management-kit@1.10.0
+
 ## 1.13.2
 
 ### Patch Changes
