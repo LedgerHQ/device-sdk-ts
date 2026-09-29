@@ -15,8 +15,6 @@ export interface DeviceModel {
   readonly icon: typeof Nano;
   /** Whether Speculinho can start a real Speculos emulator for this model. */
   readonly speculos: boolean;
-  /** How the device is driven: a touchscreen, or left/right/both buttons. */
-  readonly touch: boolean;
   /**
    * Provider carrying this model's release-candidate firmwares, absent for a
    * model that no longer gets any.
@@ -32,18 +30,16 @@ export const DEVICE_MODELS: DeviceModel[] = [
     defaultFirmware: "2.1.0",
     mask: 0x31100000,
     icon: Nano,
-    speculos: true,
-    touch: false,
+    speculos: false,
   },
   {
     value: "nanoSP",
     label: "Nano S Plus",
     defaultName: "Ledger Nano S Plus",
-    defaultFirmware: "1.1.1",
+    defaultFirmware: "1.6.1",
     mask: 0x33100000,
     icon: Nano,
     speculos: true,
-    touch: false,
     rcProvider: 81,
   },
   {
@@ -54,7 +50,6 @@ export const DEVICE_MODELS: DeviceModel[] = [
     mask: 0x33000000,
     icon: Nano,
     speculos: true,
-    touch: false,
     rcProvider: 80,
   },
   {
@@ -65,7 +60,6 @@ export const DEVICE_MODELS: DeviceModel[] = [
     mask: 0x33200000,
     icon: Stax,
     speculos: true,
-    touch: true,
     rcProvider: 83,
   },
   {
@@ -76,18 +70,16 @@ export const DEVICE_MODELS: DeviceModel[] = [
     mask: 0x33300000,
     icon: Flex,
     speculos: true,
-    touch: true,
     rcProvider: 82,
   },
   {
     value: "apexp",
     label: "Apex",
     defaultName: "Ledger Apex",
-    defaultFirmware: "1.0.0",
+    defaultFirmware: "1.1.1",
     mask: 0x33400000,
     icon: Apex,
-    speculos: false,
-    touch: true,
+    speculos: true,
     rcProvider: 84,
   },
 ];

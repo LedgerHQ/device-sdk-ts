@@ -108,13 +108,6 @@ export const api = {
       { method: "POST", token },
     ),
 
-  sendApdu: (token: string, deviceId: string, apdu: string) =>
-    request<{ response: string }>(`/devices/${deviceId}/apdu`, {
-      method: "POST",
-      token,
-      body: body({ apdu }),
-    }),
-
   listMocks: (token: string, deviceId: string) =>
     request<Mock[]>(`/devices/${deviceId}/mocks`, { token }),
 

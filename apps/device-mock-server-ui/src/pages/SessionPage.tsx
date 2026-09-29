@@ -4,6 +4,7 @@ import {
   type DeviceConfig,
   type Session,
 } from "@ledgerhq/device-mockserver-client";
+import { MockServerDevice } from "@ledgerhq/device-mockserver-react";
 import {
   Banner,
   Button,
@@ -47,6 +48,7 @@ interface SessionPageProps {
 export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [dialog, setDialog] = useState<DialogTarget>(null);
+  const [interactingId, setInteractingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -75,6 +77,12 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
     refresh();
   };
 
+  const removeDevice = async (deviceId: string) => {
+    await api.deleteDevice(token, deviceId);
+    if (interactingId === deviceId) setInteractingId(null);
+    refresh();
+  };
+
   const disposeSession = () => {
     api
       .disposeSession(token)
@@ -94,6 +102,7 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
   };
 
   const devices = session?.devices ?? [];
+  const interacting = devices.find(({ id }) => id === interactingId);
 
   return (
     <>
@@ -215,8 +224,14 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
                   key={device.id}
                   token={token}
                   device={device}
+                  interacting={device.id === interacting?.id}
                   onChanged={refresh}
                   onEdit={() => setDialog(device)}
+                  onInteract={() =>
+                    setInteractingId(
+                      device.id === interacting?.id ? null : device.id,
+                    )
+                  }
                   onError={setError}
                 />
               ))}
@@ -229,12 +244,25 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
         <SeedPanel token={token} onError={setError} />
       </main>
 
+      {interacting ? (
+        <MockServerDevice
+          key={`${interacting.id}:${interacting.device_type}:${interacting.firmware_version}`}
+          url={window.location.origin}
+          token={token}
+          deviceId={interacting.id}
+          floating
+        />
+      ) : null}
+
       {dialog ? (
         <DeviceDialog
           device={dialog === "new" ? undefined : dialog}
           existingNames={devices.map((device) => device.name)}
           onClose={() => setDialog(null)}
           onSubmit={submitDevice}
+          onRemove={
+            dialog === "new" ? undefined : () => removeDevice(dialog.id)
+          }
         />
       ) : null}
     </>
