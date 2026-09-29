@@ -7,6 +7,7 @@ on:
       - apps/device-mock-server/**
       - apps/device-mock-server-ui/**
       - packages/mockserver-client/**
+      - packages/mockserver-device-react/**
       - pnpm-lock.yaml
 
 concurrency:

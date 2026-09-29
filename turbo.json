@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["lib/**", ".next/**"],
-      "inputs": ["src/**/*.ts", "index.ts"]
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "index.ts"]
     },
     "lint": {
       "dependsOn": ["build"]

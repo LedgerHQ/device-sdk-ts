@@ -15,7 +15,7 @@ export default [
     },
   },
   {
-    files: ["eslint.config.mjs"],
+    files: ["eslint.config.mjs", "tailwind.config.mjs"],
     languageOptions: {
       parserOptions: {
         project: null,

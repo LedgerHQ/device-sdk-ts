@@ -1,5 +1,5 @@
 /**
- * src/components/DeviceScreen/sources/useSpeculosScreenApi.ts
+ * src/components/DeviceScreen/useSpeculosScreenApi.ts
  *
  * Reaches a Speculos instance directly, the same endpoints the mock server
  * proxies to. Uses DmkNetworkClient for consistency with the Speculos
@@ -10,8 +10,8 @@
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
+import { type ScreenApi } from "@ledgerhq/device-mockserver-react";
 
-import { type ScreenApi } from "@/components/DeviceScreen/sources/screenApi";
 import { selectSpeculosUrl } from "@/state/settings/selectors";
 
 const stripTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
