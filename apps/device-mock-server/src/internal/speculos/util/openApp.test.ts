@@ -40,9 +40,10 @@ describe("mapCoinApp", () => {
 describe("mapDeviceModel", () => {
   it("maps DMK device types to Speculinho models", () => {
     expect(mapDeviceModel("nanoX")).toBe("nanox");
-    expect(mapDeviceModel("nanoSP")).toBe("nanosp");
+    expect(mapDeviceModel("nanoSP")).toBe("nanos+");
     expect(mapDeviceModel("stax")).toBe("stax");
     expect(mapDeviceModel("flex")).toBe("flex");
+    expect(mapDeviceModel("apexp")).toBe("apex_p");
   });
 
   it("returns null for unsupported models", () => {
