@@ -51,6 +51,7 @@ export class BuildSubcontextsTask {
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
       case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
       case ClearSignContextType.ETHEREUM_TOKEN:
       case ClearSignContextType.ETHEREUM_NFT:
       case ClearSignContextType.ETHEREUM_SAFE:

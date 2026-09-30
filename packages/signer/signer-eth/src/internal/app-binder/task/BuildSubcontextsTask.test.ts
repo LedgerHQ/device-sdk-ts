@@ -65,6 +65,7 @@ describe("BuildSubcontextsTask", () => {
       ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
       ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
       ClearSignContextType.ETHEREUM_ENUM,
+      ClearSignContextType.ETHEREUM_MAP_ENTRY,
       ClearSignContextType.ETHEREUM_TOKEN,
       ClearSignContextType.ETHEREUM_NFT,
     ];

@@ -222,6 +222,85 @@ describe("BuildBaseContexts", () => {
     });
   });
 
+  it("should send map entries before the transaction info in generic-parser transactions", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+      },
+      {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+        payload: "transaction_info",
+        certificate: defaultCertificate,
+      },
+      {
+        type: ClearSignContextType.ETHEREUM_MAP_ENTRY,
+        payload: "map_entry",
+        certificate: defaultCertificate,
+      },
+    ];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.15.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [
+        clearSignContexts[2], // map entry
+        clearSignContexts[1], // transaction info
+        clearSignContexts[0], // transaction field description
+      ],
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
+    });
+  });
+
+  it("should exclude map entries from basic clear signing", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.ETHEREUM_TOKEN,
+        payload: "token",
+      },
+      {
+        type: ClearSignContextType.ETHEREUM_MAP_ENTRY,
+        payload: "map_entry",
+        certificate: defaultCertificate,
+      },
+    ];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.15.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [clearSignContexts[0]],
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
+    });
+  });
+
   it("should build the transaction context with clear sign contexts", async () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [

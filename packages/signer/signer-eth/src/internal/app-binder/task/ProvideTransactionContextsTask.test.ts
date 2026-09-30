@@ -379,6 +379,55 @@ describe("ProvideTransactionContextsTask", () => {
         // But both contexts should be provided
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(2);
       });
+
+      it("should store the transaction before the MAP_ENTRY contexts that precede the TRANSACTION_INFO", async () => {
+        // GIVEN
+        const mapEntry = {
+          type: ClearSignContextType.ETHEREUM_MAP_ENTRY,
+          payload: "map_entry",
+        } as const;
+        const transactionInfo = {
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+          payload: "transaction_info",
+        } as const;
+        const args: ProvideTransactionContextsTaskArgs = {
+          contexts: [
+            { context: mapEntry, subcontextCallbacks: [] },
+            { context: transactionInfo, subcontextCallbacks: [] },
+          ],
+          serializedTransaction: new Uint8Array([1, 2, 3]),
+          derivationPath: "44'/60'/0'/0/0",
+          loggerFactory: mockLoggerFactory,
+        };
+        const calls: string[] = [];
+        sendCommandInChunksTaskRunMock.mockImplementation(() => {
+          calls.push("store");
+          return Promise.resolve(successResult);
+        });
+        provideContextTaskRunMock.mockImplementation(
+          (_api: InternalApi, { context }: ProvideContextTaskArgs) => {
+            calls.push(context.type);
+            return Promise.resolve(successResult);
+          },
+        );
+
+        // WHEN
+        const task = new ProvideTransactionContextsTask(
+          api,
+          args,
+          provideContextTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(calls).toStrictEqual([
+          "store",
+          ClearSignContextType.ETHEREUM_MAP_ENTRY,
+          ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+        ]);
+      });
     });
 
     describe("with subcontexts", () => {

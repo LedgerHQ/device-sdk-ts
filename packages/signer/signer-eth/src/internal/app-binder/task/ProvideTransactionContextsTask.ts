@@ -106,7 +106,7 @@ export class ProvideTransactionContextsTask {
       },
     });
 
-    let transactionInfoProvided = false;
+    let transactionStored = false;
     const contactProvided = await this._provideExternalContact();
 
     for (const { context, subcontextCallbacks } of this._args.contexts) {
@@ -150,13 +150,15 @@ export class ProvideTransactionContextsTask {
       }
 
       if (
-        !transactionInfoProvided &&
+        !transactionStored &&
         this._args.serializedTransaction !== undefined &&
-        context.type === ClearSignContextType.ETHEREUM_TRANSACTION_INFO
+        (context.type === ClearSignContextType.ETHEREUM_TRANSACTION_INFO ||
+          context.type === ClearSignContextType.ETHEREUM_MAP_ENTRY)
       ) {
-        // Send the serialized transaction for the first TRANSACTION_INFO.
+        // Send the serialized transaction before the first TRANSACTION_INFO, or
+        // before the MAP_ENTRY contexts that precede it.
         // All other TRANSACTION_INFO contexts will be ignored as it will be for nested calldata.
-        transactionInfoProvided = true;
+        transactionStored = true;
 
         const paths = DerivationPathUtils.splitPath(this._args.derivationPath);
         const builder = new ByteArrayBuilder();

@@ -41,6 +41,7 @@ export const BASE_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
   ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
   ClearSignContextType.ETHEREUM_ENUM,
+  ClearSignContextType.ETHEREUM_MAP_ENTRY,
   ClearSignContextType.ETHEREUM_TRUSTED_NAME,
   ClearSignContextType.ETHEREUM_TOKEN,
   ClearSignContextType.ETHEREUM_NFT,
@@ -206,6 +207,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
       case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
         return false;
@@ -227,6 +229,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
       case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
       case ClearSignContextType.ETHEREUM_GATED_SIGNING:
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
         return true;
       case ClearSignContextType.ETHEREUM_ENUM:
       case ClearSignContextType.ETHEREUM_TRUSTED_NAME:
@@ -288,6 +291,10 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
         return 30;
+      // Map entries are only resolved when the fields are parsed, but they are
+      // sent ahead of the TRANSACTION_INFO that opens the descriptor
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
+        return 40;
       case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
         return 50;
       case ClearSignContextType.ETHEREUM_PLUGIN:
