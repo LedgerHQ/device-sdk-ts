@@ -105,7 +105,10 @@ describe("ResolveMcuVersion", () => {
           },
         });
 
-        expect(result.extract()).toBe("0.6");
+        expect(result.extract()).toEqual({
+          target: "bootloader",
+          version: "0.6",
+        });
         expect(getManagerApiServiceMock).not.toHaveBeenCalled();
       },
     );
@@ -134,7 +137,7 @@ describe("ResolveMcuVersion", () => {
           },
         });
 
-        expect(result.extract()).toBe("1.12");
+        expect(result.extract()).toEqual({ target: "mcu", version: "1.12" });
         expect(getMcuListMock).toHaveBeenCalled();
       },
     );
@@ -154,7 +157,7 @@ describe("ResolveMcuVersion", () => {
         input: { mode: "osUpdate", deviceInfo, finalFirmware },
       });
 
-      expect(result.extract()).toBe("1.12");
+      expect(result.extract()).toEqual({ target: "mcu", version: "1.12" });
     });
 
     it("Should ignore the number of segments when comparing bootloader versions", async () => {
@@ -171,7 +174,7 @@ describe("ResolveMcuVersion", () => {
         input: { mode: "osUpdate", deviceInfo, finalFirmware },
       });
 
-      expect(result.extract()).toBe("1.12");
+      expect(result.extract()).toEqual({ target: "mcu", version: "1.12" });
     });
 
     it("Should return the starting bootloader version when the device is not on it yet", async () => {
@@ -188,7 +191,10 @@ describe("ResolveMcuVersion", () => {
         input: { mode: "osUpdate", deviceInfo, finalFirmware },
       });
 
-      expect(result.extract()).toBe("1.17");
+      expect(result.extract()).toEqual({
+        target: "bootloader",
+        version: "1.17",
+      });
     });
 
     it("Should pick the highest MCU version compatible with the final firmware", async () => {
@@ -217,7 +223,7 @@ describe("ResolveMcuVersion", () => {
         input: { mode: "osUpdate", deviceInfo, finalFirmware },
       });
 
-      expect(result.extract()).toBe("1.12");
+      expect(result.extract()).toEqual({ target: "mcu", version: "1.12" });
     });
   });
 
@@ -244,7 +250,10 @@ describe("ResolveMcuVersion", () => {
           },
         });
 
-        expect(result.extract()).toBe(expectedVersion);
+        expect(result.extract()).toEqual({
+          target: "bootloader",
+          version: expectedVersion,
+        });
         expect(getManagerApiServiceMock).not.toHaveBeenCalled();
       },
     );
@@ -264,7 +273,7 @@ describe("ResolveMcuVersion", () => {
         input: { mode: "bootloaderRecovery", deviceInfo },
       });
 
-      expect(result.extract()).toBe("1.12");
+      expect(result.extract()).toEqual({ target: "mcu", version: "1.12" });
       expect(getDeviceVersionMock).toHaveBeenCalledWith(
         expect.objectContaining({
           targetId: deviceInfo.seTargetId,
@@ -309,7 +318,7 @@ describe("ResolveMcuVersion", () => {
         },
       });
 
-      expect(result.extract()).toBe("1.12");
+      expect(result.extract()).toEqual({ target: "mcu", version: "1.12" });
       expect(getDeviceVersionMock).not.toHaveBeenCalled();
     });
 

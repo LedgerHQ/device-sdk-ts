@@ -19,6 +19,7 @@ import {
   type FlashMcuDAInput,
   type FlashMcuDAIntermediateValue,
   type FlashMcuDAInternalState,
+  type FlashMcuDAOutput,
   FlashMcuSteps,
 } from "./types";
 
@@ -31,7 +32,7 @@ const MAX_BOOTLOADER_POLL_ATTEMPTS = 10;
 const BOOTLOADER_POLL_INTERVAL_MS = 2000;
 
 export class FlashMcuDeviceAction extends XStateDeviceAction<
-  void,
+  FlashMcuDAOutput,
   FlashMcuDAInput,
   FlashMcuDAError,
   FlashMcuDAIntermediateValue,
@@ -40,14 +41,14 @@ export class FlashMcuDeviceAction extends XStateDeviceAction<
   protected override makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
-    void,
+    FlashMcuDAOutput,
     FlashMcuDAInput,
     FlashMcuDAError,
     FlashMcuDAIntermediateValue,
     FlashMcuDAInternalState
   > {
     type types = StateMachineTypes<
-      void,
+      FlashMcuDAOutput,
       FlashMcuDAInput,
       FlashMcuDAError,
       FlashMcuDAIntermediateValue,
@@ -96,7 +97,7 @@ export class FlashMcuDeviceAction extends XStateDeviceAction<
         _internalState: {
           error: null,
           deviceInfo: null,
-          version: null,
+          resolvedFlash: null,
           bootloaderPollAttempts: 0,
         },
       }),
@@ -192,9 +193,9 @@ export class FlashMcuDeviceAction extends XStateDeviceAction<
                       ..._.context._internalState,
                       error,
                     }),
-                    Right: (version) => ({
+                    Right: (resolvedFlash) => ({
                       ..._.context._internalState,
-                      version,
+                      resolvedFlash,
                     }),
                   }),
               }),
@@ -228,7 +229,7 @@ export class FlashMcuDeviceAction extends XStateDeviceAction<
             src: "flashMcu",
             input: ({ context }) => ({
               deviceInfo: context._internalState.deviceInfo!,
-              version: context._internalState.version!,
+              version: context._internalState.resolvedFlash!.version,
             }),
             onSnapshot: {
               actions: assign({
@@ -287,7 +288,7 @@ export class FlashMcuDeviceAction extends XStateDeviceAction<
       output: ({ context }) =>
         context._internalState.error !== null
           ? Left(context._internalState.error)
-          : Right(undefined),
+          : Right({ target: context._internalState.resolvedFlash!.target }),
     });
   }
 }
