@@ -4,6 +4,7 @@ require("zx/globals");
 
 const ALIASES = {
   dmk: "@ledgerhq/device-management-kit",
+  "mock-server": "@ledgerhq/device-mock-server",
   "mockserver-client": "@ledgerhq/device-mockserver-client",
   "mockserver-react": "@ledgerhq/device-mockserver-react",
   "context-module": "@ledgerhq/context-module",
@@ -45,6 +46,7 @@ const ALIASES = {
 
 const DISPLAY_NAMES = {
   "@ledgerhq/device-management-kit": "DMK",
+  "@ledgerhq/device-mock-server": "Mock Server",
   "@ledgerhq/device-mockserver-client": "Mockserver Client",
   "@ledgerhq/device-mockserver-react": "Mockserver React",
   "@ledgerhq/context-module": "Context Module",
@@ -96,10 +98,17 @@ const PUBLISH_GLOB = [
   "!**/packages/ui/**",
 ];
 
+// Released as a Docker image by mock-server-release.yml. Safe to make public:
+// ldmk-tool pack only reads packages/, so it never reaches npm.
+const DOCKER_PACKAGE_JSONS = ["apps/device-mock-server/package.json"];
+
 const ROOT = path.resolve(__dirname, "../../..");
 
 async function getWorkspacePackages() {
-  const files = await glob(PUBLISH_GLOB, { cwd: ROOT, absolute: true });
+  const files = [
+    ...(await glob(PUBLISH_GLOB, { cwd: ROOT, absolute: true })),
+    ...DOCKER_PACKAGE_JSONS.map((file) => path.join(ROOT, file)),
+  ];
   const pkgs = [];
 
   for (const file of files) {

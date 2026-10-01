@@ -46,6 +46,7 @@ Use these short names in the `--packages` flag. The user may use either aliases 
 | `transport-speculos`    | `@ledgerhq/device-transport-kit-speculos`                      |
 | `mockserver-client`     | `@ledgerhq/device-mockserver-client`                           |
 | `mockserver-react`      | `@ledgerhq/device-mockserver-react`                            |
+| `mock-server`           | `@ledgerhq/device-mock-server`                                 |
 | `speculos-controller`   | `@ledgerhq/speculos-device-controller`                         |
 | `keyring-protocol`      | `@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol`     |
 | `ledger-wallet`         | `@ledgerhq/dmk-ledger-wallet`                                  |
@@ -55,6 +56,8 @@ Use these short names in the `--packages` flag. The user may use either aliases 
 | `devtools-ws-common`    | `@ledgerhq/device-management-kit-devtools-websocket-common`    |
 | `devtools-ws-connector` | `@ledgerhq/device-management-kit-devtools-websocket-connector` |
 | `devtools-ws-server`    | `@ledgerhq/device-management-kit-devtools-websocket-server`    |
+
+`mock-server` ships as a Docker image, not to npm: on merge to `main`, `mock-server-release.yml` pushes the image, tags `@ledgerhq/device-mock-server@<version>` and deploys it. It has no row in the docs version tables (Step 10) or the README inventory (Step 12).
 
 ## Release flow (step by step)
 
