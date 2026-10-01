@@ -28,6 +28,8 @@ import {
   type FlashMcuDAInput,
   type FlashMcuDAState,
   FlashMcuSteps,
+  type FlashTarget,
+  type ResolvedFlash,
 } from "@api/device-action/OsUpdate/Update/FlashMcu/types";
 
 vi.mock("@api/device-action/OsUpdate/Shared/Substeps/GetOsVersion");
@@ -48,9 +50,9 @@ const pendingState = (
   },
 });
 
-const completedState = (): FlashMcuDAState => ({
+const completedState = (target: FlashTarget = "mcu"): FlashMcuDAState => ({
   status: DeviceActionStatus.Completed,
-  output: undefined,
+  output: { target },
 });
 
 const errorState = (error: FlashMcuDAError): FlashMcuDAState => ({
@@ -140,7 +142,10 @@ describe("FlashMcuDeviceAction", () => {
   };
 
   const setupResolveMcuVersion = (
-    result: Either<unknown, string> = Right("1.12"),
+    result: Either<unknown, ResolvedFlash> = Right({
+      target: "mcu",
+      version: "1.12",
+    }),
   ) => {
     const handler = vi.fn().mockResolvedValue(result);
     vi.mocked(resolveMcuVersion).mockReturnValue(
@@ -194,6 +199,41 @@ describe("FlashMcuDeviceAction", () => {
                   input: {
                     deviceInfo: getOsVersionResponse,
                     version: "1.12",
+                  },
+                }),
+              );
+              resolve();
+            },
+            onError: reject,
+          },
+        );
+      }));
+
+    it("Should report a bootloader flash when that is what was resolved", () =>
+      new Promise<void>((resolve, reject) => {
+        setupGetOsVersion();
+        setupResolveMcuVersion(Right({ target: "bootloader", version: "0.6" }));
+        const flashMcuHandler = setupFlashMcu();
+
+        const expectedStates: FlashMcuDAState[] = [
+          pendingState(FlashMcuSteps.GetDeviceInfo),
+          pendingState(FlashMcuSteps.ResolveMcuVersion),
+          pendingState(FlashMcuSteps.FlashMcuOrBootloader),
+          pendingState(FlashMcuSteps.FlashMcuOrBootloader),
+          completedState("bootloader"),
+        ];
+
+        testDeviceActionStates(
+          makeDeviceAction(),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: () => {
+              expect(flashMcuHandler).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    deviceInfo: getOsVersionResponse,
+                    version: "0.6",
                   },
                 }),
               );

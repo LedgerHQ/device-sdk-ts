@@ -173,9 +173,11 @@ export type {
   FlashMcuDAError,
   FlashMcuDAInput,
   FlashMcuDAIntermediateValue,
+  FlashMcuDAOutput,
   FlashMcuDARequiredInteraction,
   FlashMcuDAState,
   FlashMcuSteps,
+  FlashTarget,
 } from "./api/device-action/OsUpdate/Update/FlashMcu/types";
 export { InstallOsUpdateDeviceAction } from "./api/device-action/OsUpdate/Update/InstallOsUpdate/InstallOsUpdateDeviceAction";
 export type {

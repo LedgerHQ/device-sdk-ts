@@ -14,7 +14,10 @@ import {
   type McuFirmware,
 } from "@api/device-action/OsUpdate/Shared/types";
 import { ResolveMcuVersionError } from "@api/device-action/OsUpdate/Update/FlashMcu/FlashMcuDeviceActionErrors";
-import { type FlashMcuDAInput } from "@api/device-action/OsUpdate/Update/FlashMcu/types";
+import {
+  type FlashMcuDAInput,
+  type ResolvedFlash,
+} from "@api/device-action/OsUpdate/Update/FlashMcu/types";
 
 /*
  * An OS update aims at a known firmware, so the MCU catalog can answer on its
@@ -53,7 +56,7 @@ type ResolveMcuVersionHandlerArgs = {
 };
 
 type ResolveMcuVersionHandlerResponse = Promise<
-  Either<ResolveMcuVersionError, string>
+  Either<ResolveMcuVersionError, ResolvedFlash>
 >;
 
 type ResolveMcuVersionHandler = (
@@ -161,10 +164,12 @@ export const resolveMcuVersion =
     );
 
     if (forcedVersion !== undefined) {
-      return Promise.resolve(Right(forcedVersion));
+      return Promise.resolve(
+        Right({ target: "bootloader", version: forcedVersion }),
+      );
     }
 
-    return EitherAsync<ResolveMcuVersionError, string>(
+    return EitherAsync<ResolveMcuVersionError, ResolvedFlash>(
       async ({ fromPromise, throwE }) => {
         const mcuList = await fromPromise(getMcuList(internalApi));
         const provider = internalApi.getManagerApiService().getProvider();
@@ -195,8 +200,8 @@ export const resolveMcuVersion =
           mcu.fromBootloaderVersion,
           deviceInfo.mcuBootloaderVersion,
         )
-          ? mcu.name
-          : mcu.fromBootloaderVersion;
+          ? { target: "mcu", version: mcu.name }
+          : { target: "bootloader", version: mcu.fromBootloaderVersion };
       },
     ).run();
   };
