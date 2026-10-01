@@ -55,6 +55,5 @@ jobs:
           docker buildx build --push \
             --platform linux/amd64 \
             -f apps/device-mock-server/Dockerfile \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.ver.outputs.semver }} \
             -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.ver.outputs.semver }}-${{ steps.ver.outputs.sha }} \
             .

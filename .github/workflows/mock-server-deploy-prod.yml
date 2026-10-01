@@ -1,13 +1,22 @@
 name: "[mock-server] deploy-prod"
 
-# Manual prod deploy. Sets the image tag + chart version on the prod ArgoCD app
-# and syncs it. Auth uses an ArgoCD project token (create it + store as secrets
-# ARGOCD_TOKEN / var ARGOCD_SERVER — done outside this repo).
+# Prod deploy, called by mock-server-release on merge to main or run manually.
+# Sets the image tag + chart version on the prod ArgoCD app and syncs it. Auth
+# uses an ArgoCD project token (create it + store as secrets ARGOCD_TOKEN / var
+# ARGOCD_SERVER — done outside this repo).
 on:
+  workflow_call:
+    inputs:
+      app_version:
+        type: string
+        required: true
+      chart_version:
+        type: string
+        default: "0.1.4"
   workflow_dispatch:
     inputs:
       app_version:
-        description: "Image tag to deploy (version pushed by build-prod, e.g. 0.1.0)"
+        description: "Image tag to deploy (released version, e.g. 0.1.0, or <version>-<sha> from build-prod)"
         required: true
       chart_version:
         description: "web-app chart version (targetRevision)"

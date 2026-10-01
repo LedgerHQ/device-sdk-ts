@@ -1,0 +1,92 @@
+name: "[mock-server] release"
+
+# set-private.cjs makes the mock server public only on releases that include
+# it, so a private package or an existing GitHub Release means nothing to ship.
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/device-mock-server/package.json
+
+concurrency:
+  group: mock-server-release
+  cancel-in-progress: false
+
+permissions:
+  id-token: write # GitHub OIDC -> JFrog
+  contents: write # tag + GitHub Release
+
+env:
+  REGISTRY: jfrog.ledgerlabs.net
+  IMAGE: infra-oci-web-apps-prod-green/device-mock-server/prod
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      release: ${{ steps.check.outputs.release }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Check release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(jq -r '.version' apps/device-mock-server/package.json)
+          private=$(jq -r '.private' apps/device-mock-server/package.json)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$private" = "false" ] && ! gh release view "@ledgerhq/device-mock-server@$version" > /dev/null 2>&1; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  release:
+    needs: check
+    if: needs.check.outputs.release == 'true'
+    runs-on: ledgerhq-device-sdk
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      - name: Get token from JFrog (OIDC)
+        id: jfrog-login
+        uses: LedgerHQ/actions-security/actions/jfrog-login@3868be0ef1ec8722fbdb2c6cda90f739cbfc742d # actions/jfrog-login-1
+
+      - name: Login to JFrog OCI registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ steps.jfrog-login.outputs.oidc-user }}
+          password: ${{ steps.jfrog-login.outputs.oidc-token }}
+
+      - name: Build and push
+        run: |
+          docker buildx build --push \
+            --platform linux/amd64 \
+            -f apps/device-mock-server/Dockerfile \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ env.VERSION }} \
+            .
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="@ledgerhq/device-mock-server@$VERSION"
+          awk -v v="## $VERSION" '$0 == v { f = 1; next } /^## / { f = 0 } f' \
+            apps/device-mock-server/CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          gh release create "$tag" --target "$GITHUB_SHA" --title "$tag" --notes-file "$RUNNER_TEMP/notes.md"
+
+  deploy:
+    needs: [check, release]
+    uses: ./.github/workflows/mock-server-deploy-prod.yml
+    with:
+      app_version: ${{ needs.check.outputs.version }}
+    secrets: inherit
