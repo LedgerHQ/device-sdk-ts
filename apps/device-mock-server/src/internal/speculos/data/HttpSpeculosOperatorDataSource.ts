@@ -74,6 +74,7 @@ export class HttpSpeculosOperatorDataSource
         seed,
         run_id: runId,
         route_timeout_seconds: this.routeTimeoutSeconds,
+        extra_args: ["-p"],
       };
       if (this.speculosVersion) body["speculos_version"] = this.speculosVersion;
       let res: Response;
