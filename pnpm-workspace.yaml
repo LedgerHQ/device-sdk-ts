@@ -62,7 +62,7 @@ catalog:
   '@types/uuid': ^10.0.0
   '@types/w3c-web-hid': ^1.0.6
   '@types/web-bluetooth': ^0.0.20
-  '@types/ws': ^8.5.14
+  '@types/ws': ^8.18.2
   '@vitejs/plugin-react': ^5.0.0
   '@vitest/coverage-istanbul': ^3.2.4
   autoprefixer: ^10.4.17
@@ -140,7 +140,7 @@ catalog:
   vite: 7.3.6
   vitest: 3.2.6
   vitest-react-native: ^0.1.5
-  ws: ^8.18.0
+  ws: ^8.22.0
   xstate: 5.19.2
   zx: 8.5.3
 
