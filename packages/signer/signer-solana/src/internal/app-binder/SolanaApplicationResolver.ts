@@ -39,7 +39,7 @@ export const SOLANA_SIGNER_FEATURES = {
   delayedSigning: {
     minVersion: SOLANA_MIN_DELAYED_SIGNING_VERSION,
     excludedModels: [] as DeviceModelId[],
-    excludedApps: [] as string[],
+    excludedApps: ["Exchange"],
   },
   genericClearSign: {
     minVersion: SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
