@@ -3,14 +3,14 @@
   "contactGroups": [
     {
       "contactName": "Alice",
-      "groupHandle": "0x9a0abcd50e18a844ac5bf38e4cd72d9b0942e506c433afcda3847f2dadd476477cc8823bac9eb8417f7ea24c702345e3bb406120f5c474ed9c698ff40668daae",
-      "hmacProof": "0xaf0579a87a7fbb48abb173f4e91923d728bb6534a718d8027e833417aa85b9c4",
+      "groupHandle": "0x9a0abcd50e18a844ac5bf38e4cd72d9b0942e506c433afcda3847f2dadd476478e5a03f2edc172451ee98e169e3eb144b4f090d31efad1a1c70e90b2a8acb8df",
+      "hmacProof": "0x2e58b22a8160e0c810ee735e41ef870423d4396f489d9026403ff5f371fb4d64",
       "externalAddresses": [
         {
           "scope": "Ethereum",
           "address": "0xa1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4",
           "chainId": "1",
-          "hmacRest": "0xdaa5ca7b9b3991a191cf4aa9c2f5cc341bbba8cd8ecd1f89a66e65019322c39f"
+          "hmacRest": "0x0aefc3bd9faeae6435acc7e1d0d6fdcccb189f36012a4513afca770edf9d47b0"
         }
       ]
     }

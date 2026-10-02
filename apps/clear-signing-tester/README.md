@@ -304,9 +304,9 @@ fixture states neither.
 pnpm cs-tester cli test tron:contacts-sign
 ```
 
-Tron Contacts need app `0.8.0-dev2`, the first build with the Address Book
-APDU — the released apps answer `6a80`/`6e00` to it — so the three scenarios
-pin it alongside OS `1.7.0-rc2`.
+Tron Contacts need app `0.8.0`, the first release with the Address Book
+APDU — older apps answer `6a80`/`6e00` to it — so the three scenarios
+pin it alongside OS `1.7.0`.
 
 `chainId` is a decimal string or number, since JSON has no bigint.
 `unexpectedTexts` asserts a text is **absent**; the negative cases need it, because
