@@ -12,6 +12,9 @@ type RawTransactionData = {
   rawTx: string;
   description?: string;
   expectedTexts?: string[];
+  unexpectedTexts?: string[];
+  expectBlindSigned?: boolean;
+  skipCraft?: boolean;
 };
 
 @injectable()
@@ -45,6 +48,17 @@ export class SolanaTransactionFileRepository
         rawTx: rawTx.rawTx,
         description: rawTx.description || `Transaction ${index + 1}`,
         expectedTexts: rawTx.expectedTexts,
+        // A descriptor the device could not resolve (token, ALT, trusted name)
+        // degrades to the raw account and the unscaled amount, which still
+        // signs. Asserting the absence of a spoofed symbol/name/amount is what
+        // makes a case fail when clear signing is subverted rather than broken.
+        unexpectedTexts: rawTx.unexpectedTexts,
+        // A case whose point is that the transaction cannot be clear-signed
+        // passes on blind_signed and fails if it ever clear-signs or errors.
+        expectBlindSigned: rawTx.expectBlindSigned,
+        // Solana-only: leave the payer key as authored instead of rewriting it
+        // to the device key before signing (for cases whose signer matters).
+        skipCraft: rawTx.skipCraft,
       };
     });
   }
