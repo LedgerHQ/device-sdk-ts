@@ -4,8 +4,8 @@
   "action": "registerContact",
   "devices": ["flex"],
   "coinApp": "Ethereum",
-  "osVersion": "1.7.0-rc2",
-  "appVersion": "1.23.0-dev",
+  "osVersion": "1.7.0",
+  "appVersion": "1.23.0",
   "mode": "sequential",
   "cases": [
     {
