@@ -91,11 +91,19 @@ describe("SetFirmwareDistributionSaltUseCase", () => {
     );
   });
 
-  it("should only invalidate the firmware update context of ready sessions", () => {
+  it("should only invalidate ready sessions with a cached firmware update context", () => {
     // GIVEN
     const readySession = makeSession(readyState);
+    const readySessionWithoutContext = makeSession({
+      ...readyState,
+      firmwareUpdateContext: undefined,
+    } as DeviceSessionState);
     const connectedSession = makeSession(connectedState);
-    getDeviceSessionsMock.mockReturnValue([readySession, connectedSession]);
+    getDeviceSessionsMock.mockReturnValue([
+      readySession,
+      readySessionWithoutContext,
+      connectedSession,
+    ]);
 
     // WHEN
     useCase.execute("new-salt");
@@ -105,6 +113,9 @@ describe("SetFirmwareDistributionSaltUseCase", () => {
       ...readyState,
       firmwareUpdateContext: undefined,
     });
+    expect(
+      readySessionWithoutContext.setDeviceSessionState,
+    ).not.toHaveBeenCalled();
     expect(connectedSession.setDeviceSessionState).not.toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalledWith(
       "Firmware distribution salt updated",

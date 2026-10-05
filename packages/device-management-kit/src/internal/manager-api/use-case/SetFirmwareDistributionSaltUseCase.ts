@@ -47,12 +47,16 @@ export class SetFirmwareDistributionSaltUseCase {
     // state changes below already uses it
     this.managerApiDataSource.setFirmwareDistributionSalt(salt);
 
-    // Invalidate the firmware update context, as the latest firmware depends
-    // on the salt. The next device action that needs it will fetch it again.
+    // Invalidate the cached firmware update context, as the latest firmware
+    // depends on the salt. The next device action that needs it will fetch it
+    // again. Sessions without a cached context are left untouched.
     let invalidatedSessions = 0;
     for (const session of this.sessionService.getDeviceSessions()) {
       const state = session.getDeviceSessionState();
-      if (state.sessionStateType !== DeviceSessionStateType.Connected) {
+      if (
+        state.sessionStateType !== DeviceSessionStateType.Connected &&
+        state.firmwareUpdateContext !== undefined
+      ) {
         session.setDeviceSessionState({
           ...state,
           firmwareUpdateContext: undefined,
