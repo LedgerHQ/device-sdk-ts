@@ -1,0 +1,106 @@
+name: "[sample] build-deploy"
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - apps/sample/**
+      - packages/**
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+
+concurrency:
+  group: sample-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write # GitHub OIDC -> JFrog
+  contents: write # create the git tag
+
+env:
+  REGISTRY: jfrog.ledgerlabs.net
+  # Image path = branch (dmk-sample/main | dmk-sample/develop).
+  IMAGE: infra-oci-web-apps-prod-green/dmk-sample/${{ github.ref_name }}
+
+jobs:
+  build:
+    runs-on: ledgerhq-device-sdk
+    timeout-minutes: 45
+    outputs:
+      # main: the release semver. develop is not git-tagged, so its computed
+      # version (X.Y.Z-staging.0) would repeat on every build — roll out the
+      # per-commit image tag (`<version>-<sha>`, always pushed below) instead,
+      # otherwise ArgoCD sees an unchanged image.tag and nothing restarts.
+      tag: ${{ github.ref_name == 'main' && steps.ver.outputs.new_version || format('{0}-{1}', steps.ver.outputs.new_version, steps.sha.outputs.short) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0 # tag history for version calculation
+
+      - name: Short SHA
+        id: sha
+        run: echo "short=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      # Next semver from the last `sample-v*` tag (default: patch; `#minor` / `#major` in a
+      # commit message bumps higher). The prefix isolates it from the changesets release tags.
+      # main -> X.Y.Z (release, git-tagged), develop -> X.Y.Z-staging.0 (pre-release, never tagged).
+      # dry_run: the tag is only created after a successful push.
+      - name: Compute next version
+        id: ver
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag_prefix: sample-v
+          default_bump: patch
+          release_branches: main
+          pre_release_branches: develop
+          append_to_pre_release_tag: staging
+          dry_run: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      - name: Get token from JFrog (OIDC)
+        id: jfrog-login
+        uses: LedgerHQ/actions-security/actions/jfrog-login@3868be0ef1ec8722fbdb2c6cda90f739cbfc742d # actions/jfrog-login-1
+
+      - name: Login to JFrog OCI registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ steps.jfrog-login.outputs.oidc-user }}
+          password: ${{ steps.jfrog-login.outputs.oidc-token }}
+
+      - name: Build and push
+        env:
+          NEXT_PUBLIC_GATING_TOKEN: ${{ vars.SAMPLE_NEXT_PUBLIC_GATING_TOKEN }}
+          DMK_CONFIG_TRANSPORT: ${{ vars.SAMPLE_DMK_CONFIG_TRANSPORT }}
+        run: |
+          docker buildx build --push \
+            --platform linux/amd64 \
+            -f apps/sample/Dockerfile \
+            --build-arg NEXT_PUBLIC_GATING_TOKEN \
+            --build-arg DMK_CONFIG_TRANSPORT \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.ver.outputs.new_version }} \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ steps.ver.outputs.new_version }}-${{ steps.sha.outputs.short }} \
+            .
+
+      # Only main gets a git tag; develop (staging) builds are not tagged.
+      - name: Create git tag
+        if: github.ref_name == 'main'
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ steps.ver.outputs.new_tag }}
+          tag_prefix: ""
+
+  # Build end triggers the deploy to the env matching the branch; the unique build tag (see `outputs.tag`) is what gets rolled out.
+  deploy:
+    needs: build
+    uses: ./.github/workflows/sample-deploy.yml
+    with:
+      # main -> prod, develop -> staging
+      argocd_app: dmk-sample-${{ github.ref_name == 'main' && 'prod' || 'staging' }}
+      app_version: ${{ needs.build.outputs.tag }}
+    secrets: inherit

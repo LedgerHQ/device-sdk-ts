@@ -1,0 +1,79 @@
+name: "[sample] preview"
+
+# Opt-in: only PRs labelled `preview-sample` (the `preview` label belongs to mock-server).
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - apps/sample/**
+      - packages/**
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+
+concurrency:
+  group: sample-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write # GitHub OIDC -> JFrog
+  contents: read
+  pull-requests: write # comment
+
+env:
+  REGISTRY: jfrog.ledgerlabs.net
+  IMAGE: infra-oci-web-apps-sandbox-green/dmk-sample/dev
+  PREVIEW_HOST: dmk-sample-pr-${{ github.event.pull_request.number }}.aws.sbx.ldg-tech.com
+
+jobs:
+  build:
+    if: contains(github.event.pull_request.labels.*.name, 'preview-sample')
+    runs-on: ledgerhq-device-sdk
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+
+      - name: Get token from JFrog (OIDC)
+        id: jfrog-login
+        uses: LedgerHQ/actions-security/actions/jfrog-login@3868be0ef1ec8722fbdb2c6cda90f739cbfc742d # actions/jfrog-login-1
+
+      - name: Login to JFrog OCI registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ steps.jfrog-login.outputs.oidc-user }}
+          password: ${{ steps.jfrog-login.outputs.oidc-token }}
+
+      - name: Build and push
+        env:
+          NEXT_PUBLIC_GATING_TOKEN: ${{ vars.SAMPLE_NEXT_PUBLIC_GATING_TOKEN }}
+          DMK_CONFIG_TRANSPORT: ${{ vars.SAMPLE_DMK_CONFIG_TRANSPORT }}
+        run: |
+          docker buildx build --push \
+            --platform linux/amd64 \
+            -f apps/sample/Dockerfile \
+            --build-arg NEXT_PUBLIC_GATING_TOKEN \
+            --build-arg DMK_CONFIG_TRANSPORT \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE }}:pr-${{ github.event.pull_request.number }} \
+            .
+
+      - name: Comment preview URL
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          body=$(printf '%s\n' \
+            "🚀 **Sample preview environment**" \
+            "" \
+            "**URL:** https://${PREVIEW_HOST}" \
+            "**Image:** \`${REGISTRY}/${IMAGE}:pr-${PR}\`" \
+            "**Commit:** \`${HEAD_SHA}\`" \
+            "" \
+            "ArgoCD syncs the env within ~30-60s after this image is pushed.")
+          # New comment each time: --edit-last would overwrite the mock-server preview comment.
+          gh pr comment "$PR" --body "$body"
