@@ -15,7 +15,29 @@ export interface TypedDataDescriptorV1 {
   message_info: {
     descriptor: CalldataTransactionDescriptor;
   };
-  fields: {
-    descriptor: string;
-  }[];
+  fields: TypedDataDescriptorFieldV1[];
 }
+
+export interface TypedDataDescriptorFieldV1 {
+  descriptor: string;
+  param: {
+    type: string;
+    token?: TypedDataDescriptorValueV1;
+  };
+}
+
+export type TypedDataDescriptorValueV1 =
+  | {
+      type: "path";
+      binary_path: {
+        type: "EIP712";
+        elements: TypedDataDescriptorPathElementV1[];
+      };
+    }
+  | {
+      type: "constant";
+    };
+
+export type TypedDataDescriptorPathElementV1 =
+  | { type: "struct_field"; index: number }
+  | { type: "array_slice"; start?: number; end?: number };

@@ -4,6 +4,7 @@ import { HttpTypedDataDataSource } from "@/modules/ethereum/typed-data/data/Http
 import { HttpTypedDataDescriptorDataSource } from "@/modules/ethereum/typed-data/data/HttpTypedDataDescriptorDataSource";
 import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
 import { DefaultTypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/DefaultTypedDataContextLoader";
+import { DefaultTypedDataDescriptorContextLoader } from "@/modules/ethereum/typed-data/domain/DefaultTypedDataDescriptorContextLoader";
 
 export const typedDataModuleFactory = () =>
   new ContainerModule(({ bind }) => {
@@ -13,5 +14,8 @@ export const typedDataModuleFactory = () =>
     );
     bind(typedDataTypes.TypedDataContextLoader).to(
       DefaultTypedDataContextLoader,
+    );
+    bind(typedDataTypes.TypedDataDescriptorContextLoader).to(
+      DefaultTypedDataDescriptorContextLoader,
     );
   });

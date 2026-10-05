@@ -32,6 +32,7 @@ export * from "./modules/ethereum/gated-signing/domain/GatedSigningTypedDataCont
 export * from "./modules/ethereum/model/EthereumClearSignContext";
 export * from "./modules/ethereum/model/TypedDataClearSignContext";
 export * from "./modules/ethereum/model/TypedDataContext";
+export * from "./modules/ethereum/model/TypedDataDescriptorContext";
 export * from "./modules/ethereum/nft/data/HttpNftDataSource";
 export * from "./modules/ethereum/nft/data/NftDataSource";
 export * from "./modules/ethereum/nft/domain/NftContextFieldLoader";
@@ -53,9 +54,12 @@ export * from "./modules/ethereum/typed-data/data/HttpTypedDataDescriptorDataSou
 export * from "./modules/ethereum/typed-data/data/TypedDataDataSource";
 export * from "./modules/ethereum/typed-data/data/TypedDataDescriptorDataSource";
 export * from "./modules/ethereum/typed-data/domain/DefaultTypedDataContextLoader";
+export * from "./modules/ethereum/typed-data/domain/DefaultTypedDataDescriptorContextLoader";
 export * from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
+export * from "./modules/ethereum/typed-data/domain/TypedDataDescriptorContextLoader";
 export * from "./modules/ethereum/typed-data/utils/getPrimaryTypeHash";
 export * from "./modules/ethereum/typed-data/utils/getSchemaHash";
+export * from "./modules/ethereum/typed-data/utils/resolveTypedDataPath";
 export * from "./modules/ethereum/uniswap/data/AbiDecoderDataSource";
 export * from "./modules/ethereum/uniswap/data/CommandDecoderDataSource";
 export * from "./modules/ethereum/uniswap/data/DefaultCommandDecoderDataSource";

@@ -19,6 +19,8 @@ import {
 } from "./TypedDataDescriptorDataSource";
 import type {
   TypedDataDescriptorDto,
+  TypedDataDescriptorFieldV1,
+  TypedDataDescriptorPathElementV1,
   TypedDataDescriptorV1,
 } from "./TypedDataDescriptorDto";
 
@@ -101,7 +103,14 @@ export class HttpTypedDataDescriptorDataSource
         signatures[this.config.cal.mode],
         INFO_SIGNATURE_TAG,
       ),
-      fields: descriptor.fields.map((field) => field.descriptor),
+      fields: descriptor.fields.map((field) => ({
+        payload: field.descriptor,
+        tokenPath:
+          field.param.type === "TOKEN_AMOUNT" &&
+          field.param.token?.type === "path"
+            ? field.param.token.binary_path.elements
+            : undefined,
+      })),
     });
   }
 
@@ -123,7 +132,33 @@ export class HttpTypedDataDescriptorDataSource
       typeof data.message_info.descriptor.signatures === "object" &&
       typeof data.message_info.descriptor.signatures[mode] === "string" &&
       Array.isArray(data.fields) &&
-      data.fields.every((field) => typeof field?.descriptor === "string")
+      data.fields.every((field) => this.isFieldV1(field))
+    );
+  }
+
+  private isFieldV1(data: TypedDataDescriptorFieldV1): boolean {
+    return (
+      typeof data === "object" &&
+      typeof data.descriptor === "string" &&
+      typeof data.param === "object" &&
+      typeof data.param.type === "string" &&
+      (data.param.token?.type !== "path" ||
+        (data.param.token.binary_path?.type === "EIP712" &&
+          Array.isArray(data.param.token.binary_path.elements) &&
+          data.param.token.binary_path.elements.every((e) =>
+            this.isPathElementV1(e),
+          )))
+    );
+  }
+
+  private isPathElementV1(data: TypedDataDescriptorPathElementV1): boolean {
+    return (
+      typeof data === "object" &&
+      ((data.type === "struct_field" && typeof data.index === "number") ||
+        (data.type === "array_slice" &&
+          (typeof data.start === "undefined" ||
+            typeof data.start === "number") &&
+          (typeof data.end === "undefined" || typeof data.end === "number")))
     );
   }
 }

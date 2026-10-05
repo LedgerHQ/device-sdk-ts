@@ -3,7 +3,10 @@ import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { HttpTypedDataDescriptorDataSource } from "@/modules/ethereum/typed-data/data/HttpTypedDataDescriptorDataSource";
-import { type TypedDataDescriptorDataSource } from "@/modules/ethereum/typed-data/data/TypedDataDescriptorDataSource";
+import {
+  type TypedDataDescriptorDataSource,
+  type TypedDataPathElement,
+} from "@/modules/ethereum/typed-data/data/TypedDataDescriptorDataSource";
 
 import {
   type TypedDataDescriptorDto,
@@ -21,6 +24,11 @@ const FIELDS = [
   "00010101075370656e646572020100031600010101110001010101050201140306000101010101",
   "0001010110416d6f756e7420616c6c6f77616e6365020102032f0001010114000101010101020114030900010101010001010102140001010101050201140309000101010100010100",
   "0001010110417070726f76616c2065787069726573020104031c00010101140001010101010201060309000101010100010102020100",
+];
+
+const TOKEN_PATH: TypedDataPathElement[] = [
+  { type: "struct_field", index: 0 },
+  { type: "struct_field", index: 0 },
 ];
 
 const SCHEMA = {
@@ -51,7 +59,20 @@ const buildDescriptor = (
   message_info: {
     descriptor: { data: MESSAGE_INFO, signatures: { test: SIGNATURE } },
   },
-  fields: FIELDS.map((descriptor) => ({ descriptor })),
+  fields: [
+    { descriptor: FIELDS[0]!, param: { type: "RAW" } },
+    {
+      descriptor: FIELDS[1]!,
+      param: {
+        type: "TOKEN_AMOUNT",
+        token: {
+          type: "path",
+          binary_path: { type: "EIP712", elements: TOKEN_PATH },
+        },
+      },
+    },
+    { descriptor: FIELDS[2]!, param: { type: "DATETIME" } },
+  ],
   ...overrides,
 });
 
@@ -114,7 +135,7 @@ describe("HttpTypedDataDescriptorDataSource", () => {
     );
   });
 
-  it("should return the signed message info and the fields in CAL order", async () => {
+  it("should return the signed message info, and the fields in CAL order with their token path", async () => {
     // GIVEN
     httpMock.get.mockResolvedValue(buildDto(buildDescriptor()));
 
@@ -125,7 +146,11 @@ describe("HttpTypedDataDescriptorDataSource", () => {
     expect(result).toEqual(
       Right({
         messageInfo: `${MESSAGE_INFO}81ff47${SIGNATURE}`,
-        fields: FIELDS,
+        fields: [
+          { payload: FIELDS[0], tokenPath: undefined },
+          { payload: FIELDS[1], tokenPath: TOKEN_PATH },
+          { payload: FIELDS[2], tokenPath: undefined },
+        ],
       }),
     );
   });
@@ -222,7 +247,45 @@ describe("HttpTypedDataDescriptorDataSource", () => {
     httpMock.get.mockResolvedValue(
       buildDto(
         buildDescriptor({
-          fields: [{ descriptor: undefined as unknown as string }],
+          fields: [
+            {
+              descriptor: undefined as unknown as string,
+              param: { type: "RAW" },
+            },
+          ],
+        }),
+      ),
+    );
+
+    // WHEN
+    const result = await datasource.getTypedDataDescriptors(params);
+
+    // THEN
+    expect(result.isLeft()).toBe(true);
+  });
+
+  it("should return an error when a token path element is invalid", async () => {
+    // GIVEN
+    httpMock.get.mockResolvedValue(
+      buildDto(
+        buildDescriptor({
+          fields: [
+            {
+              descriptor: FIELDS[1]!,
+              param: {
+                type: "TOKEN_AMOUNT",
+                token: {
+                  type: "path",
+                  binary_path: {
+                    type: "EIP712",
+                    elements: [
+                      { type: "struct_field" } as TypedDataPathElement,
+                    ],
+                  },
+                },
+              },
+            },
+          ],
         }),
       ),
     );
