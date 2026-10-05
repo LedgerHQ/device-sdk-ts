@@ -45,6 +45,7 @@ export type SettingsState = {
 
   // DMK settings
   appProvider: number;
+  firmwareDistributionSalt: string;
   webSocketUrl: string;
   pollingInterval: number;
   bypassIntentQueue: boolean;
@@ -71,6 +72,7 @@ export const initialState: SettingsState = {
 
   // DMK settings
   appProvider: 1,
+  firmwareDistributionSalt: "0",
   webSocketUrl: "wss://scriptrunner.api.live.ledger.com/update",
   pollingInterval: 1000,
   bypassIntentQueue: false,

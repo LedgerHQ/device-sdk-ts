@@ -34,7 +34,10 @@ describe("ListenToConnectedDevice", () => {
       [],
       "listen-to-connected-device-use-case",
     );
-    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
+    managerApiDataSource = new HttpManagerApiDataSource(
+      {} as DmkConfig,
+      () => logger,
+    );
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,

@@ -2,8 +2,10 @@ import { inject, injectable } from "inversify";
 import { EitherAsync, Just, Maybe, Nothing } from "purify-ts";
 
 import { type DmkConfig } from "@api/DmkConfig";
+import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DmkNetworkClient } from "@api/network/DmkNetworkClient";
 import { DmkNetworkClientError } from "@api/network/DmkNetworkClientError";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import {
   type Application,
@@ -57,13 +59,18 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
   private _firmwareDistributionSalt: string =
     DEFAULT_FIRMWARE_DISTRIBUTION_SALT;
 
+  private readonly _logger: LoggerPublisherService;
+
   constructor(
     @inject(managerApiTypes.DmkConfig)
     { managerApiUrl, provider, firmwareDistributionSalt }: DmkConfig,
+    @inject(loggerTypes.LoggerPublisherServiceFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.http = new DmkNetworkClient({ baseUrl: managerApiUrl });
     this._provider = provider;
     this._firmwareDistributionSalt = firmwareDistributionSalt;
+    this._logger = loggerFactory("HttpManagerApiDataSource");
   }
 
   setProvider(provider: number): void {
@@ -75,6 +82,17 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
 
   getProvider(): number {
     return this._provider;
+  }
+
+  setFirmwareDistributionSalt(salt: string): void {
+    if (this._firmwareDistributionSalt === salt || salt.trim() === "") {
+      return;
+    }
+    this._firmwareDistributionSalt = salt;
+  }
+
+  getFirmwareDistributionSalt(): string {
+    return this._firmwareDistributionSalt;
   }
 
   getAppList(
@@ -171,16 +189,18 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
     params: GetLatestFirmwareVersionParams,
   ): EitherAsync<HttpFetchApiError, Maybe<OsuFirmware>> {
     const { currentFinalFirmwareId, deviceId } = params;
-    return EitherAsync(() =>
-      this.http.get("/get_latest_firmware", {
+    return EitherAsync(() => {
+      const salt = this._firmwareDistributionSalt;
+      this._logger.info("Requesting latest firmware", { data: { salt } });
+      return this.http.get("/get_latest_firmware", {
         params: {
           current_se_firmware_final_version: currentFinalFirmwareId,
           device_version: deviceId,
           provider: this._provider,
-          salt: this._firmwareDistributionSalt,
+          salt,
         },
-      }),
-    )
+      });
+    })
       .chain((latestFirmware) =>
         this.mapLatestFirmwareDto(
           latestFirmware as LatestFirmwareOsuVersionResponseDto,

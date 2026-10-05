@@ -8,18 +8,28 @@ import {
   ETH_APP_METADATA,
 } from "@api/device-action/__test-utils__/data";
 import { type DmkConfig } from "@api/DmkConfig";
+import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
 import { HttpManagerApiDataSource } from "./HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "./ManagerApiDataSource";
 
+const logger = new DefaultLoggerPublisherService(
+  [],
+  "HttpManagerApiDataSourceTest",
+);
+const loggerFactory = () => logger;
+
 describe("HttpManagerApiDataSource", () => {
   describe("getAppList", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://localhost",
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
     afterEach(() => {
       vi.restoreAllMocks();
@@ -76,9 +86,12 @@ describe("HttpManagerApiDataSource", () => {
     describe("success cases", () => {
       let api: ManagerApiDataSource;
       beforeEach(() => {
-        api = new HttpManagerApiDataSource({
-          managerApiUrl: "http://localhost",
-        } as DmkConfig);
+        api = new HttpManagerApiDataSource(
+          {
+            managerApiUrl: "http://localhost",
+          } as DmkConfig,
+          loggerFactory,
+        );
       });
       afterEach(() => {
         vi.restoreAllMocks();
@@ -130,9 +143,12 @@ describe("HttpManagerApiDataSource", () => {
     describe("error cases", () => {
       let api: ManagerApiDataSource;
       beforeEach(() => {
-        api = new HttpManagerApiDataSource({
-          managerApiUrl: "http://localhost",
-        } as DmkConfig);
+        api = new HttpManagerApiDataSource(
+          {
+            managerApiUrl: "http://localhost",
+          } as DmkConfig,
+          loggerFactory,
+        );
       });
       afterEach(() => {
         vi.restoreAllMocks();
@@ -154,9 +170,12 @@ describe("HttpManagerApiDataSource", () => {
 
       it("should throw an error if the request fails", async () => {
         // given
-        const api = new HttpManagerApiDataSource({
-          managerApiUrl: "http://localhost",
-        } as DmkConfig);
+        const api = new HttpManagerApiDataSource(
+          {
+            managerApiUrl: "http://localhost",
+          } as DmkConfig,
+          loggerFactory,
+        );
 
         const err = new Error("fetch error");
         vi.spyOn(globalThis, "fetch").mockRejectedValue(err);
@@ -175,9 +194,12 @@ describe("HttpManagerApiDataSource", () => {
   describe("getDeviceVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://localhost",
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
     afterEach(() => {
       vi.restoreAllMocks();
@@ -240,9 +262,12 @@ describe("HttpManagerApiDataSource", () => {
   describe("getFirmwareVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://localhost",
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
     afterEach(() => {
       vi.restoreAllMocks();
@@ -329,10 +354,13 @@ describe("HttpManagerApiDataSource", () => {
   describe("setProvider", () => {
     let api: HttpManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://fake-url.com",
-        provider: 1,
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://fake-url.com",
+          provider: 1,
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
 
     it("should not change the provider if the new value is the same", () => {
@@ -381,9 +409,12 @@ describe("HttpManagerApiDataSource", () => {
   describe("getFirmwareVersionById", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://localhost",
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
     afterEach(() => {
       vi.restoreAllMocks();
@@ -427,9 +458,12 @@ describe("HttpManagerApiDataSource", () => {
   describe("getLatestFirmwareVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://localhost",
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
     afterEach(() => {
       vi.restoreAllMocks();
@@ -559,11 +593,14 @@ describe("HttpManagerApiDataSource", () => {
     });
     it("should request the firmware params without the legacy livecommonversion param", async () => {
       // given
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://localhost",
-        provider: 82,
-        firmwareDistributionSalt: "distribution-salt",
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+          provider: 82,
+          firmwareDistributionSalt: "distribution-salt",
+        } as DmkConfig,
+        loggerFactory,
+      );
       const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
         new Response(
           JSON.stringify({
@@ -590,14 +627,51 @@ describe("HttpManagerApiDataSource", () => {
         salt: "distribution-salt",
       });
     });
+    it("should request and log the salt set at runtime", async () => {
+      // given
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+          provider: 82,
+          firmwareDistributionSalt: "distribution-salt",
+        } as DmkConfig,
+        loggerFactory,
+      );
+      api.setFirmwareDistributionSalt("runtime-salt");
+      const infoSpy = vi.spyOn(logger, "info");
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            result: "null",
+            se_firmware_osu_version: null,
+          }),
+        ),
+      );
+
+      // when
+      await api.getLatestFirmwareVersion({
+        currentFinalFirmwareId: 200,
+        deviceId: 42,
+      });
+
+      // then
+      const requestUrl = new URL(String(fetchSpy.mock.calls[0]![0]));
+      expect(requestUrl.searchParams.get("salt")).toEqual("runtime-salt");
+      expect(infoSpy).toHaveBeenCalledWith("Requesting latest firmware", {
+        data: { salt: "runtime-salt" },
+      });
+    });
   });
 
   describe("getOsuFirmwareVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://localhost",
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
     afterEach(() => {
       vi.restoreAllMocks();
@@ -680,9 +754,12 @@ describe("HttpManagerApiDataSource", () => {
   describe("getLanguagePackages", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://localhost",
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
     afterEach(() => {
       vi.restoreAllMocks();
@@ -806,9 +883,12 @@ describe("HttpManagerApiDataSource", () => {
   describe("getMcuList", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://localhost",
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://localhost",
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
     afterEach(() => {
       vi.restoreAllMocks();
@@ -911,10 +991,13 @@ describe("HttpManagerApiDataSource", () => {
   describe("getProvider", () => {
     let api: HttpManagerApiDataSource;
     beforeEach(() => {
-      api = new HttpManagerApiDataSource({
-        managerApiUrl: "http://fake-url.com",
-        provider: 123,
-      } as DmkConfig);
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://fake-url.com",
+          provider: 123,
+        } as DmkConfig,
+        loggerFactory,
+      );
     });
     afterEach(() => {
       vi.restoreAllMocks();
@@ -927,6 +1010,34 @@ describe("HttpManagerApiDataSource", () => {
     it("should return the updated provider after setProvider is called", () => {
       api.setProvider(321);
       expect(api.getProvider()).toBe(321);
+    });
+  });
+
+  describe("setFirmwareDistributionSalt / getFirmwareDistributionSalt", () => {
+    let api: HttpManagerApiDataSource;
+    beforeEach(() => {
+      api = new HttpManagerApiDataSource(
+        {
+          managerApiUrl: "http://fake-url.com",
+          firmwareDistributionSalt: "initial-salt",
+        } as DmkConfig,
+        loggerFactory,
+      );
+    });
+
+    it("should return the initial salt", () => {
+      expect(api.getFirmwareDistributionSalt()).toBe("initial-salt");
+    });
+
+    it("should return the updated salt after setFirmwareDistributionSalt is called", () => {
+      api.setFirmwareDistributionSalt("new-salt");
+      expect(api.getFirmwareDistributionSalt()).toBe("new-salt");
+    });
+
+    it("should not change the salt if the new value is empty", () => {
+      api.setFirmwareDistributionSalt("");
+      api.setFirmwareDistributionSalt("   ");
+      expect(api.getFirmwareDistributionSalt()).toBe("initial-salt");
     });
   });
 });

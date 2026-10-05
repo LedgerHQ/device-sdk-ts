@@ -37,7 +37,10 @@ describe("SendCommandUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "send-command-use-case");
     sessionService = new DefaultDeviceSessionService(() => logger);
-    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
+    managerApiDataSource = new HttpManagerApiDataSource(
+      {} as DmkConfig,
+      () => logger,
+    );
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,
