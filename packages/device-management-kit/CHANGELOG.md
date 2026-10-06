@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 1.11.0
+
+### Minor Changes
+
+- [#1951](https://github.com/LedgerHQ/device-sdk-ts/pull/1951) [`9f5fe55`](https://github.com/LedgerHQ/device-sdk-ts/commit/9f5fe55d03a8029405288d3336019c57b0475250) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Add `setFirmwareDistributionSalt` and `getFirmwareDistributionSalt` to set the firmware distribution salt at runtime. When the salt changes, the open device sessions forget their cached firmware update context, so the next device action fetches the latest firmware again with the new salt.
+
 ## 1.10.0
 
 ### Minor Changes

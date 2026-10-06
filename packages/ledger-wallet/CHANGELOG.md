@@ -1,5 +1,16 @@
 # @ledgerhq/dmk-ledger-wallet
 
+## 0.7.0
+
+### Minor Changes
+
+- [#1939](https://github.com/LedgerHQ/device-sdk-ts/pull/1939) [`31ff2a4`](https://github.com/LedgerHQ/device-sdk-ts/commit/31ff2a4b12769206f470193bd1cafbbb60b0ff5e) Thanks [@benruseau](https://github.com/benruseau)! - `FlashMcuDeviceAction` now returns whether it flashed the MCU or the bootloader. A `target` of `"mcu"` ends the flash loop; `"bootloader"` is followed by another flash.
+
+### Patch Changes
+
+- Updated dependencies [[`9f5fe55`](https://github.com/LedgerHQ/device-sdk-ts/commit/9f5fe55d03a8029405288d3336019c57b0475250)]:
+  - @ledgerhq/device-management-kit@1.11.0
+
 ## 0.6.0
 
 ### Minor Changes
