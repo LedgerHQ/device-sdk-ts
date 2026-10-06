@@ -1,8 +1,18 @@
 import {
   type Device,
+  type MockClient,
   type SpeculosAction,
   type SpeculosButton,
 } from "@ledgerhq/device-mockserver-client";
+
+/**
+ * The MockClient calls this library makes. Picking them drops the class's
+ * private fields, so a client from another copy of the package still fits.
+ */
+export type MockServerClient = Pick<
+  MockClient,
+  "getDevice" | "getScreenshot" | "pressButton" | "touchScreen" | "sendApdu"
+>;
 
 /**
  * How the screen is reached. The mock server proxies to the Speculos instance

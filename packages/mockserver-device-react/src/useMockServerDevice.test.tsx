@@ -1,10 +1,8 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import {
-  type Device,
-  type MockClient,
-} from "@ledgerhq/device-mockserver-client";
+import { type Device } from "@ledgerhq/device-mockserver-client";
 
+import { type MockServerClient } from "./types";
 import { useMockServerDevice } from "./useMockServerDevice";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -16,7 +14,7 @@ describe("useMockServerDevice", () => {
   let root: Root;
   let result: Device | null | undefined;
 
-  const Probe: React.FC<{ client: MockClient; deviceId: string }> = ({
+  const Probe: React.FC<{ client: MockServerClient; deviceId: string }> = ({
     client,
     deviceId,
   }) => {
@@ -24,8 +22,8 @@ describe("useMockServerDevice", () => {
     return null;
   };
   const aClient = (getDevice: () => Promise<Device>) =>
-    ({ getDevice: vi.fn(getDevice) }) as unknown as MockClient;
-  const render = (client: MockClient, deviceId = "device-1") =>
+    ({ getDevice: vi.fn(getDevice) }) as unknown as MockServerClient;
+  const render = (client: MockServerClient, deviceId = "device-1") =>
     act(() => root.render(<Probe client={client} deviceId={deviceId} />));
   const flush = () => act(() => vi.advanceTimersByTimeAsync(0));
 
@@ -50,6 +48,25 @@ describe("useMockServerDevice", () => {
 
     expect(result).toBe(DEVICE);
     expect(client.getDevice).toHaveBeenCalledWith("device-1");
+  });
+
+  it("accepts a client from another copy of the package", async () => {
+    // Its own private field, as a MockClient from a second install would have:
+    // only the public calls must match.
+    class OtherCopyClient implements MockServerClient {
+      private readonly record = DEVICE;
+      getDevice = vi.fn(() => Promise.resolve(this.record));
+      getScreenshot = vi.fn<MockServerClient["getScreenshot"]>();
+      pressButton = vi.fn<MockServerClient["pressButton"]>();
+      touchScreen = vi.fn<MockServerClient["touchScreen"]>();
+      sendApdu = vi.fn<MockServerClient["sendApdu"]>();
+    }
+    const client = new OtherCopyClient();
+
+    render(client);
+    await flush();
+
+    expect(result).toBe(DEVICE);
   });
 
   it("reads nothing without a device id", async () => {
