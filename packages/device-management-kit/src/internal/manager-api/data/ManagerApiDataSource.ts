@@ -75,6 +75,19 @@ export interface ManagerApiDataSource {
   getProvider(): number;
 
   /**
+   * Sets the firmware distribution salt sent to resolve the latest firmware.
+   * An empty salt is ignored.
+   *
+   * @param salt - The firmware distribution salt.
+   */
+  setFirmwareDistributionSalt(salt: string): void;
+
+  /**
+   * Returns the current firmware distribution salt.
+   */
+  getFirmwareDistributionSalt(): string;
+
+  /**
    * Retrieves a firmware version from a final firmware ID.
    *
    * @param finalFirmwareId - The ID of the final firmware to retrieve.

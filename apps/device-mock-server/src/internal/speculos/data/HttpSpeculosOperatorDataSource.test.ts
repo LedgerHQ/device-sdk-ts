@@ -59,6 +59,7 @@ describe("HttpSpeculosOperatorDataSource", () => {
       seed: TEST_SEED,
       run_id: "run-1",
       route_timeout_seconds: 300,
+      extra_args: ["-p"],
     });
   });
 

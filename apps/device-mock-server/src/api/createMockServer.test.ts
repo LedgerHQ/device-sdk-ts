@@ -87,6 +87,17 @@ describe("createMockServer (HTTP contract)", () => {
     });
   });
 
+  describe("CORS", () => {
+    it("allows PUT requests in preflight responses", async () => {
+      const res = await api("/sessions/current/seed", { method: "OPTIONS" });
+
+      expect(res.status).toBe(204);
+      expect(res.headers.get("access-control-allow-methods")).toBe(
+        "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+      );
+    });
+  });
+
   describe("health", () => {
     it("reports liveness without auth", async () => {
       const res = await api("/health");

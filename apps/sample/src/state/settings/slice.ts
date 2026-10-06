@@ -55,6 +55,12 @@ export const settingsSlice = createSlice({
     setAppProvider: (state, action: PayloadAction<{ appProvider: number }>) => {
       state.appProvider = action.payload.appProvider;
     },
+    setFirmwareDistributionSalt: (
+      state,
+      action: PayloadAction<{ firmwareDistributionSalt: string }>,
+    ) => {
+      state.firmwareDistributionSalt = action.payload.firmwareDistributionSalt;
+    },
     setWebSocketUrl: (
       state,
       action: PayloadAction<{ webSocketUrl: string }>,
@@ -153,6 +159,7 @@ export const {
   setSpeculosDeviceModel,
   setDeviceScreenCollapsed,
   setAppProvider,
+  setFirmwareDistributionSalt,
   setWebSocketUrl,
   setPollingInterval,
   setBypassIntentQueue,

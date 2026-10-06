@@ -12,6 +12,8 @@ import { StyledComponentsRegistry } from "@/lib/registry";
 
 import ClientRootLayout from "./client-layout";
 
+import "./lumen.css";
+
 export const metadata = {
   title: "Ledger Device Management Kit",
   description: "Ledger Device Management Kit Sample App",

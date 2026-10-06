@@ -4,30 +4,34 @@
  * Live device screen, docked in the sidebar next to the device sessions it
  * belongs to. Rendered only while a device is connected, sticks to the top of
  * the sidebar while the menu scrolls under it, and collapses to its header row.
- *
- * What fills it is decided by useDeviceScreenSource, not here.
  */
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  DeviceScreen as Screen,
+  findDeviceScreenModel,
+  mockServerScreenApi,
+  useMockServerDevice,
+} from "@ledgerhq/device-mockserver-react";
+import { ThemeProvider } from "@ledgerhq/lumen-ui-react";
 import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { type DefaultTheme } from "styled-components";
 
-import {
-  DEVICE_SCREEN,
-  type DeviceScreenModel,
-} from "@/components/DeviceScreen/deviceModel";
-import { DeviceOsInfo } from "@/components/DeviceScreen/DeviceOsInfo";
-import { DeviceScreenButtons } from "@/components/DeviceScreen/DeviceScreenButtons";
-import { DeviceScreenImage } from "@/components/DeviceScreen/DeviceScreenImage";
-import { type DeviceScreenState } from "@/components/DeviceScreen/sources/types";
-import { useDeviceScreenSource } from "@/components/DeviceScreen/sources/useDeviceScreenSource";
+import { DEVICE_SCREEN_ICON } from "@/components/DeviceScreen/deviceModel";
+import { useSpeculosScreenApi } from "@/components/DeviceScreen/useSpeculosScreenApi";
+import { useMockClient } from "@/hooks/useMockClient";
 import {
   selectOrderedConnectedDevices,
   selectSelectedSessionId,
 } from "@/state/sessions/selectors";
-import { selectDeviceScreenCollapsed } from "@/state/settings/selectors";
+import {
+  selectDeviceScreenCollapsed,
+  selectMockServerSessionToken,
+  selectMockServerUrl,
+  selectTransportType,
+} from "@/state/settings/selectors";
 import { setDeviceScreenCollapsed } from "@/state/settings/slice";
 
 const Root = styled(Flex).attrs({ borderRadius: 2 })`
@@ -51,19 +55,13 @@ const Title = styled(Text).attrs({ variant: "tiny" })`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c80};
 `;
 
-const Body = styled(Flex)`
-  flex-direction: column;
-  row-gap: 8px;
+// Lumen expects Tailwind's preflight, which the sample does not load.
+const Body = styled.div`
   margin: 0 12px 12px;
-`;
 
-const Status = styled(Text).attrs({ variant: "tiny" })`
-  color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c60};
-`;
-
-const ErrorStatus = styled(Status)`
-  color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.error.c60};
-  word-break: break-word;
+  & * {
+    box-sizing: border-box;
+  }
 `;
 
 export const DeviceScreen: React.FC = () => {
@@ -71,59 +69,61 @@ export const DeviceScreen: React.FC = () => {
   const collapsed = useSelector(selectDeviceScreenCollapsed);
   const connectedDevices = useSelector(selectOrderedConnectedDevices);
   const selectedSessionId = useSelector(selectSelectedSessionId);
+  const transportType = useSelector(selectTransportType);
+  const mockServerUrl = useSelector(selectMockServerUrl);
+  const mockServerToken = useSelector(selectMockServerSessionToken);
+  const speculos = useSpeculosScreenApi();
 
   const session =
     connectedDevices.find(({ sessionId }) => sessionId === selectedSessionId) ??
     connectedDevices[0];
   const device = session?.connectedDevice;
-
-  const state = useDeviceScreenSource(device?.id ?? "", !!device && !collapsed);
+  const mockClient = useMockClient(mockServerUrl, mockServerToken);
+  const mockDeviceId = transportType === "mockserver" ? (device?.id ?? "") : "";
+  const mockDevice = useMockServerDevice(mockClient, mockDeviceId);
+  const mockServer = useMemo(
+    () => mockServerScreenApi(mockClient, mockDeviceId),
+    [mockClient, mockDeviceId],
+  );
 
   const toggle = useCallback(() => {
     dispatch(setDeviceScreenCollapsed({ deviceScreenCollapsed: !collapsed }));
   }, [dispatch, collapsed]);
 
-  if (!device || state.kind === "unavailable") {
+  if (
+    !device ||
+    (transportType !== "mockserver" && transportType !== "speculos")
+  ) {
     return null;
   }
 
-  const model = DEVICE_SCREEN[device.modelId];
+  const { label } = findDeviceScreenModel(device.modelId);
+  const ModelIcon = DEVICE_SCREEN_ICON[device.modelId];
   const Chevron = collapsed ? Icons.ChevronDown : Icons.ChevronUp;
 
   return (
-    <Root data-testid="container_device-screen">
+    <Root data-testid="container_sidebar-device-screen">
       <Header onClick={toggle} data-testid="button_toggle-device-screen">
-        <model.Icon size="XS" color="neutral.c80" />
-        <Title>{model.label} screen</Title>
+        <ModelIcon size="XS" color="neutral.c80" />
+        <Title>
+          {mockDevice?.firmware_version
+            ? `${label} - ${mockDevice.firmware_version}`
+            : label}
+        </Title>
         <Chevron size="XS" color="neutral.c80" />
       </Header>
 
-      {!collapsed && <Body>{renderScreen(state, model)}</Body>}
+      {!collapsed && (
+        <Body>
+          <ThemeProvider colorScheme="dark">
+            <Screen
+              key={transportType}
+              api={transportType === "mockserver" ? mockServer : speculos}
+              deviceType={device.modelId}
+            />
+          </ThemeProvider>
+        </Body>
+      )}
     </Root>
   );
 };
-
-function renderScreen(state: DeviceScreenState, model: DeviceScreenModel) {
-  switch (state.kind) {
-    case "loading":
-      return <Status>Loading…</Status>;
-    case "error":
-      return <ErrorStatus>{state.message}</ErrorStatus>;
-    case "os-info":
-      return <DeviceOsInfo device={state.device} />;
-    case "image":
-      return (
-        <>
-          <DeviceScreenImage
-            src={state.src}
-            onTouch={model.touch ? state.input.touch : undefined}
-          />
-          {model.buttons && (
-            <DeviceScreenButtons onPress={state.input.pressButton} />
-          )}
-        </>
-      );
-    default:
-      return null;
-  }
-}

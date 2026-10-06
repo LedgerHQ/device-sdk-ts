@@ -4,8 +4,8 @@
   "action": "signTransaction",
   "devices": ["flex"],
   "coinApp": "Tron",
-  "osVersion": "1.7.0-rc2",
-  "appVersion": "0.8.0-dev2",
+  "osVersion": "1.7.0",
+  "appVersion": "0.8.0",
   "mode": "parallel",
   "options": {
     "addressBook": "./ressources/tron/address-book.json"

@@ -3,13 +3,13 @@
   "contactGroups": [
     {
       "contactName": "Alice",
-      "groupHandle": "0x8a2954489a0abcd50e18a844ac5bf38e4cd72d9b0942e506c433afcda3847f2dccb1b2963a16feda62ff6aeaec0f0b96e20c6e77dc49e44407e637cd884b60fe",
-      "hmacProof": "0xa1f73f9e79fe605b1aedb8d27499319a4a1732ffbe079e3822b812f9a69431ed",
+      "groupHandle": "0x8a2954489a0abcd50e18a844ac5bf38e4cd72d9b0942e506c433afcda3847f2da6cfcfea71a1ef9db2743f6083dc9a0c426f24f530a270cc879164cf700efac9",
+      "hmacProof": "0x643a9be89725d7038e2c4934ae3a3ed98e5febce3d165a8a595937d87ba647b1",
       "externalAddresses": [
         {
           "scope": "Tron",
           "address": "TBoTZcARzWVgnNuB9SyE3S5g1RwsXoQL16",
-          "hmacRest": "0xa45f3bce26d9f8a0ce8ed2f8a1179fb989f1a5abe9c88fa8c9b608aca08c7026"
+          "hmacRest": "0x7320550c151ec8d6aed7aec29b707ce832365f522b338a16a7a192715b449d3a"
         }
       ]
     }

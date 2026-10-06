@@ -1,0 +1,9 @@
+/* Only what Lumen components need: no preflight, which would restyle the
+   styled-components UI around them. Tailwind layers its utilities, and any
+   unlayered global style beats a layered one, so they are made important. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none) important;
+@import "@ledgerhq/lumen-ui-react/tailwind.css";
+@import "@ledgerhq/device-mockserver-react/tailwind.css";
+
+@config "../../tailwind.config.mjs";

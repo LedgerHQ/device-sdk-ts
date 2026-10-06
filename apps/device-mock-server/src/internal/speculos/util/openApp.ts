@@ -21,14 +21,18 @@ export const SW_PROXY_ERROR = "6d00";
 
 /**
  * Map a DMK `device_type` (DeviceModelId enum value) to the Speculinho `device`
- * model identifier. Returns `null` for models Speculos does not support.
+ * field. Speculinho uses that field as the coin-apps directory and only
+ * normalizes it for the Speculos `--model` flag, so Nano S Plus must be
+ * `nanos+` and Nano Gen5 `apex_p`. Returns `null` for models Speculos does
+ * not support.
  */
 const DEVICE_MODEL_BY_TYPE: Record<string, string> = {
   nanos: "nanos",
-  nanosp: "nanosp",
+  nanosp: "nanos+",
   nanox: "nanox",
   stax: "stax",
   flex: "flex",
+  apexp: "apex_p",
 };
 
 /**

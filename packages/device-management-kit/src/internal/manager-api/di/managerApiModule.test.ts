@@ -1,6 +1,7 @@
 import { Container } from "inversify";
 
 import { type DmkConfig } from "@api/DmkConfig";
+import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { StubUseCase } from "@root/src/di.stub";
@@ -22,7 +23,11 @@ describe("managerApiModuleFactory", () => {
         } as DmkConfig,
       });
       container = new Container();
-      container.loadSync(mod);
+      container.loadSync(
+        mod,
+        // The following modules are injected into manager api module
+        loggerModuleFactory(),
+      );
     });
 
     it("should return the config module", () => {

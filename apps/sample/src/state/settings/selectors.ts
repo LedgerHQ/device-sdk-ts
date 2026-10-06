@@ -58,6 +58,8 @@ export const selectTransportConfig = createSelector(
 // DMK settings selectors
 export const selectAppProvider = (state: RootState) =>
   state.settings.appProvider;
+export const selectFirmwareDistributionSalt = (state: RootState) =>
+  state.settings.firmwareDistributionSalt;
 export const selectWebSocketUrl = (state: RootState) =>
   state.settings.webSocketUrl;
 export const selectPollingInterval = (state: RootState) =>

@@ -3,55 +3,44 @@ import { type Device, type Mock } from "@ledgerhq/device-mockserver-client";
 import {
   Button,
   IconButton,
-  SegmentedControl,
-  SegmentedControlButton,
   Spot,
+  Switch,
   Tag,
 } from "@ledgerhq/lumen-ui-react";
 import {
   ChevronDown,
   ChevronUp,
-  Code,
   LedgerDevices,
-  PenEdit,
-  Trash,
+  Settings,
 } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { api } from "@/api/client";
-import { ConsolePanel } from "@/components/ConsolePanel";
-import { CopyButton } from "@/components/CopyButton";
-import { DeviceScreenPanel } from "@/components/DeviceScreenPanel";
-import { LabeledRow } from "@/components/LabeledRow";
 import { MocksPanel } from "@/components/MocksPanel";
 import { findModel } from "@/domain/devices";
-
-type Tab = "overview" | "mocks" | "console" | "screen";
-
-const TABS: { value: Tab; label: string }[] = [
-  { value: "overview", label: "Overview" },
-  { value: "mocks", label: "Mocks" },
-  { value: "console", label: "APDU console" },
-  { value: "screen", label: "Screen" },
-];
 
 interface DeviceCardProps {
   readonly token: string;
   readonly device: Device;
+  readonly interacting: boolean;
   readonly onChanged: () => void;
   readonly onEdit: () => void;
+  readonly onInteract: () => void;
   readonly onError: (message: string) => void;
 }
+
+const describe = (cause: unknown): string =>
+  cause instanceof Error ? cause.message : String(cause);
 
 export function DeviceCard({
   token,
   device,
+  interacting,
   onChanged,
   onEdit,
+  onInteract,
   onError,
 }: DeviceCardProps) {
-  const [expanded, setExpanded] = useState(false);
-  const [tab, setTab] = useState<Tab>("overview");
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [mocksOpen, setMocksOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [mocks, setMocks] = useState<Mock[]>([]);
 
@@ -64,38 +53,30 @@ export function DeviceCard({
     api
       .listMocks(token, device.id)
       .then(setMocks)
-      .catch((cause: unknown) =>
-        onError(cause instanceof Error ? cause.message : String(cause)),
-      );
+      .catch((cause: unknown) => onError(describe(cause)));
   }, [token, device.id, onError]);
 
   useEffect(refreshMocks, [refreshMocks]);
 
-  const openMocks = () => {
-    setTab("mocks");
-    setExpanded(true);
-  };
-
-  const run = async (action: () => Promise<unknown>) => {
+  const setConnected = async (connected: boolean) => {
     setBusy(true);
     try {
-      await action();
+      await api.setConnected(token, device.id, connected);
       onChanged();
     } catch (cause) {
-      onError(cause instanceof Error ? cause.message : String(cause));
+      onError(describe(cause));
     } finally {
       setBusy(false);
     }
   };
 
   const summary = [
-    model?.label ?? device.device_type,
-    device.firmware_version ? `firmware ${device.firmware_version}` : null,
+    [model?.label ?? device.device_type, device.firmware_version]
+      .filter(Boolean)
+      .join(" "),
     device.connectivity_type,
     `${apps.length} app${apps.length === 1 ? "" : "s"}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  ].join(" · ");
 
   return (
     <div className="border-muted bg-base flex flex-col rounded-lg border">
@@ -104,193 +85,68 @@ export function DeviceCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-8">
             <p className="body-1-semi-bold text-base">{device.name}</p>
-            <Tag
-              size="sm"
-              appearance={device.connected ? "success" : "gray"}
-              label={device.connected ? "Connected" : "Disconnected"}
-            />
             {device.onboarded === false ? (
               <Tag size="sm" appearance="warning" label="Not onboarded" />
-            ) : null}
-            {mocks.length > 0 ? (
-              <Tag
-                size="sm"
-                appearance="accent-subtle"
-                label={`${mocks.length} mock${mocks.length === 1 ? "" : "s"}`}
-              />
             ) : null}
           </div>
           <p className="body-4 text-muted">{summary}</p>
         </div>
-
-        {confirmingDelete ? (
-          <div className="flex items-center gap-8">
-            <p className="body-4 text-muted">Remove this device?</p>
-            <Button
-              appearance="red"
-              size="sm"
-              loading={busy}
-              onClick={() => {
-                void run(() => api.deleteDevice(token, device.id));
-              }}
-            >
-              Remove
-            </Button>
-            <Button
-              appearance="no-background"
-              size="sm"
-              onClick={() => setConfirmingDelete(false)}
-            >
-              Keep
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-4">
-            <Button
-              appearance={device.connected ? "gray" : "base"}
-              size="sm"
-              loading={busy}
-              onClick={() =>
-                void run(() =>
-                  api.setConnected(token, device.id, !device.connected),
-                )
-              }
-            >
-              {device.connected ? "Disconnect" : "Connect"}
-            </Button>
-            <Button appearance="gray" size="sm" icon={Code} onClick={openMocks}>
-              Mocks
-            </Button>
-            <IconButton
-              appearance="no-background"
-              size="sm"
-              tooltip
-              aria-label="Edit device"
-              icon={PenEdit}
-              onClick={onEdit}
-            />
-            <IconButton
-              appearance="no-background"
-              size="sm"
-              tooltip
-              aria-label="Remove device"
-              icon={Trash}
-              onClick={() => setConfirmingDelete(true)}
-            />
-            <IconButton
-              appearance="no-background"
-              size="sm"
-              aria-label={expanded ? "Collapse device" : "Expand device"}
-              icon={expanded ? ChevronUp : ChevronDown}
-              onClick={() => setExpanded(!expanded)}
-            />
-          </div>
-        )}
+        <label className="body-3 text-muted flex items-center gap-8">
+          Connected
+          <Switch
+            size="sm"
+            selected={device.connected}
+            disabled={busy}
+            onChange={(connected) => void setConnected(connected)}
+          />
+        </label>
+        <Button
+          appearance={interacting ? "base" : "gray"}
+          size="sm"
+          onClick={onInteract}
+        >
+          {interacting ? "Close screen" : "Interact"}
+        </Button>
+        <IconButton
+          appearance="no-background"
+          size="sm"
+          tooltip
+          aria-label="Device settings"
+          icon={Settings}
+          onClick={onEdit}
+        />
       </div>
 
-      {/* The open tab sits in a recessed well: the panel around the card and the
-          card itself share a surface colour, leaving it no edge to read
-          against. */}
-      {expanded ? (
-        <div className="border-muted bg-canvas flex flex-col gap-16 rounded-b-lg border-t p-16">
-          <SegmentedControl
-            selectedValue={tab}
-            onSelectedChange={(value) => setTab(value as Tab)}
-          >
-            {TABS.map((entry) => (
-              <SegmentedControlButton key={entry.value} value={entry.value}>
-                {entry.label}
-              </SegmentedControlButton>
-            ))}
-          </SegmentedControl>
+      <button
+        type="button"
+        aria-expanded={mocksOpen}
+        onClick={() => setMocksOpen(!mocksOpen)}
+        className={`border-muted hover:bg-muted-transparent flex items-center gap-8 border-t px-16 py-12 text-left ${
+          mocksOpen ? "" : "rounded-b-lg"
+        }`}
+      >
+        <span className="body-2-semi-bold text-base">Mocks</span>
+        <span className="body-3 text-muted flex-1">
+          {mocks.length === 0
+            ? "None"
+            : `${mocks.length} mock${mocks.length === 1 ? "" : "s"}`}
+        </span>
+        {mocksOpen ? (
+          <ChevronUp size={20} className="text-muted" />
+        ) : (
+          <ChevronDown size={20} className="text-muted" />
+        )}
+      </button>
 
-          {tab === "overview" ? (
-            <div className="flex flex-col gap-12">
-              <LabeledRow label="Device id">
-                <span className="body-3 font-mono break-all">{device.id}</span>
-                <CopyButton value={device.id} label="Copy device id" />
-              </LabeledRow>
-              <LabeledRow label="Memory mask">
-                <span className="body-3 font-mono">
-                  {(device.masks ?? [])
-                    .map((mask) => `0x${mask.toString(16)}`)
-                    .join(", ") || "—"}
-                </span>
-              </LabeledRow>
-              <LabeledRow label="Onboarding">
-                <span className="body-3">
-                  {device.onboarded === false
-                    ? "Not onboarded — walk it through the steps from the APDU console."
-                    : "Onboarded and ready."}
-                </span>
-              </LabeledRow>
-              <LabeledRow label="Installed apps">
-                {apps.length > 0 ? (
-                  <div className="flex flex-wrap gap-6">
-                    {apps.map((app) => (
-                      <Tag
-                        key={app.name}
-                        size="sm"
-                        appearance="gray"
-                        label={`${app.name} ${app.version}`}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <span className="body-3 text-muted-subtle">
-                    None — Open App will answer 6807 for every app.
-                  </span>
-                )}
-              </LabeledRow>
-              <LabeledRow label="Mocks">
-                <span className="body-3">
-                  {mocks.length === 0
-                    ? "None — every command gets the server's own answer."
-                    : mocks
-                        .map((mock) => `${mock.prefix} → ${mock.responses[0]}`)
-                        .join(", ")}
-                </span>
-              </LabeledRow>
-              <div>
-                <Button
-                  appearance="gray"
-                  size="sm"
-                  icon={PenEdit}
-                  onClick={onEdit}
-                >
-                  Edit this device
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          {tab === "mocks" ? (
-            <MocksPanel
-              token={token}
-              deviceId={device.id}
-              mocks={mocks}
-              onChanged={refreshMocks}
-              onError={onError}
-            />
-          ) : null}
-
-          {tab === "console" ? (
-            <ConsolePanel
-              token={token}
-              device={device}
-              onDeviceMayHaveChanged={onChanged}
-              onError={onError}
-            />
-          ) : null}
-
-          {tab === "screen" ? (
-            <DeviceScreenPanel
-              token={token}
-              deviceId={device.id}
-              model={model}
-              onError={onError}
-            />
-          ) : null}
+      {mocksOpen ? (
+        <div className="border-muted bg-canvas rounded-b-lg border-t p-16">
+          <MocksPanel
+            token={token}
+            deviceId={device.id}
+            mocks={mocks}
+            onChanged={refreshMocks}
+            onError={onError}
+          />
         </div>
       ) : null}
     </div>

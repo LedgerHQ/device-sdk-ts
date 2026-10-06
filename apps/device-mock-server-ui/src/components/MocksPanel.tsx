@@ -4,8 +4,9 @@ import { Button, IconButton, TextInput } from "@ledgerhq/lumen-ui-react";
 import { PenEdit, Plus, Trash } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { api } from "@/api/client";
+import { MockPresetsDialog } from "@/components/MockPresetsDialog";
 import { isValidHex } from "@/domain/apdu";
-import { MOCK_PRESETS } from "@/domain/mockPresets";
+import { type MockPreset } from "@/domain/mockPresets";
 
 interface MocksPanelProps {
   readonly token: string;
@@ -34,6 +35,7 @@ export function MocksPanel({
   const [prefix, setPrefix] = useState(EXAMPLE_PREFIX);
   const [responses, setResponses] = useState(EXAMPLE_RESPONSES);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [presetsOpen, setPresetsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const run = async (action: () => Promise<unknown>) => {
@@ -67,6 +69,16 @@ export function MocksPanel({
       resetForm();
     });
 
+  const addPreset = (preset: MockPreset) => {
+    setPresetsOpen(false);
+    void run(() =>
+      api.addMock(token, deviceId, {
+        prefix: preset.prefix,
+        responses: preset.responses,
+      }),
+    );
+  };
+
   const startEdit = (mock: Mock) => {
     setEditingId(mock.id);
     setPrefix(mock.prefix);
@@ -76,8 +88,12 @@ export function MocksPanel({
   return (
     <div className="flex flex-col gap-20">
       <section className="flex flex-col gap-8">
-        <Header label={`Mocks on this device (${mocks.length})`}>
-          {mocks.length > 0 ? (
+        {mocks.length === 0 ? (
+          <p className="body-4 text-muted-subtle">
+            None — every command gets the server&apos;s own answer.
+          </p>
+        ) : (
+          <div className="flex justify-end">
             <Button
               appearance="no-background"
               size="sm"
@@ -86,15 +102,10 @@ export function MocksPanel({
             >
               Remove all
             </Button>
-          ) : null}
-        </Header>
+          </div>
+        )}
 
-        {mocks.length === 0 ? (
-          <p className="body-4 text-muted-subtle">
-            None yet. The device answers the handshake on its own; add a mock to
-            override a command or force a failure.
-          </p>
-        ) : (
+        {mocks.length === 0 ? null : (
           <div className="border-muted overflow-hidden rounded-md border">
             <div className="bg-muted-transparent border-muted flex items-center gap-12 border-b px-12 py-6">
               <span className="body-4 text-muted w-96 shrink-0">Prefix</span>
@@ -146,14 +157,18 @@ export function MocksPanel({
             ))}
           </div>
         )}
-        <p className="body-4 text-muted-subtle">
-          A mock answers any APDU starting with its prefix, and beats the answer
-          the server would derive. Longest prefix wins.
-        </p>
       </section>
 
       <section className="flex flex-col gap-8">
-        <Header label={editingId ? "Edit this mock" : "Add a mock"} />
+        <Header label={editingId ? "Edit this mock" : "Add a mock"}>
+          <Button
+            appearance="no-background"
+            size="sm"
+            onClick={() => setPresetsOpen(true)}
+          >
+            Common scenarios
+          </Button>
+        </Header>
         <div className="flex flex-col items-start gap-8 sm:flex-row">
           <div className="w-full sm:w-160">
             <TextInput
@@ -193,46 +208,18 @@ export function MocksPanel({
           ) : null}
         </div>
         <p className="body-4 text-muted-subtle">
-          Hex. Several responses, comma separated, are served one per call and
-          then loop.
+          A mock answers any APDU starting with its prefix, and beats the answer
+          the server would derive; the longest prefix wins. Hex. Several
+          responses, comma separated, are served one per call and then loop.
         </p>
       </section>
 
-      <section className="flex flex-col gap-8">
-        <Header label="Common scenarios" />
-        <div className="border-muted overflow-hidden rounded-md border">
-          {MOCK_PRESETS.map((preset) => (
-            <div
-              key={preset.label}
-              className="border-muted flex items-center gap-12 border-b px-12 py-8 last:border-b-0"
-            >
-              <span className="flex min-w-0 flex-1 flex-col gap-2">
-                <span className="body-3 text-base">{preset.label}</span>
-                <span className="body-4 text-muted-subtle">
-                  {preset.description}
-                </span>
-              </span>
-              <span className="body-4 text-muted shrink-0 font-mono">
-                {`${preset.prefix} → ${preset.responses.join(", ")}`}
-              </span>
-              <Button
-                appearance="gray"
-                size="sm"
-                onClick={() =>
-                  void run(() =>
-                    api.addMock(token, deviceId, {
-                      prefix: preset.prefix,
-                      responses: preset.responses,
-                    }),
-                  )
-                }
-              >
-                Add
-              </Button>
-            </div>
-          ))}
-        </div>
-      </section>
+      {presetsOpen ? (
+        <MockPresetsDialog
+          onPick={addPreset}
+          onClose={() => setPresetsOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

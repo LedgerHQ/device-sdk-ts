@@ -1,51 +1,8 @@
-/**
- * src/components/DeviceScreen/DeviceScreenButtons.tsx
- *
- * The physical buttons of a button-driven device. A click is sent whole; only a
- * pointer or key held past the threshold becomes a press the device has to wait
- * to see released, since some flows require a long press.
- */
-"use client";
-
 import React, { useCallback, useEffect, useRef } from "react";
 import {
   type SpeculosAction,
   type SpeculosButton,
 } from "@ledgerhq/device-mockserver-client";
-import { Flex } from "@ledgerhq/react-ui";
-import styled, { type DefaultTheme } from "styled-components";
-
-const Row = styled(Flex)`
-  column-gap: 6px;
-  justify-content: center;
-`;
-
-// A plain button: react-ui's does not forward pointer handlers, and press and
-// release have to be observed separately for a hold to work.
-const PressButton = styled.button`
-  flex: 1;
-  padding: 6px 0;
-  border: none;
-  border-radius: 4px;
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-  touch-action: none;
-  user-select: none;
-  color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};
-  background-color: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.neutral.c40};
-
-  &:hover {
-    background-color: ${({ theme }: { theme: DefaultTheme }) =>
-      theme.colors.neutral.c50};
-  }
-
-  &:active {
-    background-color: ${({ theme }: { theme: DefaultTheme }) =>
-      theme.colors.primary.c70};
-  }
-`;
 
 const BUTTONS: { button: SpeculosButton; label: string }[] = [
   { button: "left", label: "Left" },
@@ -69,9 +26,9 @@ interface Held {
   pressed: boolean;
 }
 
-interface DeviceScreenButtonsProps {
+type DeviceScreenButtonsProps = {
   onPress: (button: SpeculosButton, action: SpeculosAction) => void;
-}
+};
 
 export const DeviceScreenButtons: React.FC<DeviceScreenButtonsProps> = ({
   onPress,
@@ -108,7 +65,6 @@ export const DeviceScreenButtons: React.FC<DeviceScreenButtonsProps> = ({
     );
   }, [clearHoldTimer]);
 
-  // Never leave a button down if the row disappears mid-hold.
   useEffect(
     () => () => {
       const entry = held.current;
@@ -119,14 +75,18 @@ export const DeviceScreenButtons: React.FC<DeviceScreenButtonsProps> = ({
     [clearHoldTimer],
   );
 
+  // Plain buttons: Lumen's Button does not report press and release apart,
+  // and a hold needs both.
   return (
-    <Row>
+    <div className="flex gap-8">
       {BUTTONS.map(({ button, label }) => (
-        <PressButton
+        <button
           key={button}
           type="button"
-          // Capture so the release still arrives if the pointer wanders off.
+          aria-label={`${label} button`}
           onPointerDown={(event) => {
+            if (event.button !== 0) return;
+            // Capture so the release still arrives if the pointer wanders off.
             event.currentTarget.setPointerCapture(event.pointerId);
             hold(button);
           }}
@@ -139,11 +99,13 @@ export const DeviceScreenButtons: React.FC<DeviceScreenButtonsProps> = ({
             hold(button);
           }}
           onKeyUp={(event) => isActivationKey(event.key) && release()}
+          className="border-muted body-3 text-base bg-muted hover:bg-muted-pressed active:bg-active flex-1 rounded-md border py-8 select-none"
+          style={{ touchAction: "none" }}
           data-testid={`button_device-screen-${button}`}
         >
           {label}
-        </PressButton>
+        </button>
       ))}
-    </Row>
+    </div>
   );
 };

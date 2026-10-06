@@ -18,13 +18,13 @@ import {
 } from "@ledgerhq/lumen-ui-react";
 import {
   ChevronRight,
-  LedgerLogo,
   Plus,
   RecoveryKey,
   Trash,
 } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { api } from "@/api/client";
+import { MockServerLogo } from "@/components/MockServerLogo";
 import { ServerStatus } from "@/components/ServerStatus";
 import {
   forgetSession,
@@ -83,7 +83,7 @@ export function LandingPage({ notice, onEnter }: LandingPageProps) {
     <main className="flex min-h-screen flex-col items-center px-24 py-64">
       <div className="flex w-full max-w-[640px] flex-col gap-32">
         <header className="flex flex-col items-center gap-12 text-center">
-          <LedgerLogo size={40} className="text-base" />
+          <MockServerLogo size={56} className="text-base" />
           <h1 className="heading-2 text-base">Device Mock Server</h1>
           <p className="body-2 text-muted">
             Fake Ledger devices over HTTP. Create a session, describe the

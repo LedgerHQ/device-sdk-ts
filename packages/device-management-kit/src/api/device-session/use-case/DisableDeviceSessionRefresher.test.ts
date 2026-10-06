@@ -34,7 +34,7 @@ describe("DisableDeviceSessionRefresherUseCase", () => {
     );
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApi = new DefaultManagerApiService(
-      new HttpManagerApiDataSource({} as DmkConfig),
+      new HttpManagerApiDataSource({} as DmkConfig, () => logger),
     );
     secureChannel = new DefaultSecureChannelService(
       new DefaultSecureChannelDataSource({} as DmkConfig),

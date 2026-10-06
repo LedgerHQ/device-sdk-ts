@@ -3,4 +3,7 @@ export const managerApiTypes = {
   ManagerApiDataSource: Symbol.for("ManagerApiDataSource"),
   DmkConfig: Symbol.for("ManagerApiDmkConfig"),
   SetProviderUseCase: Symbol.for("SetProviderUseCase"),
+  SetFirmwareDistributionSaltUseCase: Symbol.for(
+    "SetFirmwareDistributionSaltUseCase",
+  ),
 };

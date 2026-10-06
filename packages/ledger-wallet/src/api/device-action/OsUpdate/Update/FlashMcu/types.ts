@@ -39,15 +39,29 @@ export type FlashMcuDAIntermediateValue = {
   progress?: number;
 };
 
+export type FlashTarget = "mcu" | "bootloader";
+
+export type ResolvedFlash = {
+  target: FlashTarget;
+  version: string;
+};
+
+/*
+ * "mcu" ends the flash loop. "bootloader" is followed by another flash.
+ */
+export type FlashMcuDAOutput = {
+  target: FlashTarget;
+};
+
 export type FlashMcuDAInternalState = {
   error: FlashMcuDAError | null;
   deviceInfo: GetOsVersionResponse | null;
-  version: string | null;
+  resolvedFlash: ResolvedFlash | null;
   bootloaderPollAttempts: number;
 };
 
 export type FlashMcuDAState = DeviceActionState<
-  void,
+  FlashMcuDAOutput,
   FlashMcuDAError,
   FlashMcuDAIntermediateValue
 >;

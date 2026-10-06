@@ -84,6 +84,7 @@ import {
   type FinalFirmware,
   type FlashMcuDAError,
   type FlashMcuDAIntermediateValue,
+  type FlashMcuDAOutput,
   FlashMcuDeviceAction,
   type InstallOsUpdateDAError,
   type InstallOsUpdateDAIntermediateValue,
@@ -657,7 +658,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         },
         deviceModelId,
       } satisfies DeviceActionProps<
-        void,
+        FlashMcuDAOutput,
         {
           bootloaderRecovery: boolean;
           finalFirmwareJson: string;

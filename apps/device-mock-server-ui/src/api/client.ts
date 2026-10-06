@@ -5,8 +5,6 @@ import {
   type MockConfig,
   type Session,
   type SessionExport,
-  type SpeculosAction,
-  type SpeculosButton,
 } from "@ledgerhq/device-mockserver-client";
 
 export interface Health {
@@ -73,28 +71,6 @@ async function errorMessage(response: Response): Promise<string> {
 
 const body = (payload: unknown) => JSON.stringify(payload);
 
-/**
- * Drive the Speculos instance behind a device. What comes back through the
- * passthrough is the emulator's own answer, not the server's JSON envelope.
- */
-async function speculos(
-  path: string,
-  token: string,
-  payload: unknown,
-): Promise<void> {
-  const response = await fetch(path, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: body(payload),
-  });
-  if (!response.ok) {
-    throw new MockServerError(response.status, await errorMessage(response));
-  }
-}
-
 export const api = {
   health: () => request<Health>("/health"),
 
@@ -132,13 +108,6 @@ export const api = {
       { method: "POST", token },
     ),
 
-  sendApdu: (token: string, deviceId: string, apdu: string) =>
-    request<{ response: string }>(`/devices/${deviceId}/apdu`, {
-      method: "POST",
-      token,
-      body: body({ apdu }),
-    }),
-
   listMocks: (token: string, deviceId: string) =>
     request<Mock[]>(`/devices/${deviceId}/mocks`, { token }),
 
@@ -169,38 +138,6 @@ export const api = {
 
   clearMocks: (token: string, deviceId: string) =>
     request<void>(`/devices/${deviceId}/mocks`, { method: "DELETE", token }),
-
-  /** Null when the device has no Speculos instance, which is any time no app runs. */
-  screenshot: async (token: string, deviceId: string): Promise<Blob | null> => {
-    const response = await fetch(`/devices/${deviceId}/speculos/screenshot`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (response.status === 409) return null;
-    if (!response.ok) {
-      throw new MockServerError(response.status, await errorMessage(response));
-    }
-    return response.blob();
-  },
-
-  pressButton: (
-    token: string,
-    deviceId: string,
-    button: SpeculosButton,
-    action: SpeculosAction,
-  ) =>
-    speculos(`/devices/${deviceId}/speculos/button/${button}`, token, {
-      action,
-    }),
-
-  /** Coordinates in device screen pixels. */
-  touchScreen: (
-    token: string,
-    deviceId: string,
-    x: number,
-    y: number,
-    action: SpeculosAction,
-  ) =>
-    speculos(`/devices/${deviceId}/speculos/finger`, token, { action, x, y }),
 
   exportSession: (token: string) =>
     request<SessionExport>("/export", { token }),
