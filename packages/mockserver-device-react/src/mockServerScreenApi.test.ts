@@ -1,15 +1,14 @@
-import { type MockClient } from "@ledgerhq/device-mockserver-client";
-
 import { mockServerScreenApi } from "./mockServerScreenApi";
+import { type MockServerClient } from "./types";
 
-const aClient = (overrides: Partial<Record<keyof MockClient, unknown>>) =>
+const aClient = (overrides: Partial<Record<keyof MockServerClient, unknown>>) =>
   ({
     getScreenshot: vi.fn(),
     getDevice: vi.fn(),
     pressButton: vi.fn(() => Promise.resolve()),
     touchScreen: vi.fn(() => Promise.resolve()),
     ...overrides,
-  }) as unknown as MockClient;
+  }) as unknown as MockServerClient;
 
 describe("mockServerScreenApi", () => {
   it("resolves the screenshot of the device", async () => {

@@ -5,5 +5,5 @@ export {
   type MockServerDeviceProps,
 } from "./MockServerDevice";
 export { mockServerScreenApi } from "./mockServerScreenApi";
-export type { DeviceScreenState, ScreenApi } from "./types";
+export type { DeviceScreenState, MockServerClient, ScreenApi } from "./types";
 export { useMockServerDevice } from "./useMockServerDevice";

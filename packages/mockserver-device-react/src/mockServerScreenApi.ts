@@ -1,13 +1,11 @@
-import { type MockClient } from "@ledgerhq/device-mockserver-client";
-
-import { type ScreenApi } from "./types";
+import { type MockServerClient, type ScreenApi } from "./types";
 
 /** The proxy answers 409 when the device has no Speculos instance. */
 const isNoInstance = (error: unknown): boolean =>
   (error as { status?: unknown } | null)?.status === 409;
 
 export const mockServerScreenApi = (
-  client: MockClient,
+  client: MockServerClient,
   deviceId: string,
 ): ScreenApi => ({
   screenshot: async () => {

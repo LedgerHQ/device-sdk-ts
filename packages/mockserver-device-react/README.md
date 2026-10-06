@@ -31,7 +31,8 @@ import { MockServerDevice } from "@ledgerhq/device-mockserver-react";
 
 `DeviceScreen` renders the same screen from any `ScreenApi`, for instance one
 that talks to Speculos directly. `mockServerScreenApi(client, deviceId)` is the
-one `MockServerDevice` uses, for hosts that already hold a `MockClient`, and
+one `MockServerDevice` uses, for hosts that already hold a `MockClient` (any
+object with the `MockServerClient` methods fits), and
 `findDeviceScreenModel(deviceType)` gives a model's label for their own header.
 
 ## Styles
