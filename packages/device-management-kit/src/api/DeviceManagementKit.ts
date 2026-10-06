@@ -52,6 +52,7 @@ import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDi
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
+import { type SetFirmwareDistributionSaltUseCase } from "@internal/manager-api/use-case/SetFirmwareDistributionSaltUseCase";
 import { type SetProviderUseCase } from "@internal/manager-api/use-case/SetProviderUseCase";
 import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
@@ -352,6 +353,34 @@ export class DeviceManagementKit {
     return this.container
       .get<ManagerApiDataSource>(managerApiTypes.ManagerApiDataSource)
       .getProvider();
+  }
+
+  /**
+   * Sets the firmware distribution salt. During a progressive OS rollout,
+   * users with different salts can see different latest OS versions. Call it
+   * as soon as the salt is known.
+   *
+   * Open device sessions fetch the latest firmware again on their next device
+   * action. A device action that is already running keeps the previous salt.
+   *
+   * @param {string} salt - The firmware distribution salt to set.
+   */
+  setFirmwareDistributionSalt(salt: string): void {
+    return this.container
+      .get<SetFirmwareDistributionSaltUseCase>(
+        managerApiTypes.SetFirmwareDistributionSaltUseCase,
+      )
+      .execute(salt);
+  }
+
+  /**
+   * Returns the current firmware distribution salt from the manager API data
+   * source.
+   */
+  getFirmwareDistributionSalt(): string {
+    return this.container
+      .get<ManagerApiDataSource>(managerApiTypes.ManagerApiDataSource)
+      .getFirmwareDistributionSalt();
   }
 
   /**

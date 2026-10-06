@@ -12,4 +12,6 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
   getMcuList = vi.fn();
   setProvider = vi.fn();
   getProvider = vi.fn();
+  setFirmwareDistributionSalt = vi.fn();
+  getFirmwareDistributionSalt = vi.fn();
 }

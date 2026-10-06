@@ -114,6 +114,29 @@ getProvider function will return the current provider set within the Device Mana
 dmk.getProvider();
 ```
 
+### Set the firmware distribution salt
+
+During a progressive OS rollout, users with different firmware distribution salts can see different latest OS versions. The salt can be set in two ways:
+
+- At build time:
+
+```ts
+export const sdk = new DeviceManagementKitBuilder()
+  .addLogger(new ConsoleLogger())
+  .addTransport(webHidTransportFactory)
+  .addConfig({ firmwareDistributionSalt: "1a2b3c" })
+  .build();
+```
+
+- At runtime, for example when the salt is not known yet when the DMK is built:
+
+```ts
+dmk.setFirmwareDistributionSalt("1a2b3c");
+dmk.getFirmwareDistributionSalt();
+```
+
+When the salt changes, the open device sessions forget their cached firmware update context. The next device action that needs it fetches it again with the new salt. Setting the same salt again, or an empty salt, does nothing.
+
 ### Override the secure channel WebSocket URL
 
 The ScriptRunner WebSocket base URL can be set in two ways:

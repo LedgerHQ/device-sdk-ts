@@ -27,6 +27,7 @@ describe("ManagerApiService", () => {
   beforeEach(() => {
     dataSource = new HttpManagerApiDataSource(
       {} as DmkConfig,
+      vi.fn(),
     ) as Mocked<HttpManagerApiDataSource>;
     service = new DefaultManagerApiService(dataSource);
   });

@@ -35,7 +35,10 @@ let secureChannel: SecureChannelService;
 describe("DefaultDeviceSessionService", () => {
   // Initialize shared resources
   loggerService = new DefaultLoggerPublisherService([], "deviceSession");
-  managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
+  managerApiDataSource = new HttpManagerApiDataSource(
+    {} as DmkConfig,
+    () => loggerService,
+  );
   managerApi = new DefaultManagerApiService(managerApiDataSource);
   secureChannelDataSource = new DefaultSecureChannelDataSource({} as DmkConfig);
   secureChannel = new DefaultSecureChannelService(secureChannelDataSource);

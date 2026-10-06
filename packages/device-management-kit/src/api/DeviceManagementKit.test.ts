@@ -103,6 +103,16 @@ describe("DeviceManagementKit", () => {
       expect(dmk.getWebSocketUrl()).toBe("wss://custom-websocket.url/update");
     });
 
+    it("should return the firmware distribution salt from the config", () => {
+      expect(dmk.getFirmwareDistributionSalt()).toBe("salt");
+    });
+
+    it("should update and return the firmware distribution salt", () => {
+      dmk.setFirmwareDistributionSalt("runtime-salt");
+
+      expect(dmk.getFirmwareDistributionSalt()).toBe("runtime-salt");
+    });
+
     it("should have isEnvironmentSupported method", () => {
       expect(dmk.isEnvironmentSupported).toBeDefined();
     });
@@ -218,6 +228,7 @@ describe("DeviceManagementKit", () => {
       [discoveryTypes.ListConnectedDevicesUseCase],
       [discoveryTypes.ListenToConnectedDeviceUseCase],
       [managerApiTypes.SetProviderUseCase],
+      [managerApiTypes.SetFirmwareDistributionSaltUseCase],
       [secureChannelTypes.SetWebSocketUrlUseCase],
     ])(
       "should have %s use case",

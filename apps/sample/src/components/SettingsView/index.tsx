@@ -10,6 +10,7 @@ import { CalBranchSetting } from "./CalBranchSetting";
 import { CalModeSetting } from "./CalModeSetting";
 import { CalUrlSetting } from "./CalUrlSetting";
 import { DatasourceProxySetting } from "./DatasourceProxySetting";
+import { FirmwareDistributionSaltSetting } from "./FirmwareDistributionSaltSetting";
 import { MetadataServiceUrlSetting } from "./MetadataServiceUrlSetting";
 import { MockServerSessionTokenSetting } from "./MockServerSessionTokenSetting";
 import { MockServerToggleSetting } from "./MockServerToggleSetting";
@@ -33,6 +34,7 @@ export const SettingsView: React.FC = () => {
         <SectionContainer>
           <SectionTitle>Device Management Kit</SectionTitle>
           <AppProviderSetting />
+          <FirmwareDistributionSaltSetting />
           <WebSocketUrlSetting />
           <PollingIntervalSetting />
           <BypassIntentQueueSetting />

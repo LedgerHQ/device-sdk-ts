@@ -17,6 +17,7 @@ import { DevToolsWebSocketConnector } from "@ledgerhq/device-management-kit-devt
 import { type TransportConfig } from "@/state/settings/schema";
 import {
   selectAppProvider,
+  selectFirmwareDistributionSalt,
   selectTransportConfig,
   selectWebSocketUrl,
 } from "@/state/settings/selectors";
@@ -55,6 +56,7 @@ function buildDmk(transportConfig: TransportConfig) {
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const transportConfig = useSelector(selectTransportConfig);
   const appProvider = useSelector(selectAppProvider);
+  const firmwareDistributionSalt = useSelector(selectFirmwareDistributionSalt);
   const webSocketUrl = useSelector(selectWebSocketUrl);
 
   const dmk = useMemo(() => buildDmk(transportConfig), [transportConfig]);
@@ -69,6 +71,10 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   useEffect(() => {
     dmk.setProvider(appProvider);
   }, [appProvider, dmk]);
+
+  useEffect(() => {
+    dmk.setFirmwareDistributionSalt(firmwareDistributionSalt);
+  }, [firmwareDistributionSalt, dmk]);
 
   // Mock server already points the secure channel at its ScriptRunner. Skip
   // the settings override so that URL is not replaced.

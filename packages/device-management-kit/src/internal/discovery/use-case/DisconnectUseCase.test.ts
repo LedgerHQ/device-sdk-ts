@@ -56,7 +56,10 @@ describe("DisconnectUseCase", () => {
   it("should disconnect from a device", async () => {
     // Given
     const connectedDevice = connectedDeviceStubBuilder();
-    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
+    managerApiDataSource = new HttpManagerApiDataSource(
+      {} as DmkConfig,
+      loggerFactory,
+    );
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,
