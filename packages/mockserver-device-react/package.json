@@ -42,7 +42,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/device-mockserver-client": "workspace:^"
+    "@ledgerhq/device-mockserver-client": "^1.3.0"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
