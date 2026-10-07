@@ -2133,6 +2133,9 @@ importers:
       '@ledgerhq/context-module':
         specifier: workspace:^
         version: link:../context-module
+      '@ledgerhq/device-contacts-kit':
+        specifier: workspace:^
+        version: link:../../device-contacts-kit
       '@ledgerhq/signer-utils':
         specifier: workspace:^
         version: link:../signer-utils
