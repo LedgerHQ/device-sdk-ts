@@ -139,6 +139,16 @@ export const api = {
   clearMocks: (token: string, deviceId: string) =>
     request<void>(`/devices/${deviceId}/mocks`, { method: "DELETE", token }),
 
+  speculosFirmwares: (deviceType: string) =>
+    request<{ firmware: string[] }>(
+      `/speculos/catalogue/${encodeURIComponent(deviceType)}`,
+    ),
+
+  speculosAppVersions: (deviceType: string, firmwareVersion: string) =>
+    request<{ apps: Record<string, string[]> }>(
+      `/speculos/catalogue/${encodeURIComponent(deviceType)}/${encodeURIComponent(firmwareVersion)}`,
+    ),
+
   exportSession: (token: string) =>
     request<SessionExport>("/export", { token }),
 

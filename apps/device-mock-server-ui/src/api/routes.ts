@@ -11,4 +11,5 @@ export const API_ROUTE_PREFIXES = [
   "/health",
   "/import",
   "/sessions",
+  "/speculos",
 ];
