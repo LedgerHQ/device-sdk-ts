@@ -9,6 +9,7 @@ import {
 
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
+import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
@@ -24,6 +25,7 @@ export const signTransactionDAStateSteps = Object.freeze({
   TRANSACTION_CHECKS_OPT_IN_RESULT:
     "signer.sol.steps.transactionChecksOptInResult",
   TRANSACTION_CHECKS_PROVIDE: "signer.sol.steps.transactionChecksProvide",
+  PROVIDE_CONTACT: "signer.sol.steps.provideContact",
   INSPECT_TRANSACTION: "signer.sol.steps.inspectTransaction",
   GET_PUB_KEY: "signer.sol.steps.getPubKey",
   BUILD_BASIC_CLEAR_SIGN_CONTEXT: "signer.sol.steps.buildBasicClearSignContext",
@@ -61,6 +63,8 @@ export type SignTransactionDAInput = {
   readonly solanaRPCURL?: string;
   readonly blockhashService?: BlockhashService;
   readonly disabledFeatures?: ReadonlyArray<SolanaSignerFeaturesNames>;
+  /** Contacts matched against the transfer recipient. Defaults to none. */
+  readonly addressBook?: SolanaAddressBook;
 };
 
 export type SignTransactionDAError =

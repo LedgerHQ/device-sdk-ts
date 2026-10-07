@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@ledgerhq/context-module": "workspace:^",
+    "@ledgerhq/device-contacts-kit": "workspace:^",
     "@ledgerhq/signer-utils": "workspace:^",
     "@solana/transaction-messages": "catalog:",
     "@solana/web3.js": "catalog:",

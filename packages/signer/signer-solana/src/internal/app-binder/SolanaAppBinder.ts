@@ -13,6 +13,10 @@ import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigura
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignMessageVersion } from "@api/model/MessageOptions";
+import {
+  EMPTY_SOLANA_ADDRESS_BOOK,
+  type SolanaAddressBook,
+} from "@api/model/SolanaAddressBook";
 import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
 import { type SolanaSignerFeaturesNames } from "@internal/app-binder/SolanaApplicationResolver";
@@ -38,6 +42,8 @@ export class SolanaAppBinder {
     private solanaRPCURL: string | undefined,
     @inject(appBinderTypes.BlockhashService)
     private blockhashService: BlockhashService,
+    @inject(externalTypes.AddressBook)
+    private addressBook: SolanaAddressBook = EMPTY_SOLANA_ADDRESS_BOOK,
   ) {}
 
   getAddress(args: {
@@ -73,6 +79,7 @@ export class SolanaAppBinder {
           solanaRPCURL: this.solanaRPCURL,
           blockhashService: this.blockhashService,
           disabledFeatures: args.disabledFeatures,
+          addressBook: this.addressBook,
         },
         loggerFactory: this.dmkLoggerFactory,
       }),
