@@ -6,6 +6,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
+import {
+  EMPTY_SOLANA_ADDRESS_BOOK,
+  type SolanaAddressBook,
+} from "@api/model/SolanaAddressBook";
+
 import { appBinderModuleFactory } from "./app-binder/di/appBinderModule";
 import { useCasesModuleFactory } from "./use-cases/di/useCasesModule";
 import { externalTypes } from "./externalTypes";
@@ -15,6 +20,7 @@ export type MakeContainerProps = {
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
   solanaRPCURL?: string;
+  addressBook?: SolanaAddressBook;
 };
 
 export const makeContainer = ({
@@ -22,6 +28,7 @@ export const makeContainer = ({
   sessionId,
   contextModule,
   solanaRPCURL,
+  addressBook,
 }: MakeContainerProps) => {
   const container = new Container();
 
@@ -35,6 +42,11 @@ export const makeContainer = ({
   container
     .bind<string | undefined>(externalTypes.SolanaRPCURL)
     .toConstantValue(solanaRPCURL);
+  // Always bound: an absent address book is an empty one, which simply never
+  // matches, so consumers never have to handle `undefined`.
+  container
+    .bind<SolanaAddressBook>(externalTypes.AddressBook)
+    .toConstantValue(addressBook ?? EMPTY_SOLANA_ADDRESS_BOOK);
 
   container
     .bind<
