@@ -13,6 +13,7 @@ import {
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
 import { ProvideGatedSigningCommand } from "@internal/app-binder/command/ProvideGatedSigningCommand";
+import { ProvideMapEntryCommand } from "@internal/app-binder/command/ProvideMapEntryCommand";
 import {
   NetworkConfigurationType,
   ProvideNetworkConfigurationCommand,
@@ -134,6 +135,15 @@ export class ProvideContextTask {
           payload,
           commandFactory: (args) =>
             new ProvideEnumCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
+        return this._sendPayloadInChunksTaskFactory(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideMapEntryCommand({
               data: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
             }),
