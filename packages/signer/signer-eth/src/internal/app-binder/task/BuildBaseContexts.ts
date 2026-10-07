@@ -250,11 +250,16 @@ export class BuildBaseContexts {
   private _hasValidTransactionInfo(
     contexts: EthereumClearSignContextSuccess[],
   ): boolean {
+    const transactionInfo = contexts.find(
+      (context) =>
+        context.type === ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+    );
+    if (transactionInfo === undefined) {
+      return false;
+    }
     return (
-      contexts.find(
-        (context) =>
-          context.type === ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
-      )?.certificate !== undefined
+      transactionInfo.certificate !== undefined ||
+      this._args.options.allowUncertifiedTransactionInfo === true
     );
   }
 

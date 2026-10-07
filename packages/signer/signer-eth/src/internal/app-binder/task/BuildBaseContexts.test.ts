@@ -874,6 +874,88 @@ describe("BuildBaseContexts", () => {
     });
   });
 
+  it("should use the generic parser without a transaction info certificate when allowed", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+      },
+      {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+        payload: "transaction_info",
+      },
+      {
+        type: ClearSignContextType.ETHEREUM_MAP_ENTRY,
+        payload: "map_entry",
+      },
+    ];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.17.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildBaseContexts(apiMock, {
+      ...defaultArgs,
+      options: { allowUncertifiedTransactionInfo: true },
+    }).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [
+        clearSignContexts[2], // map entry
+        clearSignContexts[1], // transaction info
+        clearSignContexts[0], // transaction field description
+      ],
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
+    });
+  });
+
+  it("should not use the generic parser without a transaction info even when uncertified ones are allowed", async () => {
+    // GIVEN
+    const clearSignContexts: ClearSignContext[] = [
+      {
+        type: ClearSignContextType.ETHEREUM_TOKEN,
+        payload: "token",
+      },
+      {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+      },
+    ];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.17.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildBaseContexts(apiMock, {
+      ...defaultArgs,
+      options: { allowUncertifiedTransactionInfo: true },
+    }).run();
+
+    // THEN
+    expect(result).toEqual({
+      clearSignContexts: [clearSignContexts[0]],
+      clearSignContextsOptional: [],
+      clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
+    });
+  });
+
   it("should exclude GATED_SIGNING when app version is below 1.22.0", async () => {
     // GIVEN - use mockReturnValue so every getDeviceSessionState() call returns 1.20.0
     // (coverage runs can invoke it more than once)
