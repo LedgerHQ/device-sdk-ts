@@ -155,6 +155,23 @@ def sign_enum_descriptors(enums: List[Dict[str, Any]]) -> Dict[str, Dict[str, An
     return signed_enums
 
 
+def sign_map_entry_descriptors(maps: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """
+    Sign MAP_ENTRY descriptors and group them by map id then by key (hex encoded the way the device reads it
+    from the transaction), the same way enums are grouped by the CAL service.
+    The map value is kept next to the signed descriptor, so the wallet can resolve the token/NFT it points to
+    """
+    signed_maps: Dict[str, Dict[str, Any]] = {}
+
+    for map_entry in maps:
+        map_id = map_entry["id"]
+        map_key = map_entry["key"].lower()
+        map_entry_descriptor = {"value": map_entry["value"].lower(), **sign_payload(map_entry["descriptor"])}
+        signed_maps.setdefault(map_id, {})[map_key] = map_entry_descriptor
+
+    return signed_maps
+
+
 def format_and_sign_descriptor(descriptor: Any) -> Dict[str, Any]:
     """
     Process a single descriptor: convert to JSON, sign, and clean.
@@ -170,6 +187,10 @@ def format_and_sign_descriptor(descriptor: Any) -> Dict[str, Any]:
     # Sign enums
     if "enums" in json_descriptor:
         json_descriptor["enums"] = sign_enum_descriptors(json_descriptor["enums"])
+
+    # Sign map entries
+    if "maps" in json_descriptor:
+        json_descriptor["maps"] = sign_map_entry_descriptors(json_descriptor["maps"])
 
     return remove_null_values(json_descriptor)
 
