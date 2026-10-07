@@ -108,6 +108,37 @@ const createMockActorMachineFromOutput = (
 const createMockActorMachine = (output: Either<unknown, unknown>) =>
   createMockActorMachineFromOutput(() => output);
 
+// Same as above, but the actor goes through one state per given required user
+// interaction before completing, so that each interaction is surfaced to the
+// parent through a snapshot.
+const createMockActorMachineWithInteractions = (
+  interactions: UserInteractionRequired[],
+  output: Either<unknown, unknown>,
+) =>
+  createMachine({
+    initial: "interaction0",
+    states: {
+      ...Object.fromEntries(
+        interactions.map((requiredUserInteraction, index) => [
+          `interaction${index}`,
+          {
+            after: {
+              0:
+                index + 1 < interactions.length
+                  ? `interaction${index + 1}`
+                  : "done",
+            },
+            entry: assign({
+              intermediateValue: () => ({ requiredUserInteraction }),
+            }),
+          },
+        ]),
+      ),
+      done: { type: "final" },
+    },
+    output: () => output,
+  });
+
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 const makeBackup = (overrides: Partial<Backup> = {}): Backup => ({
@@ -126,6 +157,8 @@ describe("RestoreBackupDeviceAction", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    // The device model is read when the state machine is created
+    setupDeviceModel(DeviceModelId.NANO_X);
   });
 
   // ─── Setup helpers ──────────────────────────────────────────────────────────
@@ -236,6 +269,18 @@ describe("RestoreBackupDeviceAction", () => {
         createMockActorMachine(output) as unknown as ReturnType<
           typeof uploadCustomLockScreenDevice
         >,
+      );
+
+  const setupUploadCustomLockScreenWithInteractions = (
+    interactions: UserInteractionRequired[],
+  ) =>
+    vi
+      .mocked(uploadCustomLockScreenDevice)
+      .mockReturnValue(
+        createMockActorMachineWithInteractions(
+          interactions,
+          Right(undefined),
+        ) as unknown as ReturnType<typeof uploadCustomLockScreenDevice>,
       );
 
   const setupDeviceModel = (id: DeviceModelId) =>
@@ -534,6 +579,59 @@ describe("RestoreBackupDeviceAction", () => {
           { onDone: resolve, onError: reject },
         );
       }));
+
+    describe("UploadCustomLockScreen required user interactions", () => {
+      const runUploadCustomLockScreenInteractions = (
+        deviceModelId: DeviceModelId,
+        interactions: UserInteractionRequired[],
+      ) =>
+        new Promise<RestoreBackupDARequiredInteraction[]>((resolve, reject) => {
+          setupWaitForAppAndVersion();
+          setupGetIsOnboarded();
+          setupDeviceModel(deviceModelId);
+          setupRequestMasterConsent();
+          setupUploadCustomLockScreenWithInteractions(interactions);
+
+          const observed: RestoreBackupDARequiredInteraction[] = [];
+          const { observable } = makeDeviceAction(
+            makeBackup({ clsHexImage: "0x0102" }),
+          )._execute(makeDeviceActionInternalApiMock());
+          observable.subscribe({
+            next: (state) => {
+              if (
+                state.status === DeviceActionStatus.Pending &&
+                state.intermediateValue.step ===
+                  RestoreBackupSteps.UploadCustomLockScreen
+              ) {
+                observed.push(state.intermediateValue.requiredUserInteraction);
+              }
+            },
+            error: reject,
+            complete: () => resolve(observed),
+          });
+        });
+
+      const interactions = [
+        UserInteractionRequired.UnlockDevice,
+        UserInteractionRequired.ConfirmLoadImage,
+        UserInteractionRequired.ConfirmCommitImage,
+      ];
+
+      it("should hide confirm load/commit image interactions but keep the others when master consent is granted", async () => {
+        const observed = await runUploadCustomLockScreenInteractions(
+          DeviceModelId.STAX,
+          interactions,
+        );
+
+        expect(observed).toContain(UserInteractionRequired.UnlockDevice);
+        expect(observed).not.toContain(
+          UserInteractionRequired.ConfirmLoadImage,
+        );
+        expect(observed).not.toContain(
+          UserInteractionRequired.ConfirmCommitImage,
+        );
+      });
+    });
 
     it("should not fail and should keep going when the user refuses the language pack, app install, and CLS upload prompts", () =>
       new Promise<void>((resolve, reject) => {
