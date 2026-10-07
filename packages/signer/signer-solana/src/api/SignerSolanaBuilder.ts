@@ -8,6 +8,7 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 
+import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import { type SolanaSignerFeaturesNames } from "@internal/app-binder/SolanaApplicationResolver";
 import { DefaultSignerSolana } from "@internal/DefaultSignerSolana";
 
@@ -33,6 +34,7 @@ export class SignerSolanaBuilder {
   private _sessionId: DeviceSessionId;
   private _customContextModule: ContextModule | undefined;
   private _originToken: string | undefined;
+  private _addressBook: SolanaAddressBook | undefined;
   private readonly _solanaRPCURL: string | undefined;
   private readonly _disabledFeatures:
     | ReadonlyArray<SolanaSignerFeaturesNames>
@@ -64,6 +66,21 @@ export class SignerSolanaBuilder {
   }
 
   /**
+   * Provide the Solana-compatible address book used to clear-sign contact
+   * names.
+   *
+   * The snapshot must be complete: the signer neither mutates nor persists it,
+   * and reads it as-is. Rebuild the signer to pick up later changes.
+   *
+   * @param addressBook a complete Solana address-book snapshot
+   * @returns this
+   */
+  withAddressBook(addressBook: SolanaAddressBook) {
+    this._addressBook = addressBook;
+    return this;
+  }
+
+  /**
    * Build the solana signer
    *
    * @returns the solana signer
@@ -74,6 +91,7 @@ export class SignerSolanaBuilder {
       sessionId: this._sessionId,
       solanaRPCURL: this._solanaRPCURL,
       disabledFeatures: this._disabledFeatures,
+      addressBook: this._addressBook,
       contextModule:
         this._customContextModule ??
         new ContextModuleBuilder({
