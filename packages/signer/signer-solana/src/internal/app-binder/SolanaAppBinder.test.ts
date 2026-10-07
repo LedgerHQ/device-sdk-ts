@@ -28,6 +28,10 @@ import {
   type SignTransactionDAOutput,
   type SolanaAppErrorCodes,
 } from "@api/index";
+import {
+  EMPTY_SOLANA_ADDRESS_BOOK,
+  type SolanaAddressBook,
+} from "@api/model/SolanaAddressBook";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
@@ -312,6 +316,67 @@ describe("SolanaAppBinder", () => {
               transaction,
               transactionOptions: { skipOpenApp },
               contextModule: contextModuleStub,
+            }),
+          }),
+        }),
+      );
+    });
+
+    it("should pass the bound address book to the device action", () => {
+      const addressBook: SolanaAddressBook = {
+        contactGroups: [],
+        ledgerAccounts: [
+          {
+            accountName: "Main",
+            derivationPath: "44'/501'/0'/0'",
+            hmacProof: new Uint8Array(32),
+          },
+        ],
+      };
+      const appBinder = new SolanaAppBinder(
+        mockedDmk,
+        "sessionId",
+        contextModuleStub,
+        mockLoggerFactory,
+        undefined,
+        new BlockhashService(),
+        addressBook,
+      );
+
+      appBinder.signTransaction({
+        derivationPath: "44'/501'/0'/0'",
+        transaction: new Uint8Array([0x01]),
+      });
+
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deviceAction: expect.objectContaining({
+            input: expect.objectContaining({ addressBook }),
+          }),
+        }),
+      );
+    });
+
+    it("should default to the empty address book", () => {
+      const appBinder = new SolanaAppBinder(
+        mockedDmk,
+        "sessionId",
+        contextModuleStub,
+        mockLoggerFactory,
+        undefined,
+        new BlockhashService(),
+      );
+
+      appBinder.signTransaction({
+        derivationPath: "44'/501'/0'/0'",
+        transaction: new Uint8Array([0x01]),
+      });
+
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deviceAction: expect.objectContaining({
+            input: expect.objectContaining({
+              addressBook: EMPTY_SOLANA_ADDRESS_BOOK,
             }),
           }),
         }),
