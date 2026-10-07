@@ -22,6 +22,7 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
+import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import { SolanaAppCommandError } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import {
   SEND_WITH_MEMO_MESSAGE,
@@ -90,6 +91,8 @@ let provideTxCheckMock: ReturnType<typeof vi.fn>;
 let reportSignMock: ReturnType<typeof vi.fn>;
 // Basic-flow routing
 let resolveSigningRouteMock: ReturnType<typeof vi.fn>;
+// Contacts
+let provideContactMock: ReturnType<typeof vi.fn>;
 // Terminal sign-op deps (generic + basic) and the shared refresh task
 let promptUiDisplayMock: ReturnType<typeof vi.fn>;
 let previewMock: ReturnType<typeof vi.fn>;
@@ -195,6 +198,7 @@ function run(
     getAppConfig: getAppConfigMock,
     reportSign: reportSignMock,
     resolveSigningRoute: resolveSigningRouteMock,
+    provideContact: provideContactMock,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any) as unknown as ReturnType<typeof vi.spyOn>;
   const { observable } = action._execute(apiMock);
@@ -305,6 +309,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     provideTxCheckMock = vi.fn().mockResolvedValue(undefined);
 
     reportSignMock = vi.fn().mockResolvedValue(undefined);
+    provideContactMock = vi.fn().mockResolvedValue(undefined);
 
     // No basic-flow rule matches by default.
     resolveSigningRouteMock = vi.fn().mockResolvedValue(null);
@@ -1015,6 +1020,174 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         reject,
       );
     }));
+
+  describe("ProvideContact step", () => {
+    const addressBook: SolanaAddressBook = {
+      contactGroups: [
+        {
+          contactName: "Alice",
+          groupHandle: new Uint8Array(64),
+          hmacProof: new Uint8Array(32),
+          externalAddresses: [
+            {
+              scope: "Solana",
+              address: "D2PPQSYFe83nDzk96FqGumVU8JA7J8vj2Rhjc2oXzEi5",
+              hmacRest: new Uint8Array(32),
+            },
+          ],
+        },
+      ],
+      ledgerAccounts: [],
+    };
+    const withContacts: SignTransactionDAInput = { ...baseInput, addressBook };
+
+    it("is skipped when the signer has no contacts", () =>
+      new Promise<void>((resolve, reject) => {
+        run(
+          {
+            ...baseInput,
+            addressBook: { contactGroups: [], ledgerAccounts: [] },
+          },
+          (states) => {
+            try {
+              expect(provideContactMock).not.toHaveBeenCalled();
+              expect(stepSequence(states)).not.toContain(
+                signTransactionDAStateSteps.PROVIDE_CONTACT,
+              );
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("provides the contact before basic clear-sign provisioning", () =>
+      new Promise<void>((resolve, reject) => {
+        run(
+          withContacts,
+          (states) => {
+            try {
+              expect(provideContactMock).toHaveBeenCalledOnce();
+              expect(provideContactMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    messageBytes: exampleTx,
+                    appConfig: appConfig(legacyVersion),
+                  },
+                }),
+              );
+              expect(
+                provideContactMock.mock.invocationCallOrder[0]!,
+              ).toBeLessThan(inspectMock.mock.invocationCallOrder[0]!);
+              expect(stepSequence(states)).toContain(
+                signTransactionDAStateSteps.PROVIDE_CONTACT,
+              );
+              const last = states[states.length - 1]!;
+              expect(
+                last.status === DeviceActionStatus.Completed && last.output,
+              ).toEqual(signature);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("provides the contact before generic clear-sign provisioning", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+          }),
+        );
+        run(
+          withContacts,
+          () => {
+            try {
+              expect(buildGenericMock).toHaveBeenCalled();
+              expect(
+                provideContactMock.mock.invocationCallOrder[0]!,
+              ).toBeLessThan(buildGenericMock.mock.invocationCallOrder[0]!);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("provides the contact after transaction checks", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
+              transactionChecksEnabled: true,
+              transactionChecksOptIn: true,
+            },
+          }),
+        );
+        run(
+          withContacts,
+          (states) => {
+            try {
+              const steps = stepSequence(states);
+              expect(
+                steps.indexOf(signTransactionDAStateSteps.PROVIDE_CONTACT),
+              ).toBeGreaterThan(
+                steps.indexOf(
+                  signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
+                ),
+              );
+              expect(
+                steps.indexOf(
+                  signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
+                ),
+              ).toBeGreaterThanOrEqual(0);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("still signs when providing the contact fails", () =>
+      new Promise<void>((resolve, reject) => {
+        provideContactMock.mockRejectedValue(new Error("boom"));
+        run(
+          withContacts,
+          (states) => {
+            try {
+              expect(provideContactMock).toHaveBeenCalledOnce();
+              const last = states[states.length - 1]!;
+              expect(
+                last.status === DeviceActionStatus.Completed && last.output,
+              ).toEqual(signature);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+  });
 
   describe("Report state — isBlindSign contract", () => {
     it("legacy path (generic gate skipped) → isBlindSign: true, reportSign called once", () =>
