@@ -75,7 +75,7 @@ export type MachineDependencies = {
     input: { messageBytes: Uint8Array };
   }) => Promise<string | null>;
   readonly provideContact: (arg0: {
-    input: { messageBytes: Uint8Array; appConfig: AppConfiguration };
+    input: { messageBytes: Uint8Array };
   }) => Promise<void>;
 };
 
@@ -231,7 +231,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         // Generic clear-signing terminates via SIGN MESSAGE DELAYED (0x09) on
         // the original message, so it only needs the capability bit — no RPC /
         // blockhash prerequisite.
-        isGenericClearSignAvailable: ({ context }) =>
+        isGenericClearSignSupported: ({ context }) =>
           isSupported("genericClearSign", context._internalState.appConfig!),
         // Generic clear-sign child streamed + finalized the descriptors (its
         // Right("prepared") outcome was folded into the context by the
@@ -242,10 +242,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           context._internalState.signature !== null,
         hasBasicFlowRule: ({ context }) =>
           context._internalState.basicFlowRuleId !== null,
-        // Without contacts the step is skipped entirely, so a signer built
-        // without an address book runs exactly as before.
-        hasContacts: ({ context }) =>
-          (context.input.addressBook?.contactGroups.length ?? 0) > 0,
+        // Without contacts or app support the step is skipped entirely, so a
+        // signer built without an address book runs exactly as before.
+        isContactsSupported: ({ context }) =>
+          (context.input.addressBook?.contactGroups.length ?? 0) > 0 &&
+          isSupported("contacts", context._internalState.appConfig!),
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -484,7 +485,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         CheckProvideContact: {
           always: [
-            { target: "ProvideContact", guard: "hasContacts" },
+            { target: "ProvideContact", guard: "isContactsSupported" },
             { target: "CheckGenericClearSignSupported" },
           ],
         },
@@ -503,7 +504,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "provideContact",
             input: ({ context }) => ({
               messageBytes: context._internalState.messageBytes,
-              appConfig: context._internalState.appConfig!,
             }),
             onDone: { target: "CheckGenericClearSignSupported" },
             onError: { target: "CheckGenericClearSignSupported" },
@@ -513,7 +513,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           always: [
             {
               target: "ResolveSigningRoute",
-              guard: and(["noInternalError", "isGenericClearSignAvailable"]),
+              guard: and(["noInternalError", "isGenericClearSignSupported"]),
             },
             { target: "BasicClearSign", guard: "noInternalError" },
             { target: "Error" },
@@ -916,13 +916,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       }
     };
 
-    const provideContact = (arg0: {
-      input: { messageBytes: Uint8Array; appConfig: AppConfiguration };
-    }) =>
+    const provideContact = (arg0: { input: { messageBytes: Uint8Array } }) =>
       new ProvideContactTask(internalApi, {
         addressBook: this.input.addressBook ?? EMPTY_SOLANA_ADDRESS_BOOK,
         messageBytes: arg0.input.messageBytes,
-        appConfig: arg0.input.appConfig,
         logger: this.getLoggerFactory(internalApi)("ProvideContactTask"),
       }).run();
 
