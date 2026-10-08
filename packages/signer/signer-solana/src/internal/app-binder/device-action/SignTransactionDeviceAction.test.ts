@@ -25,6 +25,7 @@ import { SolanaTransactionTypes } from "@internal/app-binder/services/Transactio
 import {
   SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
   SOLANA_MIN_TRANSACTION_CHECKS_VERSION,
+  SOLANA_SIGNER_FEATURES,
 } from "@internal/app-binder/SolanaApplicationResolver";
 
 import { makeDeviceActionInternalApiMock } from "./__test-utils__/makeInternalApi";
@@ -765,6 +766,16 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       ledgerAccounts: [],
     };
     const withContacts: SignTransactionDAInput = { ...baseInput, addressBook };
+    // The lowest Solana app version that supports contacts; each test starts
+    // there so that only the condition under test can skip the step.
+    const contactsVersion = SOLANA_SIGNER_FEATURES.contacts.minVersion;
+
+    beforeEach(() => {
+      apiMock.getDeviceSessionState.mockReturnValue(session(contactsVersion));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: appConfig(contactsVersion) }),
+      );
+    });
 
     it("is skipped when the signer has no contacts", () =>
       new Promise<void>((resolve, reject) => {
@@ -791,6 +802,73 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         );
       }));
 
+    it("is skipped when contacts is in disabledFeatures", () =>
+      new Promise<void>((resolve, reject) => {
+        run(
+          { ...withContacts, disabledFeatures: ["contacts"] },
+          (states) => {
+            try {
+              expect(provideContactMock).not.toHaveBeenCalled();
+              expect(stepSequence(states)).not.toContain(
+                signTransactionDAStateSteps.PROVIDE_CONTACT,
+              );
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("is skipped when the app is below the contacts minimum", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(session(legacyVersion));
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({ data: appConfig(legacyVersion) }),
+        );
+        run(
+          withContacts,
+          (states) => {
+            try {
+              expect(provideContactMock).not.toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("is skipped on a model without contacts", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(contactsVersion, DeviceModelId.NANO_S),
+        );
+        run(
+          withContacts,
+          (states) => {
+            try {
+              expect(provideContactMock).not.toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
     it("provides the contact before basic clear-sign provisioning", () =>
       new Promise<void>((resolve, reject) => {
         run(
@@ -800,10 +878,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
               expect(provideContactMock).toHaveBeenCalledOnce();
               expect(provideContactMock).toHaveBeenCalledWith(
                 expect.objectContaining({
-                  input: {
-                    messageBytes: exampleTx,
-                    appConfig: appConfig(legacyVersion),
-                  },
+                  input: { messageBytes: exampleTx },
                 }),
               );
               expect(
@@ -827,14 +902,6 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
 
     it("provides the contact before generic clear-sign provisioning", () =>
       new Promise<void>((resolve, reject) => {
-        apiMock.getDeviceSessionState.mockReturnValue(
-          session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
-        );
-        getAppConfigMock.mockResolvedValue(
-          CommandResultFactory({
-            data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
-          }),
-        );
         run(
           withContacts,
           () => {
@@ -855,12 +922,12 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     it("provides the contact after transaction checks", () =>
       new Promise<void>((resolve, reject) => {
         apiMock.getDeviceSessionState.mockReturnValue(
-          session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
+          session(contactsVersion, DeviceModelId.FLEX),
         );
         getAppConfigMock.mockResolvedValue(
           CommandResultFactory({
             data: {
-              ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
+              ...appConfig(contactsVersion),
               transactionChecksEnabled: true,
               transactionChecksOptIn: true,
             },

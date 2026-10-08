@@ -65,7 +65,7 @@ export type MachineDependencies = {
     input: SolanaSigningReportTaskArgs;
   }) => Promise<void>;
   readonly provideContact: (arg0: {
-    input: { messageBytes: Uint8Array; appConfig: AppConfiguration };
+    input: { messageBytes: Uint8Array };
   }) => Promise<void>;
 };
 
@@ -224,10 +224,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           context._internalState.clearSignPrepared,
         hasSignature: ({ context }) =>
           context._internalState.signature !== null,
-        // Without contacts the step is skipped entirely, so a signer built
-        // without an address book runs exactly as before.
-        hasContacts: ({ context }) =>
-          (context.input.addressBook?.contactGroups.length ?? 0) > 0,
+        // Without contacts or app support the step is skipped entirely, so a
+        // signer built without an address book runs exactly as before.
+        shouldProvideContact: ({ context }) =>
+          (context.input.addressBook?.contactGroups.length ?? 0) > 0 &&
+          isSupported("contacts", context._internalState.appConfig!),
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -387,7 +388,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               guard: "isTransactionChecksSupported",
             },
             // Feature not supported: skip the child machine entirely.
-            { target: "ProvideContact", guard: "hasContacts" },
+            { target: "ProvideContact", guard: "shouldProvideContact" },
             { target: "CheckGenericClearSignSupported" },
           ],
         },
@@ -414,7 +415,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               }),
             },
             onDone: [
-              { target: "ProvideContact", guard: "hasContacts" },
+              { target: "ProvideContact", guard: "shouldProvideContact" },
               { target: "CheckGenericClearSignSupported" },
             ],
           },
@@ -434,7 +435,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "provideContact",
             input: ({ context }) => ({
               messageBytes: context._internalState.messageBytes,
-              appConfig: context._internalState.appConfig!,
             }),
             onDone: { target: "CheckGenericClearSignSupported" },
             onError: { target: "CheckGenericClearSignSupported" },
@@ -735,13 +735,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const reportSign = async (arg0: { input: SolanaSigningReportTaskArgs }) =>
       new SolanaSigningReportTask(arg0.input).run();
 
-    const provideContact = (arg0: {
-      input: { messageBytes: Uint8Array; appConfig: AppConfiguration };
-    }) =>
+    const provideContact = (arg0: { input: { messageBytes: Uint8Array } }) =>
       new ProvideContactTask(internalApi, {
         addressBook: this.input.addressBook ?? EMPTY_SOLANA_ADDRESS_BOOK,
         messageBytes: arg0.input.messageBytes,
-        appConfig: arg0.input.appConfig,
         logger: this.getLoggerFactory(internalApi)("ProvideContactTask"),
       }).run();
 

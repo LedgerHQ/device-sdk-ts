@@ -1,4 +1,10 @@
 import {
+  CONTACTS_VERSION_REQUIREMENTS,
+  type ContactsModelRequirement,
+  isVersionAtLeast,
+  SOLANA_APP_NAME,
+} from "@ledgerhq/device-contacts-kit";
+import {
   type AppConfig,
   ApplicationChecker,
   type ApplicationResolver,
@@ -20,6 +26,38 @@ export const SOLANA_MIN_DELAYED_SIGNING_VERSION = "1.14.0";
 
 export const SOLANA_MIN_TRANSACTION_CHECKS_VERSION = "1.16.0";
 export const SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION = "1.17.0";
+
+/**
+ * Contacts versions are owned by contacts-kit, shared with the other signers.
+ * Models without Contacts or without a Solana minimum are excluded, and the
+ * highest Solana minimum across the remaining models applies to all of them.
+ */
+function resolveContactsSupport(): {
+  minVersion: string;
+  excludedModels: DeviceModelId[];
+} {
+  let minVersion = "0.0.0";
+  const excludedModels: DeviceModelId[] = [];
+  const requirements = Object.entries(CONTACTS_VERSION_REQUIREMENTS) as [
+    DeviceModelId,
+    ContactsModelRequirement,
+  ][];
+
+  for (const [modelId, requirement] of requirements) {
+    const appMinVersion = requirement.supported
+      ? requirement.minAppVersion[SOLANA_APP_NAME]
+      : undefined;
+    if (appMinVersion === undefined) {
+      excludedModels.push(modelId);
+    } else if (!isVersionAtLeast(minVersion, appMinVersion)) {
+      minVersion = appMinVersion;
+    }
+  }
+
+  return { minVersion, excludedModels };
+}
+
+const SOLANA_CONTACTS_SUPPORT = resolveContactsSupport();
 
 export const SOLANA_SIGNER_FEATURES = {
   spl: {
@@ -44,6 +82,11 @@ export const SOLANA_SIGNER_FEATURES = {
   genericClearSign: {
     minVersion: SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
     excludedModels: [DeviceModelId.NANO_S],
+    excludedApps: ["Exchange"],
+  },
+  contacts: {
+    minVersion: SOLANA_CONTACTS_SUPPORT.minVersion,
+    excludedModels: SOLANA_CONTACTS_SUPPORT.excludedModels,
     excludedApps: ["Exchange"],
   },
 } as const;
