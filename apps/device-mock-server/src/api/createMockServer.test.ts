@@ -395,6 +395,12 @@ describe("createMockServer (HTTP contract)", () => {
       const res = await api(`/devices/${id}/speculos`, {}, token);
       expect(res.status).toBe(409);
     });
+
+    it("has no catalogue without a Speculos operator (404)", async () => {
+      expect((await api("/speculos/catalogue/nanoX")).status).toBe(404);
+      const res = await api("/speculos/catalogue/nanoX/2.7.1");
+      expect(res.status).toBe(404);
+    });
   });
 
   describe("transfer", () => {

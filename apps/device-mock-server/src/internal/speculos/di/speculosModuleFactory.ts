@@ -1,6 +1,7 @@
 import { ContainerModule } from "inversify";
 
 import { type MockServerConfig } from "@api/model/MockServerConfig";
+import { HttpSpeculosCatalogueDataSource } from "@internal/speculos/data/HttpSpeculosCatalogueDataSource";
 import { HttpSpeculosOperatorDataSource } from "@internal/speculos/data/HttpSpeculosOperatorDataSource";
 import { speculosTypes } from "@internal/speculos/di/speculosTypes";
 import { CloseAppUseCase } from "@internal/speculos/use-case/CloseAppUseCase";
@@ -19,6 +20,9 @@ export const speculosModuleFactory = (config: MockServerConfig) =>
     bind(speculosTypes.OperatorConfig).toConstantValue(config.speculos);
     bind(speculosTypes.OperatorDataSource)
       .to(HttpSpeculosOperatorDataSource)
+      .inSingletonScope();
+    bind(speculosTypes.CatalogueDataSource)
+      .to(HttpSpeculosCatalogueDataSource)
       .inSingletonScope();
     bind(speculosTypes.OpenAppUseCase)
       .to(OpenAppViaSpeculosUseCase)

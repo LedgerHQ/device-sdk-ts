@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
   type Device,
   type DeviceApp,
@@ -16,20 +16,15 @@ import {
   SearchInput,
   SegmentedControl,
   SegmentedControlButton,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectItemText,
-  SelectList,
-  SelectTrigger,
   Spinner,
-  Spot,
   Switch,
   TextInput,
 } from "@ledgerhq/lumen-ui-react";
-import { LedgerDevices, Plus, Trash } from "@ledgerhq/lumen-ui-react/symbols";
+import { Plus, Trash } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { type CatalogApp, listCatalogApps } from "@/api/managerApi";
 import { type DeviceCatalog, useDeviceCatalog } from "@/api/useDeviceCatalog";
+import { useSpeculosFirmwares } from "@/api/useSpeculosFirmwares";
 import { CopyButton } from "@/components/CopyButton";
 import {
   CONNECTIVITY_TYPES,
@@ -39,6 +34,7 @@ import {
   isSignerApp,
   nextDeviceName,
 } from "@/domain/devices";
+import { byNewest, isPreRelease } from "@/domain/versions";
 
 interface DeviceDialogProps {
   readonly device?: Device;
@@ -78,11 +74,21 @@ const initialState = (
     name: nextDeviceName(DEFAULT_MODEL, existingNames),
     deviceType: DEFAULT_MODEL.value,
     connectivityType: "USB",
-    firmwareVersion: DEFAULT_MODEL.defaultFirmware,
+    // The latest the catalogue has, filled in once it arrives.
+    firmwareVersion: "",
     onboarded: true,
     apps: [],
   };
 };
+
+/**
+ * An app's name in the Speculos catalogue. Speculinho strips spaces from the
+ * name it looks a build up by: Ledger Live's "Bitcoin Test" is "BitcoinTest".
+ */
+const speculosKey = (name: string): string => name.replace(/\s/g, "");
+
+/** App versions Speculos can boot on the chosen firmware, keyed by app. */
+type SpeculosApps = Record<string, string[]>;
 
 export function DeviceDialog({
   device,
@@ -97,22 +103,65 @@ export function DeviceDialog({
   const [saving, setSaving] = useState(false);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // An edited device keeps its saved versions until its model or firmware
+  // changes; from then on, as for a new one, the latest is picked.
+  const [repickVersions, setRepickVersions] = useState(!device);
+  const [pickLatestFirmware, setPickLatestFirmware] = useState(!device);
 
   const model = findModel(form.deviceType);
+  const firmwares = useSpeculosFirmwares(form.deviceType);
   const catalog = useDeviceCatalog(form.deviceType, form.firmwareVersion);
+  const speculosApps =
+    catalog.status === "loaded" ? catalog.speculosApps : null;
+  // Until the catalogue answers, a new device has no firmware to save.
+  const firmwarePending = pickLatestFirmware && firmwares === undefined;
+
   const patch = (values: Partial<FormState>) =>
     setForm((current) => ({ ...current, ...values }));
 
-  const pickModel = (next: DeviceModel) =>
-    patch(
-      device
-        ? { deviceType: next.value }
-        : {
-            deviceType: next.value,
-            name: nextDeviceName(next, existingNames),
-            firmwareVersion: next.defaultFirmware,
-          },
-    );
+  useEffect(() => {
+    if (!pickLatestFirmware || firmwares === undefined) return;
+    setPickLatestFirmware(false);
+    if (firmwares) {
+      setForm((current) => ({
+        ...current,
+        firmwareVersion: latest(firmwares),
+      }));
+    }
+  }, [firmwares, pickLatestFirmware]);
+
+  // A new firmware carries its own builds: move each app to its latest there.
+  useEffect(() => {
+    if (!speculosApps || !repickVersions) return;
+    setForm((current) => {
+      let changed = false;
+      const apps = current.apps.map((app) => {
+        const versions = speculosApps[speculosKey(app.name)];
+        if (!versions || app.version === latest(versions)) return app;
+        changed = true;
+        return { name: app.name, version: latest(versions) };
+      });
+      return changed ? { ...current, apps } : current;
+    });
+  }, [speculosApps, repickVersions]);
+
+  const pickModel = (next: DeviceModel) => {
+    if (next.value === form.deviceType) return;
+    setRepickVersions(true);
+    setPickLatestFirmware(true);
+    patch({
+      deviceType: next.value,
+      firmwareVersion: "",
+      ...(device ? {} : { name: nextDeviceName(next, existingNames) }),
+    });
+  };
+
+  const pickFirmware = (firmwareVersion: string) => {
+    if (firmwareVersion === form.firmwareVersion) return;
+    setRepickVersions(true);
+    setPickLatestFirmware(false);
+    patch({ firmwareVersion });
+  };
 
   const updateApp = (index: number, values: Partial<DeviceApp>) =>
     patch({
@@ -121,21 +170,34 @@ export function DeviceDialog({
       ),
     });
 
-  const addApp = (app: DeviceApp = { name: "", version: "" }) =>
-    patch({ apps: [...form.apps, app] });
+  const addApp = (app: DeviceApp) => patch({ apps: [...form.apps, app] });
 
   const removeApp = (index: number) =>
     patch({ apps: form.apps.filter((_, i) => i !== index) });
 
-  const firmwareStatus = describeFirmware(catalog);
+  const firmwareStatus = describeFirmware(
+    firmwares ?? null,
+    form.firmwareVersion,
+    model,
+  );
 
-  // Ledger Live resolves an installed app by its hash, and skips one reported
-  // without. Looked up against what is saved, so an app typed by hand or
-  // edited after picking resolves too.
-  const hashOf = (app: DeviceApp): string | undefined =>
-    (catalog.status === "loaded" ? catalog.apps : []).find(
-      (entry) => entry.name === app.name && entry.version === app.version,
-    )?.hash ?? app.hash;
+  // Ledger Live resolves an installed app by its hash and its own spelling of
+  // the name ("Bitcoin Test", where the catalogue has "BitcoinTest"), and skips
+  // one it cannot resolve. Only the Manager API knows either.
+  const forLedgerLive = (
+    app: DeviceApp,
+    managerApps: CatalogApp[],
+  ): DeviceApp => {
+    const listed = managerApps.filter(
+      (entry) => speculosKey(entry.name) === speculosKey(app.name),
+    );
+    return {
+      name: listed[0]?.name ?? app.name,
+      version: app.version,
+      hash:
+        listed.find((entry) => entry.version === app.version)?.hash ?? app.hash,
+    };
+  };
 
   const remove = async () => {
     if (!onRemove) return;
@@ -154,20 +216,29 @@ export function DeviceDialog({
   const save = async () => {
     setSaving(true);
     setError(null);
-    const apps = form.apps
+    const firmware = form.firmwareVersion.trim();
+    const named = form.apps
       .map((app) => ({
         name: app.name.trim(),
         version: app.version.trim(),
         hash: app.hash,
       }))
-      .filter((app) => app.name.length > 0)
-      .map((app) => ({ ...app, hash: hashOf(app) }));
+      .filter((app) => app.name.length > 0);
+    // Without it, apps are saved as they are: what Ledger Live cannot resolve
+    // still serves a DMK app.
+    const managerApps =
+      model && named.length > 0
+        ? await listCatalogApps(model.mask, firmware, model.rcProvider).catch(
+            (): CatalogApp[] => [],
+          )
+        : [];
+    const apps = named.map((app) => forLedgerLive(app, managerApps));
     try {
       await onSubmit({
         name: form.name.trim() || undefined,
         device_type: form.deviceType,
         connectivity_type: form.connectivityType,
-        firmware_version: form.firmwareVersion.trim() || undefined,
+        firmware_version: firmware || undefined,
         masks: model ? [model.mask] : undefined,
         apps: apps.length > 0 ? apps : undefined,
         onboarded: form.onboarded,
@@ -210,43 +281,19 @@ export function DeviceDialog({
 
             <Field
               label="Model"
-              hint="Sets the target id the device reports, and which Speculos emulator can back it."
+              hint="Sets the target id the device reports, and which Speculos emulator backs it."
             >
-              <div className="flex items-center gap-12">
-                <Spot
-                  appearance="icon"
-                  icon={model?.icon ?? LedgerDevices}
-                  size={40}
-                />
-                <div className="min-w-0 flex-1">
-                  <Select
-                    value={form.deviceType}
-                    items={DEVICE_MODELS.map((entry) => ({
-                      value: entry.value,
-                      label: entry.label,
-                    }))}
-                    onValueChange={(value) => {
-                      const next = value ? findModel(value) : undefined;
-                      if (next) pickModel(next);
-                    }}
+              <div className="flex flex-wrap gap-6">
+                {DEVICE_MODELS.map((entry) => (
+                  <Chip
+                    key={entry.value}
+                    selected={entry.value === form.deviceType}
+                    onClick={() => pickModel(entry)}
                   >
-                    <SelectTrigger aria-label="Device model" />
-                    <SelectContent>
-                      <SelectList
-                        renderItem={(item) => {
-                          const entry = findModel(item.value);
-                          const Icon = entry?.icon ?? LedgerDevices;
-                          return (
-                            <SelectItem key={item.value} value={item.value}>
-                              <Icon size={20} className="text-muted" />
-                              <SelectItemText>{item.label}</SelectItemText>
-                            </SelectItem>
-                          );
-                        }}
-                      />
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <entry.icon size={16} />
+                    {entry.label}
+                  </Chip>
+                ))}
               </div>
               {model && !model.speculos ? (
                 <p className="body-4 text-warning">
@@ -256,21 +303,32 @@ export function DeviceDialog({
               ) : null}
             </Field>
 
+            <FirmwareField
+              firmwares={firmwares ?? null}
+              value={form.firmwareVersion}
+              status={firmwareStatus}
+              onChange={pickFirmware}
+            />
+
+            <Field
+              label="Installed apps"
+              hint="What ListApps reports, and the only apps Open App accepts."
+            >
+              <AppsField
+                apps={form.apps}
+                catalog={catalog}
+                speculosApps={speculosApps}
+                onAdd={addApp}
+                onUpdate={updateApp}
+                onRemove={removeApp}
+              />
+            </Field>
+
             <TextInput
               label="Device name"
               helperText="Shown in Ledger Live and returned by GetDeviceName."
               value={form.name}
               onChange={(event) => patch({ name: event.target.value })}
-            />
-
-            <TextInput
-              label="Firmware version"
-              status={firmwareStatus.status}
-              helperText={firmwareStatus.helperText}
-              value={form.firmwareVersion}
-              onChange={(event) =>
-                patch({ firmwareVersion: event.target.value })
-              }
             />
 
             <Field
@@ -305,60 +363,6 @@ export function DeviceDialog({
                 onChange={(onboarded) => patch({ onboarded })}
               />
             </div>
-
-            <Field
-              label="Installed apps"
-              hint="What ListApps reports, and the only apps Open App will accept. Versions are the ones the Manager API lists for the firmware above — Speculos needs that same version built in coin-apps, which can lag behind."
-            >
-              <div className="flex flex-col gap-8">
-                <CatalogPicker
-                  catalog={catalog}
-                  firmware={form.firmwareVersion}
-                  alreadyAdded={form.apps.map((app) => app.name)}
-                  onPick={addApp}
-                />
-                {form.apps.map((app, index) => (
-                  <div key={index} className="flex items-start gap-8">
-                    <div className="min-w-0 flex-1">
-                      <TextInput
-                        placeholder="Name (e.g. Ethereum)"
-                        value={app.name}
-                        hideClearButton
-                        onChange={(event) =>
-                          updateApp(index, { name: event.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="w-128">
-                      <TextInput
-                        placeholder="Version"
-                        value={app.version}
-                        hideClearButton
-                        onChange={(event) =>
-                          updateApp(index, { version: event.target.value })
-                        }
-                      />
-                    </div>
-                    <IconButton
-                      appearance="no-background"
-                      aria-label={`Remove app ${index + 1}`}
-                      icon={Trash}
-                      onClick={() => removeApp(index)}
-                    />
-                  </div>
-                ))}
-                <div>
-                  <Button
-                    appearance="no-background"
-                    size="sm"
-                    icon={Plus}
-                    onClick={() => addApp()}
-                  >
-                    Add one by hand
-                  </Button>
-                </div>
-              </div>
-            </Field>
 
             {onRemove ? (
               <div className="border-muted flex items-center gap-12 rounded-md border p-16">
@@ -404,7 +408,11 @@ export function DeviceDialog({
           <Button appearance="no-background" onClick={onClose}>
             Cancel
           </Button>
-          <Button loading={saving} onClick={() => void save()}>
+          <Button
+            loading={saving}
+            disabled={firmwarePending || !form.firmwareVersion.trim()}
+            onClick={() => void save()}
+          >
             {device ? "Save changes" : "Add device"}
           </Button>
         </DialogFooter>
@@ -413,151 +421,343 @@ export function DeviceDialog({
   );
 }
 
-function describeFirmware(catalog: DeviceCatalog): {
-  status?: "error" | "success";
-  helperText: string;
-} {
-  const base = "Reported by GetOsVersion, and what decides which apps exist.";
-  switch (catalog.status) {
-    case "loading":
-      return { helperText: "Checking this OS version…" };
-    case "loaded":
-      return catalog.firmwareExists
-        ? {
-            status: "success",
-            helperText: `Released for ${catalog.model}. ${base}`,
-          }
-        : {
-            status: "error",
-            helperText: `No such OS version for ${catalog.model} — Speculos will have no OS to boot.`,
-          };
-    default:
-      return { helperText: base };
-  }
+/**
+ * The version targeted by default: the newest release, or the newest build
+ * when there are only pre-releases.
+ */
+const latest = (versions: string[]): string => {
+  const sorted = [...versions].sort(byNewest);
+  return sorted.find((version) => !isPreRelease(version)) ?? sorted[0] ?? "";
+};
+
+interface FirmwareStatus {
+  readonly status?: "error" | "success";
+  readonly helperText: string;
 }
 
-const MAX_RESULTS = 6;
+function describeFirmware(
+  firmwares: string[] | null,
+  value: string,
+  model: DeviceModel | undefined,
+): FirmwareStatus {
+  const base = "Reported by GetOsVersion.";
+  const typed = value.trim();
+  if (!firmwares || !typed || !model) return { helperText: base };
+  return firmwares.includes(typed)
+    ? { status: "success", helperText: `Speculos can boot it. ${base}` }
+    : {
+        status: "error",
+        helperText: `Speculos has no ${model.label} build of it — opening an app will fail.`,
+      };
+}
+
+/** Suggestions shown at once, at most. */
+const MAX_SUGGESTIONS = 6;
+
+/** Releases suggested before anything is typed. */
+const RECENT_FIRMWARES = 4;
 
 /**
- * Search and results are inline rather than in a `Select`: its popup is
- * portaled outside the dialog, where the dialog's scroll lock swallows wheel
- * events, so a list of 200-odd apps could be clicked but never scrolled.
+ * The newest releases while the field is empty or already holds a firmware
+ * Speculos has; once something else is typed, every version containing it.
  */
-function CatalogPicker({
-  catalog,
-  firmware,
-  alreadyAdded,
-  onPick,
+const firmwareSuggestions = (firmwares: string[], typed: string): string[] => {
+  if (typed && !firmwares.includes(typed)) {
+    return firmwares.filter((version) => version.includes(typed));
+  }
+  const recent = firmwares
+    .filter((version) => !isPreRelease(version))
+    .slice(0, RECENT_FIRMWARES);
+  return typed && !recent.includes(typed) ? [typed, ...recent] : recent;
+};
+
+/**
+ * Any version can be typed — a model Speculos cannot emulate, or a server
+ * running as a pure mock, accepts anything — with the firmwares Speculos can
+ * boot suggested under it.
+ */
+function FirmwareField({
+  firmwares,
+  value,
+  status,
+  onChange,
 }: {
-  readonly catalog: DeviceCatalog;
-  readonly firmware: string;
-  readonly alreadyAdded: string[];
-  readonly onPick: (app: DeviceApp) => void;
+  readonly firmwares: string[] | null;
+  readonly value: string;
+  readonly status: FirmwareStatus;
+  readonly onChange: (firmwareVersion: string) => void;
 }) {
-  const [query, setQuery] = useState("");
-
-  if (catalog.status === "idle") {
-    return (
-      <p className="body-4 text-muted-subtle">
-        Set a firmware version to see the apps that exist for it.
-      </p>
-    );
-  }
-
-  if (catalog.status === "loading") {
-    return (
-      <div className="flex items-center gap-8">
-        <Spinner size={16} />
-        <p className="body-4 text-muted">
-          {`Looking up the apps for firmware ${firmware}…`}
-        </p>
-      </div>
-    );
-  }
-
-  if (catalog.status === "error") {
-    return (
-      <Banner
-        appearance="warning"
-        title="Could not reach the app list"
-        description={`${catalog.message}. Add apps by hand if you know their versions — but Speculos can only open an app whose version exists for this firmware.`}
-      />
-    );
-  }
-
-  if (catalog.apps.length === 0) {
-    return (
-      <Banner
-        appearance="warning"
-        title={`No app exists for firmware ${firmware}`}
-        description="Any app added by hand will fail to open under Speculos, which looks for an ELF built for this exact firmware."
-      />
-    );
-  }
-
-  const available = catalog.apps.filter(
-    (app) => !alreadyAdded.includes(app.name),
-  );
-
-  if (available.length === 0) {
-    return (
-      <p className="body-4 text-muted-subtle">
-        Every app available for this firmware is already installed.
-      </p>
-    );
-  }
-
-  const signers = available.filter((app) => isSignerApp(app.name));
-  const others = available.filter((app) => !isSignerApp(app.name));
-
-  const needle = query.trim().toLowerCase();
-  const matching = (app: DeviceApp) => app.name.toLowerCase().includes(needle);
-  const matches = needle
-    ? [...signers, ...others].filter(matching)
-    : // With no search, every signer is offered and the rest wait behind one.
-      signers;
-  const shown = needle ? matches.slice(0, MAX_RESULTS) : matches;
-  const hidden = needle ? matches.length - shown.length : others.length;
+  const typed = value.trim();
+  const suggestions = firmwareSuggestions(firmwares ?? [], typed);
 
   return (
     <div className="flex flex-col gap-8">
+      <TextInput
+        label="Firmware version"
+        status={status.status}
+        helperText={status.helperText}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {firmwares ? (
+        suggestions.length === 0 ? (
+          <p className="body-4 text-muted-subtle">
+            {`Speculos has no firmware matching "${typed}" for this model.`}
+          </p>
+        ) : (
+          <Suggestions
+            caption={
+              firmwares.includes(typed) || !typed
+                ? `Type to search all ${firmwares.length}, release candidates included.`
+                : undefined
+            }
+            hidden={suggestions.length - MAX_SUGGESTIONS}
+          >
+            {suggestions.slice(0, MAX_SUGGESTIONS).map((version) => (
+              <Chip
+                key={version}
+                selected={version === typed}
+                onClick={() => onChange(version)}
+              >
+                {version}
+              </Chip>
+            ))}
+          </Suggestions>
+        )
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Installed apps as name and version fields, with the apps Speculos can boot
+ * on this firmware suggested under the field that adds one, and each app's
+ * versions under its own. Without a catalogue an app is added as typed: a pure
+ * mock accepts anything.
+ */
+function AppsField({
+  apps,
+  catalog,
+  speculosApps,
+  onAdd,
+  onUpdate,
+  onRemove,
+}: {
+  readonly apps: DeviceApp[];
+  readonly catalog: DeviceCatalog;
+  readonly speculosApps: SpeculosApps | null;
+  readonly onAdd: (app: DeviceApp) => void;
+  readonly onUpdate: (index: number, values: Partial<DeviceApp>) => void;
+  readonly onRemove: (index: number) => void;
+}) {
+  const [query, setQuery] = useState("");
+  // The row whose version is being edited, which shows its versions.
+  const [editing, setEditing] = useState<number | null>(null);
+
+  const versionsOf = (name: string): string[] =>
+    [...(speculosApps?.[speculosKey(name.trim())] ?? [])].sort(byNewest);
+  const installed = apps.map((app) => speculosKey(app.name.trim()));
+  const available = Object.keys(speculosApps ?? {})
+    .filter((name) => !installed.includes(name))
+    .sort((a, b) => a.localeCompare(b));
+
+  const needle = query.trim().toLowerCase();
+  // Spaces ignored: "bitcoin test" finds the catalogue's "BitcoinTest".
+  const matches = needle
+    ? available.filter((name) =>
+        name.toLowerCase().includes(speculosKey(needle)),
+      )
+    : available.filter(isSignerApp);
+
+  const add = (name: string) => {
+    onAdd({ name, version: latest(versionsOf(name)) });
+    setQuery("");
+  };
+
+  return (
+    <div className="flex flex-col gap-12">
+      {apps.map((app, index) => {
+        const versions = versionsOf(app.name);
+        const warning = speculosWarning(catalog, app);
+        return (
+          <div key={index} className="flex flex-col gap-6">
+            <div className="flex items-start gap-8">
+              <div className="min-w-0 flex-1">
+                <TextInput
+                  placeholder="Name (e.g. Ethereum)"
+                  value={app.name}
+                  hideClearButton
+                  onChange={(event) =>
+                    onUpdate(index, { name: event.target.value })
+                  }
+                />
+              </div>
+              <div className="w-128">
+                <TextInput
+                  placeholder="Version"
+                  value={app.version}
+                  hideClearButton
+                  onFocus={() => setEditing(index)}
+                  onBlur={() => setEditing(null)}
+                  onChange={(event) =>
+                    onUpdate(index, { version: event.target.value })
+                  }
+                />
+              </div>
+              <IconButton
+                appearance="no-background"
+                aria-label={`Remove app ${index + 1}`}
+                icon={Trash}
+                onClick={() => onRemove(index)}
+              />
+            </div>
+            {warning ? <p className="body-4 text-warning">{warning}</p> : null}
+            {versions.length > 0 && (editing === index || warning) ? (
+              <Suggestions hidden={0}>
+                {versions.map((version) => (
+                  <Chip
+                    key={version}
+                    selected={version === app.version.trim()}
+                    onClick={() => onUpdate(index, { version })}
+                  >
+                    {version}
+                  </Chip>
+                ))}
+              </Suggestions>
+            ) : null}
+          </div>
+        );
+      })}
+
       <SearchInput
-        placeholder={`Search ${available.length} apps built for ${firmware}`}
+        placeholder={apps.length > 0 ? "Add another app" : "Add an app"}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onClear={() => setQuery("")}
       />
-      {!needle && shown.length > 0 ? (
-        <p className="body-4 text-muted">Apps DMK has a signer kit for:</p>
-      ) : null}
-      {shown.length === 0 ? (
-        <p className="body-4 text-muted-subtle">
-          {needle
-            ? `No app matching "${query.trim()}" for this firmware.`
-            : "No DMK signer app exists for this firmware — search for another."}
-        </p>
+      {catalog.status === "loading" ? (
+        <Loading text="Looking up the apps for this firmware…" />
       ) : (
-        <div className="flex flex-wrap gap-6">
-          {shown.map((app) => (
-            <Button
-              key={app.name}
-              appearance="gray"
-              size="sm"
-              icon={Plus}
-              onClick={() => onPick(app)}
+        <Suggestions
+          caption={
+            !speculosApps
+              ? needle
+                ? undefined
+                : "No Speculos catalogue for this device — type an app to add it as is."
+              : needle
+                ? matches.length === 0
+                  ? `Speculos has no app matching "${query.trim()}" for this firmware.`
+                  : undefined
+                : available.length > 0 || apps.length > 0
+                  ? `DMK signer apps. Type to search all ${available.length} Speculos has for this firmware.`
+                  : "Speculos has no app for this firmware."
+          }
+          hidden={needle ? matches.length - MAX_SUGGESTIONS : 0}
+        >
+          {/* Every signer while nothing is typed; a search shows its best few. */}
+          {(needle ? matches.slice(0, MAX_SUGGESTIONS) : matches).map(
+            (name) => (
+              <Chip key={name} onClick={() => add(name)}>
+                <Plus size={16} />
+                {name}
+              </Chip>
+            ),
+          )}
+          {needle && !speculosApps ? (
+            <Chip
+              onClick={() => {
+                onAdd({ name: query.trim(), version: "" });
+                setQuery("");
+              }}
             >
-              {`${app.name} ${app.version}`}
-            </Button>
-          ))}
-        </div>
+              <Plus size={16} />
+              {`Add "${query.trim()}" as typed`}
+            </Chip>
+          ) : null}
+        </Suggestions>
       )}
+    </div>
+  );
+}
+
+/**
+ * Why Speculos cannot open an installed app, or `null` when it can or when
+ * there is no catalogue to tell.
+ */
+function speculosWarning(
+  catalog: DeviceCatalog,
+  app: DeviceApp,
+): string | null {
+  if (catalog.status !== "loaded" || !catalog.speculosApps) return null;
+  const name = app.name.trim();
+  const version = app.version.trim();
+  if (!name || !version || name.toUpperCase() === "BOLOS") return null;
+
+  const versions = catalog.speculosApps[speculosKey(name)] ?? [];
+  if (versions.includes(version)) return null;
+  return versions.length > 0
+    ? `Speculos cannot open ${name} ${version} on this firmware.`
+    : `Speculos has no build of ${name} for this firmware.`;
+}
+
+/** Chips under a field, with what did not fit counted below them. */
+function Suggestions({
+  caption,
+  hidden,
+  children,
+}: {
+  readonly caption?: string;
+  readonly hidden: number;
+  readonly children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap gap-6">{children}</div>
       {hidden > 0 ? (
         <p className="body-4 text-muted-subtle">
-          {needle
-            ? `${hidden} more match — narrow the search to see them.`
-            : `${hidden} other apps exist for this firmware — search to find them.`}
+          {`${hidden} more — keep typing to narrow them down.`}
         </p>
+      ) : caption ? (
+        <p className="body-4 text-muted-subtle">{caption}</p>
       ) : null}
+    </div>
+  );
+}
+
+/** A pickable value: a pill in Lumen's button colours, sized for a list. */
+function Chip({
+  selected,
+  onClick,
+  children,
+}: {
+  /** Absent on a chip that acts rather than selects. */
+  readonly selected?: boolean;
+  readonly onClick: () => void;
+  readonly children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      // Leaves focus in the field the chip suggests for.
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={onClick}
+      className={`body-3 flex items-center gap-6 rounded-full px-12 py-6 transition-colors ${
+        selected
+          ? "bg-interactive text-on-interactive"
+          : "bg-muted text-base hover:bg-muted-hover"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Loading({ text }: { readonly text: string }) {
+  return (
+    <div className="flex items-center gap-8">
+      <Spinner size={16} />
+      <p className="body-4 text-muted">{text}</p>
     </div>
   );
 }
