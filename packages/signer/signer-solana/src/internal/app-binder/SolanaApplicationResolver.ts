@@ -20,6 +20,8 @@ export const SOLANA_MIN_DELAYED_SIGNING_VERSION = "1.14.0";
 
 export const SOLANA_MIN_TRANSACTION_CHECKS_VERSION = "1.16.0";
 export const SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION = "1.17.0";
+// Unreleased: the Solana app does not ship Contacts yet.
+export const SOLANA_MIN_CONTACTS_VERSION = "10.0.0";
 
 export const SOLANA_SIGNER_FEATURES = {
   spl: {
@@ -43,6 +45,11 @@ export const SOLANA_SIGNER_FEATURES = {
   },
   genericClearSign: {
     minVersion: SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
+    excludedModels: [DeviceModelId.NANO_S],
+    excludedApps: ["Exchange"],
+  },
+  contacts: {
+    minVersion: SOLANA_MIN_CONTACTS_VERSION,
     excludedModels: [DeviceModelId.NANO_S],
     excludedApps: ["Exchange"],
   },
