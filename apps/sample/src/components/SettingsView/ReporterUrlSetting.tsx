@@ -34,7 +34,7 @@ export const ReporterUrlSetting: React.FC = () => {
           renderLeft={<InputLabel>Blind Signing Reporter URL</InputLabel>}
           value={reporterUrl}
           onChange={onValueChange}
-          placeholder="https://blind-signing.api.ledger.com/ingest/v1"
+          placeholder="https://blind-signing.api.ledger.com/ingest"
         />
       </Flex>
       <ResetSettingCTA
