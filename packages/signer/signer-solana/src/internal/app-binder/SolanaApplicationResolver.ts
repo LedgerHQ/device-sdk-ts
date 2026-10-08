@@ -22,6 +22,8 @@ export const SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION = "1.17.0";
 export const SOLANA_MIN_V1_TRANSACTIONS_VERSION = "1.18.0";
 // Out of reach on purpose: gating stays off until the Solana app ships it.
 export const SOLANA_MIN_GATED_SIGNING_VERSION = "10.0.0";
+// Unreleased: the Solana app does not ship Contacts yet.
+export const SOLANA_MIN_CONTACTS_VERSION = "10.0.0";
 
 /**
  * Always on
@@ -64,6 +66,11 @@ export const SOLANA_FEATURES = {
     minVersion: SOLANA_MIN_V1_TRANSACTIONS_VERSION,
     excludedModels: [] as DeviceModelId[],
     excludedApps: [] as string[],
+  },
+  contacts: {
+    minVersion: SOLANA_MIN_CONTACTS_VERSION,
+    excludedModels: [DeviceModelId.NANO_S],
+    excludedApps: ["Exchange"],
   },
 } as const;
 

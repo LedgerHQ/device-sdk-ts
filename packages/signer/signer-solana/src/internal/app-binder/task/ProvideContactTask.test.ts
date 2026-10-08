@@ -8,8 +8,6 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Keypair } from "@solana/web3.js";
 
-import { type AppConfiguration } from "@api/model/AppConfiguration";
-import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 import {
   EMPTY_SOLANA_ADDRESS_BOOK,
   type SolanaAddressBook,
@@ -39,11 +37,6 @@ const RECIPIENT = {
   address: Keypair.generate().publicKey,
 } as const;
 const PAYLOAD = new Uint8Array([0xaa]);
-const APP_CONFIG: AppConfiguration = {
-  blindSigningEnabled: false,
-  pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
-  version: "1.18.0",
-};
 const ADDRESS_BOOK: SolanaAddressBook = {
   contactGroups: [
     {
@@ -74,7 +67,6 @@ describe("ProvideContactTask", () => {
   const args = {
     addressBook: ADDRESS_BOOK,
     messageBytes: MESSAGE_BYTES,
-    appConfig: APP_CONFIG,
     logger,
   };
 
@@ -91,13 +83,10 @@ describe("ProvideContactTask", () => {
     await new ProvideContactTask(api, args).run();
 
     expect(extractTransferRecipient).toHaveBeenCalledWith(MESSAGE_BYTES);
-    expect(buildExternalContactPayload).toHaveBeenCalledWith(
-      expect.objectContaining({
-        addressBook: ADDRESS_BOOK,
-        recipient: RECIPIENT,
-        appConfig: APP_CONFIG,
-      }),
-    );
+    expect(buildExternalContactPayload).toHaveBeenCalledWith({
+      addressBook: ADDRESS_BOOK,
+      recipient: RECIPIENT,
+    });
     expect(sendProvideContactPayload).toHaveBeenCalledWith(api, {
       payload: PAYLOAD,
       logger,

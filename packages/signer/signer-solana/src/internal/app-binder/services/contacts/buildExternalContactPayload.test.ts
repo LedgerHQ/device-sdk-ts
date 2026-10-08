@@ -1,18 +1,6 @@
-import * as contactsKit from "@ledgerhq/device-contacts-kit";
-import {
-  buildProvideContactPayload,
-  SOLANA_APP_NAME,
-} from "@ledgerhq/device-contacts-kit";
-import {
-  DeviceModelId,
-  type DeviceSessionState,
-  DeviceSessionStateType,
-  DeviceStatus,
-} from "@ledgerhq/device-management-kit";
+import { buildProvideContactPayload } from "@ledgerhq/device-contacts-kit";
 import { Keypair, PublicKey } from "@solana/web3.js";
 
-import { type AppConfiguration } from "@api/model/AppConfiguration";
-import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 import {
   EMPTY_SOLANA_ADDRESS_BOOK,
   type SolanaAddressBook,
@@ -28,29 +16,6 @@ import {
   type BuildExternalContactPayloadArgs,
 } from "./buildExternalContactPayload";
 import { type TransferRecipient } from "./extractTransferRecipient";
-
-vi.mock("@ledgerhq/device-contacts-kit", async (importOriginal) => {
-  const actual = await importOriginal<typeof contactsKit>();
-  return {
-    ...actual,
-    resolveContactsVersionRequirements: vi.fn(
-      actual.resolveContactsVersionRequirements,
-    ),
-  };
-});
-
-// The app runs at the contacts minimum, so only the condition under test can
-// keep the contact out.
-const CONTACTS_APP_VERSION = (() => {
-  const requirement = contactsKit.resolveContactsVersionRequirements(
-    DeviceModelId.FLEX,
-  );
-  const version = requirement.supported
-    ? requirement.minAppVersion[SOLANA_APP_NAME]
-    : undefined;
-  if (version === undefined) throw new Error("Flex must support Solana");
-  return version;
-})();
 
 const alice = Keypair.generate().publicKey;
 const other = Keypair.generate().publicKey;
@@ -97,29 +62,6 @@ const expectedAlicePayload = buildProvideContactPayload({
   blockchainFamily: "solana",
 });
 
-function deviceState({
-  appName = SOLANA_APP_NAME,
-  deviceModelId = DeviceModelId.FLEX,
-}: {
-  appName?: string;
-  deviceModelId?: DeviceModelId;
-} = {}): DeviceSessionState {
-  return {
-    sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-    deviceStatus: DeviceStatus.CONNECTED,
-    installedApps: [],
-    currentApp: { name: appName, version: CONTACTS_APP_VERSION },
-    deviceModelId,
-    isSecureConnectionAllowed: false,
-  };
-}
-
-const appConfig: AppConfiguration = {
-  blindSigningEnabled: false,
-  pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
-  version: CONTACTS_APP_VERSION,
-};
-
 function native(address: PublicKey): TransferRecipient {
   return { kind: "native", address };
 }
@@ -147,17 +89,11 @@ function args(
   return {
     addressBook,
     recipient: native(alice),
-    deviceState: deviceState(),
-    appConfig,
     ...overrides,
   };
 }
 
 describe("buildExternalContactPayload", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe("matching", () => {
     it("encodes the contact whose wallet receives a native transfer", () => {
       expect(buildExternalContactPayload(args())).toEqual(expectedAlicePayload);
@@ -229,50 +165,6 @@ describe("buildExternalContactPayload", () => {
             addressBook: shortKey,
             recipient: native(new PublicKey(new Uint8Array(32))),
           }),
-        ),
-      ).toBeUndefined();
-    });
-  });
-
-  describe("app support", () => {
-    it("returns undefined on a model without contacts", () => {
-      expect(
-        buildExternalContactPayload(
-          args({
-            deviceState: deviceState({ deviceModelId: DeviceModelId.NANO_S }),
-          }),
-        ),
-      ).toBeUndefined();
-    });
-
-    it("returns undefined when the app is older than the contacts minimum", () => {
-      vi.mocked(
-        contactsKit.resolveContactsVersionRequirements,
-      ).mockReturnValueOnce({
-        supported: true,
-        minOsVersion: "1.0.0",
-        minAppVersion: { [SOLANA_APP_NAME]: "99.0.0" },
-      });
-
-      expect(buildExternalContactPayload(args())).toBeUndefined();
-    });
-
-    it("returns undefined when the model declares no Solana minimum", () => {
-      vi.mocked(
-        contactsKit.resolveContactsVersionRequirements,
-      ).mockReturnValueOnce({
-        supported: true,
-        minOsVersion: "1.0.0",
-        minAppVersion: {},
-      });
-
-      expect(buildExternalContactPayload(args())).toBeUndefined();
-    });
-
-    it("returns undefined while Exchange orchestrates the signature", () => {
-      expect(
-        buildExternalContactPayload(
-          args({ deviceState: deviceState({ appName: "Exchange" }) }),
         ),
       ).toBeUndefined();
     });
