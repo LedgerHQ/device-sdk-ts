@@ -64,6 +64,34 @@ describe("validateRegisterExternalAddressInput", () => {
     ).toBeInstanceOf(ContactsValidationError);
   });
 
+  describe("Solana", () => {
+    const SOLANA_INPUT: RegisterExternalAddressInput = {
+      ...VALID_INPUT,
+      identifier: new Uint8Array(32).fill(0x11),
+      blockchainFamily: "solana",
+      chainId: undefined,
+    };
+
+    it("returns null for a 32-byte public key without chainId", () => {
+      expect(validateRegisterExternalAddressInput(SOLANA_INPUT)).toBeNull();
+    });
+
+    it.each([31, 33])("returns an error for a %i-byte identifier", (length) => {
+      expect(
+        validateRegisterExternalAddressInput({
+          ...SOLANA_INPUT,
+          identifier: new Uint8Array(length),
+        }),
+      ).toBeInstanceOf(ContactsValidationError);
+    });
+
+    it("returns an error when a chainId is given", () => {
+      expect(
+        validateRegisterExternalAddressInput({ ...SOLANA_INPUT, chainId: 1n }),
+      ).toBeInstanceOf(ContactsValidationError);
+    });
+  });
+
   it("returns an error for a wrong-sized existing group handle", () => {
     expect(
       validateRegisterExternalAddressInput({

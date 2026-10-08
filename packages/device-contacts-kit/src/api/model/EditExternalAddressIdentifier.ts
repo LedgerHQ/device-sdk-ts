@@ -14,9 +14,9 @@ export type EditExternalAddressIdentifierInput = {
   readonly scope: string;
   /** The current (pre-edit) address bytes, proven via `hmacRest`. */
   readonly previousIdentifier: Uint8Array;
-  /** The replacement address bytes (20 bytes for Ethereum). */
+  /** The replacement address bytes (20 bytes for Ethereum, 32 for Solana). */
   readonly newIdentifier: Uint8Array;
-  /** Blockchain family name, e.g. "ethereum" (v1 supports Ethereum only). */
+  /** Blockchain family name, e.g. "ethereum", "tron" or "solana". */
   readonly blockchainFamily: string;
   readonly chainId?: bigint;
   /** 64-byte group handle returned by the group's Register Identity. */
