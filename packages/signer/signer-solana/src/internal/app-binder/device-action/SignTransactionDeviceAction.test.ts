@@ -92,12 +92,16 @@ function appConfig(version: string): AppConfiguration {
   };
 }
 
-function session(version: string, deviceModelId = DeviceModelId.NANO_X) {
+function session(
+  version: string,
+  deviceModelId = DeviceModelId.NANO_X,
+  appName = "Solana",
+) {
   return {
     sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
     deviceStatus: DeviceStatus.CONNECTED,
     installedApps: [],
-    currentApp: { name: "Solana", version },
+    currentApp: { name: appName, version },
     deviceModelId,
     isSecureConnectionAllowed: true,
   };
@@ -418,6 +422,43 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
             expect(previewMock).not.toHaveBeenCalled();
             expect(refreshBlockhashMock).not.toHaveBeenCalled();
             expect(delayedSignMock).not.toHaveBeenCalled();
+            const last = states[states.length - 1]!;
+            expect(last.status).toBe(DeviceActionStatus.Completed);
+            expect(
+              last.status === DeviceActionStatus.Completed && last.output,
+            ).toEqual(signature);
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        },
+        reject,
+      );
+    }));
+
+  it("Exchange context disables delayed signing so the payout is signed once (no preview, no refresh)", () =>
+    new Promise<void>((resolve, reject) => {
+      // Solana inside Exchange: delayed signing is excluded, so even with
+      // delayed: true and an RPC the original blockhash is signed with 0x06.
+      const swapVersion = SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION;
+      apiMock.getDeviceSessionState.mockReturnValue(
+        session(swapVersion, DeviceModelId.FLEX, "Exchange"),
+      );
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: appConfig(swapVersion) }),
+      );
+      run(
+        withRpcDelayed,
+        (states) => {
+          try {
+            expect(signMock).toHaveBeenCalledTimes(1);
+            expect(
+              signMock.mock.calls[0]![0].input.serializedTransaction,
+            ).toStrictEqual(exampleTx);
+            expect(previewMock).not.toHaveBeenCalled();
+            expect(refreshBlockhashMock).not.toHaveBeenCalled();
+            expect(delayedSignMock).not.toHaveBeenCalled();
+            expect(buildGenericMock).not.toHaveBeenCalled();
             const last = states[states.length - 1]!;
             expect(last.status).toBe(DeviceActionStatus.Completed);
             expect(
