@@ -8,7 +8,6 @@ import {
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
-import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import { buildExternalContactPayload } from "@internal/app-binder/services/contacts/buildExternalContactPayload";
 import { extractTransferRecipient } from "@internal/app-binder/services/contacts/extractTransferRecipient";
@@ -16,7 +15,6 @@ import { extractTransferRecipient } from "@internal/app-binder/services/contacts
 export type ProvideContactTaskArgs = {
   readonly addressBook: SolanaAddressBook;
   readonly messageBytes: Uint8Array;
-  readonly appConfig: AppConfiguration;
   readonly logger?: LoggerPublisherService;
 };
 
@@ -24,9 +22,9 @@ export type ProvideContactTaskArgs = {
  * Give the device the contact registered for the transaction's recipient, so
  * the review shows its name instead of the raw address.
  *
- * Best effort: no match, an app that cannot use contacts, or a contact the
- * device rejects all resolve without error and the signature goes ahead
- * against the raw address.
+ * The caller checks that the app supports contacts. Best effort: no match or
+ * a contact the device rejects resolve without error and the signature goes
+ * ahead against the raw address.
  */
 export class ProvideContactTask {
   constructor(
@@ -35,18 +33,13 @@ export class ProvideContactTask {
   ) {}
 
   async run(): Promise<void> {
-    const { addressBook, messageBytes, appConfig, logger } = this.args;
+    const { addressBook, messageBytes, logger } = this.args;
     if (addressBook.contactGroups.length === 0) return;
 
     const recipient = await extractTransferRecipient(messageBytes);
     if (recipient === undefined) return;
 
-    const payload = buildExternalContactPayload({
-      addressBook,
-      recipient,
-      deviceState: this.api.getDeviceSessionState(),
-      appConfig,
-    });
+    const payload = buildExternalContactPayload({ addressBook, recipient });
     if (payload === undefined) return;
 
     const result = await sendProvideContactPayload(this.api, {

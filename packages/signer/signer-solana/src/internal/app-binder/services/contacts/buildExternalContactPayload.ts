@@ -1,39 +1,23 @@
-import {
-  buildProvideContactPayload,
-  resolveContactsVersionRequirements,
-  SOLANA_APP_NAME,
-} from "@ledgerhq/device-contacts-kit";
-import {
-  ApplicationChecker,
-  type DeviceSessionState,
-} from "@ledgerhq/device-management-kit";
+import { buildProvideContactPayload } from "@ledgerhq/device-contacts-kit";
 import { PublicKey } from "@solana/web3.js";
 
-import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 import { getAssociatedTokenAddressSync } from "@internal/app-binder/services/utils/splToken";
-import { SolanaApplicationResolver } from "@internal/app-binder/SolanaApplicationResolver";
 
 import { type TransferRecipient } from "./extractTransferRecipient";
 
 const BLOCKCHAIN_FAMILY = "solana";
 const PUBLIC_KEY_LENGTH = 32;
 
-// The Solana resolver also accepts Exchange, which orchestrates the signature
-// but does not handle contacts.
-const EXCHANGE_APP_NAME = "Exchange";
-
 export type BuildExternalContactPayloadArgs = {
   readonly addressBook: SolanaAddressBook;
   readonly recipient: TransferRecipient;
-  readonly deviceState: DeviceSessionState;
-  readonly appConfig: AppConfiguration;
 };
 
 /**
  * Encode the first external contact whose wallet receives the transfer, or
- * return `undefined` when none does or the connected app cannot use contacts.
+ * return `undefined` when none does.
  *
  * The identifier sent is always the contact's wallet public key, also for a
  * token transfer whose on-chain recipient is that wallet's token account.
@@ -41,11 +25,7 @@ export type BuildExternalContactPayloadArgs = {
 export function buildExternalContactPayload({
   addressBook,
   recipient,
-  deviceState,
-  appConfig,
 }: BuildExternalContactPayloadArgs): Uint8Array | undefined {
-  if (!supportsContacts(deviceState, appConfig)) return undefined;
-
   for (const group of addressBook.contactGroups) {
     for (const candidate of group.externalAddresses) {
       const wallet = decodeSolanaAddress(candidate.address);
@@ -92,26 +72,4 @@ function decodeSolanaAddress(address: string): PublicKey | undefined {
   } catch {
     return undefined;
   }
-}
-
-function supportsContacts(
-  deviceState: DeviceSessionState,
-  appConfig: AppConfiguration,
-): boolean {
-  const requirement = resolveContactsVersionRequirements(
-    deviceState.deviceModelId,
-  );
-  if (!requirement.supported) return false;
-
-  const minAppVersion = requirement.minAppVersion[SOLANA_APP_NAME];
-  if (minAppVersion === undefined) return false;
-
-  return new ApplicationChecker(
-    deviceState,
-    appConfig,
-    new SolanaApplicationResolver(),
-  )
-    .withMinVersionInclusiveAcceptingPrerelease(minAppVersion)
-    .excludeApp(EXCHANGE_APP_NAME)
-    .check();
 }
