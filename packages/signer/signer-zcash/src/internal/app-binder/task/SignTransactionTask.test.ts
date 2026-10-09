@@ -299,6 +299,89 @@ describe("SignTransactionTask", () => {
     ).toBe(false);
   });
 
+  it.each([
+    // Past the testnet NU7 activation (4,465,026); still NU6.3 on mainnet.
+    { network: "testnet" as const, expectedBranchIdHex: "d90a1977" },
+    { network: "mainnet" as const, expectedBranchIdHex: "5b16a537" },
+    // Omitted means mainnet.
+    { network: undefined, expectedBranchIdHex: "5b16a537" },
+  ])(
+    "sends the $network branch id for the signing height to the device",
+    async ({ network, expectedBranchIdHex }) => {
+      vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
+        DmkResultFactory({
+          data: {
+            statusCode: new Uint8Array([0x90, 0x00]),
+            data: new Uint8Array(64).fill(0x24),
+          },
+        }) as never,
+      );
+
+      const commands: unknown[] = [];
+      vi.mocked(apiMock.sendCommand).mockImplementation((command: unknown) => {
+        commands.push(command);
+        if (command instanceof GetAddressCommand) {
+          return Promise.resolve(
+            CommandResultFactory({
+              data: {
+                publicKey: new Uint8Array(65).fill(0x04),
+                address: "t1test",
+                chainCode: new Uint8Array(32).fill(0x02),
+              },
+            }) as never,
+          );
+        }
+        if (
+          command instanceof StartUntrustedHashTransactionInputCommand ||
+          command instanceof HashOutputFullCommand
+        ) {
+          return Promise.resolve(
+            CommandResultFactory({
+              data: {
+                statusCode: new Uint8Array([0x90, 0x00]),
+                data: new Uint8Array([]),
+              },
+            }) as never,
+          );
+        }
+        if (command instanceof SignTransactionCommand) {
+          return Promise.resolve(
+            CommandResultFactory({
+              data: {
+                signature: new Uint8Array([0x30, 0x45, 0x01]),
+              },
+            }) as never,
+          );
+        }
+        return Promise.reject(new Error("Unexpected command"));
+      });
+
+      const result = await new SignTransactionTask(apiMock, {
+        transactionArg: {
+          inputs: [[PREVIOUS_TRANSACTION, 0, undefined, undefined, 3000000]],
+          associatedKeysets: ["44'/133'/0'/0/0"],
+          outputScriptHex:
+            "018b515300000000001976a914b650b82e9e136db22e3643e5a52380d2ac0e360888ac",
+          additionals: ["zcash"],
+          expiryHeight: new Uint8Array([0x00, 0x00, 0x00, 0x00]),
+          blockHeight: 4500000,
+          network,
+        },
+      }).run();
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+      const startHashCommands = commands.filter(
+        (c) => c instanceof StartUntrustedHashTransactionInputCommand,
+      ) as StartUntrustedHashTransactionInputCommand[];
+      // The first START is the global header:
+      // [CLA, INS, P1, P2, Lc, version(4) | nVersionGroupId(4) | branchId(4) | count].
+      const header = startHashCommands[0]!.getApdu().getRawApdu();
+      expect(Buffer.from(header.slice(13, 17)).toString("hex")).toBe(
+        expectedBranchIdHex,
+      );
+    },
+  );
+
   it("skips change-path APDU for single-output payment (avoids SW 6986)", async () => {
     const buildSpy = vi
       .spyOn(

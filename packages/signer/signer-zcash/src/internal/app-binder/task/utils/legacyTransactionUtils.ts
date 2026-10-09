@@ -5,6 +5,7 @@ import {
   type LegacyTransaction,
   type LegacyTransactionInput,
   type LegacyTransactionOutput,
+  type ZcashNetwork,
 } from "@api/model/CreateTransactionArg";
 import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 import { uint32ToBytesLE } from "@internal/utils/numberToBytes";
@@ -19,17 +20,39 @@ export const HASH_SIZE = 0x14;
 export const OP_EQUALVERIFY = 0x88;
 export const OP_CHECKSIG = 0xac;
 
-const ZCASH_ACTIVATION_HEIGHTS = {
-  NU6_3: 3428143,
-  NU6_2: 3364600,
-  NU6_1: 3146400,
-  NU6: 2726400,
-  NU5: 1687104,
-  CANOPY: 1046400,
-  HEARTWOOD: 903000,
-  BLOSSOM: 653600,
-  SAPLING: 419200,
-} as const;
+type BranchIdEntry = {
+  activationHeight: number;
+  branchId: number;
+};
+
+// Ordered from the latest network upgrade to the earliest.
+const ZCASH_BRANCH_IDS: Record<ZcashNetwork, readonly BranchIdEntry[]> = {
+  mainnet: [
+    { activationHeight: 3428143, branchId: 0x37a5165b }, // NU6.3
+    { activationHeight: 3364600, branchId: 0x5437f330 }, // NU6.2
+    { activationHeight: 3146400, branchId: 0x4dec4df0 }, // NU6.1
+    { activationHeight: 2726400, branchId: 0xc8e71055 }, // NU6
+    { activationHeight: 1687104, branchId: 0xc2d6d0b4 }, // NU5
+    { activationHeight: 1046400, branchId: 0xe9ff75a6 }, // Canopy
+    { activationHeight: 903000, branchId: 0xf5b9230b }, // Heartwood
+    { activationHeight: 653600, branchId: 0x2bb40e60 }, // Blossom
+    { activationHeight: 419200, branchId: 0x76b809bb }, // Sapling
+  ],
+  testnet: [
+    { activationHeight: 4465026, branchId: 0x77190ad9 }, // NU7
+    { activationHeight: 4134000, branchId: 0x37a5165b }, // NU6.3
+    { activationHeight: 4052000, branchId: 0x5437f330 }, // NU6.2
+    { activationHeight: 3536500, branchId: 0x4dec4df0 }, // NU6.1
+    { activationHeight: 2976000, branchId: 0xc8e71055 }, // NU6
+    { activationHeight: 1842420, branchId: 0xc2d6d0b4 }, // NU5
+    { activationHeight: 1028500, branchId: 0xe9ff75a6 }, // Canopy
+    { activationHeight: 903800, branchId: 0xf5b9230b }, // Heartwood
+    { activationHeight: 584000, branchId: 0x2bb40e60 }, // Blossom
+    { activationHeight: 280000, branchId: 0x76b809bb }, // Sapling
+  ],
+};
+
+const OVERWINTER_BRANCH_ID = 0x5ba81b19;
 
 export type InternalTransactionInput = {
   prevout: Uint8Array;
@@ -320,33 +343,16 @@ export const buildP2pkhScriptPubKeyFromLedgerZcashPublicKey = (
 
 export const getZcashBranchId = (
   blockHeight: number | null | undefined,
+  network: ZcashNetwork = "mainnet",
 ): Uint8Array => {
-  if (
-    blockHeight === null ||
-    blockHeight === undefined ||
-    blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_3
-  ) {
-    // NOTE: null and undefined should default to the latest version
-    return uint32ToBytesLE(0x37a5165b);
-  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_2) {
-    return uint32ToBytesLE(0x5437f330);
-  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_1) {
-    return uint32ToBytesLE(0x4dec4df0);
-  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6) {
-    return uint32ToBytesLE(0xc8e71055);
-  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU5) {
-    return uint32ToBytesLE(0xc2d6d0b4);
-  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.CANOPY) {
-    return uint32ToBytesLE(0xe9ff75a6);
-  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.HEARTWOOD) {
-    return uint32ToBytesLE(0xf5b9230b);
-  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.BLOSSOM) {
-    return uint32ToBytesLE(0x2bb40e60);
-  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.SAPLING) {
-    return uint32ToBytesLE(0x76b809bb);
-  } else {
-    return uint32ToBytesLE(0x5ba81b19);
+  const entries = ZCASH_BRANCH_IDS[network];
+  if (blockHeight === null || blockHeight === undefined) {
+    // No height: the latest upgrade of the network's table, which must be both
+    // active on chain and accepted by the device app.
+    return uint32ToBytesLE(entries[0]!.branchId);
   }
+  const entry = entries.find((e) => blockHeight >= e.activationHeight);
+  return uint32ToBytesLE(entry ? entry.branchId : OVERWINTER_BRANCH_ID);
 };
 
 /** Zcash transparent v5 transaction version used with the Zcash Ledger app. */
