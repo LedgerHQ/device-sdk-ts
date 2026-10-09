@@ -8,6 +8,7 @@ import {
   type ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
 import {
+  ClearSignContextMapReference,
   ClearSignContextReference,
   ClearSignContextReferenceType,
 } from "@/modules/ethereum/model/EthereumClearSignContext";
@@ -35,10 +36,13 @@ import {
   CalldataDescriptorV1,
   CalldataDescriptorValueBinaryPathV1,
   CalldataDescriptorValueConstantV1,
+  CalldataDescriptorValueMapRefV1,
   CalldataDescriptorValueV1,
   CalldataDto,
   CalldataEnumV1,
   CalldataFieldV1,
+  CalldataMapEntryV1,
+  CalldataMapV1,
   CalldataSignatures,
   CalldataTransactionDescriptor,
   CalldataTransactionInfoV1,
@@ -163,14 +167,41 @@ export class HttpCalldataDescriptorDataSource
         }
       }
 
+      const maps: ClearSignContextSuccess[] = [];
+      for (const [id, entries] of Object.entries(
+        calldataDescriptor.maps ?? {},
+      )) {
+        for (const [
+          key,
+          { data, signatures, value },
+        ] of Object.entries<CalldataMapEntryV1>(entries)) {
+          maps.push({
+            type: ClearSignContextType.ETHEREUM_MAP_ENTRY,
+            id: Number(id),
+            key: this.normalizeHex(key),
+            value: this.normalizeHex(value),
+            payload: HexStringUtils.appendSignatureToPayload(
+              data,
+              signatures[this.config.cal.mode]!,
+              INFO_SIGNATURE_TAG,
+            ),
+            certificate,
+          });
+        }
+      }
+
       const fields: ClearSignContextSuccess[] = calldataDescriptor.fields.map(
-        (field) => ({
-          type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
-          payload: field.descriptor,
-          reference: this.getReference(field.param),
-        }),
+        (field) => {
+          const mapReferences = this.getMapReferences(field.param);
+          return {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+            payload: field.descriptor,
+            reference: this.getReference(field.param),
+            ...(mapReferences.length > 0 && { mapReferences }),
+          };
+        },
       );
-      return Right([info, ...enums, ...fields]);
+      return Right([info, ...enums, ...maps, ...fields]);
     }
 
     return Left(
@@ -201,6 +232,15 @@ export class HttpCalldataDescriptorDataSource
         type: ClearSignContextReferenceType.TOKEN,
         value: param.token.value,
       };
+    } else if (
+      param.type === "TOKEN_AMOUNT" &&
+      param.token !== undefined &&
+      param.token.type === "map"
+    ) {
+      return {
+        type: ClearSignContextReferenceType.TOKEN,
+        map: this.toMapReference(param.token),
+      };
     } else if (param.type === "NFT" && param.collection.type === "path") {
       return {
         type: ClearSignContextReferenceType.NFT,
@@ -210,6 +250,11 @@ export class HttpCalldataDescriptorDataSource
       return {
         type: ClearSignContextReferenceType.NFT,
         value: param.collection.value,
+      };
+    } else if (param.type === "NFT" && param.collection.type === "map") {
+      return {
+        type: ClearSignContextReferenceType.NFT,
+        map: this.toMapReference(param.collection),
       };
     } else if (param.type === "TRUSTED_NAME" && param.value.type === "path") {
       return {
@@ -254,6 +299,60 @@ export class HttpCalldataDescriptorDataSource
     return undefined;
   }
 
+  /**
+   * List the maps the device looks up to display a field, from all the values of its parameter
+   */
+  private getMapReferences(
+    param: CalldataDescriptorParam,
+  ): ClearSignContextMapReference[] {
+    const values: (CalldataDescriptorValueV1 | undefined)[] = [param.value];
+    switch (param.type) {
+      case "TOKEN_AMOUNT":
+        values.push(param.token);
+        break;
+      case "NFT":
+        values.push(param.collection);
+        break;
+      case "CALLDATA":
+        values.push(
+          param.callee,
+          param.selector,
+          param.amount,
+          param.spender,
+          param.chainId,
+        );
+        break;
+    }
+
+    const references = new Map<string, ClearSignContextMapReference>();
+    for (const value of values) {
+      if (value?.type !== "map") {
+        continue;
+      }
+      const reference = this.toMapReference(value);
+      references.set(JSON.stringify(reference), reference);
+    }
+    return Array.from(references.values());
+  }
+
+  private toMapReference(
+    value: CalldataDescriptorValueMapRefV1,
+  ): ClearSignContextMapReference {
+    return {
+      id: value.map_ref.id,
+      keyPath: this.toGenericPath(value.map_ref.key.binary_path),
+    };
+  }
+
+  private isHexBytes(hex: string): boolean {
+    return /^(0x)?([0-9a-fA-F]{2})+$/.test(hex);
+  }
+
+  private normalizeHex(hex: string): string {
+    const lower = hex.toLowerCase();
+    return lower.startsWith("0x") ? lower : `0x${lower}`;
+  }
+
   private toGenericPath(
     path: CalldataDescriptorContainerPathV1 | CalldataDescriptorPathElementsV1,
   ): GenericPath {
@@ -294,6 +393,7 @@ export class HttpCalldataDescriptorDataSource
       data.version === "v1" &&
       this.isTransactionInfoV1(data.transaction_info, mode) &&
       this.isEnumV1(data.enums, mode) &&
+      (data.maps === undefined || this.isMapV1(data.maps, mode)) &&
       Array.isArray(data.fields) &&
       data.fields.every((f) => this.isFieldV1(f))
     );
@@ -330,6 +430,32 @@ export class HttpCalldataDescriptorDataSource
             ([value, obj]) =>
               typeof value === "string" &&
               typeof obj === "object" &&
+              typeof obj.data === "string" &&
+              obj.signatures !== undefined &&
+              this.isCalldataSignatures(obj.signatures, mode),
+          ),
+      )
+    );
+  }
+
+  private isMapV1(
+    calldata: CalldataMapV1,
+    mode: ContextModuleCalMode,
+  ): calldata is CalldataMapV1 {
+    return (
+      typeof calldata === "object" &&
+      calldata !== null &&
+      Object.entries(calldata).every(
+        ([id, entries]) =>
+          !Number.isNaN(Number(id)) &&
+          typeof entries === "object" &&
+          entries !== null &&
+          Object.entries<CalldataMapEntryV1>(entries).every(
+            ([key, obj]) =>
+              this.isHexBytes(key) &&
+              typeof obj === "object" &&
+              typeof obj.value === "string" &&
+              this.isHexBytes(obj.value) &&
               typeof obj.data === "string" &&
               obj.signatures !== undefined &&
               this.isCalldataSignatures(obj.signatures, mode),
@@ -401,7 +527,22 @@ export class HttpCalldataDescriptorDataSource
       ((data.type === "path" &&
         this.isCalldataDescriptorValueBinaryPathV1(data)) ||
         (data.type === "constant" &&
-          this.isCalldataDescriptorValueConstantV1(data)))
+          this.isCalldataDescriptorValueConstantV1(data)) ||
+        (data.type === "map" && this.isCalldataDescriptorValueMapRefV1(data)))
+    );
+  }
+
+  private isCalldataDescriptorValueMapRefV1(
+    data: CalldataDescriptorValueMapRefV1,
+  ): boolean {
+    return (
+      typeof data.map_ref === "object" &&
+      data.map_ref !== null &&
+      typeof data.map_ref.id === "number" &&
+      typeof data.map_ref.key === "object" &&
+      data.map_ref.key !== null &&
+      data.map_ref.key.type === "path" &&
+      this.isCalldataDescriptorValueBinaryPathV1(data.map_ref.key)
     );
   }
 

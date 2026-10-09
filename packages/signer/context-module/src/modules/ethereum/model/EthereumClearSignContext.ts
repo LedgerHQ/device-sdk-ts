@@ -14,9 +14,19 @@ export enum ClearSignContextReferenceType {
   CALLDATA = "calldata",
 }
 
+/**
+ * A value the device looks up in a map: it reads the key at `keyPath` in the
+ * transaction, and resolves the value from the matching MAP_ENTRY.
+ */
+export type ClearSignContextMapReference = {
+  id: number; // map id, as referenced by the MAP_ENTRY contexts
+  keyPath: GenericPath; // where to read the map key in the transaction
+};
+
 type PathOnly = {
   valuePath: GenericPath;
   value?: never;
+  map?: never;
   callee?: GenericPath;
   selector?: GenericPath;
   amount?: GenericPath;
@@ -27,9 +37,16 @@ type PathOnly = {
 type ValueOnly = {
   value: string;
   valuePath?: never;
+  map?: never;
 };
 
-type PathOrValue = PathOnly | ValueOnly;
+type MapOnly = {
+  map: ClearSignContextMapReference;
+  value?: never;
+  valuePath?: never;
+};
+
+type PathOrValue = PathOnly | ValueOnly | MapOnly;
 
 // per-type payloads for references
 type ClearSignContextReferencePayloads = {
@@ -69,8 +86,14 @@ export type EthereumPayloadOverrides = {
     id: number;
     value: number;
   };
+  [ClearSignContextType.ETHEREUM_MAP_ENTRY]: ClearSignContextSuccessBase & {
+    id: number;
+    key: string; // lowercase hex, encoded as the device reads it from the transaction
+    value: string; // lowercase hex, as resolved by the device
+  };
   [ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION]: ClearSignContextSuccessBase & {
     reference?: ClearSignContextReference;
+    mapReferences?: ClearSignContextMapReference[]; // maps the device looks up to display this field
   };
 };
 
@@ -83,6 +106,7 @@ export const EthereumClearSignContextType = {
   TRANSACTION_INFO: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
   PROXY_INFO: ClearSignContextType.ETHEREUM_PROXY_INFO,
   ENUM: ClearSignContextType.ETHEREUM_ENUM,
+  MAP_ENTRY: ClearSignContextType.ETHEREUM_MAP_ENTRY,
   TRANSACTION_FIELD_DESCRIPTION:
     ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
   TRANSACTION_CHECK: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
