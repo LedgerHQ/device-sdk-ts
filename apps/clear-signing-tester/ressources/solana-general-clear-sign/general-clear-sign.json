@@ -1,0 +1,297 @@
+{
+  "group": "solana-general-clear-sign",
+  "name": "general-clear-sign",
+  "action": "signTransaction",
+  "devices": ["stax", "nanox", "flex"],
+  "coinApp": "Solana",
+  "mode": "parallel",
+  "cases": [
+    {
+      "rawTx": "gAEABwkBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBqfVFxksXFEhjMlMPUrxf1ja7gibof1E49vZigAAAAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABqfVFxk1hND+7ZuzQx0TIGvlRCgbV7hWbMU3X/QAAAAGodgXpQIFC2gHkebObbiOHltxUPYfxnkKTrTRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMHAwABAGYDAAAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEKAAAAAAAAAHN0YWtlLXNlZWQA8GOMCwAAAMgAAAAAAAAABqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAIAgECdAAAAAABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBCAYBAwQFBgAEAgAAAAA=",
+      "description": "System + Stake: account_effects_displayed_elsewhere / stake_create_hides_only_when_delegate_displays_amount (synthetic)",
+      "expectedTexts": [
+        "Delegate stake",
+        "8qbHbw2BbbTHBW1sbeqakYXVKRQM8Ne7pLK7m6CVfeR",
+        "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8",
+        "49.6 SOL"
+      ]
+    },
+    {
+      "rawTx": "gAEABwkBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBqfVFxksXFEhjMlMPUrxf1ja7gibof1E49vZigAAAAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABqfVFxk1hND+7ZuzQx0TIGvlRCgbV7hWbMU3X/QAAAAGodgXpQIFC2gHkebObbiOHltxUPYfxnkKTrTRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMHAwABAGYDAAAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEKAAAAAAAAAHN0YWtlLXNlZWQA8GOMCwAAAMgAAAAAAAAABqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAIAgECdAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBCAYBAwQFBgAEAgAAAAA=",
+      "description": "System + Stake: account_effects_displayed_elsewhere / stake_initialize_stays_visible_when_authorities_are_not_signer (synthetic)",
+      "expectedTexts": [
+        "Initialize stake account",
+        "Delegate stake",
+        "8qbHbw2BbbTHBW1sbeqakYXVKRQM8Ne7pLK7m6CVfeR",
+        "GgBaCs3NCBuZN12kCJgAW63ydqohFkHEdfdEXBPzLHq",
+        "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8"
+      ]
+    },
+    {
+      "rawTx": "gAEAAQT/qt9YNWeFIHOBCIiYZrWM7IpPFP14YExYS7J61lJwxHC8oapD+1tZ9nMDrJET4kULjXw4VwusHDD0SxCQh2KQrrZwtQ7Kh4SuGUa5ilbsmcxoJ0Gu6MzffOaol5yLeKkG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQMDAQIACQPoAwAAAAAAAAA=",
+      "description": "SPL Token: account_ownership_display / device_users_account_reads_as_theirs (synthetic)",
+      "expectedTexts": [
+        "Transfer tokens",
+        "8b5VMMHh6wNMtGH3fdCBjMgyL4viQRJvw539nYx5JWgX",
+        "Cm1HrFkbZmor3ZjTcqX8f71yRNNEA1aNCiqdVaLUHhfW"
+      ]
+    },
+    {
+      "rawTx": "gAIBAQX/qt9YNWeFIHOBCIiYZrWM7IpPFP14YExYS7J61lJwxPJpxiPt4PKLMKx4Q/o4UfqGIlzpVfbQrMOzDznmwGEScLyhqkP7W1n2cwOskRPiRQuNfDhXC6wcMPRLEJCHYpACHfrlcntZaziqVK05ucLlhiDdHhGceMF+anfL3Wko1Qbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBAMCAwAJA+gDAAAAAAAAAA==",
+      "description": "SPL Token: account_ownership_display / cosigners_account_is_not_called_the_users (synthetic)",
+      "expectedTexts": [
+        "Transfer tokens",
+        "8b5VMMHh6wNMtGH3fdCBjMgyL4viQRJvw539nYx5JWgX",
+        "9GL8qX8tppzG9BLVM87Va1BetoBMjCzbmqjXAHAG1HE"
+      ]
+    },
+    {
+      "rawTx": "gAEAAQT/qt9YNWeFIHOBCIiYZrWM7IpPFP14YExYS7J61lJwxHC8oapD+1tZ9nMDrJET4kULjXw4VwusHDD0SxCQh2KQxvp6877brTo9ZfNqq8l0MbG75MLS9uDkfKYCA0UvXWEG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQMDAQIACQPoAwAAAAAAAAA=",
+      "description": "SPL Token: account_ownership_display / a_mint_row_claims_no_owner (synthetic)",
+      "expectedTexts": [
+        "Transfer tokens",
+        "BUyEZb34aR4tWk6DAvc93uhSevxdUJsQzdiDkwKojCNs"
+      ]
+    },
+    {
+      "rawTx": "gAIBAQX/qt9YNWeFIHOBCIiYZrWM7IpPFP14YExYS7J61lJwxPJpxiPt4PKLMKx4Q/o4UfqGIlzpVfbQrMOzDznmwGESAh365XJ7WWs4qlStObnC5YYg3R4RnHjBfmp3y91pKNVwvKGqQ/tbWfZzA6yRE+JFC418OFcLrBww9EsQkIdikAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBAMCAwAJA+gDAAAAAAAAAA==",
+      "description": "SPL Token: account_ownership_display / no_row_claims_ownership_the_predicate_denies (synthetic)",
+      "expectedTexts": [
+        "Transfer tokens",
+        "9GL8qX8tppzG9BLVM87Va1BetoBMjCzbmqjXAHAG1HE",
+        "8b5VMMHh6wNMtGH3fdCBjMgyL4viQRJvw539nYx5JWgX"
+      ]
+    },
+    {
+      "rawTx": "gAIBBAjyacYj7eDyizCseEP6OFH6hiJc6VX20KzDsw855sBhEv+q31g1Z4Ugc4EIiJhmtYzsik8U/XhgTFhLsnrWUnDEAh365XJ7WWs4qlStObnC5YYg3R4RnHjBfmp3y91pKNWutnC1DsqHhK4ZRrmKVuyZzGgnQa7ozN985qiXnIt4qcb6evO+2606PWXzaqvJdDGxu+TC0vbg5HymAgNFL11hAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqYyXJY9OJInxuz0QKRSODYMLWhOZ2v8QhASOe9jb6fhZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACBwYAAgAEBQYBAQYDAgMBCQPoAwAAAAAAAAA=",
+      "description": "ATA + SPL Token: account_ownership_display / override_reaches_the_hide_engine_too (synthetic)",
+      "expectedTexts": [
+        "Transfer tokens",
+        "BUyEZb34aR4tWk6DAvc93uhSevxdUJsQzdiDkwKojCNs",
+        "Cm1HrFkbZmor3ZjTcqX8f71yRNNEA1aNCiqdVaLUHhfW"
+      ],
+      "unexpectedTexts": ["Create associated token account"]
+    },
+    {
+      "rawTx": "gAEABAdtkQ3fucGz39UEzYoitb1PHvnXv+fGJ1Qwm4bdukPfG70iJ6c8MwWTTbXsgS6fekUcZ/pCsQzeDz/QK1Tu9PMbbZEN37nBs9/VBM2KIrW9Tx7517/nxidUMJuG3bpD3xsGm4hX/quBhPtof2NGGMA12sQ53BrrO1WYoPAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKmMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4WQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQYGAAECAwQFAQEA",
+      "description": "ATA: apdu_account_resets / phase_b_streams_account_reset_substructure (synthetic)",
+      "expectedTexts": [
+        "Create associated token account",
+        "DjJGBA33sbVfBqD2ScnJyR4S6tgVoU6o6JSRTNDMA5cv",
+        "2SjBBhnRiESRWYPqSti1mM2u47aBa6vBg2YHVqcEmTKH"
+      ]
+    },
+    {
+      "rawTx": "gAEABAcBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAWOq4eJE5E6IZyDyb+c3MTkzugbVCv4JB7WhMyE1gzInAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGm4hX/quBhPtof2NGGMA12sQ53BrrO1WYoPAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKmMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4WQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgYGAAEAAwQFAQEFAwECAAEJAA==",
+      "description": "ATA + SPL Token: creation_marker_survivor / close_does_not_fold_into_the_create (synthetic)",
+      "expectedTexts": [
+        "Close token account",
+        "G6yNsrKxNvAZNPqREvFukaJfdAVGURdiVr6mzn6ztFdZ",
+        "8qbHbw2BbbTHBW1sbeqakYXVKRQM8Ne7pLK7m6CVfeR"
+      ]
+    },
+    {
+      "rawTx": "gAEAAQQFyTIJZNoSZAfRcYtkONrDlJDqkMbgLGFC+Kdoa8oa8gackCD8Zf2dJzp1cgBdEQ6O18ErnyVPQ5o/A6xryhryAz3MNSiEjXuHyTPvq1578/xCOnFjeWohWUjvuGvKGvIG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQMDAQIACQPoAwAAAAAAAAA=",
+      "description": "SPL Token: engine_account_schema / matching_shape_clear_signs (synthetic)",
+      "expectedTexts": [
+        "Transfer tokens",
+        "SourceAtaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "DestAtaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      ]
+    },
+    {
+      "rawTx": "gAIBAgYFyTIJZNoSZAfRcYtkONrDlJDqkMbgLGFC+Kdoa8oa8gMGY9h0LUxHvA/JZES2UhvWvGxq6lFS5EOu17BryhryBpyQIPxl/Z0nOnVyAF0RDo7XwSufJU9Dmj8DrGvKGvIDPcw1KISNe4fJM++rXnvz/EI6cWN5aiFZSO+4a8oa8gVO3p9N/mTWmWeFFW8bTJvDJaiXcPI91Msv4KhryhryBt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEFBQIDBAABCQPoAwAAAAAAAAA=",
+      "description": "SPL Token: engine_account_schema / undeclared_trailing_accounts_are_accepted (synthetic)",
+      "expectedTexts": [
+        "Transfer tokens",
+        "SourceAtaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "DestAtaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      ]
+    },
+    {
+      "rawTx": "gAEABAYFyTIJZNoSZAfRcYtkONrDlJDqkMbgLGFC+Kdoa8oa8gM9zDUohI17h8kz76tee/P8QjpxY3lqIVlI77hryhryBU7en03+ZNaZZ4UVbxtMm8MlqJdw8j3Uyy/gqGvKGvIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpjJclj04kifG7PRApFI4NgwtaE5na/xCEBI572Nvp+FkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEFBgABAAIDBAEBAA==",
+      "description": "ATA: engine_account_schema / one_signing_address_in_two_slots_is_accepted (synthetic)",
+      "expectedTexts": [
+        "Create associated token account",
+        "DestAtaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "2SjBBhnRiESRWYPqSti1mM2u47aBa6vBg2YHVqcEmTKH"
+      ]
+    },
+    {
+      "rawTx": "gAEAAgTEWiSpc5rMq051mvkUNaia6beObxRbCsZ4bfBCNDjFJE4mtvUYjOKA01+vigAdfGCwaFQJxIpHAIus3husEszhBqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAGodgXkTdUKpg0N73+KnqyVX9TXIp4citopJ3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgMDAQIAKAEAAAAE7Sno47KqI3n186Qzq8LeWoW6pAQlInRabGTwALv4vgAAAAADAwECACgBAAAABO0p6OOyqiN59fOkM6vC3lqFuqQEJSJ0Wmxk8AC7+L4BAAAAAA==",
+      "description": "Stake: engine_account_slots / stake_authorize_without_custodian_clear_signs (synthetic)",
+      "expectedTexts": [
+        "Update stake authority",
+        "6G53KAWtQnZSSN6HUxnBs3yYsK1aCuJRbrcPbWGY71LL",
+        "LEP1uHXcWbFEPwQgkeFzdhW2ykgZY6e9Dz8Yro6SdNu",
+        "Staker",
+        "Withdrawer"
+      ]
+    },
+    {
+      "rawTx": "gAEABwptkQ3fucGz39UEzYoitb1PHvnXv+fGJ1Qwm4bdukPfG3tpNMj+fCYXwsddqBCI2sUoNJKYOGdlkx8utBAatkonvSInpzwzBZNNteyBLp96RRxn+kKxDN4PP9ArVO708xsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAABHnVW/IxwG7udMVuzmgVB/2xst6j9I5RArHNola8E48G3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqYyXJY9OJInxuz0QKRSODYMLWhOZ2v8QhASOe9jb6fhZtD/6J/XX9kp0wJsfKVh53ksJqzbfyd1RSzIap7OM5ei4FLjngz0I211HsXVwR0yG3oZoF+f85up55YcNGki8xQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwQABQKwNQEABAAJA0UxAAAAAAAABwYAAQANAwYBAQMCAAEMAgAAAK/9awAAAAAABgEBAREFGwYAAQIFCQUIBQ8GCw4LDAoLCwsLCwsLCwECACPlF8uXeuOtKgEAAAAHZAABr/1rAAAAAABj7+kAAAAAAPQBAAYDAQAAAQkBLy9FwwDx+2Xnz7vShnk/EmnhPTlpthKxgpSrqTq8IGMDZGNhAwwDAg==",
+      "description": "ComputeBudget + ATA + System + SPL Token + Jupiter + SPL Token: ephemeral_ata_round_trip / wrap_folds_into_the_swap (mainnet fixture, ephemeral wSOL ATA)",
+      "expectedTexts": [
+        "Swap",
+        "0.007077295 SOL",
+        "2SjBBhnRiESRWYPqSti1mM2u47aBa6vBg2YHVqcEmTKH",
+        "5J4NuPUVvEaXHCvGg3wVaZtxXkAp31TL7boxWk5vtkoF"
+      ],
+      "unexpectedTexts": [
+        "Create associated token account",
+        "Transfer SOL",
+        "Sync wrapped SOL",
+        "Close token account"
+      ]
+    },
+    {
+      "rawTx": "gAEABAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQKIiiujNPkrrcByrREefZ+IHKCB4qcNeExkygIAAAAABU7ek7YG0AaHFk+TyYNFk+WhOGx3iy7D8njegAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpjJclj04kifG7PRApFI4NgwtaE5na/xCEBI572Nvp+FkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEFBgABAAIDBAEBAA==",
+      "description": "ATA: owner_association / run_pipeline_derives_owner_for_create_idempotent_without_attested (synthetic)",
+      "expectedTexts": [
+        "Create associated token account",
+        "AtaAccount111111111111111111111111111111111",
+        "2SjBBhnRiESRWYPqSti1mM2u47aBa6vBg2YHVqcEmTKH"
+      ]
+    },
+    {
+      "rawTx": "gAEAAQMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQKIiiujNPkrrcByrREefZ+IHKCB4qcNeExkygIAAAAABt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAECAgEAAREA",
+      "description": "SPL Token: owner_association / run_pipeline_drops_non_canonical_attested_binding (synthetic)",
+      "expectedTexts": [
+        "Sync wrapped SOL",
+        "AtaAccount111111111111111111111111111111111"
+      ]
+    },
+    {
+      "rawTx": "gAEAAgQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQKIiiujNPkrrcByrREefZ+IHKCB4qcNeExkygIAAAAABU7ek7YG0AaHFk+TyYNFk+WhOGx3iy7D8njegAAAAAAG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQMCAQIhEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAA==",
+      "description": "SPL Token: owner_association / run_pipeline_initialize_account3_argument_owner (synthetic)",
+      "expectedTexts": [
+        "Initialize token account",
+        "AtaAccount111111111111111111111111111111111",
+        "Mint111111111111111111111111111111111111111",
+        "11111111111111111111111111111112"
+      ]
+    },
+    {
+      "rawTx": "gAEAAgQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbLMKJD8+8XNUAuMIVrrp4ZGxpMEWouZA7D93ABQiG/0BU7ek7YG0AaHFk+TyYNFk+WhOGx3iy7D8njegAAAAAAG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgMCAQIhEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAwIBAiESAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEA",
+      "description": "SPL Token: owner_association / same_binding_twice_is_accepted (synthetic)",
+      "expectedTexts": [
+        "Initialize token account",
+        "D2x8UtexF1AMMoN8kdg2P5XWhoKmSkP1AWPXDA9Yg1S3",
+        "Mint111111111111111111111111111111111111111"
+      ]
+    },
+    {
+      "rawTx": "gAIAAwUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbLMKJD8+8XNUAuMIVrrp4ZGxpMEWouZA7D93ABQiG/0BU7ek7YG0AaHFk+TyYNFk+WhOGx3iy7D8njegAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAwIAATQAAAAA8B0fAAAAAAClAAAAAAAAAAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpBAIBAiESAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEA",
+      "description": "System + SPL Token: owner_association / post_transaction_state_is_not_an_attestation (synthetic)",
+      "expectedTexts": [
+        "Create account",
+        "Initialize token account",
+        "D2x8UtexF1AMMoN8kdg2P5XWhoKmSkP1AWPXDA9Yg1S3",
+        "0.00203928 SOL"
+      ]
+    },
+    {
+      "rawTx": "gAEABwptkQ3fucGz39UEzYoitb1PHvnXv+fGJ1Qwm4bdukPfG3tpNMj+fCYXwsddqBCI2sUoNJKYOGdlkx8utBAatkonvSInpzwzBZNNteyBLp96RRxn+kKxDN4PP9ArVO708xsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAABHnVW/IxwG7udMVuzmgVB/2xst6j9I5RArHNola8E48G3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqYyXJY9OJInxuz0QKRSODYMLWhOZ2v8QhASOe9jb6fhZtD/6J/XX9kp0wJsfKVh53ksJqzbfyd1RSzIap7OM5ei4FLjngz0I211HsXVwR0yG3oZoF+f85up55YcNGki8xYdwZk5M2DFc7XqHw2YFmjq8BpGgeEfr08Vo137KlPY8BwQABQKwNQEABAAJA0UxAAAAAAAABwYAAQANAwYBAQMCAAEMAgAAAK/9awAAAAAABgEBAREFGwYAAQIFCQUIBQ8GCw4LDAoLCwsLCwsLCwECACPlF8uXeuOtKgEAAAAHZAABr/1rAAAAAABj7+kAAAAAAPQBAAYDAQAAAQkBLy9FwwDx+2Xnz7vShnk/EmnhPTlpthKxgpSrqTq8IGMDZGNhAwwDAg==",
+      "description": "apdu_account_resets / real_wsol_fixture_streams_account_reset_for_create_idempotent (mainnet 1FqFZbaz)",
+      "expectedTexts": [
+        "Swap",
+        "0.007077295 SOL",
+        "2SjBBhnRiESRWYPqSti1mM2u47aBa6vBg2YHVqcEmTKH",
+        "5J4NuPUVvEaXHCvGg3wVaZtxXkAp31TL7boxWk5vtkoF"
+      ],
+      "unexpectedTexts": [
+        "Create associated token account",
+        "Transfer SOL",
+        "Sync wrapped SOL",
+        "Close token account"
+      ]
+    },
+    {
+      "rawTx": "gAIACA4R42CVsFE67UNXG2dI3IC+RI7kLWbTb80oqLXcSqMssGeMX7e9Q4+u03lRW0yqtllE3VSc7J1w4tJgl42zxrFFIIXrbpwU22XtclJ081ReD6sW3OECcdV9R8my3SWCK4sngLYbViTzBpy6kkUO71nNzZFKH4b0ieKh5smK97BmP3UtREu2HEnoPCf9sRQDqB+famCaYUyMxzN2NwmnfUqZiKd/aFslIeOD0odIRC6wi9icBCp55E6V6j2Jpq5MhnIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAABt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKkG3fbh7nWP3hhCXbzkbM3athr8TYO5DSf+vfko2KGL/AfokhPIVMZd4QmK1m883pUczn1ORC+UTvatuC1UzTZhSlhJ+3Kju+kf3FsOalf2PFoctFsgZ6btDKzTY5XIoQKMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4Wcb6evO+2606PWXzaqvJdDGxu+TC0vbg5HymAgNFL11hhDNJGFJLqb/ova6WqnTiPwanxD28MnuxHy3sqUrKTYEEBwAJA4UEAAAAAAAABwAFAkANAwAMBgEDAQoGCQEBCwsBAAUCAwQNCAoJBiWoYLejXAoooICWmAAAAAAAgdCdAQAAAAAUxrNqAAAAAAoAAAAAAA==",
+      "description": "ATA + Jupiter order engine: create ATA then fill (mainnet 3U7m9eFV)",
+      "expectedTexts": [
+        "Create associated token account",
+        "Swap",
+        "10 USDC",
+        "0.27119745",
+        "ACSaoCR7SRER4ukLQSCdwpu9kMPHHUaBTandwBP68KUd",
+        "3fCjXSd3vyjCuUBkWGEgrGJvF5uvhctTqq3J6UB6hnNS"
+      ]
+    },
+    {
+      "rawTx": "gAEABQqpk1eVsoaA1/Ef5mU4Gwhm6/8d2LKo7+Lh39our94ncSjWNPnB87AxdRlRoJCHU8zod4OQBx3yEOMefGgDOuv/qICfwZMGVj6D7na3ndigGsGrXp893ccUwUyrwGpePl1eYJCkqkfI6MYlEaTmcBPI2dPE884VHeVcJhgW4g0sMiOm7dAVwRClRiiY5URKjuY+6uLn3U3HH83fRGjdFzNgAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAACMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4WQbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpBQzMuOT/zcfZ1b68M69pausoEEZZCZe1Utk9Qlo36cwMQpvXwY9Q+BVtmvwc3ect9mjZqzvsr2tXDVdmZFrZyN1WSfD2DUjIXHPTorKv/cVqf2oSK949F9CszFceoZA9BwUABQKjMgUABQAJAwA1DAAAAAAABgYAAQAeHwcBAQgOACUeAgEICQMfICEiCCMIhWwXD+LXsF8JNgACASUeCQkaGxwHBwYfKgkKGhsdCwoMDSQlDgoHByYnDxAfKRodHBESExQVBygmJB4WFxgZBDWqKVWxhFAfNeqHuzsAAAAA0AcAAAAAAABAjt8AAAAAAAEAAgAAAC4QJwE+ECcSAAAAAAAAZAgOACUeAgEICQMfICEiCCM0jCrGUpOQLHG4et8AAAAAAJKXJs6gAQAAhojfAAAAAADQBwAAAAAAAMua3wAAAAAAARYAAAcDAQAAAQkELhyJHK6qzBx7mFbcjgunboKhzaLnTVtI9xoGYkbbhpIABw4ICQoLDRMuaBeGG/QIfWfK6LB7ybpiJbEhD+p/Ag+F0xqF+uB2tQcMAAgFBAIHBAEODQabBD9GrMqOAoqpV3omwI5/rJ1kwY8oYayRNGXYG2CfgwkACxYRCBAEEhUBA+SGu4nrPRxzklkyXg+xSChcPKJ7uK0KM5oClA9FhuIQBAF9AgoBcA==",
+      "description": "ATA + Kamino limit order + OKX: log start, swap, log end, close (mainnet 3V72ApeC)",
+      "expectedTexts": [
+        "Swap",
+        "0.00002 LBTC",
+        "0.014650944 SOL",
+        "7RrVAqv6c3oz69WzLzxngUpmhDdCGqt291ef1Gsmn1bK",
+        "G6yNsrKxNvAZNPqREvFukaJfdAVGURdiVr6mzn6ztFdZ"
+      ],
+      "unexpectedTexts": [
+        "Create associated token account",
+        "Log Balance Analytics",
+        "Close token account"
+      ]
+    },
+    {
+      "rawTx": "gAEABgrtxbrtldyQFCePJQGnEl6tWw045rUIBRlrQBSaLhiHFALfwROoLSUmAPdnIN4u98JoaiYgHoEiE7xq1J9cZ3V0T+L0R6UsPW1znjZu7aXYqy29VtBeirWxSrpV1Dzt44m22L909z4o7M2bCgKIVUgzDIr5vM/nh/t9+c25yZVllwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAAAEedVb8jHAbu50xW7OaBUH/bGy3qP0jlECsc2iVrwTjwbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpjJclj04kifG7PRApFI4NgwtaE5na/xCEBI572Nvp+Fm0P/on9df2SnTAmx8pWHneSwmrNt/J3VFLMhqns4zl6D2I1zX0UseXAYi3Y0I986XZT+R44/ahuCgO6MTbR/tPBQUABQI3UAIABQAJA8QZAAAAAAAACAYAAwAOBAcBAQYVBwABAwYOAgkGEA8KDQEDCwwAEQcGJOUXy5d6460qAQAAABIBZAABIE4AAAAAAAAblQIAAAAAADIAZAcDAwAAAQkB4DYa6jZ39WscUTqRj/ZBkWPcZSOrplXadxvYM7bt86MEzcvHzgQ3gYDM",
+      "description": "ATA + Jupiter v6 + SPL Token: route then closeAccount merges into the swap (mainnet 61cpdV3d)",
+      "expectedTexts": [
+        "Swap",
+        "0.02 USDC",
+        "0.000169243 SOL",
+        "CDhsn8zEJW4qnyHwg9gVj5bzorp2MLEmhC2UmdrGgM9",
+        "2SjBBhnRiESRWYPqSti1mM2u47aBa6vBg2YHVqcEmTKH"
+      ],
+      "unexpectedTexts": [
+        "Create associated token account",
+        "Close token account"
+      ]
+    },
+    {
+      "rawTx": "gAEAChDlaoLKKrm4VkR2FG/A1yE7vCO/lqKUPROpcLYBIS3MeGtItuCPFpA6Oixv2hOPMcSYdyF3B0NOyrBTNItB85c7ATKw2rZzNKpP7AhC4PNuXrw2IFY7rc/3om5R6KdPs29wzbspYKM/0vjT9RDd0htBRiTLqeijmqSElsGcnfbew2aR5fSvnThlQPgGVMSWDH/hBn6akqnBW9DiWCfQwiJB1eCGlUbnpu8I5bwDD+FMYfQFcYC4zWAFT43Ihj24RbYDBkZv5SEXMv/srbpyw5vnvIzlu8X3EmssQ5s6QAAAAIyXJY9OJInxuz0QKRSODYMLWhOZ2v8QhASOe9jb6fhZBpuIV/6rgYT7aH9jRhjANdrEOdwa6ztVmKDwAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCprfKd394JjOMV5I5NvQwHlCxk6Asl2esqb/2Wedk01iMG3fbh7nWP3hhCXbzkbM3athr8TYO5DSf+vfko2KGL/AktITVlehWcK4fUtmpw246XUjif92qvIGztBjo4+Vrt8szVNayl8XNqyCLdB3Pk2S+9ilmylANQApWpARxzqeUqduezRGQKHPxZTIvK0KCRARysfdFWv4OoM/siCOt3rbSXY81WMEtOS4oWTcJ/aWqQaCujhJhodr4MKdPeRlc1BwYACQP+AQAAAAAAAAcGAAEACAkKAQEHBgACAAsJDAEBCQIAAQwCAAAA4QauBQAAAAAKAQEBEQ0ODgMBAgQFCwgADAoNDw0ZQUs/TOtbW4hMAVNTJwAAAOEGrgUAAAAAAgoDAQAAAQkA",
+      "description": "ATA x2 + System + SPL Token + Meteora CP AMM: wrap SOL, swap2, close (mainnet 5e834QSZ)",
+      "expectedTexts": [
+        "Transfer SOL",
+        "Swap",
+        "0.095291105 SOL",
+        "G6yNsrKxNvAZNPqREvFukaJfdAVGURdiVr6mzn6ztFdZ",
+        "7vcJX4HQtNBdKdFvvhdoLGT4mfupSLCzfXLd5MAG4gXL"
+      ],
+      "unexpectedTexts": [
+        "Create associated token account",
+        "Sync wrapped SOL",
+        "Close token account"
+      ]
+    },
+    {
+      "rawTx": "gAEABg2LTB0yyr+ya3imi+45n9InTqWY7kL5TkSMlBWPqwvNZTYTeADqYbc6Pm5+NgD/c9rjMdsjf5uDpLJuABXgiY5uhgR9PFoi8r2wldZu6GXknU+CYg+ZFx4j3jxbiyw6mkiOFVmNkrmQBpQJRYiG/xgozsK94/kf4bflI8yJS8xrE61gb0Ce7Utypl3XhzSsSx5QcCVl0KKYf2BLnMMNrb4ms8qJb92ecxmibgbN+a1f7k4j8km7QGfInVtgKs0i4GwOLcfPy82PmjkvcxpkH+GnI75pjA//xVCe+t3hDP9FeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD9ps6fZhmN2HDYqYbzBnXEb4Pi9Sg0h5UvXVBWPj73pmeujUWFWpdVBTSSyASh5w0QBYGag6K+J2mxkNDS3hEoyXJY9OJInxuz0QKRSODYMLWhOZ2v8QhASOe9jb6fhZ2LAQF2PT5R8SbmFW3oXejGEwWbhEaNDaP+iioiUcxwEE2Qrx24k57DX/lNlkDVfcwyeUuz4btm/TroSahNzblNN6fYSrl9GGZ+IC2kmrBH5je8+thZM94P3jfhaEbt1VAwoGAAQADgcTAQEMDwANAxEQDgEEEhMTCAwFCRDyI8aJUuHyttD7AQAAAAAACwgAAg8GBA4LExDOsMoSyNGzbP//////////AdpHxLteVjxMlUnN9lBvR3KX50I3y91wkK3ouUD+ayvJAwEFCQQEAgcD",
+      "description": "ATA + Kamino Vault + Kamino Farms: deposit then stake (mainnet 4LDS8xDS)",
+      "expectedTexts": [
+        "Deposit",
+        "Stake",
+        "0.13 USDC",
+        "Entire balance",
+        "BUyEZb34aR4tWk6DAvc93uhSevxdUJsQzdiDkwKojCNs",
+        "Bbo5BEAE8GyjTEyRjVdkZafYK1bYmaor5kajKZYSXu9X",
+        "3SMNuqK7m13KorY9gX8DzjQAVXGbhgRVni65Pk6LTBgC",
+        "GXMTWzXiPnpt1TAR7R7dXAkFjH53HMmZkD8A8EeuXkbt"
+      ],
+      "unexpectedTexts": ["Create associated token account"]
+    },
+    {
+      "rawTx": "gAEAChG/UkhBZFNqv6fhfykmW1gejiObTGSHR98nDOY7vJnhMDSJ0pFDNvMLhOEthJKLjVB3WOfzFhXhO40jxbE5UXGIP+KYJHeksO3po0OXDmP8IasCX4CabDYP5ut31LpjyGOKubi8A9XiCxFAx4t15UeudUkWFSJ/lIEmi+AOw3Qz8ZzsAHo/TTtdzk6MAbsOGqMi8P5h8+q9GKJuBnrSYmm3vp64JohZRfkA1W1G9qkdfhyO2eG25WTnk2dNNK6vIanXsr8kE+Cs9YZMKefEIUqHUwl75uAtHSFd3QEGMjJz+wMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAABHnVW/IxwG7udMVuzmgVB/2xst6j9I5RArHNola8E48FSlNamSkhBk0k6HFg2jh8fDW13bySu4HkH6hAQQVEjQr+HpfkVsu5LmQqJbULpjlv8kgWS8p0aWOoRZKs1szDCv4ewstvLqYbw0go8ncUXWx5Q1CNG/m1j2Fk2ei+1LFl9d/9fISvdail973OoWIuKzq/h/xTqHG5CFYaOosb3oyXJY9OJInxuz0QKRSODYMLWhOZ2v8QhASOe9jb6fhZju2LIhBVGsD32nbr0WRFXYwi53QeV3FAUnu912p48ii0P/on9df2SnTAmx8pWHneSwmrNt/J3VFLMhqns4zl6PzRPaBBVZATz0rroahO1wI61P8hqEdH/zsFqzD6ggfDiWXkbJpg5impWDHIMy4i6ZjTRjqqHrPfzs+CjoF56mgHBwAFAiChBwAJAGZLOmJvfFA6MTYxNTc3fEw6ODg3dXN8Ujo0LjQzMzE3MTYwMiBTbzExIC0+IDI4MS42MDEyOTYgRVBqRiAtPiA0LjQzMzMzMzE3OSBTbzExIFtCaXNvbkZpLCBQYW5jYWtlU3dhcF0NBgAFAB0cHwEBDQYABgAiHB8BAQsOAAMFHQEEDgIMCh8NHB4QZxNOGPAJhz/L/Q1NAAAAAAgoHwAFBQgdCA8IIQASExEFBh8fHhAIJAAjGQYFGBQaHyAJIh0VGxYXCCjlF8uXeuOtKgIAAACNAWQAAShkAQCS1DwIAQAAAJLUPAgBAAAAAAAACw4AAwUdAQQOAgwKHw0cHhDVL5mJVPNe6Mv9DU0AAAAAAucUW8f8UOLVyL4tc3wDAxeoeaU6IFDTkZmsaCUXJjY0AwEHAAcLAwQCEQUG26khwpIx/FfMoKAmS+tavVKKc31Bqhwb52117gOqCooIGR0LFwwHHAQCAQY=",
+      "description": "Memo + ATA x2 + Jupiter Lend + Jupiter v6: memo, flash borrow, route, payback (mainnet 335CDMJV)",
+      "expectedTexts": [
+        "Add memo",
+        "Flash Borrow",
+        "Swap",
+        "Flash Repay",
+        "4.433171602 SOL",
+        "G6yNsrKxNvAZNPqREvFukaJfdAVGURdiVr6mzn6ztFdZ"
+      ],
+      "unexpectedTexts": ["Create associated token account"]
+    }
+  ]
+}
