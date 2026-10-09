@@ -201,6 +201,7 @@ type LegacyCreateTransactionArg = {
   sigHashType?: number; // default 1 (SIGHASH_ALL)
   additionals: string[]; // must include "zcash"; include "sapling" for Sapling txs
   expiryHeight?: Uint8Array; // 4 bytes; default zero for v5
+  network?: ZcashNetwork; // "mainnet" (default) | "testnet"; selects the activation heights behind the branch id (no blockHeight: latest upgrade, NU7 on testnet)
 };
 
 type LegacyTransaction = {

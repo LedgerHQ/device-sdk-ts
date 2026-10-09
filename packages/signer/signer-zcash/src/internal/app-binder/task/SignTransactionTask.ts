@@ -85,6 +85,7 @@ export class SignTransactionTask {
       sigHashType,
       additionals: additionalsRaw,
       expiryHeight,
+      network,
     } = signTx;
     const additionals = new Set(
       additionalsRaw.map((item) => item.trim().toLowerCase()),
@@ -135,7 +136,10 @@ export class SignTransactionTask {
       ? new Uint8Array(11)
       : Uint8Array.of(0x00);
 
-    const inputsResult = await this.collectTrustedInputsAndOutputs(inputs);
+    const inputsResult = await this.collectTrustedInputsAndOutputs(
+      inputs,
+      network,
+    );
     if (!("trustedInputs" in inputsResult)) {
       return inputsResult;
     }
@@ -170,7 +174,10 @@ export class SignTransactionTask {
       return provideChangeResult;
     }
 
-    targetTransaction.consensusBranchId = getZcashBranchId(blockHeight);
+    targetTransaction.consensusBranchId = getZcashBranchId(
+      blockHeight,
+      network,
+    );
 
     const hashError = await this.executeHashSequence(
       targetTransaction,
@@ -203,7 +210,10 @@ export class SignTransactionTask {
     const signatures = signaturesResult;
 
     targetTransaction.version = defaultVersion;
-    targetTransaction.consensusBranchId = getZcashBranchId(blockHeight);
+    targetTransaction.consensusBranchId = getZcashBranchId(
+      blockHeight,
+      network,
+    );
     for (let i = 0; i < inputs.length; i += 1) {
       targetTransaction.inputs[i]!.script = concatUint8Arrays(
         Uint8Array.of(signatures[i]!.length),
@@ -232,6 +242,7 @@ export class SignTransactionTask {
 
   private async collectTrustedInputsAndOutputs(
     inputs: LegacyCreateTransactionArg["inputs"],
+    network: LegacyCreateTransactionArg["network"],
   ): Promise<CollectInputsResult | SignTransactionTaskResult> {
     const trustedInputs: TrustedInputEntry[] = [];
     const regularOutputs: InternalTransactionOutput[] = [];
@@ -239,7 +250,7 @@ export class SignTransactionTask {
     for (const input of inputs) {
       const legacyPrevious = input[0];
       const previousTx = toInternalTransaction(legacyPrevious);
-      previousTx.consensusBranchId = getZcashBranchId(input[4]);
+      previousTx.consensusBranchId = getZcashBranchId(input[4], network);
       const trustedInputResult = await this.getTrustedInput(
         input[1],
         previousTx,

@@ -47,6 +47,7 @@ export type {
   LegacyTransaction,
   LegacyTransactionInput,
   LegacyTransactionOutput,
+  ZcashNetwork,
 } from "@api/model/CreateTransactionArg";
 export type {
   FullViewingKeyOptions,
