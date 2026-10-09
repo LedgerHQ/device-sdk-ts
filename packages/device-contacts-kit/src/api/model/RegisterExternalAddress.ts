@@ -18,9 +18,9 @@ export type ExistingContactGroup = {
 export type RegisterExternalAddressInput = {
   readonly contactName: string;
   readonly scope: string;
-  /** Chain address bytes (20 bytes for Ethereum). */
+  /** Chain address bytes (20 bytes for Ethereum, 32 for Solana). */
   readonly identifier: Uint8Array;
-  /** Blockchain family name, e.g. "ethereum" (v1 supports Ethereum only). */
+  /** Blockchain family name, e.g. "ethereum", "tron" or "solana". */
   readonly blockchainFamily: string;
   readonly chainId?: bigint;
   /**

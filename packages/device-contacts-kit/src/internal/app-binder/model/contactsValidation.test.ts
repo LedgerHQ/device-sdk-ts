@@ -4,6 +4,7 @@ import {
   validateByteLength,
   validateChainId,
   validateDerivationPath,
+  validateFamilyIdentifiers,
   validatePrintableLabel,
 } from "./contactsValidation";
 
@@ -86,6 +87,93 @@ describe("contactsValidation", () => {
       expect(() => validateDerivationPath("44'/x/0")).toThrow(
         ContactsValidationError,
       );
+    });
+  });
+  describe("validateFamilyIdentifiers", () => {
+    const identifier = (length: number) => [
+      { field: "identifier", value: new Uint8Array(length).fill(0x11) },
+    ];
+
+    it("returns the BLOCKCHAIN_FAMILY byte, case-insensitively", () => {
+      expect(
+        validateFamilyIdentifiers({
+          blockchainFamily: "Ethereum",
+          identifiers: identifier(20),
+          chainId: 1n,
+        }),
+      ).toBe(0x01);
+      expect(
+        validateFamilyIdentifiers({
+          blockchainFamily: "solana",
+          identifiers: identifier(32),
+        }),
+      ).toBe(0x02);
+      expect(
+        validateFamilyIdentifiers({
+          blockchainFamily: "tron",
+          identifiers: identifier(21),
+        }),
+      ).toBe(0x06);
+    });
+
+    it("rejects an unknown family", () => {
+      expect(() =>
+        validateFamilyIdentifiers({
+          blockchainFamily: "dogecoin",
+          identifiers: identifier(20),
+        }),
+      ).toThrow("Unsupported blockchain family: dogecoin");
+    });
+
+    it("requires 20-byte identifiers and a chainId for Ethereum", () => {
+      expect(() =>
+        validateFamilyIdentifiers({
+          blockchainFamily: "ethereum",
+          identifiers: identifier(32),
+          chainId: 1n,
+        }),
+      ).toThrow("identifier is 32 bytes, expected 20.");
+      expect(() =>
+        validateFamilyIdentifiers({
+          blockchainFamily: "ethereum",
+          identifiers: identifier(20),
+        }),
+      ).toThrow("chainId is required for the Ethereum blockchain family.");
+    });
+
+    it("requires 32-byte identifiers and no chainId for Solana", () => {
+      expect(() =>
+        validateFamilyIdentifiers({
+          blockchainFamily: "solana",
+          identifiers: identifier(20),
+        }),
+      ).toThrow("identifier is 20 bytes, expected 32.");
+      expect(() =>
+        validateFamilyIdentifiers({
+          blockchainFamily: "solana",
+          identifiers: identifier(32),
+          chainId: 101n,
+        }),
+      ).toThrow("chainId is not allowed for the Solana blockchain family.");
+    });
+
+    it("only requires non-empty identifiers for other families", () => {
+      expect(() =>
+        validateFamilyIdentifiers({
+          blockchainFamily: "tron",
+          identifiers: identifier(0),
+        }),
+      ).toThrow("identifier must not be empty.");
+    });
+
+    it("range-checks a chainId", () => {
+      expect(() =>
+        validateFamilyIdentifiers({
+          blockchainFamily: "ethereum",
+          identifiers: identifier(20),
+          chainId: 0n,
+        }),
+      ).toThrow(ContactsValidationError);
     });
   });
 });

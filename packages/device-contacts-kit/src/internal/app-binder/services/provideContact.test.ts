@@ -90,6 +90,29 @@ describe("buildProvideContactPayload", () => {
     ).toStrictEqual(buildProvideContactPayload(INPUT));
   });
 
+  it("encodes a Solana contact with its family byte and no CHAIN_ID", () => {
+    const payload = buildProvideContactPayload({
+      ...INPUT,
+      identifier: new Uint8Array(32).fill(0x11),
+      blockchainFamily: "solana",
+      chainId: undefined,
+    });
+
+    expect(bufferToHexaString(payload, false)).toContain(
+      "81f220" + "11".repeat(32) + GROUP_HANDLE_TLV + "510102",
+    );
+  });
+
+  it("throws on a Solana identifier that is not 32 bytes", () => {
+    expect(() =>
+      buildProvideContactPayload({
+        ...INPUT,
+        blockchainFamily: "solana",
+        chainId: undefined,
+      }),
+    ).toThrow("identifier is 20 bytes, expected 32.");
+  });
+
   it("throws on an unknown blockchain family", () => {
     expect(() =>
       buildProvideContactPayload({ ...INPUT, blockchainFamily: "dogecoin" }),

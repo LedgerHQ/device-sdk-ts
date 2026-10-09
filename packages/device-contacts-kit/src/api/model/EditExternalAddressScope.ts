@@ -15,9 +15,9 @@ export type EditExternalAddressScopeInput = {
   readonly previousScope: string;
   /** The replacement scope (max 32 printable ASCII chars). */
   readonly newScope: string;
-  /** The entry's identifier bytes (20 bytes for Ethereum). Unchanged by the edit. */
+  /** The entry's identifier bytes (20 bytes for Ethereum, 32 for Solana). Unchanged by the edit. */
   readonly identifier: Uint8Array;
-  /** Blockchain family name, e.g. "ethereum" (v1 supports Ethereum only). */
+  /** Blockchain family name, e.g. "ethereum", "tron" or "solana". */
   readonly blockchainFamily: string;
   readonly chainId?: bigint;
   /** 64-byte group handle returned by the group's Register Identity. */

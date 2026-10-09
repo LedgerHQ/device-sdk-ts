@@ -45,6 +45,7 @@ export {
   ETHEREUM_APP_NAME,
   isVersionAtLeast,
   resolveContactsVersionRequirements,
+  SOLANA_APP_NAME,
   TRON_APP_NAME,
 } from "@api/model/ContactsVersionRequirements";
 export {
