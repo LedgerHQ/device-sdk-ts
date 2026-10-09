@@ -42,7 +42,10 @@ To use this transport, ensure you have the Device Management Kit installed in yo
 To use the transport, you need to inject it in the DeviceManagementKitBuilder before the build. This will allow the Device Management Kit to find and interact with speculos devices trhough http
 
 ```typescript
-import { DeviceManagementKitBuilder } from "@ledgerhq/device-management-kit";
+import {
+  DeviceManagementKitBuilder,
+  DeviceModelId,
+} from "@ledgerhq/device-management-kit";
 import {
   speculosTransportFactory,
   SpeculosTransport,
@@ -52,6 +55,18 @@ import {
 const dmk = new DeviceManagementKitBuilder()
   .addTransport(speculosTransportFactory()) // Defaults to the default speculos port http://localhost:5000
   .addTransport(speculosTransportFactory("http://localhost:5001")) // With custom server
+  .build();
+
+// With a bearer token sent on every request (`Authorization: Bearer <token>`), e.g. a protected Speculinho session
+const dmk = new DeviceManagementKitBuilder()
+  .addTransport(
+    speculosTransportFactory(
+      "https://my-run.speculos.ledgerlabs.net",
+      false,
+      DeviceModelId.NANO_X,
+      { bearerToken: sessionToken },
+    ),
+  )
   .build();
 
 // With custom config

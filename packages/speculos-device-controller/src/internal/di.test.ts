@@ -62,6 +62,30 @@ describe("createDefaultControllers - fetch configuration", () => {
       }),
     );
   });
+
+  it("sends the bearer token alongside the client header", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}"));
+
+    const { touch } = createDefaultControllers("https://localhost:1234", {
+      screens: SCREENS,
+      clientHeader: "test-client",
+      bearerToken: "session-token",
+    });
+
+    await touch.tap("stax", { x: 50, y: 50 });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://localhost:1234/finger",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer session-token",
+          "X-Ledger-Client-Version": "test-client",
+        }),
+      }),
+    );
+  });
 });
 
 describe("createDefaultControllers - wiring", () => {

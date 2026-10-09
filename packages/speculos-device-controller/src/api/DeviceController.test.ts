@@ -49,4 +49,25 @@ describe("deviceControllerClientFactory", () => {
       b.tapFactory("flex").tapQuick,
     );
   });
+
+  it("sends the bearer token with every request", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}"));
+    const deviceClient = deviceControllerClientFactory("http://localhost:0", {
+      bearerToken: "session-token",
+    });
+
+    await deviceClient.buttonFactory().press("both");
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://localhost:0/button/both",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer session-token",
+        }),
+      }),
+    );
+    fetchSpy.mockRestore();
+  });
 });

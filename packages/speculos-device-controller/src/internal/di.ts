@@ -21,6 +21,9 @@ export function createDefaultControllers(
     baseUrl: baseURL,
     headers: {
       "X-Ledger-Client-Version": opts.clientHeader ?? "ldmk-transport-speculos",
+      ...(opts.bearerToken
+        ? { Authorization: `Bearer ${opts.bearerToken}` }
+        : {}),
     },
   });
 
