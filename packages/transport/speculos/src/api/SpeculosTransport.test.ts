@@ -1,11 +1,17 @@
 import {
+  DeviceModelId,
   type DmkConfig,
   type LoggerPublisherService,
+  type TransportArgs,
   type TransportConnectedDevice,
 } from "@ledgerhq/device-management-kit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SpeculosTransport } from "@api/SpeculosTransport";
+import {
+  SpeculosTransport,
+  speculosTransportFactory,
+} from "@api/SpeculosTransport";
+import { HttpSpeculosDatasource } from "@internal/datasource/HttpSpeculosDatasource";
 
 const GET_APP_AND_VERSION_RESPONSE =
   "0108457468657265756d0a312e32332e302d64657601009000";
@@ -69,6 +75,45 @@ describe("SpeculosTransport", () => {
       await vi.advanceTimersByTimeAsync(10_000);
 
       expect(isServerAvailable).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("headers", () => {
+    const headers = { Authorization: "Bearer session-token" };
+
+    it("should pass the custom headers to the datasource", () => {
+      new SpeculosTransport(
+        loggerFactory,
+        {} as DmkConfig,
+        "http://localhost:5000",
+        true,
+        DeviceModelId.NANO_X,
+        { headers },
+      );
+
+      expect(HttpSpeculosDatasource).toHaveBeenCalledWith(
+        "http://localhost:5000",
+        undefined,
+        headers,
+      );
+    });
+
+    it("should pass the custom headers through the factory", () => {
+      speculosTransportFactory(
+        "http://localhost:5001",
+        true,
+        DeviceModelId.NANO_X,
+        { headers },
+      )({
+        config: {} as DmkConfig,
+        loggerServiceFactory: loggerFactory,
+      } as unknown as TransportArgs);
+
+      expect(HttpSpeculosDatasource).toHaveBeenCalledWith(
+        "http://localhost:5001",
+        undefined,
+        headers,
+      );
     });
   });
 });
