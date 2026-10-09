@@ -20,6 +20,7 @@ export function createDefaultControllers(
   const client = new DmkNetworkClient({
     baseUrl: baseURL,
     headers: {
+      ...opts.headers,
       "X-Ledger-Client-Version": opts.clientHeader ?? "ldmk-transport-speculos",
     },
   });

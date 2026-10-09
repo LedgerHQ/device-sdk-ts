@@ -28,6 +28,10 @@ import { type SpeculosDatasource } from "@internal/datasource/SpeculosDatasource
 export const speculosIdentifier: TransportIdentifier =
   "SPECULOS_HTTP_TRANSPORT";
 
+export type SpeculosTransportOptions = {
+  headers?: Record<string, string>;
+};
+
 export class SpeculosTransport implements Transport {
   private logger: LoggerPublisherService;
   private readonly identifier: TransportIdentifier = speculosIdentifier;
@@ -43,10 +47,15 @@ export class SpeculosTransport implements Transport {
     speculosUrl: string,
     isE2E?: boolean,
     deviceModelId: DeviceModelId = DeviceModelId.STAX,
+    { headers }: SpeculosTransportOptions = {},
   ) {
     this._isE2E = isE2E ?? false;
     this.logger = loggerServiceFactory("SpeculosTransport");
-    this._speculosDataSource = new HttpSpeculosDatasource(speculosUrl);
+    this._speculosDataSource = new HttpSpeculosDatasource(
+      speculosUrl,
+      undefined,
+      headers,
+    );
     this.speculosDevice = {
       id: "SpeculosID",
       deviceModel: {
@@ -230,8 +239,14 @@ export const speculosTransportFactory: (
   speculosUrl?: string,
   isE2E?: boolean,
   deviceModelId?: DeviceModelId,
+  options?: SpeculosTransportOptions,
 ) => TransportFactory =
-  (speculosUrl = "http://127.0.0.1:5000", isE2E = false, deviceModelId?) =>
+  (
+    speculosUrl = "http://127.0.0.1:5000",
+    isE2E = false,
+    deviceModelId?,
+    options?,
+  ) =>
   ({ config, loggerServiceFactory }) =>
     new SpeculosTransport(
       loggerServiceFactory,
@@ -239,4 +254,5 @@ export const speculosTransportFactory: (
       speculosUrl,
       isE2E,
       deviceModelId,
+      options,
     );
