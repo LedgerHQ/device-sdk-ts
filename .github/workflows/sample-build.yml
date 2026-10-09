@@ -8,6 +8,8 @@ on:
       - packages/**
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
+      - .dockerignore # part of the image build context
+      - .github/workflows/sample-*.yml
 
 concurrency:
   group: sample-build-${{ github.ref }}
