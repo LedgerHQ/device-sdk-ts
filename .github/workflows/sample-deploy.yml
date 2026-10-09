@@ -1,0 +1,75 @@
+name: "[sample] deploy"
+
+# Sets the image tag + chart version on a prod ArgoCD app and syncs it.
+# Called automatically at the end of sample-build (main -> prod, develop -> staging),
+# or run manually (workflow_dispatch). Token is scoped to the dmk-sample ArgoCD project, so it is a separate
+# secret (and var SAMPLE_ARGOCD_SERVER) from mock-server's ARGOCD_TOKEN / ARGOCD_SERVER:
+#   argocd proj role create-token dmk-sample developer  -> secret SAMPLE_ARGOCD_TOKEN
+on:
+  workflow_dispatch:
+    inputs:
+      argocd_app:
+        description: "ArgoCD Application to deploy"
+        required: true
+        default: dmk-sample-staging
+        type: choice
+        options: [dmk-sample-prod, dmk-sample-staging]
+      app_version:
+        description: "Image tag to deploy (tag pushed by build, e.g. 0.1.3-abc1234)"
+        required: true
+      chart_version:
+        description: "web-app chart version (targetRevision)"
+        required: true
+        default: "0.1.4"
+  workflow_call:
+    inputs:
+      argocd_app:
+        required: true
+        type: string
+      app_version:
+        required: true
+        type: string
+      chart_version:
+        required: false
+        type: string
+        default: "0.1.4"
+    secrets:
+      SAMPLE_ARGOCD_TOKEN:
+        required: true
+
+concurrency:
+  group: sample-deploy-${{ inputs.argocd_app }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ledgerhq-device-sdk
+    timeout-minutes: 15
+    steps:
+      - name: Install ArgoCD CLI
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL -o "$HOME/.local/bin/argocd" \
+            https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+          chmod +x "$HOME/.local/bin/argocd"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Deploy
+        env:
+          ARGOCD_SERVER: ${{ vars.SAMPLE_ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.SAMPLE_ARGOCD_TOKEN }}
+          ARGOCD_APP: ${{ inputs.argocd_app }} # must equal the Application's metadata.name
+          APP_VERSION: ${{ inputs.app_version }}
+          CHART_VERSION: ${{ inputs.chart_version }}
+        run: |
+          # --source-position 1: the OCI chart is source #1 on this multi-source app.
+          argocd app set "$ARGOCD_APP" \
+            --source-position 1 \
+            --revision "$CHART_VERSION" \
+            -p image.tag="$APP_VERSION" \
+            --grpc-web
+          argocd app sync "$ARGOCD_APP" --grpc-web
+          argocd app wait "$ARGOCD_APP" --health --timeout 300 --grpc-web

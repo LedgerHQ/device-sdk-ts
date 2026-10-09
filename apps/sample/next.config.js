@@ -2,10 +2,23 @@
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { withSentryConfig } = require("@sentry/nextjs");
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const path = require("path");
 
 const API_URL = process.env.API_URL || "http://127.0.0.1:5328";
 
+// Container (EKS) builds set BUILD_STANDALONE=true; Vercel builds are unaffected.
+const standalone =
+  process.env.BUILD_STANDALONE === "true"
+    ? {
+        output: "standalone",
+        // Trace workspace packages from the monorepo root.
+        outputFileTracingRoot: path.join(__dirname, "../../"),
+      }
+    : {};
+
 const nextConfig = {
+  ...standalone,
   reactStrictMode: true,
   compiler: {
     styledComponents: true,
@@ -23,8 +36,10 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
+        // In the container the Flask API runs in the same pod (API_URL set at
+        // build time); on Vercel it is served by the Python function at /api/.
         destination:
-          process.env.NODE_ENV === "development"
+          process.env.NODE_ENV === "development" || process.env.API_URL
             ? `${API_URL}/api/:path*`
             : "/api/",
       },
