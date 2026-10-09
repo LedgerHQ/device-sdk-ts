@@ -10,20 +10,17 @@ const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
 
 export class HttpSpeculosDatasource implements SpeculosDatasource {
   private readonly baseUrl: string;
-  private readonly clientHeader: string;
+  private readonly headers: Record<string, string>;
   private readonly http: DmkNetworkClient;
 
   constructor(
     baseUrl: string,
     clientHeader: string = `ldmk-transport-speculos/${PACKAGE.version}`,
+    headers: Record<string, string> = {},
   ) {
     this.baseUrl = removeTrailingSlashes(baseUrl);
-    this.clientHeader = clientHeader;
-    this.http = new DmkNetworkClient({
-      headers: {
-        "X-Ledger-Client-Version": this.clientHeader,
-      },
-    });
+    this.headers = { ...headers, "X-Ledger-Client-Version": clientHeader };
+    this.http = new DmkNetworkClient({ headers: this.headers });
   }
 
   async postApdu(apdu: string): Promise<string> {
@@ -64,9 +61,9 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
     const controller = new AbortController();
 
     const headers: HeadersInit = {
+      ...this.headers,
       Accept: "text/event-stream",
       "Cache-Control": "no-cache",
-      "X-Ledger-Client-Version": this.clientHeader,
     };
 
     const response = await fetch(url, {

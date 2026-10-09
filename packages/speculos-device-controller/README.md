@@ -42,6 +42,7 @@ Under the hood, percentages are clamped to [0, 100] and converted to pixels usin
 const deviceClient = deviceControllerClientFactory("http://localhost:4000", {
   timeoutMs: 2000, // optional fetch timeout
   clientHeader: "ldmk-transport-speculos", // optional header
+  headers: { Authorization: `Bearer ${sessionToken}` }, // optional extra headers, e.g. a protected Speculinho session
   screens: {
     // override by default keys
     flex: { width: 256, height: 256 },
@@ -93,6 +94,7 @@ type DeviceControllerClientFactory = (
   opts?: {
     timeoutMs?: number; // fetch timeout (ms)
     clientHeader?: string; // "X-Ledger-Client-Version" header
+    headers?: Record<string, string>; // extra headers sent with every request
     screens?: DeviceScreens<string>;
   },
 ) => DeviceControllerClient;
