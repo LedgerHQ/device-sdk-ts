@@ -57,14 +57,14 @@ const dmk = new DeviceManagementKitBuilder()
   .addTransport(speculosTransportFactory("http://localhost:5001")) // With custom server
   .build();
 
-// With extra headers sent on every request, e.g. a protected Speculinho session token
+// With a bearer token sent on every request (`Authorization: Bearer <token>`), e.g. a protected Speculinho session
 const dmk = new DeviceManagementKitBuilder()
   .addTransport(
     speculosTransportFactory(
       "https://my-run.speculos.ledgerlabs.net",
       false,
       DeviceModelId.NANO_X,
-      { headers: { Authorization: `Bearer ${sessionToken}` } },
+      { bearerToken: sessionToken },
     ),
   )
   .build();

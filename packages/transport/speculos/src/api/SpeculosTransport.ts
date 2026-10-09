@@ -29,7 +29,7 @@ export const speculosIdentifier: TransportIdentifier =
   "SPECULOS_HTTP_TRANSPORT";
 
 export type SpeculosTransportOptions = {
-  headers?: Record<string, string>;
+  bearerToken?: string;
 };
 
 export class SpeculosTransport implements Transport {
@@ -47,14 +47,14 @@ export class SpeculosTransport implements Transport {
     speculosUrl: string,
     isE2E?: boolean,
     deviceModelId: DeviceModelId = DeviceModelId.STAX,
-    { headers }: SpeculosTransportOptions = {},
+    { bearerToken }: SpeculosTransportOptions = {},
   ) {
     this._isE2E = isE2E ?? false;
     this.logger = loggerServiceFactory("SpeculosTransport");
     this._speculosDataSource = new HttpSpeculosDatasource(
       speculosUrl,
       undefined,
-      headers,
+      bearerToken,
     );
     this.speculosDevice = {
       id: "SpeculosID",

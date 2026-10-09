@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { HttpSpeculosDatasource } from "./HttpSpeculosDatasource";
 
-const SESSION_HEADERS = { Authorization: "Bearer session-token" };
+const TOKEN = "session-token";
+const AUTHORIZATION = { Authorization: `Bearer ${TOKEN}` };
 
 const jsonResponse = (body: unknown) =>
   new Response(JSON.stringify(body), {
@@ -36,7 +37,7 @@ describe("HttpSpeculosDatasource", () => {
     expect(init?.headers).not.toHaveProperty("Authorization");
   });
 
-  it("sends the custom headers with APDUs", async () => {
+  it("sends the bearer token with APDUs", async () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(jsonResponse({ data: "9000" }));
@@ -44,7 +45,7 @@ describe("HttpSpeculosDatasource", () => {
     const response = await new HttpSpeculosDatasource(
       "http://speculos",
       "client",
-      SESSION_HEADERS,
+      TOKEN,
     ).postApdu("b001000000");
 
     expect(response).toBe("9000");
@@ -52,14 +53,14 @@ describe("HttpSpeculosDatasource", () => {
       "http://speculos/apdu",
       expect.objectContaining({
         headers: expect.objectContaining({
-          ...SESSION_HEADERS,
+          ...AUTHORIZATION,
           "X-Ledger-Client-Version": "client",
         }),
       }),
     );
   });
 
-  it("sends the custom headers with the availability check", async () => {
+  it("sends the bearer token with the availability check", async () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response(null));
@@ -67,7 +68,7 @@ describe("HttpSpeculosDatasource", () => {
     const available = await new HttpSpeculosDatasource(
       "http://speculos",
       "client",
-      SESSION_HEADERS,
+      TOKEN,
     ).isServerAvailable();
 
     expect(available).toBe(true);
@@ -75,12 +76,12 @@ describe("HttpSpeculosDatasource", () => {
       "http://speculos/events",
       expect.objectContaining({
         method: "GET",
-        headers: expect.objectContaining(SESSION_HEADERS),
+        headers: expect.objectContaining(AUTHORIZATION),
       }),
     );
   });
 
-  it("sends the custom headers with the event stream", async () => {
+  it("sends the bearer token with the event stream", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response('data: {"text":"Ready"}\n\n', {
         headers: { "Content-Type": "text/event-stream" },
@@ -89,7 +90,7 @@ describe("HttpSpeculosDatasource", () => {
     const onEvent = vi.fn();
 
     await new Promise<void>((resolve, reject) => {
-      new HttpSpeculosDatasource("http://speculos", "client", SESSION_HEADERS)
+      new HttpSpeculosDatasource("http://speculos", "client", TOKEN)
         .openEventStream(onEvent, resolve)
         .catch(reject);
     });
@@ -98,7 +99,7 @@ describe("HttpSpeculosDatasource", () => {
       "http://speculos/events?stream=true",
       expect.objectContaining({
         headers: {
-          ...SESSION_HEADERS,
+          ...AUTHORIZATION,
           "X-Ledger-Client-Version": "client",
           Accept: "text/event-stream",
           "Cache-Control": "no-cache",
@@ -106,24 +107,5 @@ describe("HttpSpeculosDatasource", () => {
       }),
     );
     expect(onEvent).toHaveBeenCalledWith({ text: "Ready" });
-  });
-
-  it("does not let custom headers override the client header", async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(jsonResponse({ data: "9000" }));
-
-    await new HttpSpeculosDatasource("http://speculos", "client", {
-      "X-Ledger-Client-Version": "other",
-    }).postApdu("b001000000");
-
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "http://speculos/apdu",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          "X-Ledger-Client-Version": "client",
-        }),
-      }),
-    );
   });
 });

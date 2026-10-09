@@ -57,7 +57,7 @@ export type DeviceControllerClientFactory = (
   opts?: {
     timeoutMs?: number;
     clientHeader?: string;
-    headers?: Record<string, string>;
+    bearerToken?: string;
     screens?: DeviceScreens<string>;
   },
 ) => DeviceControllerClient;
@@ -75,7 +75,7 @@ export const deviceControllerClientFactory: DeviceControllerClientFactory = (
     screens: opts.screens ?? DEFAULT_SCREENS,
     timeoutMs: opts.timeoutMs,
     clientHeader: opts.clientHeader,
-    headers: opts.headers,
+    bearerToken: opts.bearerToken,
   };
 
   const { buttons, touch } = createDefaultControllers(baseURL, resolved);

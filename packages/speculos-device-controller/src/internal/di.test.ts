@@ -63,7 +63,7 @@ describe("createDefaultControllers - fetch configuration", () => {
     );
   });
 
-  it("sends custom headers alongside the client header", async () => {
+  it("sends the bearer token alongside the client header", async () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}"));
@@ -71,10 +71,7 @@ describe("createDefaultControllers - fetch configuration", () => {
     const { touch } = createDefaultControllers("https://localhost:1234", {
       screens: SCREENS,
       clientHeader: "test-client",
-      headers: {
-        Authorization: "Bearer session-token",
-        "X-Ledger-Client-Version": "ignored",
-      },
+      bearerToken: "session-token",
     });
 
     await touch.tap("stax", { x: 50, y: 50 });

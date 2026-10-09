@@ -16,10 +16,13 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
   constructor(
     baseUrl: string,
     clientHeader: string = `ldmk-transport-speculos/${PACKAGE.version}`,
-    headers: Record<string, string> = {},
+    bearerToken?: string,
   ) {
     this.baseUrl = removeTrailingSlashes(baseUrl);
-    this.headers = { ...headers, "X-Ledger-Client-Version": clientHeader };
+    this.headers = {
+      "X-Ledger-Client-Version": clientHeader,
+      ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
+    };
     this.http = new DmkNetworkClient({ headers: this.headers });
   }
 

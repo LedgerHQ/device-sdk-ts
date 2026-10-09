@@ -18,7 +18,7 @@ export type DeviceControllerOptions<K extends string = string> = {
   screens: DeviceScreens<K>;
   timeoutMs?: number;
   clientHeader?: string;
-  headers?: Record<string, string>;
+  bearerToken?: string;
 };
 
 export interface HttpClient {

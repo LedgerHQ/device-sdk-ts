@@ -50,12 +50,12 @@ describe("deviceControllerClientFactory", () => {
     );
   });
 
-  it("sends the custom headers with every request", async () => {
+  it("sends the bearer token with every request", async () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}"));
     const deviceClient = deviceControllerClientFactory("http://localhost:0", {
-      headers: { Authorization: "Bearer session-token" },
+      bearerToken: "session-token",
     });
 
     await deviceClient.buttonFactory().press("both");
