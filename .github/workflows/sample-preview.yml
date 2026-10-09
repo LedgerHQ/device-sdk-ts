@@ -10,6 +10,8 @@ on:
       - packages/**
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
+      - .dockerignore
+      - .github/workflows/sample-*.yml
 
 concurrency:
   group: sample-preview-${{ github.event.pull_request.number }}

@@ -24,7 +24,10 @@ ENV NEXT_PUBLIC_GATING_TOKEN=$NEXT_PUBLIC_GATING_TOKEN \
     BUILD_STANDALONE=true \
     API_URL=http://127.0.0.1:5328 \
     NEXT_TELEMETRY_DISABLED=1
-RUN pnpm turbo run build --filter=@ledgerhq/device-management-kit-sample
+# --env-mode=loose: turbo 2 defaults to strict env mode, which drops any env var not
+# declared in turbo.json — BUILD_STANDALONE / API_URL / DMK_CONFIG_TRANSPORT above
+# would never reach `next build` (no .next/standalone, wrong /api rewrite target).
+RUN pnpm turbo run build --env-mode=loose --filter=@ledgerhq/device-management-kit-sample
 
 # ── runtime ───────────────────────────────────────────────────────────────────
 FROM jfrog.ledgerlabs.net/ossproxy-oci-proxy-dockerio/nikolaik/python-nodejs:python3.12-nodejs24-slim
