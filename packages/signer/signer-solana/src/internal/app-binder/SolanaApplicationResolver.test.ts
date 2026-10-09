@@ -1,4 +1,8 @@
 import {
+  resolveContactsVersionRequirements,
+  SOLANA_APP_NAME,
+} from "@ledgerhq/device-contacts-kit";
+import {
   type AppConfig,
   DeviceModelId,
   DeviceSessionStateType,
@@ -11,6 +15,7 @@ import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 
 import {
   isSolanaSignerFeatureSupported,
+  SOLANA_SIGNER_FEATURES,
   SolanaApplicationResolver,
 } from "./SolanaApplicationResolver";
 
@@ -98,5 +103,60 @@ describe("isSolanaSignerFeatureSupported", () => {
       new Set(["spl"]),
     );
     expect(result).toBe(false);
+  });
+});
+
+describe("contacts feature", () => {
+  const appConfig: AppConfiguration = {
+    blindSigningEnabled: false,
+    pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
+    version: "99.0.0",
+  };
+  const apiWith = (appName: string, modelId: DeviceModelId) =>
+    ({
+      getDeviceSessionState: () =>
+        createReadyState(appName, appConfig.version, modelId),
+    }) as unknown as InternalApi;
+
+  it("takes its versions from contacts-kit", () => {
+    const flex = resolveContactsVersionRequirements(DeviceModelId.FLEX);
+    if (!flex.supported) throw new Error("Flex must support contacts");
+
+    expect(SOLANA_SIGNER_FEATURES.contacts.minVersion).toBe(
+      flex.minAppVersion[SOLANA_APP_NAME],
+    );
+    expect(SOLANA_SIGNER_FEATURES.contacts.excludedModels).toEqual([
+      DeviceModelId.NANO_S,
+    ]);
+  });
+
+  it("is supported by the Solana app on a model with contacts", () => {
+    expect(
+      isSolanaSignerFeatureSupported(
+        apiWith("Solana", DeviceModelId.FLEX),
+        "contacts",
+        appConfig,
+      ),
+    ).toBe(true);
+  });
+
+  it("is not supported on a model without contacts", () => {
+    expect(
+      isSolanaSignerFeatureSupported(
+        apiWith("Solana", DeviceModelId.NANO_S),
+        "contacts",
+        appConfig,
+      ),
+    ).toBe(false);
+  });
+
+  it("is not supported while Exchange orchestrates the signature", () => {
+    expect(
+      isSolanaSignerFeatureSupported(
+        apiWith("Exchange", DeviceModelId.FLEX),
+        "contacts",
+        appConfig,
+      ),
+    ).toBe(false);
   });
 });

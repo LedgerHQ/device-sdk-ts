@@ -32,6 +32,13 @@ export type { MessageOptions } from "@api/model/MessageOptions";
 export { SignMessageVersion } from "@api/model/MessageOptions";
 export type { Signature } from "@api/model/Signature";
 export {
+  EMPTY_SOLANA_ADDRESS_BOOK,
+  type SolanaAddressBook,
+  type SolanaContactGroup,
+  type SolanaExternalAddress,
+  type SolanaLedgerAccountContact,
+} from "@api/model/SolanaAddressBook";
+export {
   isSolanaAppError,
   SolanaAppCommandError,
 } from "@api/model/SolanaAppErrors";
