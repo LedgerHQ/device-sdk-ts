@@ -154,6 +154,144 @@ describe("serializeTransaction v5 header", () => {
   });
 });
 
+describe("getZcashBranchId per network", () => {
+  const OVERWINTER = Uint8Array.of(0x19, 0x1b, 0xa8, 0x5b);
+
+  it.each([
+    [3428143, [0x5b, 0x16, 0xa5, 0x37]],
+    [3364600, [0x30, 0xf3, 0x37, 0x54]],
+    [3146400, [0xf0, 0x4d, 0xec, 0x4d]],
+    [2726400, [0x55, 0x10, 0xe7, 0xc8]],
+    [1687104, [0xb4, 0xd0, 0xd6, 0xc2]],
+    [1046400, [0xa6, 0x75, 0xff, 0xe9]],
+    [903000, [0x0b, 0x23, 0xb9, 0xf5]],
+    [653600, [0x60, 0x0e, 0xb4, 0x2b]],
+    [419200, [0xbb, 0x09, 0xb8, 0x76]],
+  ])(
+    "mainnet height %i matches with and without explicit network",
+    (height, bytes) => {
+      expect(getZcashBranchId(height, "mainnet")).toEqual(
+        Uint8Array.from(bytes),
+      );
+      expect(getZcashBranchId(height)).toEqual(Uint8Array.from(bytes));
+    },
+  );
+
+  it("mainnet has no NU7 entry: far-future height stays on NU6.3", () => {
+    expect(getZcashBranchId(5000000, "mainnet")).toEqual(
+      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
+    );
+  });
+
+  it.each([
+    [
+      "NU7",
+      4465026,
+      [0xd9, 0x0a, 0x19, 0x77],
+      4465025,
+      [0x5b, 0x16, 0xa5, 0x37],
+    ],
+    [
+      "NU6.3",
+      4134000,
+      [0x5b, 0x16, 0xa5, 0x37],
+      4133999,
+      [0x30, 0xf3, 0x37, 0x54],
+    ],
+    [
+      "NU6.2",
+      4052000,
+      [0x30, 0xf3, 0x37, 0x54],
+      4051999,
+      [0xf0, 0x4d, 0xec, 0x4d],
+    ],
+    [
+      "NU6.1",
+      3536500,
+      [0xf0, 0x4d, 0xec, 0x4d],
+      3536499,
+      [0x55, 0x10, 0xe7, 0xc8],
+    ],
+    [
+      "NU6",
+      2976000,
+      [0x55, 0x10, 0xe7, 0xc8],
+      2975999,
+      [0xb4, 0xd0, 0xd6, 0xc2],
+    ],
+    [
+      "NU5",
+      1842420,
+      [0xb4, 0xd0, 0xd6, 0xc2],
+      1842419,
+      [0xa6, 0x75, 0xff, 0xe9],
+    ],
+    [
+      "Canopy",
+      1028500,
+      [0xa6, 0x75, 0xff, 0xe9],
+      1028499,
+      [0x0b, 0x23, 0xb9, 0xf5],
+    ],
+    [
+      "Heartwood",
+      903800,
+      [0x0b, 0x23, 0xb9, 0xf5],
+      903799,
+      [0x60, 0x0e, 0xb4, 0x2b],
+    ],
+    [
+      "Blossom",
+      584000,
+      [0x60, 0x0e, 0xb4, 0x2b],
+      583999,
+      [0xbb, 0x09, 0xb8, 0x76],
+    ],
+    [
+      "Sapling",
+      280000,
+      [0xbb, 0x09, 0xb8, 0x76],
+      279999,
+      [0x19, 0x1b, 0xa8, 0x5b],
+    ],
+  ])(
+    "testnet %s activates at its height",
+    (_name, height, bytes, belowHeight, belowBytes) => {
+      expect(getZcashBranchId(height, "testnet")).toEqual(
+        Uint8Array.from(bytes),
+      );
+      expect(getZcashBranchId(belowHeight, "testnet")).toEqual(
+        Uint8Array.from(belowBytes),
+      );
+    },
+  );
+
+  it("testnet null and undefined default to NU7", () => {
+    expect(getZcashBranchId(null, "testnet")).toEqual(
+      Uint8Array.of(0xd9, 0x0a, 0x19, 0x77),
+    );
+    expect(getZcashBranchId(undefined, "testnet")).toEqual(
+      Uint8Array.of(0xd9, 0x0a, 0x19, 0x77),
+    );
+  });
+
+  it("mainnet null and undefined default to NU6.3", () => {
+    expect(getZcashBranchId(null, "mainnet")).toEqual(
+      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
+    );
+    expect(getZcashBranchId(undefined, "mainnet")).toEqual(
+      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
+    );
+  });
+
+  it("returns the Overwinter branch id below Sapling on both networks", () => {
+    expect(getZcashBranchId(0, "mainnet")).toEqual(OVERWINTER);
+    expect(getZcashBranchId(419199, "mainnet")).toEqual(OVERWINTER);
+    expect(getZcashBranchId(0, "testnet")).toEqual(OVERWINTER);
+    expect(getZcashBranchId(279999, "testnet")).toEqual(OVERWINTER);
+  });
+});
+
 describe("resolveExpiryHeightBytes", () => {
   it("returns 4 zero bytes when expiryHeight is omitted", () => {
     expect(resolveExpiryHeightBytes()).toEqual(new Uint8Array(4));

@@ -241,18 +241,18 @@ export class InMemorySessionRepository implements SessionRepository {
   setPendingLanguageOperation(
     record: SessionRecord,
     deviceId: string,
-    bytes: number,
+    language: string | undefined,
   ): void {
-    record.pendingLanguageOperations.set(deviceId, bytes);
+    record.pendingLanguageOperations.set(deviceId, language);
   }
 
   takePendingLanguageOperation(
     record: SessionRecord,
     deviceId: string,
-  ): Maybe<number> {
-    const bytes = record.pendingLanguageOperations.get(deviceId);
+  ): Maybe<string> {
+    const language = record.pendingLanguageOperations.get(deviceId);
     record.pendingLanguageOperations.delete(deviceId);
-    return Maybe.fromNullable(bytes);
+    return Maybe.fromNullable(language);
   }
 
   setPendingFirmwareOperation(

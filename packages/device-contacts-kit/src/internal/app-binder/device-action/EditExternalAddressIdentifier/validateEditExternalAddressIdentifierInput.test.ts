@@ -68,6 +68,43 @@ describe("validateEditExternalAddressIdentifierInput", () => {
     expect(error).toBeInstanceOf(ContactsValidationError);
   });
 
+  describe("Solana", () => {
+    const SOLANA_INPUT: EditExternalAddressIdentifierInput = {
+      ...VALID_INPUT,
+      previousIdentifier: new Uint8Array(32).fill(0x11),
+      newIdentifier: new Uint8Array(32).fill(0x22),
+      blockchainFamily: "solana",
+      chainId: undefined,
+    };
+
+    it("accepts 32-byte public keys without chainId", () => {
+      expect(
+        validateEditExternalAddressIdentifierInput(SOLANA_INPUT),
+      ).toBeNull();
+    });
+
+    it.each(["previousIdentifier", "newIdentifier"] as const)(
+      "rejects a %s that is not 32 bytes",
+      (field) => {
+        const error = validateEditExternalAddressIdentifierInput({
+          ...SOLANA_INPUT,
+          [field]: new Uint8Array(20),
+        });
+        expect(error).toBeInstanceOf(ContactsValidationError);
+        expect(error?.message).toContain(field);
+      },
+    );
+
+    it("rejects a chainId", () => {
+      expect(
+        validateEditExternalAddressIdentifierInput({
+          ...SOLANA_INPUT,
+          chainId: 1n,
+        }),
+      ).toBeInstanceOf(ContactsValidationError);
+    });
+  });
+
   it("rejects a groupHandle of the wrong length", () => {
     const error = validateEditExternalAddressIdentifierInput({
       ...VALID_INPUT,

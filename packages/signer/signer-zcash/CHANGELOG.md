@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+### Minor Changes
+
+- [#1952](https://github.com/LedgerHQ/device-sdk-ts/pull/1952) [`f541791`](https://github.com/LedgerHQ/device-sdk-ts/commit/f54179162e330b71f363538560affcfd4486fe68) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Select the Zcash consensus branch id per network: signTransaction accepts an optional `network` ("mainnet" by default), and testnet transactions use testnet activation heights, including NU7.
+
 ## 0.7.1
 
 ### Patch Changes

@@ -1,9 +1,13 @@
+import { Right } from "purify-ts";
+
 import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
 } from "./config/model/ContextModuleConfig";
 import { type TypedDataContext } from "./modules/ethereum/model/TypedDataContext";
 import type { TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
+import { DefaultSignReporter } from "./modules/multichain/sign-reporter/domain/DefaultSignReporter";
+import { type SignReportParams } from "./modules/multichain/sign-reporter/model/SignReportParams";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
@@ -379,6 +383,45 @@ describe("DefaultContextModule", () => {
         ClearSignContextType.ETHEREUM_TOKEN,
       );
       expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
+    });
+  });
+
+  describe("signReport", () => {
+    const params = { chain: "ETH" } as SignReportParams;
+
+    it.each([ContextModuleChainID.Ethereum, ContextModuleChainID.Solana])(
+      "should delegate to the bound sign reporter for %s",
+      async (chain) => {
+        // GIVEN
+        const reportSpy = vi
+          .spyOn(DefaultSignReporter.prototype, "report")
+          .mockResolvedValue(Right(undefined));
+        const contextModule = new DefaultContextModule({
+          ...defaultContextModuleConfig,
+          chain,
+        });
+
+        // WHEN
+        await contextModule.signReport(params);
+
+        // THEN
+        expect(reportSpy).toHaveBeenCalledWith(params);
+      },
+    );
+
+    it("should be a no-op when no sign reporter is bound", async () => {
+      // GIVEN
+      const reportSpy = vi.spyOn(DefaultSignReporter.prototype, "report");
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        chain: ContextModuleChainID.Tron,
+      });
+
+      // WHEN
+      await contextModule.signReport(params);
+
+      // THEN
+      expect(reportSpy).not.toHaveBeenCalled();
     });
   });
 });

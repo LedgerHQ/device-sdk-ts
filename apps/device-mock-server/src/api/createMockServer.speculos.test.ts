@@ -72,6 +72,13 @@ const route = (url: string, init?: RequestInit): Response => {
     });
   }
   if (url.endsWith("/release")) return fakeResponse({});
+  if (url.endsWith("/catalogue")) {
+    return fakeResponse({
+      devices: {
+        nanox: { firmware: { "2.7.1": { Bitcoin: ["2.4.6", "2.5.0"] } } },
+      },
+    });
+  }
   if (url.startsWith(`${EMULATOR_URL}/`) && !emulatorAlive) {
     return fakeResponse(
       { error: "no healthy upstream" },
@@ -265,5 +272,27 @@ describe("createMockServer + Speculos (HTTP contract)", () => {
     // Not installed -> 6807, and no acquire attempted.
     expect(((await res.json()) as { response: string }).response).toBe("6807");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("narrows the Speculos catalogue to a model and firmware, without auth", async () => {
+    const res = await api("/speculos/catalogue/nanoX/2.7.1");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      apps: { Bitcoin: ["2.4.6", "2.5.0"] },
+    });
+
+    const unknownFirmware = await api("/speculos/catalogue/nanoX/9.9.9");
+    expect(await unknownFirmware.json()).toEqual({ apps: {} });
+  });
+
+  it("lists the firmware Speculos carries for a model, without auth", async () => {
+    const res = await api("/speculos/catalogue/nanoX");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ firmware: ["2.7.1"] });
+  });
+
+  it("rejects a catalogue lookup for a model Speculos cannot emulate (400)", async () => {
+    const res = await api("/speculos/catalogue/unknown/1.0.0");
+    expect(res.status).toBe(400);
   });
 });

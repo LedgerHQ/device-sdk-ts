@@ -18,12 +18,6 @@ const EARLY_CHECK_ENTER_WITH_LC = "e003000000";
 const firmwareResolver: FirmwareUpdateResolver = {
   resolveNextVersion: vi.fn().mockResolvedValue(Maybe.empty()),
   resolveCurrentMcuVersion: vi.fn().mockResolvedValue(Maybe.of("2.30")),
-  // The Flex French pack is 32128 bytes; every other size is unknown to it.
-  resolveLanguageBySize: vi
-    .fn()
-    .mockImplementation(({ bytes }: { bytes: number }) =>
-      Promise.resolve(bytes === 32128 ? Maybe.of("french") : Maybe.empty()),
-    ),
 } as unknown as FirmwareUpdateResolver;
 
 const setup = (onboarded?: boolean) => {
@@ -216,7 +210,8 @@ describe("OsApduService rename", () => {
 });
 
 describe("OsApduService language packs", () => {
-  // A load script: create announcing 32128 bytes (0x7d80), a chunk, the commit.
+  // A load script: create naming French (p1 01) and announcing 32128 bytes
+  // (0x7d80), a chunk, the commit.
   const LOAD_CREATE = "e03001000400007d80";
   const LOAD_CHUNK = "e0310100040011223344";
   const LOAD_COMMIT = "e032010004aabbccdd";
@@ -240,7 +235,7 @@ describe("OsApduService language packs", () => {
     expect(await os.resolve(record, device, LIST_FIRST)).toBe("9000");
   });
 
-  it("installs the pack the announced size identifies", async () => {
+  it("installs the language the create command names", async () => {
     const { os, repo, record, device } = setup();
 
     await install(os, record, device);
@@ -276,10 +271,25 @@ describe("OsApduService language packs", () => {
     expect(before).toContain("0100");
   });
 
-  it("still succeeds when the size matches no known pack", async () => {
+  // Nano X 2.8.0 French, Spanish and Turkish packs are all 9280 bytes (0x2440).
+  it.each([
+    ["e03001000400002440", "french"],
+    ["e03002000400002440", "spanish"],
+    ["e03006000400002440", "turkish"],
+  ])("tells same-size packs apart (%s)", async (create, language) => {
     const { os, repo, record, device } = setup();
 
-    await install(os, record, device, "e03001000400000001");
+    await install(os, record, device, create);
+
+    expect(repo.findDevice(record, device.id).unsafeCoerce().language).toBe(
+      language,
+    );
+  });
+
+  it("still succeeds when the language is unknown", async () => {
+    const { os, repo, record, device } = setup();
+
+    await install(os, record, device, "e030fe000400007d80");
 
     expect(
       repo.findDevice(record, device.id).unsafeCoerce().language,

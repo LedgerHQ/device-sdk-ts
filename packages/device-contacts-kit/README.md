@@ -55,6 +55,18 @@ observable.subscribe((state) => {
 });
 ```
 
+`identifier` is the address as raw bytes; converting an address string to bytes (hex for
+Ethereum, base58 for Tron and Solana) is up to the host. The kit checks it against the blockchain
+family before anything reaches the device:
+
+| `blockchainFamily` | `identifier`            | `chainId`   | Embedded app |
+| ------------------ | ----------------------- | ----------- | ------------ |
+| `"ethereum"`       | 20-byte address         | Required    | `Ethereum`   |
+| `"tron"`           | Non-empty address bytes | Not used    | `Tron`       |
+| `"solana"`         | 32-byte public key      | Not allowed | `Solana`     |
+
+The same rules apply to the edit operations and to `buildProvideContactPayload`.
+
 ## Renaming a contact
 
 `renameContact` runs the device's EDIT CONTACT NAME operation. Unlike the register operations, this
@@ -116,8 +128,8 @@ if (requirement.supported) {
 
 The two axes are checked independently, never as one combined verdict: `minOsVersion` gates
 OS-owned operations (served by the device OS, e.g. renaming a contact from the dashboard) and
-`minAppVersion` gates app-owned operations (served by the embedded app, keyed by app name — v1
-ships Ethereum only). A device can satisfy one and not the other, and each Contacts operation
+`minAppVersion` gates app-owned operations (served by the embedded app, keyed by app name: `ETHEREUM_APP_NAME`,
+`TRON_APP_NAME`, `SOLANA_APP_NAME`). A device can satisfy one and not the other, and each Contacts operation
 depends on exactly one of them, so collapsing them into a single "is Contacts supported" answer
 would reject devices that can serve the operation the host actually wants.
 

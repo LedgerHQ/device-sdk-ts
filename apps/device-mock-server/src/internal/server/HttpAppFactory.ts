@@ -6,6 +6,7 @@ import { appTypes } from "@internal/di/types";
 import { serverTypes } from "@internal/server/di/serverTypes";
 import { requestLogger } from "@internal/server/middleware/requestLogger";
 import { type AuthRoutes } from "@internal/server/routes/AuthRoutes";
+import { type CatalogueRoutes } from "@internal/server/routes/CatalogueRoutes";
 import { type DeviceRoutes } from "@internal/server/routes/DeviceRoutes";
 import { type SessionsRoutes } from "@internal/server/routes/SessionsRoutes";
 import { type TransferRoutes } from "@internal/server/routes/TransferRoutes";
@@ -19,6 +20,8 @@ export class HttpAppFactory {
     @inject(sessionTypes.Repository)
     private readonly repository: SessionRepository,
     @inject(serverTypes.AuthRoutes) private readonly auth: AuthRoutes,
+    @inject(serverTypes.CatalogueRoutes)
+    private readonly catalogue: CatalogueRoutes,
     @inject(serverTypes.SessionsRoutes)
     private readonly sessions: SessionsRoutes,
     @inject(serverTypes.DeviceRoutes) private readonly devices: DeviceRoutes,
@@ -72,6 +75,7 @@ export class HttpAppFactory {
     });
 
     app.use(this.auth.build());
+    app.use(this.catalogue.build());
 
     // Ahead of the routers below, which demand a bearer token on every request
     // they see. A file the UI does not own falls through to them untouched.

@@ -56,11 +56,11 @@ export interface SessionRecord {
    */
   pendingFirmwareOperations: Map<string, string>;
   /**
-   * Byte size announced by an in-flight language-pack load, awaiting commit
-   * when the last load command is acknowledged: deviceId -> bytes. The size is
-   * what identifies the language, since the load script never names it.
+   * Language named by an in-flight language-pack load, awaiting commit when
+   * the last load command is acknowledged: deviceId -> language, `undefined`
+   * when the mock does not know it.
    */
-  pendingLanguageOperations: Map<string, number>;
+  pendingLanguageOperations: Map<string, string | undefined>;
   /**
    * Per-device onboarding simulation state, present only for devices created
    * with `onboarded: false`: deviceId -> current onboarding state.

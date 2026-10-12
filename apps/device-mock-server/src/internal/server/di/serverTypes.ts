@@ -3,5 +3,6 @@ export const serverTypes = {
   SessionsRoutes: Symbol.for("SessionsRoutes"),
   DeviceRoutes: Symbol.for("DeviceRoutes"),
   TransferRoutes: Symbol.for("TransferRoutes"),
+  CatalogueRoutes: Symbol.for("CatalogueRoutes"),
   HttpAppFactory: Symbol.for("HttpAppFactory"),
 };

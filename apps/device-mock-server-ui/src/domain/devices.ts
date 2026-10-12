@@ -1,16 +1,15 @@
 import { Apex, Flex, Nano, Stax } from "@ledgerhq/lumen-ui-react/symbols";
 
 /**
- * For Speculos proxying, firmware and app versions must exist in coin-apps as
- * `/apps/{device}/{firmware}/{App}/app_{version}.elf` — Speculinho builds that
- * path verbatim. Pure mock sessions accept any value.
+ * For Speculos proxying, firmware and app versions must be in Speculinho's
+ * catalogue, which the device dialog offers. Pure mock sessions accept any
+ * value.
  */
 export interface DeviceModel {
   /** `device_type` sent to the server (a DMK `DeviceModelId` value). */
   readonly value: string;
   readonly label: string;
   readonly defaultName: string;
-  readonly defaultFirmware: string;
   readonly mask: number;
   readonly icon: typeof Nano;
   /** Whether Speculinho can start a real Speculos emulator for this model. */
@@ -27,7 +26,6 @@ export const DEVICE_MODELS: DeviceModel[] = [
     value: "nanoS",
     label: "Nano S",
     defaultName: "Ledger Nano S",
-    defaultFirmware: "2.1.0",
     mask: 0x31100000,
     icon: Nano,
     speculos: false,
@@ -36,7 +34,6 @@ export const DEVICE_MODELS: DeviceModel[] = [
     value: "nanoSP",
     label: "Nano S Plus",
     defaultName: "Ledger Nano S Plus",
-    defaultFirmware: "1.6.1",
     mask: 0x33100000,
     icon: Nano,
     speculos: true,
@@ -46,7 +43,6 @@ export const DEVICE_MODELS: DeviceModel[] = [
     value: "nanoX",
     label: "Nano X",
     defaultName: "Ledger Nano X",
-    defaultFirmware: "2.7.1",
     mask: 0x33000000,
     icon: Nano,
     speculos: true,
@@ -56,7 +52,6 @@ export const DEVICE_MODELS: DeviceModel[] = [
     value: "stax",
     label: "Stax",
     defaultName: "Ledger Stax",
-    defaultFirmware: "1.10.1",
     mask: 0x33200000,
     icon: Stax,
     speculos: true,
@@ -66,7 +61,6 @@ export const DEVICE_MODELS: DeviceModel[] = [
     value: "flex",
     label: "Flex",
     defaultName: "Ledger Flex",
-    defaultFirmware: "1.6.1",
     mask: 0x33300000,
     icon: Flex,
     speculos: true,
@@ -76,7 +70,6 @@ export const DEVICE_MODELS: DeviceModel[] = [
     value: "apexp",
     label: "Apex",
     defaultName: "Ledger Apex",
-    defaultFirmware: "1.1.1",
     mask: 0x33400000,
     icon: Apex,
     speculos: true,

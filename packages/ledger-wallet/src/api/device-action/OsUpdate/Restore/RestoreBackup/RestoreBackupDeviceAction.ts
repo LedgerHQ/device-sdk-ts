@@ -675,10 +675,27 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
             }),
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) => ({
-                  ..._.event.snapshot.context.intermediateValue,
-                  step: _.context.intermediateValue.step,
-                }),
+                intermediateValue: (_) => {
+                  const { intermediateValue } = _.event.snapshot.context;
+                  // With master consent granted, the user already approved the restore:
+                  // do not forward the hardcoded confirm load/commit image
+                  // interactions, but keep any other required interaction.
+                  const shouldHideInteraction =
+                    _.context._internalState.isMasterConsentGranted &&
+                    (intermediateValue.requiredUserInteraction ===
+                      UserInteractionRequired.ConfirmLoadImage ||
+                      intermediateValue.requiredUserInteraction ===
+                        UserInteractionRequired.ConfirmCommitImage);
+                  return {
+                    ...intermediateValue,
+                    ...(shouldHideInteraction
+                      ? {
+                          requiredUserInteraction: UserInteractionRequired.None,
+                        }
+                      : {}),
+                    step: _.context.intermediateValue.step,
+                  };
+                },
               }),
             },
             onDone: {

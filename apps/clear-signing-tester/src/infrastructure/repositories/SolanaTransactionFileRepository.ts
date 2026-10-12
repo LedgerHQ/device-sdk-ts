@@ -12,6 +12,9 @@ type RawTransactionData = {
   rawTx: string;
   description?: string;
   expectedTexts?: string[];
+  unexpectedTexts?: string[];
+  expectBlindSigned?: boolean;
+  skipCraft?: boolean;
 };
 
 @injectable()
@@ -45,6 +48,9 @@ export class SolanaTransactionFileRepository
         rawTx: rawTx.rawTx,
         description: rawTx.description || `Transaction ${index + 1}`,
         expectedTexts: rawTx.expectedTexts,
+        unexpectedTexts: rawTx.unexpectedTexts,
+        expectBlindSigned: rawTx.expectBlindSigned,
+        skipCraft: rawTx.skipCraft,
       };
     });
   }

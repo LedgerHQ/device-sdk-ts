@@ -131,7 +131,6 @@ describe("HttpSignReporterDatasource", () => {
           isBlindSign: true,
           sessionId: null,
           chainData: {
-            chain: "SOL",
             signatureId: solParams.signatureId,
             signingMethod: "sol_signTransaction",
             targetAddress: solParams.targetAddress,
@@ -165,7 +164,6 @@ describe("HttpSignReporterDatasource", () => {
           isBlindSign: false,
           sessionId: null,
           chainData: {
-            chain: "ETH",
             signatureId: ethParams.signatureId,
             signingMethod: "eth_signTransaction",
             targetAddress: ethParams.targetAddress,

@@ -10,7 +10,9 @@ import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnal
 
 import { type StateHandler, type StateHandlerResult } from "./StateHandler";
 
-const NAVIGATION_MAX_ATTEMPTS = 20;
+// Solana 1.17 reviews a multi-instruction transaction one instruction at a
+// time, so a stake create-and-delegate runs past 20 screens on Nano X.
+const NAVIGATION_MAX_ATTEMPTS = 40;
 const NAVIGATION_DELAY = 800;
 const WAIT_FOR_TX_PAGE_ATTEMPTS = 8;
 const WAIT_FOR_TX_PAGE_DELAY = 1500;

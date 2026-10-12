@@ -37,8 +37,9 @@ export const SET_DEVICE_NAME_PREFIX = "e0d40000";
  * Language packs. `ListLanguagePack` (ins=0x34) is paged: p1 `00` asks for the
  * first entry, `01` for the next. `DeleteLanguagePack` (ins=0x33) carries the
  * pack id in p1, or `ff` for every pack. Installing one replays a script of
- * load commands — create (ins=0x30, whose data is the pack's byte size), chunk
- * (ins=0x31) and commit (ins=0x32) — the same shape as an app install.
+ * load commands — create (ins=0x30, whose p1 is the language id and data the
+ * pack's byte size), chunk (ins=0x31) and commit (ins=0x32) — the same shape as
+ * an app install.
  */
 export const LIST_LANGUAGE_PACK_PREFIX = "e034";
 export const DELETE_LANGUAGE_PACK_PREFIX = "e033";
@@ -328,18 +329,21 @@ export function deriveListLanguagePack(device: Device, apdu: string): string {
 }
 
 /**
- * The byte size a language-pack load announces in its create command, or `null`
- * when the APDU does not carry the expected 4-byte length. The install script
- * names the language nowhere, so this size is the only handle on which pack is
- * arriving.
+ * The language a language-pack load names in p1 of its create command:
+ * `undefined` for an id the mock does not know, or `null` when the APDU does
+ * not carry the expected 4-byte size. The size cannot stand in for the id:
+ * packs of different languages can be the same size.
  */
-export function parseLanguagePackSize(apdu: string): number | null {
+export function parseLanguagePackLanguage(
+  apdu: string,
+): string | undefined | null {
   const declared = parseInt(apdu.slice(8, 10), 16);
   const data = apdu.slice(10);
   if (declared !== 4 || data.length !== 8) {
     return null;
   }
-  return parseInt(data, 16);
+  const id = parseInt(apdu.slice(4, 6), 16);
+  return Object.keys(LANGUAGE_IDS).find((name) => LANGUAGE_IDS[name] === id);
 }
 
 /**

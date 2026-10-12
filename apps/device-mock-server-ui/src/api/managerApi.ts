@@ -26,10 +26,6 @@ interface ApplicationDto {
   readonly hash?: string;
 }
 
-interface DeviceVersionDto {
-  readonly id?: number;
-}
-
 /**
  * The target id a device reports in GetOsVersion, derived from its model's
  * memory mask the way the mock server derives it. Every lookup here is keyed
@@ -38,8 +34,6 @@ interface DeviceVersionDto {
 const targetIdForMask = (mask: number): number => (mask & 0xffff0000) | 0x0004;
 
 const appsCache = new Map<string, CatalogApp[]>();
-const deviceVersionCache = new Map<number, number>();
-const firmwareCache = new Map<string, boolean>();
 
 export class ManagerApiError extends Error {
   constructor(message: string) {
@@ -84,65 +78,6 @@ export async function listCatalogApps(
 
   appsCache.set(key, entries);
   return entries;
-}
-
-/**
- * Whether an OS version was ever released for a model. Asked because an
- * unreleased one returns an empty app list, which reads as "no apps" when the
- * answer is "no such OS".
- */
-export async function firmwareExists(
-  mask: number,
-  firmwareVersion: string,
-  rcProvider?: number,
-): Promise<boolean> {
-  const targetId = targetIdForMask(mask);
-  const key = `${targetId}:${firmwareVersion}`;
-  const cached = firmwareCache.get(key);
-  if (cached !== undefined) return cached;
-
-  const deviceVersion = await resolveDeviceVersion(targetId);
-  let exists = false;
-  for (const provider of providersFor(rcProvider)) {
-    const response = await get("get_firmware_version", {
-      device_version: String(deviceVersion),
-      version_name: firmwareVersion,
-      provider: String(provider),
-    });
-    // 404 is the answer "no such OS version", not a failure.
-    if (!response.ok && response.status !== 404) {
-      throw new ManagerApiError(
-        `The Manager API answered ${response.status} for the OS version`,
-      );
-    }
-    if (response.ok) {
-      exists = true;
-      break;
-    }
-  }
-
-  firmwareCache.set(key, exists);
-  return exists;
-}
-
-async function resolveDeviceVersion(targetId: number): Promise<number> {
-  const cached = deviceVersionCache.get(targetId);
-  if (cached !== undefined) return cached;
-
-  const response = await get("get_device_version", {
-    target_id: String(targetId),
-    provider: String(DEFAULT_PROVIDER),
-  });
-  if (!response.ok) {
-    throw new ManagerApiError("The Manager API does not know this model");
-  }
-
-  const { id } = (await response.json()) as DeviceVersionDto;
-  if (id === undefined) {
-    throw new ManagerApiError("The Manager API returned no device version");
-  }
-  deviceVersionCache.set(targetId, id);
-  return id;
 }
 
 function toEntries(apps: ApplicationDto[]): CatalogApp[] {

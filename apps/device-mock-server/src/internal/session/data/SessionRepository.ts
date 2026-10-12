@@ -104,19 +104,19 @@ export interface SessionRepository {
   ): Maybe<Device>;
 
   /**
-   * Arm a device's in-flight language-pack load with the byte size its create
-   * command announced — the only thing that says which language is arriving.
+   * Arm a device's in-flight language-pack load with the language its create
+   * command named, or `undefined` when the mock does not know that language.
    */
   setPendingLanguageOperation(
     record: SessionRecord,
     deviceId: string,
-    bytes: number,
+    language: string | undefined,
   ): void;
-  /** Read and clear a device's armed language-pack size. */
+  /** Read and clear a device's armed language-pack language. */
   takePendingLanguageOperation(
     record: SessionRecord,
     deviceId: string,
-  ): Maybe<number>;
+  ): Maybe<string>;
 
   // --- Speculos proxy -------------------------------------------------------
   findProxy(

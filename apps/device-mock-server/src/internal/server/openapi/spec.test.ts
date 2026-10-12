@@ -28,6 +28,8 @@ describe("buildOpenApiSpec", () => {
         "/devices/{id}/apdu",
         "/devices/{id}/mocks",
         "/devices/{id}/speculos",
+        "/speculos/catalogue/{deviceType}",
+        "/speculos/catalogue/{deviceType}/{firmwareVersion}",
         "/export",
         "/import",
       ]),
