@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-mockserver-react",
-  "private": false,
+  "private": true,
   "version": "0.1.0",
   "license": "Apache-2.0",
   "repository": {
