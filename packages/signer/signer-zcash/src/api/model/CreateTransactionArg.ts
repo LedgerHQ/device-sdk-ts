@@ -29,6 +29,8 @@ export type LegacyTransaction = {
   serializedPreviousTransactionOverride?: Uint8Array;
 };
 
+export type ZcashNetwork = "mainnet" | "testnet";
+
 export type LegacyCreateTransactionArg = {
   inputs: Array<
     [
@@ -47,4 +49,5 @@ export type LegacyCreateTransactionArg = {
   sigHashType?: number;
   additionals: string[];
   expiryHeight?: Uint8Array;
+  network?: ZcashNetwork;
 };
