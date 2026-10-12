@@ -1,5 +1,11 @@
 # @ledgerhq/dmk-ledger-wallet
 
+## 0.7.1
+
+### Patch Changes
+
+- [#1963](https://github.com/LedgerHQ/device-sdk-ts/pull/1963) [`f952894`](https://github.com/LedgerHQ/device-sdk-ts/commit/f952894b08b3a7d45f71a9bde7797f27f9c2062f) Thanks [@benruseau](https://github.com/benruseau)! - Hide redundant confirm load/commit image interactions during custom lock screen upload in RestoreBackup when master consent is granted
+
 ## 0.7.0
 
 ### Minor Changes
