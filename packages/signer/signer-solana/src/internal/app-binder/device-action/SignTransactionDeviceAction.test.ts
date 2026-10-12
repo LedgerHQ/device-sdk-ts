@@ -66,6 +66,9 @@ let finalizeMock: ReturnType<typeof vi.fn>;
 let inspectMock: ReturnType<typeof vi.fn>;
 let buildBasicMock: ReturnType<typeof vi.fn>;
 let provideBasicMock: ReturnType<typeof vi.fn>;
+// Transaction-check (web3 checks) child deps
+let txCheckOptInMock: ReturnType<typeof vi.fn>;
+let provideTxCheckMock: ReturnType<typeof vi.fn>;
 // Reporting
 let reportSignMock: ReturnType<typeof vi.fn>;
 // Terminal sign-op deps (generic + basic) and the shared refresh task
@@ -128,10 +131,8 @@ function spyChildren() {
       "extractDependencies",
     )
     .mockReturnValue({
-      transactionCheckOptIn: vi
-        .fn()
-        .mockResolvedValue(CommandResultFactory({ data: { enabled: true } })),
-      provideTransactionCheck: vi.fn().mockResolvedValue(undefined),
+      transactionCheckOptIn: txCheckOptInMock,
+      provideTransactionCheck: provideTxCheckMock,
     } as any) as any;
   genericSignSpy = vi
     .spyOn(SignGenericClearSignDeviceAction.prototype, "extractDependencies")
@@ -273,6 +274,11 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     signMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: Just(signature) }));
+
+    txCheckOptInMock = vi
+      .fn()
+      .mockResolvedValue(CommandResultFactory({ data: { enabled: true } }));
+    provideTxCheckMock = vi.fn().mockResolvedValue(undefined);
 
     reportSignMock = vi.fn().mockResolvedValue(undefined);
 
@@ -665,6 +671,211 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         reject,
       );
     }));
+
+  describe("transaction-check re-provision after a generic fallback", () => {
+    // Flex supports both web3 checks and generic clear-sign at this version.
+    const txcAndGeneric = SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION;
+
+    function withTxcAndGeneric(config: Partial<AppConfiguration>) {
+      apiMock.getDeviceSessionState.mockReturnValue(
+        session(txcAndGeneric, DeviceModelId.FLEX),
+      );
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: { ...appConfig(txcAndGeneric), ...config },
+        }),
+      );
+    }
+
+    const armedGeneric = {
+      mode: "full",
+      poolContexts: [],
+      instructionInfoContexts: [],
+      unrecognizedProgramIds: [],
+    };
+
+    it("generic degraded → tx-check provided again before basic", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric({
+          transactionChecksEnabled: true,
+          transactionChecksOptIn: true,
+        });
+        // buildGenericMock default → mode "none" → degraded.
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(buildGenericMock).toHaveBeenCalled();
+              expect(provideTxCheckMock).toHaveBeenCalledTimes(2);
+              expect(txCheckOptInMock).not.toHaveBeenCalled();
+              // Re-provision happens after generic, before basic.
+              expect(
+                provideTxCheckMock.mock.invocationCallOrder[1]!,
+              ).toBeGreaterThan(buildGenericMock.mock.invocationCallOrder[0]!);
+              expect(
+                provideTxCheckMock.mock.invocationCallOrder[1]!,
+              ).toBeLessThan(inspectMock.mock.invocationCallOrder[0]!);
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("generic prompt failure (non-cancel) → tx-check provided again before basic", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric({
+          transactionChecksEnabled: true,
+          transactionChecksOptIn: true,
+        });
+        buildGenericMock.mockResolvedValue(armedGeneric);
+        promptUiDisplayMock.mockResolvedValue(
+          CommandResultFactory({
+            error: new SolanaAppCommandError({
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ...({ errorCode: "6a80", message: "bad descriptor" } as any),
+            }),
+          }),
+        );
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(promptUiDisplayMock).toHaveBeenCalled();
+              expect(provideTxCheckMock).toHaveBeenCalledTimes(2);
+              expect(
+                provideTxCheckMock.mock.invocationCallOrder[1]!,
+              ).toBeGreaterThan(
+                promptUiDisplayMock.mock.invocationCallOrder[0]!,
+              );
+              expect(inspectMock).toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("opt-in accepted on first pass → re-provision does not prompt again", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric({
+          transactionChecksEnabled: false,
+          transactionChecksOptIn: false,
+        });
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(txCheckOptInMock).toHaveBeenCalledTimes(1);
+              expect(provideTxCheckMock).toHaveBeenCalledTimes(2);
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("opt-in declined on first pass → no prompt and no provide on fallback", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric({
+          transactionChecksEnabled: false,
+          transactionChecksOptIn: false,
+        });
+        txCheckOptInMock.mockResolvedValue(
+          CommandResultFactory({ data: { enabled: false } }),
+        );
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(txCheckOptInMock).toHaveBeenCalledTimes(1);
+              expect(provideTxCheckMock).not.toHaveBeenCalled();
+              expect(inspectMock).toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("generic prepared + signed → tx-check provided once", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric({
+          transactionChecksEnabled: true,
+          transactionChecksOptIn: true,
+        });
+        buildGenericMock.mockResolvedValue(armedGeneric);
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(provideTxCheckMock).toHaveBeenCalledTimes(1);
+              expect(inspectMock).not.toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("generic unavailable → tx-check provided once before basic", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
+              transactionChecksEnabled: true,
+              transactionChecksOptIn: true,
+            },
+          }),
+        );
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(buildGenericMock).not.toHaveBeenCalled();
+              expect(provideTxCheckMock).toHaveBeenCalledTimes(1);
+              expect(inspectMock).toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+  });
 
   // End-to-end emitted-step-sequence contracts (the progression a consumer sees).
   it("e2e sequence: legacy SPL path with RPC then basic provisioning then delayed terminal", () =>
