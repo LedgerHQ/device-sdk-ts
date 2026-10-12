@@ -11,4 +11,5 @@ export default {
   icp: "Signer Internet Computer",
   trx: "Signer Tron",
   xrp: "Signer Xrp",
+  hedera: "Signer Hedera",
 };
