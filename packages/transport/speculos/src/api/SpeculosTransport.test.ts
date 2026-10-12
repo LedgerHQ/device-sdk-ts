@@ -98,6 +98,19 @@ describe("SpeculosTransport", () => {
       );
     });
 
+    it("should default to the local Speculos without a bearer token", () => {
+      speculosTransportFactory()({
+        config: {} as DmkConfig,
+        loggerServiceFactory: loggerFactory,
+      } as unknown as TransportArgs);
+
+      expect(HttpSpeculosDatasource).toHaveBeenCalledWith(
+        "http://127.0.0.1:5000",
+        undefined,
+        undefined,
+      );
+    });
+
     it("should pass the bearer token through the factory", () => {
       speculosTransportFactory(
         "http://localhost:5001",
