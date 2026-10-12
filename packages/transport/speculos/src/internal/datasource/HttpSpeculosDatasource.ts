@@ -6,7 +6,12 @@ import { type SpeculosDatasource } from "./SpeculosDatasource";
 
 const TIMEOUT = 2000; // 2 second timeout for availability check
 
-const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
+// A loop rather than /\/+$/, which backtracks quadratically on long runs of slashes.
+const removeTrailingSlashes = (url: string) => {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === "/") end--;
+  return url.slice(0, end);
+};
 
 export class HttpSpeculosDatasource implements SpeculosDatasource {
   private readonly baseUrl: string;

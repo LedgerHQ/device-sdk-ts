@@ -37,6 +37,22 @@ describe("HttpSpeculosDatasource", () => {
     expect(init?.headers).not.toHaveProperty("Authorization");
   });
 
+  it("strips every trailing slash from the base URL", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(jsonResponse({ data: "9000" })),
+      );
+
+    await new HttpSpeculosDatasource("http://speculos///").postApdu("b0");
+    await new HttpSpeculosDatasource("///").postApdu("b0");
+
+    expect(fetchSpy.mock.calls.map(([url]) => url)).toEqual([
+      "http://speculos/apdu",
+      "/apdu",
+    ]);
+  });
+
   it("sends the bearer token with APDUs", async () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
