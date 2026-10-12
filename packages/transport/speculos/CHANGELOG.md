@@ -1,5 +1,15 @@
 # @ledgerhq/device-transport-kit-speculos
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1969](https://github.com/LedgerHQ/device-sdk-ts/pull/1969) [`03f996c`](https://github.com/LedgerHQ/device-sdk-ts/commit/03f996c1c0ff1d815d718ce3902a8ea5dc486eb8) Thanks [@abdurrahman-ledger](https://github.com/abdurrahman-ledger)! - Add a `bearerToken` option to `SpeculosTransport`, `speculosTransportFactory` and `HttpSpeculosDatasource`, sent as `Authorization: Bearer <token>` with every request (APDU, availability check, event stream), e.g. to authenticate a protected Speculinho session.
+
+### Patch Changes
+
+- [#1826](https://github.com/LedgerHQ/device-sdk-ts/pull/1826) [`3dd79f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/3dd79f1995783494bd60a3431737867c3c729173) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Clear the disconnect-polling interval when a Speculos device disconnects normally. The stray 2s timer kept the Node event loop alive, so a CLI consumer never exited.
+
 ## 1.2.1
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @ledgerhq/speculos-device-controller
 
+## 0.4.0
+
+### Minor Changes
+
+- [#1826](https://github.com/LedgerHQ/device-sdk-ts/pull/1826) [`0bfaf74`](https://github.com/LedgerHQ/device-sdk-ts/commit/0bfaf74ab93a96526681ad28d02114d9893adadf) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Add `confirmAddressBookReview()`, tapping the Address Book review's confirm button, which sits out of reach of `mainButton()` and `secondaryButton()`.
+
+- [#1969](https://github.com/LedgerHQ/device-sdk-ts/pull/1969) [`03f996c`](https://github.com/LedgerHQ/device-sdk-ts/commit/03f996c1c0ff1d815d718ce3902a8ea5dc486eb8) Thanks [@abdurrahman-ledger](https://github.com/abdurrahman-ledger)! - Add a `bearerToken` option to `deviceControllerClientFactory`, sent as `Authorization: Bearer <token>` with every button and touch request, e.g. to authenticate a protected Speculinho session.
+
 ## 0.3.0
 
 ### Minor Changes
