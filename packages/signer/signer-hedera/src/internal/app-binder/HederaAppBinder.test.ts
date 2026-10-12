@@ -74,12 +74,11 @@ describe("HederaAppBinder", () => {
       .calls[0]![0] as GetAppConfigCallArgs;
     expect(args.sessionId).toBe(sessionId);
     expect(args.deviceAction).toBeInstanceOf(SendCommandInAppDeviceAction);
-    expect(args.deviceAction.input).toEqual({
-      command: expect.any(GetAppConfigCommand),
-      appName: APP_NAME,
-      requiredUserInteraction: UserInteractionRequired.None,
-      skipOpenApp: false,
-    });
+    const { input } = args.deviceAction;
+    expect(input.command).toBeInstanceOf(GetAppConfigCommand);
+    expect(input.appName).toBe(APP_NAME);
+    expect(input.requiredUserInteraction).toBe(UserInteractionRequired.None);
+    expect(input.skipOpenApp).toBe(false);
     expect(result).toBe(expectedResult);
   });
 
