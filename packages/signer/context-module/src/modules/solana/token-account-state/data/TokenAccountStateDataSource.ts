@@ -10,6 +10,8 @@ export type TokenAccountStateResult = {
   // Raw signed TLV bytes decoded from the backend response.
   descriptor: Uint8Array;
   mint?: string;
+  // Wallet owning the token account, as attested by the descriptor.
+  owner?: string;
   keyId: string;
   keyUsage: string;
 };

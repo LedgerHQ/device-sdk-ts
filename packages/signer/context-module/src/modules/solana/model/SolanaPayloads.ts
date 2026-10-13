@@ -233,6 +233,17 @@ export type SolanaTokenInfoPayload = {
 export type SolanaTokenAccountStatePayload = {
   descriptor: Uint8Array;
   mint?: string;
+  /** Wallet owning the token account, as attested by the descriptor. */
+  owner?: string;
+};
+
+/**
+ * Token account and owning wallet bound by the basic-flow owner-info
+ * `TRUSTED_NAME` descriptor.
+ */
+export type SolanaTokenAccountOwner = {
+  tokenAccount: string;
+  owner: string;
 };
 
 export type SolanaAltResolutionPayload = {

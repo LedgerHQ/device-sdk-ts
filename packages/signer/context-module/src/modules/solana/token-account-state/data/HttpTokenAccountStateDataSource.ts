@@ -108,6 +108,7 @@ export class HttpTokenAccountStateDataSource
             tokenAccount,
             descriptor,
             mint: dto.mint,
+            owner: dto.owner,
             keyId: validated.keyId,
             keyUsage: validated.keyUsage,
           });

@@ -93,6 +93,7 @@ export class TokenAccountStateContextLoader
         const payload: SolanaTokenAccountStatePayload = {
           descriptor: value.descriptor,
           mint: value.mint,
+          owner: value.owner,
         };
         return {
           type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
