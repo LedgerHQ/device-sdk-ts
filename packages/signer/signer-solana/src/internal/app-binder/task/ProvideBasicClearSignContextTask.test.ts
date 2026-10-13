@@ -3,6 +3,7 @@
 import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  InvalidStatusWordError,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -76,7 +77,7 @@ describe("ProvideBasicClearSignContextTask", () => {
 
       const result = await task.run();
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual({});
       expect(api.sendCommand).toHaveBeenCalledTimes(2);
 
       const certCmd = api.sendCommand.mock.calls[0]![0]!;
@@ -87,6 +88,51 @@ describe("ProvideBasicClearSignContextTask", () => {
       const tlvCmd = api.sendCommand.mock.calls[1]![0]!;
       expect(tlvCmd).toBeInstanceOf(ProvideTLVDescriptorCommand);
       expect(tlvCmd.args.payload).toStrictEqual(tlvDescriptor);
+    });
+
+    it("returns the token account owner attested by an accepted trusted name", async () => {
+      api.sendCommand.mockResolvedValue(success);
+
+      const task = new ProvideBasicClearSignContextTask(
+        api as any,
+        {
+          loadersResults: [
+            {
+              type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME as const,
+              payload: tlvDescriptor,
+              certificate: baseCert,
+              tokenAccountOwner: { tokenAccount: "TokenAcc", owner: "Owner" },
+            },
+          ],
+          transactionBytes: new Uint8Array([0xf0]),
+          loggerFactory: mockLoggerFactory,
+        } as any,
+      );
+
+      await expect(task.run()).resolves.toEqual({ TokenAcc: "Owner" });
+    });
+
+    it("does not return the owner of a trusted name the device rejected", async () => {
+      api.sendCommand.mockResolvedValue(
+        CommandResultFactory({ error: new InvalidStatusWordError("nope") }),
+      );
+
+      const task = new ProvideBasicClearSignContextTask(
+        api as any,
+        {
+          loadersResults: [
+            {
+              type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME as const,
+              payload: tlvDescriptor,
+              tokenAccountOwner: { tokenAccount: "TokenAcc", owner: "Owner" },
+            },
+          ],
+          transactionBytes: new Uint8Array([0xf0]),
+          loggerFactory: mockLoggerFactory,
+        } as any,
+      );
+
+      await expect(task.run()).resolves.toEqual({});
     });
 
     it("skips trusted-name APDUs when SOLANA_BASIC_TRUSTED_NAME is absent from loadersResults", async () => {
@@ -101,7 +147,7 @@ describe("ProvideBasicClearSignContextTask", () => {
 
       const result = await task.run();
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual({});
       expect(api.sendCommand).not.toHaveBeenCalled();
     });
 
@@ -140,7 +186,7 @@ describe("ProvideBasicClearSignContextTask", () => {
 
       const result = await task.run();
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual({});
       expect(api.sendCommand).not.toHaveBeenCalled();
     });
 
@@ -161,7 +207,7 @@ describe("ProvideBasicClearSignContextTask", () => {
 
       const result = await task.run();
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual({});
       expect(api.sendCommand).not.toHaveBeenCalled();
     });
 
@@ -364,7 +410,7 @@ describe("ProvideBasicClearSignContextTask", () => {
 
       const result = await task.run();
 
-      expect(result).toBeUndefined();
+      expect(result).toEqual({});
       // Only the trusted-name cert + descriptor were sent; the token loader
       // result must not be dispatched after the rejection.
       expect(api.sendCommand).toHaveBeenCalledTimes(2);

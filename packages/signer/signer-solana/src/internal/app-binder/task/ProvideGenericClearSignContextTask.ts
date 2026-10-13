@@ -17,6 +17,7 @@ import {
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 
+import { type TokenAccountOwners } from "@api/app-binder/TokenAccountOwners";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { SignMessageGenericPreviewCommand } from "@internal/app-binder/command/SignMessageGenericPreviewCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
@@ -66,6 +67,11 @@ export type ProvideGenericClearSignContextTaskArgs = {
   readonly normaliser?: SolanaMessageNormaliser;
 };
 
+export type ProvideGenericClearSignContextTaskResult = {
+  /** Owners attested by the TOKEN_ACCOUNT_STATE descriptors sent to the device. */
+  readonly tokenAccountOwners: TokenAccountOwners;
+};
+
 /**
  * Streams the generic clear-sign context to the device in the mandated order:
  * `SIGN MESSAGE GENERIC PREVIEW` (0x0A) then Phase A pool then Phase B
@@ -95,7 +101,12 @@ export class ProvideGenericClearSignContextTask {
     };
   }
 
-  async run(): Promise<CommandResult<void, ProvideContextErrorCodes>> {
+  async run(): Promise<
+    CommandResult<
+      ProvideGenericClearSignContextTaskResult,
+      ProvideContextErrorCodes
+    >
+  > {
     const previewResult = await this.streamGenericPreview();
     if (!isSuccessCommandResult(previewResult)) {
       return previewResult;
@@ -108,24 +119,28 @@ export class ProvideGenericClearSignContextTask {
         return result;
       }
     }
-    await this.streamChallengeBoundDescriptors();
+    const tokenAccountOwners = await this.streamChallengeBoundDescriptors();
     for (const context of this.args.instructionInfoContexts) {
       const result = await this.provideDescriptor(context);
       if (!isSuccessCommandResult(result)) {
         return result;
       }
     }
-    return CommandResultFactory({ data: undefined });
+    return CommandResultFactory({
+      data: { tokenAccountOwners },
+    });
   }
 
   /**
    * Streams a single descriptor to the device. Failures of a
    * {@link FATAL_PROVIDE_CONTEXT_TYPES} descriptor abort generic clear-signing
    * by throwing; any other descriptor's failure is logged and swallowed so the
-   * device can still clear-sign the rest with degraded UX.
+   * device can still clear-sign the rest with degraded UX. `onAccepted` runs
+   * only once the device accepted the descriptor.
    */
   private async provideDescriptor(
     context: ClearSignContext,
+    onAccepted?: () => void,
   ): Promise<CommandResult<void, ProvideContextErrorCodes>> {
     if (!isSolanaContextSuccess(context)) {
       return CommandResultFactory({ data: undefined });
@@ -148,6 +163,7 @@ export class ProvideGenericClearSignContextTask {
         }),
       );
     }
+    onAccepted?.();
     return CommandResultFactory({ data: undefined });
   }
 
@@ -175,8 +191,13 @@ export class ProvideGenericClearSignContextTask {
     return CommandResultFactory({ data: undefined });
   }
 
-  /** Challenge-bound Phase A descriptors (token-account-state, ALT, trusted-name). */
-  private async streamChallengeBoundDescriptors(): Promise<void> {
+  /**
+   * Challenge-bound Phase A descriptors (token-account-state, ALT, trusted-name).
+   *
+   * @returns the token account owners attested by the TOKEN_ACCOUNT_STATE
+   * descriptors the device accepted.
+   */
+  private async streamChallengeBoundDescriptors(): Promise<TokenAccountOwners> {
     const deviceModelId = this.api.getDeviceSessionState().deviceModelId;
     const {
       tokenAccountStates,
@@ -229,6 +250,7 @@ export class ProvideGenericClearSignContextTask {
     // failed, or no usable descriptor came back) leaves the account unmarked, so
     // a later reference to it is free to try again.
     const streamedTokenAccounts = new Set<string>();
+    const tokenAccountOwners: Record<string, string> = {};
 
     for (const tokenAccount of tokenAccountStates) {
       if (streamedTokenAccounts.has(tokenAccount)) continue;
@@ -238,6 +260,7 @@ export class ProvideGenericClearSignContextTask {
           requests: [{ tokenAccount, challenge }],
         }),
         ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+        (ctx) => recordTokenAccountOwner(tokenAccountOwners, tokenAccount, ctx),
       );
       if (contexts.length === 0) {
         // No descriptor at all — not even a minimal no-mint/owner response
@@ -390,7 +413,9 @@ export class ProvideGenericClearSignContextTask {
       }
 
       streamedTokenAccounts.add(resolvedAddress);
-      await this.provideDescriptor(stateCtx);
+      await this.provideDescriptor(stateCtx, () =>
+        recordTokenAccountOwner(tokenAccountOwners, resolvedAddress, stateCtx),
+      );
       streamedMints.add(mint);
       await this.provideDescriptor(mintTokenInfoCtx);
     }
@@ -430,7 +455,13 @@ export class ProvideGenericClearSignContextTask {
       );
       if (stateCtx && isSolanaContextSuccess(stateCtx)) {
         streamedTokenAccounts.add(resolvedAddress);
-        await this.provideDescriptor(stateCtx);
+        await this.provideDescriptor(stateCtx, () =>
+          recordTokenAccountOwner(
+            tokenAccountOwners,
+            resolvedAddress,
+            stateCtx,
+          ),
+        );
         const mint = (stateCtx as SolanaTokenAccountStateContextSuccess).payload
           .mint;
         if (mint && !streamedMints.has(mint)) {
@@ -473,6 +504,7 @@ export class ProvideGenericClearSignContextTask {
         ClearSignContextType.SOLANA_TRUSTED_NAME,
       );
     }
+    return tokenAccountOwners;
   }
 
   /**
@@ -503,10 +535,12 @@ export class ProvideGenericClearSignContextTask {
   /**
    * `GET CHALLENGE`, fetch the descriptor, stream it, and return the matched
    * contexts so callers can inspect the payload (e.g. extract mint / resolvedAddress).
+   * `onAccepted` runs for each matched context the device accepted.
    */
   private async provideChallengeBoundDescriptorAndReturn(
     buildInput: (challenge: string) => unknown,
     type: ClearSignContextType,
+    onAccepted?: (context: ClearSignContext) => void,
   ): Promise<ClearSignContext[]> {
     const challengeResult = await this.api.sendCommand(
       new GetChallengeCommand(),
@@ -524,7 +558,7 @@ export class ProvideGenericClearSignContextTask {
     const matched: ClearSignContext[] = [];
     for (const context of contexts) {
       if (context.type === type) {
-        await this.provideDescriptor(context);
+        await this.provideDescriptor(context, () => onAccepted?.(context));
         matched.push(context);
       }
     }
@@ -646,4 +680,17 @@ export class ProvideGenericClearSignContextTask {
     }
     return result;
   }
+}
+
+/**
+ * Remember the owner a TOKEN_ACCOUNT_STATE descriptor the device accepted for
+ * `tokenAccount` attests, so a contact can later be matched against it.
+ */
+function recordTokenAccountOwner(
+  tokenAccountOwners: Record<string, string>,
+  tokenAccount: string,
+  context: ClearSignContext,
+): void {
+  const { owner } = (context as SolanaTokenAccountStateContextSuccess).payload;
+  if (owner !== undefined) tokenAccountOwners[tokenAccount] = owner;
 }
