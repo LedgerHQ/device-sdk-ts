@@ -5,6 +5,7 @@ import {
   type SolanaEnumVariantPayload,
   type SolanaInstructionInfoPayload,
   type SolanaLifiPayload,
+  type SolanaTokenAccountOwner,
   type SolanaTokenAccountStatePayload,
   type SolanaTokenData,
   type SolanaTokenInfoPayload,
@@ -41,6 +42,7 @@ export type {
   SolanaLifiInstructionMeta,
   SolanaLifiPayload,
   SolanaSignedDescriptor,
+  SolanaTokenAccountOwner,
   SolanaTokenAccountStatePayload,
   SolanaTokenData,
   SolanaTokenInfoPayload,
@@ -69,6 +71,8 @@ export type SolanaPayloadOverrides = {
   [ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME]: {
     payload: Uint8Array;
     certificate?: PkiCertificate;
+    /** The binding the descriptor attests, as returned by the owner-info API. */
+    tokenAccountOwner?: SolanaTokenAccountOwner;
   };
   [ClearSignContextType.SOLANA_TRANSACTION_CHECK]: {
     payload: SolanaTransactionCheckPayload;

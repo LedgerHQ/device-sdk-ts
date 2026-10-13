@@ -124,6 +124,30 @@ describe("TokenAccountStateContextLoader", () => {
       });
     });
 
+    it("carries the attested mint and owner in the payload", async () => {
+      vi.spyOn(dataSource, "getTokenAccountState").mockImplementation(
+        async ({ tokenAccount }) =>
+          Right({
+            tokenAccount,
+            descriptor: new Uint8Array([0xab]),
+            mint: "MintAddr",
+            owner: "OwnerAddr",
+            keyId: "k",
+            keyUsage: "u",
+          }),
+      );
+
+      const [context] = await makeLoader().load({
+        deviceModelId: DeviceModelId.NANO_X,
+        requests: [{ tokenAccount: TA_USDC, challenge: "c1" }],
+      });
+
+      expect(context).toMatchObject({
+        type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+        payload: { mint: "MintAddr", owner: "OwnerAddr" },
+      });
+    });
+
     it("emits an ERROR (not a cert-less success) when the certificate resolves undefined", async () => {
       vi.spyOn(certificateLoader, "loadCertificate").mockResolvedValue(
         undefined,
