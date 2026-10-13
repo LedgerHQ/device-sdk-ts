@@ -18,8 +18,12 @@ export type ProvisionTransactionCheckDAInput = {
 /**
  * Best-effort: the machine provisions the tx-check descriptor but never
  * signs; any failure is swallowed, so the output is always `Right`.
+ * `transactionChecksEnabled` is the state after the opt-in prompt (if any),
+ * so the parent can re-provision later without prompting again.
  */
-export type ProvisionTransactionCheckDAOutput = void;
+export type ProvisionTransactionCheckDAOutput = {
+  readonly transactionChecksEnabled: boolean;
+};
 
 export type ProvisionTransactionCheckDAError = never;
 

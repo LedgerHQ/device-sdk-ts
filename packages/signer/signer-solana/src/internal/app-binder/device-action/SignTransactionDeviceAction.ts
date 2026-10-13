@@ -402,7 +402,25 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   event.snapshot.context.intermediateValue,
               }),
             },
-            onDone: { target: "CheckGenericClearSignSupported" },
+            // The opt-in has now been answered (or skipped): record the outcome
+            // so the re-provision after a generic fallback never prompts again.
+            onDone: {
+              target: "CheckGenericClearSignSupported",
+              actions: assign({
+                _internalState: ({ event, context }) =>
+                  event.output.caseOf<SignTransactionDAInternalState>({
+                    Right: ({ transactionChecksEnabled }) => ({
+                      ...context._internalState,
+                      appConfig: {
+                        ...context._internalState.appConfig!,
+                        transactionChecksEnabled,
+                        transactionChecksOptIn: true,
+                      },
+                    }),
+                    Left: () => context._internalState,
+                  }),
+              }),
+            },
           },
         },
         CheckGenericClearSignSupported: {
@@ -454,7 +472,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               }),
             },
             onError: {
-              target: "BasicClearSign",
+              target: "CheckTxCheckReprovision",
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] generic clear-sign threw; falling back to legacy",
@@ -471,7 +489,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               guard: and(["noInternalError", "isClearSignPrepared"]),
             },
             // Degraded (Right("degraded")): fall back to the legacy path.
-            { target: "BasicClearSign", guard: "noInternalError" },
+            { target: "CheckTxCheckReprovision", guard: "noInternalError" },
             // Defensive: surface an unexpected Left.
             { target: "Error" },
           ],
@@ -530,10 +548,43 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             // Signed: report (isBlindSign: false) then surface result.
             { target: "Report", guard: "hasSignature" },
             // Degraded (no signature, no error): fall back to the legacy path.
-            { target: "BasicClearSign", guard: "noInternalError" },
+            { target: "CheckTxCheckReprovision", guard: "noInternalError" },
             // User cancel / signing failure: report (isBlindSign: false) then surface error.
             { target: "Report" },
           ],
+        },
+        // A failed generic clear-sign attempt wipes the device's provisioned
+        // context, including the tx-check descriptor sent in TxCheck. Provide
+        // it again before falling back to the basic path. The opt-in was
+        // already answered in TxCheck, so this pass never prompts.
+        CheckTxCheckReprovision: {
+          always: [
+            {
+              target: "TxCheckReprovision",
+              guard: "isTransactionChecksSupported",
+            },
+            { target: "BasicClearSign" },
+          ],
+        },
+        TxCheckReprovision: {
+          invoke: {
+            id: "transactionCheckReprovisionStateMachine",
+            src: "transactionCheckStateMachine",
+            input: ({ context }) => ({
+              appConfig: context._internalState.appConfig!,
+              derivationPath: context.input.derivationPath,
+              transaction: context._internalState.messageBytes,
+              contextModule: context.input.contextModule,
+              serializedForTxCheck: context._internalState.serializedForTxCheck,
+            }),
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: ({ event }) =>
+                  event.snapshot.context.intermediateValue,
+              }),
+            },
+            onDone: { target: "BasicClearSign" },
+          },
         },
         // Legacy SPL / token provisioning child (best-effort, never signs). It
         // streams descriptors; control always proceeds to the basic terminal
