@@ -11,6 +11,7 @@ import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceA
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOption";
 import { type MessageOptions } from "@api/model/MessageOptions";
+import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { type Transaction } from "@api/model/Transaction";
 import { type SignerSolana } from "@api/SignerSolana";
@@ -29,6 +30,7 @@ export type DefaultSignerSolanaConstructorArgs = {
   contextModule: ContextModule;
   solanaRPCURL?: string;
   disabledFeatures?: ReadonlyArray<SolanaSignerFeaturesNames>;
+  addressBook?: SolanaAddressBook;
 };
 
 export class DefaultSignerSolana implements SignerSolana {
@@ -43,12 +45,14 @@ export class DefaultSignerSolana implements SignerSolana {
     contextModule,
     solanaRPCURL,
     disabledFeatures,
+    addressBook,
   }: DefaultSignerSolanaConstructorArgs) {
     this._container = makeContainer({
       dmk,
       sessionId,
       contextModule,
       solanaRPCURL,
+      addressBook,
     });
     this._disabledFeatures = disabledFeatures;
   }
