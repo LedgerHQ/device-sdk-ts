@@ -1,6 +1,7 @@
 import {
   ClearSignContextType,
   isSolanaContextSuccess,
+  type SolanaBasicTrustedNameContextSuccess,
   type SolanaContext,
 } from "@ledgerhq/context-module";
 import {
@@ -9,6 +10,7 @@ import {
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
+import { type TokenAccountOwners } from "@api/app-binder/TokenAccountOwners";
 import {
   DefaultSolanaMessageNormaliser,
   type SolanaMessageNormaliser,
@@ -47,7 +49,11 @@ export class ProvideBasicClearSignContextTask {
     ClearSignContextType.SOLANA_TRANSACTION_CHECK,
   ] as const;
 
-  async run(): Promise<void> {
+  /**
+   * @returns the token account owners attested by the descriptors the device
+   * accepted.
+   */
+  async run(): Promise<TokenAccountOwners> {
     this._logger.debug("[run] Starting ProvideBasicClearSignContextTask");
     const { loadersResults } = this.args;
 
@@ -59,20 +65,31 @@ export class ProvideBasicClearSignContextTask {
       data: { ordered: ordered.map((c) => ({ type: c.type })) },
     });
 
+    const tokenAccountOwners: Record<string, string> = {};
     for (const loaderResult of ordered) {
       if (!isSolanaContextSuccess(loaderResult)) continue;
       this._logger.debug(`[run] Providing ${loaderResult.type}`);
       const result = await dispatchProvideContext(loaderResult, this._deps);
       if (!isSuccessCommandResult(result)) {
-        // run() still resolves (Promise<void>) to preserve existing callers'
-        // best-effort behavior; only stop dispatching further descriptors so we
-        // don't keep sending APDUs after a device rejection.
+        // run() still resolves to preserve existing callers' best-effort
+        // behavior; only stop dispatching further descriptors so we don't keep
+        // sending APDUs after a device rejection.
         this._logger.error(
           `[run] device rejected ${loaderResult.type}, stopping basic clear-sign provisioning`,
           { data: { error: result.error } },
         );
-        return;
+        return tokenAccountOwners;
+      }
+      if (
+        loaderResult.type === ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME
+      ) {
+        const binding = (loaderResult as SolanaBasicTrustedNameContextSuccess)
+          .tokenAccountOwner;
+        if (binding !== undefined) {
+          tokenAccountOwners[binding.tokenAccount] = binding.owner;
+        }
       }
     }
+    return tokenAccountOwners;
   }
 }
