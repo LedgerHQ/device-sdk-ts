@@ -90,7 +90,9 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
     });
     provideMock = vi
       .fn()
-      .mockResolvedValue(CommandResultFactory({ data: undefined }));
+      .mockResolvedValue(
+        CommandResultFactory({ data: { tokenAccountOwners: {} } }),
+      );
     finalizeMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: undefined }));
@@ -108,6 +110,31 @@ describe("ProvisionGenericClearSignDeviceAction", () => {
           expect(
             last.status === DeviceActionStatus.Completed && last.output,
           ).toEqual(expect.objectContaining({ status: "prepared" }));
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      }, reject);
+    }));
+
+  it("outputs the token account owners attested while providing", () =>
+    new Promise<void>((resolve, reject) => {
+      provideMock.mockResolvedValue(
+        CommandResultFactory({
+          data: { tokenAccountOwners: { TokenAcc: "Owner" } },
+        }),
+      );
+      run((states) => {
+        try {
+          const last = states[states.length - 1]!;
+          expect(
+            last.status === DeviceActionStatus.Completed && last.output,
+          ).toEqual(
+            expect.objectContaining({
+              status: "prepared",
+              tokenAccountOwners: { TokenAcc: "Owner" },
+            }),
+          );
           resolve();
         } catch (e) {
           reject(e);

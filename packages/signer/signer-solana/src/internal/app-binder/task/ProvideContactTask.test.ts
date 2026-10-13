@@ -13,8 +13,15 @@ import {
   type SolanaAddressBook,
 } from "@api/model/SolanaAddressBook";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
-import { buildExternalContactPayload } from "@internal/app-binder/services/contacts/buildExternalContactPayload";
-import { extractTransferRecipient } from "@internal/app-binder/services/contacts/extractTransferRecipient";
+import {
+  buildExternalContactPayload,
+  buildOwnerContactPayload,
+} from "@internal/app-binder/services/contacts/buildExternalContactPayload";
+import {
+  extractTransferRecipient,
+  type TransferRecipient,
+} from "@internal/app-binder/services/contacts/extractTransferRecipient";
+import { TOKEN_PROGRAM_ID } from "@internal/app-binder/services/utils/splToken";
 
 import { ProvideContactTask } from "./ProvideContactTask";
 
@@ -24,7 +31,11 @@ vi.mock("@ledgerhq/device-contacts-kit", async (importOriginal) => ({
 }));
 vi.mock(
   "@internal/app-binder/services/contacts/buildExternalContactPayload",
-  () => ({ buildExternalContactPayload: vi.fn() }),
+  async (importOriginal) => ({
+    ...(await importOriginal()),
+    buildExternalContactPayload: vi.fn(),
+    buildOwnerContactPayload: vi.fn(),
+  }),
 );
 vi.mock(
   "@internal/app-binder/services/contacts/extractTransferRecipient",
@@ -67,8 +78,9 @@ describe("ProvideContactTask", () => {
   const args = {
     addressBook: ADDRESS_BOOK,
     messageBytes: MESSAGE_BYTES,
+    match: { by: "recipient" },
     logger,
-  };
+  } as const;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -80,7 +92,7 @@ describe("ProvideContactTask", () => {
   });
 
   it("provides the contact matching the transfer recipient", async () => {
-    await new ProvideContactTask(api, args).run();
+    await expect(new ProvideContactTask(api, args).run()).resolves.toBe(true);
 
     expect(extractTransferRecipient).toHaveBeenCalledWith(MESSAGE_BYTES);
     expect(buildExternalContactPayload).toHaveBeenCalledWith({
@@ -101,17 +113,17 @@ describe("ProvideContactTask", () => {
       }) as never,
     );
 
-    await expect(
-      new ProvideContactTask(api, args).run(),
-    ).resolves.toBeUndefined();
+    await expect(new ProvideContactTask(api, args).run()).resolves.toBe(true);
     expect(logger.warn).toHaveBeenCalledOnce();
   });
 
   it("does not parse the transaction without contacts", async () => {
-    await new ProvideContactTask(api, {
-      ...args,
-      addressBook: EMPTY_SOLANA_ADDRESS_BOOK,
-    }).run();
+    await expect(
+      new ProvideContactTask(api, {
+        ...args,
+        addressBook: EMPTY_SOLANA_ADDRESS_BOOK,
+      }).run(),
+    ).resolves.toBe(false);
 
     expect(extractTransferRecipient).not.toHaveBeenCalled();
     expect(sendProvideContactPayload).not.toHaveBeenCalled();
@@ -120,7 +132,7 @@ describe("ProvideContactTask", () => {
   it("does not send anything without a single recipient", async () => {
     vi.mocked(extractTransferRecipient).mockResolvedValue(undefined);
 
-    await new ProvideContactTask(api, args).run();
+    await expect(new ProvideContactTask(api, args).run()).resolves.toBe(false);
 
     expect(buildExternalContactPayload).not.toHaveBeenCalled();
     expect(sendProvideContactPayload).not.toHaveBeenCalled();
@@ -129,8 +141,63 @@ describe("ProvideContactTask", () => {
   it("does not send anything when no contact matches", async () => {
     vi.mocked(buildExternalContactPayload).mockReturnValue(undefined);
 
-    await new ProvideContactTask(api, args).run();
+    await expect(new ProvideContactTask(api, args).run()).resolves.toBe(false);
 
     expect(sendProvideContactPayload).not.toHaveBeenCalled();
+  });
+
+  describe("matching through attested token account owners", () => {
+    const TOKEN_ACCOUNT = Keypair.generate().publicKey;
+    const TOKEN_RECIPIENT: TransferRecipient = {
+      kind: "token",
+      tokenAccount: TOKEN_ACCOUNT,
+      mint: undefined,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    };
+    const tokenAccountOwners = {
+      [TOKEN_ACCOUNT.toBase58()]: Keypair.generate().publicKey.toBase58(),
+    };
+    const ownerArgs = {
+      ...args,
+      match: { by: "tokenAccountOwner", tokenAccountOwners },
+    } as const;
+
+    beforeEach(() => {
+      vi.mocked(extractTransferRecipient).mockResolvedValue(TOKEN_RECIPIENT);
+      vi.mocked(buildOwnerContactPayload).mockReturnValue(PAYLOAD);
+    });
+
+    it("provides the contact owning the recipient token account", async () => {
+      await expect(new ProvideContactTask(api, ownerArgs).run()).resolves.toBe(
+        true,
+      );
+
+      expect(buildOwnerContactPayload).toHaveBeenCalledWith({
+        addressBook: ADDRESS_BOOK,
+        recipient: TOKEN_RECIPIENT,
+        tokenAccountOwners,
+      });
+      expect(buildExternalContactPayload).not.toHaveBeenCalled();
+      expect(sendProvideContactPayload).toHaveBeenCalledWith(api, {
+        payload: PAYLOAD,
+        logger,
+      } satisfies SendProvideContactPayloadArgs);
+    });
+
+    it("does not send anything when no owner matches", async () => {
+      vi.mocked(buildOwnerContactPayload).mockReturnValue(undefined);
+
+      await expect(new ProvideContactTask(api, ownerArgs).run()).resolves.toBe(
+        false,
+      );
+
+      expect(sendProvideContactPayload).not.toHaveBeenCalled();
+    });
+  });
+
+  it("matches the recipient directly, never through an owner", async () => {
+    await new ProvideContactTask(api, args).run();
+
+    expect(buildOwnerContactPayload).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 import { buildProvideContactPayload } from "@ledgerhq/device-contacts-kit";
 import { PublicKey } from "@solana/web3.js";
 
+import { type TokenAccountOwners } from "@api/app-binder/TokenAccountOwners";
 import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 import { getAssociatedTokenAddressSync } from "@internal/app-binder/services/utils/splToken";
@@ -15,21 +16,63 @@ export type BuildExternalContactPayloadArgs = {
   readonly recipient: TransferRecipient;
 };
 
+export type BuildOwnerContactPayloadArgs = BuildExternalContactPayloadArgs & {
+  /** Token account owners the clear-sign descriptors attested to the device. */
+  readonly tokenAccountOwners: TokenAccountOwners;
+};
+
 /**
  * Encode the first external contact whose wallet receives the transfer, or
  * return `undefined` when none does.
  *
  * The identifier sent is always the contact's wallet public key, also for a
- * token transfer whose on-chain recipient is that wallet's token account.
+ * token transfer whose on-chain recipient is that wallet's token account. A
+ * wallet receives a token transfer when the token account is its associated
+ * token account for the transfer's mint.
  */
 export function buildExternalContactPayload({
   addressBook,
   recipient,
 }: BuildExternalContactPayloadArgs): Uint8Array | undefined {
+  return findContactPayload(addressBook, (wallet) =>
+    receives(wallet, recipient),
+  );
+}
+
+/**
+ * Encode the first external contact whose wallet owns the recipient token
+ * account, as attested to the device by a clear-sign descriptor, or return
+ * `undefined` when there is no such token account or no such contact.
+ *
+ * Only a token transfer can match: its token account must have an attested
+ * owner, and that owner must be a contact's wallet. The identifier sent is the
+ * contact's wallet public key.
+ */
+export function buildOwnerContactPayload({
+  addressBook,
+  recipient,
+  tokenAccountOwners,
+}: BuildOwnerContactPayloadArgs): Uint8Array | undefined {
+  if (recipient.kind !== "token") return undefined;
+
+  const attestedOwner = tokenAccountOwners[recipient.tokenAccount.toBase58()];
+  const owner =
+    attestedOwner === undefined
+      ? undefined
+      : decodeSolanaAddress(attestedOwner);
+  if (owner === undefined) return undefined;
+
+  return findContactPayload(addressBook, (wallet) => wallet.equals(owner));
+}
+
+function findContactPayload(
+  addressBook: SolanaAddressBook,
+  matches: (wallet: PublicKey) => boolean,
+): Uint8Array | undefined {
   for (const group of addressBook.contactGroups) {
     for (const candidate of group.externalAddresses) {
       const wallet = decodeSolanaAddress(candidate.address);
-      if (wallet === undefined || !receives(wallet, recipient)) continue;
+      if (wallet === undefined || !matches(wallet)) continue;
 
       return buildProvideContactPayload({
         contactName: group.contactName,
@@ -48,6 +91,7 @@ export function buildExternalContactPayload({
 
 function receives(wallet: PublicKey, recipient: TransferRecipient): boolean {
   if (recipient.kind === "native") return wallet.equals(recipient.address);
+  if (recipient.mint === undefined) return false;
 
   try {
     return getAssociatedTokenAddressSync(
