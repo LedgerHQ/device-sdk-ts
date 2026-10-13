@@ -7,10 +7,7 @@ import {
 } from "@solana/web3.js";
 
 import {
-  addSigners,
-  asInstructionData as asData,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  createTransferCheckedInstruction,
   TOKEN_PROGRAM_ID,
 } from "@internal/app-binder/services/utils/splToken";
 
@@ -18,7 +15,62 @@ import {
 // (see splToken.ts). Byte-for-byte equivalence is locked by golden vectors in
 // splTokenBuilders.test.ts.
 
-export { createTransferCheckedInstruction };
+type InstructionData = NonNullable<
+  ConstructorParameters<typeof TransactionInstruction>[0]["data"]
+>;
+
+const asData = (bytes: Uint8Array): InstructionData => bytes as InstructionData;
+
+// Mirrors `addSigners` from `@solana/spl-token`.
+function addSigners(
+  keys: AccountMeta[],
+  ownerOrAuthority: PublicKey,
+  multiSigners: PublicKey[],
+): AccountMeta[] {
+  if (multiSigners.length) {
+    keys.push({ pubkey: ownerOrAuthority, isSigner: false, isWritable: false });
+    for (const signer of multiSigners) {
+      keys.push({ pubkey: signer, isSigner: true, isWritable: false });
+    }
+  } else {
+    keys.push({ pubkey: ownerOrAuthority, isSigner: true, isWritable: false });
+  }
+  return keys;
+}
+
+const TRANSFER_CHECKED_INSTRUCTION = 12;
+
+// Data layout: [discriminator(u8), amount(u64 LE), decimals(u8)].
+export function createTransferCheckedInstruction(
+  source: PublicKey,
+  mint: PublicKey,
+  destination: PublicKey,
+  owner: PublicKey,
+  amount: number | bigint,
+  decimals: number,
+  multiSigners: PublicKey[] = [],
+  programId: PublicKey = TOKEN_PROGRAM_ID,
+): TransactionInstruction {
+  const keys = addSigners(
+    [
+      { pubkey: source, isSigner: false, isWritable: true },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: destination, isSigner: false, isWritable: true },
+    ],
+    owner,
+    multiSigners,
+  );
+  const data = new Uint8Array(10);
+  const view = new DataView(data.buffer);
+  view.setUint8(0, TRANSFER_CHECKED_INSTRUCTION);
+  view.setBigUint64(1, BigInt(amount), true);
+  view.setUint8(9, decimals);
+  return new TransactionInstruction({
+    keys,
+    programId,
+    data: asData(data),
+  });
+}
 
 const Discriminator = {
   Transfer: 3,

@@ -17,6 +17,8 @@ import { type LeafValue, type VariantCache } from "./types";
  * @param path packed argument path (`u8 step_count || <packed steps>`).
  * @param data the instruction-data buffer.
  * @param dataReader scalar decoder (defaults to {@link DefaultDataReader}).
+ *
+ * @deprecated Unused; will be removed in the next major version.
  */
 export function decodeArgumentPath(
   typePool: Uint8Array,
