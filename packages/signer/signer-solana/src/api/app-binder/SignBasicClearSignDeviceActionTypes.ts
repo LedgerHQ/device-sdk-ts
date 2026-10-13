@@ -23,6 +23,7 @@ export type SignBasicClearSignDAInternalState = {
   readonly transactionToSign: Uint8Array | null;
 };
 
+/** @deprecated Unused; will be removed in the next major version. */
 export type SignBasicClearSignDAReturnType = ExecuteDeviceActionReturnType<
   SignBasicClearSignDAOutput,
   SignBasicClearSignDAError,

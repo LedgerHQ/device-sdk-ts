@@ -7,7 +7,11 @@ import * as K from "./kinds";
  * Wire format: `u8 step_count || <packed steps>`.
  */
 
-/** Sentinel array index meaning "iterate every element" (`0xFFFF`). */
+/**
+ * Sentinel array index meaning "iterate every element" (`0xFFFF`).
+ *
+ * @deprecated Unused; will be removed in the next major version.
+ */
 export const ARRAY_ITERATE_ALL = 0xffff;
 
 /** A single packed step: `[parentKind, value, discKind | undefined]`. */
@@ -133,7 +137,11 @@ export function packPath(steps: readonly PathStep[]): Uint8Array {
   return out;
 }
 
-/** Byte-equality of two packed paths. */
+/**
+ * Byte-equality of two packed paths.
+ *
+ * @deprecated Unused; will be removed in the next major version.
+ */
 export function pathsEqual(left: Uint8Array, right: Uint8Array): boolean {
   if (left.length !== right.length) return false;
   for (let i = 0; i < left.length; i++) {
