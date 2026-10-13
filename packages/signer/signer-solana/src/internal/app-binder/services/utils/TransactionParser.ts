@@ -9,6 +9,7 @@ import {
 } from "@solana/web3.js";
 import { type Either, EitherAsync, Left, Right } from "purify-ts";
 
+import { TransactionInputNormaliser } from "@internal/app-binder/services/TransactionInputNormaliser";
 import {
   type AddressLookupRef,
   type NormalisedCompiledIx,
@@ -193,6 +194,18 @@ export class TransactionParser {
 function decodeMessage(
   rawBytes: Uint8Array,
 ): Either<ParserError, Message | MessageV0> {
+  // Locate the message with strict format detection first: the lenient
+  // web3.js decoders below can misread a raw message as a signed transaction
+  // and decode garbage from it.
+  const detected = new TransactionInputNormaliser().detect(rawBytes);
+  if (detected) {
+    try {
+      return Right(VersionedMessage.deserialize(detected.messageBytes));
+    } catch {
+      // Not decodable by web3.js (e.g. v1): fall through to report the error.
+    }
+  }
+
   const versionedTx = tryDeserialiseVersioned(rawBytes);
   if (versionedTx.isRight()) {
     return Right(versionedTx.extract() as Message | MessageV0);

@@ -11,6 +11,11 @@ import {
 } from "@solana/web3.js";
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  SEND_WITH_MEMO_MESSAGE,
+  UNSTAKE_MESSAGE,
+  withOneSignature,
+} from "@internal/app-binder/services/__test-utils__/ambiguousMessages";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 import {
@@ -562,6 +567,53 @@ describe("TransactionParser", () => {
       expect(
         parser.hasAddressLookupTables(new Uint8Array([0xab, 0xad, 0xbe, 0xef])),
       ).toBe(false);
+    });
+  });
+
+  describe("raw messages a lenient decoder also reads as signed transactions", () => {
+    it.each([
+      [
+        "unstake",
+        UNSTAKE_MESSAGE,
+        [
+          "ComputeBudget111111111111111111111111111111",
+          "Stake11111111111111111111111111111111111111",
+        ],
+      ],
+      [
+        "send with memo",
+        SEND_WITH_MEMO_MESSAGE,
+        [
+          "ComputeBudget111111111111111111111111111111",
+          "11111111111111111111111111111111",
+          "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+        ],
+      ],
+    ])("parses the %s message as a message", async (_, message, programIds) => {
+      // Precondition: web3.js reads it as a one-signature transaction.
+      expect(() => VersionedTransaction.deserialize(message)).not.toThrow();
+
+      const result = (
+        await new TransactionParser().parse(message).run()
+      ).unsafeCoerce();
+
+      expect(
+        result.message.compiledInstructions.map((ix) =>
+          result.message.allKeys[ix.programIdIndex]!.toBase58(),
+        ),
+      ).toEqual(programIds);
+      expect(result.message.allKeys).toHaveLength(5);
+    });
+
+    it("parses the message out of its signed wire format", async () => {
+      const result = (
+        await new TransactionParser()
+          .parse(withOneSignature(UNSTAKE_MESSAGE))
+          .run()
+      ).unsafeCoerce();
+
+      expect(result.message.compiledInstructions).toHaveLength(2);
+      expect(result.message.allKeys).toHaveLength(5);
     });
   });
 });

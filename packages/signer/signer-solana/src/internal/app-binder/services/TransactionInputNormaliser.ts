@@ -1,15 +1,17 @@
-import { getCompiledTransactionMessageDecoder } from "@solana/transaction-messages";
-import { VersionedTransaction } from "@solana/web3.js";
+import {
+  type CompiledTransactionMessage,
+  getCompiledTransactionMessageDecoder,
+} from "@solana/transaction-messages";
 
 const SIGNATURE_LENGTH = 64;
 
 // SIMD-0385 "Transaction V1" wire format: VersionByte(0x81) is unsupported by
-// @solana/web3.js, so its message boundary is decoded via @solana/transaction-messages
-// instead (a lightweight, officially-maintained sub-package of the Solana Kit
-// ecosystem). Its decoder ignores any trailing bytes and just reports how far it
-// read, so it can be pointed at a buffer that may or may not carry trailing
-// signatures — full-wire vs. bare-message detection stays our own concern, same
-// as the legacy/v0 branch below.
+// @solana/web3.js, so every message boundary is decoded via
+// @solana/transaction-messages instead (a lightweight, officially-maintained
+// sub-package of the Solana Kit ecosystem). Its decoder ignores any trailing
+// bytes and just reports how far it read (it can even report past the end of a
+// truncated buffer), so full-wire vs. bare-message detection stays our own
+// concern: an interpretation only counts when it ends exactly at the input end.
 const V1_VERSION_BYTE = 0x81;
 const compiledTransactionMessageDecoder =
   getCompiledTransactionMessageDecoder();
@@ -20,34 +22,111 @@ export type NormalizedTransactionInput = {
 };
 
 /**
- * Detects whether a transaction input is a full wire-format Solana transaction
- * (`tx.serialize()`) or raw message bytes (`tx.serializeMessage()`), and
- * returns the message bytes together with the original blob when it was
- * full wire-format (used internally to forward co-signer signatures to
+ * Splits a transaction input into the message bytes sent to the device and,
+ * when the input is a full wire-format transaction (`tx.serialize()`), the
+ * original blob (used internally to forward co-signer signatures to
  * Transaction Check without re-serialization).
  *
- * Handles legacy/v0 (via `@solana/web3.js`) and v1 (SIMD-0385, via
- * `@solana/transaction-messages`, since web3.js does not support it yet)
- * transaction formats.
+ * A raw message can also look like a full transaction to a lenient decoder
+ * (a single-signer message starts with `0x01`, which reads as "one
+ * signature"), so detection only accepts an interpretation that decodes to a
+ * well-formed message ending exactly at the input end, trying the bare message
+ * first.
+ *
+ * Handles legacy, v0 and v1 (SIMD-0385) transaction formats.
  */
 export class TransactionInputNormaliser {
   normalize(bytes: Uint8Array): NormalizedTransactionInput {
-    if (bytes[0] === V1_VERSION_BYTE) {
-      return this.normalizeV1(bytes);
-    }
+    // Neither a bare message nor a well-formed full transaction: truncated or
+    // malformed input. Fall back to best-effort pass-through; device-side
+    // validation is the safety net, as for any other malformed input.
+    return this.detect(bytes) ?? { messageBytes: bytes };
+  }
 
-    try {
-      VersionedTransaction.deserialize(bytes);
-    } catch {
+  /**
+   * Strict format detection. Returns `null` when the bytes are neither a
+   * well-formed bare message nor a well-formed full transaction.
+   */
+  detect(bytes: Uint8Array): NormalizedTransactionInput | null {
+    return bytes[0] === V1_VERSION_BYTE
+      ? this.detectV1(bytes)
+      : this.detectLegacyOrV0(bytes);
+  }
+
+  private detectLegacyOrV0(
+    bytes: Uint8Array,
+  ): NormalizedTransactionInput | null {
+    if (this.isWellFormedMessage(bytes)) {
       return { messageBytes: bytes };
     }
 
-    // Full wire-format. Extract message bytes directly from the raw bytes so
-    // the slice is byte-identical to what the loader validates against.
+    // Extract message bytes directly from the raw bytes so the slice is
+    // byte-identical to what the loader validates against.
     const { byteLength, value: sigCount } = this.decodeCompactU16(bytes);
-    const messageOffset = byteLength + sigCount * SIGNATURE_LENGTH;
-    const messageBytes = bytes.subarray(messageOffset);
-    return { messageBytes, serializedForTxCheck: bytes };
+    const messageBytes = bytes.subarray(
+      byteLength + sigCount * SIGNATURE_LENGTH,
+    );
+    if (this.isWellFormedMessage(messageBytes, sigCount)) {
+      return { messageBytes, serializedForTxCheck: bytes };
+    }
+
+    return null;
+  }
+
+  /**
+   * True when `bytes` are exactly one legacy/v0 message (no missing or
+   * trailing bytes) with a consistent header and in-range account indexes,
+   * requiring `expectedSigners` signatures when given.
+   */
+  private isWellFormedMessage(
+    bytes: Uint8Array,
+    expectedSigners?: number,
+  ): boolean {
+    let message: CompiledTransactionMessage;
+    try {
+      const [decoded, end] = compiledTransactionMessageDecoder.read(bytes, 0);
+      if (end !== bytes.length) return false;
+      message = decoded;
+    } catch {
+      return false;
+    }
+    if (message.version === 1) return false;
+
+    const {
+      numSignerAccounts,
+      numReadonlySignerAccounts,
+      numReadonlyNonSignerAccounts,
+    } = message.header;
+    if (
+      expectedSigners !== undefined &&
+      numSignerAccounts !== expectedSigners
+    ) {
+      return false;
+    }
+    // At least one signer must be writable (the fee payer), which also rules
+    // out a message without signers.
+    if (
+      numReadonlySignerAccounts >= numSignerAccounts ||
+      numSignerAccounts + numReadonlyNonSignerAccounts >
+        message.staticAccounts.length
+    ) {
+      return false;
+    }
+
+    const lookups =
+      message.version === 0 ? (message.addressTableLookups ?? []) : [];
+    const accountCount = lookups.reduce(
+      (count, lookup) =>
+        count + lookup.writableIndexes.length + lookup.readonlyIndexes.length,
+      message.staticAccounts.length,
+    );
+    return message.instructions.every(
+      (instruction) =>
+        instruction.programAddressIndex < accountCount &&
+        (instruction.accountIndices ?? []).every(
+          (index) => index < accountCount,
+        ),
+    );
   }
 
   private decodeCompactU16(bytes: Uint8Array): {
@@ -65,10 +144,10 @@ export class TransactionInputNormaliser {
     return { value, byteLength: bytes.length };
   }
 
-  private normalizeV1(bytes: Uint8Array): NormalizedTransactionInput {
+  private detectV1(bytes: Uint8Array): NormalizedTransactionInput | null {
     const messageEnd = this.decodeV1MessageEnd(bytes);
     if (messageEnd === null) {
-      return { messageBytes: bytes };
+      return null;
     }
 
     if (bytes.length === messageEnd) {
@@ -84,10 +163,7 @@ export class TransactionInputNormaliser {
       };
     }
 
-    // Neither a bare message nor a well-formed full transaction: truncated or
-    // malformed input. Fall back to best-effort pass-through; device-side
-    // validation is the safety net, as for any other malformed input.
-    return { messageBytes: bytes };
+    return null;
   }
 
   /**
