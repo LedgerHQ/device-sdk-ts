@@ -21,17 +21,6 @@ const CLA = 0xe0;
 const P1 = 0x00;
 export const INS = 0x25;
 
-/**
- * Substructure-type selector byte. The caller prepends it as the first byte
- * of the first chunk's payload.
- */
-export enum SubstructureType {
-  DisplayField = 0x00,
-  ValueFlowPort = 0x01,
-  HideRule = 0x02,
-  AccountReset = 0x03,
-}
-
 export type ProvideInstructionSubstructureCommandArgs = {
   readonly payload: Uint8Array;
   /**
