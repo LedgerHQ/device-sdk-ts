@@ -177,9 +177,7 @@ function parseEntry(reader: ByteReader, inline: boolean): Entry {
  *
  * The TLV value is `u8 count || entry_0 || ... || entry_{count-1}`.
  *
- * @throws never — wrap with the public `decode` entry points which return
- * `Either`. Internally throws {@link TypePoolDecoderThrow}; do not call directly across
- * a module boundary.
+ * @throws {@link TypePoolDecoderThrow} on malformed input.
  */
 export function parsePool(buffer: Uint8Array): Entry[] {
   if (buffer.length === 0) {
