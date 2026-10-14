@@ -107,12 +107,7 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
               resolutionContext?: TransactionResolutionContext;
               rpcUrl?: string;
             };
-          }) =>
-            inspectTransaction({
-              serializedTransaction: input.serializedTransaction,
-              resolutionContext: input.resolutionContext,
-              rpcUrl: input.rpcUrl,
-            }),
+          }) => inspectTransaction(input),
         ),
         buildBasicClearSignContext: fromPromise(buildBasicClearSignContext),
         provideBasicClearSignContext: fromPromise(provideBasicClearSignContext),
@@ -203,7 +198,6 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
               return {
                 contextModule: context.input.contextModule,
                 loggerFactory: this.getLoggerFactory(internalApi),
-                transactionBytes: context.input.transaction,
                 options: {
                   tokenAddress: inspectorData?.tokenAddress,
                   createATA: inspectorData?.createATA,
@@ -295,13 +289,11 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
       resolutionContext?: TransactionResolutionContext;
       rpcUrl?: string;
     }) =>
-      Promise.resolve(
-        new TransactionInspector(arg0.rpcUrl).inspectTransactionType(
-          arg0.serializedTransaction,
-          arg0.resolutionContext?.tokenAddress,
-          arg0.resolutionContext?.createATA,
-          arg0.resolutionContext?.templateId,
-        ),
+      new TransactionInspector(arg0.rpcUrl).inspectTransactionType(
+        arg0.serializedTransaction,
+        arg0.resolutionContext?.tokenAddress,
+        arg0.resolutionContext?.createATA,
+        arg0.resolutionContext?.templateId,
       );
 
     const buildBasicClearSignContext = async (arg0: {
