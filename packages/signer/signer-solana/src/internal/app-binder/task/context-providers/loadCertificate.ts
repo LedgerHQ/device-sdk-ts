@@ -25,9 +25,10 @@ export async function loadCertificate(
 }
 
 /**
- * Loads the certificate when present, otherwise a no-op success. Every
- * context-provider handler needs exactly this "certificate is optional"
- * gate before streaming its descriptor.
+ * Loads the certificate when present, otherwise a no-op success: the gate for
+ * the context-provider handlers whose certificate is optional. TOKEN is the
+ * exception: it skips its whole descriptor when the certificate is missing, so
+ * it calls {@link loadCertificate} directly.
  */
 export async function loadCertificateIfPresent(
   api: InternalApi,

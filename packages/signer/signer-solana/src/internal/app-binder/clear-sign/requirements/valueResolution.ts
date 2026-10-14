@@ -23,7 +23,8 @@ export function accountAddressAt(
  * The ALT reference of an account slot, bounds-checked. Set only for slots the
  * host cannot resolve (ALT-supplied, no `ALT_RESOLUTION` streamed yet), so it is
  * the natural complement of {@link accountAddressAt}: exactly one of the two
- * answers for any slot of a parsed message.
+ * answers for any in-range slot of a parsed message (both are `undefined` for
+ * an out-of-range index).
  */
 export function accountAltRefAt(
   instruction: RequirementInstruction,
