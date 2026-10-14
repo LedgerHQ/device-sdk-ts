@@ -27,10 +27,16 @@ import {
   SEND_WITH_MEMO_MESSAGE,
   UNSTAKE_MESSAGE,
 } from "@internal/app-binder/services/__test-utils__/ambiguousMessages";
+import {
+  SPEC_V1_MESSAGE,
+  withTrailingBytes,
+} from "@internal/app-binder/services/__test-utils__/v1Fixtures";
+import { TransactionInputNormaliser } from "@internal/app-binder/services/TransactionInputNormaliser";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
 import {
   SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
   SOLANA_MIN_TRANSACTION_CHECKS_VERSION,
+  SOLANA_MIN_V1_TRANSACTIONS_VERSION,
 } from "@internal/app-binder/SolanaApplicationResolver";
 
 import { makeDeviceActionInternalApiMock } from "./__test-utils__/makeInternalApi";
@@ -50,7 +56,9 @@ import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
  */
 
 const defaultDerivation = "44'/501'/0'/0'";
-const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
+// A real legacy message: the orchestrator reads its version from the first
+// byte, so the example must not look like an unknown versioned message.
+const exampleTx = UNSTAKE_MESSAGE;
 const signature = new Uint8Array([0xaa, 0xbb]);
 const armedSig = new Uint8Array([0x77, 0x88]);
 
@@ -179,7 +187,7 @@ function run(
   const action = new SignTransactionDeviceAction({ input });
   parentSpy = vi.spyOn(action, "extractDependencies").mockReturnValue({
     normalizeTransaction: vi.fn().mockResolvedValue({
-      messageBytes: exampleTx,
+      messageBytes: input.transaction,
       serializedForTxCheck: undefined,
     }),
     getAppConfig: getAppConfigMock,
@@ -1436,7 +1444,9 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     });
 
     it("returns null for an unparseable message", async () => {
-      await expect(resolveSigningRoute(exampleTx)).resolves.toBeNull();
+      await expect(
+        resolveSigningRoute(new Uint8Array([0xde, 0xad, 0xbe, 0xef])),
+      ).resolves.toBeNull();
     });
 
     it("matches a rule served by CAL and looks up the transaction's programs", async () => {
@@ -1472,6 +1482,213 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         },
         [ClearSignContextType.SOLANA_BASIC_FLOW_RULE],
       );
+    });
+  });
+
+  describe("message versions", () => {
+    // Flex on the first generic clear-sign version, web3 checks opted in:
+    // every child machine can run.
+    beforeEach(() => {
+      apiMock.getDeviceSessionState.mockReturnValue(
+        session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION, DeviceModelId.FLEX),
+      );
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            ...appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+            transactionChecksEnabled: true,
+            transactionChecksOptIn: true,
+          },
+        }),
+      );
+    });
+
+    const v0Message = Uint8Array.from([0x80, ...UNSTAKE_MESSAGE, 0]);
+
+    // Tx-check, generic build (degraded by default here, as the parser does for
+    // any message it cannot read), tx-check again, basic inspection (standard
+    // transaction, so nothing to provide), report, then the one-shot sign.
+    const fullPathSteps = [
+      signTransactionDAStateSteps.GET_APP_CONFIG,
+      signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
+      signTransactionDAStateSteps.BUILD_GENERIC_CLEAR_SIGN_CONTEXT,
+      signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
+      signTransactionDAStateSteps.INSPECT_TRANSACTION,
+      signTransactionDAStateSteps.SIGN_TRANSACTION,
+    ];
+
+    const expectFullPath = (
+      states: DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[],
+    ) => {
+      expect(stepSequence(states)).toEqual(fullPathSteps);
+      expect(provideTxCheckMock).toHaveBeenCalledTimes(2);
+      expect(buildGenericMock).toHaveBeenCalledOnce();
+      expect(inspectMock).toHaveBeenCalledOnce();
+      expect(reportSignMock).toHaveBeenCalledOnce();
+      expect(signMock).toHaveBeenCalledOnce();
+      const last = states[states.length - 1]!;
+      expect(
+        last.status === DeviceActionStatus.Completed && last.output,
+      ).toEqual(signature);
+    };
+
+    it.each([
+      ["legacy", exampleTx],
+      ["v0", v0Message],
+    ])(
+      "%s message: full signing path",
+      (_, transaction) =>
+        new Promise<void>((resolve, reject) => {
+          run(
+            { ...baseInput, transaction },
+            (states) => {
+              try {
+                expectFullPath(states);
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }),
+    );
+
+    // What the normaliser hands on for input it cannot split: the bytes as
+    // they are.
+    const passedThrough = (input: Uint8Array) =>
+      new TransactionInputNormaliser().normalize(input).messageBytes;
+
+    const expectRefusedAfterAppConfig = (
+      states: DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[],
+      expectedError: object,
+    ) => {
+      expect(stepSequence(states)).toEqual([
+        signTransactionDAStateSteps.GET_APP_CONFIG,
+      ]);
+      expect(getAppConfigMock).toHaveBeenCalledOnce();
+      for (const mock of [
+        txCheckOptInMock,
+        provideTxCheckMock,
+        buildGenericMock,
+        provideGenericMock,
+        finalizeMock,
+        promptUiDisplayMock,
+        inspectMock,
+        buildBasicMock,
+        provideBasicMock,
+        previewMock,
+        refreshBlockhashMock,
+        delayedSignMock,
+        signMock,
+        reportSignMock,
+      ]) {
+        expect(mock).not.toHaveBeenCalled();
+      }
+      const last = states[states.length - 1]!;
+      expect(last.status).toBe(DeviceActionStatus.Error);
+      expect(
+        last.status === DeviceActionStatus.Error && last.error,
+      ).toMatchObject(expectedError);
+    };
+
+    it.each([
+      [
+        "v1 on an app below the v1 version",
+        SPEC_V1_MESSAGE,
+        {
+          _tag: "SolanaTransactionVersionNotSupportedError",
+          version: 1,
+          reason: "appVersion",
+        },
+      ],
+      [
+        "v1 wire input with a trailing byte",
+        passedThrough(withTrailingBytes(SPEC_V1_MESSAGE, [0])),
+        { _tag: "InvalidSolanaTransactionError", rule: "TRAILING_BYTES" },
+      ],
+    ])(
+      "%s: refused right after the app configuration, nothing else sent",
+      (_, transaction, expectedError) =>
+        new Promise<void>((resolve, reject) => {
+          run(
+            { ...baseInput, transaction },
+            (states) => {
+              try {
+                expectRefusedAfterAppConfig(states, expectedError);
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }),
+    );
+
+    describe("on an app that supports v1", () => {
+      beforeEach(() => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_V1_TRANSACTIONS_VERSION, DeviceModelId.FLEX),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              ...appConfig(SOLANA_MIN_V1_TRANSACTIONS_VERSION),
+              transactionChecksEnabled: true,
+              transactionChecksOptIn: true,
+            },
+          }),
+        );
+      });
+
+      it("v1 message: full signing path", () =>
+        new Promise<void>((resolve, reject) => {
+          run(
+            { ...baseInput, transaction: SPEC_V1_MESSAGE },
+            (states) => {
+              try {
+                expectFullPath(states);
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+
+      it("v1 message with v1Transactions disabled: refused as an app version", () =>
+        new Promise<void>((resolve, reject) => {
+          run(
+            {
+              ...baseInput,
+              transaction: SPEC_V1_MESSAGE,
+              disabledFeatures: ["v1Transactions"],
+            },
+            (states) => {
+              try {
+                expectRefusedAfterAppConfig(states, {
+                  _tag: "SolanaTransactionVersionNotSupportedError",
+                  version: 1,
+                  reason: "appVersion",
+                });
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
     });
   });
 });
