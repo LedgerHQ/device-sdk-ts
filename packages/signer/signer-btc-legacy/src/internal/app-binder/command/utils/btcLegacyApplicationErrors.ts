@@ -73,7 +73,7 @@ export const BTC_LEGACY_APP_ERRORS: CommandErrors<BtcLegacyErrorCodes> = {
   "9484": { message: "AlgorithmNotSupportedError" },
   "9485": { message: "InvalidKCVError" },
   "9802": { message: "CodeNotInitializedError" },
-  "9804": { message: "AccessConditionNotFullfilledError" },
+  "9804": { message: "AccessConditionNotFulfilledError" },
   "9808": { message: "ContradictionSecretCodeStatusError" },
   "9810": { message: "ContradictionInvalidationError" },
   "9840": { message: "CodeBlockedError" },
