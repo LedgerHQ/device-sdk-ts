@@ -8,6 +8,7 @@ import { BtcSignerDriver } from "./utils/drivers/BtcSignerDriver";
 import { CommandsDriver } from "./utils/drivers/CommandsDriver";
 import { DeviceActionsDriver } from "./utils/drivers/DeviceActionsDriver";
 import { EthSignerDriver } from "./utils/drivers/EthSignerDriver";
+import { LtcSignerDriver } from "./utils/drivers/LtcSignerDriver";
 import { MockDeviceDriver } from "./utils/drivers/MockDeviceDriver";
 import { SettingsDriver } from "./utils/drivers/SettingsDriver";
 import { SidebarDriver } from "./utils/drivers/SidebarDriver";
@@ -31,6 +32,7 @@ type Fixtures = {
   sidebar: SidebarDriver;
   ethSigner: EthSignerDriver;
   btcSigner: BtcSignerDriver;
+  ltcSigner: LtcSignerDriver;
   trxSigner: TrxSignerDriver;
   xrpSigner: XrpSignerDriver;
   /** Build a Speculos driver for a connected device (its app must be opened). */
@@ -72,6 +74,9 @@ export const test = base.extend<Fixtures>({
   },
   btcSigner: async ({ page }, use) => {
     await use(new BtcSignerDriver(page));
+  },
+  ltcSigner: async ({ page }, use) => {
+    await use(new LtcSignerDriver(page));
   },
   trxSigner: async ({ page }, use) => {
     await use(new TrxSignerDriver(page));
