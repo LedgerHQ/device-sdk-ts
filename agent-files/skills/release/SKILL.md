@@ -16,7 +16,7 @@ The following commands need network access, post-install scripts, or the GitHub 
 - `pnpm install --no-frozen-lockfile` (Step 9 — post-install scripts, native deps)
 - `pnpm exec zx agent-files/scripts/release/create-pr.cjs` (Step 11 — `gh pr create`)
 
-All other scripts (`discover`, `set-private`, `pin-deps`, `bump`, `cleanup`) run fine inside the sandbox.
+All other scripts (`discover`, `set-private`, `pin-deps`, `bump`, `cleanup`, `slack-message`) run fine inside the sandbox.
 
 ## Package aliases
 
@@ -130,6 +130,7 @@ git checkout -b release
 pnpm exec zx agent-files/scripts/release/set-private.cjs --packages <PKGS>
 ```
 
+- Pass only the packages from `selected[]` in Step 2: a skipped package made public here would end up in the release PR and the Slack announcement with its previous changelog entry.
 - Sets `private:false` on target packages, `private:true` on everything else.
 - Auto-includes dependents of major-bumped packages (creates a patch changeset for them).
 - Review the JSON summary to confirm the right packages are public.
@@ -244,7 +245,16 @@ pnpm exec zx agent-files/scripts/release/create-pr.cjs
 - Opens a PR targeting `main` with a version summary body.
 - Report the PR URL to the user.
 
-### Step 12 -- Verify documentation and README
+### Step 12 -- Generate the Slack announcement
+
+```bash
+pnpm exec zx agent-files/scripts/release/slack-message.cjs
+```
+
+- Builds the release announcement from the new `CHANGELOG.md` section of each released package.
+- Show the output to the user in a fenced code block, ready to paste in Slack.
+
+### Step 13 -- Verify documentation and README
 
 Perform a documentation health check. This step does not block the release but surfaces issues for the user.
 
