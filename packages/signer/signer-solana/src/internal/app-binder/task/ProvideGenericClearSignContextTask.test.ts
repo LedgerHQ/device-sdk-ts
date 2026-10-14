@@ -6,6 +6,7 @@ import {
 import {
   CommandResultFactory,
   DeviceModelId,
+  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
@@ -13,6 +14,7 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { ProvideInstructionInfoCommand } from "@internal/app-binder/command/ProvideInstructionInfoCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
+import { ProvideTokenAccountStateCommand } from "@internal/app-binder/command/ProvideTokenAccountStateCommand";
 import { SignMessageGenericPreviewCommand } from "@internal/app-binder/command/SignMessageGenericPreviewCommand";
 
 import { type ChallengeBoundRequirements } from "./BuildGenericClearSignContextTask";
@@ -312,10 +314,13 @@ describe("ProvideGenericClearSignContextTask", () => {
       certificate: cert,
     } as any;
   }
-  function tokenAccountStateCtx(mint: string): ClearSignContext {
+  function tokenAccountStateCtx(
+    mint: string,
+    owner?: string,
+  ): ClearSignContext {
     return {
       type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
-      payload: { mint, descriptor: new Uint8Array([0xaa, 0xbb]) },
+      payload: { mint, owner, descriptor: new Uint8Array([0xaa, 0xbb]) },
       certificate: cert,
     } as any;
   }
@@ -581,6 +586,132 @@ describe("ProvideGenericClearSignContextTask", () => {
       (c) => c[1]?.[0] === ClearSignContextType.SOLANA_TOKEN_INFO,
     );
     expect(tokenInfoCalls).toHaveLength(0);
+  });
+
+  it("returns the owners attested by every TOKEN_ACCOUNT_STATE sent", async () => {
+    const getContexts = vi.fn(
+      async (input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("ATA2")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE) {
+          const tokenAccount = input.requests[0].tokenAccount as string;
+          return [
+            tokenAccountStateCtx(
+              "MINT1",
+              tokenAccount === "ATA3" ? undefined : `OWNER_${tokenAccount}`,
+            ),
+          ];
+        }
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return [tokenInfoCtxFor("MINT1")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAccountStates: ["ATA1", "ATA3"],
+        tokenAccountStateAltRefs: [{ altAddress: "ALT2", entryIndex: 0 }],
+      },
+      getContexts,
+    );
+
+    const result = await task.run();
+
+    expect(result).toEqual(
+      CommandResultFactory({
+        data: {
+          tokenAccountOwners: { ATA1: "OWNER_ATA1", ATA2: "OWNER_ATA2" },
+        },
+      }),
+    );
+  });
+
+  it("returns only the owners of TOKEN_ACCOUNT_STATE descriptors the device accepted", async () => {
+    // One accepted and one rejected account on each of the three paths that
+    // send a TOKEN_ACCOUNT_STATE: direct, TOKEN_AMOUNT.TOKEN ALT fallback, and
+    // TOKEN_ACCOUNT_STATE ALT refs.
+    const REJECTED = 0xee;
+    const resolved: Record<string, string> = {
+      ALT_A: "OK2",
+      ALT_B: "BAD2",
+      ALT_C: "OK3",
+      ALT_D: "BAD3",
+    };
+    const getContexts = vi.fn(
+      async (input: any, types: ClearSignContextType[]) => {
+        const request = input.requests?.[0];
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx(resolved[request.altAddress]!)];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE) {
+          const tokenAccount = request.tokenAccount as string;
+          return [
+            {
+              type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+              payload: {
+                mint: `MINT_${tokenAccount}`,
+                owner: `OWNER_${tokenAccount}`,
+                descriptor: new Uint8Array([
+                  tokenAccount.startsWith("BAD") ? REJECTED : 0xaa,
+                ]),
+              },
+              certificate: cert,
+            } as any,
+          ];
+        }
+        if (
+          types[0] === ClearSignContextType.SOLANA_TOKEN_INFO &&
+          input.mints[0].startsWith("MINT_")
+        )
+          return [tokenInfoCtxFor(input.mints[0])];
+        return [];
+      },
+    );
+    const { task, api } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAccountStates: ["OK1", "BAD1"],
+        tokenAmountAltRefs: [
+          { altAddress: "ALT_A", entryIndex: 0 },
+          { altAddress: "ALT_B", entryIndex: 0 },
+        ],
+        tokenAccountStateAltRefs: [
+          { altAddress: "ALT_C", entryIndex: 0 },
+          { altAddress: "ALT_D", entryIndex: 0 },
+        ],
+      },
+      getContexts,
+    );
+    api.sendCommand.mockImplementation(async (cmd: unknown) => {
+      if (cmd instanceof GetChallengeCommand) return challenge;
+      if (
+        cmd instanceof ProvideTokenAccountStateCommand &&
+        cmd.args.payload.includes(REJECTED)
+      ) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("rejected"),
+        });
+      }
+      return success;
+    });
+
+    const result = await task.run();
+
+    expect(result).toEqual(
+      CommandResultFactory({
+        data: {
+          tokenAccountOwners: {
+            OK1: "OWNER_OK1",
+            OK2: "OWNER_OK2",
+            OK3: "OWNER_OK3",
+          },
+        },
+      }),
+    );
   });
 
   it("tokenAccountStateAltRefs: streams ALT_RESOLUTION, then TOKEN_ACCOUNT_STATE, then TOKEN_INFO for the attested mint", async () => {

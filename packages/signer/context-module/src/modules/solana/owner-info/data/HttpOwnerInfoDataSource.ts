@@ -138,6 +138,8 @@ export class HttpOwnerInfoDataSource implements OwnerInfoDataSource {
       }
       return Right({
         tlvDescriptor,
+        tokenAccount: ownerInfo.tokenAccount,
+        owner: ownerInfo.owner,
       });
     });
   }
