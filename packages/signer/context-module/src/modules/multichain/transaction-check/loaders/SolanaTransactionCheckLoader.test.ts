@@ -147,6 +147,56 @@ describe("SolanaTransactionCheckLoader", () => {
     });
   });
 
+  describe("load — v1 (SIMD-0385) transactions", () => {
+    // The spec's 172-byte v1 message followed by its one signature: 236 bytes.
+    const SPEC_V1_TRANSACTION = Uint8Array.from([
+      ...Buffer.from(
+        "810100010f000000" +
+          "aa".repeat(32) +
+          "0103" +
+          "11".repeat(32) +
+          "22".repeat(32) +
+          "00".repeat(32) +
+          "8813000000000000c20100000080000002020c0000010200000040420f0000000000",
+        "hex",
+      ),
+      ...new Uint8Array(64).fill(0x44),
+    ]);
+    // The v1 size limit. The loader never parses the bytes, so filler is enough.
+    const MAX_SIZE_V1_TRANSACTION = Uint8Array.from({ length: 4096 }, (_, i) =>
+      i === 0 ? 0x81 : i & 0xff,
+    );
+
+    beforeEach(() => {
+      dataSourceMock.check.mockResolvedValue(
+        Right({ publicKeyId: "pk", descriptor: "aabb" }),
+      );
+    });
+
+    it.each([
+      ["the 236-byte spec", SPEC_V1_TRANSACTION],
+      ["a 4096-byte", MAX_SIZE_V1_TRANSACTION],
+    ])(
+      "sends %s v1 wire transaction unchanged",
+      async (_, transactionBytes) => {
+        await loader.load({
+          deviceModelId: DeviceModelId.NANO_X,
+          transactionCheck: {
+            from: "signer",
+            transactionBytes,
+            chain: SolanaTransactionScanChainId.MAINNET,
+          },
+        });
+
+        const sent = dataSourceMock.check.mock.calls[0]![0];
+        expect(sent.path).toBe(TransactionCheckPaths.SOLANA_TRANSACTION);
+        const raw = bs58.decode(sent.body.tx.raw);
+        expect(raw[0]).toBe(0x81);
+        expect(raw).toEqual(transactionBytes);
+      },
+    );
+  });
+
   describe("load — result mapping", () => {
     it("returns a SOLANA_TRANSACTION_CHECK context with descriptor and certificate on success", async () => {
       dataSourceMock.check.mockResolvedValue(
