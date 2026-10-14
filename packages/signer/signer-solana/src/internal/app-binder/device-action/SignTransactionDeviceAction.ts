@@ -29,6 +29,7 @@ import {
   type NormalizedTransactionInput,
   TransactionInputNormaliser,
 } from "@internal/app-binder/services/TransactionInputNormaliser";
+import { checkMessageVersion } from "@internal/app-binder/services/utils/messageVersion";
 import {
   isSolanaSignerFeatureSupported,
   type SolanaSignerFeaturesNames,
@@ -363,10 +364,40 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         GetAppConfigResultCheck: {
           always: [
             {
-              target: "CheckTransactionCheckSupported",
+              target: "CheckTransactionVersionSupported",
               guard: "noInternalError",
             },
             { target: "Error" },
+          ],
+        },
+        // Refuses unsupported or invalid message versions before any
+        // transaction-check, descriptor or sign APDU is sent.
+        CheckTransactionVersionSupported: {
+          entry: assign({
+            _internalState: ({ context }) => ({
+              ...context._internalState,
+              error: checkMessageVersion(
+                context._internalState.messageBytes,
+                isSupported(
+                  "v1Transactions",
+                  context._internalState.appConfig!,
+                ),
+              ),
+            }),
+          }),
+          always: [
+            {
+              target: "CheckTransactionCheckSupported",
+              guard: "noInternalError",
+            },
+            {
+              target: "Error",
+              actions: ({ context }) =>
+                logger.info(
+                  "[CheckTransactionVersionSupported] transaction refused",
+                  { data: { error: context._internalState.error } },
+                ),
+            },
           ],
         },
         CheckTransactionCheckSupported: {

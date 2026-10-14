@@ -38,8 +38,9 @@ export type NormalizedTransactionInput = {
 export class TransactionInputNormaliser {
   normalize(bytes: Uint8Array): NormalizedTransactionInput {
     // Neither a bare message nor a well-formed full transaction: truncated or
-    // malformed input. Fall back to best-effort pass-through; device-side
-    // validation is the safety net, as for any other malformed input.
+    // malformed input. Fall back to best-effort pass-through. The signing flow
+    // refuses an invalid v1 message before anything reaches the device; for
+    // legacy and v0, device-side validation is the safety net.
     return this.detect(bytes) ?? { messageBytes: bytes };
   }
 
