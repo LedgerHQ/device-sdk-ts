@@ -1062,6 +1062,9 @@ importers:
       '@ledgerhq/device-signer-kit-bitcoin':
         specifier: workspace:^
         version: link:../../packages/signer/signer-btc
+      '@ledgerhq/device-signer-kit-bitcoin-legacy':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-btc-legacy
       '@ledgerhq/device-signer-kit-cosmos':
         specifier: workspace:^
         version: link:../../packages/signer/signer-cosmos
