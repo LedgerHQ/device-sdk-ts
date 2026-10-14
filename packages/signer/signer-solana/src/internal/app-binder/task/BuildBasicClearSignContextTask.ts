@@ -21,7 +21,6 @@ export type { SolanaTransactionContextResultSuccess as BasicClearSignContext };
 export type BuildBasicClearSignContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly options: TransactionResolutionContext;
-  readonly transactionBytes: Uint8Array;
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
