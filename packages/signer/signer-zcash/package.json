@@ -38,6 +38,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ledgerhq/signer-btc-legacy-core": "workspace:^",
     "@ledgerhq/signer-utils": "workspace:^",
     "@noble/hashes": "^1.8.0",
     "inversify": "catalog:",

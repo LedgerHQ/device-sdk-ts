@@ -3,6 +3,7 @@ import {
   type CommandErrors,
   DeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
+import { type LegacyErrorConfig } from "@ledgerhq/signer-btc-legacy-core";
 
 export type ZcashErrorCodes =
   | "6300"
@@ -95,3 +96,8 @@ export class ZcashAppCommandError extends DeviceExchangeError<ZcashErrorCodes> {
 export const ZcashAppCommandErrorFactory = (
   args: CommandErrorArgs<ZcashErrorCodes>,
 ) => new ZcashAppCommandError(args);
+
+export const ZCASH_ERROR_CONFIG: LegacyErrorConfig<ZcashErrorCodes> = {
+  errors: ZCASH_APP_ERRORS,
+  factory: ZcashAppCommandErrorFactory,
+};

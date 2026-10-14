@@ -1,76 +1,22 @@
 import {
-  type Apdu,
-  ApduBuilder,
-  type ApduBuilderArgs,
-  type ApduResponse,
-  type Command,
-  type CommandResult,
-  CommandResultFactory,
-} from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
-import { Maybe } from "purify-ts";
+  LegacyStartUntrustedHashTransactionInputCommand,
+  type StartUntrustedHashTransactionInputCommandArgs,
+} from "@ledgerhq/signer-btc-legacy-core";
 
-import {
-  P1,
-  P2,
-  ZCASH_CLA,
-} from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+import { ZCASH_LEGACY_PROFILE } from "@internal/app-binder/zcashLegacyProfile";
 
-import {
-  ZCASH_APP_ERRORS,
-  ZcashAppCommandErrorFactory,
-  type ZcashErrorCodes,
-} from "./utils/zcashApplicationErrors";
+export {
+  type StartUntrustedHashTransactionInputCommandArgs,
+  type StartUntrustedHashTransactionInputCommandResponse,
+} from "@ledgerhq/signer-btc-legacy-core";
 
-const START_UNTRUSTED_HASH_TRANSACTION_INPUT = 0x44;
-
-export type StartUntrustedHashTransactionInputCommandArgs = {
-  newTransaction: boolean;
-  firstRound: boolean;
-  transactionData: Uint8Array;
-};
-
-export type StartUntrustedHashTransactionInputCommandResponse = ApduResponse;
-
-export class StartUntrustedHashTransactionInputCommand
-  implements
-    Command<
-      StartUntrustedHashTransactionInputCommandResponse,
-      StartUntrustedHashTransactionInputCommandArgs,
-      ZcashErrorCodes
-    >
-{
-  readonly name = "StartUntrustedHashTransactionInput";
-
-  private readonly errorHelper = new CommandErrorHelper<
-    StartUntrustedHashTransactionInputCommandResponse,
-    ZcashErrorCodes
-  >(ZCASH_APP_ERRORS, ZcashAppCommandErrorFactory);
-
-  constructor(
-    private readonly args: StartUntrustedHashTransactionInputCommandArgs,
-  ) {}
-
-  getApdu(): Apdu {
-    const apduArgs: ApduBuilderArgs = {
-      cla: ZCASH_CLA,
-      ins: START_UNTRUSTED_HASH_TRANSACTION_INPUT,
-      p1: this.args.firstRound ? P1.FIRST : P1.NEXT,
-      p2: this.args.newTransaction ? P2.SAPLING : P2.HASH_INPUT_CONTINUE,
-    };
-    return new ApduBuilder(apduArgs)
-      .addBufferToData(this.args.transactionData)
-      .build();
-  }
-
-  parseResponse(
-    response: ApduResponse,
-  ): CommandResult<
-    StartUntrustedHashTransactionInputCommandResponse,
-    ZcashErrorCodes
-  > {
-    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefault(
-      CommandResultFactory({ data: response }),
+export class StartUntrustedHashTransactionInputCommand extends LegacyStartUntrustedHashTransactionInputCommand<ZcashErrorCodes> {
+  constructor(args: StartUntrustedHashTransactionInputCommandArgs) {
+    super(
+      args,
+      ZCASH_LEGACY_PROFILE.errors,
+      ZCASH_LEGACY_PROFILE.newTransactionP2,
     );
   }
 }
