@@ -5,4 +5,5 @@ export const btcLegacyTypes = {
   SessionId: Symbol.for("SessionId"),
   Profile: Symbol.for("BtcLegacyProfile"),
   AppBinder: Symbol.for("BtcLegacyAppBinder"),
+  GetAddressUseCase: Symbol.for("BtcLegacyGetAddressUseCase"),
 } as const;
