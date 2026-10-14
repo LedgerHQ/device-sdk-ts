@@ -2,6 +2,7 @@ import {
   DeviceActionStatus,
   type ExecuteDeviceActionReturnType,
 } from "@ledgerhq/device-management-kit";
+import { type BtcLegacyAppBinder } from "@ledgerhq/signer-btc-legacy-core";
 import { from } from "rxjs";
 import { vi } from "vitest";
 
@@ -10,7 +11,7 @@ import {
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { type ZcashAppBinder } from "@internal/app-binder/ZcashAppBinder";
+import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 
 import { GetAddressUseCase } from "./GetAddressUseCase";
 
@@ -20,7 +21,7 @@ describe("GetAddressUseCase", () => {
     const getAddressMock = vi.fn();
     const appBinder = {
       getAddress: getAddressMock,
-    } as unknown as ZcashAppBinder;
+    } as unknown as BtcLegacyAppBinder<ZcashErrorCodes>;
     const expectedResult: ExecuteDeviceActionReturnType<
       GetAddressDAOutput,
       GetAddressDAError,
@@ -59,7 +60,7 @@ describe("GetAddressUseCase", () => {
     });
     const appBinder = {
       getAddress: getAddressMock,
-    } as unknown as ZcashAppBinder;
+    } as unknown as BtcLegacyAppBinder<ZcashErrorCodes>;
 
     const useCase = new GetAddressUseCase(appBinder);
     useCase.execute(derivationPath, {

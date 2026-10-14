@@ -58,7 +58,12 @@ describe("DefaultSignerZcash", () => {
     };
     expect(call.sessionId).toBe(sessionId);
     expect(call.deviceAction).toBeInstanceOf(SendCommandInAppDeviceAction);
-    expect(call.deviceAction.input.command).toBeInstanceOf(GetAddressCommand);
+    // Built by the legacy-protocol signer kit: compare what the device receives.
+    expect(call.deviceAction.input.command.getApdu().getRawApdu()).toEqual(
+      new GetAddressCommand({ derivationPath, checkOnDevice: false })
+        .getApdu()
+        .getRawApdu(),
+    );
     expect(call.deviceAction.input.appName).toBe(APP_NAME);
     expect(call.deviceAction.input.requiredUserInteraction).toBe(
       UserInteractionRequired.None,

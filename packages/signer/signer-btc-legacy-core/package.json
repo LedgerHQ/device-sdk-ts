@@ -53,7 +53,9 @@
   "dependencies": {
     "@ledgerhq/signer-utils": "workspace:^",
     "@noble/hashes": "^1.8.0",
-    "purify-ts": "catalog:"
+    "inversify": "catalog:",
+    "purify-ts": "catalog:",
+    "reflect-metadata": "catalog:"
   },
   "description": "Shared core for the signers of apps on the legacy Bitcoin protocol (CLA 0xE0): commands, transaction utils, coin profile."
 }

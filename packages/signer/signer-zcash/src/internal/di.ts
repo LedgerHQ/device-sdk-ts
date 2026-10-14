@@ -2,9 +2,14 @@ import {
   type DeviceManagementKit,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
+import {
+  btcLegacyModuleFactory,
+  btcLegacyTypes,
+} from "@ledgerhq/signer-btc-legacy-core";
 import { Container } from "inversify";
 
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
+import { ZCASH_LEGACY_PROFILE } from "@internal/app-binder/zcashLegacyProfile";
 import { externalTypes } from "@internal/externalTypes";
 import { addressModuleFactory } from "@internal/use-cases/address/di/addressModule";
 import { configModuleFactory } from "@internal/use-cases/config/di/configModule";
@@ -24,7 +29,12 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
 
+  // Transparent services shared with the other legacy-protocol coins. Dmk and
+  // SessionId are bound above under the same Symbol.for keys.
+  container.bind(btcLegacyTypes.Profile).toConstantValue(ZCASH_LEGACY_PROFILE);
+
   container.loadSync(
+    btcLegacyModuleFactory(),
     appBindingModuleFactory(),
     configModuleFactory(),
     addressModuleFactory(),
