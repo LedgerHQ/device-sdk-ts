@@ -1,5 +1,7 @@
 import { type DmkError } from "@ledgerhq/device-management-kit";
 
+import { type V1Rule } from "./v1Message";
+
 /**
  * The smallest message that can possibly decode is one with no instructions
  * and a single static account key: 3 header bytes + 1 byte for the static-key
@@ -100,9 +102,24 @@ export class AccountIndexOutOfRangeError implements DmkError {
   }
 }
 
+export class InvalidV1MessageError implements DmkError {
+  readonly _tag = "InvalidV1MessageError";
+  readonly originalError: Error;
+
+  constructor(
+    readonly rule: V1Rule,
+    detail: string,
+  ) {
+    this.originalError = new Error(
+      `Invalid Solana v1 message (${rule}): ${detail}`,
+    );
+  }
+}
+
 export type ParserError =
   | TruncatedTransactionError
   | InvalidVersionError
+  | InvalidV1MessageError
   | MalformedTransactionError
   | EmptyInstructionsError
   | OversizedAccountArrayError

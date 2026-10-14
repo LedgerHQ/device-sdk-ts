@@ -20,6 +20,7 @@ import { type AddressLookupTableResolver } from "./AddressLookupTableResolver";
 import {
   AccountIndexOutOfRangeError,
   EmptyInstructionsError,
+  InvalidV1MessageError,
   InvalidVersionError,
   MalformedTransactionError,
   MAX_ACCOUNTS_PER_INSTRUCTION,
@@ -28,6 +29,11 @@ import {
   type ParserError,
   TruncatedTransactionError,
 } from "./ParserError";
+import {
+  type DecodedV1Message,
+  decodeV1Message,
+  V1_VERSION_BYTE,
+} from "./v1Message";
 
 const VERSION_PREFIX_MASK = 0x7f;
 // Pads `allKeys` at unresolved ALT slots. The all-zero key is base58 the
@@ -51,9 +57,9 @@ export type TransactionParserOptions = {
 };
 
 /**
- * Decodes raw transaction bytes into a normalised message (legacy + v0). ALT
- * references are resolved when an {@link AddressLookupTableResolver} is
- * provided, or preserved on the output when `preserveAltRefs` is set and no
+ * Decodes raw transaction bytes into a normalised message (legacy, v0 and
+ * v1). ALT references are resolved when an {@link AddressLookupTableResolver}
+ * is provided, or preserved on the output when `preserveAltRefs` is set and no
  * resolver is given. Malformed input is returned as a typed `ParserError`,
  * never thrown.
  */
@@ -70,6 +76,12 @@ export class TransactionParser {
   }
 
   parse(rawBytes: Uint8Array): EitherAsync<ParserError, ParsedTransaction> {
+    // v1 (SIMD-0385) is read by our own validator: web3.js cannot decode it,
+    // and v1 has no lookup tables to resolve.
+    if (rawBytes[0] === V1_VERSION_BYTE) {
+      return EitherAsync.liftEither(parseV1(rawBytes));
+    }
+
     return EitherAsync(async ({ liftEither, fromPromise }) => {
       if (rawBytes.length < MIN_MESSAGE_BYTES) {
         return liftEither(
@@ -185,6 +197,62 @@ export class TransactionParser {
       return normalised;
     });
   }
+}
+
+function parseV1(rawBytes: Uint8Array): Either<ParserError, ParsedTransaction> {
+  // Same strict detection as legacy and v0: a full wire transaction is cut
+  // down to its message.
+  const messageBytes =
+    new TransactionInputNormaliser().detect(rawBytes)?.messageBytes ?? rawBytes;
+  return decodeV1Message(messageBytes)
+    .mapLeft<ParserError>(
+      ({ rule, detail }) => new InvalidV1MessageError(rule, detail),
+    )
+    .chain(normaliseV1)
+    .map((message) => ({ message, usesAddressLookupTables: false }));
+}
+
+/**
+ * Maps a decoded v1 message onto the legacy/v0 model. Every account is
+ * static, and the header gives signer and writable flags with the same
+ * formula as legacy messages.
+ */
+function normaliseV1(
+  message: DecodedV1Message,
+): Either<ParserError, NormalizedMessage> {
+  const {
+    numSignerAccounts,
+    numReadonlySignerAccounts,
+    numReadonlyNonSignerAccounts,
+  } = message.header;
+  const keyCount = message.staticAccounts.length;
+  const signerMap = Array.from(
+    { length: keyCount },
+    (_, i) => i < numSignerAccounts,
+  );
+  const writableMap = Array.from({ length: keyCount }, (_, i) =>
+    i < numSignerAccounts
+      ? i < numSignerAccounts - numReadonlySignerAccounts
+      : i < keyCount - numReadonlyNonSignerAccounts,
+  );
+
+  return buildCompiledInstructions(
+    message.instructionHeaders.map((header, i) => ({
+      programIdIndex: header.programAccountIndex,
+      accountKeyIndexes: [
+        ...(message.instructionPayloads[i]?.instructionAccountIndices ?? []),
+      ],
+      data: Uint8Array.from(
+        message.instructionPayloads[i]?.instructionData ?? [],
+      ),
+    })),
+    writableMap,
+    keyCount,
+    signerMap,
+  ).map((compiledInstructions) => ({
+    compiledInstructions,
+    allKeys: message.staticAccounts.map((address) => new PublicKey(address)),
+  }));
 }
 
 /**
