@@ -1,7 +1,12 @@
-import { getCompiledTransactionMessageDecoder } from "@solana/transaction-messages";
+import {
+  type CompiledTransactionMessage,
+  getCompiledTransactionMessageDecoder,
+} from "@solana/transaction-messages";
 import { Connection } from "@solana/web3.js";
 import bs58 from "bs58";
 import { injectable } from "inversify";
+
+import { decodeV1Message } from "./utils/v1Message";
 
 const PUBLIC_KEY_LENGTH = 32;
 const BLOCKHASH_LENGTH = 32;
@@ -130,11 +135,8 @@ export class BlockhashService {
   getRefreshBlocker(
     serializedMessage: Uint8Array,
   ): BlockhashRefreshBlocker | null {
-    let message;
-    try {
-      message =
-        getCompiledTransactionMessageDecoder().decode(serializedMessage);
-    } catch {
+    const message = this.decodeMessage(serializedMessage);
+    if (!message) {
       return "undecodable";
     }
 
@@ -166,6 +168,20 @@ export class BlockhashService {
     }
 
     return null;
+  }
+
+  private decodeMessage(
+    serializedMessage: Uint8Array,
+  ): CompiledTransactionMessage | undefined {
+    // Kit also decodes invalid v1 messages; only the validator rules them out.
+    if (serializedMessage[0] === V1_VERSION_BYTE) {
+      return decodeV1Message(serializedMessage).toMaybe().extract();
+    }
+    try {
+      return getCompiledTransactionMessageDecoder().decode(serializedMessage);
+    } catch {
+      return undefined;
+    }
   }
 
   /**

@@ -1,5 +1,7 @@
 import { type DmkError } from "@ledgerhq/device-management-kit";
 
+import { type InvalidSolanaTransactionError } from "@api/model/SolanaTransactionErrors";
+
 /**
  * The smallest message that can possibly decode is one with no instructions
  * and a single static account key: 3 header bytes + 1 byte for the static-key
@@ -103,6 +105,7 @@ export class AccountIndexOutOfRangeError implements DmkError {
 export type ParserError =
   | TruncatedTransactionError
   | InvalidVersionError
+  | InvalidSolanaTransactionError
   | MalformedTransactionError
   | EmptyInstructionsError
   | OversizedAccountArrayError
