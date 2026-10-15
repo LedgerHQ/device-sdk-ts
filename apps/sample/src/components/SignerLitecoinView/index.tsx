@@ -5,6 +5,9 @@ import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
+  type GetExtendedPublicKeyDAError,
+  type GetExtendedPublicKeyDAIntermediateValue,
+  type GetExtendedPublicKeyDAOutput,
   LITECOIN_PROFILE,
   SignerBtcLegacyBuilder,
 } from "@ledgerhq/device-signer-kit-bitcoin-legacy";
@@ -80,6 +83,29 @@ export const SignerLitecoinView: React.FC<{ sessionId: string }> = ({
         },
         GetAddressDAError<BtcLegacyErrorCodes>,
         GetAddressDAIntermediateValue
+      >,
+      {
+        title: "Get extended public key",
+        description: "Get the extended public key of a Litecoin account",
+        executeDeviceAction: ({ derivationPath, skipOpenApp }) =>
+          signer.getExtendedPublicKey(derivationPath, { skipOpenApp }),
+        initialValues: {
+          derivationPath: "84'/2'/0'",
+          skipOpenApp: false,
+        },
+        labelSelector: {
+          derivationPath: "Derivation path",
+          skipOpenApp: "Skip open app",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetExtendedPublicKeyDAOutput,
+        {
+          derivationPath: string;
+          skipOpenApp: boolean;
+        },
+        GetExtendedPublicKeyDAError<BtcLegacyErrorCodes>,
+        GetExtendedPublicKeyDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
