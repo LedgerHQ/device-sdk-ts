@@ -100,3 +100,7 @@ export const selectDatasourceConfig = (state: RootState) =>
   state.settings.datasourceConfig;
 export const selectDatasourceProxy = (state: RootState) =>
   state.settings.datasourceConfig.proxy;
+
+// Solana signer selectors
+export const selectSolanaDisabledFeatures = (state: RootState) =>
+  state.settings.solanaDisabledFeatures;
