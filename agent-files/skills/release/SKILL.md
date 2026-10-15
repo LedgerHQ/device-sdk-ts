@@ -27,6 +27,7 @@ Use these short names in the `--packages` flag. The user may use either aliases 
 | `dmk`                   | `@ledgerhq/device-management-kit`                              |
 | `signer-eth`            | `@ledgerhq/device-signer-kit-ethereum`                         |
 | `signer-btc`            | `@ledgerhq/device-signer-kit-bitcoin`                          |
+| `signer-btc-legacy`     | `@ledgerhq/device-signer-kit-bitcoin-legacy`                   |
 | `signer-sol`            | `@ledgerhq/device-signer-kit-solana`                           |
 | `signer-aleo`           | `@ledgerhq/device-signer-kit-aleo`                             |
 | `signer-cosmos`         | `@ledgerhq/device-signer-kit-cosmos`                           |
