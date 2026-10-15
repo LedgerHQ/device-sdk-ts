@@ -77,6 +77,7 @@ requested `--device` is skipped rather than failed.
 | `solana`                    | stax, nanox, flex | Solana transaction fixtures                       |
 | `solana-general-clear-sign` | stax, nanox, flex | Solana general (IDL-based) clear-signing fixtures |
 | `solana-programs`           | —                 | Live program transactions — disabled, see below   |
+| `solana-v1`                 | —                 | Solana v1 fixtures — disabled, see below          |
 | `tron`                      | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex   |
 
 The `solana-programs` group is **disabled**. Its cases pull transactions from an
@@ -92,6 +93,14 @@ a public endpoint answers a scan of this size with `429`.
 
 Note develop reports these scenarios green. That is not evidence they work —
 develop exits 0 when a scan finds nothing at all.
+
+The `solana-v1` group is **disabled** until a released Solana app signs v1
+transactions: until then the signer refuses every v1 transaction before it
+reaches the device. Its cases are earlier fixtures re-encoded as v1 (SIMD-0385)
+messages (same accounts and instructions, ComputeBudget values moved into the
+v1 config where present), plus a durable-nonce transfer. To switch it on, drop
+`"enabled": false` from `ressources/solana-v1/v1-transactions.json` and add
+`solana-v1` to the scenarios run by `pull_request.yml` and `nightly_solana.yml`.
 
 ### Options
 
