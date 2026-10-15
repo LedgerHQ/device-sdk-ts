@@ -1,5 +1,14 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.18.2
+
+### Patch Changes
+
+- Require context-module 2.7.0 (sign reporter enabled)
+
+- Updated dependencies [[`ffd105c`](https://github.com/LedgerHQ/device-sdk-ts/commit/ffd105c2b1f271ab7203abff8ab56ab4f344439d)]:
+  - @ledgerhq/context-module@2.7.0
+
 ## 1.18.1
 
 ### Patch Changes
