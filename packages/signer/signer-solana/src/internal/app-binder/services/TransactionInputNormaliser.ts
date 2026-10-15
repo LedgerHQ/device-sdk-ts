@@ -13,6 +13,8 @@ const SIGNATURE_LENGTH = 64;
 // truncated buffer), so full-wire vs. bare-message detection stays our own
 // concern: an interpretation only counts when it ends exactly at the input end.
 const V1_VERSION_BYTE = 0x81;
+// A versioned message starts with `0x80 | version`; `0x80` alone is v0.
+const VERSIONED_MESSAGE_FLAG = 0x80;
 const compiledTransactionMessageDecoder =
   getCompiledTransactionMessageDecoder();
 
@@ -38,10 +40,15 @@ export type NormalizedTransactionInput = {
 export class TransactionInputNormaliser {
   normalize(bytes: Uint8Array): NormalizedTransactionInput {
     // Neither a bare message nor a well-formed full transaction: truncated or
-    // malformed input. Fall back to best-effort pass-through. The signing flow
-    // refuses an invalid v1 message before anything reaches the device; for
-    // legacy and v0, device-side validation is the safety net.
-    return this.detect(bytes) ?? { messageBytes: bytes };
+    // malformed input. A message of another version behind signatures is cut
+    // out so its version can be refused; anything else falls back to
+    // best-effort pass-through. The signing flow refuses an invalid v1 message
+    // before anything reaches the device; for legacy and v0, device-side
+    // validation is the safety net.
+    return (
+      this.detect(bytes) ??
+      this.embeddedVersionedMessage(bytes) ?? { messageBytes: bytes }
+    );
   }
 
   /**
@@ -128,6 +135,43 @@ export class TransactionInputNormaliser {
           (index) => index < accountCount,
         ),
     );
+  }
+
+  /**
+   * For signature-prefixed input that no format matched, returns the bytes
+   * after the signatures when they start with a version other than legacy or
+   * v0 (v1 in a non-standard layout, or a version the signer does not know)
+   * followed by a signer count equal to the signature count. Passing the whole
+   * input through would hide that version behind the signature count, which
+   * reads as a legacy message, so the version check could not refuse it.
+   *
+   * A malformed bare legacy message can match by chance (its account keys
+   * hold the "version" and "signer count"); it is then refused as an
+   * unsupported version instead of by the device. A valid one never gets here.
+   */
+  private embeddedVersionedMessage(
+    bytes: Uint8Array,
+  ): NormalizedTransactionInput | null {
+    // Below 0x80, the signature count is a single compact-u16 byte.
+    const sigCount = bytes[0];
+    if (
+      sigCount === undefined ||
+      sigCount === 0 ||
+      (sigCount & VERSIONED_MESSAGE_FLAG) !== 0
+    ) {
+      return null;
+    }
+    const messageBytes = bytes.subarray(1 + sigCount * SIGNATURE_LENGTH);
+    const [versionByte, signerCount] = messageBytes;
+    if (
+      versionByte === undefined ||
+      (versionByte & VERSIONED_MESSAGE_FLAG) === 0 ||
+      versionByte === VERSIONED_MESSAGE_FLAG ||
+      signerCount !== sigCount
+    ) {
+      return null;
+    }
+    return { messageBytes };
   }
 
   private decodeCompactU16(bytes: Uint8Array): {

@@ -20,9 +20,13 @@ import {
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 import { SolanaAppCommandError } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-import { UNSTAKE_MESSAGE } from "@internal/app-binder/services/__test-utils__/ambiguousMessages";
+import {
+  UNSTAKE_MESSAGE,
+  withOneSignature,
+} from "@internal/app-binder/services/__test-utils__/ambiguousMessages";
 import {
   SPEC_V1_MESSAGE,
+  withByte,
   withTrailingBytes,
 } from "@internal/app-binder/services/__test-utils__/v1Fixtures";
 import { TransactionInputNormaliser } from "@internal/app-binder/services/TransactionInputNormaliser";
@@ -1217,8 +1221,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         }),
     );
 
-    // What the normaliser hands on for input it cannot split: the bytes as
-    // they are.
+    // What the real normaliser hands on for input it cannot split.
     const passedThrough = (input: Uint8Array) =>
       new TransactionInputNormaliser().normalize(input).messageBytes;
 
@@ -1273,6 +1276,15 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         "v1 wire input with a trailing byte",
         passedThrough(withTrailingBytes(SPEC_V1_MESSAGE, [0])),
         { _tag: "InvalidSolanaTransactionError", rule: "TRAILING_BYTES" },
+      ],
+      [
+        "signature-prefixed input of an unknown version",
+        passedThrough(withOneSignature(withByte(SPEC_V1_MESSAGE, 0, 0x82))),
+        {
+          _tag: "SolanaTransactionVersionNotSupportedError",
+          version: 2,
+          reason: "unknownVersion",
+        },
       ],
     ])(
       "%s: refused right after the app configuration, nothing else sent",
