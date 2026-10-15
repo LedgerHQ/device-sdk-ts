@@ -19,6 +19,7 @@ import { OriginTokenSetting } from "./OriginTokenSetting";
 import { PollingIntervalSetting } from "./PollingIntervalSetting";
 import { ReporterUrlSetting } from "./ReporterUrlSetting";
 import { SectionTitle } from "./SectionTitle";
+import { SolanaDisabledFeaturesSetting } from "./SolanaDisabledFeaturesSetting";
 import { SpeculosDeviceModelSetting } from "./SpeculosDeviceModelSetting";
 import { SpeculosToggleSetting } from "./SpeculosToggleSetting";
 import { SpeculosUrlSetting } from "./SpeculosUrlSetting";
@@ -80,6 +81,11 @@ export const SettingsView: React.FC = () => {
         <SectionContainer>
           <SectionTitle>Ethereum Signer</SectionTitle>
           <DatasourceProxySetting />
+        </SectionContainer>
+
+        <SectionContainer>
+          <SectionTitle>Solana Signer</SectionTitle>
+          <SolanaDisabledFeaturesSetting />
         </SectionContainer>
       </Flex>
     </PageWithHeader>
