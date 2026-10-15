@@ -54,6 +54,19 @@ export class LtcSignerDriver {
     await this.page.getByTestId("CTA_send-device-action").click();
   }
 
+  /** Open the Get extended public key action, fill its form and Execute it. */
+  async getExtendedPublicKey({
+    derivationPath,
+  }: { derivationPath?: string } = {}): Promise<void> {
+    await this.page.getByTestId("CTA_command-Get extended public key").click();
+    if (derivationPath !== undefined) {
+      const input = this.page.getByTestId("input-text_derivationPath");
+      await input.waitFor({ state: "visible" });
+      await input.fill(derivationPath);
+    }
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
   /** Pick an option of the form's only select input. */
   private async selectOption(optionLabel: string): Promise<void> {
     const form = this.page.getByTestId("form_device-action");
