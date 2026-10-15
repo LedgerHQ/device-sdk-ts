@@ -9,6 +9,7 @@ import { BtcLegacyAppBinder } from "@internal/app-binder/BtcLegacyAppBinder";
 import { btcLegacyModuleFactory } from "@internal/btcLegacyModule";
 import { btcLegacyTypes } from "@internal/btcLegacyTypes";
 import { GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";
+import { GetExtendedPublicKeyUseCase } from "@internal/use-cases/address/GetExtendedPublicKeyUseCase";
 
 describe("btcLegacyModuleFactory", () => {
   let container: Container;
@@ -35,5 +36,11 @@ describe("btcLegacyModuleFactory", () => {
     expect(container.get(btcLegacyTypes.GetAddressUseCase)).toBeInstanceOf(
       GetAddressUseCase,
     );
+  });
+
+  it("should bind the get extended public key use case", () => {
+    expect(
+      container.get(btcLegacyTypes.GetExtendedPublicKeyUseCase),
+    ).toBeInstanceOf(GetExtendedPublicKeyUseCase);
   });
 });

@@ -1,4 +1,5 @@
 import {
+  CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
   SendCommandInAppDeviceAction,
@@ -65,6 +66,31 @@ describe("BtcLegacyAppBinder", () => {
         UserInteractionRequired.VerifyAddress,
       );
       expect(deviceAction.input.skipOpenApp).toBe(true);
+    });
+  });
+
+  describe("getExtendedPublicKey", () => {
+    it("should run the xpub task in the profile's app", () => {
+      const binder = new BtcLegacyAppBinder(dmk, sessionId, LITECOIN_PROFILE);
+
+      binder.getExtendedPublicKey({
+        derivationPath: "84'/2'/0'",
+        skipOpenApp: false,
+      });
+
+      const { deviceAction } = executeDeviceAction.mock.calls[0]![0] as {
+        deviceAction: CallTaskInAppDeviceAction<
+          unknown,
+          never,
+          UserInteractionRequired
+        >;
+      };
+      expect(deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+      expect(deviceAction.input).toMatchObject({
+        appName: "Litecoin",
+        requiredUserInteraction: UserInteractionRequired.None,
+        skipOpenApp: false,
+      });
     });
   });
 });

@@ -1,4 +1,5 @@
 import {
+  CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
   SendCommandInAppDeviceAction,
@@ -43,6 +44,30 @@ describe("DefaultSignerBtcLegacy", () => {
           skipOpenApp: false,
         },
       }),
+    });
+  });
+
+  it("should get an extended public key from the profile's app", () => {
+    const executeDeviceAction = vi.fn();
+    const signer = new SignerBtcLegacyBuilder({
+      dmk: { executeDeviceAction } as unknown as DeviceManagementKit,
+      sessionId: "session-id" as DeviceSessionId,
+      profile: LITECOIN_PROFILE,
+    }).build();
+
+    signer.getExtendedPublicKey("84'/2'/0'", { skipOpenApp: true });
+
+    const { deviceAction } = executeDeviceAction.mock.calls[0]![0] as {
+      deviceAction: CallTaskInAppDeviceAction<
+        unknown,
+        never,
+        UserInteractionRequired
+      >;
+    };
+    expect(deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+    expect(deviceAction.input).toMatchObject({
+      appName: "Litecoin",
+      skipOpenApp: true,
     });
   });
 });

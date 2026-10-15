@@ -1,15 +1,19 @@
 import {
+  CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
+  type InternalApi,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type GetExtendedPublicKeyDAReturnType } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
 import { type AddressFormat } from "@api/model/AddressOptions";
 import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
 import { LegacyGetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
+import { GetExtendedPublicKeyTask } from "@internal/app-binder/task/GetExtendedPublicKeyTask";
 import { btcLegacyTypes } from "@internal/btcLegacyTypes";
 
 @injectable()
@@ -37,6 +41,27 @@ export class BtcLegacyAppBinder<ErrorCodes extends string> {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  getExtendedPublicKey(args: {
+    derivationPath: string;
+    skipOpenApp: boolean;
+  }): GetExtendedPublicKeyDAReturnType<ErrorCodes> {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi: InternalApi) =>
+            new GetExtendedPublicKeyTask(internalApi, {
+              derivationPath: args.derivationPath,
+              profile: this.profile,
+            }).run(),
+          appName: this.profile.appName,
+          requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
       }),

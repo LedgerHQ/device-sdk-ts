@@ -14,4 +14,6 @@ export type LegacyErrorConfig<ErrorCodes extends string> = {
 export type LegacyCoinProfile<ErrorCodes extends string> = {
   appName: string;
   errors: LegacyErrorConfig<ErrorCodes>;
+  // BIP32 version bytes of the coin's extended public keys, such as 0x019da462 ("Ltub").
+  xpubVersion: number;
 };
