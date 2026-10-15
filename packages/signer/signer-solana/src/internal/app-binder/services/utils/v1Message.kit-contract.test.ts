@@ -134,8 +134,8 @@ describe("Kit v1 message decoder contract", () => {
 
   describe("config mask", () => {
     it.each([
-      ["bit 0 without bit 1", 0x0e],
-      ["bit 1 without bit 0", 0x0d],
+      ["bit 1 without bit 0", 0x0e],
+      ["bit 0 without bit 1", 0x0d],
     ])("throws on a lone priority-fee bit (%s)", (_, mask) => {
       expect(
         errorCodeOf(() =>

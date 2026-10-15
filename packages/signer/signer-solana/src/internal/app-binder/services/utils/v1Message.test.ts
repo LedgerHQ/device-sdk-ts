@@ -267,12 +267,12 @@ describe("decodeV1Message", () => {
         "CONFIG_MASK",
       ],
       [
-        "lone priority-fee bit 0",
+        "lone priority-fee bit 1",
         withByte(SPEC_V1_MESSAGE, configMask, 0x0e),
         "CONFIG_MASK",
       ],
       [
-        "lone priority-fee bit 1",
+        "lone priority-fee bit 0",
         withByte(SPEC_V1_MESSAGE, configMask, 0x0d),
         "CONFIG_MASK",
       ],
