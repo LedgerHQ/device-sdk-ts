@@ -37,3 +37,15 @@ const { observable, cancel } = signer.getAddress("84'/2'/0'/0/0", {
 - `addressFormat`: `legacy`, `p2sh`, `bech32` or `cashaddr`. Defaults to `legacy`.
 
 The output holds the `publicKey`, the `address` and the `chainCode`.
+
+### Extended public key
+
+```typescript
+const { observable, cancel } = signer.getExtendedPublicKey("84'/2'/0'");
+```
+
+The legacy protocol has no command for it: the kit reads the account key and its parent's key with two get address calls, then builds the BIP32 extended key with the profile's `xpubVersion`, as Ledger Wallet does with hw-app-btc. The path needs at least two levels. The output holds the `extendedPublicKey`.
+
+`getExtendedPublicKey` options:
+
+- `skipOpenApp`: do not open the app before sending the commands. Defaults to `false`.
