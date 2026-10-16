@@ -17,11 +17,8 @@ import {
   SignerEthBuilder,
 } from "@ledgerhq/device-signer-kit-ethereum";
 
-import {
-  loadAddressBook,
-  subscribeToAddressBook,
-  toEvmAddressBook,
-} from "@/lib/contacts/addressBook";
+import { useStoredAddressBook } from "@/hooks/useStoredAddressBook";
+import { toEvmAddressBook } from "@/lib/contacts/addressBook";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 import {
@@ -56,14 +53,9 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   const reporterConfig = useSelector(selectReporterConfig);
   const originToken = useSelector(selectOriginToken);
   const datasourceConfig = useSelector(selectDatasourceConfig);
-  // Bumped on every address-book change so the signer is rebuilt with the
-  // contacts registered on the Contacts page (the snapshot is read at build).
-  const [addressBookVersion, setAddressBookVersion] = useState(0);
-
-  useEffect(
-    () => subscribeToAddressBook(() => setAddressBookVersion((v) => v + 1)),
-    [],
-  );
+  // The signer is rebuilt with the contacts registered on the Contacts page
+  // whenever the book changes (the snapshot is read at build).
+  const addressBook = useStoredAddressBook();
 
   useEffect(() => {
     if (!sessionId || !dmk) {
@@ -90,7 +82,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       originToken,
     })
       .withContextModule(contextModule)
-      .withAddressBook(toEvmAddressBook(loadAddressBook()))
+      .withAddressBook(toEvmAddressBook(addressBook))
       .build();
     setSigner(newSigner);
   }, [
@@ -102,7 +94,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     reporterConfig,
     originToken,
     datasourceConfig,
-    addressBookVersion,
+    addressBook,
   ]);
 
   return (

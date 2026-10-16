@@ -111,8 +111,8 @@ and address validation, the no-device state) are covered by
 2. **Expect** the address under **Tron**, shown in base58.
 3. Build an unsigned TRX transfer (`TransferContract`) to that address — e.g.
    TronGrid Shasta/Nile `wallet/createtransaction` → `raw_data_hex`.
-4. Open **Signers → Tron** (re-open it after registering: the signer reads the
-   book once, when the page mounts) → **Sign transaction** with that hex.
+4. Open **Signers → Tron** → **Sign transaction** with that hex. The signer is
+   rebuilt automatically whenever the book changes — no reload needed.
 5. **Expect** the device review to show the contact name + address name instead
    of the raw address.
 6. **TRC20**: a `transfer(address,uint256)` (or `approve`) of a known TRC20
