@@ -39,6 +39,7 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
   ClearSignContextType.ETHEREUM_PROXY_INFO,
   ClearSignContextType.ETHEREUM_ENUM,
+  ClearSignContextType.ETHEREUM_MAP_ENTRY,
 ];
 
 @injectable()
