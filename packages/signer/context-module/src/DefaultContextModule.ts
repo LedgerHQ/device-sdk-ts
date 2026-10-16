@@ -1,4 +1,5 @@
 import { type Container } from "inversify";
+import { type Either, Left } from "purify-ts";
 
 import {
   type ContextModuleLoaderConfig,
@@ -30,7 +31,12 @@ import { transactionCheckTypes } from "@/modules/multichain/transaction-check/di
 import { altResolutionTypes } from "@/modules/solana/alt-resolution/di/altResolutionTypes";
 import { enumVariantTypes } from "@/modules/solana/enum-variant/di/enumVariantTypes";
 import { instructionInfoTypes } from "@/modules/solana/instruction-info/di/instructionInfoTypes";
+import {
+  type GetSolanaBasicFlowRulesParams,
+  type SolanaBasicFlowRulesLoader,
+} from "@/modules/solana/instruction-info/domain/SolanaBasicFlowRulesLoader";
 import { lifiTypes } from "@/modules/solana/lifi/di/lifiTypes";
+import { type SolanaBasicFlowRule } from "@/modules/solana/model/SolanaContextTypes";
 import { ownerInfoTypes } from "@/modules/solana/owner-info/di/ownerInfoTypes";
 import { tokenTypes as solanaTokenTypes } from "@/modules/solana/token/di/tokenTypes";
 import { tokenAccountStateTypes } from "@/modules/solana/token-account-state/di/tokenAccountStateTypes";
@@ -53,6 +59,7 @@ export class DefaultContextModule implements ContextModule {
   private _fieldLoaders: ContextFieldLoader<unknown>[];
   private _blindSigningReporter: BlindSigningReporter | null;
   private _signReporter: SignReporter | null;
+  private _solanaBasicFlowRulesLoader: SolanaBasicFlowRulesLoader | null;
 
   constructor(args: ContextModuleServiceConfig & ContextModuleLoaderConfig) {
     this._config = args;
@@ -71,6 +78,7 @@ export class DefaultContextModule implements ContextModule {
     this._blindSigningReporter =
       args.customBlindSigningReporter ?? this._getBlindSigningReporter();
     this._signReporter = this._getSignReporter();
+    this._solanaBasicFlowRulesLoader = this._getSolanaBasicFlowRulesLoader();
   }
 
   private _getDefaultFieldLoaders(): ContextFieldLoader[] {
@@ -205,6 +213,17 @@ export class DefaultContextModule implements ContextModule {
     return null;
   }
 
+  private _getSolanaBasicFlowRulesLoader(): SolanaBasicFlowRulesLoader | null {
+    if (
+      this._container.isBound(instructionInfoTypes.SolanaBasicFlowRulesLoader)
+    ) {
+      return this._container.get<SolanaBasicFlowRulesLoader>(
+        instructionInfoTypes.SolanaBasicFlowRulesLoader,
+      );
+    }
+    return null;
+  }
+
   public async getContexts(
     input: unknown,
     expectedTypes?: ClearSignContextType[],
@@ -261,5 +280,18 @@ export class DefaultContextModule implements ContextModule {
 
   public async signReport(params: SignReportParams): Promise<void> {
     await this._signReporter?.report(params);
+  }
+
+  public async getSolanaBasicFlowRules(
+    params: GetSolanaBasicFlowRulesParams,
+  ): Promise<Either<Error, SolanaBasicFlowRule[]>> {
+    if (this._solanaBasicFlowRulesLoader === null) {
+      return Left(
+        new Error(
+          "[ContextModule] getSolanaBasicFlowRules is not supported for this chain",
+        ),
+      );
+    }
+    return this._solanaBasicFlowRulesLoader.load(params);
   }
 }

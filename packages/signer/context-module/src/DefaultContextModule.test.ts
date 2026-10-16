@@ -8,6 +8,7 @@ import { type TypedDataContext } from "./modules/ethereum/model/TypedDataContext
 import type { TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { DefaultSignReporter } from "./modules/multichain/sign-reporter/domain/DefaultSignReporter";
 import { type SignReportParams } from "./modules/multichain/sign-reporter/model/SignReportParams";
+import { SolanaBasicFlowRulesLoader } from "./modules/solana/instruction-info/domain/SolanaBasicFlowRulesLoader";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
@@ -422,6 +423,48 @@ describe("DefaultContextModule", () => {
 
       // THEN
       expect(reportSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("getSolanaBasicFlowRules", () => {
+    const params = {
+      programIds: ["Stake11111111111111111111111111111111111111"],
+      network: "solana-mainnet",
+    };
+
+    it("should delegate to the Solana basic-flow rules loader", async () => {
+      // GIVEN
+      const rules = [{ id: "native-staking", required: [], allowed: [] }];
+      const loadSpy = vi
+        .spyOn(SolanaBasicFlowRulesLoader.prototype, "load")
+        .mockResolvedValue(Right(rules));
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        chain: ContextModuleChainID.Solana,
+      });
+
+      // WHEN
+      const result = await contextModule.getSolanaBasicFlowRules(params);
+
+      // THEN
+      expect(loadSpy).toHaveBeenCalledWith(params);
+      expect(result).toEqual(Right(rules));
+    });
+
+    it("should return Left for a non-Solana chain", async () => {
+      // GIVEN
+      const loadSpy = vi.spyOn(SolanaBasicFlowRulesLoader.prototype, "load");
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        chain: ContextModuleChainID.Ethereum,
+      });
+
+      // WHEN
+      const result = await contextModule.getSolanaBasicFlowRules(params);
+
+      // THEN
+      expect(loadSpy).not.toHaveBeenCalled();
+      expect(result.isLeft()).toBe(true);
     });
   });
 });

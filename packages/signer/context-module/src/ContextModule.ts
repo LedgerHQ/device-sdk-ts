@@ -1,5 +1,9 @@
+import { type Either } from "purify-ts";
+
 import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
 import { type SignReportParams } from "@/modules/multichain/sign-reporter/model/SignReportParams";
+import { type GetSolanaBasicFlowRulesParams } from "@/modules/solana/instruction-info/domain/SolanaBasicFlowRulesLoader";
+import { type SolanaBasicFlowRule } from "@/modules/solana/model/SolanaContextTypes";
 import {
   type ClearSignContext,
   type ClearSignContextType,
@@ -22,4 +26,8 @@ export interface ContextModule {
   ): Promise<TypedDataClearSignContext>;
   report(params: BlindSigningReportParams): Promise<void>;
   signReport?(params: SignReportParams): Promise<void>;
+  // Optional so custom context modules don't have to implement it.
+  getSolanaBasicFlowRules?(
+    params: GetSolanaBasicFlowRulesParams,
+  ): Promise<Either<Error, SolanaBasicFlowRule[]>>;
 }
