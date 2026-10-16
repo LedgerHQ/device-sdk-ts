@@ -99,4 +99,30 @@ describe("isSolanaSignerFeatureSupported", () => {
     );
     expect(result).toBe(false);
   });
+
+  function apiFor(appName: string): InternalApi {
+    return {
+      getDeviceSessionState: () => createReadyState(appName, "99.0.0"),
+    } as unknown as InternalApi;
+  }
+
+  it("disables delayed signing when Solana is orchestrated by Exchange", () => {
+    expect(
+      isSolanaSignerFeatureSupported(
+        apiFor("Exchange"),
+        "delayedSigning",
+        appConfig,
+      ),
+    ).toBe(false);
+  });
+
+  it("enables delayed signing when Solana is opened directly", () => {
+    expect(
+      isSolanaSignerFeatureSupported(
+        apiFor("Solana"),
+        "delayedSigning",
+        appConfig,
+      ),
+    ).toBe(true);
+  });
 });
