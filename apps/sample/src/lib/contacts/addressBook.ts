@@ -39,6 +39,10 @@ import {
   type EvmContactGroup,
 } from "@ledgerhq/device-signer-kit-ethereum";
 import {
+  type SolanaAddressBook,
+  type SolanaContactGroup,
+} from "@ledgerhq/device-signer-kit-solana";
+import {
   encodeTronAddress,
   type TronAddressBook,
   type TronContactGroup,
@@ -594,6 +598,36 @@ export function toTronAddressBook(book: AddressBook): TronAddressBook {
       .map((a) => ({
         scope: a.scope,
         address: encodeTronAddress(parseHexField(a.address, "address")),
+        hmacRest: a.hmacRest,
+      }));
+    if (externalAddresses.length === 0) continue;
+    contactGroups.push({
+      contactName: group.contactName,
+      groupHandle: group.groupHandle,
+      hmacProof: group.hmacProof,
+      externalAddresses,
+    });
+  }
+  return { contactGroups, ledgerAccounts: [] };
+}
+
+/**
+ * Project the book onto the {@link SolanaAddressBook} snapshot the Solana
+ * signer takes via `withAddressBook`: Solana-family addresses only, nested
+ * under their group, with the wallet public key in base58 (the signer derives
+ * the token accounts itself). Groups with no Solana address are dropped.
+ */
+export function toSolanaAddressBook(book: AddressBook): SolanaAddressBook {
+  const contactGroups: SolanaContactGroup[] = [];
+  for (const group of book.contactGroups.filter(isRegisteredGroup)) {
+    const externalAddresses = externalAddressesForGroup(book, group.id)
+      .filter((a) => a.blockchainFamily === "solana")
+      .map((a) => ({
+        scope: a.scope,
+        address: formatIdentifier(
+          "solana",
+          parseHexField(a.address, "address"),
+        ),
         hmacRest: a.hmacRest,
       }));
     if (externalAddresses.length === 0) continue;

@@ -143,7 +143,12 @@ and address validation, the no-device state) are covered by
    in **Error details**. The book is left unchanged. Without the Solana app
    installed, the open-app failure shows instead (Unknown error + details).
 4. Once a Solana app supports Contacts and the gate is lifted, run sections 1–4
-   on Solana.
+   on Solana, then sign on **Signers → Solana**: the book's Solana contacts are
+   injected into the signer (`withAddressBook`, rebuilt whenever the book
+   changes). A SOL transfer — or an SPL `TransferChecked` to the contact's
+   associated token account — to a registered wallet should show the contact
+   name. The signer gates the step behind its own unreleased `contacts` feature
+   version; **Settings → Solana disabled features → Contacts** turns it off.
 
 ---
 

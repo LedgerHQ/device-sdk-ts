@@ -40,6 +40,8 @@ import bs58 from "bs58";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { Form } from "@/components/Form";
+import { useStoredAddressBook } from "@/hooks/useStoredAddressBook";
+import { toSolanaAddressBook } from "@/lib/contacts/addressBook";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import {
   selectCalConfig,
@@ -164,6 +166,10 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   const originToken = useSelector(selectOriginToken);
   const datasourceConfig = useSelector(selectDatasourceConfig);
   const solanaDisabledFeatures = useSelector(selectSolanaDisabledFeatures);
+  // Solana contacts registered on the Contacts page are provided to the device
+  // before signing a transfer to one of them (when the app supports Contacts).
+  // The signer is rebuilt whenever the book changes.
+  const addressBook = useStoredAddressBook();
 
   const signer = useMemo(() => {
     const contextModule = new ContextModuleBuilder({
@@ -188,6 +194,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
       disabledFeatures: solanaDisabledFeatures,
     })
       .withContextModule(contextModule)
+      .withAddressBook(toSolanaAddressBook(addressBook))
       .build();
   }, [
     dmk,
@@ -199,6 +206,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
     originToken,
     datasourceConfig,
     solanaDisabledFeatures,
+    addressBook,
   ]);
   const solanaTools = new SolanaToolsBuilder({
     dmk,
