@@ -1,4 +1,7 @@
-import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  ClearSignContextType,
+  type ContextModule,
+} from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   type DeviceActionState,
@@ -1393,6 +1396,41 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
 
     it("returns null for an unparseable message", async () => {
       await expect(resolveSigningRoute(exampleTx)).resolves.toBeNull();
+    });
+
+    it("matches a rule served by CAL and looks up the transaction's programs", async () => {
+      const getContexts = vi.fn().mockResolvedValue([
+        {
+          type: ClearSignContextType.SOLANA_BASIC_FLOW_RULE,
+          payload: {
+            id: "send-with-memo",
+            required: [
+              { programId: "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr" },
+            ],
+            allowed: [{ programId: "11111111111111111111111111111111" }],
+          },
+        },
+      ]);
+      const contextModule = { getContexts } as unknown as ContextModule;
+
+      await expect(
+        new SignTransactionDeviceAction({
+          input: { ...baseInput, contextModule },
+        })
+          .extractDependencies(apiMock)
+          .resolveSigningRoute({
+            input: { messageBytes: SEND_WITH_MEMO_MESSAGE },
+          }),
+      ).resolves.toBe("send-with-memo");
+      expect(getContexts).toHaveBeenCalledWith(
+        {
+          programIds: expect.arrayContaining([
+            "11111111111111111111111111111111",
+            "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+          ]) as unknown,
+        },
+        [ClearSignContextType.SOLANA_BASIC_FLOW_RULE],
+      );
     });
   });
 });
