@@ -1,3 +1,5 @@
+import { type ContextModule } from "@ledgerhq/context-module";
+
 import {
   STAKE_PROGRAM_ID,
   SYSTEM_PROGRAM_ID,
@@ -37,9 +39,32 @@ export const SOLANA_BASIC_FLOW_RULES: ReadonlyArray<BasicFlowRule> = [
 ];
 
 /**
- * Rules used to route a transaction to the basic flow. Only the
- * bundled default for now.
+ * Rules used to route a transaction to the basic flow: the bundled default,
+ * overridden rule by rule (same id) by whatever CAL serves for the
+ * transaction's programs. A CAL failure, or a context module without the
+ * lookup, means no CAL rules, so the bundled default still applies.
  */
-export function resolveBasicFlowRules(): Promise<ReadonlyArray<BasicFlowRule>> {
-  return Promise.resolve(SOLANA_BASIC_FLOW_RULES);
+export async function resolveBasicFlowRules(
+  contextModule: ContextModule,
+  programIds: string[],
+): Promise<ReadonlyArray<BasicFlowRule>> {
+  let calRules: ReadonlyArray<BasicFlowRule> = [];
+  try {
+    const result = await contextModule.getSolanaBasicFlowRules?.({
+      programIds,
+    });
+    calRules = result?.orDefault([]) ?? [];
+  } catch {
+    // Same as no CAL rules.
+  }
+  return mergeRulesById(SOLANA_BASIC_FLOW_RULES, calRules);
+}
+
+/** CAL rules replace the bundled rule with the same id; new ids are added. */
+export function mergeRulesById(
+  defaults: ReadonlyArray<BasicFlowRule>,
+  calRules: ReadonlyArray<BasicFlowRule>,
+): BasicFlowRule[] {
+  const calIds = new Set(calRules.map((rule) => rule.id));
+  return [...defaults.filter((rule) => !calIds.has(rule.id)), ...calRules];
 }
