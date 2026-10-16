@@ -93,6 +93,16 @@ a public endpoint answers a scan of this size with `429`.
 Note develop reports these scenarios green. That is not evidence they work —
 develop exits 0 when a scan finds nothing at all.
 
+The `solana:native-staking` scenario is **disabled** until the signer routes
+native staking (Stake `delegateStake`, `deactivate`, `withdraw`) to the basic
+flow: until then those transactions go through generic clear signing and the
+native stake screens it expects never show. Its expected texts are read from the
+Solana app 1.17.1 source and its Ragger snapshots, not yet from a run here. The
+fee payer and stake authority are the Speculos key, so crafting leaves them
+alone. The last case is a control: delegate plus a Memo, outside the rule, that
+must stay on generic clear signing. To switch it on, drop `"enabled": false`
+from `ressources/solana/native-staking.json` and check it passes on Speculos.
+
 ### Options
 
 | Option                         | Default           | Description                                        |
