@@ -20,6 +20,7 @@ import {
   UNSTAKE_MESSAGE,
   withOneSignature,
 } from "./__test-utils__/ambiguousMessages";
+import { SPEC_V1_MESSAGE, withByte } from "./__test-utils__/v1Fixtures";
 import { TransactionInputNormaliser } from "./TransactionInputNormaliser";
 
 type TransactionVersion = "legacy" | 0 | 1;
@@ -403,6 +404,19 @@ describe("TransactionInputNormaliser", () => {
       ).toBeNull();
     });
   });
+
+  it.each([
+    ["v1", withOneSignature(SPEC_V1_MESSAGE)],
+    ["unknown-version", withOneSignature(withByte(SPEC_V1_MESSAGE, 0, 0x82))],
+  ])(
+    "cuts a signature-prefixed %s message out of the input so its version stays visible",
+    (_, input) => {
+      const result = normaliser.normalize(input);
+
+      expect(result.messageBytes).toEqual(input.subarray(65));
+      expect(result.serializedForTxCheck).toBeUndefined();
+    },
+  );
 
   it("falls back to raw bytes for garbage input", () => {
     const garbage = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
