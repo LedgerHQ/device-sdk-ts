@@ -50,6 +50,7 @@ export type CalldataDescriptorParam =
   | CalldataDescriptorParamRawV1
   | CalldataDescriptorParamAmountV1
   | CalldataDescriptorParamTokenAmountV1
+  | CalldataDescriptorParamTokenV1
   | CalldataDescriptorParamNFTV1
   | CalldataDescriptorParamDatetimeV1
   | CalldataDescriptorParamDurationV1
@@ -82,6 +83,11 @@ export interface CalldataDescriptorParamTokenAmountV1 {
   type: "TOKEN_AMOUNT";
   value: CalldataDescriptorValueV1;
   token?: CalldataDescriptorValueV1;
+}
+
+export interface CalldataDescriptorParamTokenV1 {
+  type: "TOKEN";
+  value: CalldataDescriptorValueV1;
 }
 
 export interface CalldataDescriptorParamNFTV1 {
