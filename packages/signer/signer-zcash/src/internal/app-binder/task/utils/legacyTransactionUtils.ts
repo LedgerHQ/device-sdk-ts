@@ -28,6 +28,7 @@ type BranchIdEntry = {
 // Ordered from the latest network upgrade to the earliest.
 const ZCASH_BRANCH_IDS: Record<ZcashNetwork, readonly BranchIdEntry[]> = {
   mainnet: [
+    { activationHeight: 3543405, branchId: 0x77190ad9 }, // NU7
     { activationHeight: 3428143, branchId: 0x37a5165b }, // NU6.3
     { activationHeight: 3364600, branchId: 0x5437f330 }, // NU6.2
     { activationHeight: 3146400, branchId: 0x4dec4df0 }, // NU6.1
