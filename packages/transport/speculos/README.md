@@ -49,7 +49,7 @@ import {
 import {
   speculosTransportFactory,
   SpeculosTransport,
-} from "@ledgerhq/device-transport-speculos";
+} from "@ledgerhq/device-transport-kit-speculos";
 
 // Easy setup with the factory
 const dmk = new DeviceManagementKitBuilder()
