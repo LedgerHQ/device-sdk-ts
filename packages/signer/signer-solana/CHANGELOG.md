@@ -1,5 +1,16 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.13.4
+
+### Patch Changes
+
+- [#1983](https://github.com/LedgerHQ/device-sdk-ts/pull/1983) [`b83e7d7`](https://github.com/LedgerHQ/device-sdk-ts/commit/b83e7d7d4c94214aaa7684d6aa23394d8331d876) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Re-send the transaction check before the basic sign when generic clear signing falls back, since the failed attempt wipes it on the device
+
+- [#1978](https://github.com/LedgerHQ/device-sdk-ts/pull/1978) [`6a05d6f`](https://github.com/LedgerHQ/device-sdk-ts/commit/6a05d6f2d47eaca7d0793d9706837a6b4683342e) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Improve transaction input detection: a raw message or a full transaction is only recognised when it decodes to a well-formed message ending exactly at the input end
+
+- Updated dependencies [[`ffd105c`](https://github.com/LedgerHQ/device-sdk-ts/commit/ffd105c2b1f271ab7203abff8ab56ab4f344439d)]:
+  - @ledgerhq/context-module@2.7.0
+
 ## 1.13.3
 
 ### Patch Changes
