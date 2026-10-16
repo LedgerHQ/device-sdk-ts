@@ -17,7 +17,8 @@ export type GlobalCommandErrorStatusCode =
   | "5502"
   | "5223"
   | "6e00"
-  | "6d00";
+  | "6d00"
+  | "6901";
 
 /**
  * Global command error class
@@ -38,6 +39,10 @@ export const GLOBAL_ERRORS: CommandErrors<GlobalCommandErrorStatusCode> = {
   "5223": { message: "Device internal error", tag: "DeviceInternalError" },
   "6e00": { message: "CLA not supported", tag: "DeviceInternalError" },
   "6d00": { message: "INS not supported", tag: "DeviceInternalError" },
+  "6901": {
+    message: "Device is busy, its own interface is in the foreground.",
+    tag: "DeviceNotReadyError",
+  },
 };
 
 /**
