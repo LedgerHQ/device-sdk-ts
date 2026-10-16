@@ -7,7 +7,7 @@ import {
   DeviceSessionStateType,
   DeviceStatus,
 } from "@ledgerhq/device-management-kit";
-import { Just, Nothing } from "purify-ts";
+import { Just, Nothing, Right } from "purify-ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { signClearSignDAStateSteps } from "@api/app-binder/SignClearSignDeviceActionTypes";
@@ -1393,6 +1393,40 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
 
     it("returns null for an unparseable message", async () => {
       await expect(resolveSigningRoute(exampleTx)).resolves.toBeNull();
+    });
+
+    it("matches a rule served by CAL and looks up the transaction's programs", async () => {
+      const getSolanaBasicFlowRules = vi.fn().mockResolvedValue(
+        Right([
+          {
+            id: "send-with-memo",
+            required: [
+              { programId: "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr" },
+            ],
+            allowed: [{ programId: "11111111111111111111111111111111" }],
+          },
+        ]),
+      );
+      const contextModule = {
+        ...contextModuleStub,
+        getSolanaBasicFlowRules,
+      } as unknown as ContextModule;
+
+      await expect(
+        new SignTransactionDeviceAction({
+          input: { ...baseInput, contextModule },
+        })
+          .extractDependencies(apiMock)
+          .resolveSigningRoute({
+            input: { messageBytes: SEND_WITH_MEMO_MESSAGE },
+          }),
+      ).resolves.toBe("send-with-memo");
+      expect(getSolanaBasicFlowRules).toHaveBeenCalledWith({
+        programIds: expect.arrayContaining([
+          "11111111111111111111111111111111",
+          "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+        ]) as unknown,
+      });
     });
   });
 });

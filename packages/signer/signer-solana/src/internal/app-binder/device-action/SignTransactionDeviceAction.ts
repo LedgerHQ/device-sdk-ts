@@ -819,10 +819,25 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           .parse(arg0.input.messageBytes)
           .run();
         if (parsed.isLeft()) return null;
-        const rules = await resolveBasicFlowRules();
+        const message = parsed.unsafeCoerce().message;
+        // ComputeBudget is always allowed and not in CAL: don't look it up.
+        const programIds = [
+          ...new Set(
+            message.compiledInstructions.map((ix) =>
+              message.allKeys[ix.programIdIndex]?.toBase58(),
+            ),
+          ),
+        ].filter(
+          (id): id is string =>
+            id !== undefined && id !== COMPUTE_BUDGET_PROGRAM_ID,
+        );
+        const rules = await resolveBasicFlowRules(
+          this.input.contextModule,
+          programIds,
+        );
         return new RuleMatcher(rules, {
           alwaysAllowed: [COMPUTE_BUDGET_PROGRAM_ID],
-        }).match(parsed.unsafeCoerce().message);
+        }).match(message);
       } catch (error) {
         this.getLoggerFactory(internalApi)("ResolveSigningRoute").warn(
           "[resolveSigningRoute] failed; keeping the generic clear-sign path",
