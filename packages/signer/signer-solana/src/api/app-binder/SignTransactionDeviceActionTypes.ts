@@ -111,6 +111,9 @@ export type SignTransactionDAInternalState = {
   // Set when generic clear-sign degraded specifically due to an ACCOUNT_SCHEMA
   // pre-check failure (stale CAL descriptor), used for blind-sign reporting.
   readonly staleDescriptor: boolean;
+  // Id of the basic-flow rule that routed the transaction straight to the
+  // basic flow (skipping generic clear-sign), or null when none matched.
+  readonly basicFlowRuleId: string | null;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<
