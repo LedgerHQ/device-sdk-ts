@@ -1,5 +1,11 @@
 # @ledgerhq/context-module
 
+## 2.7.0
+
+### Minor Changes
+
+- [#1966](https://github.com/LedgerHQ/device-sdk-ts/pull/1966) [`ffd105c`](https://github.com/LedgerHQ/device-sdk-ts/commit/ffd105c2b1f271ab7203abff8ab56ab4f344439d) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Turn multichain sign reporter on
+
 ## 2.6.0
 
 ### Minor Changes

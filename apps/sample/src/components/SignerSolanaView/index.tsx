@@ -47,6 +47,7 @@ import {
   selectMetadataServiceConfig,
   selectOriginToken,
   selectReporterConfig,
+  selectSolanaDisabledFeatures,
   selectWeb3ChecksConfig,
 } from "@/state/settings/selectors";
 
@@ -162,6 +163,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   const reporterConfig = useSelector(selectReporterConfig);
   const originToken = useSelector(selectOriginToken);
   const datasourceConfig = useSelector(selectDatasourceConfig);
+  const solanaDisabledFeatures = useSelector(selectSolanaDisabledFeatures);
 
   const signer = useMemo(() => {
     const contextModule = new ContextModuleBuilder({
@@ -183,6 +185,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
       sessionId,
       originToken,
       solanaRPCURL: "https://solana.coin.ledger.com",
+      disabledFeatures: solanaDisabledFeatures,
     })
       .withContextModule(contextModule)
       .build();
@@ -195,6 +198,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
     reporterConfig,
     originToken,
     datasourceConfig,
+    solanaDisabledFeatures,
   ]);
   const solanaTools = new SolanaToolsBuilder({
     dmk,

@@ -9,6 +9,7 @@ import {
   type ProvisionTransactionCheckDAError,
   type ProvisionTransactionCheckDAInput,
   type ProvisionTransactionCheckDAIntermediateValue,
+  type ProvisionTransactionCheckDAOutput,
 } from "@api/app-binder/ProvisionTransactionCheckDeviceActionTypes";
 import { signTransactionDAStateSteps } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
@@ -50,7 +51,7 @@ function run(
   input: ProvisionTransactionCheckDAInput,
   onComplete: (
     states: DeviceActionState<
-      void,
+      ProvisionTransactionCheckDAOutput,
       ProvisionTransactionCheckDAError,
       ProvisionTransactionCheckDAIntermediateValue
     >[],
@@ -61,7 +62,7 @@ function run(
   vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps() as any); // eslint-disable-line @typescript-eslint/no-explicit-any
   const { observable } = action._execute(apiMock);
   const states: DeviceActionState<
-    void,
+    ProvisionTransactionCheckDAOutput,
     ProvisionTransactionCheckDAError,
     ProvisionTransactionCheckDAIntermediateValue
   >[] = [];
@@ -74,7 +75,7 @@ function run(
 
 function stepSequence(
   states: DeviceActionState<
-    void,
+    ProvisionTransactionCheckDAOutput,
     ProvisionTransactionCheckDAError,
     ProvisionTransactionCheckDAIntermediateValue
   >[],
@@ -129,9 +130,12 @@ describe("ProvisionTransactionCheckDeviceAction", () => {
                 signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
               ),
             );
-            expect(states[states.length - 1]!.status).toBe(
-              DeviceActionStatus.Completed,
-            );
+            // The opt-in outcome is surfaced so the parent can re-provision
+            // without prompting again.
+            expect(states[states.length - 1]).toEqual({
+              status: DeviceActionStatus.Completed,
+              output: { transactionChecksEnabled: true },
+            });
             resolve();
           } catch (e) {
             reject(e);
@@ -152,9 +156,10 @@ describe("ProvisionTransactionCheckDeviceAction", () => {
           try {
             expect(optInMock).toHaveBeenCalled();
             expect(provideMock).not.toHaveBeenCalled();
-            expect(states[states.length - 1]!.status).toBe(
-              DeviceActionStatus.Completed,
-            );
+            expect(states[states.length - 1]).toEqual({
+              status: DeviceActionStatus.Completed,
+              output: { transactionChecksEnabled: false },
+            });
             resolve();
           } catch (e) {
             reject(e);

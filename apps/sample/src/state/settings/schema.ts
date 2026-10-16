@@ -8,6 +8,7 @@ import {
   type ContextModuleWeb3ChecksConfig,
 } from "@ledgerhq/context-module";
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
+import { type SolanaSignerFeaturesNames } from "@ledgerhq/device-signer-kit-solana";
 
 import { DEFAULT_MOCK_SERVER_URL, DEFAULT_SPECULOS_URL } from "@/utils/const";
 
@@ -57,6 +58,9 @@ export type SettingsState = {
   reporterConfig: ContextModuleReporterConfig;
   originToken: string;
   datasourceConfig: ContextModuleDatasourceConfig;
+
+  // Solana signer settings
+  solanaDisabledFeatures: SolanaSignerFeaturesNames[];
 };
 
 export const initialState: SettingsState = {
@@ -96,4 +100,7 @@ export const initialState: SettingsState = {
   datasourceConfig: {
     proxy: "default",
   },
+
+  // Solana signer settings
+  solanaDisabledFeatures: [],
 };

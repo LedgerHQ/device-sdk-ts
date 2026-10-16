@@ -205,7 +205,11 @@ export class ProvisionTransactionCheckDeviceAction extends XStateDeviceAction<
         },
         Done: { type: "final" },
       },
-      output: () => Right(undefined),
+      output: ({ context }) =>
+        Right({
+          transactionChecksEnabled:
+            context._internalState.appConfig?.transactionChecksEnabled === true,
+        }),
     });
   }
 

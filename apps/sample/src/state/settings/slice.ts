@@ -1,5 +1,6 @@
 import { type ContextModuleCalConfig } from "@ledgerhq/context-module";
 import { type DeviceModelId } from "@ledgerhq/device-management-kit";
+import { type SolanaSignerFeaturesNames } from "@ledgerhq/device-signer-kit-solana";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import {
@@ -144,6 +145,16 @@ export const settingsSlice = createSlice({
       };
     },
 
+    // Solana signer settings
+    setSolanaDisabledFeatures: (
+      state,
+      action: PayloadAction<{
+        solanaDisabledFeatures: SolanaSignerFeaturesNames[];
+      }>,
+    ) => {
+      state.solanaDisabledFeatures = action.payload.solanaDisabledFeatures;
+    },
+
     // Hydration action for loading persisted settings
     hydrateSettings: (_state, action: PayloadAction<SettingsState>) => {
       return action.payload;
@@ -172,6 +183,7 @@ export const {
   setMetadataServiceUrl,
   setReporterUrl,
   setDatasourceProxy,
+  setSolanaDisabledFeatures,
   hydrateSettings,
 } = settingsSlice.actions;
 
