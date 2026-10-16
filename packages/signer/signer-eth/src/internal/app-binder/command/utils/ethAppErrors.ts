@@ -13,6 +13,7 @@ export type EthErrorCodes =
   | "6983"
   | "6984"
   | "6985"
+  | "6986"
   | "6a00"
   | "6a80"
   | "6a84"
@@ -33,6 +34,7 @@ export const ETH_APP_ERRORS: CommandErrors<EthErrorCodes> = {
   "6983": { message: "Wrong Data length" },
   "6984": { message: "Plugin not installed" },
   "6985": { message: "Condition not satisfied" },
+  "6986": { message: "Command not allowed" },
   "6a00": { message: "Error without info" },
   "6a80": { message: "Invalid data" },
   "6a84": { message: "Insufficient memory" },
