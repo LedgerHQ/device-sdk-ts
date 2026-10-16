@@ -93,6 +93,16 @@ a public endpoint answers a scan of this size with `429`.
 Note develop reports these scenarios green. That is not evidence they work —
 develop exits 0 when a scan finds nothing at all.
 
+The `solana:native-staking` scenario checks the signer's basic-flow routing for
+native staking. The `Basic flow:` cases (Stake `delegateStake`, `deactivate`,
+`withdraw`, alone or as the Ledger Wallet create-and-delegate) must show the
+Solana app's native stake screens. The `Generic flow:` cases must stay on
+generic clear signing: transactions outside the rule, and shapes the basic flow
+can't display (more than one staking operation, ComputeBudget after another
+instruction). They assert the basic flow's labels are absent; a wrong route
+would also blind-sign them. The fee payer and stake authority are the Speculos
+key, so crafting leaves them alone.
+
 ### Options
 
 | Option                         | Default           | Description                                        |
