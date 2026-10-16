@@ -1,4 +1,3 @@
-import { base64StringToBuffer } from "@ledgerhq/device-management-kit";
 import {
   type Message,
   type MessageV0,
@@ -94,23 +93,6 @@ export class TransactionParser {
 
       return { message: normalised, usesAddressLookupTables };
     });
-  }
-
-  /**
-   * Check whether the raw bytes represent a versioned transaction that uses
-   * address lookup tables (ALTs). Read-only probe used by the inspector;
-   * unlike {@link parse} this returns a plain boolean.
-   */
-  hasAddressLookupTables(rawBytes: Uint8Array): boolean {
-    if (rawBytes.length < MIN_MESSAGE_BYTES) return false;
-    const decoded = decodeMessage(rawBytes);
-    return decoded
-      .map(
-        (msg) =>
-          msg.version !== "legacy" &&
-          (msg as MessageV0).addressTableLookups.length > 0,
-      )
-      .orDefault(false);
   }
 
   private normaliseLegacy(
@@ -344,19 +326,12 @@ export function buildCompiledInstructions(
       accountSigner.push(signerMap?.[keyIdx] ?? false);
     }
 
-    const data =
-      ci.data instanceof Uint8Array
-        ? ci.data
-        : typeof ci.data === "string"
-          ? (base64StringToBuffer(ci.data) ?? new Uint8Array())
-          : Uint8Array.from(ci.data ?? []);
-
     out.push({
       programIdIndex: ci.programIdIndex,
       accountKeyIndexes: [...ci.accountKeyIndexes],
       accountWritable,
       accountSigner,
-      data,
+      data: ci.data,
     });
   }
   return Right(out);

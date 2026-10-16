@@ -40,10 +40,15 @@ type InstructionData = NonNullable<
   ConstructorParameters<typeof TransactionInstruction>[0]["data"]
 >;
 
+/** @deprecated Unused; will be removed in the next major version. */
 export const asInstructionData = (bytes: Uint8Array): InstructionData =>
   bytes as InstructionData;
 
-// Mirrors `addSigners` from `@solana/spl-token`.
+/**
+ * Mirrors `addSigners` from `@solana/spl-token`.
+ *
+ * @deprecated Unused; will be removed in the next major version.
+ */
 export function addSigners(
   keys: AccountMeta[],
   ownerOrAuthority: PublicKey,
@@ -62,7 +67,11 @@ export function addSigners(
 
 const TRANSFER_CHECKED_INSTRUCTION = 12;
 
-// Data layout: [discriminator(u8), amount(u64 LE), decimals(u8)].
+/**
+ * Data layout: [discriminator(u8), amount(u64 LE), decimals(u8)].
+ *
+ * @deprecated Unused; will be removed in the next major version.
+ */
 export function createTransferCheckedInstruction(
   source: PublicKey,
   mint: PublicKey,

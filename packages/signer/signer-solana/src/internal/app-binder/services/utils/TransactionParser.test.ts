@@ -365,28 +365,6 @@ describe("TransactionParser", () => {
     });
   });
 
-  describe("compiled instructions", () => {
-    it("GIVEN instruction data as a base64 string WHEN building compiled instructions THEN it decodes bytes", () => {
-      // GIVEN
-      const compiledInstructions = [
-        {
-          programIdIndex: 0,
-          accountKeyIndexes: [0],
-          data: "AQID/w==" as unknown as Uint8Array,
-        },
-      ];
-
-      // WHEN
-      const result = buildCompiledInstructions(compiledInstructions, [true], 1);
-
-      // THEN
-      expect(result.isRight()).toBe(true);
-      expect(result.unsafeCoerce()[0]?.data).toStrictEqual(
-        Uint8Array.from([1, 2, 3, 255]),
-      );
-    });
-  });
-
   describe("address lookup tables", () => {
     it("resolves ALT entries when a resolver is provided (existing behaviour)", async () => {
       const payer = Keypair.generate();
@@ -541,32 +519,6 @@ describe("TransactionParser", () => {
 
       expect(result.usesAddressLookupTables).toBe(false);
       expect(result.message.compiledInstructions).toHaveLength(1);
-    });
-  });
-
-  describe("hasAddressLookupTables", () => {
-    it("returns false for legacy transactions", () => {
-      const payer = Keypair.generate();
-      const raw = makeSignedRawTx(
-        [
-          SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
-            lamports: 1_000,
-          }),
-        ],
-        payer,
-      );
-
-      const parser = new TransactionParser();
-      expect(parser.hasAddressLookupTables(raw)).toBe(false);
-    });
-
-    it("returns false for garbage bytes", () => {
-      const parser = new TransactionParser();
-      expect(
-        parser.hasAddressLookupTables(new Uint8Array([0xab, 0xad, 0xbe, 0xef])),
-      ).toBe(false);
     });
   });
 

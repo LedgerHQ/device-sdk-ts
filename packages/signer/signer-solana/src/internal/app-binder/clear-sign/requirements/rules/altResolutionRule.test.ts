@@ -295,7 +295,6 @@ describe("applyAltResolutionRule", () => {
       ...emptyParsed(),
       hideRules: [
         {
-          ruleSetIndex: 0,
           condition: HideCondition.CREATED_IN_TRANSACTION,
           target: accountPath(1),
         },
@@ -309,17 +308,16 @@ describe("applyAltResolutionRule", () => {
 
   it("emits ALT_RESOLUTION for a HIDE_RULE target of every rule set", () => {
     // Targets are resolved before the merge runs, so a rule that ends up not
-    // firing still needs its target.
+    // firing still needs its target. The two rules stand for two different
+    // rule sets (CAL `rule_set_index` 0 and 1, which the host does not keep).
     const parsed: ParsedInstruction = {
       ...emptyParsed(),
       hideRules: [
         {
-          ruleSetIndex: 0,
           condition: HideCondition.IS_SIGNER,
           target: accountPath(0),
         },
         {
-          ruleSetIndex: 1,
           condition: HideCondition.ACCOUNT_USED_ELSEWHERE,
           target: accountPath(1),
         },

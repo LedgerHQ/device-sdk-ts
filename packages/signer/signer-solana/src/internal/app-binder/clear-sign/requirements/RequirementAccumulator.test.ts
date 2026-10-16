@@ -3,8 +3,6 @@ import { RequirementAccumulator } from "./RequirementAccumulator";
 describe("RequirementAccumulator", () => {
   it("deduplicates each descriptor type by its key", () => {
     const accumulator = new RequirementAccumulator();
-    accumulator.addInstructionInfo("P", "00");
-    accumulator.addInstructionInfo("P", "00");
     accumulator.addEnumVariant("P", "e", 1);
     accumulator.addEnumVariant("P", "e", 1);
     accumulator.addTokenInfo("mint");
@@ -17,7 +15,6 @@ describe("RequirementAccumulator", () => {
     accumulator.addTrustedName("name");
 
     const result = accumulator.build();
-    expect(result.instructionInfos).toHaveLength(1);
     expect(result.enumVariants).toHaveLength(1);
     expect(result.tokenInfos).toEqual(["mint"]);
     expect(result.tokenAccountStates).toEqual(["ata"]);
@@ -149,7 +146,6 @@ describe("RequirementAccumulator", () => {
 
   it("returns an empty set when nothing was added", () => {
     expect(new RequirementAccumulator().build()).toEqual({
-      instructionInfos: [],
       enumVariants: [],
       tokenInfos: [],
       tokenAccountStates: [],

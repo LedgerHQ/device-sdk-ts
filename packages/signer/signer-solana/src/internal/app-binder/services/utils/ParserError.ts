@@ -17,6 +17,8 @@ export const MAX_ACCOUNTS_PER_INSTRUCTION = 256;
 
 /**
  * The TX-wide account index is a u8 in the wire format.
+ *
+ * @deprecated Unused; will be removed in the next major version.
  */
 export const MAX_ACCOUNTS_PER_TX = 256;
 
