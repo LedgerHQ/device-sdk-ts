@@ -12,6 +12,10 @@
  *
  * Scope: external addresses only (Ledger-account contacts are out of scope).
  *
+ * As in Ledger Wallet, a contact can be created locally before any device
+ * operation: it only gets its device credentials (`groupHandle` + `hmacProof`)
+ * when its first address is registered.
+ *
  * `groupHandle` on {@link ContactGroup} is the canonical, device-issued value.
  * Each {@link ExternalAddress} keeps a copy for operation payloads; that copy
  * must always match its linked group. `id` / `contactGroupId` are client-side
@@ -22,11 +26,9 @@
 import {
   type EditExternalAddressIdentifierOutput,
   type EditExternalAddressScopeOutput,
-  ETHEREUM_APP_NAME,
   type ProvideContactInput,
   type RegisterExternalAddressOutput,
   type RenameContactOutput,
-  TRON_APP_NAME,
 } from "@ledgerhq/device-contacts-kit";
 import {
   bufferToHexaString,
@@ -37,11 +39,17 @@ import {
   type EvmContactGroup,
 } from "@ledgerhq/device-signer-kit-ethereum";
 import {
-  decodeTronAddress,
   encodeTronAddress,
   type TronAddressBook,
   type TronContactGroup,
 } from "@ledgerhq/device-signer-kit-tron";
+
+import {
+  CONTACTS_FAMILY_LIST,
+  type ContactsFamily,
+  findContactsFamily,
+  isContactsFamily,
+} from "@/lib/contacts/families";
 
 export type AddressBook = {
   contactGroups: ContactGroup[];
@@ -52,11 +60,26 @@ export type ContactGroup = {
   /** Client-side id for host storage / UI linking only. Not a device value. */
   id: string;
   contactName: string;
-  /** Canonical device-issued handle for the group. */
+  /**
+   * Canonical device-issued handle for the group. Absent for a local-only
+   * contact, until its first address is registered.
+   */
+  groupHandle?: Uint8Array;
+  /** Group-level name proof (rotated by Rename). Absent with `groupHandle`. */
+  hmacProof?: Uint8Array;
+};
+
+/** A contact group that holds its device credentials. */
+export type RegisteredContactGroup = ContactGroup & {
   groupHandle: Uint8Array;
-  /** Group-level name proof (rotated by Rename). */
   hmacProof: Uint8Array;
 };
+
+export function isRegisteredGroup(
+  group: ContactGroup,
+): group is RegisteredContactGroup {
+  return group.groupHandle !== undefined && group.hmacProof !== undefined;
+}
 
 export type ExternalAddress = {
   /** Client-side id for host storage / UI linking only. Not a device value. */
@@ -67,8 +90,8 @@ export type ExternalAddress = {
   groupHandle: Uint8Array;
   scope: string;
   /**
-   * Hex of the identifier bytes (no `0x`) — for Ethereum the 20-byte address,
-   * for Tron the 21-byte `0x41`-prefixed address. See {@link formatIdentifier}
+   * Hex of the identifier bytes (no `0x`) — e.g. the 20-byte Ethereum address,
+   * the 21-byte `0x41`-prefixed Tron address or the 32-byte Solana public key. See {@link formatIdentifier}
    * for the family's human-readable form.
    */
   address: string;
@@ -154,6 +177,17 @@ export function sampleAddressBook(): AddressBook {
         chainId: 1n,
         hmacRest: placeholderBytes(32, 0x82),
       },
+      {
+        id: "sample-address-bob-sol",
+        contactGroupId: "sample-group-bob",
+        groupHandle: bobHandle,
+        scope: "Sol main",
+        // Base58 7J922pfkw6Kz1TtEpr5jvBJEV9k2wbBG4L981r1NBPpu.
+        address:
+          "5d8a0fa0df8d8bb1b49d59c9b4f0fb2c8e8ee4b5c3d0a1f2e3d4c5b6a7980112",
+        blockchainFamily: "solana",
+        hmacRest: placeholderBytes(32, 0x83),
+      },
     ],
   };
 }
@@ -182,40 +216,32 @@ export function addSampleContacts(book: AddressBook): AddressBook {
 
 // --- blockchain families ----------------------------------------------------
 //
-// The families the playground can register, and the embedded app that serves
-// each one's app-owned Contacts operations (Register / Edit Identifier / Edit
-// Scope). Rename is an OS operation and ignores the app.
+// The per-family rules live in `families.ts`; these helpers apply them to the
+// form fields and stored values of the address book.
 
-export type ContactsFamily = "ethereum" | "tron";
+export type { ContactsFamily } from "@/lib/contacts/families";
 
 export const CONTACTS_APP_BY_FAMILY: Readonly<Record<ContactsFamily, string>> =
-  {
-    ethereum: ETHEREUM_APP_NAME,
-    tron: TRON_APP_NAME,
-  };
+  Object.fromEntries(
+    CONTACTS_FAMILY_LIST.map((d) => [d.family, d.appName]),
+  ) as Record<ContactsFamily, string>;
 
 export const CONTACTS_FAMILY_OPTIONS: Array<{
   label: string;
   value: ContactsFamily;
-}> = [
-  { label: "Ethereum", value: "ethereum" },
-  { label: "Tron", value: "tron" },
-];
+}> = CONTACTS_FAMILY_LIST.map((d) => ({ label: d.label, value: d.family }));
 
 /** Narrow a stored family string, falling back to Ethereum for unknown ones. */
 export function toContactsFamily(family: string | undefined): ContactsFamily {
-  return family === "tron" ? "tron" : "ethereum";
+  return family !== undefined && isContactsFamily(family) ? family : "ethereum";
 }
 
-const TRON_ADDRESS_BYTES = 21;
-const TRON_ADDRESS_PREFIX = 0x41;
-
-/** Only Ethereum carries a CHAIN_ID; the kit would send one for any family. */
+/** Only families with a CHAIN_ID carry one; the kit would send it for any. */
 export function chainIdForFamily(
   family: string,
   chainId: string,
 ): bigint | undefined {
-  return family === "ethereum" && chainId.trim().length > 0
+  return findContactsFamily(family)?.hasChainId && chainId.trim().length > 0
     ? BigInt(chainId.trim())
     : undefined;
 }
@@ -236,37 +262,31 @@ export function parseHexField(value: string, field: string): Uint8Array {
 
 /**
  * Parse an identifier form field into the identifier bytes the device signs
- * over. Tron takes a base58 `T…` address (or its 21-byte hex); every other
- * family takes hex.
+ * over, in the family's address form (see `families.ts`). Unknown families take
+ * hex.
  */
 export function parseIdentifier(
   family: string,
   value: string,
   field: string,
 ): Uint8Array {
-  if (family !== "tron") return parseHexField(value, field);
-
-  const trimmed = value.trim();
-  const bytes = trimmed.startsWith("T")
-    ? decodeTronAddress(trimmed)
-    : hexaStringToBuffer(trimmed);
-  if (
-    !bytes ||
-    bytes.length !== TRON_ADDRESS_BYTES ||
-    bytes[0] !== TRON_ADDRESS_PREFIX
-  ) {
+  const descriptor = findContactsFamily(family);
+  if (!descriptor) return parseHexField(value, field);
+  const bytes = descriptor.parse(value);
+  if (!bytes) {
     throw new Error(
-      `${field} is not a valid Tron address (base58 "T…" or 21-byte hex starting with 41): "${value}"`,
+      `${field} is not a valid ${descriptor.label} address: "${value}"`,
     );
   }
   return bytes;
 }
 
-/** The family's human-readable form of identifier bytes (base58 for Tron). */
+/** The family's human-readable form of identifier bytes (hex if unknown). */
 export function formatIdentifier(family: string, bytes: Uint8Array): string {
-  return family === "tron"
-    ? encodeTronAddress(bytes)
-    : bufferToHexaString(bytes, false);
+  return (
+    findContactsFamily(family)?.format(bytes) ??
+    bufferToHexaString(bytes, false)
+  );
 }
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
@@ -277,7 +297,7 @@ function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
   return true;
 }
 
-function newId(): string {
+export function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
@@ -290,7 +310,10 @@ export function findGroupByHandle(
   book: AddressBook,
   groupHandle: Uint8Array,
 ): ContactGroup | undefined {
-  return book.contactGroups.find((g) => bytesEqual(g.groupHandle, groupHandle));
+  return book.contactGroups.find(
+    (g) =>
+      g.groupHandle !== undefined && bytesEqual(g.groupHandle, groupHandle),
+  );
 }
 
 export function findGroupById(
@@ -318,21 +341,38 @@ export function externalAddressesForGroup(
 /**
  * Fold a REGISTER EXTERNAL ADDRESS output into the book.
  *
- * `mode: "create"` yields a new contact group; `mode: "link"` reuses the
- * existing group (matched by `groupHandle`) and adds the address to it. If a
- * link output arrives for a group not yet in the book, the group is
- * materialized from the output so the book stays self-consistent. Re-registering
- * the same address within a group upserts it (scope + `hmacRest`) instead of
- * duplicating.
+ * `mode: "create"` yields a new contact group — or, when `localGroupId` names a
+ * local-only contact, gives that contact the returned device credentials;
+ * `mode: "link"` reuses the existing group (matched by `groupHandle`) and adds
+ * the address to it. If a link output arrives for a group not yet in the book,
+ * the group is materialized from the output so the book stays self-consistent.
+ * Re-registering the same address within a group upserts it (scope +
+ * `hmacRest`) instead of duplicating.
  */
 export function applyRegister(
   book: AddressBook,
   output: RegisterExternalAddressOutput,
+  localGroupId?: string,
 ): AddressBook {
   const addressHex = bufferToHexaString(output.identifier, false);
 
   let group = findGroupByHandle(book, output.groupHandle);
   let contactGroups = book.contactGroups;
+
+  const localGroup =
+    localGroupId !== undefined ? findGroupById(book, localGroupId) : undefined;
+  if (!group && localGroup && !isRegisteredGroup(localGroup)) {
+    const registered: ContactGroup = {
+      ...localGroup,
+      contactName: output.contactName,
+      groupHandle: output.groupHandle,
+      hmacProof: output.hmacProof,
+    };
+    group = registered;
+    contactGroups = contactGroups.map((g) =>
+      g.id === registered.id ? registered : g,
+    );
+  }
 
   if (!group) {
     // "create", or a "link" whose group isn't in the local book yet.
@@ -399,6 +439,7 @@ export function applyRename(
   return {
     ...book,
     contactGroups: book.contactGroups.map((g) =>
+      g.groupHandle !== undefined &&
       bytesEqual(g.groupHandle, output.groupHandle)
         ? { ...g, contactName: output.contactName, hmacProof: output.hmacProof }
         : g,
@@ -449,6 +490,59 @@ export function applyEditScope(
   };
 }
 
+// --- local-only edits -------------------------------------------------------
+//
+// Ledger Wallet keeps these off the device: creating a contact, renaming one
+// that has no address yet, and deleting contacts or addresses.
+
+/** Add a local-only contact (no device credentials yet). */
+export function addLocalContact(
+  book: AddressBook,
+  contact: { id: string; contactName: string },
+): AddressBook {
+  return {
+    ...book,
+    contactGroups: [
+      ...book.contactGroups,
+      { id: contact.id, contactName: contact.contactName },
+    ],
+  };
+}
+
+/** Rename a local-only contact; a registered one is renamed on the device. */
+export function renameLocalContact(
+  book: AddressBook,
+  groupId: string,
+  contactName: string,
+): AddressBook {
+  return {
+    ...book,
+    contactGroups: book.contactGroups.map((g) =>
+      g.id === groupId && !isRegisteredGroup(g) ? { ...g, contactName } : g,
+    ),
+  };
+}
+
+/** Delete a contact and all of its addresses. */
+export function deleteContact(book: AddressBook, groupId: string): AddressBook {
+  return {
+    contactGroups: book.contactGroups.filter((g) => g.id !== groupId),
+    externalAddresses: book.externalAddresses.filter(
+      (a) => a.contactGroupId !== groupId,
+    ),
+  };
+}
+
+export function deleteExternalAddress(
+  book: AddressBook,
+  addressId: string,
+): AddressBook {
+  return {
+    ...book,
+    externalAddresses: book.externalAddresses.filter((a) => a.id !== addressId),
+  };
+}
+
 // --- signer adapter ---------------------------------------------------------
 
 /**
@@ -466,6 +560,9 @@ export function toProvideContactInput(
 ): ProvideContactInput {
   if (address.contactGroupId !== group.id) {
     throw new Error("External address does not belong to the given group");
+  }
+  if (!isRegisteredGroup(group)) {
+    throw new Error("The contact group has no device credentials yet");
   }
   if (!bytesEqual(address.groupHandle, group.groupHandle)) {
     throw new Error(
@@ -491,7 +588,7 @@ export function toProvideContactInput(
  */
 export function toTronAddressBook(book: AddressBook): TronAddressBook {
   const contactGroups: TronContactGroup[] = [];
-  for (const group of book.contactGroups) {
+  for (const group of book.contactGroups.filter(isRegisteredGroup)) {
     const externalAddresses = externalAddressesForGroup(book, group.id)
       .filter((a) => a.blockchainFamily === "tron")
       .map((a) => ({
@@ -518,7 +615,7 @@ export function toTronAddressBook(book: AddressBook): TronAddressBook {
  */
 export function toEvmAddressBook(book: AddressBook): EvmAddressBook {
   const contactGroups: EvmContactGroup[] = [];
-  for (const group of book.contactGroups) {
+  for (const group of book.contactGroups.filter(isRegisteredGroup)) {
     const externalAddresses = externalAddressesForGroup(book, group.id).flatMap(
       (a) =>
         a.blockchainFamily === "ethereum" && a.chainId !== undefined
@@ -553,8 +650,8 @@ export function toEvmAddressBook(book: AddressBook): EvmAddressBook {
 type SerializedContactGroup = {
   id: string;
   contactName: string;
-  groupHandle: string;
-  hmacProof: string;
+  groupHandle?: string;
+  hmacProof?: string;
 };
 
 type SerializedExternalAddress = {
@@ -578,8 +675,12 @@ export function serializeAddressBook(book: AddressBook): SerializedAddressBook {
     contactGroups: book.contactGroups.map((g) => ({
       id: g.id,
       contactName: g.contactName,
-      groupHandle: bufferToHexaString(g.groupHandle, false),
-      hmacProof: bufferToHexaString(g.hmacProof, false),
+      ...(isRegisteredGroup(g)
+        ? {
+            groupHandle: bufferToHexaString(g.groupHandle, false),
+            hmacProof: bufferToHexaString(g.hmacProof, false),
+          }
+        : {}),
     })),
     externalAddresses: book.externalAddresses.map((a) => ({
       id: a.id,
@@ -601,8 +702,12 @@ export function deserializeAddressBook(
     contactGroups: (raw.contactGroups ?? []).map((g) => ({
       id: g.id,
       contactName: g.contactName,
-      groupHandle: parseHexField(g.groupHandle, "groupHandle"),
-      hmacProof: parseHexField(g.hmacProof, "hmacProof"),
+      ...(g.groupHandle !== undefined && g.hmacProof !== undefined
+        ? {
+            groupHandle: parseHexField(g.groupHandle, "groupHandle"),
+            hmacProof: parseHexField(g.hmacProof, "hmacProof"),
+          }
+        : {}),
     })),
     externalAddresses: (raw.externalAddresses ?? []).map((a) => ({
       id: a.id,
