@@ -34,6 +34,28 @@ export type GetTransactionDescriptorsResponse = {
   descriptors: SolanaLifiDescriptorEntry[];
 };
 
+/**
+ * Matches instructions of one program. `discriminators` is a prefix match on
+ * the instruction data (u32 LE for native programs, 8-byte Anchor
+ * discriminator for Anchor programs); absent means any instruction of the
+ * program.
+ */
+export type SolanaInstructionMatcher = {
+  programId: string;
+  discriminators?: ReadonlyArray<Uint8Array>;
+};
+
+/**
+ * Routes a transaction to the basic signing flow when at least one
+ * instruction matches `required` and every instruction matches `required` or
+ * `allowed`.
+ */
+export type SolanaBasicFlowRule = {
+  id: string;
+  required: ReadonlyArray<SolanaInstructionMatcher>;
+  allowed: ReadonlyArray<SolanaInstructionMatcher>;
+};
+
 export type SolanaTransactionDescriptorList = Record<
   string,
   SolanaTransactionDescriptor[]

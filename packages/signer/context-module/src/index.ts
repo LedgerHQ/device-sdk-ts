@@ -80,6 +80,7 @@ export * from "./modules/solana/enum-variant/domain/EnumVariantContextLoader";
 export * from "./modules/solana/instruction-info/data/HttpInstructionInfoDataSource";
 export * from "./modules/solana/instruction-info/data/InstructionInfoDataSource";
 export * from "./modules/solana/instruction-info/domain/InstructionInfoContextLoader";
+export * from "./modules/solana/instruction-info/domain/SolanaBasicFlowRuleContextLoader";
 export * from "./modules/solana/model/SolanaClearSignContext";
 export * from "./modules/solana/model/SolanaContextTypes";
 export * from "./modules/solana/model/SolanaTransactionScanChainId";
