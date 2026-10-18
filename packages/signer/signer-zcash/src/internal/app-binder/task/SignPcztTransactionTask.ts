@@ -26,6 +26,7 @@ import { SignPcztIronwoodCommand } from "@internal/app-binder/command/SignPcztIr
 import { SignPcztOrchardCommand } from "@internal/app-binder/command/SignPcztOrchardCommand";
 import { SignPcztTransparentCommand } from "@internal/app-binder/command/SignPcztTransparentCommand";
 import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { OutputAccountRefusedError } from "@internal/app-binder/command/utils/OutputAccountRefusedError";
 import {
   pcztP1,
   pcztP2,
@@ -35,12 +36,15 @@ import {
   serializeTransparentInputs,
   serializeTransparentOutputsIndexed,
 } from "@internal/app-binder/command/utils/pcztSerializer";
+import { UnsupportedOutputAccountDeclarationError } from "@internal/app-binder/command/utils/UnsupportedOutputAccountDeclarationError";
 import { UserAddressRefusedError } from "@internal/app-binder/command/utils/UserAddressRefusedError";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import {
   isAppVersionAtLeast,
+  MIN_APP_VERSION_FOR_OUTPUT_ACCOUNT,
   MIN_APP_VERSION_FOR_USER_ADDRESS,
 } from "@internal/app-binder/task/utils/appVersion";
+import { resolveOutputAccounts } from "@internal/app-binder/task/utils/outputAccountDeclaration";
 import { resolveUserAddressReceivers } from "@internal/app-binder/task/utils/userAddressReceivers";
 
 export type SignPcztTransactionTaskArgs = {
@@ -92,13 +96,52 @@ const mapUserAddressRefusal = (
 };
 
 /**
+ * The receiver lists of a pool, without those of the actions that declare an
+ * account: the device accepts one of the two extensions per output.
+ */
+const withoutDeclared = (
+  receivers: (Uint8Array | undefined)[],
+  accounts: readonly (number | undefined)[],
+): (Uint8Array | undefined)[] =>
+  receivers.map((value, index) =>
+    accounts[index] === undefined ? value : undefined,
+  );
+
+/**
+ * A 6a80 on the metadata packet of an action that declares an output account is
+ * reported as {@link OutputAccountRefusedError}; any other failure (another
+ * status, another packet, an undeclared action) is returned unchanged.
+ * `actionIndex` is `-1` when the failing packet is not a metadata packet.
+ */
+const mapOutputAccountRefusal = (
+  error: SignPcztTransactionTaskError,
+  pool: "orchard" | "ironwood",
+  actionIndex: number,
+  accounts: readonly (number | undefined)[],
+): SignPcztTransactionTaskError => {
+  const account = actionIndex >= 0 ? accounts[actionIndex] : undefined;
+  if (
+    account !== undefined &&
+    "errorCode" in error &&
+    error.errorCode === STATUS_INCORRECT_DATA
+  ) {
+    return new OutputAccountRefusedError(pool, actionIndex, account);
+  }
+  return error;
+};
+
+/**
  * Drives the device PCZT signing protocol end-to-end, supporting both V5
  * (Orchard) and V6 (Orchard + Ironwood) transactions:
  *
- * 0. when an output carries `userAddressReceivers`, validates them before any
- *    APDU, then reads the app version (`GetAppConfig`) and drops every list
- *    below 3.11.0 or when the version is unreadable (the transaction then signs
- *    as without lists);
+ * 0. validates the output extensions before any APDU: the account a shielded
+ *    output pays (`outputZip32Derivation`) and the user address receivers
+ *    (`userAddressReceivers`). When there is either, reads the app version
+ *    (`GetAppConfig`): a declared account needs 3.10.0 or later, else the task
+ *    fails before any PCZT APDU; the receiver lists are dropped below 3.11.0 or
+ *    when the version is unreadable (the transaction then signs as without
+ *    lists). An action declaring an account never carries its receiver list:
+ *    the device refuses both on one output, and proves the account instead;
  * 1. streams the PCZT bundle in the fixed order — `PCZT_HEADER`,
  *    `PCZT_TRANSPARENT_INPUT`, `PCZT_TRANSPARENT_OUTPUT`, `PCZT_ORCHARD_ACTION`,
  *    and for V6: `PCZT_IRONWOOD_ACTION` (a null Ironwood bundle on a V6
@@ -154,28 +197,37 @@ export class SignPcztTransactionTask {
 
     const hasIronwood = isV6 && ironwoodBundle !== null;
 
-    // User address receivers: validated before any APDU, sent only to an app
-    // that accepts them.
+    // 0. Output extensions: validated before any APDU, then gated on the app
+    //    version. The account declaration fails closed; the receiver lists are
+    //    dropped on an app that predates them.
+    const declared = resolveOutputAccounts(this.args.transaction);
+    if (declared instanceof InvalidArgumentError) {
+      return DmkResultFactory({ error: declared });
+    }
     const resolved = resolveUserAddressReceivers(this.args.transaction);
     if (resolved instanceof InvalidArgumentError) {
       return DmkResultFactory({ error: resolved });
     }
     let userTransparent = resolved.transparent;
-    let userOrchard = resolved.orchard;
-    let userIronwood = resolved.ironwood;
-    if (resolved.count > 0) {
+    let userOrchard = withoutDeclared(resolved.orchard, declared.orchard);
+    let userIronwood = withoutDeclared(resolved.ironwood, declared.ironwood);
+    if (declared.count > 0 || resolved.count > 0) {
       const configResult = await this.api.sendCommand(
         new GetAppConfigCommand(),
       );
       if (!isSuccessCommandResult(configResult)) {
         return DmkResultFactory({ error: configResult.error });
       }
+      const { version } = configResult.data;
       if (
-        !isAppVersionAtLeast(
-          configResult.data.version,
-          MIN_APP_VERSION_FOR_USER_ADDRESS,
-        )
+        declared.count > 0 &&
+        !isAppVersionAtLeast(version, MIN_APP_VERSION_FOR_OUTPUT_ACCOUNT)
       ) {
+        return DmkResultFactory({
+          error: new UnsupportedOutputAccountDeclarationError(version),
+        });
+      }
+      if (!isAppVersionAtLeast(version, MIN_APP_VERSION_FOR_USER_ADDRESS)) {
         userTransparent = [];
         userOrchard = [];
         userIronwood = [];
@@ -228,7 +280,10 @@ export class SignPcztTransactionTask {
     }
 
     const { packets: orchardPackets, lastPacketIndices: orchardLast } =
-      serializeOrchardActionsIndexed(bundle, userOrchard);
+      serializeOrchardActionsIndexed(bundle, {
+        accounts: declared.orchard,
+        userAddresses: userOrchard,
+      });
     for (let i = 0; i < orchardPackets.length; i += 1) {
       const result = await this.api.sendCommand(
         new PcztOrchardActionCommand({
@@ -242,7 +297,12 @@ export class SignPcztTransactionTask {
       if (!isSuccessCommandResult(result)) {
         return DmkResultFactory({
           error: mapUserAddressRefusal(
-            result.error,
+            mapOutputAccountRefusal(
+              result.error,
+              "orchard",
+              orchardLast.indexOf(i),
+              declared.orchard,
+            ),
             "orchard",
             i,
             orchardLast,
@@ -261,7 +321,10 @@ export class SignPcztTransactionTask {
     // has already sent P2=CONTINUE — leaving the device waiting for more data.
     if (hasIronwood) {
       const { packets: ironwoodPackets, lastPacketIndices: ironwoodLast } =
-        serializeIronwoodActionsIndexed(ironwoodBundle!, userIronwood);
+        serializeIronwoodActionsIndexed(ironwoodBundle!, {
+          accounts: declared.ironwood,
+          userAddresses: userIronwood,
+        });
       for (let i = 0; i < ironwoodPackets.length; i += 1) {
         const result = await this.api.sendCommand(
           new PcztIronwoodActionCommand({
@@ -273,7 +336,12 @@ export class SignPcztTransactionTask {
         if (!isSuccessCommandResult(result)) {
           return DmkResultFactory({
             error: mapUserAddressRefusal(
-              result.error,
+              mapOutputAccountRefusal(
+                result.error,
+                "ironwood",
+                ironwoodLast.indexOf(i),
+                declared.ironwood,
+              ),
               "ironwood",
               i,
               ironwoodLast,

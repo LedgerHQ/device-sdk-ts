@@ -18,23 +18,29 @@ import { INS_PCZT_SIGN_IRONWOOD } from "@internal/app-binder/command/SignPcztIro
 import { INS_PCZT_SIGN_ORCHARD } from "@internal/app-binder/command/SignPcztOrchardCommand";
 import { INS_PCZT_SIGN_TRANSPARENT } from "@internal/app-binder/command/SignPcztTransparentCommand";
 import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { OutputAccountRefusedError } from "@internal/app-binder/command/utils/OutputAccountRefusedError";
+import { UnsupportedOutputAccountDeclarationError } from "@internal/app-binder/command/utils/UnsupportedOutputAccountDeclarationError";
 import { UserAddressRefusedError } from "@internal/app-binder/command/utils/UserAddressRefusedError";
 import { ZcashAppCommandErrorFactory } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+import { ZcashAppCommandError } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import {
   allDummyIronwoodBundle,
   allDummyOrchardBundle,
   mixedDummyOrchardBundle,
   multiRealDummyOrchardBundle,
+  orchardTransactionDeclaringAccount,
   privateToPrivateTransaction,
   privateToPublicTransaction,
   publicToPrivateTransaction,
   publicToPublicTransaction,
   sampleIronwoodBundle,
   sampleTransparentOutput,
+  shieldedUserAddressReceivers,
   transparentUserAddressReceivers,
   UA_SHIELDED_VALUE_HEX,
   UA_TRANSPARENT_VALUE_HEX,
   v5TransactionWithUserAddressReceivers,
+  v6TransactionDeclaringAccounts,
   v6TransactionWithOrchardAndIronwood,
   v6TransactionWithTransparentOrchardAndIronwood,
   v6TransactionWithUserAddressReceivers,
@@ -746,6 +752,356 @@ describe("SignPcztTransactionTask", () => {
       if (!isSuccessDmkResult(result)) {
         expect(result.error).toBe(failWith);
       }
+    });
+  });
+
+  describe("output account declaration", () => {
+    type Sent = { name: string; ins: number; data: Uint8Array };
+    let sent: Sent[];
+
+    const APP_CONFIG_INS = 0xc4;
+    // Orchard/Ironwood metadata packet of the single action of the fixtures:
+    // count, spend, zip32, cmx+epk, enc x3, out, metadata.
+    const METADATA_PACKET = 8;
+
+    /**
+     * Device double: answers GetAppConfig with `version` (or `configError`),
+     * and fails the `refuseAt`-th packet of a pool command with `refuse`.
+     */
+    const useDevice = (options: {
+      version?: string;
+      configError?: boolean;
+      refuse?: { name: string; packet: number; code: "6a80" | "6a84" };
+    }) => {
+      sent = [];
+      const counters: Record<string, number> = {};
+      vi.mocked(apiMock.sendCommand).mockImplementation((command: unknown) => {
+        const cmd = command as CapturedCommand;
+        const raw = cmd.getApdu().getRawApdu();
+        sent.push({ name: cmd.name, ins: raw[1]!, data: raw.slice(5) });
+        if (cmd.name === "getAppConfig") {
+          return Promise.resolve(
+            options.configError
+              ? CommandResultFactory({
+                  error: new InvalidStatusWordError("config unreadable"),
+                })
+              : CommandResultFactory({
+                  data: { version: options.version ?? "3.10.0" },
+                }),
+          );
+        }
+        const packet = counters[cmd.name] ?? 0;
+        counters[cmd.name] = packet + 1;
+        if (
+          options.refuse &&
+          options.refuse.name === cmd.name &&
+          options.refuse.packet === packet
+        ) {
+          return Promise.resolve(
+            CommandResultFactory({
+              error: new ZcashAppCommandError({
+                errorCode: options.refuse.code,
+                message: "refused",
+              }),
+            }),
+          );
+        }
+        if (cmd.name === "SignPcztOrchard" || cmd.name === "SignPcztIronwood") {
+          return Promise.resolve(
+            CommandResultFactory({
+              data: { spendAuthSig: new Uint8Array(64).fill(raw[3]!) },
+            }),
+          );
+        }
+        return Promise.resolve(CommandResultFactory({ data: undefined }));
+      });
+    };
+
+    const pczt = () => sent.filter((c) => c.name.startsWith("Pczt"));
+
+    it("sends no GetAppConfig and the same stream when nothing is declared", async () => {
+      useDevice({});
+      await run(privateToPrivateTransaction());
+
+      expect(sent.some((c) => c.ins === APP_CONFIG_INS)).toBe(false);
+      expect(sent[0]!.ins).toBe(INS_PCZT_HEADER);
+      const metadata = sent.filter((c) => c.ins === INS_PCZT_ORCHARD_ACTION)[
+        METADATA_PACKET
+      ]!;
+      expect(metadata.data).toHaveLength(115);
+    });
+
+    it("checks the version first, then streams the extended Orchard metadata (V5)", async () => {
+      useDevice({ version: "3.10.0" });
+      const result = await run(orchardTransactionDeclaringAccount(1));
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+      expect(sent[0]!.ins).toBe(APP_CONFIG_INS);
+      expect(sent[1]!.ins).toBe(INS_PCZT_HEADER);
+      const metadata = sent.filter((c) => c.ins === INS_PCZT_ORCHARD_ACTION)[
+        METADATA_PACKET
+      ]!;
+      expect(metadata.data).toHaveLength(121);
+      expect(Buffer.from(metadata.data.slice(115)).toString("hex")).toBe(
+        "010401000000",
+      );
+      if (isSuccessDmkResult(result)) {
+        expect(result.data.orchard).toHaveLength(1);
+      }
+    });
+
+    it("streams the extended metadata on both pools (V6)", async () => {
+      useDevice({ version: "3.10.0" });
+      const result = await run(v6TransactionDeclaringAccounts(1, 2));
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+      expect(sent[0]!.ins).toBe(APP_CONFIG_INS);
+      const orchard = sent.filter((c) => c.ins === INS_PCZT_ORCHARD_ACTION)[
+        METADATA_PACKET
+      ]!;
+      const ironwood = sent.filter((c) => c.ins === INS_PCZT_IRONWOOD_ACTION)[
+        METADATA_PACKET
+      ]!;
+      expect(Buffer.from(orchard.data.slice(115)).toString("hex")).toBe(
+        "010401000000",
+      );
+      expect(ironwood.data).toHaveLength(122);
+      expect(Buffer.from(ironwood.data.slice(116)).toString("hex")).toBe(
+        "010402000000",
+      );
+      if (isSuccessDmkResult(result)) {
+        expect(result.data.ironwood).toHaveLength(1);
+      }
+    });
+
+    it("refuses an app older than 3.10.0 before any transaction APDU", async () => {
+      useDevice({ version: "3.9.5" });
+      const result = await run(orchardTransactionDeclaringAccount(1));
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(
+          UnsupportedOutputAccountDeclarationError,
+        );
+        expect(
+          (result.error as UnsupportedOutputAccountDeclarationError).appVersion,
+        ).toBe("3.9.5");
+      }
+      expect(sent.map((c) => c.ins)).toEqual([APP_CONFIG_INS]);
+      expect(pczt()).toHaveLength(0);
+    });
+
+    it("fails closed on an unreadable version", async () => {
+      useDevice({ version: "ironwood" });
+      const result = await run(orchardTransactionDeclaringAccount(1));
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(
+          UnsupportedOutputAccountDeclarationError,
+        );
+      }
+      expect(pczt()).toHaveLength(0);
+    });
+
+    it("surfaces a GetAppConfig failure without sending the transaction", async () => {
+      useDevice({ configError: true });
+      const result = await run(orchardTransactionDeclaringAccount(1));
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+      }
+      expect(pczt()).toHaveLength(0);
+    });
+
+    it("rejects an invalid declaration before any APDU", async () => {
+      useDevice({});
+      // account 0 is the account being spent
+      const result = await run(orchardTransactionDeclaringAccount(0));
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(InvalidArgumentError);
+      }
+      expect(sent).toHaveLength(0);
+    });
+
+    it("reports a 6a80 on a declared Orchard metadata packet as OutputAccountRefusedError", async () => {
+      useDevice({
+        refuse: {
+          name: "PcztOrchardAction",
+          packet: METADATA_PACKET,
+          code: "6a80",
+        },
+      });
+      const result = await run(orchardTransactionDeclaringAccount(7));
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        const error = result.error as OutputAccountRefusedError;
+        expect(error).toBeInstanceOf(OutputAccountRefusedError);
+        expect(error.pool).toBe("orchard");
+        expect(error.actionIndex).toBe(0);
+        expect(error.account).toBe(7);
+        expect(error.errorCode).toBe("output_account_refused");
+      }
+    });
+
+    it("reports a 6a80 on a declared Ironwood metadata packet as OutputAccountRefusedError", async () => {
+      useDevice({
+        refuse: {
+          name: "PcztIronwoodAction",
+          packet: METADATA_PACKET,
+          code: "6a80",
+        },
+      });
+      const result = await run(v6TransactionDeclaringAccounts(1, 2));
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        const error = result.error as OutputAccountRefusedError;
+        expect(error).toBeInstanceOf(OutputAccountRefusedError);
+        expect(error.pool).toBe("ironwood");
+        expect(error.actionIndex).toBe(0);
+        expect(error.account).toBe(2);
+      }
+    });
+
+    it("passes a 6a80 on another packet of the declared action through", async () => {
+      useDevice({
+        refuse: {
+          name: "PcztOrchardAction",
+          packet: METADATA_PACKET - 1,
+          code: "6a80",
+        },
+      });
+      const result = await run(orchardTransactionDeclaringAccount(1));
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(ZcashAppCommandError);
+        expect((result.error as ZcashAppCommandError).errorCode).toBe("6a80");
+      }
+    });
+
+    it("passes a 6a84 on the declared metadata packet through", async () => {
+      useDevice({
+        refuse: {
+          name: "PcztOrchardAction",
+          packet: METADATA_PACKET,
+          code: "6a84",
+        },
+      });
+      const result = await run(orchardTransactionDeclaringAccount(1));
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(ZcashAppCommandError);
+        expect((result.error as ZcashAppCommandError).errorCode).toBe("6a84");
+      }
+    });
+
+    it("passes a 6a80 on the metadata packet of an undeclared action through", async () => {
+      useDevice({
+        refuse: {
+          name: "PcztOrchardAction",
+          packet: METADATA_PACKET,
+          code: "6a80",
+        },
+      });
+      const result = await run(privateToPrivateTransaction());
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(ZcashAppCommandError);
+      }
+    });
+
+    describe("with user address receivers", () => {
+      /** V6: Orchard declares account 1, Ironwood carries a receiver list. */
+      const declaredAndListed = (): PcztTransaction => {
+        const tx = v6TransactionDeclaringAccounts(1, 2);
+        const { outputZip32Derivation: _, ...ironwood } =
+          tx.ironwoodBundle!.actions[0]!;
+        return {
+          ...tx,
+          ironwoodBundle: {
+            ...tx.ironwoodBundle!,
+            actions: [
+              {
+                ...ironwood,
+                userAddressReceivers: shieldedUserAddressReceivers(),
+              },
+            ],
+          },
+        };
+      };
+      const metadataOf = (ins: number) =>
+        Buffer.from(
+          sent.filter((c) => c.ins === ins)[METADATA_PACKET]!.data,
+        ).toString("hex");
+
+      it("sends only the account on an action that carries both", async () => {
+        useDevice({ version: "3.11.0" });
+        const tx = orchardTransactionDeclaringAccount(1);
+        tx.orchardBundle!.actions[0]!.userAddressReceivers =
+          shieldedUserAddressReceivers();
+        const result = await run(tx);
+
+        expect(isSuccessDmkResult(result)).toBe(true);
+        const metadata = metadataOf(INS_PCZT_ORCHARD_ACTION);
+        expect(metadata).toHaveLength(121 * 2);
+        expect(metadata.endsWith("010401000000")).toBe(true);
+      });
+
+      it("sends each extension on its own action from app 3.11.0", async () => {
+        useDevice({ version: "3.11.0" });
+        const result = await run(declaredAndListed());
+
+        expect(isSuccessDmkResult(result)).toBe(true);
+        expect(sent.filter((c) => c.ins === APP_CONFIG_INS)).toHaveLength(1);
+        expect(
+          metadataOf(INS_PCZT_ORCHARD_ACTION).endsWith("010401000000"),
+        ).toBe(true);
+        expect(
+          metadataOf(INS_PCZT_IRONWOOD_ACTION).endsWith(
+            "0241" + UA_SHIELDED_VALUE_HEX,
+          ),
+        ).toBe(true);
+      });
+
+      it("keeps the account and drops the list on app 3.10.0", async () => {
+        useDevice({ version: "3.10.0" });
+        const result = await run(declaredAndListed());
+
+        expect(isSuccessDmkResult(result)).toBe(true);
+        expect(
+          metadataOf(INS_PCZT_ORCHARD_ACTION).endsWith("010401000000"),
+        ).toBe(true);
+        expect(metadataOf(INS_PCZT_IRONWOOD_ACTION)).toHaveLength(116 * 2);
+      });
+
+      it("reports a 6a80 on an action that carried both as OutputAccountRefusedError", async () => {
+        useDevice({
+          version: "3.11.0",
+          refuse: {
+            name: "PcztOrchardAction",
+            packet: METADATA_PACKET,
+            code: "6a80",
+          },
+        });
+        const tx = orchardTransactionDeclaringAccount(3);
+        tx.orchardBundle!.actions[0]!.userAddressReceivers =
+          shieldedUserAddressReceivers();
+        const result = await run(tx);
+
+        expect(isSuccessDmkResult(result)).toBe(false);
+        if (!isSuccessDmkResult(result)) {
+          expect(result.error).toBeInstanceOf(OutputAccountRefusedError);
+          expect((result.error as OutputAccountRefusedError).account).toBe(3);
+        }
+      });
     });
   });
 });
