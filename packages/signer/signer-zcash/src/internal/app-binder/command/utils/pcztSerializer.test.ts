@@ -13,6 +13,7 @@ import {
   serializePcztHeader,
   serializeTransparentInputs,
   serializeTransparentOutputs,
+  shieldedMetadataPacketIndices,
 } from "@internal/app-binder/command/utils/pcztSerializer";
 import {
   bytes,
@@ -23,7 +24,9 @@ import {
   SAMPLE_GLOBAL_V6,
   SAMPLE_HEADER_HEX,
   SAMPLE_HEADER_HEX_V6,
+  sampleIronwoodAction,
   sampleIronwoodBundle,
+  sampleOrchardAction,
   sampleOrchardBundle,
   sampleTransparentInput,
   sampleTransparentOutput,
@@ -253,6 +256,104 @@ describe("pcztSerializer", () => {
       packets.forEach((packet) => {
         expect(packet.length).toBeLessThanOrEqual(PCZT_MAX_PACKET_SIZE);
       });
+    });
+  });
+
+  describe("output account declaration", () => {
+    const orchardMeta =
+      "0a".repeat(43) + // recipient
+      "0500000000000000" + // value 5 LE
+      "0b".repeat(32) + // rseed
+      "0c".repeat(32); // rcv
+    const ironwoodMeta =
+      "1a".repeat(43) +
+      "0500000000000000" +
+      "1b".repeat(32) +
+      "1c".repeat(32) +
+      "03"; // notePlaintextVersion
+    const METADATA = 8;
+
+    const orchardBundleOf = (n: number) => ({
+      ...sampleOrchardBundle(),
+      actions: Array.from({ length: n }, () => sampleOrchardAction()),
+    });
+
+    it("appends tag 01, length 04 and the LE account after rcv on Orchard", () => {
+      const declared = serializeOrchardActions(sampleOrchardBundle(), [1]);
+      const undeclared = serializeOrchardActions(sampleOrchardBundle());
+
+      expect(declared[METADATA]).toHaveLength(121);
+      expect(bytesToHex(declared[METADATA]!)).toBe(
+        orchardMeta + "0104" + "01000000",
+      );
+      declared.forEach((packet, index) => {
+        if (index !== METADATA) {
+          expect(bytesToHex(packet)).toBe(bytesToHex(undeclared[index]!));
+        }
+      });
+    });
+
+    it("appends the entry strictly after notePlaintextVersion on Ironwood", () => {
+      const declared = serializeIronwoodActions(sampleIronwoodBundle(), [2]);
+
+      expect(declared[METADATA]).toHaveLength(122);
+      expect(bytesToHex(declared[METADATA]!)).toBe(
+        ironwoodMeta + "0104" + "02000000",
+      );
+    });
+
+    it("encodes account 100 as 64000000", () => {
+      const declared = serializeOrchardActions(sampleOrchardBundle(), [100]);
+      expect(bytesToHex(declared[METADATA]!)).toBe(
+        orchardMeta + "0104" + "64000000",
+      );
+    });
+
+    it("extends only the declared actions of a mixed bundle", () => {
+      const packets = serializeOrchardActions(orchardBundleOf(2), [
+        undefined,
+        3,
+      ]);
+      const indices = shieldedMetadataPacketIndices(orchardBundleOf(2));
+
+      expect(packets[indices[0]!]).toHaveLength(115);
+      expect(bytesToHex(packets[indices[1]!]!)).toBe(
+        orchardMeta + "0104" + "03000000",
+      );
+    });
+
+    it("leaves the bytes unchanged when no account is declared", () => {
+      expect(
+        serializeOrchardActions(sampleOrchardBundle(), [undefined]).map(
+          bytesToHex,
+        ),
+      ).toEqual(serializeOrchardActions(sampleOrchardBundle()).map(bytesToHex));
+      expect(
+        serializeIronwoodActions(sampleIronwoodBundle(), [undefined])[METADATA],
+      ).toHaveLength(116);
+      expect(sampleIronwoodAction().notePlaintextVersion).toBe(3);
+    });
+
+    it("ignores the public outputZip32Derivation field unless the account is passed", () => {
+      const bundle = {
+        ...sampleOrchardBundle(),
+        actions: [
+          {
+            ...sampleOrchardAction(),
+            outputZip32Derivation: { path: "32'/133'/1'" },
+          },
+        ],
+      };
+      expect(serializeOrchardActions(bundle)[METADATA]).toHaveLength(115);
+    });
+
+    it("returns the metadata packet index of each action with a split enc_ciphertext", () => {
+      expect(shieldedMetadataPacketIndices(orchardBundleOf(0))).toEqual([]);
+      // count, then 8 packets per action (spend, zip32, cmx, enc x3, out, metadata).
+      expect(shieldedMetadataPacketIndices(orchardBundleOf(1))).toEqual([8]);
+      expect(shieldedMetadataPacketIndices(orchardBundleOf(2))).toEqual([
+        8, 16,
+      ]);
     });
   });
 

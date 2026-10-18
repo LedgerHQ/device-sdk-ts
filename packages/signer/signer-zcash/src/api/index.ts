@@ -68,6 +68,7 @@ export type {
   PcztTransaction,
   PcztTransparentInput,
   PcztTransparentOutput,
+  PcztZip32Derivation,
 } from "@api/model/PcztTransaction";
 export * from "@api/SignerZcash";
 export * from "@api/SignerZcashBuilder";
