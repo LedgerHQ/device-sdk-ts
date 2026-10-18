@@ -35,12 +35,22 @@ import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 /** Default ZIP-32 seed fingerprint when the PCZT omits one (32 zero bytes). */
 const DEFAULT_SEED_FINGERPRINT = new Uint8Array(32);
 
+/** Output extension tag: the ZIP 32 account of the same seed the output pays. */
+const OUTPUT_EXTENSION_ACCOUNT_TAG = 0x01;
+
 /** Output extension tag: receivers of the unified address the user entered. */
 export const OUTPUT_EXTENSION_USER_ADDRESS_TAG = 0x02;
 
 /** One entry of an output extension block: `tag u8 · len u8 · value[len]`. */
 export const outputExtension = (tag: number, value: Uint8Array): Uint8Array =>
   concatUint8Arrays(Uint8Array.of(tag, value.length), value);
+
+/** Account extension value: the account index, little-endian `u32`. */
+const accountExtensionValue = (account: number): Uint8Array => {
+  const builder = new ByteArrayBuilder();
+  builder.add32BitUIntToData(account, false);
+  return builder.build();
+};
 
 /**
  * Packets of one output list, and for each output the index (in `packets`) of
@@ -50,6 +60,17 @@ export const outputExtension = (tag: number, value: Uint8Array): Uint8Array =>
 export type SerializedOutputs = {
   packets: Uint8Array[];
   lastPacketIndices: number[];
+};
+
+/**
+ * Output extensions of a shielded bundle, one entry per action (`undefined` =
+ * none). Resolved and validated by the caller, never read off the actions.
+ */
+export type ShieldedOutputExtensions = {
+  /** ZIP 32 account each action's output pays (tag `0x01`). */
+  accounts?: readonly (number | undefined)[];
+  /** Encoded user address receivers of each action (tag `0x02`). */
+  userAddresses?: readonly (Uint8Array | undefined)[];
 };
 
 /** `path_len u8` followed by big-endian `u32` path components. */
@@ -219,13 +240,14 @@ export const serializeTransparentOutputsIndexed = (
 // warn if one type is accidentally used in place of the other. Ironwood-only
 // additions (e.g. `notePlaintextVersion`, added for PCZT v2) are serialized
 // via `'<field>' in action` guards below — any future Ironwood-only field
-// requires the same treatment or the omission will be silent. The user
-// address extension is the same: it is passed in `userAddresses`, never read off
-// the action, and goes after `rcv` (Orchard) or after `notePlaintextVersion`
-// (Ironwood).
+// requires the same treatment or the omission will be silent. The output
+// extensions are the opposite: they are passed in `extensions`, never read off
+// the action, and go after `rcv` (Orchard) or after `notePlaintextVersion`
+// (Ironwood). The device refuses tags `0x01` and `0x02` on one output, so an
+// action declaring an account carries tag `0x01` only.
 const serializeShieldedActions = (
   bundle: PcztOrchardBundle | PcztIronwoodBundle,
-  userAddresses?: (Uint8Array | undefined)[],
+  extensions: ShieldedOutputExtensions = {},
 ): SerializedOutputs => {
   const packets: Uint8Array[] = [createVarint(bundle.actions.length)];
   const lastPacketIndices: number[] = [];
@@ -271,8 +293,16 @@ const serializeShieldedActions = (
         (action as { notePlaintextVersion: number }).notePlaintextVersion,
       );
     }
-    const userAddress = userAddresses?.[i];
-    if (userAddress !== undefined) {
+    const account = extensions.accounts?.[i];
+    const userAddress = extensions.userAddresses?.[i];
+    if (account !== undefined) {
+      metadata.addBufferToData(
+        outputExtension(
+          OUTPUT_EXTENSION_ACCOUNT_TAG,
+          accountExtensionValue(account),
+        ),
+      );
+    } else if (userAddress !== undefined) {
       metadata.addBufferToData(
         outputExtension(OUTPUT_EXTENSION_USER_ADDRESS_TAG, userAddress),
       );
@@ -295,17 +325,20 @@ const serializeShieldedActions = (
   return { packets, lastPacketIndices };
 };
 
-/** `PCZT_ORCHARD_ACTION` packet sequence (including the trailer when action count > 0). */
+/**
+ * `PCZT_ORCHARD_ACTION` packet sequence (including the trailer when action count > 0).
+ * `extensions` holds the resolved output extensions of each action.
+ */
 export const serializeOrchardActions = (
   bundle: PcztOrchardBundle,
-  userAddresses?: (Uint8Array | undefined)[],
-): Uint8Array[] => serializeShieldedActions(bundle, userAddresses).packets;
+  extensions?: ShieldedOutputExtensions,
+): Uint8Array[] => serializeShieldedActions(bundle, extensions).packets;
 
 /** Same as {@link serializeOrchardActions}, with each action's metadata packet index. */
 export const serializeOrchardActionsIndexed = (
   bundle: PcztOrchardBundle,
-  userAddresses?: (Uint8Array | undefined)[],
-): SerializedOutputs => serializeShieldedActions(bundle, userAddresses);
+  extensions?: ShieldedOutputExtensions,
+): SerializedOutputs => serializeShieldedActions(bundle, extensions);
 
 /**
  * `PCZT_IRONWOOD_ACTION` packet sequence (including the trailer when action count > 0).
@@ -316,14 +349,14 @@ export const serializeOrchardActionsIndexed = (
  */
 export const serializeIronwoodActions = (
   bundle: PcztIronwoodBundle,
-  userAddresses?: (Uint8Array | undefined)[],
-): Uint8Array[] => serializeShieldedActions(bundle, userAddresses).packets;
+  extensions?: ShieldedOutputExtensions,
+): Uint8Array[] => serializeShieldedActions(bundle, extensions).packets;
 
 /** Same as {@link serializeIronwoodActions}, with each action's metadata packet index. */
 export const serializeIronwoodActionsIndexed = (
   bundle: PcztIronwoodBundle,
-  userAddresses?: (Uint8Array | undefined)[],
-): SerializedOutputs => serializeShieldedActions(bundle, userAddresses);
+  extensions?: ShieldedOutputExtensions,
+): SerializedOutputs => serializeShieldedActions(bundle, extensions);
 
 /**
  * P1 framing for packet `index` of a `total`-packet command:
