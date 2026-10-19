@@ -81,7 +81,7 @@ export function DeviceCard({
   return (
     <div className="border-muted bg-base flex flex-col rounded-lg border">
       <div className="flex flex-wrap items-center gap-16 p-16">
-        <Spot appearance="icon" icon={model?.icon ?? LedgerDevices} size={40} />
+        <Spot icon={model?.icon ?? LedgerDevices} size={40} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-8">
             <p className="body-1-semi-bold text-base">{device.name}</p>
