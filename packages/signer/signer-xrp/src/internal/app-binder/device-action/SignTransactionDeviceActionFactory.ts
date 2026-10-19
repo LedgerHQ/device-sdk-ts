@@ -19,10 +19,15 @@ type SignTransactionTaskError = CommandErrorResult<XrpErrorCodes>["error"];
  *
  * Signing always ends on a confirmation screen, so the caller is told to
  * prompt for it regardless of the arguments.
+ *
+ * `transaction` can be a function, read when the task runs rather than when
+ * the device action is built. A composite device action can then register
+ * this one before the bytes to sign are known (for example when they contain
+ * a `SigningPubKey` returned by an earlier GetAddress step).
  */
 export const SignTransactionDeviceActionFactory = (args: {
   derivationPath: string;
-  transaction: Uint8Array;
+  transaction: Uint8Array | (() => Uint8Array);
   skipOpenApp: boolean;
   loggerFactory: (tag: string) => LoggerPublisherService;
 }): CallTaskInAppDeviceAction<
@@ -39,7 +44,10 @@ export const SignTransactionDeviceActionFactory = (args: {
       task: async (internalApi) =>
         new SendSignTransactionTask(internalApi, {
           derivationPath: args.derivationPath,
-          serializedTransaction: args.transaction,
+          serializedTransaction:
+            typeof args.transaction === "function"
+              ? args.transaction()
+              : args.transaction,
           loggerFactory: args.loggerFactory,
         }).run(),
       appName: APP_NAME,
