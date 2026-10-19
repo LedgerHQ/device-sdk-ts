@@ -156,6 +156,52 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       };
     };
 
+    // Shared by the generic and basic terminal sign children.
+    const terminalSignInput = ({ context }: { context: types["context"] }) => {
+      const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
+      return {
+        derivationPath: context.input.derivationPath,
+        transaction: context._internalState.messageBytes,
+        rpcUrl,
+        fetchBlockhash,
+        userInputType:
+          context.input.transactionOptions?.transactionResolutionContext
+            ?.userInputType,
+        blockhashService: context.input.blockhashService,
+      };
+    };
+
+    const canProvideContacts = (context: types["context"]): boolean =>
+      (context.input.addressBook?.contactGroups.length ?? 0) > 0 &&
+      isSupported("contacts", context._internalState.appConfig!);
+
+    const byRecipient = (): ContactMatch => ({ by: "recipient" });
+
+    const byTokenAccountOwner = (context: types["context"]): ContactMatch => ({
+      by: "tokenAccountOwner",
+      tokenAccountOwners: context._internalState.tokenAccountOwners,
+    });
+
+    // Best-effort contact step: a failure never stops the signature, the
+    // machine always moves on to `target`.
+    const provideContactState = (
+      id: string,
+      target: string,
+      match: (context: types["context"]) => ContactMatch,
+    ) => ({
+      entry: "assignProvideContactStep" as const,
+      invoke: {
+        id,
+        src: "provideContact" as const,
+        input: ({ context }: { context: types["context"] }) => ({
+          messageBytes: context._internalState.messageBytes,
+          match: match(context),
+        }),
+        onDone: { target, actions: "assignContactSent" as const },
+        onError: { target },
+      },
+    });
+
     return setup({
       types: {
         input: {} as types["input"],
@@ -235,19 +281,28 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           context._internalState.signature !== null,
         // Without contacts or app support the step is skipped entirely, so a
         // signer built without an address book runs exactly as before.
-        shouldProvideContact: ({ context }) =>
-          (context.input.addressBook?.contactGroups.length ?? 0) > 0 &&
-          isSupported("contacts", context._internalState.appConfig!),
+        shouldProvideContact: ({ context }) => canProvideContacts(context),
         // Second chance for a token transfer whose recipient is not an
         // associated token account: once provisioning attested token account
         // owners, the recipient can be matched through its owner.
         shouldProvideOwnerContact: ({ context }) =>
           !context._internalState.contactSent &&
           Object.keys(context._internalState.tokenAccountOwners).length > 0 &&
-          (context.input.addressBook?.contactGroups.length ?? 0) > 0 &&
-          isSupported("contacts", context._internalState.appConfig!),
+          canProvideContacts(context),
       },
       actions: {
+        assignProvideContactStep: assign({
+          intermediateValue: () => ({
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.PROVIDE_CONTACT,
+          }),
+        }),
+        assignContactSent: assign({
+          _internalState: ({ event, context }) => ({
+            ...context._internalState,
+            contactSent: event["output"] === true,
+          }),
+        }),
         assignErrorFromEvent: assign({
           _internalState: (_) => ({
             ..._.context._internalState,
@@ -442,32 +497,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         // Best-effort contact for the transfer recipient. It runs before any
         // clear-sign descriptor so it never lands between a GET CHALLENGE and
         // the descriptor bound to it, and a failure never stops the signature.
-        ProvideContact: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.PROVIDE_CONTACT,
-            }),
-          }),
-          invoke: {
-            id: "provideContact",
-            src: "provideContact",
-            input: ({ context }) => ({
-              messageBytes: context._internalState.messageBytes,
-              match: { by: "recipient" },
-            }),
-            onDone: {
-              target: "CheckGenericClearSignSupported",
-              actions: assign({
-                _internalState: ({ event, context }) => ({
-                  ...context._internalState,
-                  contactSent: event.output,
-                }),
-              }),
-            },
-            onError: { target: "CheckGenericClearSignSupported" },
-          },
-        },
+        ProvideContact: provideContactState(
+          "provideContact",
+          "CheckGenericClearSignSupported",
+          byRecipient,
+        ),
         CheckGenericClearSignSupported: {
           always: [
             {
@@ -550,35 +584,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         // Best-effort contact matched through an attested token account owner,
         // once every descriptor is provided and before the prompt.
-        ProvideOwnerContactBeforeGenericSign: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.PROVIDE_CONTACT,
-            }),
-          }),
-          invoke: {
-            id: "provideOwnerContactBeforeGenericSign",
-            src: "provideContact",
-            input: ({ context }) => ({
-              messageBytes: context._internalState.messageBytes,
-              match: {
-                by: "tokenAccountOwner",
-                tokenAccountOwners: context._internalState.tokenAccountOwners,
-              },
-            }),
-            onDone: {
-              target: "GenericTerminalSign",
-              actions: assign({
-                _internalState: ({ event, context }) => ({
-                  ...context._internalState,
-                  contactSent: event.output,
-                }),
-              }),
-            },
-            onError: { target: "GenericTerminalSign" },
-          },
-        },
+        ProvideOwnerContactBeforeGenericSign: provideContactState(
+          "provideOwnerContactBeforeGenericSign",
+          "GenericTerminalSign",
+          byTokenAccountOwner,
+        ),
         // Generic terminal sign: prompt + best-effort blockhash refresh +
         // delayed sign. A user cancel / signing failure surfaces; a non-cancel
         // prompt failure resolves to `"degraded"` and falls back to the legacy
@@ -587,19 +597,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "signGenericClearSignStateMachine",
             src: "signGenericClearSignStateMachine",
-            input: ({ context }) => {
-              const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
-              return {
-                derivationPath: context.input.derivationPath,
-                transaction: context._internalState.messageBytes,
-                rpcUrl,
-                fetchBlockhash,
-                userInputType:
-                  context.input.transactionOptions?.transactionResolutionContext
-                    ?.userInputType,
-                blockhashService: context.input.blockhashService,
-              };
-            },
+            input: terminalSignInput,
             onSnapshot: {
               actions: assign({
                 intermediateValue: ({ event }) =>
@@ -653,32 +651,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             { target: "BasicClearSign" },
           ],
         },
-        ReprovideContact: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.PROVIDE_CONTACT,
-            }),
-          }),
-          invoke: {
-            id: "reprovideContact",
-            src: "provideContact",
-            input: ({ context }) => ({
-              messageBytes: context._internalState.messageBytes,
-              match: { by: "recipient" },
-            }),
-            onDone: {
-              target: "BasicClearSign",
-              actions: assign({
-                _internalState: ({ event, context }) => ({
-                  ...context._internalState,
-                  contactSent: event.output,
-                }),
-              }),
-            },
-            onError: { target: "BasicClearSign" },
-          },
-        },
+        ReprovideContact: provideContactState(
+          "reprovideContact",
+          "BasicClearSign",
+          byRecipient,
+        ),
         // Legacy SPL / token provisioning child (best-effort, never signs). It
         // streams descriptors; control always proceeds to the basic terminal
         // sign.
@@ -727,35 +704,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             { target: "Report" },
           ],
         },
-        ProvideOwnerContactBeforeBasicSign: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.PROVIDE_CONTACT,
-            }),
-          }),
-          invoke: {
-            id: "provideOwnerContactBeforeBasicSign",
-            src: "provideContact",
-            input: ({ context }) => ({
-              messageBytes: context._internalState.messageBytes,
-              match: {
-                by: "tokenAccountOwner",
-                tokenAccountOwners: context._internalState.tokenAccountOwners,
-              },
-            }),
-            onDone: {
-              target: "Report",
-              actions: assign({
-                _internalState: ({ event, context }) => ({
-                  ...context._internalState,
-                  contactSent: event.output,
-                }),
-              }),
-            },
-            onError: { target: "Report" },
-          },
-        },
+        ProvideOwnerContactBeforeBasicSign: provideContactState(
+          "provideOwnerContactBeforeBasicSign",
+          "Report",
+          byTokenAccountOwner,
+        ),
         // Single report state for all paths.
         // isBlindSign is derived from context: false when a signature or error is
         // already set (clear-sign path — success or cancel), true otherwise
@@ -818,19 +771,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "signBasicClearSignStateMachine",
             src: "signBasicClearSignStateMachine",
-            input: ({ context }) => {
-              const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
-              return {
-                derivationPath: context.input.derivationPath,
-                transaction: context._internalState.messageBytes,
-                rpcUrl,
-                fetchBlockhash,
-                userInputType:
-                  context.input.transactionOptions?.transactionResolutionContext
-                    ?.userInputType,
-                blockhashService: context.input.blockhashService,
-              };
-            },
+            input: terminalSignInput,
             onSnapshot: {
               actions: assign({
                 intermediateValue: ({ event }) =>
