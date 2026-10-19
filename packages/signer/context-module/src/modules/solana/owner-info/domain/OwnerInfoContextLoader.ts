@@ -83,13 +83,14 @@ export class OwnerInfoContextLoader
       Left: (error): ClearSignContext[] => [
         { type: ClearSignContextType.ERROR, error },
       ],
-      Right: ({ tlvDescriptor }): ClearSignContext[] => {
+      Right: ({ tlvDescriptor, tokenAccount, owner }): ClearSignContext[] => {
         if (tlvDescriptor !== undefined) {
           return [
             {
               type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
               payload: tlvDescriptor,
               certificate: trustedNamePKICertificate,
+              tokenAccountOwner: { tokenAccount, owner },
             },
           ];
         }

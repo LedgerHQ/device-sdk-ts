@@ -13,6 +13,7 @@ import {
   type ProvisionBasicClearSignDAError,
   type ProvisionBasicClearSignDAInput,
   type ProvisionBasicClearSignDAIntermediateValue,
+  type ProvisionBasicClearSignDAOutput,
 } from "@api/app-binder/ProvisionBasicClearSignDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
@@ -55,7 +56,7 @@ function run(
   input: ProvisionBasicClearSignDAInput,
   onComplete: (
     states: DeviceActionState<
-      void,
+      ProvisionBasicClearSignDAOutput,
       ProvisionBasicClearSignDAError,
       ProvisionBasicClearSignDAIntermediateValue
     >[],
@@ -66,7 +67,7 @@ function run(
   vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps() as any); // eslint-disable-line @typescript-eslint/no-explicit-any
   const { observable } = action._execute(apiMock);
   const states: DeviceActionState<
-    void,
+    ProvisionBasicClearSignDAOutput,
     ProvisionBasicClearSignDAError,
     ProvisionBasicClearSignDAIntermediateValue
   >[] = [];
@@ -102,7 +103,7 @@ describe("ProvisionBasicClearSignDeviceAction", () => {
     buildMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: basicContext }));
-    provideMock = vi.fn().mockResolvedValue(undefined);
+    provideMock = vi.fn().mockResolvedValue({});
   });
 
   it("SPL tx: inspect then build then provide then done", () =>
@@ -117,6 +118,46 @@ describe("ProvisionBasicClearSignDeviceAction", () => {
             expect(states[states.length - 1]!.status).toBe(
               DeviceActionStatus.Completed,
             );
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        },
+        reject,
+      );
+    }));
+
+  it("outputs the token account owners the provided descriptors attested", () =>
+    new Promise<void>((resolve, reject) => {
+      provideMock.mockResolvedValue({ TokenAcc: "Owner" });
+      run(
+        splInput,
+        (states) => {
+          try {
+            const last = states[states.length - 1]!;
+            expect(
+              last.status === DeviceActionStatus.Completed && last.output,
+            ).toEqual({ tokenAccountOwners: { TokenAcc: "Owner" } });
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        },
+        reject,
+      );
+    }));
+
+  it("outputs no token account owners when providing fails", () =>
+    new Promise<void>((resolve, reject) => {
+      provideMock.mockRejectedValue(new Error("boom"));
+      run(
+        splInput,
+        (states) => {
+          try {
+            const last = states[states.length - 1]!;
+            expect(
+              last.status === DeviceActionStatus.Completed && last.output,
+            ).toEqual({ tokenAccountOwners: {} });
             resolve();
           } catch (e) {
             reject(e);

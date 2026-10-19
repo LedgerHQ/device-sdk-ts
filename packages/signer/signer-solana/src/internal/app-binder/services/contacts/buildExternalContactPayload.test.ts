@@ -14,6 +14,8 @@ import {
 import {
   buildExternalContactPayload,
   type BuildExternalContactPayloadArgs,
+  buildOwnerContactPayload,
+  type BuildOwnerContactPayloadArgs,
 } from "./buildExternalContactPayload";
 import { type TransferRecipient } from "./extractTransferRecipient";
 
@@ -128,6 +130,21 @@ describe("buildExternalContactPayload", () => {
       ).toBeUndefined();
     });
 
+    it("does not match a token transfer without a mint", () => {
+      expect(
+        buildExternalContactPayload(
+          args({
+            recipient: {
+              kind: "token",
+              tokenAccount: Keypair.generate().publicKey,
+              mint: undefined,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            },
+          }),
+        ),
+      ).toBeUndefined();
+    });
+
     it("returns undefined when no contact receives the transfer", () => {
       expect(
         buildExternalContactPayload(
@@ -168,5 +185,91 @@ describe("buildExternalContactPayload", () => {
         ),
       ).toBeUndefined();
     });
+  });
+});
+
+describe("buildOwnerContactPayload", () => {
+  const tokenAccount = Keypair.generate().publicKey;
+
+  function ownerArgs(
+    overrides: Partial<BuildOwnerContactPayloadArgs> = {},
+  ): BuildOwnerContactPayloadArgs {
+    return {
+      addressBook,
+      recipient: {
+        kind: "token",
+        tokenAccount,
+        mint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      },
+      tokenAccountOwners: { [tokenAccount.toBase58()]: alice.toBase58() },
+      ...overrides,
+    };
+  }
+
+  it("matches a token account whose attested owner is the wallet", () => {
+    expect(buildOwnerContactPayload(ownerArgs())).toEqual(expectedAlicePayload);
+  });
+
+  it("matches a token transfer without a mint", () => {
+    expect(
+      buildOwnerContactPayload(
+        ownerArgs({
+          recipient: {
+            kind: "token",
+            tokenAccount,
+            mint: undefined,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          },
+        }),
+      ),
+    ).toEqual(expectedAlicePayload);
+  });
+
+  it("does not match a token account owned by someone else", () => {
+    expect(
+      buildOwnerContactPayload(
+        ownerArgs({
+          tokenAccountOwners: {
+            [tokenAccount.toBase58()]: Keypair.generate().publicKey.toBase58(),
+          },
+        }),
+      ),
+    ).toBeUndefined();
+  });
+
+  it("does not match a token account without an attested owner", () => {
+    expect(
+      buildOwnerContactPayload(ownerArgs({ tokenAccountOwners: {} })),
+    ).toBeUndefined();
+  });
+
+  it("does not match through an attested owner that is no public key", () => {
+    expect(
+      buildOwnerContactPayload(
+        ownerArgs({
+          tokenAccountOwners: { [tokenAccount.toBase58()]: "not-base58-0OIl" },
+        }),
+      ),
+    ).toBeUndefined();
+  });
+
+  it("does not match the associated token account without an attested owner", () => {
+    expect(
+      buildOwnerContactPayload(
+        ownerArgs({ recipient: tokenTo(alice), tokenAccountOwners: {} }),
+      ),
+    ).toBeUndefined();
+  });
+
+  it("does not match a native transfer", () => {
+    expect(
+      buildOwnerContactPayload(
+        ownerArgs({
+          recipient: native(alice),
+          tokenAccountOwners: { [alice.toBase58()]: alice.toBase58() },
+        }),
+      ),
+    ).toBeUndefined();
   });
 });
