@@ -57,6 +57,18 @@ export type PcztTransparentOutput = {
   derivation?: PcztBip32Derivation | null;
 };
 
+/**
+ * The PCZT output `zip32_derivation`: the ZIP 32 path of an output paying an
+ * account of the same seed as the spend. The signer checks it against the spend
+ * side and sends only the account index to the device.
+ */
+export type PcztZip32Derivation = {
+  /** Hardened path `32'/<coin type>'/<account>'`; the account is at most 100. */
+  path: string;
+  /** ZIP-32 seed fingerprint, 32 bytes. Defaults to 32 zero bytes if omitted. */
+  seedFingerprint?: Uint8Array;
+};
+
 /** A single `orchard::Action` (spend + output halves). */
 export type PcztOrchardAction = {
   /** Value commitment, 32 bytes. */
@@ -96,6 +108,12 @@ export type PcztOrchardAction = {
   rseed: Uint8Array;
   /** Randomized commitment value, 32 bytes (required by the device). */
   rcv: Uint8Array;
+  /**
+   * Declares the account of the same seed the output pays. Sent to the device
+   * only when set, and only to Zcash app 3.9.5 or later; omitted (or `null`)
+   * leaves the serialization unchanged.
+   */
+  outputZip32Derivation?: PcztZip32Derivation | null;
 };
 
 /** The Orchard action bundle plus its trailer. */
@@ -149,6 +167,12 @@ export type PcztIronwoodAction = {
   rseed: Uint8Array;
   /** Randomized commitment value, 32 bytes (required by the device). */
   rcv: Uint8Array;
+  /**
+   * Declares the account of the same seed the output pays. Sent to the device
+   * only when set, and only to Zcash app 3.9.5 or later; omitted (or `null`)
+   * leaves the serialization unchanged.
+   */
+  outputZip32Derivation?: PcztZip32Derivation | null;
   /**
    * Note-plaintext version (PCZT v2), 1 byte. `0x03` for Ironwood notes.
    * Carried to the device; required for PCZT v2 parsing.
