@@ -13,13 +13,15 @@ import { type AppConfiguration } from "@api/model/AppConfiguration";
 
 import { APP_NAME } from "./constants";
 
-//const UNRELEASED_MIN_VERSION = "10.0.0";
+// Minimum version for a feature no Solana app supports yet: keeps it closed.
+const UNRELEASED_MIN_VERSION = "10.0.0";
 const DEFAULT_VERSION = "0.0.1";
 export const SOLANA_MIN_SPL_VERSION = "1.9.2";
 export const SOLANA_MIN_DELAYED_SIGNING_VERSION = "1.14.0";
 
 export const SOLANA_MIN_TRANSACTION_CHECKS_VERSION = "1.16.0";
 export const SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION = "1.17.0";
+export const SOLANA_MIN_V1_TRANSACTIONS_VERSION = UNRELEASED_MIN_VERSION;
 
 export const SOLANA_SIGNER_FEATURES = {
   spl: {
@@ -45,6 +47,13 @@ export const SOLANA_SIGNER_FEATURES = {
     minVersion: SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
     excludedModels: [DeviceModelId.NANO_S],
     excludedApps: ["Exchange"],
+  },
+  // No exclusions: Exchange swaps must sign v1 too, and the minimum version
+  // already leaves out apps that will never support it.
+  v1Transactions: {
+    minVersion: SOLANA_MIN_V1_TRANSACTIONS_VERSION,
+    excludedModels: [] as DeviceModelId[],
+    excludedApps: [] as string[],
   },
 } as const;
 
