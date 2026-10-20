@@ -20,6 +20,10 @@ import {
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 import { SolanaAppCommandError } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import {
+  SEND_WITH_MEMO_MESSAGE,
+  UNSTAKE_MESSAGE,
+} from "@internal/app-binder/services/__test-utils__/ambiguousMessages";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
 import {
   SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
@@ -71,6 +75,8 @@ let txCheckOptInMock: ReturnType<typeof vi.fn>;
 let provideTxCheckMock: ReturnType<typeof vi.fn>;
 // Reporting
 let reportSignMock: ReturnType<typeof vi.fn>;
+// Basic-flow routing
+let resolveSigningRouteMock: ReturnType<typeof vi.fn>;
 // Terminal sign-op deps (generic + basic) and the shared refresh task
 let promptUiDisplayMock: ReturnType<typeof vi.fn>;
 let previewMock: ReturnType<typeof vi.fn>;
@@ -171,6 +177,7 @@ function run(
     }),
     getAppConfig: getAppConfigMock,
     reportSign: reportSignMock,
+    resolveSigningRoute: resolveSigningRouteMock,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any) as unknown as ReturnType<typeof vi.spyOn>;
   const { observable } = action._execute(apiMock);
@@ -281,6 +288,9 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     provideTxCheckMock = vi.fn().mockResolvedValue(undefined);
 
     reportSignMock = vi.fn().mockResolvedValue(undefined);
+
+    // No basic-flow rule matches by default.
+    resolveSigningRouteMock = vi.fn().mockResolvedValue(null);
 
     spyChildren();
   });
@@ -1133,5 +1143,256 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
           reject,
         );
       }));
+
+    it("basic-flow rule match → isBlindSign: false, reportSign called once", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+          }),
+        );
+        resolveSigningRouteMock.mockResolvedValue("native-staking");
+        run(
+          baseInput,
+          () => {
+            try {
+              expect(reportSignMock).toHaveBeenCalledOnce();
+              const callArg = reportSignMock.mock.calls[0]![0] as {
+                input: { isBlindSign: boolean };
+              };
+              expect(callArg.input.isBlindSign).toBe(false);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+  });
+
+  describe("basic-flow routing", () => {
+    // Flex supports both web3 checks and generic clear-sign at this version.
+    function withTxcAndGeneric() {
+      apiMock.getDeviceSessionState.mockReturnValue(
+        session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION, DeviceModelId.FLEX),
+      );
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            ...appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+            transactionChecksEnabled: true,
+            transactionChecksOptIn: true,
+          },
+        }),
+      );
+    }
+
+    it("rule match → TxCheck then basic, skipping generic and the tx-check re-provision", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric();
+        resolveSigningRouteMock.mockResolvedValue("native-staking");
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(resolveSigningRouteMock).toHaveBeenCalledOnce();
+              const routeArg = resolveSigningRouteMock.mock.calls[0]![0] as {
+                input: { messageBytes: Uint8Array };
+              };
+              expect(routeArg.input).toEqual({ messageBytes: exampleTx });
+              // TxCheck runs before the routing decision, exactly once.
+              expect(provideTxCheckMock).toHaveBeenCalledOnce();
+              expect(
+                provideTxCheckMock.mock.invocationCallOrder[0]!,
+              ).toBeLessThan(
+                resolveSigningRouteMock.mock.invocationCallOrder[0]!,
+              );
+              expect(buildGenericMock).not.toHaveBeenCalled();
+              expect(promptUiDisplayMock).not.toHaveBeenCalled();
+              expect(inspectMock).toHaveBeenCalled();
+              expect(signMock).toHaveBeenCalled();
+              const steps = stepSequence(states);
+              expect(steps).not.toContain(
+                signTransactionDAStateSteps.BUILD_GENERIC_CLEAR_SIGN_CONTEXT,
+              );
+              const last = states[states.length - 1]!;
+              expect(last.status).toBe(DeviceActionStatus.Completed);
+              expect(
+                last.status === DeviceActionStatus.Completed && last.output,
+              ).toEqual(signature);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("rule match + delayed → basic terminal still refreshes the blockhash", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+          }),
+        );
+        resolveSigningRouteMock.mockResolvedValue("native-staking");
+        run(
+          withRpcDelayed,
+          (states) => {
+            try {
+              expect(buildGenericMock).not.toHaveBeenCalled();
+              expect(stepSequence(states)).toEqual([
+                signTransactionDAStateSteps.GET_APP_CONFIG,
+                signTransactionDAStateSteps.INSPECT_TRANSACTION,
+                signClearSignDAStateSteps.PREVIEW_TRANSACTION,
+                signClearSignDAStateSteps.FETCH_BLOCKHASH,
+                signClearSignDAStateSteps.DELAYED_SIGN,
+              ]);
+              expect(refreshBlockhashMock).toHaveBeenCalled();
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("no rule match → generic path unchanged", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric();
+        // buildGenericMock default → mode "none" → degraded → re-provision.
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(resolveSigningRouteMock).toHaveBeenCalledOnce();
+              expect(buildGenericMock).toHaveBeenCalled();
+              expect(provideTxCheckMock).toHaveBeenCalledTimes(2);
+              expect(inspectMock).toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("routing actor failure → falls through to generic", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric();
+        resolveSigningRouteMock.mockRejectedValue(new Error("boom"));
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(buildGenericMock).toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it.each([
+      ["app below the generic min version", () => undefined, baseInput],
+      [
+        "Nano S",
+        () => {
+          apiMock.getDeviceSessionState.mockReturnValue(
+            session(
+              SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
+              DeviceModelId.NANO_S,
+            ),
+          );
+          getAppConfigMock.mockResolvedValue(
+            CommandResultFactory({
+              data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+            }),
+          );
+        },
+        baseInput,
+      ],
+      [
+        "genericClearSign in disabledFeatures",
+        () => {
+          apiMock.getDeviceSessionState.mockReturnValue(
+            session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+          );
+          getAppConfigMock.mockResolvedValue(
+            CommandResultFactory({
+              data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+            }),
+          );
+        },
+        {
+          ...baseInput,
+          disabledFeatures: ["genericClearSign"],
+        } satisfies SignTransactionDAInput,
+      ],
+    ])(
+      "generic unavailable (%s) → routing is not resolved",
+      (_name, arrange, input) =>
+        new Promise<void>((resolve, reject) => {
+          arrange();
+          run(
+            input,
+            (states) => {
+              try {
+                expect(resolveSigningRouteMock).not.toHaveBeenCalled();
+                expect(buildGenericMock).not.toHaveBeenCalled();
+                expect(signMock).toHaveBeenCalled();
+                expect(states[states.length - 1]!.status).toBe(
+                  DeviceActionStatus.Completed,
+                );
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }),
+    );
+  });
+
+  describe("resolveSigningRoute dependency", () => {
+    const resolveSigningRoute = (messageBytes: Uint8Array) =>
+      new SignTransactionDeviceAction({ input: baseInput })
+        .extractDependencies(apiMock)
+        .resolveSigningRoute({ input: { messageBytes } });
+
+    it("returns the native-staking rule for a Ledger Wallet unstake", async () => {
+      await expect(resolveSigningRoute(UNSTAKE_MESSAGE)).resolves.toBe(
+        "native-staking",
+      );
+    });
+
+    it("returns null for a non-staking transaction", async () => {
+      await expect(
+        resolveSigningRoute(SEND_WITH_MEMO_MESSAGE),
+      ).resolves.toBeNull();
+    });
+
+    it("returns null for an unparseable message", async () => {
+      await expect(resolveSigningRoute(exampleTx)).resolves.toBeNull();
+    });
   });
 });
