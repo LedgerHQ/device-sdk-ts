@@ -819,7 +819,22 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           .parse(arg0.input.messageBytes)
           .run();
         if (parsed.isLeft()) return null;
-        const rules = await resolveBasicFlowRules();
+        const message = parsed.unsafeCoerce().message;
+        // ComputeBudget isn't in CAL: don't look it up.
+        const programIds = [
+          ...new Set(
+            message.compiledInstructions.map((ix) =>
+              message.allKeys[ix.programIdIndex]?.toBase58(),
+            ),
+          ),
+        ].filter(
+          (id): id is string =>
+            id !== undefined && id !== COMPUTE_BUDGET_PROGRAM_ID,
+        );
+        const rules = await resolveBasicFlowRules(
+          this.input.contextModule,
+          programIds,
+        );
         return new GenericFlowRouter(rules, {
           leadingAllowed: [COMPUTE_BUDGET_PROGRAM_ID],
         }).match(parsed.unsafeCoerce());

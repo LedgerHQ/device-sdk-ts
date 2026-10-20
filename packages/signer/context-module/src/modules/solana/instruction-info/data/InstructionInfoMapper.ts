@@ -20,6 +20,7 @@ import {
 } from "@/modules/solana/model/SolanaPayloads";
 import { u16Codec } from "@/shared/utils/uIntCodec";
 
+import { type SolanaBasicFlowTag } from "./InstructionInfoDataSource";
 import {
   type CalAccountResetDto,
   type CalAccountSchemaDto,
@@ -28,6 +29,7 @@ import {
   type CalInstructionDescriptorDto,
   type CalOwnerAssociationDto,
   type CalSignatures,
+  calSigningRouteCodec,
   type CalSlotConstraintDto,
   type CalValueFlowPortDto,
 } from "./InstructionInfoDto";
@@ -214,6 +216,32 @@ export function toProgramEnumVariants(
   mode: CalMode,
 ): SolanaInstructionEnumVariant[] {
   return Object.values(descriptors).flatMap((dto) => toEnumVariants(dto, mode));
+}
+
+/**
+ * Collect the `signing_route.basic_flow` tags of every descriptor in a
+ * program. `signing_route` is validated here rather than by the program codec,
+ * so a malformed value drops that instruction's tags without touching its
+ * descriptor. Unknown roles are dropped, and so are tags on an instruction
+ * without a discriminator (keyed under `""`): CAL rules are instruction-level.
+ */
+export function toBasicFlowTags(
+  descriptors: Record<string, CalInstructionDescriptorDto>,
+): SolanaBasicFlowTag[] {
+  return Object.entries(descriptors).flatMap(([discriminator, dto]) => {
+    if (discriminator === "" || dto.signing_route === undefined) return [];
+    return calSigningRouteCodec
+      .decode(dto.signing_route)
+      .caseOf<SolanaBasicFlowTag[]>({
+        Left: () => [],
+        Right: ({ basic_flow = [] }) =>
+          basic_flow.flatMap(({ rule, role }) =>
+            rule.length > 0 && (role === "required" || role === "allowed")
+              ? [{ discriminator, rule, role }]
+              : [],
+          ),
+      });
+  });
 }
 
 /**

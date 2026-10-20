@@ -1,4 +1,9 @@
 import {
+  ClearSignContextType,
+  type ContextModule,
+} from "@ledgerhq/context-module";
+
+import {
   STAKE_PROGRAM_ID,
   SYSTEM_PROGRAM_ID,
 } from "@internal/app-binder/constants";
@@ -35,10 +40,58 @@ export const SOLANA_BASIC_FLOW_RULES: ReadonlyArray<BasicFlowRule> = [
   },
 ];
 
+// How long to wait for CAL rules before using the bundled default alone.
+export const CAL_RULES_TIMEOUT_MS = 3000;
+
 /**
- * Rules used to route a transaction to the basic flow. Only the
- * bundled default for now.
+ * Rules used to route a transaction to the basic flow: the bundled default,
+ * overridden rule by rule (same id) by whatever CAL serves for the
+ * transaction's programs. A CAL failure or timeout, or a context module
+ * that doesn't load these rules, means no CAL rules, so the bundled default
+ * still applies.
  */
-export function resolveBasicFlowRules(): Promise<ReadonlyArray<BasicFlowRule>> {
-  return Promise.resolve(SOLANA_BASIC_FLOW_RULES);
+export async function resolveBasicFlowRules(
+  contextModule: ContextModule,
+  programIds: string[],
+): Promise<ReadonlyArray<BasicFlowRule>> {
+  const calRules = await fetchCalRules(contextModule, programIds);
+  return mergeRulesById(SOLANA_BASIC_FLOW_RULES, calRules);
+}
+
+async function fetchCalRules(
+  contextModule: ContextModule,
+  programIds: string[],
+): Promise<ReadonlyArray<BasicFlowRule>> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<ReadonlyArray<BasicFlowRule>>((resolve) => {
+    timer = setTimeout(() => resolve([]), CAL_RULES_TIMEOUT_MS);
+  });
+  const lookup = Promise.resolve()
+    .then(() =>
+      contextModule.getContexts({ programIds }, [
+        ClearSignContextType.SOLANA_BASIC_FLOW_RULE,
+      ]),
+    )
+    .then((contexts) =>
+      contexts.flatMap((context) =>
+        context.type === ClearSignContextType.SOLANA_BASIC_FLOW_RULE
+          ? [context.payload]
+          : [],
+      ),
+    )
+    .catch(() => []);
+  try {
+    return await Promise.race([lookup, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** CAL rules replace the bundled rule with the same id; new ids are added. */
+export function mergeRulesById(
+  defaults: ReadonlyArray<BasicFlowRule>,
+  calRules: ReadonlyArray<BasicFlowRule>,
+): BasicFlowRule[] {
+  const calIds = new Set(calRules.map((rule) => rule.id));
+  return [...defaults.filter((rule) => !calIds.has(rule.id)), ...calRules];
 }

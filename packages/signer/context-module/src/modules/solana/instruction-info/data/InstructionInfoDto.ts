@@ -133,6 +133,22 @@ export type CalInstructionDescriptorDto = {
   account_resets?: CalAccountResetDto[];
   /** Absent means "no ACCOUNT_SCHEMA check". */
   account_schema?: CalAccountSchemaDto;
+  /**
+   * Host-side routing tags, outside the signed `descriptor`. Not covered by
+   * the program codec: the mapper validates it on its own with
+   * {@link calSigningRouteCodec} so a malformed value only drops the tags.
+   */
+  signing_route?: CalSigningRouteDto;
+};
+
+/** `role` is `"required"` or `"allowed"`; the mapper drops any other value. */
+export type CalSigningRouteEntryDto = {
+  rule: string;
+  role: string;
+};
+
+export type CalSigningRouteDto = {
+  basic_flow?: CalSigningRouteEntryDto[];
 };
 
 // One program object of the `solana_programs` response: the program `id`, its
@@ -189,6 +205,23 @@ const calInstructionDescriptorCodec = Codec.interface({
   hide_rules: optional(array(calSubstructureCodec)),
   account_resets: optional(array(calSubstructureCodec)),
   account_schema: optional(calAccountSchemaCodec),
+});
+
+/**
+ * Codec for one instruction's `signing_route`. Kept out of
+ * `calInstructionDescriptorCodec` on purpose: routing tags are optional
+ * metadata, and a malformed value must not invalidate the program's
+ * clear-signing descriptors.
+ */
+export const calSigningRouteCodec = Codec.interface({
+  basic_flow: optional(
+    array(
+      Codec.interface({
+        rule: string,
+        role: string,
+      }),
+    ),
+  ),
 });
 
 /**

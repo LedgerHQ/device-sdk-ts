@@ -43,6 +43,7 @@ function makeJupiterWithVariants(): InstructionInfoResult {
   return {
     programId: JUPITER_PROGRAM,
     descriptors: {},
+    basicFlowTags: [],
     enumVariants: [
       {
         enumId: "swap",
@@ -213,6 +214,7 @@ describe("EnumVariantContextLoader", () => {
       const result: InstructionInfoResult = {
         programId: JUPITER_PROGRAM,
         descriptors: {},
+        basicFlowTags: [],
         enumVariants: [
           {
             enumId: "swap",
@@ -278,6 +280,7 @@ describe("EnumVariantContextLoader", () => {
       const result: InstructionInfoResult = {
         programId: JUPITER_PROGRAM,
         descriptors: {},
+        basicFlowTags: [],
         enumVariants: [
           {
             enumId: "swap",

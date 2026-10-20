@@ -11,6 +11,7 @@ import {
   GetInstructionInfoParams,
   InstructionInfoDataSource,
   InstructionInfoResult,
+  SolanaProgramNotFoundError,
 } from "./InstructionInfoDataSource";
 import {
   type CalInstructionDescriptorDto,
@@ -19,6 +20,7 @@ import {
 } from "./InstructionInfoDto";
 import {
   type CalMode,
+  toBasicFlowTags,
   toInstructionInfoPayload,
   toProgramEnumVariants,
 } from "./InstructionInfoMapper";
@@ -31,10 +33,25 @@ const CHAIN_ID_BY_NETWORK: Record<string, SolanaTransactionScanChainId> = {
   "solana-testnet": SolanaTransactionScanChainId.TESTNET,
 };
 
+// One sign looks up the same programs several times (signing-route lookup,
+// instruction-info and enum-variant loaders), so results are memoized for a
+// short time. The TTL only has to cover one sign; the size cap bounds memory.
+const CACHE_TTL_MS = 30_000;
+const CACHE_MAX_ENTRIES = 64;
+
+type InstructionInfoCacheEntry = {
+  expiresAt: number;
+  result: Promise<Either<Error, InstructionInfoResult>>;
+};
+
 @injectable()
 export class HttpInstructionInfoDataSource
   implements InstructionInfoDataSource
 {
+  // Keyed by `${chainId}:${programId}`. The in-flight promise is stored, so
+  // concurrent callers share one HTTP call.
+  private readonly cache = new Map<string, InstructionInfoCacheEntry>();
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
@@ -42,12 +59,59 @@ export class HttpInstructionInfoDataSource
     private readonly http: DmkNetworkClient,
   ) {}
 
-  public async getInstructionInfo({
+  public getInstructionInfo({
     programId,
     network,
   }: GetInstructionInfoParams): Promise<Either<Error, InstructionInfoResult>> {
     const chainId =
       CHAIN_ID_BY_NETWORK[network] ?? SolanaTransactionScanChainId.MAINNET;
+    const key = `${chainId}:${programId}`;
+    const now = Date.now();
+
+    const cached = this.cache.get(key);
+    if (cached !== undefined && cached.expiresAt > now) {
+      return cached.result;
+    }
+
+    const result = this.fetchInstructionInfo(programId, chainId);
+    this.cache.delete(key);
+    if (this.cache.size >= CACHE_MAX_ENTRIES) {
+      // Map iterates in insertion order: evict the oldest entry.
+      const oldest = this.cache.keys().next();
+      if (!oldest.done) this.cache.delete(oldest.value);
+    }
+    this.cache.set(key, { expiresAt: now + CACHE_TTL_MS, result });
+
+    // Failures are not cached so the next caller retries. "Program not found"
+    // is a valid CAL answer and stays cached.
+    void result.then(
+      (either) => {
+        const cacheable = either.caseOf({
+          Left: (error) => error instanceof SolanaProgramNotFoundError,
+          Right: () => true,
+        });
+        if (!cacheable) this.evict(key, result);
+      },
+      () => this.evict(key, result),
+    );
+
+    return result;
+  }
+
+  private evict(
+    key: string,
+    result: Promise<Either<Error, InstructionInfoResult>>,
+  ): void {
+    // Only drop our own entry, not a newer one stored under the same key.
+    if (this.cache.get(key)?.result === result) {
+      this.cache.delete(key);
+    }
+  }
+
+  private async fetchInstructionInfo(
+    programId: string,
+    chainId: SolanaTransactionScanChainId,
+  ): Promise<Either<Error, InstructionInfoResult>> {
     let data: unknown;
     try {
       data = await this.http.get(`${this.config.cal.url}/solana_programs`, {
@@ -67,9 +131,19 @@ export class HttpInstructionInfoDataSource
       );
     }
 
-    if (!Array.isArray(data) || data.length === 0) {
+    if (!Array.isArray(data)) {
       return Left(
         new Error(
+          `[ContextModule] HttpInstructionInfoDataSource: unexpected response for program ${programId}`,
+        ),
+      );
+    }
+
+    // CAL answers with an empty array for a program it doesn't know.
+    if (data.length === 0) {
+      return Left(
+        new SolanaProgramNotFoundError(
+          programId,
           `[ContextModule] HttpInstructionInfoDataSource: empty response for program ${programId}`,
         ),
       );
@@ -85,7 +159,8 @@ export class HttpInstructionInfoDataSource
     );
     if (program === undefined) {
       return Left(
-        new Error(
+        new SolanaProgramNotFoundError(
+          programId,
           `[ContextModule] HttpInstructionInfoDataSource: no descriptors for program ${programId}`,
         ),
       );
@@ -135,6 +210,7 @@ export class HttpInstructionInfoDataSource
               descriptorsByDiscriminator,
               mode,
             ),
+            basicFlowTags: toBasicFlowTags(descriptorsByDiscriminator),
           });
         },
       });
