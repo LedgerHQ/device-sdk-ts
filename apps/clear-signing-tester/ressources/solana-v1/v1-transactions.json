@@ -1,0 +1,129 @@
+{
+  "group": "solana-v1",
+  "name": "v1-transactions",
+  "action": "signTransaction",
+  "devices": ["stax", "nanox", "flex"],
+  "coinApp": "Solana",
+  "mode": "parallel",
+  "enabled": false,
+  "cases": [
+    {
+      "rawTx": "gQEAAQAAAAA5c+MwwpuDHz/LDkk3TMaXOvxpq1px29DZhyrd65uk3AEDzfhOiXvS99eT8EayKXGeUQ/SUqCYvjyRzYCW4hp/JQ/juKN8Ml9pirhn4lqzJBttRWz28APQXj8YqaR0NIZ5PgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgIMAAABAgAAAEBCDwAAAAAA",
+      "description": "v1: System: Transfer 0.001 SOL",
+      "expectedTexts": [
+        "Transfer SOL",
+        "0.001 SOL",
+        "GKvqsuNcnwWqPzzuhLmGi4rzzh55FhJtGizkhHaEJqiV"
+      ]
+    },
+    {
+      "rawTx": "gQEAAQcAAAA5c+MwwpuDHz/LDkk3TMaXOvxpq1px29DZhyrd65uk3AEDzfhOiXvS99eT8EayKXGeUQ/SUqCYvjyRzYCW4hp/JQ/juKN8Ml9pirhn4lqzJBttRWz28APQXj8YqaR0NIZ5PgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAECcAAAAAAABADQMAAgIMAAABAgAAAEBLTAAAAAAA",
+      "description": "v1: System: Transfer 0.005 SOL, priority fee 10000 lamports and CU limit 200000 in the v1 config instead of ComputeBudget instructions",
+      "expectedTexts": [
+        "Transfer SOL",
+        "0.005 SOL",
+        "GKvqsuNcnwWqPzzuhLmGi4rzzh55FhJtGizkhHaEJqiV"
+      ]
+    },
+    {
+      "rawTx": "gQEAAgAAAAA5c+MwwpuDHz/LDkk3TMaXOvxpq1px29DZhyrd65uk3AIEzfhOiXvS99eT8EayKXGeUQ/SUqCYvjyRzYCW4hp/JQ/juKN8Ml9pirhn4lqzJBttRWz28APQXj8YqaR0NIZ5PgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABUpTWpkpIQZNJOhxYNo4fHw1td28kruB5B+oQEEFRI0CAgwAAwEUAAABAgAAAEBCDwAAAAAAAHBheW1lbnQgZm9yIHNlcnZpY2Vz",
+      "description": "v1: System: Transfer 0.001 SOL + Memo",
+      "expectedTexts": [
+        "Transfer SOL",
+        "0.001 SOL",
+        "GKvqsuNcnwWqPzzuhLmGi4rzzh55FhJtGizkhHaEJqiV",
+        "Add memo"
+      ]
+    },
+    {
+      "rawTx": "gQEAAwAAAAC3MbY8NGa8wKi+YmMp5K/r/nXap3XTiWq//pX8Z3i/9wIGzfhOiXvS99eT8EayKXGeUQ/SUqCYvjyRzYCW4hp/JQ+l4+o4IFLsEAvoV1HcAhvQWRtGYpEAkSQoStb9DXgr239zwQQGAvrRw5mj55sNGmFVYINQG3PMdukSNSdEdXqfAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAAAG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqShSkObfHsvC2gi2UwNF5mOPYD82MaoquoCPsZ3sMnFMAwAFAAQECgACRxsAAAEFAgAMQEIPAAAAAAAJ",
+      "description": "v1: SPL Token: TransferChecked 0.001 VIRTUAL",
+      "expectedTexts": [
+        "Transfer tokens",
+        "0.001 VIRTUAL",
+        "9aX9m19cx9Vth2Ez2jp9tWERxX1ByCnGAyeycv1tQnpW"
+      ]
+    },
+    {
+      "rawTx": "gQEABgAAAADO6NbxpmNk2HEJXiUhaLSajjbUB1gr5WBez7DbJJEUogMJzfhOiXvS99eT8EayKXGeUQ/SUqCYvjyRzYCW4hp/JQ+Z8qRctNRwlFc8zPuDrfReI46uODQ5j/7UPLJV/uOsO6RbSeAy72FjIUl5KRurNnyPyEnpfB+EDX1Ux2AQ84MtAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAACMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4WQOm3cY3rkohXRxcxL70W9O7rsU3VZ2qMK9xsbxLf20Rxvp6877brTo9ZfNqq8l0MbG75MLS9uDkfKYCA0UvXWEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpAwAFAAQGAAAIBAoAAt95AAAAAQUGBwgCBgEADEBCDwAAAAAABg==",
+      "description": "v1: SPL Token: CreateATA + TransferChecked 1 USDC (unfunded)",
+      "expectedTexts": [
+        "Transfer tokens",
+        "1 USDC",
+        "BMwyMVFRTQXWAQLMzodkfLgpghg85EAGcp7muBm7ZhYv"
+      ]
+    },
+    {
+      "rawTx": "gQEABgAAAACLZah1wYL4QB7Gq7aO2nE1SROM//MIBgGawxJQIs70zgMJzfhOiXvS99eT8EayKXGeUQ/SUqCYvjyRzYCW4hp/JQ8ZWqwRXld7Xfa4PvljsscxGy9NJA2+uvPjtayi9SpVOKUgVSNBzV1S25pldUg3DznAfYUtiujVyVDEG/bpI2JoAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAACMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4Wa+NcCGc2ABlT31FybU5lEBrqGEvuyc7+AvlkUkXb+5SYdS4HNlX9KQpLY+91Q6p1OmLFvMjNaOujLM3+HlFkYIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbd9uHudY/eGEJdvORszdq2GvxNg7kNJ/69+SjYoYv8AwAFAAQGAAAIBBMAAu1VAAAAAQUGBwgCBgEAGgHOLQMAAAAAAAKOIAAAAAAAAA==",
+      "description": "v1: Token-2022: CWIF CreateATA + TransferCheckedWithFee (unfunded)",
+      "expectedTexts": ["2hyPEa5T5JaZXzdYxPMcyE4tw3TWYgeVo74BqwZLBhwV"]
+    },
+    {
+      "rawTx": "gQIABwAAAADEmud2A3ggVPF6ne0UOU9zTED2BcvNMrQ2gQM+Q036CgMJpq+bMNrOEGOI+hsjbnVXcIfuKheOG2Sc6bcnfe3xQZ8ho2/nThI0w15iv9cA/SR7ksTU4OU4QBrFH1xK6XZXpwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAr6bcXhQ8HiXGY+MGbgpsWBex5t5G8kNDrNU3pNxaF8MGodgXkTdUKpg0N73+KnqyVX9TXIp4citopJ3AAAAAAAah2BelAgULaAeR5s5tuI4eW3FQ9h/GeQpOtNEAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAGp9UXGSxcUSGMyUw9SvF/WNruCJuh/UTj29mKAAAAAAan1RcZNYTQ/u2bs0MdEyBr5UQoG1e4VmzFN1/0AAAAAgI0AAQCdAAEBgQAAAEAAAAAAMqaOwAAAADIAAAAAAAAAAah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAAAQcAAAAApq+bMNrOEGOI+hsjbnVXcIfuKheOG2Sc6bcnfe3xQZ+mr5sw2s4QY4j6GyNudVdwh+4qF44bZJzptyd97fFBnwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEDBggFAAIAAAA=",
+      "description": "v1: Stake: create and delegate 1 SOL",
+      "expectedTexts": [
+        "Delegate stake",
+        "3GJzvStsiYZonWE7WTsmt1BpWXkfcgWMGinaDwNs9HBc",
+        "CpfvLiiPALdzZTP3fUrALg2TXwEDSAknRh1sn5JCt9Sr",
+        "1 SOL"
+      ]
+    },
+    {
+      "rawTx": "gQEAAgAAAADEmud2A3ggVPF6ne0UOU9zTED2BcvNMrQ2gQM+Q036CgEEpq+bMNrOEGOI+hsjbnVXcIfuKheOG2Sc6bcnfe3xQZ8ho2/nThI0w15iv9cA/SR7ksTU4OU4QBrFH1xK6XZXpwah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAACAwQAAQMABQAAAA==",
+      "description": "v1: Stake: deactivate stake account",
+      "expectedTexts": ["3GJzvStsiYZonWE7WTsmt1BpWXkfcgWMGinaDwNs9HBc"]
+    },
+    {
+      "rawTx": "gQEAAgAAAABaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWgIFzfhOiXvS99eT8EayKXGeUQ/SUqCYvjyRzYCW4hp/JQ9OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTk5OTuO4o3wyX2mKuGfiWrMkG21FbPbwA9BePxippHQ0hnk+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGp9UXGSxWjuCKhF9z0peIzwNcMUWyGrNE2AYuqUAAAAMDBAADAgwAAQQABAAAAAACAgAAAEBCDwAAAAAA",
+      "description": "v1: System: AdvanceNonceAccount + Transfer 0.001 SOL (durable nonce)",
+      "expectedTexts": [
+        "Transfer SOL",
+        "0.001 SOL",
+        "GKvqsuNcnwWqPzzuhLmGi4rzzh55FhJtGizkhHaEJqiV"
+      ]
+    },
+    {
+      "rawTx": "gQEAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEEBckyCWTaEmQH0XGLZDjaw5SQ6pDG4CxhQvinaGvKGvIGnJAg/GX9nSc6dXIAXREOjtfBK58lT0OaPwOsa8oa8gM9zDUohI17h8kz76tee/P8QjpxY3lqIVlI77hryhryBt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKkDAwkAAQIAA+gDAAAAAAAA",
+      "description": "v1: SPL Token: engine_account_schema / matching_shape_clear_signs (synthetic)",
+      "expectedTexts": [
+        "Transfer tokens",
+        "SourceAtaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "DestAtaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      ]
+    },
+    {
+      "rawTx": "gQEAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIExFokqXOazKtOdZr5FDWomum3jm8UWwrGeG3wQjQ4xSROJrb1GIzigNNfr4oAHXxgsGhUCcSKRwCLrN4brBLM4Qan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAADAygAAwMoAAECAAEAAAAE7Sno47KqI3n186Qzq8LeWoW6pAQlInRabGTwALv4vgAAAAABAgABAAAABO0p6OOyqiN59fOkM6vC3lqFuqQEJSJ0Wmxk8AC7+L4BAAAA",
+      "description": "v1: Stake: engine_account_slots / stake_authorize_without_custodian_clear_signs (synthetic)",
+      "expectedTexts": [
+        "Update stake authority",
+        "6G53KAWtQnZSSN6HUxnBs3yYsK1aCuJRbrcPbWGY71LL",
+        "LEP1uHXcWbFEPwQgkeFzdhW2ykgZY6e9Dz8Yro6SdNu",
+        "Staker",
+        "Withdrawer"
+      ]
+    },
+    {
+      "rawTx": "gQIACAAAAACEM0kYUkupv+i9rpaqdOI/BqfEPbwye7EfLeypSspNgQQOEeNglbBROu1DVxtnSNyAvkSO5C1m02/NKKi13EqjLLBnjF+3vUOPrtN5UVtMqrZZRN1UnOydcOLSYJeNs8axRSCF626cFNtl7XJSdPNUXg+rFtzhAnHVfUfJst0lgiuLJ4C2G1Yk8wacupJFDu9Zzc2RSh+G9InioebJivewZj91LURLthxJ6Dwn/bEUA6gfn2pgmmFMjMczdjcJp31KmYinf2hbJSHjg9KHSEQusIvYnAQqeeROleo9iaauTIZyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADBkZv5SEXMv/srbpyw5vnvIzlu8X3EmssQ5s6QAAAAAbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpBt324e51j94YQl285GzN2rYa/E2DuQ0n/r35KNihi/wH6JITyFTGXeEJitZvPN6VHM59TkQvlE72rbgtVM02YUpYSftyo7vpH9xbDmpX9jxaHLRbIGem7Qys02OVyKECjJclj04kifG7PRApFI4NgwtaE5na/xCEBI572Nvp+FnG+nrzvtutOj1l82qryXQxsbvkwtL24OR8pgIDRS9dYQcACQAHAAUADAYBAAsLJQADhQQAAAAAAAACQA0DAAEDAQoGCQEBAAUCAwQNCAoJBqhgt6NcCiiggJaYAAAAAACB0J0BAAAAABTGs2oAAAAACgAAAAA=",
+      "description": "v1: ATA + Jupiter order engine: create ATA then fill (mainnet 3U7m9eFV)",
+      "expectedTexts": [
+        "Create associated token account",
+        "Swap",
+        "10 USDC",
+        "0.27119745",
+        "ACSaoCR7SRER4ukLQSCdwpu9kMPHHUaBTandwBP68KUd",
+        "3fCjXSd3vyjCuUBkWGEgrGJvF5uvhctTqq3J6UB6hnNS"
+      ]
+    },
+    {
+      "rawTx": "gQEACgAAAAC0l2PNVjBLTkuKFk3Cf2lqkGgro4SYaHa+DCnT3kZXNQcQ5WqCyiq5uFZEdhRvwNchO7wjv5ailD0TqXC2ASEtzHhrSLbgjxaQOjosb9oTjzHEmHchdwdDTsqwUzSLQfOXOwEysNq2czSqT+wIQuDzbl68NiBWO63P96JuUeinT7NvcM27KWCjP9L40/UQ3dIbQUYky6noo5qkhJbBnJ323sNmkeX0r504ZUD4BlTElgx/4QZ+mpKpwVvQ4lgn0MIiQdXghpVG56bvCOW8Aw/hTGH0BXGAuM1gBU+NyIY9uEW2AwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAACMlyWPTiSJ8bs9ECkUjg2DC1oTmdr/EIQEjnvY2+n4WQabiFf+q4GE+2h/Y0YYwDXaxDncGus7VZig8AAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8Aqa3ynd/eCYzjFeSOTb0MB5QsZOgLJdnrKm/9lnnZNNYjBt324e51j94YQl285GzN2rYa/E2DuQ0n/r35KNihi/wJLSE1ZXoVnCuH1LZqcNuOl1I4n/dqryBs7QY6OPla7fLM1TWspfFzasgi3Qdz5NkvvYpZspQDUAKVqQEcc6nlKnbns0RkChz8WUyLytCgkQEcrH3RVr+DqDP7Igjrd60GAAkABwYBAAcGAQAJAgwACgEBAA0OGQAKAwEAA/4BAAAAAAAAAAEACAkKAQACAAsJDAEAAQIAAADhBq4FAAAAAAERDgMBAgQFCwgADAoNDw1BSz9M61tbiEwBU1MnAAAA4QauBQAAAAACAQAACQ==",
+      "description": "v1: ATA x2 + System + SPL Token + Meteora CP AMM: wrap SOL, swap2, close (mainnet 5e834QSZ)",
+      "expectedTexts": [
+        "Transfer SOL",
+        "Swap",
+        "0.095291105 SOL",
+        "G6yNsrKxNvAZNPqREvFukaJfdAVGURdiVr6mzn6ztFdZ",
+        "7vcJX4HQtNBdKdFvvhdoLGT4mfupSLCzfXLd5MAG4gXL"
+      ]
+    }
+  ]
+}
