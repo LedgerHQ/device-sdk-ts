@@ -1,0 +1,191 @@
+{
+  "group": "solana",
+  "name": "native-staking",
+  "action": "signTransaction",
+  "devices": ["stax", "nanox", "flex"],
+  "coinApp": "Solana",
+  "mode": "parallel",
+  "cases": [
+    {
+      "rawTx": "AQAIChVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBZSFn6O+y3QerYPgZNPVnBoKeXB/07AwCFmeSpPMSRAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAAAGodgXkTdUKpg0N73+KnqyVX9TXIp4citopJ3AAAAAAAah2BelAgULaAeR5s5tuI4eW3FQ9h/GeQpOtNEAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAGp9UXGSxcUSGMyUw9SvF/WNruCJuh/UTj29mKAAAAAAan1RcZNYTQ/u2bs0MdEyBr5UQoG1e4VmzFN1/0AAAABwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcFBAAJAxAnAAAAAAAABAAFAkANAwACAgABYwMAAAAVcuUvLF5+ZrwZrGzTC21pbqeZz+bXhFQqt9i3/jFbXAcAAAAAAAAAc3Rha2U6MADKmjsAAAAAyAAAAAAAAAAGodgXkTdUKpg0N73+KnqyVX9TXIp4citopJ3AAAAAAAUCAQh0AAAAABVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcFXLlLyxefma8Gaxs0wttaW6nmc/m14RUKrfYt/4xW1wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFBgEDBwkGAAQCAAAA",
+      "description": "Basic flow: ComputeBudget + System: CreateAccountWithSeed + Stake: Initialize + DelegateStake 1 SOL to Ledger by Figment",
+      "expectedTexts": [
+        "Review transaction to delegate stake",
+        "Delegated from",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky",
+        "Deposit",
+        "1 SOL",
+        "New authority",
+        "2SjBBhnRiESRWYPqSti1mM2u47aBa6vBg2YHVqcEmTKH",
+        "Ledger by Figment"
+      ]
+    },
+    {
+      "rawTx": "AQACBBVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024GodgXkTdUKpg0N73+KnqyVX9TXIp4citopJ3AAAAAAAan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcBAgMBAwAEBQAAAA==",
+      "description": "Basic flow: Stake: Deactivate",
+      "expectedTexts": [
+        "Review transaction to deactivate stake",
+        "Stake account",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky"
+      ]
+    },
+    {
+      "rawTx": "AQADBRVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024GodgXkTdUKpg0N73+KnqyVX9TXIp4citopJ3AAAAAAAan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABqfVFxk1hND+7ZuzQx0TIGvlRCgbV7hWbMU3X/QAAAAHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwECBQEAAwQADAQAAAAAypo7AAAAAA==",
+      "description": "Basic flow: Stake: Withdraw 1 SOL",
+      "expectedTexts": [
+        "Review transaction to withdraw SOL",
+        "Amount",
+        "1 SOL",
+        "From stake account",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky",
+        "2SjBBhnRiESRWYPqSti1mM2u47aBa6vBg2YHVqcEmTKH"
+      ]
+    },
+    {
+      "rawTx": "AQAGCBVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024QWUhZ+jvst0Hq2D4GTT1ZwaCnlwf9OwMAhZnkqTzEkQMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAABqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAGodgXpQIFC2gHkebObbiOHltxUPYfxnkKTrTRAAAAAAan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABqfVFxk1hND+7ZuzQx0TIGvlRCgbV7hWbMU3X/QAAAAHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwMDAAkDECcAAAAAAAADAAUCQA0DAAQGAQIGBwUABAIAAAA=",
+      "description": "Basic flow: ComputeBudget + DelegateStake, re-delegating an existing stake account to Ledger by Figment",
+      "expectedTexts": [
+        "Review transaction to activate stake",
+        "Delegated from",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky",
+        "Ledger by Figment"
+      ]
+    },
+    {
+      "rawTx": "AQAFBxVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1026vptxeFDweJcZj4wZuCmxYF7Hm3kbyQ0Os1Tek3FoXwwah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABqHYF6UCBQtoB5Hmzm24jh5bcVD2H8Z5Ck600QAAAAAGp9UXGMd0yShWY5hpHV62i164o5tLbVxzVVshAAAAAAan1RcZNYTQ/u2bs0MdEyBr5UQoG1e4VmzFN1/0AAAABwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcBAwYBAgUGBAAEAgAAAA==",
+      "description": "Basic flow: DelegateStake to Ledger by Chorus One",
+      "expectedTexts": [
+        "Review transaction to activate stake",
+        "Delegated from",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky",
+        "Ledger by Chorus One"
+      ]
+    },
+    {
+      "rawTx": "AQAFBxVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024JCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABqHYF6UCBQtoB5Hmzm24jh5bcVD2H8Z5Ck600QAAAAAGp9UXGMd0yShWY5hpHV62i164o5tLbVxzVVshAAAAAAan1RcZNYTQ/u2bs0MdEyBr5UQoG1e4VmzFN1/0AAAABwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcBAwYBAgUGBAAEAgAAAA==",
+      "description": "Basic flow: DelegateStake to a validator without a Ledger name",
+      "expectedTexts": [
+        "Review transaction to activate stake",
+        "Delegated from",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky",
+        "Vote account",
+        "cGfHiC6Kgg3FpFZvgwGcswsCRtp4aBP2fzuXRQPizuN"
+      ],
+      "unexpectedTexts": ["Ledger by Figment", "Ledger by Chorus One"]
+    },
+    {
+      "rawTx": "AQADBRVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024DBkZv5SEXMv/srbpyw5vnvIzlu8X3EmssQ5s6QAAAAAah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwMCAAkDECcAAAAAAAACAAUCQA0DAAMDAQQABAUAAAA=",
+      "description": "Basic flow: ComputeBudget + Deactivate",
+      "expectedTexts": [
+        "Review transaction to deactivate stake",
+        "Stake account",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky"
+      ]
+    },
+    {
+      "rawTx": "AQAEBhVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024DBkZv5SEXMv/srbpyw5vnvIzlu8X3EmssQ5s6QAAAAAah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAGp9UXGTWE0P7tm7NDHRMga+VEKBtXuFZsxTdf9AAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAwIACQMQJwAAAAAAAAIABQJADQMAAwUBAAQFAAwEAAAAAMqaOwAAAAA=",
+      "description": "Basic flow: ComputeBudget + Withdraw 1 SOL",
+      "expectedTexts": [
+        "Review transaction to withdraw SOL",
+        "Amount",
+        "1 SOL",
+        "From stake account",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky",
+        "2SjBBhnRiESRWYPqSti1mM2u47aBa6vBg2YHVqcEmTKH"
+      ]
+    },
+    {
+      "rawTx": "AQADBhVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024FBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAGp9UXGTWE0P7tm7NDHRMga+VEKBtXuFZsxTdf9AAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAQMFAQIEBQAMBAAAAEDA0d8CAAAA",
+      "description": "Basic flow: Withdraw 12.345 SOL to another recipient",
+      "expectedTexts": [
+        "Review transaction to withdraw SOL",
+        "12.345 SOL",
+        "From stake account",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky",
+        "LbUiWL3xVV8hTFYBVdbTNrpDo41NKS6o3LHHuDzjfcY"
+      ]
+    },
+    {
+      "rawTx": "AQAHCRVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcknh0oEpXz+84DuJR/Ev3Rv+m9bErqFu7koeWubXC4VcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBZSFn6O+y3QerYPgZNPVnBoKeXB/07AwCFmeSpPMSRBqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAGodgXpQIFC2gHkebObbiOHltxUPYfxnkKTrTRAAAAAAan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABqfVFxksXFEhjMlMPUrxf1ja7gibof1E49vZigAAAAAGp9UXGTWE0P7tm7NDHRMga+VEKBtXuFZsxTdf9AAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAwICAAFjAwAAABVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcBwAAAAAAAABzdGFrZToyAJQ1dwAAAADIAAAAAAAAAAah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABAIBB3QAAAAAFXLlLyxefma8Gaxs0wttaW6nmc/m14RUKrfYt/4xW1wVcuUvLF5+ZrwZrGzTC21pbqeZz+bXhFQqt9i3/jFbXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGAQMGCAUABAIAAAA=",
+      "description": "Basic flow: CreateAccountWithSeed + Initialize + DelegateStake 2 SOL, without ComputeBudget",
+      "expectedTexts": [
+        "Review transaction to delegate stake",
+        "Delegated from",
+        "Arm4DLNoCy7qfWwZmtZDsqrefdv54cDmBxGAvM4KF1Ci",
+        "Deposit",
+        "2 SOL",
+        "Ledger by Figment"
+      ]
+    },
+    {
+      "rawTx": "gAEAAwUVcuUvLF5+ZrwZrGzTC21pbqeZz+bXhFQqt9i3/jFbXGEdoMgkcmfWEalX3g3cICMvLM2g1A6o3NDoVstSddNuAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEObOkAAAAAGodgXkTdUKpg0N73+KnqyVX9TXIp4citopJ3AAAAAAAan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcDAgAJAxAnAAAAAAAAAgAFAkANAwADAwEEAAQFAAAAAA==",
+      "description": "Basic flow: v0 message without lookup tables, ComputeBudget + Deactivate",
+      "expectedTexts": [
+        "Review transaction to deactivate stake",
+        "Stake account",
+        "7Y6kVcMXXKMDLHDuzKk9YJbiPaD5vu3cWD1YdSq6sPky"
+      ]
+    },
+    {
+      "rawTx": "AQAGCBVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024QWUhZ+jvst0Hq2D4GTT1ZwaCnlwf9OwMAhZnkqTzEkQVKU1qZKSEGTSTocWDaOHx8NbXdvJK7geQfqEBBBUSNBqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAGodgXpQIFC2gHkebObbiOHltxUPYfxnkKTrTRAAAAAAan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABqfVFxk1hND+7ZuzQx0TIGvlRCgbV7hWbMU3X/QAAAAHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwIEBgECBgcFAAQCAAAAAwARbGVkZ2VyIGxpdmUgc3Rha2U=",
+      "description": "Generic flow: Stake: DelegateStake + Memo (Memo is outside the native-staking rule)",
+      "expectedTexts": ["Delegate stake", "Add memo"],
+      "unexpectedTexts": ["Delegated from"]
+    },
+    {
+      "rawTx": "AQAEBhVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcknh0oEpXz+84DuJR/Ev3Rv+m9bErqFu7koeWubXC4VcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAABqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAGp9UXGSxcUSGMyUw9SvF/WNruCJuh/UTj29mKAAAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBAMACQMQJwAAAAAAAAMABQJADQMAAgIAAWMDAAAAFXLlLyxefma8Gaxs0wttaW6nmc/m14RUKrfYt/4xW1wHAAAAAAAAAHN0YWtlOjIAlDV3AAAAAMgAAAAAAAAABqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAEAgEFdAAAAAAVcuUvLF5+ZrwZrGzTC21pbqeZz+bXhFQqt9i3/jFbXBVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "description": "Generic flow: CreateAccountWithSeed + Initialize only (no staking operation)",
+      "unexpectedTexts": ["Create stake acct"]
+    },
+    {
+      "rawTx": "AQABBBVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcHUjJtPmZuKtiy27lf3NdufJJh9dlIxcI9CtQuirkdw9hHaDIJHJn1hGpV94N3CAjLyzNoNQOqNzQ6FbLUnXTbgah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcBAwMCAQAMAwAAAABlzR0AAAAA",
+      "description": "Generic flow: Stake Split (not in the rule)",
+      "expectedTexts": ["Instruction intent", "Split stake"]
+    },
+    {
+      "rawTx": "AQADBhVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcHUjJtPmZuKtiy27lf3NdufJJh9dlIxcI9CtQuirkdw9hHaDIJHJn1hGpV94N3CAjLyzNoNQOqNzQ6FbLUnXTbgah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAGp9UXGTWE0P7tm7NDHRMga+VEKBtXuFZsxTdf9AAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAQMFAgEEBQAEBwAAAA==",
+      "description": "Generic flow: Stake Merge (not in the rule)"
+    },
+    {
+      "rawTx": "AQABBBVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024Gp9UXGMd0yShWY5hpHV62i164o5tLbVxzVVshAAAAAAah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcBAwMBAgAoAQAAAAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGAAAAAA==",
+      "description": "Generic flow: Stake Authorize (not in the rule)",
+      "unexpectedTexts": ["Set stake auth"]
+    },
+    {
+      "rawTx": "AQAGCRVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024FBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEFlIWfo77LdB6tg+Bk09WcGgp5cH/TsDAIWZ5Kk8xJEGodgXkTdUKpg0N73+KnqyVX9TXIp4citopJ3AAAAAAAah2BelAgULaAeR5s5tuI4eW3FQ9h/GeQpOtNEAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAGp9UXGTWE0P7tm7NDHRMga+VEKBtXuFZsxTdf9AAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAgUGAQQHCAYABAIAAAADAgACDAIAAAAA4fUFAAAAAA==",
+      "description": "Generic flow: DelegateStake + System Transfer (Transfer is outside the rule)",
+      "expectedTexts": ["Delegate stake"],
+      "unexpectedTexts": ["Delegated from"]
+    },
+    {
+      "rawTx": "AgAHCRVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBZSFn6O+y3QerYPgZNPVnBoKeXB/07AwCFmeSpPMSRBqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAGodgXpQIFC2gHkebObbiOHltxUPYfxnkKTrTRAAAAAAan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABqfVFxksXFEhjMlMPUrxf1ja7gibof1E49vZigAAAAAGp9UXGTWE0P7tm7NDHRMga+VEKBtXuFZsxTdf9AAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAwICAAE0AAAAAADKmjsAAAAAyAAAAAAAAAAGodgXkTdUKpg0N73+KnqyVX9TXIp4citopJ3AAAAAAAQCAQd0AAAAABVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcFXLlLyxefma8Gaxs0wttaW6nmc/m14RUKrfYt/4xW1wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBgEDBggFAAQCAAAA",
+      "description": "Generic flow: CreateAccount (not WithSeed) + Initialize + DelegateStake",
+      "expectedTexts": ["Delegate stake"],
+      "unexpectedTexts": ["Delegated from"]
+    },
+    {
+      "rawTx": "AQADBhVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcHUjJtPmZuKtiy27lf3NdufJJh9dlIxcI9CtQuirkdw9hHaDIJHJn1hGpV94N3CAjLyzNoNQOqNzQ6FbLUnXTbgMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAABqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAGp9UXGMd0yShWY5hpHV62i164o5tLbVxzVVshAAAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBAMACQMQJwAAAAAAAAMABQJADQMABAMCBQAEBQAAAAQDAQUABAUAAAA=",
+      "description": "Generic flow: two Deactivates (the basic flow displays one staking operation)",
+      "unexpectedTexts": ["Review transaction to deactivate stake"]
+    },
+    {
+      "rawTx": "AQADBhVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcHUjJtPmZuKtiy27lf3NdufJJh9dlIxcI9CtQuirkdw9hHaDIJHJn1hGpV94N3CAjLyzNoNQOqNzQ6FbLUnXTbgah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAGp9UXGTWE0P7tm7NDHRMga+VEKBtXuFZsxTdf9AAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAgMDAgQABAUAAAADBQEABAUADAQAAAAAypo7AAAAAA==",
+      "description": "Generic flow: Deactivate + Withdraw (the basic flow displays one staking operation)",
+      "unexpectedTexts": [
+        "Review transaction to deactivate stake",
+        "From stake account"
+      ]
+    },
+    {
+      "rawTx": "AQAFCBVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcHUjJtPmZuKtiy27lf3NdufJJh9dlIxcI9CtQuirkdw9hHaDIJHJn1hGpV94N3CAjLyzNoNQOqNzQ6FbLUnXTbhBZSFn6O+y3QerYPgZNPVnBoKeXB/07AwCFmeSpPMSRBqHYF5E3VCqYNDe9/ip6slV/U1yKeHIraKSdwAAAAAAGodgXpQIFC2gHkebObbiOHltxUPYfxnkKTrTRAAAAAAan1RcYx3TJKFZjmGkdXraLXrijm0ttXHNVWyEAAAAABqfVFxk1hND+7ZuzQx0TIGvlRCgbV7hWbMU3X/QAAAAHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwIEBgIDBgcFAAQCAAAABAUBAAYHAAwEAAAAAMqaOwAAAAA=",
+      "description": "Generic flow: DelegateStake + Withdraw (the basic flow displays one staking operation)",
+      "expectedTexts": ["Delegate stake"],
+      "unexpectedTexts": ["Delegated from"]
+    },
+    {
+      "rawTx": "AQAEBhVy5S8sXn5mvBmsbNMLbWlup5nP5teEVCq32Lf+MVtcYR2gyCRyZ9YRqVfeDdwgIy8szaDUDqjc0OhWy1J1024DBkZv5SEXMv/srbpyw5vnvIzlu8X3EmssQ5s6QAAAAAah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAABqfVFxjHdMkoVmOYaR1etoteuKObS21cc1VbIQAAAAAGp9UXGTWE0P7tm7NDHRMga+VEKBtXuFZsxTdf9AAAAAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHAwMFAQAEBQAMBAAAAADKmjsAAAAAAgAJAxAnAAAAAAAAAgAFAkANAwA=",
+      "description": "Generic flow: Withdraw followed by ComputeBudget (the basic flow only skips leading ComputeBudget)",
+      "unexpectedTexts": ["From stake account"]
+    }
+  ]
+}
