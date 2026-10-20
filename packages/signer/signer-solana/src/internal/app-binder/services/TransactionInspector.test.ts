@@ -6,6 +6,7 @@ import {
 } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
 
+import { v1FromLegacyMessage } from "@internal/app-binder/services/__test-utils__/v1Fixtures";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -461,6 +462,108 @@ describe("TransactionInspector", () => {
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.tokenAddress).toBe(tokenOverride);
     expect(result.data.createATA).toEqual(ataOverride);
+  });
+});
+
+describe("TransactionInspector — v1 messages", () => {
+  /** The same instructions, signed by `payer`, as a v1 message. */
+  function makeV1Message(ixs: TransactionInstruction[], payer: Keypair) {
+    const tx = new Transaction();
+    tx.recentBlockhash = DUMMY_BLOCKHASH;
+    tx.feePayer = payer.publicKey;
+    tx.add(...ixs);
+    return v1FromLegacyMessage(tx.compileMessage());
+  }
+
+  it("detects an SPL TransferChecked and returns the destination address and mint", async () => {
+    const owner = Keypair.generate();
+    const mint = Keypair.generate().publicKey;
+    const destination = Keypair.generate().publicKey;
+    const message = makeV1Message(
+      [
+        createTransferCheckedInstruction(
+          Keypair.generate().publicKey,
+          mint,
+          destination,
+          owner.publicKey,
+          123n,
+          0,
+          [],
+          TOKEN_PROGRAM_ID,
+        ),
+      ],
+      owner,
+    );
+
+    const result = await new TransactionInspector().inspectTransactionType(
+      message,
+    );
+
+    expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
+    expect(result.data.tokenAddress).toBe(destination.toBase58());
+    expect(result.data.mintAddress).toBe(mint.toBase58());
+  });
+
+  it("detects ATA creation", async () => {
+    const payer = Keypair.generate();
+    const owner = Keypair.generate().publicKey;
+    const mint = Keypair.generate().publicKey;
+    const ata = getAssociatedTokenAddressSync(
+      mint,
+      owner,
+      true,
+      TOKEN_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID,
+    );
+    const message = makeV1Message(
+      [
+        createAssociatedTokenAccountInstruction(
+          payer.publicKey,
+          ata,
+          owner,
+          mint,
+          TOKEN_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID,
+        ),
+      ],
+      payer,
+    );
+
+    const result = await new TransactionInspector().inspectTransactionType(
+      message,
+    );
+
+    expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
+    expect(result.data.createATA).toEqual({
+      address: owner.toBase58(),
+      mintAddress: mint.toBase58(),
+    });
+  });
+
+  it("fast path: tokenAddress override + SPL instruction, SPL and returns override", async () => {
+    const owner = Keypair.generate();
+    const message = makeV1Message(
+      [
+        createTransferInstruction(
+          Keypair.generate().publicKey,
+          Keypair.generate().publicKey,
+          owner.publicKey,
+          1n,
+          [],
+          TOKEN_PROGRAM_ID,
+        ),
+      ],
+      owner,
+    );
+    const overrideToken = Keypair.generate().publicKey.toBase58();
+
+    const result = await new TransactionInspector().inspectTransactionType(
+      message,
+      overrideToken,
+    );
+
+    expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
+    expect(result.data.tokenAddress).toBe(overrideToken);
   });
 });
 

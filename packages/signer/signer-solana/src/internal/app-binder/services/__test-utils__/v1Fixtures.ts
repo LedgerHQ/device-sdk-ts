@@ -1,3 +1,5 @@
+import { type Message, PublicKey } from "@solana/web3.js";
+
 // Solana transaction v1 (SIMD-0385) message fixtures. A v1 message is laid out
 // as: version 0x81, a 3-byte header, a u32 LE config mask, a 32-byte lifetime
 // token, u8 instruction and address counts, the addresses, 4 bytes per set
@@ -181,3 +183,27 @@ export const SPEC_V1_INPUT: V1MessageInput = {
     },
   ],
 };
+
+/**
+ * Re-encodes a compiled legacy message as v1: same header, accounts,
+ * blockhash and instructions, no config. Legacy key order (writable signers,
+ * readonly signers, writable non-signers, readonly non-signers) is also the
+ * v1 order, so both describe the same transaction.
+ */
+export const v1FromLegacyMessage = (message: Message): Uint8Array =>
+  encodeV1Message({
+    numSignerAccounts: message.header.numRequiredSignatures,
+    numReadonlySignerAccounts: message.header.numReadonlySignedAccounts,
+    numReadonlyNonSignerAccounts: message.header.numReadonlyUnsignedAccounts,
+    configMask: 0,
+    lifetimeToken: new PublicKey(message.recentBlockhash).toBytes(),
+    addresses: message.accountKeys.map((key) => key.toBytes()),
+    configValues: [],
+    instructions: message.compiledInstructions.map(
+      ({ programIdIndex, accountKeyIndexes, data }) => ({
+        programIndex: programIdIndex,
+        accounts: accountKeyIndexes,
+        data,
+      }),
+    ),
+  });

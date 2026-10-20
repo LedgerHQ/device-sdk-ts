@@ -1,12 +1,14 @@
 import {
   AddressLookupTableAccount,
   Keypair,
+  Message,
   MessageV0,
   type PublicKey,
   SystemProgram,
   Transaction,
   type TransactionInstruction,
   TransactionMessage,
+  VersionedMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
 import { describe, expect, it, vi } from "vitest";
@@ -16,6 +18,18 @@ import {
   UNSTAKE_MESSAGE,
   withOneSignature,
 } from "@internal/app-binder/services/__test-utils__/ambiguousMessages";
+import {
+  encodeV1Message,
+  filledAddress,
+  MAINNET_V1_MESSAGE_288,
+  MAINNET_V1_MESSAGE_675,
+  SPEC_V1_INPUT,
+  SPEC_V1_MESSAGE,
+  SPEC_V1_OFFSETS,
+  withByte,
+  withBytes,
+  withTrailingBytes,
+} from "@internal/app-binder/services/__test-utils__/v1Fixtures";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 import {
@@ -25,6 +39,7 @@ import {
 import {
   AccountIndexOutOfRangeError,
   EmptyInstructionsError,
+  InvalidV1MessageError,
   InvalidVersionError,
   MalformedTransactionError,
   MAX_ACCOUNTS_PER_INSTRUCTION,
@@ -248,9 +263,9 @@ describe("TransactionParser", () => {
 
     it("returns InvalidVersionError when the version byte is unsupported", async () => {
       const parser = new TransactionParser();
-      // 0x80 = versioned prefix with version 0 (valid). 0x81 = version 1 (not yet supported).
+      // 0x80 = version 0 and 0x81 = version 1 (both supported). 0x82 = version 2.
       const bytes = new Uint8Array(80);
-      bytes[0] = 0x81;
+      bytes[0] = 0x82;
 
       const result = await parser.parse(bytes).run();
 
@@ -614,6 +629,233 @@ describe("TransactionParser", () => {
 
       expect(result.message.compiledInstructions).toHaveLength(2);
       expect(result.message.allKeys).toHaveLength(5);
+    });
+  });
+
+  describe("v1 messages", () => {
+    const SYSTEM_PROGRAM = "11111111111111111111111111111111";
+    const parseV1 = (bytes: Uint8Array, parser = new TransactionParser()) =>
+      parser.parse(bytes).run();
+
+    it("maps the spec worked example onto the normalised model", async () => {
+      const result = (await parseV1(SPEC_V1_MESSAGE)).unsafeCoerce();
+
+      expect(result.usesAddressLookupTables).toBe(false);
+      expect(result.message.addressLookupRefs).toBeUndefined();
+      expect(result.message.allKeys.map((key) => key.toBase58())).toEqual([
+        "29d2S7vB453rNYFdR5Ycwt7y9haRT5fwVwL9zTmBhfV2",
+        "3JF3sEqM796hk5WFqA6EtmEwJQ9quALszsfJyvXNQKy3",
+        SYSTEM_PROGRAM,
+      ]);
+      expect(result.message.compiledInstructions).toEqual([
+        {
+          programIdIndex: 2,
+          accountKeyIndexes: [0, 1],
+          accountWritable: [true, true],
+          accountSigner: [true, false],
+          data: new Uint8Array([2, 0, 0, 0, 0x40, 0x42, 0x0f, 0, 0, 0, 0, 0]),
+        },
+      ]);
+    });
+
+    it("parses the message out of its wire format, like legacy and v0", async () => {
+      const wire = withTrailingBytes(
+        SPEC_V1_MESSAGE,
+        new Array<number>(64).fill(0x44),
+      );
+
+      const fromWire = (await parseV1(wire)).unsafeCoerce();
+      const fromMessage = (await parseV1(SPEC_V1_MESSAGE)).unsafeCoerce();
+
+      expect(fromWire).toEqual(fromMessage);
+    });
+
+    it("keeps every instruction's accounts and data, including data over 255 bytes", async () => {
+      const longData = Uint8Array.from({ length: 300 }, (_, i) => i & 0xff);
+      const bytes = encodeV1Message({
+        ...SPEC_V1_INPUT,
+        instructions: [
+          { programIndex: 2, accounts: [0, 1], data: [1, 2, 3] },
+          { programIndex: 2, accounts: [], data: longData },
+          { programIndex: 1, accounts: [2, 0, 2], data: [] },
+        ],
+      });
+
+      const { message } = (await parseV1(bytes)).unsafeCoerce();
+
+      expect(
+        message.compiledInstructions.map(
+          ({ programIdIndex, accountKeyIndexes, data }) => ({
+            programIdIndex,
+            accountKeyIndexes,
+            data,
+          }),
+        ),
+      ).toEqual([
+        {
+          programIdIndex: 2,
+          accountKeyIndexes: [0, 1],
+          data: new Uint8Array([1, 2, 3]),
+        },
+        { programIdIndex: 2, accountKeyIndexes: [], data: longData },
+        {
+          programIdIndex: 1,
+          accountKeyIndexes: [2, 0, 2],
+          data: new Uint8Array(),
+        },
+      ]);
+    });
+
+    it.each([
+      [
+        "675-byte",
+        MAINNET_V1_MESSAGE_675,
+        [
+          "hydHwdP54fiTbJ5QXuKDLZFLY5m8pqx15RSmWcL1yAJ",
+          "ojh19ojaKduoJZuaJADhcVGp4xt1TcdAvZmpVsCorch",
+          SYSTEM_PROGRAM,
+        ],
+      ],
+      [
+        "288-byte",
+        MAINNET_V1_MESSAGE_288,
+        [SYSTEM_PROGRAM, "AhoL8CPMN782giCCn8RSixmJXhd8ZCgexUvef1Qy2b7u"],
+      ],
+    ])(
+      "parses the %s mainnet message with its program ids",
+      async (_, bytes, programIds) => {
+        const { message } = (await parseV1(bytes)).unsafeCoerce();
+
+        expect(
+          message.compiledInstructions.map((ix) =>
+            message.allKeys[ix.programIdIndex]!.toBase58(),
+          ),
+        ).toEqual(programIds);
+      },
+    );
+
+    it("derives signer and writable flags with the legacy header formula", async () => {
+      // 3 signers (the last one readonly), then 3 non-signers (the last two
+      // readonly). The instruction references every account.
+      const header = {
+        numRequiredSignatures: 3,
+        numReadonlySignedAccounts: 1,
+        numReadonlyUnsignedAccounts: 2,
+      };
+      const addresses = [1, 2, 3, 4, 5, 6].map(filledAddress);
+      const bytes = encodeV1Message({
+        ...SPEC_V1_INPUT,
+        numSignerAccounts: header.numRequiredSignatures,
+        numReadonlySignerAccounts: header.numReadonlySignedAccounts,
+        numReadonlyNonSignerAccounts: header.numReadonlyUnsignedAccounts,
+        addresses,
+        instructions: [
+          { programIndex: 5, accounts: [0, 1, 2, 3, 4, 5], data: [] },
+        ],
+      });
+      const legacy = new Message({
+        header,
+        accountKeys: addresses.map((address) =>
+          DefaultBs58Encoder.encode(address),
+        ),
+        recentBlockhash: DUMMY_BLOCKHASH,
+        instructions: [],
+      });
+
+      const ix = (await parseV1(bytes)).unsafeCoerce().message
+        .compiledInstructions[0]!;
+
+      expect(ix.accountSigner).toEqual(
+        [0, 1, 2, 3, 4, 5].map((i) => legacy.isAccountSigner(i)),
+      );
+      expect(ix.accountWritable).toEqual(
+        [0, 1, 2, 3, 4, 5].map((i) => legacy.isAccountWritable(i)),
+      );
+      expect(ix.accountSigner).toEqual([true, true, true, false, false, false]);
+      expect(ix.accountWritable).toEqual([
+        true,
+        true,
+        false,
+        true,
+        false,
+        false,
+      ]);
+    });
+
+    it.each([
+      [
+        "an unknown config bit",
+        withByte(SPEC_V1_MESSAGE, SPEC_V1_OFFSETS.configMask, 0x2f),
+        "CONFIG_MASK",
+      ],
+      [
+        "duplicate addresses",
+        withBytes(
+          SPEC_V1_MESSAGE,
+          SPEC_V1_OFFSETS.addresses + 32,
+          filledAddress(0x11),
+        ),
+        "DUPLICATE_ADDRESS",
+      ],
+      [
+        "program index 0",
+        withByte(SPEC_V1_MESSAGE, SPEC_V1_OFFSETS.instructionHeaders, 0),
+        "PROGRAM_INDEX",
+      ],
+      [
+        "a trailing byte",
+        withTrailingBytes(SPEC_V1_MESSAGE, [0]),
+        "TRAILING_BYTES",
+      ],
+      ["a truncated message", SPEC_V1_MESSAGE.subarray(0, 100), "TRUNCATED"],
+      [
+        "a message shorter than any legacy message",
+        SPEC_V1_MESSAGE.subarray(0, 10),
+        "TRUNCATED",
+      ],
+    ])("returns InvalidV1MessageError for %s", async (_, bytes, rule) => {
+      const error = (await parseV1(bytes)).swap().unsafeCoerce();
+
+      expect(error).toBeInstanceOf(InvalidV1MessageError);
+      expect(error).toMatchObject({ rule });
+    });
+
+    it("returns EmptyInstructionsError for a v1 message without instructions", async () => {
+      const bytes = encodeV1Message({ ...SPEC_V1_INPUT, instructions: [] });
+
+      const error = (await parseV1(bytes)).swap().unsafeCoerce();
+
+      expect(error).toBeInstanceOf(EmptyInstructionsError);
+    });
+
+    it("never calls the web3.js decoders, which cannot read v1", async () => {
+      const spies = [
+        vi.spyOn(VersionedTransaction, "deserialize"),
+        vi.spyOn(VersionedMessage, "deserialize"),
+        vi.spyOn(Transaction, "from"),
+      ];
+
+      await parseV1(SPEC_V1_MESSAGE);
+      await parseV1(withTrailingBytes(SPEC_V1_MESSAGE, [0]));
+
+      for (const spy of spies) {
+        expect(spy).not.toHaveBeenCalled();
+        spy.mockRestore();
+      }
+    });
+
+    it("never calls the ALT resolver and keeps no ALT refs", async () => {
+      const resolver: AddressLookupTableResolver = { resolve: vi.fn() };
+
+      const { message } = (
+        await parseV1(
+          SPEC_V1_MESSAGE,
+          new TransactionParser(resolver, { preserveAltRefs: true }),
+        )
+      ).unsafeCoerce();
+
+      expect(resolver.resolve).not.toHaveBeenCalled();
+      expect(message.addressLookupRefs).toBeUndefined();
     });
   });
 });
