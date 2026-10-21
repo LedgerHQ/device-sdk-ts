@@ -28,10 +28,10 @@ describe("getZcashBranchId", () => {
 
   it("returns latest branch id when block height is unknown", () => {
     expect(getZcashBranchId(undefined)).toEqual(
-      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
+      Uint8Array.of(0xd9, 0x0a, 0x19, 0x77),
     );
     expect(getZcashBranchId(null)).toEqual(
-      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
+      Uint8Array.of(0xd9, 0x0a, 0x19, 0x77),
     );
   });
 
@@ -59,6 +59,15 @@ describe("getZcashBranchId", () => {
     );
     expect(getZcashBranchId(3428143)).toEqual(
       Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
+    );
+  });
+
+  it("switches from NU6.3 to NU7 branch id at activation height", () => {
+    expect(getZcashBranchId(3543404)).toEqual(
+      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
+    );
+    expect(getZcashBranchId(3543405)).toEqual(
+      Uint8Array.of(0xd9, 0x0a, 0x19, 0x77),
     );
   });
 });
@@ -158,6 +167,7 @@ describe("getZcashBranchId per network", () => {
   const OVERWINTER = Uint8Array.of(0x19, 0x1b, 0xa8, 0x5b);
 
   it.each([
+    [3543405, [0xd9, 0x0a, 0x19, 0x77]],
     [3428143, [0x5b, 0x16, 0xa5, 0x37]],
     [3364600, [0x30, 0xf3, 0x37, 0x54]],
     [3146400, [0xf0, 0x4d, 0xec, 0x4d]],
@@ -177,8 +187,11 @@ describe("getZcashBranchId per network", () => {
     },
   );
 
-  it("mainnet has no NU7 entry: far-future height stays on NU6.3", () => {
-    expect(getZcashBranchId(5000000, "mainnet")).toEqual(
+  it("mainnet NU7 activates at its height", () => {
+    expect(getZcashBranchId(3543405, "mainnet")).toEqual(
+      Uint8Array.of(0xd9, 0x0a, 0x19, 0x77),
+    );
+    expect(getZcashBranchId(3543404, "mainnet")).toEqual(
       Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
     );
   });
@@ -275,12 +288,12 @@ describe("getZcashBranchId per network", () => {
     );
   });
 
-  it("mainnet null and undefined default to NU6.3", () => {
+  it("mainnet null and undefined default to NU7", () => {
     expect(getZcashBranchId(null, "mainnet")).toEqual(
-      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
+      Uint8Array.of(0xd9, 0x0a, 0x19, 0x77),
     );
     expect(getZcashBranchId(undefined, "mainnet")).toEqual(
-      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
+      Uint8Array.of(0xd9, 0x0a, 0x19, 0x77),
     );
   });
 
