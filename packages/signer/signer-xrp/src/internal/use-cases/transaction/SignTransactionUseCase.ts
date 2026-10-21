@@ -2,6 +2,7 @@ import { inject, injectable } from "inversify";
 
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { DEFAULT_CURVE } from "@internal/app-binder/constants";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { XrpAppBinder } from "@internal/app-binder/XrpAppBinder";
 
@@ -22,6 +23,7 @@ export class SignTransactionUseCase {
       derivationPath,
       transaction,
       skipOpenApp: options?.skipOpenApp ?? false,
+      curve: options?.curve ?? DEFAULT_CURVE,
     });
   }
 }

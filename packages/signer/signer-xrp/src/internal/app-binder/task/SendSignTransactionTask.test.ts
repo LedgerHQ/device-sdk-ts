@@ -8,6 +8,7 @@ import {
 import { Just, Nothing } from "purify-ts";
 import { vi } from "vitest";
 
+import { Curve } from "@api/model/Curve";
 import { type SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { XrpAppCommandError } from "@internal/app-binder/command/utils/xrpApplicationErrors";
 
@@ -45,7 +46,8 @@ const runTask = async (
   {
     derivationPath = DERIVATION_PATH,
     failAtChunk,
-  }: { derivationPath?: string; failAtChunk?: number } = {},
+    curve = Curve.Secp256k1,
+  }: { derivationPath?: string; failAtChunk?: number; curve?: Curve } = {},
 ) => {
   const commands: SignTransactionCommand[] = [];
   let call = 0;
@@ -77,6 +79,7 @@ const runTask = async (
   const result = await new SendSignTransactionTask(api, {
     derivationPath,
     serializedTransaction,
+    curve,
     loggerFactory,
   }).run();
 
@@ -85,6 +88,7 @@ const runTask = async (
     result,
     apdus,
     p1s: apdus.map((a) => a[2]),
+    p2s: apdus.map((a) => a[3]),
     // The data each APDU carried, past the 5 byte header.
     payloads: apdus.map((a) => a.slice(5)),
   };
@@ -207,6 +211,30 @@ describe("SendSignTransactionTask", () => {
       payloads.forEach((payload) => {
         expect(payload.length).toBeLessThanOrEqual(APDU_MAX_PAYLOAD);
       });
+    });
+  });
+
+  describe("the curve", () => {
+    it("should select secp256k1 on every chunk when asked", async () => {
+      // WHEN
+      const { p2s } = await runTask(
+        transactionOfLength(APDU_MAX_PAYLOAD * 2 + 7),
+        { curve: Curve.Secp256k1 },
+      );
+
+      // THEN
+      expect(p2s).toStrictEqual([0x40, 0x40, 0x40]);
+    });
+
+    it("should select Ed25519 on every chunk when asked", async () => {
+      // WHEN
+      const { p2s } = await runTask(
+        transactionOfLength(APDU_MAX_PAYLOAD * 2 + 7),
+        { curve: Curve.Ed25519 },
+      );
+
+      // THEN
+      expect(p2s).toStrictEqual([0x80, 0x80, 0x80]);
     });
   });
 

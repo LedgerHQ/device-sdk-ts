@@ -2,6 +2,7 @@ import { inject, injectable } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { DEFAULT_CURVE } from "@internal/app-binder/constants";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { XrpAppBinder } from "@internal/app-binder/XrpAppBinder";
 
@@ -22,6 +23,7 @@ export class GetAddressUseCase {
       checkOnDevice: options?.checkOnDevice ?? false,
       returnChainCode: options?.returnChainCode ?? false,
       skipOpenApp: options?.skipOpenApp ?? false,
+      curve: options?.curve ?? DEFAULT_CURVE,
     });
   }
 }

@@ -10,6 +10,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Nothing } from "purify-ts";
 
+import { type Curve } from "@api/model/Curve";
 import { type Signature } from "@api/model/Signature";
 import {
   SignTransactionCommand,
@@ -23,6 +24,8 @@ const PATH_SIZE = 4;
 type SendSignTransactionTaskArgs = {
   derivationPath: string;
   serializedTransaction: Uint8Array;
+  /** Curve to sign with, sent on every chunk. */
+  curve: Curve;
   loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
@@ -42,7 +45,7 @@ export class SendSignTransactionTask {
   }
 
   async run(): Promise<CommandResult<Signature, XrpErrorCodes>> {
-    const { derivationPath, serializedTransaction } = this.args;
+    const { derivationPath, serializedTransaction, curve } = this.args;
 
     if (serializedTransaction.length === 0) {
       return CommandResultFactory({
@@ -76,6 +79,7 @@ export class SendSignTransactionTask {
           chunkedData: chunks[i]!,
           isFirstChunk: i === 0,
           isLastChunk: i === chunks.length - 1,
+          curve,
         }),
       );
 

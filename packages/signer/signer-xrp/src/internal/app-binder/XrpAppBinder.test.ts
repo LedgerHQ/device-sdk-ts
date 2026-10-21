@@ -24,6 +24,7 @@ import {
   type GetAppConfigDAIntermediateValue,
   type GetAppConfigDAOutput,
 } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { Curve } from "@api/model/Curve";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import {
   GetAppConfigCommand,
@@ -187,6 +188,7 @@ describe("XrpAppBinder", () => {
         checkOnDevice: false,
         returnChainCode: false,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -215,6 +217,7 @@ describe("XrpAppBinder", () => {
         checkOnDevice: false,
         returnChainCode: false,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -234,6 +237,7 @@ describe("XrpAppBinder", () => {
         checkOnDevice: true,
         returnChainCode: false,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -253,6 +257,7 @@ describe("XrpAppBinder", () => {
         checkOnDevice: true,
         returnChainCode: true,
         skipOpenApp: true,
+        curve: Curve.Secp256k1,
       });
 
       // THEN the P1/P2 of the built APDU reflect every argument
@@ -263,6 +268,26 @@ describe("XrpAppBinder", () => {
       const apdu = command.getApdu().getRawApdu();
       expect(apdu[2]).toBe(0x01); // P1: display and confirm
       expect(apdu[3]).toBe(0x41); // P2: secp256k1 | return chain code
+    });
+
+    it("should forward the Ed25519 curve through to the APDU", () => {
+      // GIVEN
+      const { binder, executeDeviceAction } = setup();
+
+      // WHEN
+      binder.getAddress({
+        derivationPath: DERIVATION_PATH,
+        checkOnDevice: false,
+        returnChainCode: true,
+        skipOpenApp: false,
+        curve: Curve.Ed25519,
+      });
+
+      // THEN
+      const apdu = lastCall(executeDeviceAction)
+        .deviceAction.input.command.getApdu()
+        .getRawApdu();
+      expect(apdu[3]).toBe(0x81); // P2: ed25519 | return chain code
     });
   });
 
@@ -296,6 +321,7 @@ describe("XrpAppBinder", () => {
         derivationPath: DERIVATION_PATH,
         transaction: TRANSACTION,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -321,6 +347,7 @@ describe("XrpAppBinder", () => {
         derivationPath: DERIVATION_PATH,
         transaction: TRANSACTION,
         skipOpenApp: true,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -349,6 +376,7 @@ describe("XrpAppBinder", () => {
         derivationPath: DERIVATION_PATH,
         transaction: TRANSACTION,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -375,6 +403,7 @@ describe("XrpAppBinder", () => {
         derivationPath: DERIVATION_PATH,
         transaction: TRANSACTION,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       const { task } = (
@@ -426,6 +455,32 @@ describe("XrpAppBinder", () => {
       );
       expect(tagged).toContain("SendSignTransactionTask");
       expect(isSuccessCommandResult(taskResult)).toBe(true);
+    });
+
+    it("should run the task with the curve it is given", async () => {
+      // GIVEN
+      const { binder, executeDeviceAction } = setup();
+      binder.signTransaction({
+        derivationPath: DERIVATION_PATH,
+        transaction: TRANSACTION,
+        skipOpenApp: false,
+        curve: Curve.Ed25519,
+      });
+      const { task } = lastCall(executeDeviceAction).deviceAction.input;
+      const sendCommand = vi
+        .fn()
+        .mockResolvedValue(
+          CommandResultFactory({ data: Just(new Uint8Array(64)) }),
+        );
+
+      // WHEN the device action runs the task
+      await task({ sendCommand } as unknown as InternalApi);
+
+      // THEN the Sign APDU selects Ed25519 in P2
+      const apdu = (
+        sendCommand.mock.calls[0]![0] as SignTransactionCommand
+      ).getApdu();
+      expect(apdu.getRawApdu()[3]).toBe(0x80);
     });
   });
 });
