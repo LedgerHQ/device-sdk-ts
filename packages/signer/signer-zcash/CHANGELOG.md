@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0
+
+### Minor Changes
+
+- [#2011](https://github.com/LedgerHQ/device-sdk-ts/pull/2011) [`8d7031a`](https://github.com/LedgerHQ/device-sdk-ts/commit/8d7031a3dd5b7286f0cb06d91ef51086a4c34edb) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Sign mainnet Zcash transactions under the NU7 branch id from the NU7 mainnet activation height, which is also the default when no block height is given.
+
 ## 0.8.0
 
 ### Minor Changes
