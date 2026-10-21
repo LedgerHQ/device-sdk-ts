@@ -10,6 +10,7 @@ import {
   ListItemTitle,
   ListItemTrailing,
   Spot,
+  SpotNumber,
   TextInput,
   Tile,
   TileContent,
@@ -110,7 +111,7 @@ export function LandingPage({ notice, onEnter }: LandingPageProps) {
             disabled={busy}
             onClick={createSession}
           >
-            <Spot appearance="icon" icon={Plus} />
+            <Spot icon={Plus} />
             <TileContent>
               <TileTitle>Create a session</TileTitle>
               <TileDescription>
@@ -125,7 +126,7 @@ export function LandingPage({ notice, onEnter }: LandingPageProps) {
             disabled={busy}
             onClick={() => setShowTokenInput(true)}
           >
-            <Spot appearance="icon" icon={RecoveryKey} />
+            <Spot icon={RecoveryKey} />
             <TileContent>
               <TileTitle>Enter a session</TileTitle>
               <TileDescription>
@@ -218,11 +219,7 @@ export function LandingPage({ notice, onEnter }: LandingPageProps) {
           <ol className="flex flex-col gap-12">
             {STEPS.map((step, index) => (
               <li key={step} className="flex items-start gap-12">
-                <Spot
-                  appearance="number"
-                  number={(index + 1) as 1 | 2 | 3}
-                  size={32}
-                />
+                <SpotNumber value={(index + 1) as 1 | 2 | 3} size={32} />
                 <p className="body-3 text-muted pt-6">{step}</p>
               </li>
             ))}

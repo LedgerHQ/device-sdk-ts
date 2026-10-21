@@ -1,4 +1,4 @@
-import { Apex, Flex, Nano, Stax } from "@ledgerhq/lumen-ui-react/symbols";
+import { Flex, Nano, NanoGen5, Stax } from "@ledgerhq/lumen-ui-react/symbols";
 
 export interface DeviceScreenModel {
   readonly label: string;
@@ -47,7 +47,7 @@ const MODELS: Record<string, DeviceScreenModel> = {
   },
   apexp: {
     label: "Apex",
-    icon: Apex,
+    icon: NanoGen5,
     touch: true,
     speculos: true,
     screenWidth: 300,

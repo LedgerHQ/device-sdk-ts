@@ -1,18 +1,47 @@
-import React, { useEffect, useMemo } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
-  type EditExternalAddressIdentifierDAOutput,
-  type EditExternalAddressScopeDAOutput,
-  type RegisterExternalAddressDAOutput,
-  type RenameContactDAOutput,
+  type EditExternalAddressIdentifierOutput,
+  type EditExternalAddressScopeOutput,
+  type RegisterExternalAddressOutput,
+  type RenameContactOutput,
 } from "@ledgerhq/device-contacts-kit";
-import { Flex, Tag, Text } from "@ledgerhq/react-ui";
+import { bufferToHexaString } from "@ledgerhq/device-management-kit";
+import { Button, Flex, Tag, Text } from "@ledgerhq/react-ui";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
-import { useContactsManager } from "@/providers/ContactsProvider";
+import {
+  ADDRESS_BOOK_STORAGE_KEY,
+  type AddressBook,
+  addSampleContacts,
+  applyEditIdentifier,
+  applyEditScope,
+  applyRegister,
+  applyRename,
+  chainIdForFamily,
+  type ContactGroup,
+  CONTACTS_FAMILY_OPTIONS,
+  type ContactsFamily,
+  emptyAddressBook,
+  type ExternalAddress,
+  externalAddressesForGroup,
+  findGroupById,
+  formatIdentifier,
+  loadAddressBook,
+  parseHexField,
+  parseIdentifier,
+  saveAddressBook,
+  toContactsFamily,
+} from "@/lib/contacts/addressBook";
+import { useContactsManagers } from "@/providers/ContactsProvider";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-
-const CONTACTS_STORAGE_KEY = "dmk-sample-contacts";
 
 // Example first-account Ethereum address (no 0x prefix).
 const DEFAULT_IDENTIFIER = "de0b295669a9fd93d5f28d9ec85e40f4cb697bae";
@@ -25,148 +54,144 @@ const DEFAULT_NEW_IDENTIFIER = "70997970c51812dc3a010c7d01b50e0d17dc79c8";
 // the edit visibly changes the entry's scope.
 const DEFAULT_NEW_SCOPE = "Eth cold";
 
-function hexToBytes(hex: string): Uint8Array {
-  const raw = hex.startsWith("0x") || hex.startsWith("0X") ? hex.slice(2) : hex;
-  if (raw.length % 2 !== 0) {
-    throw new Error(`Hex value has an odd length: "${hex}"`);
-  }
-  const bytes = new Uint8Array(raw.length / 2);
-  for (let i = 0; i < raw.length; i += 2) {
-    bytes[i / 2] = parseInt(raw.slice(i, i + 2), 16);
-  }
-  return bytes;
+function last<T>(items: T[]): T | undefined {
+  return items.length > 0 ? items[items.length - 1] : undefined;
 }
 
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+function truncateHex(hex: string): string {
+  return hex.length > 20 ? `${hex.slice(0, 12)}…${hex.slice(-8)}` : hex;
 }
 
-type PersistedContactEntry = {
-  mode: RegisterExternalAddressDAOutput["mode"];
-  contactName: string;
-  scope: string;
-  blockchainFamily: string;
-  chainId?: string;
-  identifierHex: string;
-  groupHandleHex: string;
-  hmacProofHex: string;
-  hmacRestHex: string;
-  registeredAt: string;
+/** A stored address in its family's human-readable form (base58 for Tron). */
+function displayAddress(address: ExternalAddress): string {
+  return formatIdentifier(
+    address.blockchainFamily,
+    parseHexField(address.address, "address"),
+  );
+}
+
+// Family is a dropdown on every app-owned operation: it selects both the
+// BLOCKCHAIN_FAMILY byte and the embedded app the operation runs in.
+const familyValueSelector = { blockchainFamily: CONTACTS_FAMILY_OPTIONS };
+
+/**
+ * Host-side address-book store for the Contacts playground. Holds the canonical
+ * {@link AddressBook} in React state, persists every change to localStorage, and
+ * exposes one handler per device operation. The handlers fold a device output
+ * into the book via the pure reducers in `lib/contacts/addressBook`, so a
+ * successful flow updates only the proof field(s) that operation returned.
+ */
+type AddressBookStore = {
+  book: AddressBook;
+  onRegister: (output: RegisterExternalAddressOutput) => void;
+  onRename: (output: RenameContactOutput) => void;
+  onEditIdentifier: (output: EditExternalAddressIdentifierOutput) => void;
+  onEditScope: (output: EditExternalAddressScopeOutput) => void;
+  reload: () => void;
+  clear: () => void;
+  /** Merge the placeholder sample contacts in (idempotent). */
+  loadSamples: () => void;
 };
 
-function loadEntries(): PersistedContactEntry[] {
-  if (typeof window === "undefined") return [];
-  const raw = window.localStorage.getItem(CONTACTS_STORAGE_KEY);
-  return raw ? (JSON.parse(raw) as PersistedContactEntry[]) : [];
+const AddressBookContext = createContext<AddressBookStore | null>(null);
+
+function useAddressBookStore(): AddressBookStore {
+  const ctx = useContext(AddressBookContext);
+  if (!ctx) {
+    throw new Error("useAddressBookStore must be used within its provider");
+  }
+  return ctx;
 }
 
-function persistProofs(output: RegisterExternalAddressDAOutput): void {
-  if (typeof window === "undefined") return;
-  const entry: PersistedContactEntry = {
-    mode: output.mode,
-    contactName: output.contactName,
-    scope: output.scope,
-    blockchainFamily: output.blockchainFamily,
-    chainId: output.chainId?.toString(),
-    identifierHex: bytesToHex(output.identifier),
-    groupHandleHex: bytesToHex(output.groupHandle),
-    hmacProofHex: bytesToHex(output.hmacProof),
-    hmacRestHex: bytesToHex(output.hmacRest),
-    registeredAt: new Date().toISOString(),
-  };
-  window.localStorage.setItem(
-    CONTACTS_STORAGE_KEY,
-    JSON.stringify([...loadEntries(), entry]),
+function useAddressBookState(): AddressBookStore {
+  const [book, setBook] = useState<AddressBook>(emptyAddressBook);
+  // Gate persistence until after the client-side hydration load, so the initial
+  // empty state never clobbers an existing book on disk.
+  const [hydrated, setHydrated] = useState(false);
+
+  // Reload from localStorage on mount (client only — avoids an SSR/CSR
+  // hydration mismatch, since the server has no localStorage).
+  useEffect(() => {
+    setBook(loadAddressBook());
+    setHydrated(true);
+  }, []);
+
+  // Single writer: persist whenever the book changes (post-hydration). Keeping
+  // this out of the state updaters makes those updaters pure — important under
+  // React StrictMode, which double-invokes them.
+  useEffect(() => {
+    if (hydrated) saveAddressBook(book);
+  }, [book, hydrated]);
+
+  // Handlers are stable (empty deps + functional updates), so the output views
+  // that fold a device result in via `useEffect([output, handler])` fire once
+  // per operation instead of re-running every time the book changes.
+  const onRegister = useCallback(
+    (output: RegisterExternalAddressOutput) =>
+      setBook((prev) => applyRegister(prev, output)),
+    [],
+  );
+  const onRename = useCallback(
+    (output: RenameContactOutput) =>
+      setBook((prev) => applyRename(prev, output)),
+    [],
+  );
+  const onEditIdentifier = useCallback(
+    (output: EditExternalAddressIdentifierOutput) =>
+      setBook((prev) => applyEditIdentifier(prev, output)),
+    [],
+  );
+  const onEditScope = useCallback(
+    (output: EditExternalAddressScopeOutput) =>
+      setBook((prev) => applyEditScope(prev, output)),
+    [],
+  );
+  const reload = useCallback(() => setBook(loadAddressBook()), []);
+  const clear = useCallback(() => setBook(emptyAddressBook()), []);
+  const loadSamples = useCallback(
+    () => setBook((prev) => addSampleContacts(prev)),
+    [],
+  );
+
+  return useMemo<AddressBookStore>(
+    () => ({
+      book,
+      onRegister,
+      onRename,
+      onEditIdentifier,
+      onEditScope,
+      reload,
+      clear,
+      loadSamples,
+    }),
+    [
+      book,
+      onRegister,
+      onRename,
+      onEditIdentifier,
+      onEditScope,
+      reload,
+      clear,
+      loadSamples,
+    ],
   );
 }
 
-/** The most recently persisted contact, if any — used to pre-fill the rename
- * form so the playground can rename a persisted contact end-to-end. */
-function loadLatestContact(): PersistedContactEntry | null {
-  const entries = loadEntries();
-  return entries.length > 0 ? entries[entries.length - 1]! : null;
-}
+// --- output views -----------------------------------------------------------
+//
+// Each view folds its device output into the address book on success (once, when
+// the output arrives) and renders the returned proof material.
 
-/** After a successful rename, update the matching persisted contact in place —
- * new name + rotated (replacement) proof — so a subsequent rename round-trips. */
-function applyRename(output: RenameContactDAOutput): void {
-  if (typeof window === "undefined") return;
-  const groupHandleHex = bytesToHex(output.groupHandle);
-  const newHmacProofHex = bytesToHex(output.hmacProof);
-  const updated = loadEntries().map((entry) =>
-    entry.groupHandleHex === groupHandleHex
-      ? {
-          ...entry,
-          contactName: output.contactName,
-          hmacProofHex: newHmacProofHex,
-        }
-      : entry,
-  );
-  window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(updated));
-}
-
-/** After a successful identifier edit, update the matching persisted entry in
- * place — matched by group handle and the pre-edit identifier — with the new
- * identifier and the rotated address-level proof (`hmacRest`). The group-level
- * `hmacProof` is unchanged by an edit, so it passes through untouched and a
- * subsequent edit round-trips. */
-function applyEditIdentifier(
-  output: EditExternalAddressIdentifierDAOutput,
-): void {
-  if (typeof window === "undefined") return;
-  const groupHandleHex = bytesToHex(output.groupHandle);
-  const previousIdentifierHex = bytesToHex(output.previousIdentifier);
-  const newIdentifierHex = bytesToHex(output.identifier);
-  const newHmacRestHex = bytesToHex(output.hmacRest);
-  const updated = loadEntries().map((entry) =>
-    entry.groupHandleHex === groupHandleHex &&
-    entry.identifierHex === previousIdentifierHex
-      ? {
-          ...entry,
-          identifierHex: newIdentifierHex,
-          hmacRestHex: newHmacRestHex,
-        }
-      : entry,
-  );
-  window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(updated));
-}
-
-/** After a successful scope edit, update the matching persisted entry in place —
- * matched by group handle, identifier, and the pre-edit scope — with the new
- * scope and the rotated address-level proof (`hmacRest`). The group-level
- * `hmacProof` and the identifier are unchanged by the edit, so they pass through
- * untouched and a subsequent edit round-trips. */
-function applyEditScope(output: EditExternalAddressScopeDAOutput): void {
-  if (typeof window === "undefined") return;
-  const groupHandleHex = bytesToHex(output.groupHandle);
-  const identifierHex = bytesToHex(output.identifier);
-  const newHmacRestHex = bytesToHex(output.hmacRest);
-  const updated = loadEntries().map((entry) =>
-    entry.groupHandleHex === groupHandleHex &&
-    entry.identifierHex === identifierHex &&
-    entry.scope === output.previousScope
-      ? {
-          ...entry,
-          scope: output.scope,
-          hmacRestHex: newHmacRestHex,
-        }
-      : entry,
-  );
-  window.localStorage.setItem(CONTACTS_STORAGE_KEY, JSON.stringify(updated));
-}
-
-const PersistedProofRows: React.FC<{ rows: Array<[string, string]> }> = ({
+const SavedProofRows: React.FC<{ rows: Array<[string, string]> }> = ({
   rows,
 }) => (
   <Flex flexDirection="column" rowGap={3}>
     <Flex columnGap={2} alignItems="center">
       <Tag active type="opacity">
-        Persisted to localStorage
+        Saved to address book
       </Tag>
       <Text variant="small" color="neutral.c70">
-        key: {CONTACTS_STORAGE_KEY}
+        key: {ADDRESS_BOOK_STORAGE_KEY}
       </Text>
     </Flex>
     {rows.map(([label, value]) => (
@@ -183,12 +208,12 @@ const PersistedProofRows: React.FC<{ rows: Array<[string, string]> }> = ({
 );
 
 const RegisterExternalAddressOutputView: React.FC<{
-  output: RegisterExternalAddressDAOutput;
+  output: RegisterExternalAddressOutput;
 }> = ({ output }) => {
-  // Persist every returned proof value locally as soon as it is available.
+  const { onRegister } = useAddressBookStore();
   useEffect(() => {
-    persistProofs(output);
-  }, [output]);
+    onRegister(output);
+  }, [output, onRegister]);
 
   const rows: Array<[string, string]> = [
     ["mode", output.mode],
@@ -196,86 +221,232 @@ const RegisterExternalAddressOutputView: React.FC<{
     ["scope", output.scope],
     ["blockchainFamily", output.blockchainFamily],
     ["chainId", output.chainId?.toString() ?? "—"],
-    ["identifier", bytesToHex(output.identifier)],
-    ["groupHandle", bytesToHex(output.groupHandle)],
-    ["hmacProof", bytesToHex(output.hmacProof)],
-    ["hmacRest", bytesToHex(output.hmacRest)],
+    [
+      "identifier",
+      formatIdentifier(output.blockchainFamily, output.identifier),
+    ],
+    ["groupHandle", bufferToHexaString(output.groupHandle, false)],
+    ["hmacProof", bufferToHexaString(output.hmacProof, false)],
+    ["hmacRest", bufferToHexaString(output.hmacRest, false)],
   ];
 
-  return <PersistedProofRows rows={rows} />;
+  return <SavedProofRows rows={rows} />;
 };
 
 const RenameContactOutputView: React.FC<{
-  output: RenameContactDAOutput;
+  output: RenameContactOutput;
 }> = ({ output }) => {
-  // Update the matching persisted contact locally as soon as the proof rotates.
+  const { onRename } = useAddressBookStore();
   useEffect(() => {
-    applyRename(output);
-  }, [output]);
+    onRename(output);
+  }, [output, onRename]);
 
   const rows: Array<[string, string]> = [
     ["previousContactName", output.previousContactName],
     ["contactName", output.contactName],
-    ["groupHandle", bytesToHex(output.groupHandle)],
-    ["hmacProof", bytesToHex(output.hmacProof)],
+    ["groupHandle", bufferToHexaString(output.groupHandle, false)],
+    ["hmacProof", bufferToHexaString(output.hmacProof, false)],
   ];
 
-  return <PersistedProofRows rows={rows} />;
+  return <SavedProofRows rows={rows} />;
 };
 
 const EditExternalAddressIdentifierOutputView: React.FC<{
-  output: EditExternalAddressIdentifierDAOutput;
+  output: EditExternalAddressIdentifierOutput;
 }> = ({ output }) => {
-  // Update the matching persisted entry locally as soon as the identifier and
-  // its address-level proof rotate.
+  const { onEditIdentifier } = useAddressBookStore();
   useEffect(() => {
-    applyEditIdentifier(output);
-  }, [output]);
+    onEditIdentifier(output);
+  }, [output, onEditIdentifier]);
 
   const rows: Array<[string, string]> = [
     ["contactName", output.contactName],
     ["scope", output.scope],
-    ["previousIdentifier", bytesToHex(output.previousIdentifier)],
-    ["identifier", bytesToHex(output.identifier)],
+    [
+      "previousIdentifier",
+      formatIdentifier(output.blockchainFamily, output.previousIdentifier),
+    ],
+    [
+      "identifier",
+      formatIdentifier(output.blockchainFamily, output.identifier),
+    ],
     ["blockchainFamily", output.blockchainFamily],
     ["chainId", output.chainId?.toString() ?? "—"],
-    ["groupHandle", bytesToHex(output.groupHandle)],
-    ["hmacProof", bytesToHex(output.hmacProof)],
-    ["hmacRest", bytesToHex(output.hmacRest)],
+    ["groupHandle", bufferToHexaString(output.groupHandle, false)],
+    ["hmacProof", bufferToHexaString(output.hmacProof, false)],
+    ["hmacRest", bufferToHexaString(output.hmacRest, false)],
   ];
 
-  return <PersistedProofRows rows={rows} />;
+  return <SavedProofRows rows={rows} />;
 };
 
 const EditExternalAddressScopeOutputView: React.FC<{
-  output: EditExternalAddressScopeDAOutput;
+  output: EditExternalAddressScopeOutput;
 }> = ({ output }) => {
-  // Update the matching persisted entry locally as soon as the scope and its
-  // address-level proof rotate.
+  const { onEditScope } = useAddressBookStore();
   useEffect(() => {
-    applyEditScope(output);
-  }, [output]);
+    onEditScope(output);
+  }, [output, onEditScope]);
 
   const rows: Array<[string, string]> = [
     ["contactName", output.contactName],
     ["previousScope", output.previousScope],
     ["scope", output.scope],
-    ["identifier", bytesToHex(output.identifier)],
+    [
+      "identifier",
+      formatIdentifier(output.blockchainFamily, output.identifier),
+    ],
     ["blockchainFamily", output.blockchainFamily],
     ["chainId", output.chainId?.toString() ?? "—"],
-    ["groupHandle", bytesToHex(output.groupHandle)],
-    ["hmacProof", bytesToHex(output.hmacProof)],
-    ["hmacRest", bytesToHex(output.hmacRest)],
+    ["groupHandle", bufferToHexaString(output.groupHandle, false)],
+    ["hmacProof", bufferToHexaString(output.hmacProof, false)],
+    ["hmacRest", bufferToHexaString(output.hmacRest, false)],
   ];
 
-  return <PersistedProofRows rows={rows} />;
+  return <SavedProofRows rows={rows} />;
 };
+
+// --- persisted address-book panel -------------------------------------------
+
+const AddressRow: React.FC<{ address: ExternalAddress }> = ({ address }) => (
+  <Flex
+    flexDirection="column"
+    rowGap={1}
+    pl={4}
+    style={{ borderLeft: "1px solid rgba(128,128,128,0.3)" }}
+  >
+    <Flex columnGap={2} alignItems="baseline" flexWrap="wrap">
+      <Tag active type="opacity">
+        {address.scope}
+      </Tag>
+      <Text variant="paragraph" style={{ wordBreak: "break-all" }}>
+        {displayAddress(address)}
+      </Text>
+    </Flex>
+    <Text variant="tiny" color="neutral.c70">
+      {address.blockchainFamily}
+      {address.chainId !== undefined ? ` · chainId ${address.chainId}` : ""} ·
+      hmacRest {truncateHex(bufferToHexaString(address.hmacRest, false))}
+    </Text>
+  </Flex>
+);
+
+const GroupCard: React.FC<{
+  group: ContactGroup;
+  addresses: ExternalAddress[];
+}> = ({ group, addresses }) => (
+  <Flex
+    flexDirection="column"
+    rowGap={2}
+    p={3}
+    style={{ border: "1px solid rgba(128,128,128,0.3)", borderRadius: 8 }}
+  >
+    <Text variant="large">{group.contactName}</Text>
+    <Text variant="tiny" color="neutral.c70">
+      groupHandle {truncateHex(bufferToHexaString(group.groupHandle, false))} ·
+      hmacProof {truncateHex(bufferToHexaString(group.hmacProof, false))}
+    </Text>
+    <Flex flexDirection="column" rowGap={2}>
+      {addresses.length === 0 ? (
+        <Text variant="small" color="neutral.c70">
+          No external addresses in this group.
+        </Text>
+      ) : (
+        addresses.map((address) => (
+          <AddressRow key={address.id} address={address} />
+        ))
+      )}
+    </Flex>
+  </Flex>
+);
+
+const AddressBookPanel: React.FC = () => {
+  const { book, reload, clear, loadSamples } = useAddressBookStore();
+  // Non-empty if either collection has entries, so a partial/corrupted book
+  // (addresses but no groups) still renders as populated and keeps Clear
+  // enabled for recovery.
+  const isEmpty =
+    book.contactGroups.length === 0 && book.externalAddresses.length === 0;
+
+  return (
+    <Flex
+      flexDirection="column"
+      rowGap={3}
+      p={4}
+      mb={4}
+      style={{
+        border: "1px solid rgba(128,128,128,0.3)",
+        borderRadius: 8,
+        maxHeight: 280,
+        overflowY: "auto",
+      }}
+    >
+      <Flex
+        justifyContent="space-between"
+        alignItems="center"
+        columnGap={3}
+        flexWrap="wrap"
+      >
+        <Flex columnGap={2} alignItems="center">
+          <Text variant="h5Inter">Address book</Text>
+          <Tag active type="opacity">
+            localStorage
+          </Tag>
+          <Text variant="small" color="neutral.c70">
+            key: {ADDRESS_BOOK_STORAGE_KEY}
+          </Text>
+        </Flex>
+        <Flex columnGap={2}>
+          <Button variant="shade" size="small" onClick={loadSamples}>
+            Load samples
+          </Button>
+          <Button variant="shade" size="small" onClick={reload}>
+            Reload
+          </Button>
+          <Button
+            variant="shade"
+            size="small"
+            onClick={clear}
+            disabled={isEmpty}
+          >
+            Clear
+          </Button>
+        </Flex>
+      </Flex>
+
+      <Text variant="tiny" color="neutral.c70">
+        “Load samples” seeds placeholder contacts for demoing the UI and
+        persistence. Their proofs are fabricated — the device will reject them
+        for real Rename / Edit / Provide operations.
+      </Text>
+
+      {isEmpty ? (
+        <Text variant="body" color="neutral.c70">
+          No contacts yet — register an external address, or load the samples,
+          to populate the book.
+        </Text>
+      ) : (
+        <Flex flexDirection="column" rowGap={3}>
+          {book.contactGroups.map((group) => (
+            <GroupCard
+              key={group.id}
+              group={group}
+              addresses={externalAddressesForGroup(book, group.id)}
+            />
+          ))}
+        </Flex>
+      )}
+    </Flex>
+  );
+};
+
+// --- form input types -------------------------------------------------------
 
 type RegisterInput = {
   contactName: string;
   scope: string;
   identifier: string;
-  blockchainFamily: string;
+  blockchainFamily: ContactsFamily;
   chainId: string;
   existingGroupHandle: string;
   existingHmacProof: string;
@@ -294,7 +465,7 @@ type EditExternalAddressIdentifierInputForm = {
   scope: string;
   previousIdentifier: string;
   newIdentifier: string;
-  blockchainFamily: string;
+  blockchainFamily: ContactsFamily;
   chainId: string;
   groupHandle: string;
   hmacProof: string;
@@ -307,7 +478,7 @@ type EditExternalAddressScopeInputForm = {
   previousScope: string;
   newScope: string;
   identifier: string;
-  blockchainFamily: string;
+  blockchainFamily: ContactsFamily;
   chainId: string;
   groupHandle: string;
   hmacProof: string;
@@ -315,17 +486,22 @@ type EditExternalAddressScopeInputForm = {
   skipOpenApp: boolean;
 };
 
-export const ContactsView: React.FC<{ sessionId: string }> = ({
-  sessionId,
-}) => {
+const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
   const dmk = useDmk();
-  const contactsManager = useContactsManager();
+  const contactsManagers = useContactsManagers();
+  const { book } = useAddressBookStore();
 
   const deviceModelId = dmk.getConnectedDevice({ sessionId }).modelId;
 
-  // Pre-fill the rename form from a previously registered contact (read once on
-  // mount); lets the playground rename a persisted contact end-to-end.
-  const latestContact = useMemo(() => loadLatestContact(), []);
+  // Pre-fill the rename / edit forms from the most recent persisted entries, so
+  // a registered contact can be renamed or edited end-to-end. The forms capture
+  // these values when a row is opened, so re-selecting a row after a successful
+  // operation reflects the updated book.
+  const lastGroup = last(book.contactGroups);
+  const lastAddress = last(book.externalAddresses);
+  const lastAddressGroup = lastAddress
+    ? findGroupById(book, lastAddress.contactGroupId)
+    : undefined;
 
   // The Contacts view lists actions with different input/output shapes, so the
   // list is typed loosely (mirroring the signer sample views).
@@ -335,7 +511,7 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
       {
         title: "Register External Address",
         description:
-          "Register an external address on the device — creating a new contact group, or adding the address to an existing one by providing its group handle and name proof.",
+          "Register an external address on the device — creating a new contact group, or adding the address to an existing one by providing its group handle and name proof. The family selects the embedded app the operation runs in (Ethereum or Tron). Identifier: hex for Ethereum, a base58 T… address for Tron. chainId is sent for Ethereum only.",
         executeDeviceAction: ({
           contactName,
           scope,
@@ -346,24 +522,34 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           existingHmacProof,
           skipOpenApp,
         }: RegisterInput) => {
-          if (!contactsManager) {
+          if (!contactsManagers) {
             throw new Error("Contacts manager not initialized");
           }
           const existingContactGroup =
             existingGroupHandle.trim().length > 0 &&
             existingHmacProof.trim().length > 0
               ? {
-                  groupHandle: hexToBytes(existingGroupHandle.trim()),
-                  hmacProof: hexToBytes(existingHmacProof.trim()),
+                  groupHandle: parseHexField(
+                    existingGroupHandle,
+                    "existingGroupHandle",
+                  ),
+                  hmacProof: parseHexField(
+                    existingHmacProof,
+                    "existingHmacProof",
+                  ),
                 }
               : undefined;
 
-          return contactsManager.registerExternalAddress({
+          return contactsManagers[blockchainFamily].registerExternalAddress({
             contactName,
             scope,
-            identifier: hexToBytes(identifier.trim()),
+            identifier: parseIdentifier(
+              blockchainFamily,
+              identifier,
+              "identifier",
+            ),
             blockchainFamily,
-            chainId: chainId.trim().length > 0 ? BigInt(chainId) : undefined,
+            chainId: chainIdForFamily(blockchainFamily, chainId),
             existingContactGroup,
             skipOpenApp,
           });
@@ -378,10 +564,17 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           identifier: DEFAULT_IDENTIFIER,
           blockchainFamily: "ethereum",
           chainId: "1",
-          existingGroupHandle: "",
-          existingHmacProof: "",
+          // Pre-fill the "link to existing group" fields from the latest group,
+          // so adding a second address to it is one click away.
+          existingGroupHandle: lastGroup
+            ? bufferToHexaString(lastGroup.groupHandle, false)
+            : "",
+          existingHmacProof: lastGroup
+            ? bufferToHexaString(lastGroup.hmacProof, false)
+            : "",
           skipOpenApp: false,
         },
+        valueSelector: familyValueSelector,
         OutputComponent: RegisterExternalAddressOutputView,
         deviceModelId,
       },
@@ -395,15 +588,15 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           groupHandle,
           hmacProof,
         }: RenameContactInputForm) => {
-          if (!contactsManager) {
+          if (!contactsManagers) {
             throw new Error("Contacts manager not initialized");
           }
 
-          return contactsManager.renameContact({
+          return contactsManagers.ethereum.renameContact({
             previousContactName,
             newContactName,
-            groupHandle: hexToBytes(groupHandle.trim()),
-            hmacProof: hexToBytes(hmacProof.trim()),
+            groupHandle: parseHexField(groupHandle, "groupHandle"),
+            hmacProof: parseHexField(hmacProof, "hmacProof"),
           });
         },
         validateValues: ({
@@ -417,10 +610,14 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           groupHandle.trim().length > 0 &&
           hmacProof.trim().length > 0,
         initialValues: {
-          previousContactName: latestContact?.contactName ?? "Alice",
+          previousContactName: lastGroup?.contactName ?? "Alice",
           newContactName: "Bob",
-          groupHandle: latestContact?.groupHandleHex ?? "",
-          hmacProof: latestContact?.hmacProofHex ?? "",
+          groupHandle: lastGroup
+            ? bufferToHexaString(lastGroup.groupHandle, false)
+            : "",
+          hmacProof: lastGroup
+            ? bufferToHexaString(lastGroup.hmacProof, false)
+            : "",
         },
         OutputComponent: RenameContactOutputView,
         deviceModelId,
@@ -441,20 +638,30 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           hmacRest,
           skipOpenApp,
         }: EditExternalAddressIdentifierInputForm) => {
-          if (!contactsManager) {
+          if (!contactsManagers) {
             throw new Error("Contacts manager not initialized");
           }
 
-          return contactsManager.editExternalAddressIdentifier({
+          return contactsManagers[
+            blockchainFamily
+          ].editExternalAddressIdentifier({
             contactName,
             scope,
-            previousIdentifier: hexToBytes(previousIdentifier.trim()),
-            newIdentifier: hexToBytes(newIdentifier.trim()),
+            previousIdentifier: parseIdentifier(
+              blockchainFamily,
+              previousIdentifier,
+              "previousIdentifier",
+            ),
+            newIdentifier: parseIdentifier(
+              blockchainFamily,
+              newIdentifier,
+              "newIdentifier",
+            ),
             blockchainFamily,
-            chainId: chainId.trim().length > 0 ? BigInt(chainId) : undefined,
-            groupHandle: hexToBytes(groupHandle.trim()),
-            hmacProof: hexToBytes(hmacProof.trim()),
-            hmacRest: hexToBytes(hmacRest.trim()),
+            chainId: chainIdForFamily(blockchainFamily, chainId),
+            groupHandle: parseHexField(groupHandle, "groupHandle"),
+            hmacProof: parseHexField(hmacProof, "hmacProof"),
+            hmacRest: parseHexField(hmacRest, "hmacRest"),
             skipOpenApp,
           });
         },
@@ -475,18 +682,26 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           hmacProof.trim().length > 0 &&
           hmacRest.trim().length > 0,
         initialValues: {
-          contactName: latestContact?.contactName ?? "Alice",
-          scope: latestContact?.scope ?? "Eth main",
-          previousIdentifier:
-            latestContact?.identifierHex ?? DEFAULT_IDENTIFIER,
+          contactName: lastAddressGroup?.contactName ?? "Alice",
+          scope: lastAddress?.scope ?? "Eth main",
+          previousIdentifier: lastAddress
+            ? displayAddress(lastAddress)
+            : DEFAULT_IDENTIFIER,
           newIdentifier: DEFAULT_NEW_IDENTIFIER,
-          blockchainFamily: latestContact?.blockchainFamily ?? "ethereum",
-          chainId: latestContact?.chainId ?? "1",
-          groupHandle: latestContact?.groupHandleHex ?? "",
-          hmacProof: latestContact?.hmacProofHex ?? "",
-          hmacRest: latestContact?.hmacRestHex ?? "",
+          blockchainFamily: toContactsFamily(lastAddress?.blockchainFamily),
+          chainId: lastAddress?.chainId?.toString() ?? "1",
+          groupHandle: lastAddress
+            ? bufferToHexaString(lastAddress.groupHandle, false)
+            : "",
+          hmacProof: lastAddressGroup
+            ? bufferToHexaString(lastAddressGroup.hmacProof, false)
+            : "",
+          hmacRest: lastAddress
+            ? bufferToHexaString(lastAddress.hmacRest, false)
+            : "",
           skipOpenApp: false,
         },
+        valueSelector: familyValueSelector,
         OutputComponent: EditExternalAddressIdentifierOutputView,
         deviceModelId,
       },
@@ -506,20 +721,24 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           hmacRest,
           skipOpenApp,
         }: EditExternalAddressScopeInputForm) => {
-          if (!contactsManager) {
+          if (!contactsManagers) {
             throw new Error("Contacts manager not initialized");
           }
 
-          return contactsManager.editExternalAddressScope({
+          return contactsManagers[blockchainFamily].editExternalAddressScope({
             contactName,
             previousScope,
             newScope,
-            identifier: hexToBytes(identifier.trim()),
+            identifier: parseIdentifier(
+              blockchainFamily,
+              identifier,
+              "identifier",
+            ),
             blockchainFamily,
-            chainId: chainId.trim().length > 0 ? BigInt(chainId) : undefined,
-            groupHandle: hexToBytes(groupHandle.trim()),
-            hmacProof: hexToBytes(hmacProof.trim()),
-            hmacRest: hexToBytes(hmacRest.trim()),
+            chainId: chainIdForFamily(blockchainFamily, chainId),
+            groupHandle: parseHexField(groupHandle, "groupHandle"),
+            hmacProof: parseHexField(hmacProof, "hmacProof"),
+            hmacRest: parseHexField(hmacRest, "hmacRest"),
             skipOpenApp,
           });
         },
@@ -540,23 +759,50 @@ export const ContactsView: React.FC<{ sessionId: string }> = ({
           hmacProof.trim().length > 0 &&
           hmacRest.trim().length > 0,
         initialValues: {
-          contactName: latestContact?.contactName ?? "Alice",
-          previousScope: latestContact?.scope ?? "Eth main",
+          contactName: lastAddressGroup?.contactName ?? "Alice",
+          previousScope: lastAddress?.scope ?? "Eth main",
           newScope: DEFAULT_NEW_SCOPE,
-          identifier: latestContact?.identifierHex ?? DEFAULT_IDENTIFIER,
-          blockchainFamily: latestContact?.blockchainFamily ?? "ethereum",
-          chainId: latestContact?.chainId ?? "1",
-          groupHandle: latestContact?.groupHandleHex ?? "",
-          hmacProof: latestContact?.hmacProofHex ?? "",
-          hmacRest: latestContact?.hmacRestHex ?? "",
+          identifier: lastAddress
+            ? displayAddress(lastAddress)
+            : DEFAULT_IDENTIFIER,
+          blockchainFamily: toContactsFamily(lastAddress?.blockchainFamily),
+          chainId: lastAddress?.chainId?.toString() ?? "1",
+          groupHandle: lastAddress
+            ? bufferToHexaString(lastAddress.groupHandle, false)
+            : "",
+          hmacProof: lastAddressGroup
+            ? bufferToHexaString(lastAddressGroup.hmacProof, false)
+            : "",
+          hmacRest: lastAddress
+            ? bufferToHexaString(lastAddress.hmacRest, false)
+            : "",
           skipOpenApp: false,
         },
+        valueSelector: familyValueSelector,
         OutputComponent: EditExternalAddressScopeOutputView,
         deviceModelId,
       },
     ],
-    [contactsManager, deviceModelId, latestContact],
+    [contactsManagers, deviceModelId, lastGroup, lastAddress, lastAddressGroup],
   );
 
-  return <DeviceActionsList title="Contacts" deviceActions={deviceActions} />;
+  return (
+    <Flex flexDirection="column" flex={1} overflow="hidden">
+      <AddressBookPanel />
+      <Flex flex={1} overflow="hidden">
+        <DeviceActionsList title="Contacts" deviceActions={deviceActions} />
+      </Flex>
+    </Flex>
+  );
+};
+
+export const ContactsView: React.FC<{ sessionId: string }> = ({
+  sessionId,
+}) => {
+  const store = useAddressBookState();
+  return (
+    <AddressBookContext.Provider value={store}>
+      <ContactsViewInner sessionId={sessionId} />
+    </AddressBookContext.Provider>
+  );
 };

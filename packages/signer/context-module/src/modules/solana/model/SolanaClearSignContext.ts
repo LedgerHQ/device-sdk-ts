@@ -1,4 +1,5 @@
 import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
+import { type SolanaBasicFlowRule } from "@/modules/solana/model/SolanaContextTypes";
 import {
   type SolanaAltResolutionPayload,
   type SolanaEnumVariantPayload,
@@ -89,6 +90,9 @@ export type SolanaPayloadOverrides = {
   [ClearSignContextType.SOLANA_ALT_RESOLUTION]: {
     payload: SolanaAltResolutionPayload;
     certificate?: PkiCertificate;
+  };
+  [ClearSignContextType.SOLANA_BASIC_FLOW_RULE]: {
+    payload: SolanaBasicFlowRule;
   };
 };
 

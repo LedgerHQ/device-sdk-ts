@@ -1,4 +1,4 @@
-import { Apex, Flex, Nano, Stax } from "@ledgerhq/lumen-ui-react/symbols";
+import { Flex, Nano, NanoGen5, Stax } from "@ledgerhq/lumen-ui-react/symbols";
 
 /**
  * For Speculos proxying, firmware and app versions must be in Speculinho's
@@ -71,7 +71,7 @@ export const DEVICE_MODELS: DeviceModel[] = [
     label: "Apex",
     defaultName: "Ledger Apex",
     mask: 0x33400000,
-    icon: Apex,
+    icon: NanoGen5,
     speculos: true,
     rcProvider: 84,
   },

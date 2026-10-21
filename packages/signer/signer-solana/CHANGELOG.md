@@ -1,5 +1,18 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.14.0
+
+### Minor Changes
+
+- [#2012](https://github.com/LedgerHQ/device-sdk-ts/pull/2012) [`8c76bfe`](https://github.com/LedgerHQ/device-sdk-ts/commit/8c76bfe940ee6d59ff0cefd641d7c655cd1f0229) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Read the Solana basic-flow routing rules from CAL through the context module, merged over the bundled default by rule id. The lookup is bounded by a 3 s deadline
+
+- [#2010](https://github.com/LedgerHQ/device-sdk-ts/pull/2010) [`e52d332`](https://github.com/LedgerHQ/device-sdk-ts/commit/e52d3324d23128be898a2b9f128b49a052e0d7db) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Route native staking transactions (stake, unstake, withdraw) straight to the basic flow through a rules-driven matcher, skipping generic clear signing. Only shapes the Solana app's basic flow can display are routed: one staking operation, ComputeBudget only at the start, and no address lookup tables
+
+### Patch Changes
+
+- Updated dependencies [[`d9d4089`](https://github.com/LedgerHQ/device-sdk-ts/commit/d9d4089ba0975e8b22d3c9b4e0a2ed3af3219987)]:
+  - @ledgerhq/context-module@2.8.0
+
 ## 1.13.4
 
 ### Patch Changes

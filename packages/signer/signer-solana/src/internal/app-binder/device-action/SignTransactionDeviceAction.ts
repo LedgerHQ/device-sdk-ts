@@ -24,11 +24,17 @@ import {
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-import { APP_NAME } from "@internal/app-binder/constants";
+import {
+  APP_NAME,
+  COMPUTE_BUDGET_PROGRAM_ID,
+} from "@internal/app-binder/constants";
+import { resolveBasicFlowRules } from "@internal/app-binder/generic-flow-router/basicFlowRules";
+import { GenericFlowRouter } from "@internal/app-binder/generic-flow-router/GenericFlowRouter";
 import {
   type NormalizedTransactionInput,
   TransactionInputNormaliser,
 } from "@internal/app-binder/services/TransactionInputNormaliser";
+import { TransactionParser } from "@internal/app-binder/services/utils/TransactionParser";
 import {
   isSolanaSignerFeatureSupported,
   type SolanaSignerFeaturesNames,
@@ -62,6 +68,9 @@ export type MachineDependencies = {
   readonly reportSign: (arg0: {
     input: SolanaSigningReportTaskArgs;
   }) => Promise<void>;
+  readonly resolveSigningRoute: (arg0: {
+    input: { messageBytes: Uint8Array };
+  }) => Promise<string | null>;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -88,8 +97,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       SignTransactionDAInternalState
     >;
 
-    const { normalizeTransaction, getAppConfig, reportSign } =
-      this.extractDependencies(internalApi);
+    const {
+      normalizeTransaction,
+      getAppConfig,
+      reportSign,
+      resolveSigningRoute,
+    } = this.extractDependencies(internalApi);
 
     const loggerFactory = this.getLoggerFactory(internalApi);
     const logger = loggerFactory("SignTransactionDeviceAction");
@@ -151,6 +164,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       actors: {
         normalizeTransaction: fromPromise(normalizeTransaction),
         reportSign: fromPromise(reportSign),
+        resolveSigningRoute: fromPromise(resolveSigningRoute),
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
@@ -218,6 +232,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           context._internalState.clearSignPrepared,
         hasSignature: ({ context }) =>
           context._internalState.signature !== null,
+        hasBasicFlowRule: ({ context }) =>
+          context._internalState.basicFlowRuleId !== null,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -250,6 +266,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           clearSignPrepared: false,
           unrecognizedProgramIds: [],
           staleDescriptor: false,
+          basicFlowRuleId: null,
         },
       }),
       states: {
@@ -426,11 +443,49 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         CheckGenericClearSignSupported: {
           always: [
             {
-              target: "GenericClearSign",
+              target: "ResolveSigningRoute",
               guard: and(["noInternalError", "isGenericClearSignAvailable"]),
             },
             { target: "BasicClearSign", guard: "noInternalError" },
             { target: "Error" },
+          ],
+        },
+        // Basic-flow rules: a matching transaction skips generic clear-sign
+        // and goes straight to the basic flow, where the app parses it
+        // natively. Generic never ran, so the tx-check descriptor provided in
+        // TxCheck is still in place and no re-provision is needed. The actor
+        // never rejects; onError is purely defensive.
+        ResolveSigningRoute: {
+          invoke: {
+            id: "resolveSigningRoute",
+            src: "resolveSigningRoute",
+            input: ({ context }) => ({
+              messageBytes: context._internalState.messageBytes,
+            }),
+            onDone: {
+              target: "CheckSigningRoute",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  basicFlowRuleId: event.output,
+                }),
+              }),
+            },
+            onError: { target: "GenericClearSign" },
+          },
+        },
+        CheckSigningRoute: {
+          always: [
+            {
+              target: "BasicClearSign",
+              guard: "hasBasicFlowRule",
+              actions: ({ context }) =>
+                logger.info(
+                  "[ClearSign] basic-flow rule matched; skipping generic clear-sign",
+                  { data: { rule: context._internalState.basicFlowRuleId } },
+                ),
+            },
+            { target: "GenericClearSign" },
           ],
         },
         // Generic clear-sign child: streams + validates the descriptors (no
@@ -614,8 +669,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         // Single report state for all paths.
         // isBlindSign is derived from context: false when a signature or error is
-        // already set (clear-sign path — success or cancel), true otherwise
-        // (basic/legacy path, neither has run yet).
+        // already set (clear-sign path — success or cancel) or when a
+        // basic-flow rule routed the transaction (the app clear-signs it
+        // natively), true otherwise (basic path, neither has run yet).
         // Routes to: SignTransactionResultCheck (clear-sign success),
         //            Error (clear-sign cancel/failure), or
         //            BasicTerminalSign (basic path).
@@ -631,6 +687,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   : null;
               return {
                 isBlindSign:
+                  context._internalState.basicFlowRuleId === null &&
                   context._internalState.signature === null &&
                   context._internalState.error === null,
                 messageBytes: context._internalState.messageBytes,
@@ -751,10 +808,50 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const reportSign = async (arg0: { input: SolanaSigningReportTaskArgs }) =>
       new SolanaSigningReportTask(arg0.input).run();
 
+    // Never rejects: any failure means no rule matched, so the transaction
+    // stays on the generic path. Program IDs are always static keys, so no
+    // ALT resolver is needed.
+    const resolveSigningRoute = async (arg0: {
+      input: { messageBytes: Uint8Array };
+    }): Promise<string | null> => {
+      try {
+        const parsed = await new TransactionParser()
+          .parse(arg0.input.messageBytes)
+          .run();
+        if (parsed.isLeft()) return null;
+        const message = parsed.unsafeCoerce().message;
+        // ComputeBudget isn't in CAL: don't look it up.
+        const programIds = [
+          ...new Set(
+            message.compiledInstructions.map((ix) =>
+              message.allKeys[ix.programIdIndex]?.toBase58(),
+            ),
+          ),
+        ].filter(
+          (id): id is string =>
+            id !== undefined && id !== COMPUTE_BUDGET_PROGRAM_ID,
+        );
+        const rules = await resolveBasicFlowRules(
+          this.input.contextModule,
+          programIds,
+        );
+        return new GenericFlowRouter(rules, {
+          leadingAllowed: [COMPUTE_BUDGET_PROGRAM_ID],
+        }).match(parsed.unsafeCoerce());
+      } catch (error) {
+        this.getLoggerFactory(internalApi)("ResolveSigningRoute").warn(
+          "[resolveSigningRoute] failed; keeping the generic clear-sign path",
+          { data: { error: String(error) } },
+        );
+        return null;
+      }
+    };
+
     return {
       normalizeTransaction,
       getAppConfig,
       reportSign,
+      resolveSigningRoute,
     };
   }
 }

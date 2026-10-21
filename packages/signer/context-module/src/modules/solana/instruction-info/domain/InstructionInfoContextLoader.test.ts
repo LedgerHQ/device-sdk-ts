@@ -59,6 +59,7 @@ function makeSystemResult(): InstructionInfoResult {
   return {
     programId: SYSTEM_PROGRAM,
     descriptors: { "00000000": Right(makeSystemPayload()) },
+    basicFlowTags: [],
     enumVariants: [],
   };
 }
@@ -84,6 +85,7 @@ function makeJupiterResult(): InstructionInfoResult {
   return {
     programId: JUPITER_PROGRAM,
     descriptors: { e517cb977ae3ad2a: Right(makeJupiterPayload()) },
+    basicFlowTags: [],
     enumVariants: [],
   };
 }
@@ -97,6 +99,7 @@ function makeJupiterRouteResult(
       e517cb977ae3ad2a: Right({ ...makeJupiterPayload(), enumVariants }),
     },
     enumVariants,
+    basicFlowTags: [],
   };
 }
 
@@ -324,6 +327,7 @@ describe("InstructionInfoContextLoader", () => {
           }),
         },
         enumVariants: [],
+        basicFlowTags: [],
       };
       vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
         Right(result),
@@ -351,6 +355,7 @@ describe("InstructionInfoContextLoader", () => {
           "00000000": Left(new Error("missing 'test' signature")),
         },
         enumVariants: [],
+        basicFlowTags: [],
       };
       vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
         Right(result),

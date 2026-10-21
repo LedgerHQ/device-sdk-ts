@@ -1,5 +1,11 @@
 # @ledgerhq/context-module
 
+## 2.8.0
+
+### Minor Changes
+
+- [#2012](https://github.com/LedgerHQ/device-sdk-ts/pull/2012) [`d9d4089`](https://github.com/LedgerHQ/device-sdk-ts/commit/d9d4089ba0975e8b22d3c9b4e0a2ed3af3219987) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add a `SOLANA_BASIC_FLOW_RULE` context type and its loader to read the Solana basic-flow routing rules from the CAL `signing_route` tags, and cache `solana_programs` lookups briefly so a sign doesn't fetch the same program twice.
+
 ## 2.7.0
 
 ### Minor Changes

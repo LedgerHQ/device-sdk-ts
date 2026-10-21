@@ -8,6 +8,7 @@ import { type TypedDataContext } from "./modules/ethereum/model/TypedDataContext
 import type { TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { DefaultSignReporter } from "./modules/multichain/sign-reporter/domain/DefaultSignReporter";
 import { type SignReportParams } from "./modules/multichain/sign-reporter/model/SignReportParams";
+import { SolanaBasicFlowRuleContextLoader } from "./modules/solana/instruction-info/domain/SolanaBasicFlowRuleContextLoader";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
@@ -422,6 +423,59 @@ describe("DefaultContextModule", () => {
 
       // THEN
       expect(reportSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Solana basic-flow rules", () => {
+    const input = {
+      programIds: ["Stake11111111111111111111111111111111111111"],
+      network: "solana-mainnet",
+    };
+    const expectedTypes = [ClearSignContextType.SOLANA_BASIC_FLOW_RULE];
+
+    it("should load them through getContexts on Solana", async () => {
+      // GIVEN
+      const contexts: ClearSignContext[] = [
+        {
+          type: ClearSignContextType.SOLANA_BASIC_FLOW_RULE,
+          payload: { id: "native-staking", required: [], allowed: [] },
+        },
+      ];
+      const loadSpy = vi
+        .spyOn(SolanaBasicFlowRuleContextLoader.prototype, "load")
+        .mockResolvedValue(contexts);
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        defaultLoaders: true,
+        chain: ContextModuleChainID.Solana,
+      });
+
+      // WHEN
+      const result = await contextModule.getContexts(input, expectedTypes);
+
+      // THEN
+      expect(loadSpy).toHaveBeenCalledWith(input);
+      expect(result).toEqual(contexts);
+    });
+
+    it("should return no contexts on a non-Solana chain", async () => {
+      // GIVEN
+      const loadSpy = vi.spyOn(
+        SolanaBasicFlowRuleContextLoader.prototype,
+        "load",
+      );
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        defaultLoaders: true,
+        chain: ContextModuleChainID.Ethereum,
+      });
+
+      // WHEN
+      const result = await contextModule.getContexts(input, expectedTypes);
+
+      // THEN
+      expect(loadSpy).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
     });
   });
 });

@@ -300,14 +300,33 @@ describe("SignTransactionTask", () => {
   });
 
   it.each([
-    // Past the testnet NU7 activation (4,465,026); still NU6.3 on mainnet.
-    { network: "testnet" as const, expectedBranchIdHex: "d90a1977" },
-    { network: "mainnet" as const, expectedBranchIdHex: "5b16a537" },
+    // Past the testnet NU7 activation (4,465,026).
+    {
+      network: "testnet" as const,
+      blockHeight: 4465026,
+      expectedBranchIdHex: "d90a1977",
+    },
+    // Just below the mainnet NU7 activation: still NU6.3.
+    {
+      network: "mainnet" as const,
+      blockHeight: 3543404,
+      expectedBranchIdHex: "5b16a537",
+    },
+    // At the mainnet NU7 activation.
+    {
+      network: "mainnet" as const,
+      blockHeight: 3543405,
+      expectedBranchIdHex: "d90a1977",
+    },
     // Omitted means mainnet.
-    { network: undefined, expectedBranchIdHex: "5b16a537" },
+    {
+      network: undefined,
+      blockHeight: 3543405,
+      expectedBranchIdHex: "d90a1977",
+    },
   ])(
-    "sends the $network branch id for the signing height to the device",
-    async ({ network, expectedBranchIdHex }) => {
+    "sends the $network branch id for height $blockHeight to the device",
+    async ({ network, blockHeight, expectedBranchIdHex }) => {
       vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
         DmkResultFactory({
           data: {
@@ -364,7 +383,7 @@ describe("SignTransactionTask", () => {
             "018b515300000000001976a914b650b82e9e136db22e3643e5a52380d2ac0e360888ac",
           additionals: ["zcash"],
           expiryHeight: new Uint8Array([0x00, 0x00, 0x00, 0x00]),
-          blockHeight: 4500000,
+          blockHeight,
           network,
         },
       }).run();
