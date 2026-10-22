@@ -1,0 +1,312 @@
+{
+  "group": "erc7730-typed-data-v2",
+  "name": "raw-fields",
+  "action": "signTypedData",
+  "devices": ["flex"],
+  "coinApp": "Ethereum",
+  "osVersion": "1.7.0",
+  "appVersion": "1.24.0",
+  "mode": "parallel",
+  "enabled": false,
+  "cases": [
+    {
+      "description": "Lens post: strings and integers shown with no formatting",
+      "data": {
+        "domain": {
+          "name": "LensHub",
+          "version": "2",
+          "chainId": 137,
+          "verifyingContract": "0xdb46d1dc155634fbc732f92e853b10b288ad5a1d"
+        },
+        "primaryType": "Post",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Post": [
+            {
+              "name": "profileId",
+              "type": "uint256"
+            },
+            {
+              "name": "contentURI",
+              "type": "string"
+            },
+            {
+              "name": "actionModules",
+              "type": "address[]"
+            },
+            {
+              "name": "actionModulesInitDatas",
+              "type": "bytes[]"
+            },
+            {
+              "name": "referenceModule",
+              "type": "address"
+            },
+            {
+              "name": "referenceModuleInitData",
+              "type": "bytes"
+            },
+            {
+              "name": "nonce",
+              "type": "uint256"
+            },
+            {
+              "name": "deadline",
+              "type": "uint256"
+            }
+          ]
+        },
+        "message": {
+          "profileId": "42",
+          "contentURI": "ipfs://QmTzQ1Nj5CFbGXUBuoZvEphAE1rKMQR7FxGZFkJu3QLNSG",
+          "actionModules": [],
+          "actionModulesInitDatas": [],
+          "referenceModule": "0x0000000000000000000000000000000000000000",
+          "referenceModuleInitData": "0x",
+          "nonce": 5,
+          "deadline": 1735689600
+        }
+      },
+      "expectedTexts": [
+        "Review typed message to Post",
+        "Interaction with LensHub",
+        "Profile Id 42",
+        "nonce 5",
+        "Network Polygon"
+      ]
+    },
+    {
+      "description": "Rarible lazy mint: values read in arrays of structs",
+      "data": {
+        "domain": {
+          "name": "Rarible",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xc9154424b823b10579895ccbe442d41b9abd96ed"
+        },
+        "primaryType": "Mint721",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Mint721": [
+            {
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "name": "tokenURI",
+              "type": "string"
+            },
+            {
+              "name": "creators",
+              "type": "Part[]"
+            },
+            {
+              "name": "royalties",
+              "type": "Part[]"
+            }
+          ],
+          "Part": [
+            {
+              "name": "account",
+              "type": "address"
+            },
+            {
+              "name": "value",
+              "type": "uint96"
+            }
+          ]
+        },
+        "message": {
+          "tokenId": "123456789",
+          "tokenURI": "ipfs://QmTzQ1Nj5CFbGXUBuoZvEphAE1rKMQR7FxGZFkJu3QLNSG",
+          "creators": [
+            {
+              "account": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+              "value": "10000"
+            }
+          ],
+          "royalties": [
+            {
+              "account": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+              "value": "1000"
+            }
+          ]
+        }
+      },
+      "expectedTexts": [
+        "Review typed message to Lazy Mint ERC-721",
+        "Token ID 123456789",
+        "Token URI ipfs://",
+        "Royalties value",
+        "1000"
+      ]
+    },
+    {
+      "description": "DeGate transfer: ten descriptors in one message",
+      "data": {
+        "domain": {
+          "name": "DeGate",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xe63602a9b3dfe983187525ac985fec4f57b24ed5"
+        },
+        "primaryType": "Transfer",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Transfer": [
+            {
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "name": "accountID",
+              "type": "uint32"
+            },
+            {
+              "name": "tokenID",
+              "type": "uint32"
+            },
+            {
+              "name": "amount",
+              "type": "uint248"
+            },
+            {
+              "name": "feeTokenID",
+              "type": "uint32"
+            },
+            {
+              "name": "maxFee",
+              "type": "uint96"
+            },
+            {
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "name": "validUntil",
+              "type": "uint32"
+            },
+            {
+              "name": "storageID",
+              "type": "uint32"
+            }
+          ]
+        },
+        "message": {
+          "owner": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+          "accountID": 12345,
+          "tokenID": 0,
+          "amount": "1000000000000000000",
+          "feeTokenID": 0,
+          "maxFee": "30000000000000",
+          "to": "0x1111111254eeb25477b68fb85ed929f73a960582",
+          "validUntil": 1735689600,
+          "storageID": 43
+        }
+      },
+      "expectedTexts": [
+        "Review typed message to DeGate Transfer",
+        "AccountID 12345",
+        "MaxFee 30000000000000",
+        "StorageID 43"
+      ]
+    },
+    {
+      "description": "Tally ballot: a message of two fields",
+      "data": {
+        "domain": {
+          "name": "Tally",
+          "chainId": 1,
+          "verifyingContract": "0x408ed6354d4973f66138c91495f2f2fcbd8724c3"
+        },
+        "primaryType": "Ballot",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "Ballot": [
+            {
+              "name": "proposalId",
+              "type": "uint256"
+            },
+            {
+              "name": "support",
+              "type": "uint8"
+            }
+          ]
+        },
+        "message": {
+          "proposalId": "42",
+          "support": 1
+        }
+      },
+      "expectedTexts": [
+        "Review typed message to Uniswap Governor",
+        "Proposal id 42",
+        "Support 1"
+      ]
+    }
+  ]
+}
