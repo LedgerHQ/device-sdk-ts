@@ -67,6 +67,27 @@ export class LtcSignerDriver {
     await this.page.getByTestId("CTA_send-device-action").click();
   }
 
+  /** Open the Sign Transaction action, fill its form and Execute it. */
+  async signTransaction(fields: {
+    inputs: string;
+    associatedKeysets: string;
+    outputScriptHex: string;
+    changePath?: string;
+    lockTime?: string;
+  }): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign Transaction").click();
+    for (const [fieldKey, value] of Object.entries({
+      changePath: "",
+      lockTime: "0",
+      ...fields,
+    })) {
+      const input = this.page.getByTestId(`input-text_${fieldKey}`);
+      await input.waitFor({ state: "visible" });
+      await input.fill(value);
+    }
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
   /** Pick an option of the form's only select input. */
   private async selectOption(optionLabel: string): Promise<void> {
     const form = this.page.getByTestId("form_device-action");
