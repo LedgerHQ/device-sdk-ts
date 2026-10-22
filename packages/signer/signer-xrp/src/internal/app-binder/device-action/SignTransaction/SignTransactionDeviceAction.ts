@@ -39,9 +39,11 @@ export type MachineDependencies = {
 /**
  * Opens the XRP app (unless skipped), then runs {@link SendSignTransactionTask}.
  *
- * Unlike `CallTaskInAppDeviceAction`, `transaction` and `derivationPath` come
- * from machine/invoke `input` at runtime, so a parent device action can nest
- * this machine once and supply bytes only when they are known.
+ * Unlike `CallTaskInAppDeviceAction`, the serialized transaction is not closed
+ * over a task. It lives on machine `context.input.transaction` and can be
+ * supplied from either source:
+ * - factory / constructor args (direct `executeDeviceAction`);
+ * - parent invoke `input` when this DA is nested via `makeStateMachine`.
  */
 export class SignTransactionDeviceAction extends XStateDeviceAction<
   SignTransactionDAOutput,
@@ -168,6 +170,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "signTransaction",
             src: "signTransaction",
+            // Always from context.input (seeded by factory args or invoke input).
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
               transaction: context.input.transaction,
@@ -226,13 +229,24 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           transaction: Uint8Array;
           curve: Curve;
         };
-      }) =>
-        new SendSignTransactionTask(internalApi, {
+      }) => {
+        // context.input.transaction is seeded by factory args or invoke input;
+        // reject the factory default / missing bytes before hitting the device.
+        if (!input.transaction?.length) {
+          return Promise.reject(
+            new UnknownDAError(
+              "SignTransactionDeviceAction requires a non-empty serialized transaction (factory arg or invoke/context input)",
+            ),
+          );
+        }
+
+        return new SendSignTransactionTask(internalApi, {
           derivationPath: input.derivationPath,
           serializedTransaction: input.transaction,
           curve: input.curve,
           loggerFactory,
-        }).run(),
+        }).run();
+      },
     };
   }
 }

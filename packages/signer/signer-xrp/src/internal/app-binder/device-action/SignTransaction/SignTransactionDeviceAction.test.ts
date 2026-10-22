@@ -262,4 +262,35 @@ describe("SignTransactionDeviceAction", () => {
         );
       }));
   });
+
+  describe("serialized transaction validation", () => {
+    it("rejects when transaction is empty (neither factory arg nor invoke input)", async () => {
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: DERIVATION_PATH,
+          transaction: new Uint8Array(),
+          skipOpenApp: true,
+          curve: Curve.Secp256k1,
+          loggerFactory,
+        },
+      });
+      const { signTransaction } = deviceAction.extractDependencies(apiMock);
+
+      await expect(
+        signTransaction({
+          input: {
+            derivationPath: DERIVATION_PATH,
+            transaction: new Uint8Array(),
+            curve: Curve.Secp256k1,
+          },
+        }),
+      ).rejects.toMatchObject({
+        _tag: "UnknownDAError",
+        originalError: {
+          message:
+            "SignTransactionDeviceAction requires a non-empty serialized transaction (factory arg or invoke/context input)",
+        },
+      });
+    });
+  });
 });

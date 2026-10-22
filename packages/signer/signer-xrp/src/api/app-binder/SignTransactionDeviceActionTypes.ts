@@ -14,12 +14,20 @@ import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplic
 export type SignTransactionDAOutput = Signature;
 
 /**
- * Device-action input. `transaction` is read from invoke / `createActor` input
- * at runtime, so a parent flow can register `makeStateMachine` once and pass
- * the serialized bytes only when they are known (e.g. after GetAddress).
+ * Device-action input for `SignTransactionDeviceAction`.
+ *
+ * **Serialized transaction (double source):**
+ * - Seeded from factory / constructor `input.transaction` on
+ *   `executeDeviceAction` (binder path).
+ * - Overridden by the parent invoke `input.transaction` when this machine is
+ *   nested via `makeStateMachine` (e.g. bytes known only after GetAddress).
+ *
+ * The sign step always reads `context.input.transaction` and rejects if it is
+ * missing or empty (neither factory arg nor invoke/context input provided it).
  */
 export type SignTransactionDAInput = {
   readonly derivationPath: string;
+  /** Serialized XRP transaction; see double-source note above. */
   readonly transaction: Uint8Array;
   readonly skipOpenApp: boolean;
   readonly curve: Curve;
