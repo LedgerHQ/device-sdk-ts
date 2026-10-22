@@ -13,6 +13,7 @@ import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import type { BuildEIP712ContextTaskResult } from "@internal/app-binder/task/BuildEIP712ContextTask";
+import type { ContextWithSubContexts } from "@internal/app-binder/task/BuildFullContextsTask";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
@@ -78,6 +79,8 @@ export type SignTypedDataDAInternalState = {
   readonly appConfig: GetConfigCommandResponse | null;
   readonly from: string | null;
   readonly typedDataContext: BuildEIP712ContextTaskResult | null;
+  /** The description of an EIP-712 V2 message, empty when it is signed raw */
+  readonly typedDataV2Contexts: ContextWithSubContexts[] | null;
   readonly signature: Signature | null;
   readonly isBlindSign: boolean | null;
   readonly usedFallback: boolean;
