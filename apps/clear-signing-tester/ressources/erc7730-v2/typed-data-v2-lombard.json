@@ -1,0 +1,70 @@
+{
+  "group": "erc7730-typed-data-v2",
+  "name": "lombard",
+  "action": "signTypedData",
+  "devices": ["flex"],
+  "coinApp": "Ethereum",
+  "osVersion": "1.7.0",
+  "appVersion": "1.24.0",
+  "mode": "parallel",
+  "enabled": false,
+  "cases": [
+    {
+      "description": "Lombard fee approval: a native amount and an expiry date",
+      "data": {
+        "domain": {
+          "name": "Lombard Staked Bitcoin",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0x8236a87084f8B84306f72007F36F2618A5634494"
+        },
+        "primaryType": "feeApproval",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "feeApproval": [
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "fee",
+              "type": "uint256"
+            },
+            {
+              "name": "expiry",
+              "type": "uint256"
+            }
+          ]
+        },
+        "message": {
+          "chainId": 1,
+          "fee": "50000",
+          "expiry": 1735689600
+        }
+      },
+      "expectedTexts": [
+        "Review typed message to Lombard Network Fee",
+        "Chain ID 1",
+        "Network Fee 0.00000000000005 ETH",
+        "Expiry 2025-01-01"
+      ]
+    }
+  ]
+}

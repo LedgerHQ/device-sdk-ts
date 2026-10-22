@@ -67,16 +67,25 @@ requested `--device` is skipped rather than failed.
 
 ### Groups
 
-| Group                | Devices           | What it covers                                  |
-| -------------------- | ----------------- | ----------------------------------------------- |
-| `core`               | stax, nanox       | Ethereum transaction and typed-data fixtures    |
-| `contacts`           | flex              | Ethereum Address Book registration and signing  |
-| `gating`             | stax, flex        | Unauthenticated callers fall back to gating     |
-| `erc7730`            | stax, nanox, flex | Per-dapp calldata descriptors                   |
-| `erc7730-typed-data` | stax, nanox, flex | Per-dapp typed-data descriptors                 |
-| `solana`             | stax, nanox, flex | Solana transaction fixtures                     |
-| `solana-programs`    | —                 | Live program transactions — disabled, see below |
-| `tron`               | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex |
+| Group                   | Devices           | What it covers                                  |
+| ----------------------- | ----------------- | ----------------------------------------------- |
+| `core`                  | stax, nanox       | Ethereum transaction and typed-data fixtures    |
+| `contacts`              | flex              | Ethereum Address Book registration and signing  |
+| `gating`                | stax, flex        | Unauthenticated callers fall back to gating     |
+| `erc7730`               | stax, nanox, flex | Per-dapp calldata descriptors                   |
+| `erc7730-typed-data`    | stax, nanox, flex | Per-dapp typed-data descriptors                 |
+| `erc7730-typed-data-v2` | —                 | EIP-712 V2 descriptors — disabled, see below    |
+| `solana`                | stax, nanox, flex | Solana transaction fixtures                     |
+| `solana-programs`       | —                 | Live program transactions — disabled, see below |
+| `tron`                  | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex |
+
+The `erc7730-typed-data-v2` group is **disabled** until two things exist: an
+Ethereum app with EIP-712 V2 clear signing on Speculinho (its scenarios pin
+`1.24.0`), and V2 descriptors on the CAL branch the context module reads, which
+today are only reachable through a CAL commit ref and carry `test` signatures
+only. Each case asserts the operation title and the formatted values the
+descriptors produce, so a message signed raw fails it, and the one case that
+CAL does not describe expects a blind signature.
 
 The `solana-programs` group is **disabled**. Its cases pull transactions from an
 RPC rather than a fixture, so they carry no `expectedTexts` — and a case with

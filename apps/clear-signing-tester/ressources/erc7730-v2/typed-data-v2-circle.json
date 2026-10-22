@@ -1,0 +1,159 @@
+{
+  "group": "erc7730-typed-data-v2",
+  "name": "circle",
+  "action": "signTypedData",
+  "devices": ["flex"],
+  "coinApp": "Ethereum",
+  "osVersion": "1.7.0",
+  "appVersion": "1.24.0",
+  "mode": "parallel",
+  "enabled": false,
+  "cases": [
+    {
+      "description": "USDC TransferWithAuthorization: trusted names, and the token is the verifying contract",
+      "data": {
+        "domain": {
+          "name": "USD Coin",
+          "version": "2",
+          "chainId": 1,
+          "verifyingContract": "0xA0b86991c6218b36c1d19d4a2e9eB0cE3606eB48"
+        },
+        "primaryType": "TransferWithAuthorization",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "TransferWithAuthorization": [
+            {
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "name": "validAfter",
+              "type": "uint256"
+            },
+            {
+              "name": "validBefore",
+              "type": "uint256"
+            },
+            {
+              "name": "nonce",
+              "type": "bytes32"
+            }
+          ]
+        },
+        "message": {
+          "from": "0x6e0d01a76c3cf4288372a29124a26d4353ee51be",
+          "to": "0x2b2aaa2a7a2b3a07b3c6a1fe0d0a6e3d4e4e2e6d",
+          "value": "2500000",
+          "validAfter": "1700000000",
+          "validBefore": "1900000000",
+          "nonce": "0x5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a"
+        }
+      },
+      "expectedTexts": [
+        "Review typed message to Authorize USDC transfer",
+        "Interaction with Circle",
+        "Amount 2.5 USDC",
+        "Valid after 2023-11-14",
+        "Valid before 2030-03-17"
+      ]
+    },
+    {
+      "description": "USDC ReceiveWithAuthorization: the same description under another primary type",
+      "data": {
+        "domain": {
+          "name": "USD Coin",
+          "version": "2",
+          "chainId": 1,
+          "verifyingContract": "0xA0b86991c6218b36c1d19d4a2e9eB0cE3606eB48"
+        },
+        "primaryType": "ReceiveWithAuthorization",
+        "types": {
+          "EIP712Domain": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "name": "verifyingContract",
+              "type": "address"
+            }
+          ],
+          "ReceiveWithAuthorization": [
+            {
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "name": "validAfter",
+              "type": "uint256"
+            },
+            {
+              "name": "validBefore",
+              "type": "uint256"
+            },
+            {
+              "name": "nonce",
+              "type": "bytes32"
+            }
+          ]
+        },
+        "message": {
+          "from": "0x6e0d01a76c3cf4288372a29124a26d4353ee51be",
+          "to": "0x2b2aaa2a7a2b3a07b3c6a1fe0d0a6e3d4e4e2e6d",
+          "value": "2500000",
+          "validAfter": "1700000000",
+          "validBefore": "1900000000",
+          "nonce": "0x5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a"
+        }
+      },
+      "expectedTexts": [
+        "Review typed message to Authorize USDC transfer",
+        "Interaction with Circle",
+        "Amount 2.5 USDC",
+        "Valid after 2023-11-14",
+        "Valid before 2030-03-17"
+      ]
+    }
+  ]
+}
