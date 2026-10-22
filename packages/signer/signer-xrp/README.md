@@ -48,6 +48,8 @@ const { observable: signature$ } = signer.signTransaction(
 
 With Ed25519, the public key starts with `ED` and the signature is 64 raw bytes instead of a DER signature. In both cases, its uppercase hex goes in `TxnSignature`.
 
+Getting an Ed25519 address requires XRP app 2.8.0 or later: older versions answer `6f88`. Signing with Ed25519 works on older versions too.
+
 ## Development
 
 ```bash

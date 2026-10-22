@@ -118,7 +118,7 @@ const { observable, cancel } = signerXrp.getAddress(derivationPath, options);
   - `checkOnDevice`: An optional boolean indicating whether user confirmation on the device is required (`true`) or not (`false`). Defaults to `false`.
   - `returnChainCode`: An optional boolean indicating whether the BIP32 chain code should be returned alongside the address (`true`) or not (`false`). Defaults to `false`.
   - `skipOpenApp`: An optional boolean indicating whether to skip opening the xrp app automatically (`true`) or not (`false`). Defaults to `false`.
-  - `curve`: An optional `Curve` to derive the key with, `Curve.Secp256k1` or `Curve.Ed25519`. Defaults to `Curve.Secp256k1`. The same derivation path is a different account on each curve, so sign with the curve the address was derived with.
+  - `curve`: An optional `Curve` to derive the key with, `Curve.Secp256k1` or `Curve.Ed25519`. Defaults to `Curve.Secp256k1`. The same derivation path is a different account on each curve, so sign with the curve the address was derived with. `Curve.Ed25519` requires XRP app 2.8.0 or later: older versions answer `6f88`.
 
 #### **Returns**
 

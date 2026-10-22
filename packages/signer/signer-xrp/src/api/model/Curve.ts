@@ -11,6 +11,9 @@ export enum Curve {
   /**
    * EdDSA on Ed25519. Public keys start with `ED`, signatures are 64 raw
    * bytes.
+   *
+   * Getting an address requires XRP app 2.8.0 or later: older versions answer
+   * `6f88`. Signing works on older versions too.
    */
   Ed25519 = "ed25519",
 }
