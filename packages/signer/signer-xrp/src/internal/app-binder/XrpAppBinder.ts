@@ -10,6 +10,7 @@ import { inject, injectable } from "inversify";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type Curve } from "@api/model/Curve";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { externalTypes } from "@internal/externalTypes";
 
@@ -45,6 +46,7 @@ export class XrpAppBinder {
     checkOnDevice: boolean;
     returnChainCode: boolean;
     skipOpenApp: boolean;
+    curve: Curve;
   }): GetAddressDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -56,6 +58,7 @@ export class XrpAppBinder {
     derivationPath: string;
     transaction: Uint8Array;
     skipOpenApp: boolean;
+    curve: Curve;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,

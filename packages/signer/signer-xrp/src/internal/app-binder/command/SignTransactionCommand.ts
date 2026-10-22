@@ -11,13 +11,14 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Just, Maybe, Nothing } from "purify-ts";
 
+import { type Curve } from "@api/model/Curve";
 import { type Signature } from "@api/model/Signature";
 
 import {
   INS,
   P1_MORE_CHUNKS,
   P1_SUBSEQUENT_CHUNK,
-  P2_SECP256K1,
+  P2_BY_CURVE,
   XRP_CLA,
 } from "./utils/apduHeaderUtils";
 import {
@@ -42,6 +43,8 @@ export type SignTransactionCommandArgs = {
   readonly chunkedData: Uint8Array;
   readonly isFirstChunk: boolean;
   readonly isLastChunk: boolean;
+  /** Curve to sign with. */
+  readonly curve: Curve;
 };
 
 /**
@@ -73,7 +76,7 @@ export class SignTransactionCommand
   }
 
   getApdu(): Apdu {
-    const { chunkedData, isFirstChunk, isLastChunk } = this.args;
+    const { chunkedData, isFirstChunk, isLastChunk, curve } = this.args;
 
     const signTransactionArgs: ApduBuilderArgs = {
       cla: XRP_CLA,
@@ -84,8 +87,9 @@ export class SignTransactionCommand
         (isFirstChunk ? 0x00 : P1_SUBSEQUENT_CHUNK) |
         (isLastChunk ? 0x00 : P1_MORE_CHUNKS),
       // Unlike GetAddress, P2 carries the curve alone — there is no chain code
-      // flag on this instruction.
-      p2: P2_SECP256K1,
+      // flag on this instruction. The app reads it on the first chunk only;
+      // every chunk carries the same value.
+      p2: P2_BY_CURVE[curve],
     };
 
     return new ApduBuilder(signTransactionArgs)
@@ -113,9 +117,10 @@ export class SignTransactionCommand
         return CommandResultFactory({ data: Nothing });
       }
 
-      // The signature is DER-encoded and variable length, so it is returned
-      // whole. `ApduResponse` already keeps the status word out of the data,
-      // so nothing has to be sliced off the end.
+      // The signature is DER-encoded (secp256k1, variable length) or 64 raw
+      // bytes (Ed25519), so it is returned whole. `ApduResponse` already keeps
+      // the status word out of the data, so nothing has to be sliced off the
+      // end.
       return CommandResultFactory({ data: Just(signature) });
     });
   }

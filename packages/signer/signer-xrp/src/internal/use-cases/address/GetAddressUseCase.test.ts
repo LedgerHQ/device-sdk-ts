@@ -1,6 +1,7 @@
 import { from } from "rxjs";
 import { vi } from "vitest";
 
+import { Curve } from "@api/model/Curve";
 import { type XrpAppBinder } from "@internal/app-binder/XrpAppBinder";
 
 import { GetAddressUseCase } from "./GetAddressUseCase";
@@ -33,7 +34,7 @@ describe("GetAddressUseCase", () => {
     expect(result).toBe(expectedResult);
   });
 
-  it("should default the flags to false", () => {
+  it("should default the flags to false and the curve to secp256k1", () => {
     // GIVEN
     const { useCase, getAddressMock } = setup();
 
@@ -46,6 +47,7 @@ describe("GetAddressUseCase", () => {
       checkOnDevice: false,
       returnChainCode: false,
       skipOpenApp: false,
+      curve: Curve.Secp256k1,
     });
   });
 
@@ -62,6 +64,7 @@ describe("GetAddressUseCase", () => {
       checkOnDevice: false,
       returnChainCode: false,
       skipOpenApp: false,
+      curve: Curve.Secp256k1,
     });
   });
 
@@ -74,6 +77,7 @@ describe("GetAddressUseCase", () => {
       checkOnDevice: true,
       returnChainCode: true,
       skipOpenApp: true,
+      curve: Curve.Ed25519,
     });
 
     // THEN
@@ -82,6 +86,7 @@ describe("GetAddressUseCase", () => {
       checkOnDevice: true,
       returnChainCode: true,
       skipOpenApp: true,
+      curve: Curve.Ed25519,
     });
   });
 });

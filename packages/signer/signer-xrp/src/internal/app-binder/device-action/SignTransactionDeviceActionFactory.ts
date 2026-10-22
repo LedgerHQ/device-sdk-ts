@@ -5,9 +5,10 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { type Curve } from "@api/model/Curve";
 import { type Signature } from "@api/model/Signature";
 import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplicationErrors";
-import { APP_NAME } from "@internal/app-binder/constants";
+import { APP_NAME, DEFAULT_CURVE } from "@internal/app-binder/constants";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
 
 /** Every error the signing task can end on. */
@@ -24,6 +25,8 @@ export const SignTransactionDeviceActionFactory = (args: {
   derivationPath: string;
   transaction: Uint8Array;
   skipOpenApp: boolean;
+  /** Curve to sign with. Defaults to `Curve.Secp256k1`. */
+  curve?: Curve;
   loggerFactory: (tag: string) => LoggerPublisherService;
 }): CallTaskInAppDeviceAction<
   Signature,
@@ -40,6 +43,7 @@ export const SignTransactionDeviceActionFactory = (args: {
         new SendSignTransactionTask(internalApi, {
           derivationPath: args.derivationPath,
           serializedTransaction: args.transaction,
+          curve: args.curve ?? DEFAULT_CURVE,
           loggerFactory: args.loggerFactory,
         }).run(),
       appName: APP_NAME,

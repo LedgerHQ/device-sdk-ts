@@ -3,6 +3,7 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { Curve } from "@api/model/Curve";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import {
   INS,
@@ -76,47 +77,82 @@ describe("GetAddressCommand", () => {
   });
 
   describe("getApdu", () => {
-    // 2 display x 2 chain code, the curve selector being always secp256k1.
+    // 2 display x 2 chain code x 2 curves. P2 is the curve selector (0x40
+    // secp256k1, 0x80 ed25519) OR-ed with the chain code flag.
     const matrix: {
       checkOnDevice: boolean;
       returnChainCode: boolean;
+      curve: Curve;
       p1: number;
       p2: number;
     }[] = [
       {
         checkOnDevice: false,
         returnChainCode: false,
+        curve: Curve.Secp256k1,
         p1: 0x00,
         p2: 0x40,
       },
       {
         checkOnDevice: false,
         returnChainCode: true,
+        curve: Curve.Secp256k1,
         p1: 0x00,
         p2: 0x41,
       },
       {
         checkOnDevice: true,
         returnChainCode: false,
+        curve: Curve.Secp256k1,
         p1: 0x01,
         p2: 0x40,
       },
       {
         checkOnDevice: true,
         returnChainCode: true,
+        curve: Curve.Secp256k1,
         p1: 0x01,
         p2: 0x41,
+      },
+      {
+        checkOnDevice: false,
+        returnChainCode: false,
+        curve: Curve.Ed25519,
+        p1: 0x00,
+        p2: 0x80,
+      },
+      {
+        checkOnDevice: false,
+        returnChainCode: true,
+        curve: Curve.Ed25519,
+        p1: 0x00,
+        p2: 0x81,
+      },
+      {
+        checkOnDevice: true,
+        returnChainCode: false,
+        curve: Curve.Ed25519,
+        p1: 0x01,
+        p2: 0x80,
+      },
+      {
+        checkOnDevice: true,
+        returnChainCode: true,
+        curve: Curve.Ed25519,
+        p1: 0x01,
+        p2: 0x81,
       },
     ];
 
     it.each(matrix)(
-      "should build P1=$p1 P2=$p2 for checkOnDevice=$checkOnDevice returnChainCode=$returnChainCode",
-      ({ checkOnDevice, returnChainCode, p1, p2 }) => {
+      "should build P1=$p1 P2=$p2 for checkOnDevice=$checkOnDevice returnChainCode=$returnChainCode curve=$curve",
+      ({ checkOnDevice, returnChainCode, curve, p1, p2 }) => {
         // GIVEN
         const command = new GetAddressCommand({
           derivationPath: DERIVATION_PATH,
           checkOnDevice,
           returnChainCode,
+          curve,
         });
 
         // WHEN
@@ -127,7 +163,7 @@ describe("GetAddressCommand", () => {
       },
     );
 
-    it("should default to no display and no chain code", () => {
+    it("should default to no display, no chain code and secp256k1", () => {
       // GIVEN
       const command = new GetAddressCommand({
         derivationPath: DERIVATION_PATH,
@@ -209,6 +245,36 @@ describe("GetAddressCommand", () => {
         assert.fail("Expected a success");
       }
       expect(result.data.publicKey).toHaveLength(66); // 33 bytes
+      expect(result.data.address).toBe(ADDRESS);
+    });
+
+    it("should parse an Ed25519 public key, ED-prefixed by the app", () => {
+      // GIVEN the 33 byte XRPL form of an Ed25519 key: 0xED then 32 bytes
+      const ed25519Key = [
+        0xed,
+        ...Array.from({ length: 32 }, (_, i) => (i + 1) & 0xff),
+      ];
+      const command = new GetAddressCommand({
+        derivationPath: DERIVATION_PATH,
+        curve: Curve.Ed25519,
+      });
+
+      // WHEN
+      const result = command.parseResponse(
+        success([
+          ed25519Key.length,
+          ...ed25519Key,
+          ADDRESS_BYTES.length,
+          ...ADDRESS_BYTES,
+        ]),
+      );
+
+      // THEN
+      if (!isSuccessCommandResult(result)) {
+        assert.fail("Expected a success");
+      }
+      expect(result.data.publicKey).toHaveLength(66); // 33 bytes
+      expect(result.data.publicKey.startsWith("ed")).toBe(true);
       expect(result.data.address).toBe(ADDRESS);
     });
 
