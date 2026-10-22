@@ -87,14 +87,20 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       actions: {
         assignErrorFromEvent: assign({
-          _internalState: (_) => ({
-            ..._.context._internalState,
-            error: new UnknownDAError(
-              _.event["error"] instanceof Error
-                ? _.event["error"].message
-                : String(_.event["error"]),
-            ),
-          }),
+          _internalState: ({
+            context,
+            event,
+          }): SignTransactionDAInternalState => {
+            const eventError: unknown = (event as { error?: unknown }).error;
+            return {
+              signature: context._internalState.signature,
+              error: new UnknownDAError(
+                eventError instanceof Error
+                  ? eventError.message
+                  : String(eventError),
+              ),
+            };
+          },
         }),
       },
     }).createMachine({
