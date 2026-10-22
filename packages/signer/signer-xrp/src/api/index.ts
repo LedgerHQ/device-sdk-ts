@@ -18,9 +18,11 @@ export {
 export { SignTransactionDeviceActionFactory } from "@api/app-binder/SignTransactionDeviceActionFactory";
 export {
   type SignTransactionDAError,
+  type SignTransactionDAInput,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
   type SignTransactionDAReturnType,
+  SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export { type Address } from "@api/model/Address";
 export { type AddressOptions } from "@api/model/AddressOptions";

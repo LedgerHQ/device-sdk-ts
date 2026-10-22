@@ -54,6 +54,11 @@ export class XrpAppBinder {
     });
   }
 
+  /**
+   * Signs via {@link SignTransactionDeviceActionFactory} with the serialized
+   * transaction passed as a factory arg (direct execute path). Nested flows
+   * instead omit that arg and set `transaction` on invoke `input`.
+   */
   signTransaction(args: {
     derivationPath: string;
     transaction: Uint8Array;
