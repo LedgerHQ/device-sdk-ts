@@ -106,8 +106,8 @@ export function MocksPanel({
         )}
 
         {mocks.length === 0 ? null : (
-          <div className="border-muted overflow-hidden rounded-md border">
-            <div className="bg-muted-transparent border-muted flex items-center gap-12 border-b px-12 py-6">
+          <div className="bg-muted-transparent overflow-hidden rounded-md">
+            <div className="border-muted-subtle flex items-center gap-12 border-b px-12 py-6">
               <span className="body-4 text-muted w-96 shrink-0">Prefix</span>
               <span className="body-4 text-muted flex-1">Responses</span>
               <span className="w-64 shrink-0" />
@@ -115,8 +115,8 @@ export function MocksPanel({
             {mocks.map((mock) => (
               <div
                 key={mock.id}
-                className={`border-muted flex items-center gap-12 border-b px-12 py-8 last:border-b-0 ${
-                  editingId === mock.id ? "bg-muted-transparent" : ""
+                className={`border-muted-subtle flex items-center gap-12 border-b px-12 py-8 last:border-b-0 ${
+                  editingId === mock.id ? "bg-muted-transparent-hover" : ""
                 }`}
               >
                 <span className="body-3 text-base w-96 shrink-0 font-mono">
