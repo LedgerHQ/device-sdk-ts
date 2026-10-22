@@ -14,6 +14,8 @@ export enum ClearSignContextType {
   ETHEREUM_PROXY_INFO = "ethereumProxyInfo",
   ETHEREUM_ENUM = "ethereumEnum",
   ETHEREUM_TRANSACTION_FIELD_DESCRIPTION = "ethereumTransactionFieldDescription",
+  ETHEREUM_EIP712_MESSAGE_INFO = "ethereumEip712MessageInfo",
+  ETHEREUM_EIP712_FIELD_DESCRIPTION = "ethereumEip712FieldDescription",
   ETHEREUM_TRANSACTION_CHECK = "ethereumTransactionCheck",
   ETHEREUM_DYNAMIC_NETWORK = "ethereumDynamicNetwork",
   ETHEREUM_DYNAMIC_NETWORK_ICON = "ethereumDynamicNetworkIcon",

@@ -20,6 +20,7 @@ import { tokenTypes as ethereumTokenTypes } from "@/modules/ethereum/token/di/to
 import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
 import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
+import { typedDataV2Types } from "@/modules/ethereum/typed-data-v2/di/typedDataV2Types";
 import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
 import { reporterTypes } from "@/modules/multichain/reporter/di/reporterTypes";
 import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
@@ -105,6 +106,9 @@ export class DefaultContextModule implements ContextModule {
           ),
           this._container.get<ContextLoader>(
             calldataTypes.CalldataContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            typedDataV2Types.Eip712V2ContextLoader,
           ),
           this._container.get<ContextLoader>(
             dynamicNetworkTypes.DynamicNetworkContextLoader,
