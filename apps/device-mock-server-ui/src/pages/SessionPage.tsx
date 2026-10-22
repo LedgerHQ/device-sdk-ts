@@ -50,6 +50,7 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
   const [dialog, setDialog] = useState<DialogTarget>(null);
   const [interactingId, setInteractingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [seed, setSeed] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   const refresh = useCallback(() => {
@@ -207,7 +208,7 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
               <Spinner size={24} />
             </div>
           ) : devices.length === 0 ? (
-            <div className="border-muted flex flex-col items-center gap-12 rounded-md border border-dashed p-32 text-center">
+            <div className="bg-muted-transparent flex flex-col items-center gap-12 rounded-md p-32 text-center">
               <p className="body-2 text-base">No devices in this session yet</p>
               <p className="body-3 text-muted max-w-[420px]">
                 Add one and pick its model, firmware and installed apps. A
@@ -239,9 +240,20 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
           )}
         </Panel>
 
-        <TransferPanel token={token} onImported={refresh} onError={setError} />
+        <TransferPanel
+          token={token}
+          seed={seed}
+          onSeedLoaded={setSeed}
+          onImported={refresh}
+          onError={setError}
+        />
 
-        <SeedPanel token={token} onError={setError} />
+        <SeedPanel
+          token={token}
+          seed={seed}
+          onSeedChange={setSeed}
+          onError={setError}
+        />
       </main>
 
       {interacting ? (

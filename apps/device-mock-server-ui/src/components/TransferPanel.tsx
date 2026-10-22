@@ -1,25 +1,44 @@
 import { useRef, useState } from "react";
 import { type SessionExport } from "@ledgerhq/device-mockserver-client";
-import { Banner, Button } from "@ledgerhq/lumen-ui-react";
-import { Download, Upload } from "@ledgerhq/lumen-ui-react/symbols";
+import {
+  Banner,
+  Button,
+  IconButton,
+  TextInput,
+} from "@ledgerhq/lumen-ui-react";
+import { Download, Trash, Upload } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { api } from "@/api/client";
 import { Panel } from "@/components/Panel";
+import {
+  deleteSavedSnapshot,
+  getSavedSnapshots,
+  type SavedSnapshot,
+  saveSnapshot,
+} from "@/domain/storage";
 
 interface TransferPanelProps {
   readonly token: string;
+  /** What the "Speculos seed" field holds right now; saved with the session. */
+  readonly seed: string;
+  /** A loaded session hands its seed back to the "Speculos seed" field. */
+  readonly onSeedLoaded: (seed: string) => void;
   readonly onImported: () => void;
   readonly onError: (message: string) => void;
 }
 
 export function TransferPanel({
   token,
+  seed,
+  onSeedLoaded,
   onImported,
   onError,
 }: TransferPanelProps) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [imported, setImported] = useState<string | null>(null);
+  const [saveName, setSaveName] = useState("");
+  const [saved, setSaved] = useState<SavedSnapshot[]>(getSavedSnapshots);
   const filePicker = useRef<HTMLInputElement>(null);
 
   const fail = (cause: unknown) =>
@@ -44,6 +63,44 @@ export function TransferPanel({
       fail(cause);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const saveInBrowser = async () => {
+    const name = saveName.trim();
+    if (name.length === 0) return;
+    setBusy(true);
+    try {
+      const snapshot = await api.exportSession(token);
+      saveSnapshot(
+        name,
+        JSON.stringify(snapshot, null, 2),
+        seed.trim() || undefined,
+      );
+      setSaved(getSavedSnapshots());
+      setSaveName("");
+    } catch (cause) {
+      fail(cause);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeSaved = (name: string) => {
+    deleteSavedSnapshot(name);
+    setSaved(getSavedSnapshots());
+  };
+
+  const loadSaved = async (entry: SavedSnapshot) => {
+    setDraft(entry.snapshot);
+    await importSnapshot(entry.snapshot);
+    if (!entry.seed) return;
+    try {
+      await api.setSeed(token, entry.seed);
+      onSeedLoaded(entry.seed);
+      setImported((message) => `${message ?? ""} Seed restored.`.trim());
+    } catch (cause) {
+      fail(cause);
     }
   };
 
@@ -106,6 +163,67 @@ export function TransferPanel({
             className="hidden"
             onChange={(event) => pickFile(event.target.files?.[0])}
           />
+        </div>
+
+        <div className="flex flex-col gap-8">
+          <span className="body-3-semi-bold text-base">
+            Saved in this browser
+          </span>
+          <div className="flex flex-wrap items-end gap-8">
+            <div className="min-w-[220px] flex-1">
+              <TextInput
+                label="Session name"
+                value={saveName}
+                onChange={(event) => setSaveName(event.target.value)}
+              />
+            </div>
+            <Button
+              appearance="gray"
+              loading={busy}
+              disabled={saveName.trim().length === 0}
+              onClick={() => void saveInBrowser()}
+            >
+              Save current session
+            </Button>
+          </div>
+          {saved.length === 0 ? (
+            <p className="body-4 text-muted">No saved session yet.</p>
+          ) : (
+            <div className="bg-muted-transparent flex flex-col overflow-hidden rounded-md">
+              {saved.map((entry) => (
+                <div
+                  key={entry.name}
+                  className="border-muted-subtle flex items-center justify-between gap-12 border-b px-12 py-8 last:border-b-0"
+                >
+                  <span className="flex min-w-0 flex-col gap-2">
+                    <span className="body-3 text-base truncate">
+                      {entry.name}
+                    </span>
+                    <span className="body-4 text-muted">
+                      Saved {new Date(entry.savedAt).toLocaleString()}
+                      {entry.seed ? " · with seed" : ""}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-4">
+                    <Button
+                      appearance="gray"
+                      size="sm"
+                      onClick={() => void loadSaved(entry)}
+                    >
+                      Load
+                    </Button>
+                    <IconButton
+                      appearance="no-background"
+                      size="sm"
+                      aria-label={`Delete saved session ${entry.name}`}
+                      icon={Trash}
+                      onClick={() => removeSaved(entry.name)}
+                    />
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <Banner

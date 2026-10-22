@@ -171,9 +171,9 @@ export function LandingPage({ notice, onEnter }: LandingPageProps) {
         ) : null}
 
         {known.length > 0 ? (
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-12">
             <h2 className="heading-5 text-base">Recently used</h2>
-            <div className="bg-base border-muted flex flex-col rounded-lg border">
+            <div className="bg-surface flex flex-col gap-4 rounded-lg p-8">
               {known.map((entry) => (
                 <ListItem
                   key={entry.token}
@@ -207,14 +207,14 @@ export function LandingPage({ notice, onEnter }: LandingPageProps) {
                 </ListItem>
               ))}
             </div>
-            <p className="body-4 text-muted">
+            <p className="body-4 text-muted px-4">
               Tokens live in this browser only. The server forgets every session
               when it restarts.
             </p>
           </div>
         ) : null}
 
-        <div className="border-muted flex flex-col gap-12 rounded-lg border p-24">
+        <div className="bg-surface flex flex-col gap-12 rounded-lg p-24">
           <h2 className="heading-5 text-base">How it works</h2>
           <ol className="flex flex-col gap-12">
             {STEPS.map((step, index) => (
