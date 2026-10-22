@@ -208,6 +208,8 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_ENUM:
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
+      case ClearSignContextType.ETHEREUM_EIP712_MESSAGE_INFO:
+      case ClearSignContextType.ETHEREUM_EIP712_FIELD_DESCRIPTION:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -236,6 +238,8 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
+      case ClearSignContextType.ETHEREUM_EIP712_MESSAGE_INFO:
+      case ClearSignContextType.ETHEREUM_EIP712_FIELD_DESCRIPTION:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -302,6 +306,8 @@ export class BuildBaseContexts {
       /* not used here */
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
+      case ClearSignContextType.ETHEREUM_EIP712_MESSAGE_INFO:
+      case ClearSignContextType.ETHEREUM_EIP712_FIELD_DESCRIPTION:
         return 90;
 
       default: {

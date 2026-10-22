@@ -180,6 +180,45 @@ describe("ProvideContextTask", () => {
         },
       );
 
+      it.each([
+        [ClearSignContextType.ETHEREUM_EIP712_MESSAGE_INFO, 0x26],
+        [ClearSignContextType.ETHEREUM_EIP712_FIELD_DESCRIPTION, 0x28],
+      ] as const)(
+        "should provide a %s context with the EIP-712 V2 P2",
+        async (contextType, ins) => {
+          // GIVEN
+          const args: ProvideContextTaskArgs = {
+            context: {
+              type: contextType,
+              payload: "payload",
+            } as ClearSignContextSuccess<typeof contextType>,
+            loggerFactory: mockLoggerFactory,
+          };
+          sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+
+          // WHEN
+          await new ProvideContextTask(
+            api,
+            args,
+            sendPayloadInChunksTaskMockFactory,
+          ).run();
+
+          // THEN
+          const factoryCall = sendPayloadInChunksTaskMockFactory.mock.calls[0]!;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const commandFactory = factoryCall[1].commandFactory;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+          const command = commandFactory({
+            chunkedData: new Uint8Array([1, 2, 3]),
+            isFirstChunk: true,
+          });
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          expect(command.getApdu().getRawApdu()).toStrictEqual(
+            Uint8Array.from([0xe0, ins, 0x01, 0x02, 0x03, 0x01, 0x02, 0x03]),
+          );
+        },
+      );
+
       it("should provide context for DYNAMIC_NETWORK with correct configuration type", async () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
