@@ -111,12 +111,14 @@ const { observable, cancel } = signerXrp.getAddress(derivationPath, options);
       checkOnDevice?: boolean;
       returnChainCode?: boolean;
       skipOpenApp?: boolean;
+      curve?: Curve;
     };
     ```
 
   - `checkOnDevice`: An optional boolean indicating whether user confirmation on the device is required (`true`) or not (`false`). Defaults to `false`.
   - `returnChainCode`: An optional boolean indicating whether the BIP32 chain code should be returned alongside the address (`true`) or not (`false`). Defaults to `false`.
   - `skipOpenApp`: An optional boolean indicating whether to skip opening the xrp app automatically (`true`) or not (`false`). Defaults to `false`.
+  - `curve`: An optional `Curve` to derive the key with, `Curve.Secp256k1` or `Curve.Ed25519`. Defaults to `Curve.Secp256k1`. The same derivation path is a different account on each curve, so sign with the curve the address was derived with.
 
 #### **Returns**
 
@@ -124,7 +126,7 @@ const { observable, cancel } = signerXrp.getAddress(derivationPath, options);
 
 ```typescript
 type GetAddressCommandResponse = {
-  /** Uncompressed public key, hex encoded. */
+  /** Public key in XRPL format, hex encoded: 33 bytes, compressed for secp256k1, `ED`-prefixed for Ed25519. */
   publicKey: string;
   /** The XRP address, as returned by the application. */
   address: string;
@@ -171,21 +173,20 @@ const { observable, cancel } = signerXrp.signTransaction(
     ```typescript
     type TransactionOptions = {
       skipOpenApp?: boolean;
+      curve?: Curve;
     };
     ```
 
   - `skipOpenApp`: An optional boolean indicating whether to skip opening the xrp app automatically (`true`) or not (`false`).
+  - `curve`: An optional `Curve` to sign with, `Curve.Secp256k1` or `Curve.Ed25519`. Defaults to `Curve.Secp256k1`. Use the curve the address was derived with: nothing checks it before signing, and a signature made with the wrong curve is rejected by the network.
 
 #### **Returns**
 
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type Signature = {
-  r: string;
-  s: string;
-  v?: number;
-};
+/** DER-encoded for secp256k1, 64 raw bytes for Ed25519. Its uppercase hex goes in `TxnSignature`. */
+type Signature = Uint8Array;
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
