@@ -1,5 +1,4 @@
 import {
-  CallTaskInAppDeviceAction,
   CommandResultFactory,
   DeviceActionStatus,
   type DeviceManagementKit,
@@ -33,6 +32,7 @@ import {
 import { type SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 import { XrpAppBinder } from "@internal/app-binder/XrpAppBinder";
 
 type GetAppConfigSendCommandAction = SendCommandInAppDeviceAction<
@@ -59,17 +59,7 @@ type GetAddressCallArgs = {
 
 type SignTransactionCallArgs = {
   sessionId: DeviceSessionId;
-  deviceAction: CallTaskInAppDeviceAction<
-    Uint8Array,
-    never,
-    UserInteractionRequired.SignTransaction
-  > & {
-    input: {
-      appName: string;
-      requiredUserInteraction: UserInteractionRequired;
-      skipOpenApp: boolean;
-      task: (api: InternalApi) => Promise<unknown>;
-    };
+  deviceAction: SignTransactionDeviceAction & {
     logger?: LoggerPublisherService;
   };
 };
@@ -311,7 +301,7 @@ describe("XrpAppBinder", () => {
     const lastCall = (executeDeviceAction: ReturnType<typeof vi.fn>) =>
       executeDeviceAction.mock.calls[0]![0] as SignTransactionCallArgs;
 
-    it("should execute a CallTaskInAppDeviceAction for the XRP app", () => {
+    it("should execute a SignTransactionDeviceAction for the XRP app", () => {
       // GIVEN
       const { binder, executeDeviceAction, expectedResult, sessionId } =
         setup();
@@ -330,11 +320,9 @@ describe("XrpAppBinder", () => {
 
       const callArgs = lastCall(executeDeviceAction);
       expect(callArgs.sessionId).toBe(sessionId);
-      expect(callArgs.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
-      expect(callArgs.deviceAction.input.appName).toBe(APP_NAME);
-      expect(callArgs.deviceAction.input.requiredUserInteraction).toBe(
-        UserInteractionRequired.SignTransaction,
-      );
+      expect(callArgs.deviceAction).toBeInstanceOf(SignTransactionDeviceAction);
+      expect(callArgs.deviceAction.input.derivationPath).toBe(DERIVATION_PATH);
+      expect(callArgs.deviceAction.input.transaction).toBe(TRANSACTION);
       expect(callArgs.deviceAction.input.skipOpenApp).toBe(false);
     });
 
@@ -384,7 +372,7 @@ describe("XrpAppBinder", () => {
       expect(lastCall(executeDeviceAction).deviceAction.logger).toBeDefined();
     });
 
-    it("should run the task with the derivation path and transaction", async () => {
+    it("should run the sign dependency with the derivation path and transaction", async () => {
       // GIVEN a binder whose logger factory records the tags asked of it
       const tagged: string[] = [];
       const taggingFactory = (tag: string) => {
@@ -406,19 +394,26 @@ describe("XrpAppBinder", () => {
         curve: Curve.Secp256k1,
       });
 
-      const { task } = (
+      const deviceAction = (
         executeDeviceAction.mock.calls[0]![0] as SignTransactionCallArgs
-      ).deviceAction.input;
+      ).deviceAction;
       const sendCommand = vi
         .fn()
         .mockResolvedValue(
           CommandResultFactory({ data: Just(Uint8Array.from([0x30, 0x44])) }),
         );
 
-      // WHEN the device action runs the task
-      const taskResult = await task({
+      // WHEN the device action's sign dependency runs
+      const { signTransaction } = deviceAction.extractDependencies({
         sendCommand,
       } as unknown as InternalApi);
+      const taskResult = await signTransaction({
+        input: {
+          derivationPath: DERIVATION_PATH,
+          transaction: TRANSACTION,
+          curve: Curve.Secp256k1,
+        },
+      });
 
       // THEN the task ran against the arguments the binder was given, sending
       // the encoded path followed by the transaction, and it built its logger
@@ -466,15 +461,24 @@ describe("XrpAppBinder", () => {
         skipOpenApp: false,
         curve: Curve.Ed25519,
       });
-      const { task } = lastCall(executeDeviceAction).deviceAction.input;
+      const deviceAction = lastCall(executeDeviceAction).deviceAction;
       const sendCommand = vi
         .fn()
         .mockResolvedValue(
           CommandResultFactory({ data: Just(new Uint8Array(64)) }),
         );
 
-      // WHEN the device action runs the task
-      await task({ sendCommand } as unknown as InternalApi);
+      // WHEN the device action's sign dependency runs
+      const { signTransaction } = deviceAction.extractDependencies({
+        sendCommand,
+      } as unknown as InternalApi);
+      await signTransaction({
+        input: {
+          derivationPath: DERIVATION_PATH,
+          transaction: TRANSACTION,
+          curve: Curve.Ed25519,
+        },
+      });
 
       // THEN the Sign APDU selects Ed25519 in P2
       const apdu = (

@@ -1,25 +1,15 @@
-import {
-  CallTaskInAppDeviceAction,
-  type CommandErrorResult,
-  type LoggerPublisherService,
-  UserInteractionRequired,
-} from "@ledgerhq/device-management-kit";
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 import { type Curve } from "@api/model/Curve";
-import { type Signature } from "@api/model/Signature";
-import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplicationErrors";
-import { APP_NAME, DEFAULT_CURVE } from "@internal/app-binder/constants";
-import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
-
-/** Every error the signing task can end on. */
-type SignTransactionTaskError = CommandErrorResult<XrpErrorCodes>["error"];
+import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
+import { DEFAULT_CURVE } from "@internal/app-binder/constants";
 
 /**
  * Build the device action that opens the XRP app, if needed, and runs
  * {@link SendSignTransactionTask} on it.
  *
- * Signing always ends on a confirmation screen, so the caller is told to
- * prompt for it regardless of the arguments.
+ * `transaction` is part of the device-action input (not closed over a task), so
+ * nested flows can pass bytes at invoke time after they are known.
  */
 export const SignTransactionDeviceActionFactory = (args: {
   derivationPath: string;
@@ -28,27 +18,14 @@ export const SignTransactionDeviceActionFactory = (args: {
   /** Curve to sign with. Defaults to `Curve.Secp256k1`. */
   curve?: Curve;
   loggerFactory: (tag: string) => LoggerPublisherService;
-}): CallTaskInAppDeviceAction<
-  Signature,
-  SignTransactionTaskError,
-  UserInteractionRequired.SignTransaction
-> =>
-  new CallTaskInAppDeviceAction<
-    Signature,
-    SignTransactionTaskError,
-    UserInteractionRequired.SignTransaction
-  >({
+}): SignTransactionDeviceAction =>
+  new SignTransactionDeviceAction({
     input: {
-      task: async (internalApi) =>
-        new SendSignTransactionTask(internalApi, {
-          derivationPath: args.derivationPath,
-          serializedTransaction: args.transaction,
-          curve: args.curve ?? DEFAULT_CURVE,
-          loggerFactory: args.loggerFactory,
-        }).run(),
-      appName: APP_NAME,
-      requiredUserInteraction: UserInteractionRequired.SignTransaction,
+      derivationPath: args.derivationPath,
+      transaction: args.transaction,
       skipOpenApp: args.skipOpenApp,
+      curve: args.curve ?? DEFAULT_CURVE,
+      loggerFactory: args.loggerFactory,
     },
     logger: args.loggerFactory("SignTransactionDeviceAction"),
   });
