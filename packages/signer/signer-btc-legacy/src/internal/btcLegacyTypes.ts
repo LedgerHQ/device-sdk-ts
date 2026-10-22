@@ -9,4 +9,9 @@ export const btcLegacyTypes = {
   GetExtendedPublicKeyUseCase: Symbol.for(
     "BtcLegacyGetExtendedPublicKeyUseCase",
   ),
+  SignTransactionUseCase: Symbol.for("BtcLegacySignTransactionUseCase"),
+  GetTrustedInputTask: Symbol.for("BtcLegacyGetTrustedInputTask"),
+  SignTransactionTask: Symbol.for("BtcLegacySignTransactionTask"),
+  TrustedInputSerializer: Symbol.for("BtcLegacyTrustedInputSerializer"),
+  TransactionSerializer: Symbol.for("BtcLegacyTransactionSerializer"),
 } as const;

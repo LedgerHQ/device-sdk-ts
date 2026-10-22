@@ -14,13 +14,16 @@ import { of } from "rxjs";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetExtendedPublicKeyDAReturnType } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
+import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressFormat } from "@api/model/AddressOptions";
+import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
 import { LegacyGetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import {
   GetExtendedPublicKeyTask,
   validateExtendedPublicKeyPath,
 } from "@internal/app-binder/task/GetExtendedPublicKeyTask";
+import { type SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
 import { btcLegacyTypes } from "@internal/btcLegacyTypes";
 
 @injectable()
@@ -31,6 +34,8 @@ export class BtcLegacyAppBinder<ErrorCodes extends string> {
     private readonly sessionId: DeviceSessionId,
     @inject(btcLegacyTypes.Profile)
     private readonly profile: LegacyCoinProfile<ErrorCodes>,
+    @inject(btcLegacyTypes.SignTransactionTask)
+    private readonly signTransactionTask: SignTransactionTask<ErrorCodes>,
   ) {}
 
   getAddress(args: {
@@ -74,6 +79,29 @@ export class BtcLegacyAppBinder<ErrorCodes extends string> {
             }).run(),
           appName: this.profile.appName,
           requiredUserInteraction: UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  signTransaction(args: {
+    transaction: LegacyCreateTransactionArg;
+    skipOpenApp: boolean;
+  }): SignTransactionDAReturnType<ErrorCodes> {
+    const error = this.signTransactionTask.validate(args.transaction);
+    if (error !== undefined) {
+      return this.reject(error);
+    }
+
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi: InternalApi) =>
+            this.signTransactionTask.run(internalApi, args.transaction),
+          appName: this.profile.appName,
+          requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp,
         },
       }),

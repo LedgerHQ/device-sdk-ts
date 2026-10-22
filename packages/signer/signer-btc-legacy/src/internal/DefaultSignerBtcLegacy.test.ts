@@ -9,9 +9,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { lastValueFrom } from "rxjs";
 
+import { DOGECOIN_PROFILE } from "@api/profiles/dogecoinProfile";
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import { SignerBtcLegacyBuilder } from "@api/SignerBtcLegacyBuilder";
 import { LegacyGetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
+import { REFERENCE_TRANSACTIONS } from "@internal/app-binder/task/__fixtures__/referenceTransactions";
 
 describe("DefaultSignerBtcLegacy", () => {
   it("should get an address from the profile's app", () => {
@@ -91,5 +93,34 @@ describe("DefaultSignerBtcLegacy", () => {
       ),
     });
     expect(executeDeviceAction).not.toHaveBeenCalled();
+  });
+
+  it("should sign a transaction in the profile's app", () => {
+    const executeDeviceAction = vi.fn();
+    const signer = new SignerBtcLegacyBuilder({
+      dmk: { executeDeviceAction } as unknown as DeviceManagementKit,
+      sessionId: "session-id" as DeviceSessionId,
+      profile: DOGECOIN_PROFILE,
+    }).build();
+
+    signer.signTransaction(
+      REFERENCE_TRANSACTIONS.find(
+        ({ profile }) => profile === DOGECOIN_PROFILE,
+      )!.transaction,
+    );
+
+    const { deviceAction } = executeDeviceAction.mock.calls[0]![0] as {
+      deviceAction: CallTaskInAppDeviceAction<
+        unknown,
+        never,
+        UserInteractionRequired
+      >;
+    };
+    expect(deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+    expect(deviceAction.input).toMatchObject({
+      appName: "Dogecoin",
+      requiredUserInteraction: UserInteractionRequired.SignTransaction,
+      skipOpenApp: false,
+    });
   });
 });
