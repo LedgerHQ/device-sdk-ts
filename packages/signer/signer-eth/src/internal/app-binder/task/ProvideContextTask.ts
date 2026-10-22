@@ -147,6 +147,26 @@ export class ProvideContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
+      case ClearSignContextType.ETHEREUM_EIP712_MESSAGE_INFO:
+        return this._sendPayloadInChunksTaskFactory(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideTransactionInformationCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              isEip712V2: true,
+            }),
+        }).run();
+      case ClearSignContextType.ETHEREUM_EIP712_FIELD_DESCRIPTION:
+        return this._sendPayloadInChunksTaskFactory(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideTransactionFieldDescriptionCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              isEip712V2: true,
+            }),
+        }).run();
       case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,

@@ -54,6 +54,24 @@ describe("ProvideTransactionInformationCommand", () => {
         Uint8Array.from([0xe0, 0x26, 0x00, 0x00, 0x03, 0x04, 0x05, 0x06]),
       );
     });
+
+    it("should return the raw APDU for the message info of an EIP-712 V2 message", () => {
+      // GIVEN
+      const args: ProvideTransactionInformationCommandArgs = {
+        data: Uint8Array.from([0x01, 0x02, 0x03]),
+        isFirstChunk: true,
+        isEip712V2: true,
+      };
+
+      // WHEN
+      const command = new ProvideTransactionInformationCommand(args);
+      const apdu = command.getApdu();
+
+      // THEN
+      expect(apdu.getRawApdu()).toStrictEqual(
+        Uint8Array.from([0xe0, 0x26, 0x01, 0x02, 0x03, 0x01, 0x02, 0x03]),
+      );
+    });
   });
 
   describe("parseResponse", () => {
