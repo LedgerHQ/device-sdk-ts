@@ -13,7 +13,7 @@ import {
 
 /**
  * The `standard` format, as hw-app-btc's `getTrustedInput` streams it: the
- * header, each input, each output, then the lock time.
+ * header, each input, each output, then the lock time and the extra data.
  */
 @injectable()
 export class StandardTrustedInputSerializer implements TrustedInputSerializer {
@@ -22,6 +22,7 @@ export class StandardTrustedInputSerializer implements TrustedInputSerializer {
     inputs,
     outputs,
     locktime,
+    extraData,
   }: LegacyTransaction): Uint8Array[] {
     if (outputs === undefined || locktime === undefined) {
       throw new Error(
@@ -62,7 +63,15 @@ export class StandardTrustedInputSerializer implements TrustedInputSerializer {
       chunks.push(output);
     });
 
-    chunks.push(locktime);
+    // The extra data goes with its length after the lock time, in blocks like
+    // a script.
+    const end = new ByteArrayBuilder().addBufferToData(locktime);
+    if (extraData !== undefined && extraData.length > 0) {
+      end
+        .addBufferToData(createVarint(extraData.length))
+        .addBufferToData(extraData);
+    }
+    chunks.push(...splitScriptBlocks(end.build(), new Uint8Array()));
     return chunks;
   }
 }
