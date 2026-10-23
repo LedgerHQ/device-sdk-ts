@@ -20,7 +20,7 @@ import {
 
 /**
  * Streams a challenge-bound `TOKEN_ACCOUNT_STATE` (0x27) descriptor. The caller
- * (stream task) must have issued a fresh `GET CHALLENGE` immediately before
+ * (`ProvideGenericClearSignContextTask`) must have issued a fresh `GET CHALLENGE` immediately before
  * fetching this descriptor so its signature binds to the latest challenge.
  */
 export const provideTokenAccountStateContext: ProvideContextHandler<

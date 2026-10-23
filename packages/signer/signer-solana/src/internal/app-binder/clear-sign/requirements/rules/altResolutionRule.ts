@@ -111,7 +111,7 @@ export function applyAltResolutionRule(
     requestAccount(accountIndex);
   }
 
-  // 7. ACCOUNT_RESET targets. A reset now also carries a TOKEN_VALUE the device
+  // 7. ACCOUNT_RESET targets. A reset also carries a TOKEN_VALUE the device
   // dereferences exactly like a port's: the VALUE slot and FALLBACK_ACCOUNT must
   // be resolved or FINALIZE refuses. Gate accountIndex and fallbackAccountIndex on
   // RESOLVE only — the device ignores those fields for other token kinds, just as

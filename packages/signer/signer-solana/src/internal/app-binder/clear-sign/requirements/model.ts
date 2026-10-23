@@ -126,10 +126,9 @@ export type DescriptorRequirements = {
   tokenAccountStateAltRefs: AltEntryKey[];
   /**
    * ALT-backed MINT entries from MINT_ASSOCIATIONS (accounts at a `mint_index`
-   * that have no resolved address). The device may signal these via status
-   * 0x6d10 after receiving ALT_RESOLUTION; TOKEN_INFO is then streamed best-effort.
-   * They are excluded from `altResolutions` and handled with
-   * hold-and-conditionally-stream logic in the provide phase.
+   * that have no resolved address). They are excluded from `altResolutions`:
+   * the provide phase streams their ALT_RESOLUTION, then the resolved mint's
+   * TOKEN_INFO (best-effort, skipped when that mint was already streamed).
    */
   mintAltRefs: AltEntryKey[];
 };

@@ -52,10 +52,10 @@ export type MachineDependencies = {
 
 /**
  * Streams legacy SPL / token clear-sign descriptors to the device before
- * signing: it inspects the transaction, and — when the app supports SPL or
- * transaction-checks — fetches the public key, builds the descriptor context and
- * provides it. Every step is best-effort: a failure simply ends the machine so
- * the caller falls back to blind signing.
+ * signing: when the app supports SPL it inspects the transaction, and for an
+ * SPL or swap transaction it builds the descriptor context and provides it.
+ * Every step is best-effort: a failure simply ends the machine so the caller
+ * falls back to blind signing.
  */
 export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
   ProvisionBasicClearSignDAOutput,
