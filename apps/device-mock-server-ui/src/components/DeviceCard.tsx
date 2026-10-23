@@ -79,7 +79,7 @@ export function DeviceCard({
   ].join(" · ");
 
   return (
-    <div className="border-muted bg-base flex flex-col rounded-lg border">
+    <div className="bg-base flex flex-col rounded-lg">
       <div className="flex flex-wrap items-center gap-16 p-16">
         <Spot icon={model?.icon ?? LedgerDevices} size={40} />
         <div className="min-w-0 flex-1">
@@ -121,7 +121,7 @@ export function DeviceCard({
         type="button"
         aria-expanded={mocksOpen}
         onClick={() => setMocksOpen(!mocksOpen)}
-        className={`border-muted hover:bg-muted-transparent flex items-center gap-8 border-t px-16 py-12 text-left ${
+        className={`hover:bg-muted-transparent flex items-center gap-8 px-16 py-12 text-left ${
           mocksOpen ? "" : "rounded-b-lg"
         }`}
       >
@@ -139,7 +139,7 @@ export function DeviceCard({
       </button>
 
       {mocksOpen ? (
-        <div className="border-muted bg-canvas rounded-b-lg border-t p-16">
+        <div className="bg-canvas rounded-b-lg p-16">
           <MocksPanel
             token={token}
             deviceId={device.id}

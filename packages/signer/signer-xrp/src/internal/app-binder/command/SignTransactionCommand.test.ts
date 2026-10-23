@@ -3,6 +3,7 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { Curve } from "@api/model/Curve";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import {
   INS,
@@ -13,7 +14,8 @@ import { type XrpAppCommandError } from "@internal/app-binder/command/utils/xrpA
 // A stand-in payload; the command writes whatever chunk it is given.
 const CHUNK = Uint8Array.from([0xde, 0xad, 0xbe, 0xef]);
 
-// P2 is the curve alone on this instruction — secp256k1, no chain code bit.
+// P2 is the curve alone on this instruction — secp256k1 in these tests, no
+// chain code bit.
 const P2 = 0x40;
 
 const buildExpectedApdu = (p1: number) =>
@@ -45,6 +47,7 @@ describe("SignTransactionCommand", () => {
           chunkedData: CHUNK,
           isFirstChunk: true,
           isLastChunk: true,
+          curve: Curve.Secp256k1,
         }).name,
       ).toBe("SignTransaction");
     });
@@ -66,6 +69,7 @@ describe("SignTransactionCommand", () => {
           chunkedData: CHUNK,
           isFirstChunk,
           isLastChunk,
+          curve: Curve.Secp256k1,
         });
 
         // WHEN
@@ -76,19 +80,23 @@ describe("SignTransactionCommand", () => {
       },
     );
 
-    it("should always select secp256k1 in P2", () => {
-      // GIVEN
+    it.each([
+      { curve: Curve.Secp256k1, p2: 0x40 },
+      { curve: Curve.Ed25519, p2: 0x80 },
+    ])("should select P2=$p2 for curve=$curve", ({ curve, p2 }) => {
+      // GIVEN a middle chunk: the curve is on every chunk, not just the first
       const command = new SignTransactionCommand({
         chunkedData: CHUNK,
-        isFirstChunk: true,
-        isLastChunk: true,
+        isFirstChunk: false,
+        isLastChunk: false,
+        curve,
       });
 
       // WHEN
       const apdu = command.getApdu().getRawApdu();
 
       // THEN
-      expect(apdu[3]).toBe(0x40);
+      expect(apdu[3]).toBe(p2);
     });
 
     it("should write the chunk as-is, without touching its contents", () => {
@@ -100,6 +108,7 @@ describe("SignTransactionCommand", () => {
         chunkedData: firstChunk,
         isFirstChunk: true,
         isLastChunk: false,
+        curve: Curve.Secp256k1,
       });
 
       // WHEN
@@ -116,6 +125,7 @@ describe("SignTransactionCommand", () => {
       chunkedData: CHUNK,
       isFirstChunk: true,
       isLastChunk: true,
+      curve: Curve.Secp256k1,
     });
 
     it("should return the DER signature from the final chunk", () => {
@@ -131,6 +141,31 @@ describe("SignTransactionCommand", () => {
       // out of the data by ApduResponse.
       expect(result.data.extract()).toStrictEqual(
         Uint8Array.from(DER_SIGNATURE),
+      );
+    });
+
+    it("should return a 64 byte Ed25519 signature whole", () => {
+      // GIVEN the raw (not DER) signature the app answers with on Ed25519
+      const ed25519Signature = Array.from(
+        { length: 64 },
+        (_, i) => (i + 7) & 0xff,
+      );
+      const ed25519Command = new SignTransactionCommand({
+        chunkedData: CHUNK,
+        isFirstChunk: true,
+        isLastChunk: true,
+        curve: Curve.Ed25519,
+      });
+
+      // WHEN
+      const result = ed25519Command.parseResponse(success(ed25519Signature));
+
+      // THEN
+      if (!isSuccessCommandResult(result)) {
+        assert.fail("Expected a success");
+      }
+      expect(result.data.extract()).toStrictEqual(
+        Uint8Array.from(ed25519Signature),
       );
     });
 

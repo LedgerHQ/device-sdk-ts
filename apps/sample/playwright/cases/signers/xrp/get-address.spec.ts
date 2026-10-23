@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-imports */
 import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
+import { Curve } from "@ledgerhq/device-signer-kit-xrp";
 
 import { expect, test } from "../../../fixtures";
 
@@ -27,6 +28,17 @@ const STAX_WITH_XRP: DeviceConfig = {
     { name: "XRP", version: "2.6.1" },
   ],
   masks: [0x33200000],
+};
+
+// Ed25519 GET_PUBLIC_KEY fails outright before app-xrp 2.8.0 (it expanded the
+// key with SHA-256, which the SDK rejects, and answered 6f88), so the Ed25519
+// cases need a later build.
+const STAX_WITH_XRP_ED25519: DeviceConfig = {
+  ...STAX_WITH_XRP,
+  apps: [
+    { name: "BOLOS", version: "1.10.1" },
+    { name: "XRP", version: "2.8.2" },
+  ],
 };
 
 // GetAddress APDU: CLA e0, INS 02, P1 00 (no display), P2 40 (secp256k1).
@@ -61,6 +73,11 @@ const XRP_ADDRESS_RE = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
 // (44'/144'/0'/0/0) from the mock server's default Speculos seed — the
 // well-known test mnemonic — so it is stable across runs.
 const SPECULOS_ADDRESS = "rBxq9sFZKwW1vtiLr2ndBccoFQwtPyiUpA";
+
+// The Ed25519 key and address at the same path and seed: `ED` then 32 bytes.
+const SPECULOS_ED25519_PUBLIC_KEY =
+  "edf49bdeedb26da2642b5dabdc1ae40185c79ec78c5952f2499d58239881a41c7e";
+const SPECULOS_ED25519_ADDRESS = "rH8r5NtfZ2EJdpNMTuz22JLY2RxousWfiV";
 
 interface GetAddressOutput {
   publicKey: string;
@@ -231,6 +248,34 @@ test.describe("signer xrp: get address", () => {
       expect(result.status).toBe("completed");
       // The very address that was shown on, and confirmed from, the screen.
       expect(result.output!.address).toBe(SPECULOS_ADDRESS);
+    });
+  });
+
+  test("returns an Ed25519 address from the real XRP app", async ({
+    device,
+    xrpSigner,
+  }) => {
+    test.setTimeout(180_000);
+
+    await test.step("Given a connected Stax with an XRP app supporting Ed25519", async () => {
+      await device.addAndConnect(STAX_WITH_XRP_ED25519);
+    });
+
+    await test.step("When Get Address is executed on the Ed25519 curve", async () => {
+      await xrpSigner.open();
+      await xrpSigner.getAddress({ curve: Curve.Ed25519 });
+    });
+
+    await test.step("Then the Ed25519 account of the default path is returned", async () => {
+      const result = await xrpSigner.lastResult<GetAddressOutput>({
+        timeout: 150_000,
+      });
+
+      expect(result.status).toBe("completed");
+      expect(result.output!.publicKey).toBe(SPECULOS_ED25519_PUBLIC_KEY);
+      // The same path is another account on the other curve.
+      expect(result.output!.address).toBe(SPECULOS_ED25519_ADDRESS);
+      expect(result.output!.address).not.toBe(SPECULOS_ADDRESS);
     });
   });
 });

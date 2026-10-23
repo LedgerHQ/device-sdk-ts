@@ -1,5 +1,4 @@
 import {
-  CallTaskInAppDeviceAction,
   CommandResultFactory,
   DeviceActionStatus,
   type DeviceManagementKit,
@@ -24,6 +23,7 @@ import {
   type GetAppConfigDAIntermediateValue,
   type GetAppConfigDAOutput,
 } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { Curve } from "@api/model/Curve";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import {
   GetAppConfigCommand,
@@ -32,6 +32,7 @@ import {
 import { type SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 import { XrpAppBinder } from "@internal/app-binder/XrpAppBinder";
 
 type GetAppConfigSendCommandAction = SendCommandInAppDeviceAction<
@@ -58,17 +59,7 @@ type GetAddressCallArgs = {
 
 type SignTransactionCallArgs = {
   sessionId: DeviceSessionId;
-  deviceAction: CallTaskInAppDeviceAction<
-    Uint8Array,
-    never,
-    UserInteractionRequired.SignTransaction
-  > & {
-    input: {
-      appName: string;
-      requiredUserInteraction: UserInteractionRequired;
-      skipOpenApp: boolean;
-      task: (api: InternalApi) => Promise<unknown>;
-    };
+  deviceAction: SignTransactionDeviceAction & {
     logger?: LoggerPublisherService;
   };
 };
@@ -187,6 +178,7 @@ describe("XrpAppBinder", () => {
         checkOnDevice: false,
         returnChainCode: false,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -215,6 +207,7 @@ describe("XrpAppBinder", () => {
         checkOnDevice: false,
         returnChainCode: false,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -234,6 +227,7 @@ describe("XrpAppBinder", () => {
         checkOnDevice: true,
         returnChainCode: false,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -253,6 +247,7 @@ describe("XrpAppBinder", () => {
         checkOnDevice: true,
         returnChainCode: true,
         skipOpenApp: true,
+        curve: Curve.Secp256k1,
       });
 
       // THEN the P1/P2 of the built APDU reflect every argument
@@ -263,6 +258,26 @@ describe("XrpAppBinder", () => {
       const apdu = command.getApdu().getRawApdu();
       expect(apdu[2]).toBe(0x01); // P1: display and confirm
       expect(apdu[3]).toBe(0x41); // P2: secp256k1 | return chain code
+    });
+
+    it("should forward the Ed25519 curve through to the APDU", () => {
+      // GIVEN
+      const { binder, executeDeviceAction } = setup();
+
+      // WHEN
+      binder.getAddress({
+        derivationPath: DERIVATION_PATH,
+        checkOnDevice: false,
+        returnChainCode: true,
+        skipOpenApp: false,
+        curve: Curve.Ed25519,
+      });
+
+      // THEN
+      const apdu = lastCall(executeDeviceAction)
+        .deviceAction.input.command.getApdu()
+        .getRawApdu();
+      expect(apdu[3]).toBe(0x81); // P2: ed25519 | return chain code
     });
   });
 
@@ -286,7 +301,7 @@ describe("XrpAppBinder", () => {
     const lastCall = (executeDeviceAction: ReturnType<typeof vi.fn>) =>
       executeDeviceAction.mock.calls[0]![0] as SignTransactionCallArgs;
 
-    it("should execute a CallTaskInAppDeviceAction for the XRP app", () => {
+    it("should execute a SignTransactionDeviceAction for the XRP app", () => {
       // GIVEN
       const { binder, executeDeviceAction, expectedResult, sessionId } =
         setup();
@@ -296,6 +311,7 @@ describe("XrpAppBinder", () => {
         derivationPath: DERIVATION_PATH,
         transaction: TRANSACTION,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -304,11 +320,9 @@ describe("XrpAppBinder", () => {
 
       const callArgs = lastCall(executeDeviceAction);
       expect(callArgs.sessionId).toBe(sessionId);
-      expect(callArgs.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
-      expect(callArgs.deviceAction.input.appName).toBe(APP_NAME);
-      expect(callArgs.deviceAction.input.requiredUserInteraction).toBe(
-        UserInteractionRequired.SignTransaction,
-      );
+      expect(callArgs.deviceAction).toBeInstanceOf(SignTransactionDeviceAction);
+      expect(callArgs.deviceAction.input.derivationPath).toBe(DERIVATION_PATH);
+      expect(callArgs.deviceAction.input.transaction).toBe(TRANSACTION);
       expect(callArgs.deviceAction.input.skipOpenApp).toBe(false);
     });
 
@@ -321,6 +335,7 @@ describe("XrpAppBinder", () => {
         derivationPath: DERIVATION_PATH,
         transaction: TRANSACTION,
         skipOpenApp: true,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -349,6 +364,7 @@ describe("XrpAppBinder", () => {
         derivationPath: DERIVATION_PATH,
         transaction: TRANSACTION,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
       // THEN
@@ -356,7 +372,7 @@ describe("XrpAppBinder", () => {
       expect(lastCall(executeDeviceAction).deviceAction.logger).toBeDefined();
     });
 
-    it("should run the task with the derivation path and transaction", async () => {
+    it("should run the sign dependency with the derivation path and transaction", async () => {
       // GIVEN a binder whose logger factory records the tags asked of it
       const tagged: string[] = [];
       const taggingFactory = (tag: string) => {
@@ -375,21 +391,29 @@ describe("XrpAppBinder", () => {
         derivationPath: DERIVATION_PATH,
         transaction: TRANSACTION,
         skipOpenApp: false,
+        curve: Curve.Secp256k1,
       });
 
-      const { task } = (
+      const deviceAction = (
         executeDeviceAction.mock.calls[0]![0] as SignTransactionCallArgs
-      ).deviceAction.input;
+      ).deviceAction;
       const sendCommand = vi
         .fn()
         .mockResolvedValue(
           CommandResultFactory({ data: Just(Uint8Array.from([0x30, 0x44])) }),
         );
 
-      // WHEN the device action runs the task
-      const taskResult = await task({
+      // WHEN the device action's sign dependency runs
+      const { signTransaction } = deviceAction.extractDependencies({
         sendCommand,
       } as unknown as InternalApi);
+      const taskResult = await signTransaction({
+        input: {
+          derivationPath: DERIVATION_PATH,
+          transaction: TRANSACTION,
+          curve: Curve.Secp256k1,
+        },
+      });
 
       // THEN the task ran against the arguments the binder was given, sending
       // the encoded path followed by the transaction, and it built its logger
@@ -426,6 +450,41 @@ describe("XrpAppBinder", () => {
       );
       expect(tagged).toContain("SendSignTransactionTask");
       expect(isSuccessCommandResult(taskResult)).toBe(true);
+    });
+
+    it("should run the task with the curve it is given", async () => {
+      // GIVEN
+      const { binder, executeDeviceAction } = setup();
+      binder.signTransaction({
+        derivationPath: DERIVATION_PATH,
+        transaction: TRANSACTION,
+        skipOpenApp: false,
+        curve: Curve.Ed25519,
+      });
+      const deviceAction = lastCall(executeDeviceAction).deviceAction;
+      const sendCommand = vi
+        .fn()
+        .mockResolvedValue(
+          CommandResultFactory({ data: Just(new Uint8Array(64)) }),
+        );
+
+      // WHEN the device action's sign dependency runs
+      const { signTransaction } = deviceAction.extractDependencies({
+        sendCommand,
+      } as unknown as InternalApi);
+      await signTransaction({
+        input: {
+          derivationPath: DERIVATION_PATH,
+          transaction: TRANSACTION,
+          curve: Curve.Ed25519,
+        },
+      });
+
+      // THEN the Sign APDU selects Ed25519 in P2
+      const apdu = (
+        sendCommand.mock.calls[0]![0] as SignTransactionCommand
+      ).getApdu();
+      expect(apdu.getRawApdu()[3]).toBe(0x80);
     });
   });
 });

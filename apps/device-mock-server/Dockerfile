@@ -5,7 +5,7 @@
 # CI: built + pushed to infra-oci-web-apps-*-green/device-mock-server by the mock-server-* workflows.
 
 # ── install ───────────────────────────────────────────────────────────────────
-FROM node:24-alpine AS install
+FROM node:24.22.1-alpine AS install
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 # bash is required by the zx-based ldmk-tool used to build workspace deps
@@ -40,7 +40,7 @@ RUN node_modules/.bin/esbuild \
       --external:utf-8-validate
 
 # ── runner ────────────────────────────────────────────────────────────────────
-FROM node:24-alpine
+FROM node:24.22.1-alpine
 WORKDIR /app
 # Run as the built-in unprivileged `node` user (uid 1000) instead of root
 COPY --chown=node:node --from=builder /bundle/server.js .

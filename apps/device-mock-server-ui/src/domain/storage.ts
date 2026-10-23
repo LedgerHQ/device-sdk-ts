@@ -42,3 +42,36 @@ export const forgetSession = (token: string): void =>
     KNOWN_KEY,
     getKnownSessions().filter((entry) => entry.token !== token),
   );
+
+const SNAPSHOTS_KEY = "mock-server-ui.saved-snapshots";
+
+export interface SavedSnapshot {
+  readonly name: string;
+  readonly savedAt: number;
+  /** Same JSON text as an exported file, so both import the same way. */
+  readonly snapshot: string;
+  /** Typed at save time: the server cannot read the session seed back. */
+  readonly seed?: string;
+}
+
+export const getSavedSnapshots = (): SavedSnapshot[] =>
+  read<SavedSnapshot[]>(SNAPSHOTS_KEY, []);
+
+/** Saving under an existing name replaces it. */
+export const saveSnapshot = (
+  name: string,
+  snapshot: string,
+  seed?: string,
+): void => {
+  const others = getSavedSnapshots().filter((entry) => entry.name !== name);
+  write(SNAPSHOTS_KEY, [
+    { name, savedAt: Date.now(), snapshot, seed },
+    ...others,
+  ]);
+};
+
+export const deleteSavedSnapshot = (name: string): void =>
+  write(
+    SNAPSHOTS_KEY,
+    getSavedSnapshots().filter((entry) => entry.name !== name),
+  );

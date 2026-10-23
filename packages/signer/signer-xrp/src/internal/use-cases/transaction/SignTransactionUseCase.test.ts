@@ -1,6 +1,7 @@
 import { from } from "rxjs";
 import { vi } from "vitest";
 
+import { Curve } from "@api/model/Curve";
 import { type XrpAppBinder } from "@internal/app-binder/XrpAppBinder";
 
 import { SignTransactionUseCase } from "./SignTransactionUseCase";
@@ -34,7 +35,7 @@ describe("SignTransactionUseCase", () => {
     expect(result).toBe(expectedResult);
   });
 
-  it("should default skipOpenApp to false", () => {
+  it("should default skipOpenApp to false and the curve to secp256k1", () => {
     // GIVEN
     const { useCase, signTransactionMock } = setup();
 
@@ -46,10 +47,11 @@ describe("SignTransactionUseCase", () => {
       derivationPath: DERIVATION_PATH,
       transaction: TRANSACTION,
       skipOpenApp: false,
+      curve: Curve.Secp256k1,
     });
   });
 
-  it("should apply the same default for an empty option object", () => {
+  it("should apply the same defaults for an empty option object", () => {
     // GIVEN
     const { useCase, signTransactionMock } = setup();
 
@@ -61,6 +63,7 @@ describe("SignTransactionUseCase", () => {
       derivationPath: DERIVATION_PATH,
       transaction: TRANSACTION,
       skipOpenApp: false,
+      curve: Curve.Secp256k1,
     });
   });
 
@@ -76,6 +79,23 @@ describe("SignTransactionUseCase", () => {
       derivationPath: DERIVATION_PATH,
       transaction: TRANSACTION,
       skipOpenApp: true,
+      curve: Curve.Secp256k1,
+    });
+  });
+
+  it("should forward the curve", () => {
+    // GIVEN
+    const { useCase, signTransactionMock } = setup();
+
+    // WHEN
+    useCase.execute(DERIVATION_PATH, TRANSACTION, { curve: Curve.Ed25519 });
+
+    // THEN
+    expect(signTransactionMock).toHaveBeenCalledWith({
+      derivationPath: DERIVATION_PATH,
+      transaction: TRANSACTION,
+      skipOpenApp: false,
+      curve: Curve.Ed25519,
     });
   });
 });

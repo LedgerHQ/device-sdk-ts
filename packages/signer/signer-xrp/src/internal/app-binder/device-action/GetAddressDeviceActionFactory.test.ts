@@ -3,6 +3,7 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { Curve } from "@api/model/Curve";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
 
@@ -84,5 +85,21 @@ describe("GetAddressDeviceActionFactory", () => {
     const apdu = input.command.getApdu().getRawApdu();
     expect(apdu[2]).toBe(0x01);
     expect(apdu[3]).toBe(0x41);
+  });
+
+  it("should pass the curve through to the command", () => {
+    GetAddressDeviceActionFactory({
+      ...defaultArgs,
+      returnChainCode: true,
+      curve: Curve.Ed25519,
+    });
+
+    const { input } = vi.mocked(SendCommandInAppDeviceAction).mock
+      .calls[0]![0] as unknown as {
+      input: { command: GetAddressCommand };
+    };
+
+    // P2 ed25519 | return chain code.
+    expect(input.command.getApdu().getRawApdu()[3]).toBe(0x81);
   });
 });

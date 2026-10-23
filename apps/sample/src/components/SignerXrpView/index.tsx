@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import {
+  Curve,
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
@@ -16,6 +17,11 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useSignerXrp } from "@/providers/SignerXrpProvider";
+
+const curveOptions = Object.values(Curve).map((value) => ({
+  label: value,
+  value,
+}));
 
 export const SignerXrpView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -59,6 +65,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           checkOnDevice,
           returnChainCode,
           skipOpenApp,
+          curve,
         }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
@@ -67,6 +74,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
             checkOnDevice,
             returnChainCode,
             skipOpenApp,
+            curve,
           });
         },
         initialValues: {
@@ -74,12 +82,17 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           checkOnDevice: false,
           returnChainCode: false,
           skipOpenApp: false,
+          curve: Curve.Secp256k1,
+        },
+        valueSelector: {
+          curve: curveOptions,
         },
         labelSelector: {
           derivationPath: "Derivation path",
           checkOnDevice: "Check on device",
           returnChainCode: "Return chain code",
           skipOpenApp: "Skip open app",
+          curve: "Curve",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -89,6 +102,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           checkOnDevice?: boolean;
           returnChainCode?: boolean;
           skipOpenApp?: boolean;
+          curve: Curve;
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
@@ -96,7 +110,12 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
       {
         title: "Sign Transaction",
         description: "Sign a transaction with the device",
-        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
+        executeDeviceAction: ({
+          derivationPath,
+          transaction,
+          skipOpenApp,
+          curve,
+        }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
@@ -106,17 +125,23 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           }
           return signer.signTransaction(derivationPath, txBytes, {
             skipOpenApp,
+            curve,
           });
         },
         initialValues: {
           derivationPath: "44'/144'/0'/0/0",
           transaction: "",
           skipOpenApp: false,
+          curve: Curve.Secp256k1,
+        },
+        valueSelector: {
+          curve: curveOptions,
         },
         labelSelector: {
           derivationPath: "Derivation path",
           transaction: "Transaction (hex)",
           skipOpenApp: "Skip open app",
+          curve: "Curve",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -125,6 +150,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           derivationPath: string;
           transaction: string;
           skipOpenApp?: boolean;
+          curve: Curve;
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue

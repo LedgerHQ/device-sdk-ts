@@ -1,50 +1,42 @@
-import {
-  CallTaskInAppDeviceAction,
-  type CommandErrorResult,
-  type LoggerPublisherService,
-  UserInteractionRequired,
-} from "@ledgerhq/device-management-kit";
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
-import { type Signature } from "@api/model/Signature";
-import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplicationErrors";
-import { APP_NAME } from "@internal/app-binder/constants";
-import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
-
-/** Every error the signing task can end on. */
-type SignTransactionTaskError = CommandErrorResult<XrpErrorCodes>["error"];
+import { type Curve } from "@api/model/Curve";
+import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
+import { DEFAULT_CURVE } from "@internal/app-binder/constants";
 
 /**
  * Build the device action that opens the XRP app, if needed, and runs
  * {@link SendSignTransactionTask} on it.
  *
- * Signing always ends on a confirmation screen, so the caller is told to
- * prompt for it regardless of the arguments.
+ * **Serialized transaction (double source):**
+ * - **Direct / binder path** (`executeDeviceAction`): pass `transaction` here;
+ *   it becomes `deviceAction.input` and seeds the machine context.
+ * - **Nested path** (`makeStateMachine` + invoke): omit `transaction` (defaults
+ *   to an empty `Uint8Array`); supply the real bytes on the parent invoke
+ *   `input`, which becomes `context.input.transaction` at runtime.
+ *
+ * Existing callers that pass `transaction` keep working unchanged. Signing
+ * rejects if neither source provides a non-empty buffer.
  */
 export const SignTransactionDeviceActionFactory = (args: {
   derivationPath: string;
-  transaction: Uint8Array;
+  /**
+   * Serialized XRP transaction. Optional for nested actors (override via invoke
+   * `input`); defaults to an empty buffer so construction stays typed.
+   */
+  transaction?: Uint8Array;
   skipOpenApp: boolean;
+  /** Curve to sign with. Defaults to `Curve.Secp256k1`. */
+  curve?: Curve;
   loggerFactory: (tag: string) => LoggerPublisherService;
-}): CallTaskInAppDeviceAction<
-  Signature,
-  SignTransactionTaskError,
-  UserInteractionRequired.SignTransaction
-> =>
-  new CallTaskInAppDeviceAction<
-    Signature,
-    SignTransactionTaskError,
-    UserInteractionRequired.SignTransaction
-  >({
+}): SignTransactionDeviceAction =>
+  new SignTransactionDeviceAction({
     input: {
-      task: async (internalApi) =>
-        new SendSignTransactionTask(internalApi, {
-          derivationPath: args.derivationPath,
-          serializedTransaction: args.transaction,
-          loggerFactory: args.loggerFactory,
-        }).run(),
-      appName: APP_NAME,
-      requiredUserInteraction: UserInteractionRequired.SignTransaction,
+      derivationPath: args.derivationPath,
+      transaction: args.transaction ?? new Uint8Array(),
       skipOpenApp: args.skipOpenApp,
+      curve: args.curve ?? DEFAULT_CURVE,
+      loggerFactory: args.loggerFactory,
     },
     logger: args.loggerFactory("SignTransactionDeviceAction"),
   });

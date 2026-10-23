@@ -7,9 +7,10 @@ import {
   type GetAddressCommandArgs,
   type GetAddressCommandResponse,
 } from "@api/app-binder/GetAddressCommandTypes";
+import { type Curve } from "@api/model/Curve";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplicationErrors";
-import { APP_NAME } from "@internal/app-binder/constants";
+import { APP_NAME, DEFAULT_CURVE } from "@internal/app-binder/constants";
 
 /**
  * Build the device action that opens the XRP app, if needed, and runs
@@ -23,6 +24,8 @@ export const GetAddressDeviceActionFactory = (args: {
   checkOnDevice: boolean;
   returnChainCode: boolean;
   skipOpenApp: boolean;
+  /** Curve to derive the key with. Defaults to `Curve.Secp256k1`. */
+  curve?: Curve;
 }): SendCommandInAppDeviceAction<
   GetAddressCommandResponse,
   GetAddressCommandArgs,
@@ -40,6 +43,7 @@ export const GetAddressDeviceActionFactory = (args: {
         derivationPath: args.derivationPath,
         checkOnDevice: args.checkOnDevice,
         returnChainCode: args.returnChainCode,
+        curve: args.curve ?? DEFAULT_CURVE,
       }),
       appName: APP_NAME,
       requiredUserInteraction: args.checkOnDevice

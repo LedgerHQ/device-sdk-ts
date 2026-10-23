@@ -1,5 +1,8 @@
 /* eslint-disable no-restricted-imports */
+import { createPublicKey, verify } from "node:crypto";
+
 import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
+import { Curve } from "@ledgerhq/device-signer-kit-xrp";
 
 import { expect, test } from "../../../fixtures";
 
@@ -17,6 +20,15 @@ const STAX_WITH_XRP: DeviceConfig = {
   masks: [0x33200000],
 };
 
+// Ed25519 signing needs app-xrp 2.8.0 or later, see get-address.spec.ts.
+const STAX_WITH_XRP_ED25519: DeviceConfig = {
+  ...STAX_WITH_XRP,
+  apps: [
+    { name: "BOLOS", version: "1.10.1" },
+    { name: "XRP", version: "2.8.2" },
+  ],
+};
+
 // Both blobs are ripple-binary-codec encoded Payments from the emulator's own
 // address, produced with `encode()` from that library. The first fits a single
 // APDU; the second carries a long memo so the payload spans two chunks, which
@@ -29,6 +41,34 @@ const PAYMENT =
 // 425 bytes, so 446 with the prefix: two chunks, the first one full.
 const PAYMENT_WITH_MEMO =
   "12000024000000026140000000000F424068400000000000000C73210324E5F600B52BB3D9246D49C4AB1722BA7F32B7A3E4F9F2B8A1A28B9118CC36C48114784051E8B60F89B51417D1D10AE5B7D8EEAF6CDF8314B5F762798A53D543A014CAF8B297CFF8F2F937E8F9EA7C0B6465736372697074696F6E7DC16B787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878E1F1";
+
+// PAYMENT sent from the emulator's Ed25519 account: same fields, with its key as
+// SigningPubKey and its account ID as Account.
+const ED25519_PAYMENT =
+  "12000024000000026140000000000F424068400000000000000C7321EDF49BDEEDB26DA2642B5DABDC1AE40185C79EC78C5952F2499D58239881A41C7E8114B8055308CD0ACE21F0C9CABFF9D0E4F662D539818314B5F762798A53D543A014CAF8B297CFF8F2F937E8";
+
+const fromHex = (hex: string) =>
+  Uint8Array.from(hex.replace(/^0x/, "").match(/../g) ?? [], (byte) =>
+    parseInt(byte, 16),
+  );
+
+// XRPL signs `STX\0` followed by the serialized transaction.
+const SIGNING_PREFIX = "53545800";
+
+// The Ed25519 key the emulator derives at the default path (44'/144'/0'/0/0),
+// `edf49bde…a41c7e`, without its `ED` marker and as a JWK `x` (base64url).
+const ED25519_JWK_X = "9Jve7bJtomQrXavcGuQBhceex4xZUvJJnVgjmIGkHH4";
+
+const verifiesWithEd25519Key = (signatureHex: string): boolean =>
+  verify(
+    null,
+    fromHex(SIGNING_PREFIX + ED25519_PAYMENT),
+    createPublicKey({
+      key: { kty: "OKP", crv: "Ed25519", x: ED25519_JWK_X },
+      format: "jwk",
+    }),
+    fromHex(signatureHex),
+  );
 
 // The signature is a Uint8Array, which the sample renders as a 0x-prefixed hex
 // string. DER wraps the pair in a SEQUENCE (0x30) whose first element is an
@@ -149,6 +189,43 @@ test.describe("signer xrp: sign transaction", () => {
       expect(error).toContain(
         "Condition of use not satisfied (Rejected by user)",
       );
+    });
+  });
+
+  test("signs a payment with the Ed25519 key", async ({
+    device,
+    xrpSigner,
+    speculos,
+  }) => {
+    test.setTimeout(180_000);
+
+    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+
+    await test.step("Given a connected Stax with an XRP app supporting Ed25519", async () => {
+      dev = await device.addAndConnect(STAX_WITH_XRP_ED25519);
+    });
+
+    await test.step("When a payment from the Ed25519 account is submitted on the Ed25519 curve", async () => {
+      await xrpSigner.open();
+      await xrpSigner.signTransaction(ED25519_PAYMENT, {
+        curve: Curve.Ed25519,
+      });
+    });
+
+    await test.step("And the transaction is approved on the Speculos screen", async () => {
+      const emulator = speculos(dev);
+      await emulator.waitReady();
+      await emulator.approveSigning();
+    });
+
+    await test.step("Then a 64 byte signature valid for the Ed25519 key is returned", async () => {
+      const result = await xrpSigner.lastResult<SignTransactionOutput>({
+        timeout: 150_000,
+      });
+
+      expect(result.status).toBe("completed");
+      expect(result.output).toMatch(/^0x[0-9a-f]{128}$/i);
+      expect(verifiesWithEd25519Key(result.output!)).toBe(true);
     });
   });
 });

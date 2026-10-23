@@ -349,7 +349,7 @@ export function DeviceDialog({
               </SegmentedControl>
             </Field>
 
-            <div className="border-muted flex items-start justify-between gap-16 rounded-md border p-16">
+            <div className="bg-muted-transparent flex items-start justify-between gap-16 rounded-md p-16">
               <div className="flex flex-col gap-2">
                 <p className="body-2-semi-bold text-base">Already onboarded</p>
                 <p className="body-4 text-muted">
@@ -365,7 +365,7 @@ export function DeviceDialog({
             </div>
 
             {onRemove ? (
-              <div className="border-muted flex items-center gap-12 rounded-md border p-16">
+              <div className="bg-muted-transparent flex items-center gap-12 rounded-md p-16">
                 <p className="body-3 text-base flex-1">
                   {confirmingRemove
                     ? "Remove this device and its mocks?"

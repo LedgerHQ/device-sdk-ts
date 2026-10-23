@@ -16,13 +16,14 @@ import {
   type GetAddressCommandArgs,
   type GetAddressCommandResponse,
 } from "@api/app-binder/GetAddressCommandTypes";
+import { DEFAULT_CURVE } from "@internal/app-binder/constants";
 
 import {
   INS,
   P1_DEFAULT,
   P1_DISPLAY,
+  P2_BY_CURVE,
   P2_RETURN_CHAIN_CODE,
-  P2_SECP256K1,
   XRP_CLA,
 } from "./utils/apduHeaderUtils";
 import { validateDerivationPath } from "./utils/validateDerivationPath";
@@ -42,9 +43,9 @@ export type { GetAddressCommandArgs, GetAddressCommandResponse };
  *
  * The device answers with
  * `[pkLen][publicKey][addressLen][address][chainCode?]`, where the public key
- * is compressed to 33 bytes by the app and the address is ASCII. Both are
- * length-prefixed, so they are parsed by their prefix rather than by a fixed
- * size.
+ * is 33 bytes in XRPL format (compressed for secp256k1, `ED`-prefixed for
+ * Ed25519) and the address is ASCII. Both are length-prefixed, so they are
+ * parsed by their prefix rather than by a fixed size.
  */
 export class GetAddressCommand
   implements
@@ -64,15 +65,18 @@ export class GetAddressCommand
   }
 
   getApdu(): Apdu {
-    const { derivationPath, checkOnDevice, returnChainCode } = this.args;
+    const { derivationPath, checkOnDevice, returnChainCode, curve } = this.args;
 
     const getAddressArgs: ApduBuilderArgs = {
       cla: XRP_CLA,
       ins: INS.GET_PUBLIC_KEY,
       p1: checkOnDevice ? P1_DISPLAY : P1_DEFAULT,
       // P2 is a bitmask: the curve selector in the high bits, the chain code
-      // flag in the low bit.
-      p2: P2_SECP256K1 | (returnChainCode ? P2_RETURN_CHAIN_CODE : 0x00),
+      // flag in the low bit. `GetAddressCommandArgs` is public, so the curve is
+      // optional here.
+      p2:
+        P2_BY_CURVE[curve ?? DEFAULT_CURVE] |
+        (returnChainCode ? P2_RETURN_CHAIN_CODE : 0x00),
     };
 
     const builder = new ApduBuilder(getAddressArgs);

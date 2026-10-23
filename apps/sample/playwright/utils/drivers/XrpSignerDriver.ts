@@ -1,3 +1,4 @@
+import { type Curve } from "@ledgerhq/device-signer-kit-xrp";
 import { expect, type Page } from "@playwright/test";
 
 import { ResponsesDriver } from "./ResponsesDriver";
@@ -45,11 +46,13 @@ export class XrpSignerDriver {
     checkOnDevice = false,
     returnChainCode = false,
     skipOpenApp = false,
+    curve,
   }: {
     derivationPath?: string;
     checkOnDevice?: boolean;
     returnChainCode?: boolean;
     skipOpenApp?: boolean;
+    curve?: Curve;
   } = {}): Promise<void> {
     await this.page.getByTestId("CTA_command-Get Address").click();
     if (derivationPath !== undefined) {
@@ -60,6 +63,9 @@ export class XrpSignerDriver {
     await this.setSwitch("checkOnDevice", checkOnDevice);
     await this.setSwitch("returnChainCode", returnChainCode);
     await this.setSwitch("skipOpenApp", skipOpenApp);
+    if (curve !== undefined) {
+      await this.selectCurve(curve);
+    }
     await this.page.getByTestId("CTA_send-device-action").click();
   }
 
@@ -73,7 +79,8 @@ export class XrpSignerDriver {
     {
       derivationPath,
       skipOpenApp = false,
-    }: { derivationPath?: string; skipOpenApp?: boolean } = {},
+      curve,
+    }: { derivationPath?: string; skipOpenApp?: boolean; curve?: Curve } = {},
   ): Promise<void> {
     await this.page.getByTestId("CTA_command-Sign Transaction").click();
     if (derivationPath !== undefined) {
@@ -85,7 +92,21 @@ export class XrpSignerDriver {
     await input.waitFor({ state: "visible" });
     await input.fill(transaction);
     await this.setSwitch("skipOpenApp", skipOpenApp);
+    if (curve !== undefined) {
+      await this.selectCurve(curve);
+    }
     await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
+   * Pick a curve in the form's Curve select, the only select of the XRP
+   * actions. Its options are labelled with the `Curve` enum values.
+   */
+  private async selectCurve(curve: Curve): Promise<void> {
+    const form = this.page.getByTestId("form_device-action");
+    await form.locator('[class*="control"]').first().click();
+    await this.page.getByRole("option", { name: curve, exact: true }).click();
+    await expect(form.getByText(curve, { exact: true })).toBeVisible();
   }
 
   /**

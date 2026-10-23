@@ -38,19 +38,25 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ledgerhq/signer-utils": "workspace:^",
+    "@noble/hashes": "^1.8.0",
+    "bs58": "catalog:",
     "inversify": "catalog:",
+    "purify-ts": "catalog:",
     "reflect-metadata": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
-    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "rxjs": "catalog:",
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "rxjs": "catalog:"
   }
 }

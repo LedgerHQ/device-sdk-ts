@@ -23,11 +23,11 @@ export function MockPresetsDialog({ onPick, onClose }: MockPresetsDialogProps) {
           onClose={onClose}
         />
         <DialogBody scrollbarWidth="auto">
-          <div className="border-muted overflow-hidden rounded-md border">
+          <div className="bg-muted-transparent overflow-hidden rounded-md">
             {MOCK_PRESETS.map((preset) => (
               <div
                 key={preset.label}
-                className="border-muted flex items-center gap-12 border-b px-12 py-8 last:border-b-0"
+                className="border-muted-subtle flex items-center gap-12 border-b px-12 py-8 last:border-b-0"
               >
                 <span className="flex min-w-0 flex-1 flex-col gap-2">
                   <span className="body-3 text-base">{preset.label}</span>
