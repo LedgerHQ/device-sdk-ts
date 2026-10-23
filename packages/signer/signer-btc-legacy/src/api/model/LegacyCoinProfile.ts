@@ -18,4 +18,9 @@ export type LegacyCoinProfile<ErrorCodes extends string> = {
   xpubVersion: number;
   // The coin has SegWit, so a transaction can spend SegWit outputs.
   segwit: boolean;
+  // The default sighash type: SIGHASH_ALL, or SIGHASH_ALL | SIGHASH_FORKID for
+  // Bitcoin Cash and Bitcoin Gold.
+  sigHashType: number;
+  // Every transaction is hashed with BIP143, even without SegWit inputs.
+  bip143: boolean;
 };

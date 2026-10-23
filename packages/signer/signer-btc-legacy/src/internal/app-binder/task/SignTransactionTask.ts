@@ -38,7 +38,6 @@ import {
   p2pkhScript,
   p2wpkhScript,
   sequenceToBytes,
-  SIGHASH_ALL,
   splitOutputBlocks,
   splitScriptBlocks,
 } from "@internal/app-binder/task/utils/legacyTransactionUtils";
@@ -179,7 +178,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
       changePath,
       outputScriptHex,
       lockTime = DEFAULT_LOCKTIME,
-      sigHashType = SIGHASH_ALL,
+      sigHashType = this.profile.sigHashType,
       segwit = false,
       additionals = [],
     } = transaction;
@@ -189,6 +188,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
       : additionals.includes("bech32")
         ? "native"
         : "wrapped";
+    const bip143 = segwit || this.profile.bip143;
 
     const trustedInputs: Uint8Array[] = [];
     for (const [previousTransaction, outputIndex] of inputs) {
@@ -232,7 +232,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
       script: new Uint8Array(),
     });
 
-    if (segwit) {
+    if (bip143) {
       const hashError =
         (await this.hashInputs(
           api,
@@ -246,7 +246,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
 
     const signatures: Uint8Array[] = [];
     for (const [index, derivationPath] of associatedKeysets.entries()) {
-      const hashError = segwit
+      const hashError = bip143
         ? await this.hashInputs(api, [signedInputs[index]!])
         : ((await this.hashInputs(
             api,
