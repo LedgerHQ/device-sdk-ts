@@ -175,8 +175,10 @@ unreferenced:
 
 Disabled scenarios are skipped by every selector, including `all`. Naming one
 explicitly fails with what to do about it, and `cs-tester list` prints them
-under the enabled ones. Nine ship disabled today — alternate-chain fixtures
-nobody wired up, and three descriptors known to be broken.
+under the enabled ones. Ten ship disabled today — alternate-chain fixtures
+nobody wired up, three descriptors known to be broken, and
+`erc7730:morpho-bundler`, whose nested-calldata descriptor the pinned Ethereum
+app answers with `6980`.
 
 ## App and OS versions
 
