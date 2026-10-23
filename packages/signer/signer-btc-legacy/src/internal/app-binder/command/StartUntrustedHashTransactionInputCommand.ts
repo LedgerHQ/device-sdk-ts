@@ -15,6 +15,8 @@ import {
   BTC_LEGACY_CLA,
   P1,
   P2,
+  TRANSACTION_TYPE,
+  type TransactionType,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 const START_UNTRUSTED_HASH_TRANSACTION_INPUT_INS = 0x44;
@@ -23,6 +25,8 @@ export type StartUntrustedHashTransactionInputCommandArgs = {
   readonly newTransaction: boolean;
   readonly firstRound: boolean;
   readonly transactionData: Uint8Array;
+  // Defaults to a legacy transaction.
+  readonly transactionType?: TransactionType;
 };
 
 export type StartUntrustedHashTransactionInputCommandResponse = ApduResponse;
@@ -58,7 +62,9 @@ export class LegacyStartUntrustedHashTransactionInputCommand<
       cla: BTC_LEGACY_CLA,
       ins: START_UNTRUSTED_HASH_TRANSACTION_INPUT_INS,
       p1: this.args.firstRound ? P1.FIRST : P1.NEXT,
-      p2: this.args.newTransaction ? P2.DEFAULT : P2.HASH_INPUT_CONTINUE,
+      p2: this.args.newTransaction
+        ? (this.args.transactionType ?? TRANSACTION_TYPE.LEGACY)
+        : P2.HASH_INPUT_CONTINUE,
     };
 
     return new ApduBuilder(startUntrustedHashTransactionInputArgs)

@@ -37,4 +37,9 @@ export type LegacyCreateTransactionArg = {
   outputScriptHex: string;
   lockTime?: number;
   sigHashType?: number;
+  // The inputs spend SegWit outputs, signed with BIP143: native with "bech32"
+  // in additionals, P2SH-wrapped otherwise.
+  segwit?: boolean;
+  // hw-app-btc's flags. The kit reads "bech32" and ignores the others.
+  additionals?: string[];
 };
