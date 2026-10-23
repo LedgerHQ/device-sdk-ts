@@ -21,6 +21,10 @@ import { LegacyProvideOutputFullChangePathCommand } from "@internal/app-binder/c
 import { LegacySignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { LegacyStartUntrustedHashTransactionInputCommand } from "@internal/app-binder/command/StartUntrustedHashTransactionInputCommand";
 import {
+  TRANSACTION_TYPE,
+  type TransactionType,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
+import {
   type SignedTransactionInput,
   type TransactionSerializer,
 } from "@internal/app-binder/task/format/TransactionSerializer";
@@ -30,6 +34,9 @@ import {
   createVarint,
   DEFAULT_LOCKTIME,
   DEFAULT_SEQUENCE,
+  hashPublicKey,
+  p2pkhScript,
+  p2wpkhScript,
   sequenceToBytes,
   SIGHASH_ALL,
   splitOutputBlocks,
@@ -41,6 +48,7 @@ import { btcLegacyTypes } from "@internal/btcLegacyTypes";
 const TRUSTED_INPUT_PREVOUT_OFFSET = 4;
 const PREVOUT_LENGTH = 36;
 const TRUSTED_INPUT_MARKER = 0x01;
+const WITNESS_ITEM_COUNT = 0x02;
 
 type SignTransactionTaskError<ErrorCodes extends string> =
   CommandErrorResult<ErrorCodes>["error"];
@@ -52,8 +60,8 @@ export type SignTransactionTaskResult<ErrorCodes extends string> = DmkResult<
 
 type SignedInput = {
   readonly trustedInput: Uint8Array;
-  // The script signed for this input: the redeem script, or the script of
-  // the output it spends.
+  // The script signed for this input: the redeem script, the P2PKH script of
+  // its key for SegWit, or the script of the output it spends.
   readonly script: Uint8Array;
   readonly sequence: Uint8Array;
 };
@@ -63,10 +71,12 @@ const isUint = (value: number, max: number): boolean =>
   Number.isInteger(value) && value >= 0 && value <= max;
 
 /**
- * Signs a transaction without SegWit inputs, as hw-app-btc's
- * `createTransaction` does: one trusted input per input, then, for each input,
- * the whole transaction hashed with that input's script only, and its
- * signature.
+ * Signs a transaction as hw-app-btc's `createTransaction` does: one trusted
+ * input per input, then
+ * - without BIP143, for each input, the whole transaction hashed with that
+ *   input's script only, and its signature;
+ * - with BIP143, the whole transaction hashed once, then each input alone and
+ *   its signature.
  */
 @injectable()
 export class SignTransactionTask<ErrorCodes extends string> {
@@ -160,16 +170,15 @@ export class SignTransactionTask<ErrorCodes extends string> {
       outputScriptHex,
       lockTime = DEFAULT_LOCKTIME,
       sigHashType = SIGHASH_ALL,
+      segwit = false,
+      additionals = [],
     } = transaction;
     const outputScript = hexaStringToBuffer(outputScriptHex)!;
+    const bip143 = segwit;
+    const bech32 = segwit && additionals.includes("bech32");
 
-    const signedInputs: SignedInput[] = [];
-    for (const [
-      previousTransaction,
-      outputIndex,
-      redeemScript,
-      sequence,
-    ] of inputs) {
+    const trustedInputs: Uint8Array[] = [];
+    for (const [previousTransaction, outputIndex] of inputs) {
       const trustedInput = await this.getTrustedInputTask.run(api, {
         transaction: previousTransaction,
         indexLookup: outputIndex,
@@ -177,17 +186,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
       if (!isSuccessDmkResult(trustedInput)) {
         return trustedInput;
       }
-
-      signedInputs.push({
-        trustedInput: trustedInput.data,
-        script:
-          typeof redeemScript === "string"
-            ? hexaStringToBuffer(redeemScript)!
-            : previousTransaction.outputs![outputIndex]!.script,
-        sequence: sequenceToBytes(
-          typeof sequence === "number" ? sequence : DEFAULT_SEQUENCE,
-        ),
-      });
+      trustedInputs.push(trustedInput.data);
     }
 
     const publicKeys: Uint8Array[] = [];
@@ -201,11 +200,48 @@ export class SignTransactionTask<ErrorCodes extends string> {
       publicKeys.push(compressPublicKey(result.data.publicKey));
     }
 
+    const signedInputs: SignedInput[] = inputs.map(
+      ([previousTransaction, outputIndex, redeemScript, sequence], index) => ({
+        trustedInput: trustedInputs[index]!,
+        script:
+          typeof redeemScript === "string"
+            ? hexaStringToBuffer(redeemScript)!
+            : segwit
+              ? p2pkhScript(hashPublicKey(publicKeys[index]!))
+              : previousTransaction.outputs![outputIndex]!.script,
+        sequence: sequenceToBytes(
+          typeof sequence === "number" ? sequence : DEFAULT_SEQUENCE,
+        ),
+      }),
+    );
+    const withoutScript = (input: SignedInput): SignedInput => ({
+      ...input,
+      script: new Uint8Array(),
+    });
+
+    if (bip143) {
+      const hashError =
+        (await this.hashInputs(
+          api,
+          signedInputs.map(withoutScript),
+          TRANSACTION_TYPE.BIP143,
+        )) ?? (await this.hashOutputs(api, outputScript, changePath));
+      if (hashError !== undefined) {
+        return DmkResultFactory({ error: hashError });
+      }
+    }
+
     const signatures: Uint8Array[] = [];
     for (const [index, derivationPath] of associatedKeysets.entries()) {
-      const hashError =
-        (await this.hashInputs(api, signedInputs, index)) ??
-        (await this.hashOutputs(api, outputScript, changePath));
+      const hashError = bip143
+        ? await this.hashInputs(api, [signedInputs[index]!])
+        : ((await this.hashInputs(
+            api,
+            signedInputs.map((input, inputIndex) =>
+              inputIndex === index ? input : withoutScript(input),
+            ),
+            index === 0 ? TRANSACTION_TYPE.LEGACY : undefined,
+          )) ?? (await this.hashOutputs(api, outputScript, changePath)));
       if (hashError !== undefined) {
         return DmkResultFactory({ error: hashError });
       }
@@ -228,10 +264,12 @@ export class SignTransactionTask<ErrorCodes extends string> {
           TRUSTED_INPUT_PREVOUT_OFFSET,
           TRUSTED_INPUT_PREVOUT_OFFSET + PREVOUT_LENGTH,
         ),
-        script: new ByteArrayBuilder()
-          .encodeInLVFromBuffer(signatures[index]!)
-          .encodeInLVFromBuffer(publicKeys[index]!)
-          .build(),
+        script: this.inputScript(
+          segwit,
+          bech32,
+          signatures[index]!,
+          publicKeys[index]!,
+        ),
         sequence,
       }),
     );
@@ -242,30 +280,61 @@ export class SignTransactionTask<ErrorCodes extends string> {
           inputs: transactionInputs,
           outputScript,
           lockTime,
+          witnesses: segwit
+            ? signatures.map((signature, index) =>
+                new ByteArrayBuilder()
+                  .add8BitUIntToData(WITNESS_ITEM_COUNT)
+                  .encodeInLVFromBuffer(signature)
+                  .encodeInLVFromBuffer(publicKeys[index]!)
+                  .build(),
+              )
+            : undefined,
         }),
       ),
     });
   }
 
-  // Streams every input, only the one being signed carrying its script. The
-  // first stream starts a new transaction, the next ones continue it.
+  // A SegWit input's signature is in its witness: a native input has no
+  // script, a P2SH-wrapped one pushes its witness program.
+  private inputScript(
+    segwit: boolean,
+    bech32: boolean,
+    signature: Uint8Array,
+    publicKey: Uint8Array,
+  ): Uint8Array {
+    if (bech32) {
+      return new Uint8Array();
+    }
+
+    const builder = new ByteArrayBuilder();
+    return segwit
+      ? builder
+          .encodeInLVFromBuffer(p2wpkhScript(hashPublicKey(publicKey)))
+          .build()
+      : builder
+          .encodeInLVFromBuffer(signature)
+          .encodeInLVFromBuffer(publicKey)
+          .build();
+  }
+
+  // Streams the inputs with their scripts. With a transaction type, the
+  // stream starts a new transaction of that type, otherwise it continues one.
   private async hashInputs(
     api: InternalApi,
     signedInputs: SignedInput[],
-    signedIndex: number,
+    transactionType?: TransactionType,
   ): Promise<SignTransactionTaskError<ErrorCodes> | undefined> {
-    const newTransaction = signedIndex === 0;
+    const newTransaction = transactionType !== undefined;
     const chunks: Uint8Array[] = [];
 
-    signedInputs.forEach(({ trustedInput, script, sequence }, index) => {
-      const inputScript = index === signedIndex ? script : new Uint8Array();
+    signedInputs.forEach(({ trustedInput, script, sequence }) => {
       chunks.push(
         new ByteArrayBuilder()
           .add8BitUIntToData(TRUSTED_INPUT_MARKER)
           .encodeInLVFromBuffer(trustedInput)
-          .addBufferToData(createVarint(inputScript.length))
+          .addBufferToData(createVarint(script.length))
           .build(),
-        ...splitScriptBlocks(inputScript, sequence),
+        ...splitScriptBlocks(script, sequence),
       );
     });
 
@@ -275,6 +344,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
           newTransaction,
           firstRound: true,
           transactionData: this.serializer.serializeHeader(signedInputs.length),
+          transactionType,
         },
         this.profile.errors,
       ),
@@ -286,7 +356,12 @@ export class SignTransactionTask<ErrorCodes extends string> {
     for (const transactionData of chunks) {
       const result = await api.sendCommand(
         new LegacyStartUntrustedHashTransactionInputCommand(
-          { newTransaction, firstRound: false, transactionData },
+          {
+            newTransaction,
+            firstRound: false,
+            transactionData,
+            transactionType,
+          },
           this.profile.errors,
         ),
       );

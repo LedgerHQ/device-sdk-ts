@@ -69,8 +69,10 @@ The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, 
 - `changePath`: the derivation path of the change output, if any.
 - `outputScriptHex`: the serialized outputs, count included.
 - `lockTime`: defaults to `0`. `sigHashType`: defaults to `SIGHASH_ALL`.
+- `segwit`: the inputs spend SegWit outputs and are signed with BIP143. They are native with `"bech32"` in `additionals`, P2SH-wrapped otherwise.
+- `additionals`: hw-app-btc's flags. The kit reads `"bech32"` and ignores the others.
 
-Only inputs without SegWit are supported for now, in the `standard` transaction format of Litecoin (`LITECOIN_PROFILE`) and Dogecoin (`DOGECOIN_PROFILE`). The output is the signed transaction in hexadecimal.
+Transactions are in the `standard` format of Litecoin (`LITECOIN_PROFILE`) and Dogecoin (`DOGECOIN_PROFILE`). The output is the signed transaction in hexadecimal.
 
 `signTransaction` options:
 
