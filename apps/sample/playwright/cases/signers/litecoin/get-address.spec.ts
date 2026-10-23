@@ -2,7 +2,7 @@
 import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
 import { expect, test } from "../../../fixtures";
-import { type AddressFormatLabel } from "../../../utils/drivers/LtcSignerDriver";
+import { type AddressFormatLabel } from "../../../utils/drivers/BtcLegacySignerDriver";
 import { type SpeculosDriver } from "../../../utils/drivers/SpeculosDriver";
 
 const FLEX_WITH_LITECOIN: DeviceConfig = {

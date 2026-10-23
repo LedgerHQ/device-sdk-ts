@@ -12,23 +12,28 @@ export interface DeviceActionResult<Output> {
 export type AddressFormatLabel = "Legacy" | "P2SH" | "Bech32";
 
 /**
- * Drives the Litecoin signer view (signer-btc-legacy with the Litecoin
- * profile): navigating to it, executing device actions and reading back the
+ * Drives the view of a coin on signer-btc-legacy, such as Litecoin or
+ * Dogecoin: navigating to it, executing device actions and reading back the
  * emitted device-action states.
  */
-export class LtcSignerDriver {
+export class BtcLegacySignerDriver {
   private readonly responses: ResponsesDriver;
 
-  constructor(private readonly page: Page) {
+  constructor(
+    private readonly page: Page,
+    private readonly coin: "Litecoin" | "Dogecoin",
+  ) {
     this.responses = new ResponsesDriver(page);
   }
 
-  /** Navigate Signer Kits -> Litecoin. */
+  /** Navigate Signer Kits -> the coin. */
   async open(): Promise<void> {
     await this.page.getByTestId("CTA_route-to-/signers").click();
     await this.page.waitForURL("http://localhost:3000/signers");
-    await this.page.getByTestId("CTA_command-Litecoin").click();
-    await this.page.waitForURL("http://localhost:3000/signers/litecoin");
+    await this.page.getByTestId(`CTA_command-${this.coin}`).click();
+    await this.page.waitForURL(
+      `http://localhost:3000/signers/${this.coin.toLowerCase()}`,
+    );
   }
 
   /** Open the Get Address action, fill its form and Execute it. */
@@ -63,6 +68,27 @@ export class LtcSignerDriver {
       const input = this.page.getByTestId("input-text_derivationPath");
       await input.waitFor({ state: "visible" });
       await input.fill(derivationPath);
+    }
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /** Open the Sign Transaction action, fill its form and Execute it. */
+  async signTransaction(fields: {
+    inputs: string;
+    associatedKeysets: string;
+    outputScriptHex: string;
+    changePath?: string;
+    lockTime?: string;
+  }): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign Transaction").click();
+    for (const [fieldKey, value] of Object.entries({
+      changePath: "",
+      lockTime: "0",
+      ...fields,
+    })) {
+      const input = this.page.getByTestId(`input-text_${fieldKey}`);
+      await input.waitFor({ state: "visible" });
+      await input.fill(value);
     }
     await this.page.getByTestId("CTA_send-device-action").click();
   }
