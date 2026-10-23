@@ -13,9 +13,16 @@ export type LegacyTransactionOutput = {
 
 export type LegacyTransaction = {
   version: Uint8Array;
+  // Sapling transactions, such as Komodo's.
+  nVersionGroupId?: Uint8Array;
   inputs: LegacyTransactionInput[];
   outputs?: LegacyTransactionOutput[];
   locktime?: Uint8Array;
+  // Sapling transactions, such as Komodo's.
+  nExpiryHeight?: Uint8Array;
+  // What follows the lock time and the expiry height, such as Horizen's
+  // joinsplits or Komodo's empty Sapling part.
+  extraData?: Uint8Array;
 };
 
 export type LegacyCreateTransactionArg = {
@@ -37,4 +44,14 @@ export type LegacyCreateTransactionArg = {
   outputScriptHex: string;
   lockTime?: number;
   sigHashType?: number;
+  // The inputs spend SegWit outputs, signed with BIP143: native with "bech32"
+  // in additionals, P2SH-wrapped otherwise.
+  segwit?: boolean;
+  // The expiry height of a transaction in the sapling format, 4 bytes.
+  // Defaults to 0, as Ledger Wallet sends for Komodo.
+  expiryHeight?: Uint8Array;
+  // hw-app-btc's flags. The kit reads "bech32", and "cashaddr" for a Bitcoin
+  // Cash transaction to show its outputs as cashaddr addresses. It ignores the
+  // others.
+  additionals?: string[];
 };

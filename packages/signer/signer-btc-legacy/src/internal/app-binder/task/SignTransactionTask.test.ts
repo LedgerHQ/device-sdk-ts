@@ -10,6 +10,9 @@ import {
 
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
+import { BITCOIN_CASH_PROFILE } from "@api/profiles/bitcoinCashProfile";
+import { BITCOIN_LEGACY_PROFILE } from "@api/profiles/bitcoinLegacyProfile";
+import { BITCOIN_PROFILE } from "@api/profiles/bitcoinProfile";
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import {
   BtcLegacyAppCommandError,
@@ -71,6 +74,41 @@ describe("SignTransactionTask", () => {
       });
     },
   );
+
+  it("should default to the profile's sighash type", async () => {
+    const { transaction, exchanges, signedTransaction } =
+      REFERENCE_TRANSACTIONS.find(
+        (reference) => reference.profile === BITCOIN_CASH_PROFILE,
+      )!;
+    const { api } = replay(exchanges);
+
+    const result = await getTask(BITCOIN_CASH_PROFILE).run(api, {
+      ...transaction,
+      sigHashType: undefined,
+    });
+
+    expect(result).toStrictEqual({
+      status: "SUCCESS",
+      data: signedTransaction,
+    });
+  });
+
+  // Speculos no longer runs the Bitcoin app before 2.1. Bitcoin Legacy is
+  // that app under another name.
+  it("should sign for the old Bitcoin apps as Bitcoin Legacy", async () => {
+    const { transaction, exchanges, signedTransaction } =
+      REFERENCE_TRANSACTIONS.find(
+        (reference) => reference.profile === BITCOIN_LEGACY_PROFILE,
+      )!;
+    const { api } = replay(exchanges);
+
+    const result = await getTask(BITCOIN_PROFILE).run(api, transaction);
+
+    expect(result).toStrictEqual({
+      status: "SUCCESS",
+      data: signedTransaction,
+    });
+  });
 
   it("should return the error of a rejected signature", async () => {
     const { transaction, exchanges } = ONE_INPUT!;
@@ -157,6 +195,11 @@ describe("SignTransactionTask", () => {
         "the redeem script is not hexadecimal",
         { ...base, inputs: [[previousTransaction, 1, "zz"]] },
         "The redeem script is not a hexadecimal string",
+      ],
+      [
+        "the expiry height is not 4 bytes",
+        { ...base, expiryHeight: new Uint8Array(3) },
+        "The expiry height is not 4 bytes",
       ],
       [
         "the previous transaction has no lock time",

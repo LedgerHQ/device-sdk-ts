@@ -27,9 +27,18 @@ export type { ExtendedPublicKeyOptions } from "@api/model/ExtendedPublicKeyOptio
 export type {
   LegacyCoinProfile,
   LegacyErrorConfig,
+  TransactionFormat,
 } from "@api/model/LegacyCoinProfile";
 export type { TransactionOptions } from "@api/model/TransactionOptions";
+export { BITCOIN_CASH_PROFILE } from "@api/profiles/bitcoinCashProfile";
+export { BITCOIN_GOLD_PROFILE } from "@api/profiles/bitcoinGoldProfile";
+export { BITCOIN_LEGACY_PROFILE } from "@api/profiles/bitcoinLegacyProfile";
+export { BITCOIN_PROFILE } from "@api/profiles/bitcoinProfile";
+export { DASH_PROFILE } from "@api/profiles/dashProfile";
+export { DIGIBYTE_PROFILE } from "@api/profiles/digibyteProfile";
 export { DOGECOIN_PROFILE } from "@api/profiles/dogecoinProfile";
+export { HORIZEN_PROFILE } from "@api/profiles/horizenProfile";
+export { KOMODO_PROFILE } from "@api/profiles/komodoProfile";
 export { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 export * from "@api/SignerBtcLegacy";
 export * from "@api/SignerBtcLegacyBuilder";
@@ -57,6 +66,11 @@ export {
   type ProvideOutputFullChangePathCommandResponse,
 } from "@internal/app-binder/command/ProvideOutputFullChangePathCommand";
 export {
+  LegacySaplingOutputCommitCommand,
+  type SaplingOutputCommitCommandArgs,
+  type SaplingOutputCommitCommandResponse,
+} from "@internal/app-binder/command/SaplingOutputCommitCommand";
+export {
   LegacySignTransactionCommand,
   type SignTransactionCommandArgs,
   type SignTransactionCommandResponse,
@@ -73,6 +87,7 @@ export {
   BtcLegacyAppCommandErrorFactory,
   type BtcLegacyErrorCodes,
 } from "@internal/app-binder/command/utils/btcLegacyApplicationErrors";
+export { SaplingTransactionSerializer } from "@internal/app-binder/task/format/SaplingTransactionSerializer";
 export { StandardTransactionSerializer } from "@internal/app-binder/task/format/StandardTransactionSerializer";
 export { StandardTrustedInputSerializer } from "@internal/app-binder/task/format/StandardTrustedInputSerializer";
 export type {
