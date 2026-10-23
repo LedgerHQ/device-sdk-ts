@@ -4,7 +4,14 @@ export type {
   GetAddressDAOutput,
   GetAddressDAReturnType,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
+export type {
+  GetExtendedPublicKeyDAError,
+  GetExtendedPublicKeyDAIntermediateValue,
+  GetExtendedPublicKeyDAOutput,
+  GetExtendedPublicKeyDAReturnType,
+} from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
 export type { AddressFormat, AddressOptions } from "@api/model/AddressOptions";
+export type { ExtendedPublicKeyOptions } from "@api/model/ExtendedPublicKeyOptions";
 export type {
   LegacyCoinProfile,
   LegacyErrorConfig,

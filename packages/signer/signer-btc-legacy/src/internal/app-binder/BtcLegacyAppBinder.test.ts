@@ -1,9 +1,13 @@
 import {
+  CallTaskInAppDeviceAction,
+  DeviceActionStatus,
   type DeviceManagementKit,
   type DeviceSessionId,
+  InvalidStatusWordError,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
+import { lastValueFrom } from "rxjs";
 
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import { LegacyGetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
@@ -65,6 +69,48 @@ describe("BtcLegacyAppBinder", () => {
         UserInteractionRequired.VerifyAddress,
       );
       expect(deviceAction.input.skipOpenApp).toBe(true);
+    });
+  });
+
+  describe("getExtendedPublicKey", () => {
+    it("should run the xpub task in the profile's app", () => {
+      const binder = new BtcLegacyAppBinder(dmk, sessionId, LITECOIN_PROFILE);
+
+      binder.getExtendedPublicKey({
+        derivationPath: "84'/2'/0'",
+        skipOpenApp: false,
+      });
+
+      const { deviceAction } = executeDeviceAction.mock.calls[0]![0] as {
+        deviceAction: CallTaskInAppDeviceAction<
+          unknown,
+          never,
+          UserInteractionRequired
+        >;
+      };
+      expect(deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+      expect(deviceAction.input).toMatchObject({
+        appName: "Litecoin",
+        requiredUserInteraction: UserInteractionRequired.None,
+        skipOpenApp: false,
+      });
+    });
+
+    it("should reject a path without a parent level before opening the app", async () => {
+      const binder = new BtcLegacyAppBinder(dmk, sessionId, LITECOIN_PROFILE);
+
+      const { observable } = binder.getExtendedPublicKey({
+        derivationPath: "84'",
+        skipOpenApp: false,
+      });
+
+      await expect(lastValueFrom(observable)).resolves.toStrictEqual({
+        status: DeviceActionStatus.Error,
+        error: new InvalidStatusWordError(
+          "The derivation path needs at least two levels",
+        ),
+      });
+      expect(executeDeviceAction).not.toHaveBeenCalled();
     });
   });
 });

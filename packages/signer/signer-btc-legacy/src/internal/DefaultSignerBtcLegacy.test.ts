@@ -1,9 +1,13 @@
 import {
+  CallTaskInAppDeviceAction,
+  DeviceActionStatus,
   type DeviceManagementKit,
   type DeviceSessionId,
+  InvalidStatusWordError,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
+import { lastValueFrom } from "rxjs";
 
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import { SignerBtcLegacyBuilder } from "@api/SignerBtcLegacyBuilder";
@@ -44,5 +48,48 @@ describe("DefaultSignerBtcLegacy", () => {
         },
       }),
     });
+  });
+
+  it("should get an extended public key from the profile's app", () => {
+    const executeDeviceAction = vi.fn();
+    const signer = new SignerBtcLegacyBuilder({
+      dmk: { executeDeviceAction } as unknown as DeviceManagementKit,
+      sessionId: "session-id" as DeviceSessionId,
+      profile: LITECOIN_PROFILE,
+    }).build();
+
+    signer.getExtendedPublicKey("84'/2'/0'", { skipOpenApp: true });
+
+    const { deviceAction } = executeDeviceAction.mock.calls[0]![0] as {
+      deviceAction: CallTaskInAppDeviceAction<
+        unknown,
+        never,
+        UserInteractionRequired
+      >;
+    };
+    expect(deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+    expect(deviceAction.input).toMatchObject({
+      appName: "Litecoin",
+      skipOpenApp: true,
+    });
+  });
+
+  it("should reject a path without a parent level before any device action", async () => {
+    const executeDeviceAction = vi.fn();
+    const signer = new SignerBtcLegacyBuilder({
+      dmk: { executeDeviceAction } as unknown as DeviceManagementKit,
+      sessionId: "session-id" as DeviceSessionId,
+      profile: LITECOIN_PROFILE,
+    }).build();
+
+    const { observable } = signer.getExtendedPublicKey("84'");
+
+    await expect(lastValueFrom(observable)).resolves.toStrictEqual({
+      status: DeviceActionStatus.Error,
+      error: new InvalidStatusWordError(
+        "The derivation path needs at least two levels",
+      ),
+    });
+    expect(executeDeviceAction).not.toHaveBeenCalled();
   });
 });
