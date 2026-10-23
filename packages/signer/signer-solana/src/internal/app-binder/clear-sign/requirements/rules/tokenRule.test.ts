@@ -114,7 +114,7 @@ function accountPathValue(index: number): ParsedValue {
 }
 
 function isSignerRule(target: ParsedValue): ParsedHideRule {
-  return { ruleSetIndex: 0, condition: HideCondition.IS_SIGNER, target };
+  return { condition: HideCondition.IS_SIGNER, target };
 }
 
 function run(
@@ -710,7 +710,6 @@ describe("applyTokenRule", () => {
         parsed({
           hideRules: [
             {
-              ruleSetIndex: 0,
               condition: HideCondition.CREATED_IN_TRANSACTION,
               target: accountPathValue(0),
             },

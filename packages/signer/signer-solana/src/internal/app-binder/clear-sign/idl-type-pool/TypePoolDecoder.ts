@@ -392,6 +392,8 @@ export function decode(
  * Convenience wrapper over {@link decode} that accepts the raw `IDL_TYPE_POOL`
  * TLV value (`u8 count || entries…`) and parses it before decoding. Parse
  * failures surface as the same typed {@link TypePoolDecoderError} `Left`.
+ *
+ * @deprecated Unused; will be removed in the next major version.
  */
 export function decodePoolBytes(
   typePool: Uint8Array,
