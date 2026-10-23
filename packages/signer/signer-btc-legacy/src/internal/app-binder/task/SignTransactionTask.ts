@@ -38,7 +38,6 @@ import {
   p2pkhScript,
   p2wpkhScript,
   sequenceToBytes,
-  SIGHASH_ALL,
   splitOutputBlocks,
   splitScriptBlocks,
 } from "@internal/app-binder/task/utils/legacyTransactionUtils";
@@ -169,12 +168,12 @@ export class SignTransactionTask<ErrorCodes extends string> {
       changePath,
       outputScriptHex,
       lockTime = DEFAULT_LOCKTIME,
-      sigHashType = SIGHASH_ALL,
+      sigHashType = this.profile.sigHashType,
       segwit = false,
       additionals = [],
     } = transaction;
     const outputScript = hexaStringToBuffer(outputScriptHex)!;
-    const bip143 = segwit;
+    const bip143 = segwit || this.profile.bip143;
     const bech32 = segwit && additionals.includes("bech32");
 
     const trustedInputs: Uint8Array[] = [];

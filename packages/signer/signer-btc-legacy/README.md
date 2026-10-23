@@ -1,6 +1,6 @@
 # Ledger Bitcoin Legacy Signer Implementation
 
-This module provides the implementation of the Ledger signer of the Device Management Kit for the apps on the legacy Bitcoin protocol (CLA `0xE0`), such as Litecoin, Dogecoin or Bitcoin Cash. Each coin is a profile of this kit: its app name and its error map.
+This module provides the implementation of the Ledger signer of the Device Management Kit for the apps on the legacy Bitcoin protocol (CLA `0xE0`), such as Litecoin, Dogecoin or Bitcoin Cash. Each coin is a profile of this kit: its app name, its error map and how it signs.
 
 It also exports its inversify module (`btcLegacyModuleFactory`), its tokens (`btcLegacyTypes`) and its services, for the signer kits built on the same protocol, such as `@ledgerhq/device-signer-kit-zcash`.
 
@@ -68,11 +68,11 @@ The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, 
 - `associatedKeysets`: the derivation path of each input's key.
 - `changePath`: the derivation path of the change output, if any.
 - `outputScriptHex`: the serialized outputs, count included.
-- `lockTime`: defaults to `0`. `sigHashType`: defaults to `SIGHASH_ALL`.
+- `lockTime`: defaults to `0`. `sigHashType`: defaults to the profile's, `SIGHASH_ALL` or, for Bitcoin Cash and Bitcoin Gold, `SIGHASH_ALL | SIGHASH_FORKID`.
 - `segwit`: the inputs spend SegWit outputs and are signed with BIP143. They are native with `"bech32"` in `additionals`, P2SH-wrapped otherwise.
 - `additionals`: hw-app-btc's flags. The kit reads `"bech32"` and ignores the others.
 
-Transactions are in the `standard` format of Litecoin (`LITECOIN_PROFILE`) and Dogecoin (`DOGECOIN_PROFILE`). The output is the signed transaction in hexadecimal.
+Transactions are in the `standard` format of Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`), Bitcoin Cash (`BITCOIN_CASH_PROFILE`) and Bitcoin Gold (`BITCOIN_GOLD_PROFILE`). The last two hash every transaction with BIP143 (the profile's `bip143`). The output is the signed transaction in hexadecimal.
 
 `signTransaction` options:
 

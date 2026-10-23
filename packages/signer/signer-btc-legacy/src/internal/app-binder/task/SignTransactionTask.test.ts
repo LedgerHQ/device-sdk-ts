@@ -10,6 +10,7 @@ import {
 
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
+import { BITCOIN_CASH_PROFILE } from "@api/profiles/bitcoinCashProfile";
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import {
   BtcLegacyAppCommandError,
@@ -71,6 +72,24 @@ describe("SignTransactionTask", () => {
       });
     },
   );
+
+  it("should default to the profile's sighash type", async () => {
+    const { transaction, exchanges, signedTransaction } =
+      REFERENCE_TRANSACTIONS.find(
+        (reference) => reference.profile === BITCOIN_CASH_PROFILE,
+      )!;
+    const { api } = replay(exchanges);
+
+    const result = await getTask(BITCOIN_CASH_PROFILE).run(api, {
+      ...transaction,
+      sigHashType: undefined,
+    });
+
+    expect(result).toStrictEqual({
+      status: "SUCCESS",
+      data: signedTransaction,
+    });
+  });
 
   it("should return the error of a rejected signature", async () => {
     const { transaction, exchanges } = ONE_INPUT!;
