@@ -1,5 +1,8 @@
 /* eslint @typescript-eslint/consistent-type-imports: 0 */
-import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  ClearSignContextType,
+  type ContextModule,
+} from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   DeviceActionStatus,
@@ -14,6 +17,7 @@ import { Just, Nothing } from "purify-ts";
 
 import { type SignTypedDataDAState } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { SignTypedDataDAStateStep } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { EthAppCommandErrorFactory } from "@internal/app-binder/command/utils/ethAppErrors";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
@@ -133,11 +137,13 @@ describe("SignTypedDataDeviceAction", () => {
   const provideContextMock = vi.fn();
   const signTypedDataMock = vi.fn();
   const signTypedDataLegacyMock = vi.fn();
+  const buildTypedDataV2ContextMock = vi.fn();
   const signTypedDataV2Mock = vi.fn();
   const getAddressMock = vi.fn();
   const detectBlindSigningMock = vi.fn();
   function extractDependenciesMock() {
     detectBlindSigningMock.mockResolvedValue({ isBlindSign: false });
+    buildTypedDataV2ContextMock.mockResolvedValue([]);
     return {
       getAddress: getAddressMock,
       getAppConfig: getAppConfigMock,
@@ -146,6 +152,7 @@ describe("SignTypedDataDeviceAction", () => {
       provideContext: provideContextMock,
       signTypedData: signTypedDataMock,
       signTypedDataLegacy: signTypedDataLegacyMock,
+      buildTypedDataV2Context: buildTypedDataV2ContextMock,
       signTypedDataV2: signTypedDataV2Mock,
       detectBlindSigning: detectBlindSigningMock,
     };
@@ -1383,9 +1390,9 @@ describe("SignTypedDataDeviceAction", () => {
       return deviceAction;
     };
 
-    // V2 is raw-only, so it needs neither the clear-signing context nor the
-    // signer address that context is built from.
-    it("should sign through V2 without building a context", () =>
+    // V2 builds its own description of the message, which does not need the
+    // signer address the V1 context is built from.
+    it("should sign through V2 without building the V1 context", () =>
       new Promise<void>((resolve, reject) => {
         apiMock.getDeviceSessionState.mockReturnValue(
           readyWithApp("1.23.0") as never,
@@ -1406,6 +1413,13 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1442,6 +1456,25 @@ describe("SignTypedDataDeviceAction", () => {
                   derivationPath: "44'/60'/0'/0/0",
                   data: TEST_MESSAGE,
                   parser: mockParser,
+                  contexts: [],
+                }),
+              }),
+            );
+            expect(buildTypedDataV2ContextMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: expect.objectContaining({
+                  data: TEST_MESSAGE,
+                  parser: mockParser,
+                }),
+              }),
+            );
+            expect(detectBlindSigningMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: expect.objectContaining({
+                  input: expect.objectContaining({
+                    hasContext: false,
+                    clearSigningType: null,
+                  }),
                 }),
               }),
             );
@@ -1451,6 +1484,97 @@ describe("SignTypedDataDeviceAction", () => {
             resolve();
           },
         });
+      }));
+
+    it("should clear sign through V2 with the description of the message", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          readyWithApp("1.23.0") as never,
+        );
+        setupAppConfig("1.23.0", true, true);
+        const contexts = [
+          {
+            context: {
+              type: ClearSignContextType.ETHEREUM_EIP712_MESSAGE_INFO,
+              payload: "0x01",
+            },
+            subcontextCallbacks: [],
+          },
+        ];
+        buildTypedDataV2ContextMock.mockResolvedValueOnce(contexts);
+        signTypedDataV2Mock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
+
+        testDeviceActionStates(
+          v2DeviceAction(),
+          [
+            {
+              intermediateValue: {
+                requiredUserInteraction: UserInteractionRequired.None,
+                step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+              },
+              status: DeviceActionStatus.Pending,
+            },
+            {
+              intermediateValue: {
+                requiredUserInteraction: UserInteractionRequired.None,
+                step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+              },
+              status: DeviceActionStatus.Pending,
+            },
+            {
+              intermediateValue: {
+                requiredUserInteraction: UserInteractionRequired.SignTypedData,
+                step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_V2,
+              },
+              status: DeviceActionStatus.Pending,
+            },
+            {
+              intermediateValue: {
+                requiredUserInteraction: UserInteractionRequired.None,
+                step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
+              },
+              status: DeviceActionStatus.Pending,
+            },
+            {
+              output: {
+                v: 0x1c,
+                r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+                s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+              },
+              status: DeviceActionStatus.Completed,
+            },
+          ],
+          apiMock,
+          {
+            onError: reject,
+            onDone: () => {
+              expect(signTypedDataV2Mock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: expect.objectContaining({ contexts }),
+                }),
+              );
+              expect(detectBlindSigningMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: expect.objectContaining({
+                    input: expect.objectContaining({
+                      hasContext: true,
+                      clearSigningType: ClearSigningType.EIP7730,
+                    }),
+                  }),
+                }),
+              );
+              resolve();
+            },
+          },
+        );
       }));
 
     it("should surface a V2 failure without retrying through V1", () =>
@@ -1473,6 +1597,13 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },

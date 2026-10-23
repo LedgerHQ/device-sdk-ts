@@ -29,6 +29,7 @@ import {
   type SignTypedDataDAOutput,
   SignTypedDataDAStateStep,
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
@@ -50,6 +51,8 @@ import {
   BuildEIP712ContextTask,
   type BuildEIP712ContextTaskResult,
 } from "@internal/app-binder/task/BuildEIP712ContextTask";
+import { BuildEIP712V2ContextsTask } from "@internal/app-binder/task/BuildEIP712V2ContextsTask";
+import { type ContextWithSubContexts } from "@internal/app-binder/task/BuildFullContextsTask";
 import {
   ProvideEIP712ContextTask,
   type ProvideEIP712ContextTaskArgs,
@@ -105,11 +108,19 @@ export type MachineDependencies = {
       data: TypedData;
     };
   }) => Promise<CommandResult<Signature, EthErrorCodes>>;
+  readonly buildTypedDataV2Context: (arg0: {
+    input: {
+      contextModule: ContextModule;
+      parser: TypedDataParserService;
+      data: TypedData;
+    };
+  }) => Promise<ContextWithSubContexts[]>;
   readonly signTypedDataV2: (arg0: {
     input: {
       derivationPath: string;
       data: TypedData;
       parser: TypedDataParserService;
+      contexts: ContextWithSubContexts[];
     };
   }) => Promise<CommandResult<Signature, EthErrorCodes>>;
   readonly detectBlindSigning: (arg0: {
@@ -149,6 +160,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       provideContext,
       signTypedData,
       signTypedDataLegacy,
+      buildTypedDataV2Context,
       signTypedDataV2,
       detectBlindSigning,
     } = this.extractDependencies(internalApi);
@@ -170,6 +182,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         provideContext: fromPromise(provideContext),
         signTypedData: fromPromise(signTypedData),
         signTypedDataLegacy: fromPromise(signTypedDataLegacy),
+        buildTypedDataV2Context: fromPromise(buildTypedDataV2Context),
         signTypedDataV2: fromPromise(signTypedDataV2),
         detectBlindSigning: fromPromise(detectBlindSigning),
       },
@@ -228,6 +241,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             appConfig: null,
             from: null,
             typedDataContext: null,
+            typedDataV2Contexts: null,
             signature: null,
             isBlindSign: null,
             usedFallback: false,
@@ -322,10 +336,10 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         },
         GetAppConfigResultCheck: {
           always: [
-            // V2 is raw-only, so it needs neither the clear-signing context nor the
-            // signer address the context is built from.
+            // V2 builds its own description of the message, which does not need the
+            // signer address the V1 context is built from.
             {
-              target: "SignTypedDataV2",
+              target: "BuildTypedDataV2Context",
               guard: and(["noInternalError", "isEip712V2Supported"]),
             },
             {
@@ -556,6 +570,38 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             { target: "DetectBlindSigning" },
           ],
         },
+        BuildTypedDataV2Context: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+            },
+          }),
+          invoke: {
+            id: "buildTypedDataV2Context",
+            src: "buildTypedDataV2Context",
+            input: ({ context }) => ({
+              contextModule: context.input.contextModule,
+              parser: context.input.parser,
+              data: context.input.data,
+            }),
+            onDone: {
+              target: "SignTypedDataV2",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    typedDataV2Contexts: event.output,
+                  }),
+                }),
+              ],
+            },
+            // Nothing was sent to the device yet, so the message can still be signed raw
+            onError: {
+              target: "SignTypedDataV2",
+            },
+          },
+        },
         SignTypedDataV2: {
           entry: assign({
             intermediateValue: {
@@ -570,6 +616,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               derivationPath: context.input.derivationPath,
               data: context.input.data,
               parser: context.input.parser,
+              contexts: context._internalState.typedDataV2Contexts ?? [],
             }),
             // No fallback to the V1 protocol: a V2 failure has to surface as one rather
             // than be papered over by a second, differently encoded attempt.
@@ -666,7 +713,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                   type: "typedData" as const,
                   hasContext:
                     context._internalState.typedDataContext?.clearSignContext.isJust() ??
-                    false,
+                    (context._internalState.typedDataV2Contexts?.length ?? 0) >
+                      0,
                   usedFallback: context._internalState.usedFallback,
                   chainId: normalizeChainId(context.input.data.domain.chainId),
                   targetAddress:
@@ -677,7 +725,10 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                   deviceVersion,
                   clearSigningType:
                     context._internalState.typedDataContext?.clearSigningType ??
-                    null,
+                    ((context._internalState.typedDataV2Contexts?.length ?? 0) >
+                    0
+                      ? ClearSigningType.EIP7730
+                      : null),
                   partialContextErrors:
                     context._internalState.typedDataContext
                       ?.contextErrorCount ?? 0,
@@ -799,17 +850,35 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         this.getLoggerFactory(internalApi),
       ).run();
 
+    const buildTypedDataV2Context = async (arg0: {
+      input: {
+        contextModule: ContextModule;
+        parser: TypedDataParserService;
+        data: TypedData;
+      };
+    }) =>
+      new BuildEIP712V2ContextsTask(internalApi, {
+        contextModule: arg0.input.contextModule,
+        parser: arg0.input.parser,
+        data: arg0.input.data,
+        deviceModelId: internalApi.getDeviceModel().id,
+        loggerFactory: this.getLoggerFactory(internalApi),
+      }).run();
+
     const signTypedDataV2 = async (arg0: {
       input: {
         derivationPath: string;
         data: TypedData;
         parser: TypedDataParserService;
+        contexts: ContextWithSubContexts[];
       };
     }) =>
       new SendEIP712V2Task(internalApi, {
         derivationPath: arg0.input.derivationPath,
         data: arg0.input.data,
         parser: arg0.input.parser,
+        contexts: arg0.input.contexts,
+        loggerFactory: this.getLoggerFactory(internalApi),
       }).run();
 
     const detectBlindSigning = async (arg0: {
@@ -824,6 +893,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       provideContext,
       signTypedData,
       signTypedDataLegacy,
+      buildTypedDataV2Context,
       signTypedDataV2,
       detectBlindSigning,
     };

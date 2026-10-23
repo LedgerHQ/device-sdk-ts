@@ -1,3 +1,4 @@
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   type InternalApi,
@@ -10,6 +11,7 @@ import { type TypedData } from "@api/model/TypedData";
 import { SendEIP712SchemaCommand } from "@internal/app-binder/command/SendEIP712SchemaCommand";
 import { SendEIP712ValuesCommand } from "@internal/app-binder/command/SendEIP712ValuesCommand";
 import { SignEIP712V2Command } from "@internal/app-binder/command/SignEIP712V2Command";
+import { type ContextWithSubContexts } from "@internal/app-binder/task/BuildFullContextsTask";
 import { DefaultTypedDataParserService } from "@internal/typed-data/service/DefaultTypedDataParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
@@ -47,6 +49,24 @@ const SIGNATURE = {
   s: `0x${"bb".repeat(32)}`,
 };
 
+const loggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
+const CONTEXTS = [
+  {
+    context: {
+      type: ClearSignContextType.ETHEREUM_EIP712_MESSAGE_INFO,
+      payload: "0x01",
+    },
+    subcontextCallbacks: [],
+  },
+] as ContextWithSubContexts[];
+
 const parserReturning = (result: unknown): TypedDataParserService =>
   ({
     parse: vi.fn().mockReturnValue(result),
@@ -80,6 +100,8 @@ describe("SendEIP712V2Task", () => {
       derivationPath: DERIVATION_PATH,
       data: DATA,
       parser: realParser(),
+      contexts: [],
+      loggerFactory,
     }).run();
 
     // THEN
@@ -106,6 +128,8 @@ describe("SendEIP712V2Task", () => {
       derivationPath: DERIVATION_PATH,
       data: DATA,
       parser: realParser(),
+      contexts: [],
+      loggerFactory,
     }).run();
 
     // THEN
@@ -129,10 +153,112 @@ describe("SendEIP712V2Task", () => {
       derivationPath: DERIVATION_PATH,
       data: DATA,
       parser: realParser(),
+      contexts: [],
+      loggerFactory,
     }).run();
 
     // THEN
     expect(isSuccessCommandResult(result)).toBe(false);
+    const sent = vi.mocked(api.sendCommand).mock.calls.map(([c]) => c);
+    expect(sent.some((c) => c instanceof SignEIP712V2Command)).toBe(false);
+  });
+
+  it("should provide the description of the message between the values and the sign command", async () => {
+    // GIVEN
+    const order: string[] = [];
+    vi.spyOn(api, "sendCommand").mockImplementation((command) => {
+      order.push(command.name);
+      return Promise.resolve(
+        command instanceof SignEIP712V2Command
+          ? CommandResultFactory({ data: SIGNATURE })
+          : CommandResultFactory({ data: undefined }),
+      );
+    });
+    const provideContexts = vi.fn().mockImplementation(() => ({
+      run: () => {
+        order.push("provideContexts");
+        return Promise.resolve(Right(undefined));
+      },
+    }));
+
+    // WHEN
+    const result = await new SendEIP712V2Task(
+      api,
+      {
+        derivationPath: DERIVATION_PATH,
+        data: DATA,
+        parser: realParser(),
+        contexts: CONTEXTS,
+        loggerFactory,
+      },
+      provideContexts,
+    ).run();
+
+    // THEN
+    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(provideContexts).toHaveBeenCalledWith(api, {
+      contexts: CONTEXTS,
+      derivationPath: DERIVATION_PATH,
+      loggerFactory,
+    });
+    expect(order.slice(-3)).toStrictEqual([
+      "sendEIP712Values",
+      "provideContexts",
+      "signEIP712V2",
+    ]);
+  });
+
+  it("should not provide anything for a message without description", async () => {
+    // GIVEN
+    vi.spyOn(api, "sendCommand").mockResolvedValue(
+      CommandResultFactory({ data: SIGNATURE }),
+    );
+    const provideContexts = vi.fn();
+
+    // WHEN
+    await new SendEIP712V2Task(
+      api,
+      {
+        derivationPath: DERIVATION_PATH,
+        data: DATA,
+        parser: realParser(),
+        contexts: [],
+        loggerFactory,
+      },
+      provideContexts,
+    ).run();
+
+    // THEN
+    expect(provideContexts).not.toHaveBeenCalled();
+  });
+
+  it("should never sign when the app refuses the description", async () => {
+    // GIVEN
+    vi.spyOn(api, "sendCommand").mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    const error = CommandResultFactory({
+      error: new InvalidStatusWordError("message info refused"),
+    });
+    const provideContexts = vi.fn().mockReturnValue({
+      run: () => Promise.resolve(Left(error)),
+    });
+
+    // WHEN
+    const result = await new SendEIP712V2Task(
+      api,
+      {
+        derivationPath: DERIVATION_PATH,
+        data: DATA,
+        parser: realParser(),
+        contexts: CONTEXTS,
+        loggerFactory,
+      },
+      provideContexts,
+    ).run();
+
+    // THEN
+    expect(result).toBe(error);
     const sent = vi.mocked(api.sendCommand).mock.calls.map(([c]) => c);
     expect(sent.some((c) => c instanceof SignEIP712V2Command)).toBe(false);
   });
@@ -146,6 +272,8 @@ describe("SendEIP712V2Task", () => {
       derivationPath: DERIVATION_PATH,
       data: DATA,
       parser: parserReturning(Left(new Error("unparseable"))),
+      contexts: [],
+      loggerFactory,
     }).run();
 
     // THEN
@@ -168,6 +296,8 @@ describe("SendEIP712V2Task", () => {
       derivationPath: DERIVATION_PATH,
       data: DATA,
       parser: parserReturning(Right({ ...PARSED, types: {} })),
+      contexts: [],
+      loggerFactory,
     }).run();
 
     // THEN
