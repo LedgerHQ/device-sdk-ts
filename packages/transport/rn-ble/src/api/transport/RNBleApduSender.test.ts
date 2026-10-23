@@ -447,3 +447,41 @@ describe.skip("RNBleApduSender", () => {
     });
   });
 });
+
+describe("RNBleApduSender closeConnection", () => {
+  let senderLogger: LoggerPublisherServiceStub;
+  const buildSender = (cancel: () => Promise<Device>) =>
+    new RNBleApduSender(
+      {
+        dependencies: {
+          device: { mtu: LEDGER_MTU, cancelConnection: cancel } as Device,
+          internalDevice: {} as RNBleInternalDevice,
+          manager: {} as BleManager,
+        },
+        apduReceiverFactory: vi.fn(),
+        apduSenderFactory: vi.fn(),
+      },
+      (tag) => {
+        senderLogger = new LoggerPublisherServiceStub([], tag);
+        return senderLogger;
+      },
+    );
+
+  it("should cancel the device connection", () => {
+    const cancel = vi.fn().mockResolvedValue({} as Device);
+    buildSender(cancel).closeConnection();
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it("should handle a cancelConnection rejection when the device already disconnected", async () => {
+    const error = new Error("Operation was cancelled");
+    const cancel = vi.fn().mockRejectedValue(error);
+    buildSender(cancel).closeConnection();
+    await vi.waitFor(() =>
+      expect(senderLogger.info).toHaveBeenCalledWith(
+        "Error cancelling connection",
+        { data: { error } },
+      ),
+    );
+  });
+});
