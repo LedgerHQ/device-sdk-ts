@@ -21,5 +21,7 @@ export interface TransactionSerializer {
     lockTime: number;
     // One per input when they spend SegWit outputs.
     witnesses?: Uint8Array[];
+    // Transactions in the sapling format.
+    expiryHeight?: Uint8Array;
   }): Uint8Array;
 }

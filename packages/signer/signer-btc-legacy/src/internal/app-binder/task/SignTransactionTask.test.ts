@@ -178,6 +178,11 @@ describe("SignTransactionTask", () => {
         "The redeem script is not a hexadecimal string",
       ],
       [
+        "the expiry height is not 4 bytes",
+        { ...base, expiryHeight: new Uint8Array(3) },
+        "The expiry height is not 4 bytes",
+      ],
+      [
         "the previous transaction has no lock time",
         {
           ...base,

@@ -11,6 +11,10 @@ export type LegacyErrorConfig<ErrorCodes extends string> = {
   ) => DeviceExchangeError<ErrorCodes>;
 };
 
+// How the coin serializes its transactions: "sapling" is the v4 format of
+// Komodo, hashed with BIP143 and an expiry height.
+export type TransactionFormat = "standard" | "sapling";
+
 export type LegacyCoinProfile<ErrorCodes extends string> = {
   appName: string;
   errors: LegacyErrorConfig<ErrorCodes>;
@@ -21,4 +25,5 @@ export type LegacyCoinProfile<ErrorCodes extends string> = {
   sigHashType: number;
   // Every transaction is hashed with BIP143, even without SegWit inputs.
   bip143: boolean;
+  transactionFormat: TransactionFormat;
 };

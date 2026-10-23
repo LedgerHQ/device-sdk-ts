@@ -64,18 +64,24 @@ const { observable, cancel } = signer.signTransaction({
 
 The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, with `Uint8Array`s instead of `Buffer`s:
 
-- `inputs`: for each input, the previous transaction (`version`, `inputs`, `outputs`, `locktime`, and Horizen's `extraData`), the index of the spent output, an optional redeem script in hexadecimal, and an optional sequence (defaults to `0xffffffff`). As in hw-app-btc, the redeem script is only hashed: the signed input script holds the signature and the public key, so P2SH inputs are not supported.
+- `inputs`: for each input, the previous transaction (`version`, `inputs`, `outputs`, `locktime`, and when it has them `nVersionGroupId`, `nExpiryHeight` and `extraData`), the index of the spent output, an optional redeem script in hexadecimal, and an optional sequence (defaults to `0xffffffff`). As in hw-app-btc, the redeem script is only hashed: the signed input script holds the signature and the public key, so P2SH inputs are not supported.
 - `associatedKeysets`: the derivation path of each input's key.
 - `changePath`: the derivation path of the change output, if any.
 - `outputScriptHex`: the serialized outputs, count included.
 - `lockTime`: defaults to `0`. `sigHashType`: defaults to the profile's, `SIGHASH_ALL` or, for Bitcoin Cash and Bitcoin Gold, `SIGHASH_ALL | SIGHASH_FORKID`.
 - `segwit`: the inputs spend SegWit outputs and are signed with BIP143. They are native with `"bech32"` in `additionals`, P2SH-wrapped otherwise.
+- `expiryHeight`: the expiry height of a transaction in the `sapling` format, 4 bytes. Defaults to 0, as Ledger Wallet sends for Komodo.
 - `additionals`: hw-app-btc's flags. The kit reads `"bech32"`, and `"cashaddr"` for a Bitcoin Cash transaction to show its outputs as cashaddr addresses. It ignores the others.
 
-Transactions are in the `standard` format of Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`), Bitcoin Cash (`BITCOIN_CASH_PROFILE`), Bitcoin Gold (`BITCOIN_GOLD_PROFILE`) and Horizen (`HORIZEN_PROFILE`). Bitcoin Cash and Bitcoin Gold hash every transaction with BIP143 (the profile's `bip143`). The output is the signed transaction in hexadecimal.
+Each profile picks a transaction format (the profile's `transactionFormat`):
+
+- `standard`: Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`), Bitcoin Cash (`BITCOIN_CASH_PROFILE`), Bitcoin Gold (`BITCOIN_GOLD_PROFILE`) and Horizen (`HORIZEN_PROFILE`). Bitcoin Cash and Bitcoin Gold hash every transaction with BIP143 (the profile's `bip143`).
+- `sapling`: Komodo (`KOMODO_PROFILE`). Its v4 transactions are hashed with BIP143 and carry an expiry height, and the app commits the outputs before signing the inputs.
+
+The output is the signed transaction in hexadecimal.
 
 `signTransaction` options:
 
 - `skipOpenApp`: do not open the app before sending the commands. Defaults to `false`.
 
-The trusted input and signing tasks are services of the module (`btcLegacyTypes.GetTrustedInputTask`, `btcLegacyTypes.SignTransactionTask`). Their format steps are hooks behind `btcLegacyTypes.TrustedInputSerializer` and `btcLegacyTypes.TransactionSerializer`, bound to the `standard` format: a kit on another format rebinds them in its container.
+The trusted input and signing tasks are services of the module (`btcLegacyTypes.GetTrustedInputTask`, `btcLegacyTypes.SignTransactionTask`). Their format steps are hooks behind `btcLegacyTypes.TrustedInputSerializer` and `btcLegacyTypes.TransactionSerializer`, bound to the profile's format: a kit on another format rebinds them in its container.

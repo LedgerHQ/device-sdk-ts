@@ -11,4 +11,5 @@ export const DOGECOIN_PROFILE: LegacyCoinProfile<BtcLegacyErrorCodes> = {
   xpubVersion: 0x02facafd,
   sigHashType: SIGHASH_ALL,
   bip143: false,
+  transactionFormat: "standard",
 };
