@@ -10,7 +10,7 @@ import {
 
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
 
-import { loadCertificateIfPresent } from "./loadCertificate";
+import { loadCertificate } from "./loadCertificate";
 import {
   type ProvideContextErrorCodes,
   type ProvideContextHandler,
@@ -31,10 +31,7 @@ export const provideTokenContext: ProvideContextHandler<
     return CommandResultFactory({ data: undefined });
   }
 
-  const certResult = await loadCertificateIfPresent(
-    api,
-    tokenMetadataCertificate,
-  );
+  const certResult = await loadCertificate(api, tokenMetadataCertificate);
   if (!isSuccessCommandResult(certResult)) {
     return certResult;
   }
