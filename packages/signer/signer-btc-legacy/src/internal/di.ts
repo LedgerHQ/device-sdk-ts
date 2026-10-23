@@ -1,6 +1,7 @@
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
@@ -28,6 +29,13 @@ export const makeContainer = <ErrorCodes extends string>({
   container
     .bind<LegacyCoinProfile<ErrorCodes>>(btcLegacyTypes.Profile)
     .toConstantValue(profile);
+  container
+    .bind<
+      (tag: string) => LoggerPublisherService
+    >(btcLegacyTypes.DmkLoggerFactory)
+    .toConstantValue((tag: string) =>
+      dmk.getLoggerFactory()(["SignerBtcLegacy", tag]),
+    );
 
   container.loadSync(btcLegacyModuleFactory());
 

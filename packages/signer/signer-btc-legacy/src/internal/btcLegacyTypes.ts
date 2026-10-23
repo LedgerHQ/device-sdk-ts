@@ -4,6 +4,7 @@ export const btcLegacyTypes = {
   Dmk: Symbol.for("Dmk"),
   SessionId: Symbol.for("SessionId"),
   Profile: Symbol.for("BtcLegacyProfile"),
+  DmkLoggerFactory: Symbol.for("BtcLegacyDmkLoggerFactory"),
   AppBinder: Symbol.for("BtcLegacyAppBinder"),
   GetAddressUseCase: Symbol.for("BtcLegacyGetAddressUseCase"),
   GetExtendedPublicKeyUseCase: Symbol.for(
