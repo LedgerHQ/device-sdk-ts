@@ -70,7 +70,7 @@ The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, 
 - `outputScriptHex`: the serialized outputs, count included.
 - `lockTime`: defaults to `0`. `sigHashType`: defaults to the profile's, `SIGHASH_ALL` or, for Bitcoin Cash and Bitcoin Gold, `SIGHASH_ALL | SIGHASH_FORKID`.
 - `segwit`: the inputs spend SegWit outputs and are signed with BIP143. They are native with `"bech32"` in `additionals`, P2SH-wrapped otherwise. The kit fails before any APDU when the profile has no SegWit, such as Dogecoin.
-- `additionals`: hw-app-btc's flags. The kit reads `"bech32"` and ignores the others.
+- `additionals`: hw-app-btc's flags. The kit reads `"bech32"`, and `"cashaddr"` for a Bitcoin Cash transaction to show its outputs as cashaddr addresses. It ignores the others.
 
 Transactions are in the `standard` format of Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`), Bitcoin Cash (`BITCOIN_CASH_PROFILE`) and Bitcoin Gold (`BITCOIN_GOLD_PROFILE`). The last two hash every transaction with BIP143 (the profile's `bip143`). The output is the signed transaction in hexadecimal.
 

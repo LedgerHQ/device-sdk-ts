@@ -15,6 +15,8 @@ export const P2 = {
 export const TRANSACTION_TYPE = {
   LEGACY: 0x00,
   BIP143: 0x02,
+  // Bitcoin Cash, the app shows the outputs as cashaddr addresses.
+  CASHADDR: 0x03,
 } as const;
 
 export type TransactionType =

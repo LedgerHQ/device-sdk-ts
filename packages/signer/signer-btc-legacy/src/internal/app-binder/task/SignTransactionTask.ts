@@ -189,6 +189,11 @@ export class SignTransactionTask<ErrorCodes extends string> {
         ? "native"
         : "wrapped";
     const bip143 = segwit || this.profile.bip143;
+    const transactionType = additionals.includes("cashaddr")
+      ? TRANSACTION_TYPE.CASHADDR
+      : bip143
+        ? TRANSACTION_TYPE.BIP143
+        : TRANSACTION_TYPE.LEGACY;
 
     const trustedInputs: Uint8Array[] = [];
     for (const [previousTransaction, outputIndex] of inputs) {
@@ -237,7 +242,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
         (await this.hashInputs(
           api,
           signedInputs.map(withoutScript),
-          TRANSACTION_TYPE.BIP143,
+          transactionType,
         )) ?? (await this.hashOutputs(api, outputScript, changePath));
       if (hashError !== undefined) {
         return DmkResultFactory({ error: hashError });
@@ -253,7 +258,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
             signedInputs.map((input, inputIndex) =>
               inputIndex === index ? input : withoutScript(input),
             ),
-            index === 0 ? TRANSACTION_TYPE.LEGACY : undefined,
+            index === 0 ? transactionType : undefined,
           )) ?? (await this.hashOutputs(api, outputScript, changePath)));
       if (hashError !== undefined) {
         return DmkResultFactory({ error: hashError });
