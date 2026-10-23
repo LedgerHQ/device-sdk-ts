@@ -20,6 +20,11 @@ const SUPPORTED_SIGNERS = [
     icon: <CryptoIcon ledgerId="bitcoin" ticker="BTC" size={size} />,
   },
   {
+    title: "Litecoin",
+    description: "Access Litecoin signer functionality",
+    icon: <CryptoIcon ledgerId="litecoin" ticker="LTC" size={size} />,
+  },
+  {
     title: "Solana",
     description: "Access Solana signer functionality",
     icon: <CryptoIcon ledgerId="solana" ticker="SOL" size={size} />,
