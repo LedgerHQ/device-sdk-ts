@@ -18,6 +18,7 @@ import { safeModuleFactory } from "@/modules/ethereum/safe/di/safeModuleFactory"
 import { tokenModuleFactory as ethereumTokenModuleFactory } from "@/modules/ethereum/token/di/tokenModuleFactory";
 import { trustedNameModuleFactory } from "@/modules/ethereum/trusted-name/di/trustedNameModuleFactory";
 import { typedDataModuleFactory } from "@/modules/ethereum/typed-data/di/typedDataModuleFactory";
+import { typedDataV2ModuleFactory } from "@/modules/ethereum/typed-data-v2/di/typedDataV2ModuleFactory";
 import { uniswapModuleFactory } from "@/modules/ethereum/uniswap/di/uniswapModuleFactory";
 import { nanoPkiModuleFactory } from "@/modules/multichain/pki/di/pkiModuleFactory";
 import { reporterModuleFactory } from "@/modules/multichain/reporter/di/reporterModuleFactory";
@@ -71,6 +72,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
         ethereumTokenModuleFactory(),
         calldataModuleFactory(),
         typedDataModuleFactory(),
+        typedDataV2ModuleFactory(),
         uniswapModuleFactory(),
         ethereumTransactionCheckModuleFactory(),
       );

@@ -26,6 +26,10 @@ export type ProvideTransactionInformationCommandArgs = {
    * If this is the first chunk of the message
    */
   readonly isFirstChunk: boolean;
+  /**
+   * If the information is the EIP712_MESSAGE_INFO of an EIP-712 V2 message
+   */
+  readonly isEip712V2?: boolean;
 };
 
 export class ProvideTransactionInformationCommand
@@ -47,7 +51,7 @@ export class ProvideTransactionInformationCommand
       cla: 0xe0,
       ins: 0x26,
       p1: this.args.isFirstChunk ? 0x01 : 0x00,
-      p2: 0x00,
+      p2: this.args.isEip712V2 ? 0x02 : 0x00,
     };
 
     return new ApduBuilder(ProvideTransactionInformationArgs)

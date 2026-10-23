@@ -1,3 +1,4 @@
+import { type Eip712ValuePath } from "@/modules/ethereum/model/Eip712Path";
 import {
   type ClearSignContext,
   type ClearSignContextSuccess,
@@ -60,6 +61,33 @@ export type ClearSignContextReference<
   ? { type: T } & ClearSignContextReferencePayloads[T]
   : never;
 
+type Eip712PathOrValue =
+  | { valuePath: Eip712ValuePath; value?: never }
+  | { value: string; valuePath?: never };
+
+// per-type payloads for the references of an EIP-712 V2 field descriptor
+type Eip712ClearSignContextReferencePayloads = {
+  [ClearSignContextReferenceType.ENUM]: {
+    valuePath: Eip712ValuePath;
+    id: number;
+  };
+  [ClearSignContextReferenceType.TRUSTED_NAME]: {
+    valuePath: Eip712ValuePath;
+    types: string[];
+    sources: string[];
+  };
+  // The call a CALLDATA descriptor names, which has to be described as a transaction
+  [ClearSignContextReferenceType.CALLDATA]: object;
+  [ClearSignContextReferenceType.TOKEN]: Eip712PathOrValue;
+  [ClearSignContextReferenceType.NFT]: Eip712PathOrValue;
+};
+
+export type Eip712ClearSignContextReference<
+  T extends ClearSignContextReferenceType = ClearSignContextReferenceType,
+> = T extends ClearSignContextReferenceType
+  ? { type: T } & Eip712ClearSignContextReferencePayloads[T]
+  : never;
+
 /**
  * Ethereum-specific payload overrides — contributed to the shared
  * ClearSignContextSuccessPayloads map at the integration boundary.
@@ -71,6 +99,9 @@ export type EthereumPayloadOverrides = {
   };
   [ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION]: ClearSignContextSuccessBase & {
     reference?: ClearSignContextReference;
+  };
+  [ClearSignContextType.ETHEREUM_EIP712_FIELD_DESCRIPTION]: ClearSignContextSuccessBase & {
+    reference?: Eip712ClearSignContextReference;
   };
 };
 
@@ -85,6 +116,9 @@ export const EthereumClearSignContextType = {
   ENUM: ClearSignContextType.ETHEREUM_ENUM,
   TRANSACTION_FIELD_DESCRIPTION:
     ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+  EIP712_MESSAGE_INFO: ClearSignContextType.ETHEREUM_EIP712_MESSAGE_INFO,
+  EIP712_FIELD_DESCRIPTION:
+    ClearSignContextType.ETHEREUM_EIP712_FIELD_DESCRIPTION,
   TRANSACTION_CHECK: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
   DYNAMIC_NETWORK: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
   DYNAMIC_NETWORK_ICON: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,

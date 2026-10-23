@@ -26,6 +26,10 @@ export type ProvideTransactionFieldDescriptionCommandArgs = {
    * If this is the first chunk of the message
    */
   readonly isFirstChunk: boolean;
+  /**
+   * If the field describes an EIP-712 V2 message rather than a transaction
+   */
+  readonly isEip712V2?: boolean;
 };
 
 export class ProvideTransactionFieldDescriptionCommand
@@ -47,7 +51,7 @@ export class ProvideTransactionFieldDescriptionCommand
       cla: 0xe0,
       ins: 0x28,
       p1: this.args.isFirstChunk ? 0x01 : 0x00,
-      p2: 0x00,
+      p2: this.args.isEip712V2 ? 0x02 : 0x00,
     };
 
     return new ApduBuilder(ProvideTransactionFieldDescriptionArgs)
