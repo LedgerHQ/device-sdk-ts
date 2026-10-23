@@ -82,16 +82,10 @@ export class GetPubKeyCommand
     ).orDefaultLazy(() => {
       const parser = new ApduParser(response);
 
-      if (parser.testMinimalLength(PUBKEY_LENGTH) === false) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError("Public key is missing"),
-        });
-      }
-
       const buffer = parser.extractFieldByLength(PUBKEY_LENGTH);
       if (buffer === undefined) {
         return CommandResultFactory({
-          error: new InvalidStatusWordError("Unable to extract public key"),
+          error: new InvalidStatusWordError("Public key is missing"),
         });
       }
 
