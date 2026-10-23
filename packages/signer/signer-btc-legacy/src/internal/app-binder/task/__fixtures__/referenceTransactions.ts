@@ -5,6 +5,7 @@ import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
 import { BITCOIN_CASH_PROFILE } from "@api/profiles/bitcoinCashProfile";
 import { BITCOIN_GOLD_PROFILE } from "@api/profiles/bitcoinGoldProfile";
 import { DOGECOIN_PROFILE } from "@api/profiles/dogecoinProfile";
+import { HORIZEN_PROFILE } from "@api/profiles/horizenProfile";
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import { type BtcLegacyErrorCodes } from "@internal/app-binder/command/utils/btcLegacyApplicationErrors";
 
@@ -1662,5 +1663,290 @@ export const REFERENCE_TRANSACTIONS: {
     ],
     signedTransaction:
       "0x0100000001cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000006b483045022100940ade69d11166dec49a5cb591e0499545150794c02b3fe6bbf14a90239faf7a022064a8f1cc35c04467e282d9e7e7efc52ab3854f7dbada7c87f74c04194cba3609412103bbe40d5c63bd949ad001bb3eab9352afb5e3cf8e58c9b4b7c9ad3cc06f19f0fdffffffff01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac00000000",
+  },
+  {
+    name: "Horizen: previous transaction with extra data",
+    profile: HORIZEN_PROFILE,
+    transaction: {
+      inputs: [
+        [
+          {
+            version: hexaStringToBuffer("02000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "f7923e851e3ff6426373218dfc6488b168ab869d8e8f1eb0d84ddc51149ff3fd00000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "48017836ef8ae19b3dde72d12a6f2db46b5e04f3ecd1a7951b17c00ccc891960d4b70393b2e812d8506de70d79f1f28c6f11fdb3f83e57535b16a8c5c14066bf86f6e93fec1cd5115021025b912fa2cdc4b534c1eb012f5d5479e543b641a5d30553bbdc76638513a6fbe9",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("40ef5a0700000000")!,
+                script: hexaStringToBuffer(
+                  "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+                )!,
+              },
+              {
+                amount: hexaStringToBuffer("0065cd1d00000000")!,
+                script: hexaStringToBuffer(
+                  "76a9142e8adb3c6943292fa748be8e0dcc679f25bebfbb88ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("00000000")!,
+            extraData: hexaStringToBuffer("00")!,
+          },
+          1,
+          null,
+          null,
+        ],
+      ],
+      associatedKeysets: ["44'/121'/0'/0/0"],
+      outputScriptHex:
+        "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+      additionals: ["zencash"],
+    },
+    exchanges: [
+      ["e042000009000000010200000001", "9000"],
+      [
+        "e042800025f7923e851e3ff6426373218dfc6488b168ab869d8e8f1eb0d84ddc51149ff3fd000000006b",
+        "9000",
+      ],
+      [
+        "e04280003248017836ef8ae19b3dde72d12a6f2db46b5e04f3ecd1a7951b17c00ccc891960d4b70393b2e812d8506de70d79f1f28c6f11",
+        "9000",
+      ],
+      [
+        "e042800032fdb3f83e57535b16a8c5c14066bf86f6e93fec1cd5115021025b912fa2cdc4b534c1eb012f5d5479e543b641a5d30553bbdc",
+        "9000",
+      ],
+      ["e04280000b76638513a6fbe9ffffffff", "9000"],
+      ["e04280000102", "9000"],
+      [
+        "e04280002240ef5a07000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "9000",
+      ],
+      [
+        "e0428000220065cd1d000000001976a9142e8adb3c6943292fa748be8e0dcc679f25bebfbb88ac",
+        "9000",
+      ],
+      [
+        "e042800006000000000100",
+        "3200ed0799b72ee1dba5f99f6500809a80a963b914b13b4138a790c549b6c9c451aabaad010000000065cd1d000000008d80936c008a49df9000",
+      ],
+      [
+        "e040000015058000002c80000079800000000000000000000000",
+        "410476f037a570b2f816a37946d915bbdb9fc55d96d9baa1819c9bbabc2dd9dd55804d9bf9c4b4c14d19a79d90d9bf145c15e59185f446036e9213a02e697753b87d237a6e564c315241484d337531356f356d324d336e416358423536434659784654587958e3835c6e67e046488dc91dd39db2bd54b727ea11325a2e4c3da929f7e56845f19000",
+      ],
+      ["e0440000050100000001", "9000"],
+      [
+        "e04480003b01383200ed0799b72ee1dba5f99f6500809a80a963b914b13b4138a790c549b6c9c451aabaad010000000065cd1d000000008d80936c008a49df19",
+        "9000",
+      ],
+      [
+        "e04480001d76a9142e8adb3c6943292fa748be8e0dcc679f25bebfbb88acffffffff",
+        "9000",
+      ],
+      [
+        "e04a80002301c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "00009000",
+      ],
+      [
+        "e04800001b058000002c80000079800000000000000000000000000000000001",
+        "314402202974f655d167adf25701e091944e6e8246633cbda8a60fcc6246d7d9933110f102200f21089d17f2f08d4c6d6f992ba67fb2f4d2010b1c6945befc50546cb2c89a48019000",
+      ],
+    ],
+    signedTransaction:
+      "0x010000000199b72ee1dba5f99f6500809a80a963b914b13b4138a790c549b6c9c451aabaad010000006a47304402202974f655d167adf25701e091944e6e8246633cbda8a60fcc6246d7d9933110f102200f21089d17f2f08d4c6d6f992ba67fb2f4d2010b1c6945befc50546cb2c89a4801210376f037a570b2f816a37946d915bbdb9fc55d96d9baa1819c9bbabc2dd9dd5580ffffffff01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac00000000",
+  },
+  {
+    name: "Horizen: two inputs, one without extra data, and change",
+    profile: HORIZEN_PROFILE,
+    transaction: {
+      inputs: [
+        [
+          {
+            version: hexaStringToBuffer("02000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "f7923e851e3ff6426373218dfc6488b168ab869d8e8f1eb0d84ddc51149ff3fd00000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "48017836ef8ae19b3dde72d12a6f2db46b5e04f3ecd1a7951b17c00ccc891960d4b70393b2e812d8506de70d79f1f28c6f11fdb3f83e57535b16a8c5c14066bf86f6e93fec1cd5115021025b912fa2cdc4b534c1eb012f5d5479e543b641a5d30553bbdc76638513a6fbe9",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("40ef5a0700000000")!,
+                script: hexaStringToBuffer(
+                  "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+                )!,
+              },
+              {
+                amount: hexaStringToBuffer("0065cd1d00000000")!,
+                script: hexaStringToBuffer(
+                  "76a9142e8adb3c6943292fa748be8e0dcc679f25bebfbb88ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("00000000")!,
+            extraData: hexaStringToBuffer("00")!,
+          },
+          1,
+          null,
+          null,
+        ],
+        [
+          {
+            version: hexaStringToBuffer("01000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "f51fcba55d4f08fe6c7f54b9cc292d69639a0fce92b463a52c8a1aee320bda9600000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "48bb211c3abfa43442351a5ab299018cd319ce82177f9161c9e89931667c5d491d3dcb1e09d80ee7f140a935827b3ebc9b0e0394e5258672299c5899fbfbbccd45774a6e0d8a30e2f2210253bbbdbd9fb9145841c198657fad589ae590cabeff845439bcf3a07784cbd292",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("00a3e11100000000")!,
+                script: hexaStringToBuffer(
+                  "76a91442d102132f4a6968757a3347ef2174077cf7d26388ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("00000000")!,
+          },
+          0,
+          null,
+          null,
+        ],
+      ],
+      associatedKeysets: ["44'/121'/0'/0/0", "44'/121'/0'/0/1"],
+      changePath: "44'/121'/0'/1/0",
+      outputScriptHex:
+        "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914b82016fc204ef7ac8e428942ec10e708a5a6180788ac",
+      additionals: ["zencash"],
+    },
+    exchanges: [
+      ["e042000009000000010200000001", "9000"],
+      [
+        "e042800025f7923e851e3ff6426373218dfc6488b168ab869d8e8f1eb0d84ddc51149ff3fd000000006b",
+        "9000",
+      ],
+      [
+        "e04280003248017836ef8ae19b3dde72d12a6f2db46b5e04f3ecd1a7951b17c00ccc891960d4b70393b2e812d8506de70d79f1f28c6f11",
+        "9000",
+      ],
+      [
+        "e042800032fdb3f83e57535b16a8c5c14066bf86f6e93fec1cd5115021025b912fa2cdc4b534c1eb012f5d5479e543b641a5d30553bbdc",
+        "9000",
+      ],
+      ["e04280000b76638513a6fbe9ffffffff", "9000"],
+      ["e04280000102", "9000"],
+      [
+        "e04280002240ef5a07000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "9000",
+      ],
+      [
+        "e0428000220065cd1d000000001976a9142e8adb3c6943292fa748be8e0dcc679f25bebfbb88ac",
+        "9000",
+      ],
+      [
+        "e042800006000000000100",
+        "3200e73099b72ee1dba5f99f6500809a80a963b914b13b4138a790c549b6c9c451aabaad010000000065cd1d00000000a6b83fb758426d629000",
+      ],
+      ["e042000009000000000100000001", "9000"],
+      [
+        "e042800025f51fcba55d4f08fe6c7f54b9cc292d69639a0fce92b463a52c8a1aee320bda96000000006b",
+        "9000",
+      ],
+      [
+        "e04280003248bb211c3abfa43442351a5ab299018cd319ce82177f9161c9e89931667c5d491d3dcb1e09d80ee7f140a935827b3ebc9b0e",
+        "9000",
+      ],
+      [
+        "e0428000320394e5258672299c5899fbfbbccd45774a6e0d8a30e2f2210253bbbdbd9fb9145841c198657fad589ae590cabeff845439bc",
+        "9000",
+      ],
+      ["e04280000bf3a07784cbd292ffffffff", "9000"],
+      ["e04280000101", "9000"],
+      [
+        "e04280002200a3e111000000001976a91442d102132f4a6968757a3347ef2174077cf7d26388ac",
+        "9000",
+      ],
+      [
+        "e04280000400000000",
+        "3200cc75e7614c9cc0235142099d11591e9f3172c1d495efea690a45d3671492d0d4fa610000000000a3e111000000000c1ed99e252f4d9f9000",
+      ],
+      [
+        "e040000015058000002c80000079800000000000000000000000",
+        "410476f037a570b2f816a37946d915bbdb9fc55d96d9baa1819c9bbabc2dd9dd55804d9bf9c4b4c14d19a79d90d9bf145c15e59185f446036e9213a02e697753b87d237a6e564c315241484d337531356f356d324d336e416358423536434659784654587958e3835c6e67e046488dc91dd39db2bd54b727ea11325a2e4c3da929f7e56845f19000",
+      ],
+      [
+        "e040000015058000002c80000079800000000000000000000001",
+        "41049af702b62c8a3641f16053f4b26d36ccad17f1db7975c6b75419f6c1c2f3c0e71b8fc4c3973a8b82090073637e4e194059cbe422691b68ed8195201c4a627dca237a6e5842437944777747576a364b7a6545625a3469426f52556f5659394b6b7047366e982f8f7bc9c0bb73c3e0e03b296bfc0e9f2064c5706f39ddf6383b43ac9ed2379000",
+      ],
+      ["e0440000050100000002", "9000"],
+      [
+        "e04480003b01383200e73099b72ee1dba5f99f6500809a80a963b914b13b4138a790c549b6c9c451aabaad010000000065cd1d00000000a6b83fb758426d6219",
+        "9000",
+      ],
+      [
+        "e04480001d76a9142e8adb3c6943292fa748be8e0dcc679f25bebfbb88acffffffff",
+        "9000",
+      ],
+      [
+        "e04480003b01383200cc75e7614c9cc0235142099d11591e9f3172c1d495efea690a45d3671492d0d4fa610000000000a3e111000000000c1ed99e252f4d9f00",
+        "9000",
+      ],
+      ["e044800004ffffffff", "9000"],
+      ["e04aff0015058000002c80000079800000000000000100000000", "9000"],
+      [
+        "e04a000032020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914b82016",
+        "009000",
+      ],
+      ["e04a800013fc204ef7ac8e428942ec10e708a5a6180788ac", "00009000"],
+      [
+        "e04800001b058000002c80000079800000000000000000000000000000000001",
+        "304402207320c439b31446da6c31ac74c00c69ebb1cb6e904efdeeeea6da8d40921bd53502201c76c202c2054504737b163b64bf5a1bbb3c9e3724e54f4e35642ef18eef61ee019000",
+      ],
+      ["e0440080050100000002", "9000"],
+      [
+        "e04480803b01383200e73099b72ee1dba5f99f6500809a80a963b914b13b4138a790c549b6c9c451aabaad010000000065cd1d00000000a6b83fb758426d6200",
+        "9000",
+      ],
+      ["e044808004ffffffff", "9000"],
+      [
+        "e04480803b01383200cc75e7614c9cc0235142099d11591e9f3172c1d495efea690a45d3671492d0d4fa610000000000a3e111000000000c1ed99e252f4d9f19",
+        "9000",
+      ],
+      [
+        "e04480801d76a91442d102132f4a6968757a3347ef2174077cf7d26388acffffffff",
+        "9000",
+      ],
+      ["e04aff0015058000002c80000079800000000000000100000000", "9000"],
+      [
+        "e04a000032020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914b82016",
+        "009000",
+      ],
+      ["e04a800013fc204ef7ac8e428942ec10e708a5a6180788ac", "00009000"],
+      [
+        "e04800001b058000002c80000079800000000000000000000001000000000001",
+        "3045022100bc623cc36f0eb95f9a8d6b66138259a3213d4ce56b2b96df2b4cf2f365ca1f0b0220069ae7d4463e0536be48fd57780adc147b6b238ac21bed9339030172bbc79f64019000",
+      ],
+    ],
+    signedTransaction:
+      "0x010000000299b72ee1dba5f99f6500809a80a963b914b13b4138a790c549b6c9c451aabaad010000006a47304402207320c439b31446da6c31ac74c00c69ebb1cb6e904efdeeeea6da8d40921bd53502201c76c202c2054504737b163b64bf5a1bbb3c9e3724e54f4e35642ef18eef61ee01210376f037a570b2f816a37946d915bbdb9fc55d96d9baa1819c9bbabc2dd9dd5580ffffffffe7614c9cc0235142099d11591e9f3172c1d495efea690a45d3671492d0d4fa61000000006b483045022100bc623cc36f0eb95f9a8d6b66138259a3213d4ce56b2b96df2b4cf2f365ca1f0b0220069ae7d4463e0536be48fd57780adc147b6b238ac21bed9339030172bbc79f640121029af702b62c8a3641f16053f4b26d36ccad17f1db7975c6b75419f6c1c2f3c0e7ffffffff020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914b82016fc204ef7ac8e428942ec10e708a5a6180788ac00000000",
   },
 ];
