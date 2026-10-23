@@ -11,6 +11,8 @@ import {
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
 import { BITCOIN_CASH_PROFILE } from "@api/profiles/bitcoinCashProfile";
+import { BITCOIN_LEGACY_PROFILE } from "@api/profiles/bitcoinLegacyProfile";
+import { BITCOIN_PROFILE } from "@api/profiles/bitcoinProfile";
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import {
   BtcLegacyAppCommandError,
@@ -84,6 +86,23 @@ describe("SignTransactionTask", () => {
       ...transaction,
       sigHashType: undefined,
     });
+
+    expect(result).toStrictEqual({
+      status: "SUCCESS",
+      data: signedTransaction,
+    });
+  });
+
+  // Speculos no longer runs the Bitcoin app before 2.1. Bitcoin Legacy is
+  // that app under another name.
+  it("should sign for the old Bitcoin apps as Bitcoin Legacy", async () => {
+    const { transaction, exchanges, signedTransaction } =
+      REFERENCE_TRANSACTIONS.find(
+        (reference) => reference.profile === BITCOIN_LEGACY_PROFILE,
+      )!;
+    const { api } = replay(exchanges);
+
+    const result = await getTask(BITCOIN_PROFILE).run(api, transaction);
 
     expect(result).toStrictEqual({
       status: "SUCCESS",

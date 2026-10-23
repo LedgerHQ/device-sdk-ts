@@ -75,7 +75,7 @@ The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, 
 
 Each profile picks a transaction format (the profile's `transactionFormat`):
 
-- `standard`: Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`), Bitcoin Cash (`BITCOIN_CASH_PROFILE`), Bitcoin Gold (`BITCOIN_GOLD_PROFILE`) and Horizen (`HORIZEN_PROFILE`). Bitcoin Cash and Bitcoin Gold hash every transaction with BIP143 (the profile's `bip143`).
+- `standard`: Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`), Bitcoin Cash (`BITCOIN_CASH_PROFILE`), Bitcoin Gold (`BITCOIN_GOLD_PROFILE`), Horizen (`HORIZEN_PROFILE`), Dash (`DASH_PROFILE`), DigiByte (`DIGIBYTE_PROFILE`), Bitcoin Legacy (`BITCOIN_LEGACY_PROFILE`) and the Bitcoin app before 2.1 (`BITCOIN_PROFILE`). Bitcoin Cash and Bitcoin Gold hash every transaction with BIP143 (the profile's `bip143`).
 - `sapling`: Komodo (`KOMODO_PROFILE`). Its v4 transactions are hashed with BIP143 and carry an expiry height, and the app commits the outputs before signing the inputs.
 
 The output is the signed transaction in hexadecimal.
