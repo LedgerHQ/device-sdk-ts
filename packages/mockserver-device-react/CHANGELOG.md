@@ -1,5 +1,11 @@
 # @ledgerhq/device-mockserver-react
 
+## 0.1.1
+
+### Patch Changes
+
+- [#2020](https://github.com/LedgerHQ/device-sdk-ts/pull/2020) [`4520e73`](https://github.com/LedgerHQ/device-sdk-ts/commit/4520e73a9dea18cf7bc05fc836a5bc194b71e897) Thanks [@zel-kass](https://github.com/zel-kass)! - Upgrade Lumen to ui-react 0.1.66 and use the NanoGen5 icon for Apex devices
+
 ## 0.1.0
 
 ### Minor Changes

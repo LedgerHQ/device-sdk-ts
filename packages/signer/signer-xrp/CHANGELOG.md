@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- [#2028](https://github.com/LedgerHQ/device-sdk-ts/pull/2028) [`3146eb3`](https://github.com/LedgerHQ/device-sdk-ts/commit/3146eb3c0349c961e053d491b778b0c139c1a955) Thanks [@pva-ledger](https://github.com/pva-ledger)! - Replace CallTaskInApp-based sign with SignTransactionDeviceAction so `transaction` is machine input (usable at invoke time when nested).
+
+- [#2024](https://github.com/LedgerHQ/device-sdk-ts/pull/2024) [`649799d`](https://github.com/LedgerHQ/device-sdk-ts/commit/649799dfb1b9a051455e8de2a2f1391b9e8f33e1) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Support Ed25519 in the XRP signer: `getAddress` and `signTransaction` take an optional `curve` option (`Curve.Secp256k1` by default, or `Curve.Ed25519`).
+
 All notable changes to this project will be documented in this file.
 
 ## 0.2.0
