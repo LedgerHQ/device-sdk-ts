@@ -39,7 +39,6 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@sentry/minimal": "catalog:",
     "purify-ts": "catalog:"
   },
   "devDependencies": {
