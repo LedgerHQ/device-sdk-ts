@@ -176,6 +176,14 @@ The description format is similar to gitmoji:
 
 _For external contributors:_ a member of the Ledger will be required to validate the execution of the CI for external contributions
 
+#### Guardrails
+
+The **Guardrails** CI job checks the architecture and the file tree of the packages your PR changes: which package may depend on which, which layer may import which, and how signer kits and transports lay out their files. The job is informational for now: a red Guardrails job doesn't block the merge, but please don't add new violations.
+
+- Run it locally with `pnpm guardrails` inside a signer kit or a transport, or `pnpm guardrails` at the root for everything.
+- Each failure names the rule, the file, why the rule exists and how to fix it. The rules are described in [packages/tools/ldmk-tool/guardrails/README.md](packages/tools/ldmk-tool/guardrails/README.md).
+- When the code is right and the rule doesn't fit, add an `exceptions` entry (or an `extraFolders` entry for a new folder) with a `reason` in the package's `guardrails.config.mjs`.
+
 ### Developer Portal
 
 Ledger provides the tools and resources you need to build on top of our platform. They are accessible in the [Ledger Developer Portal](https://developers.ledger.com/).
