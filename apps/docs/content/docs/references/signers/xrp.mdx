@@ -163,7 +163,7 @@ const { observable, cancel } = signerXrp.signTransaction(
 
   - **Required**
   - **Type:** `Uint8Array`
-  - The serialized transaction to be signed.
+  - The serialized transaction to be signed, without `TxnSignature`. Do not add the `STX\0` signing prefix (for example with `encodeForSigning`): the XRP application prepends it itself, or `SMT\0` followed by the signer's account ID when `SigningPubKey` is empty (multi-signing).
 
 - `options`
 

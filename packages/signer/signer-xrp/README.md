@@ -16,14 +16,20 @@ import { SignerXrpBuilder } from "@ledgerhq/device-signer-kit-xrp";
 const signer = new SignerXrpBuilder({ dmk, sessionId }).build();
 
 // Get address
-const address = await signer.getAddress("m/44'/0'/0'/0/0");
+const { observable: address$ } = signer.getAddress("44'/144'/0'/0/0");
 
 // Sign transaction
-const signature = await signer.signTransaction(
-  "m/44'/0'/0'/0/0",
+const { observable: signature$ } = signer.signTransaction(
+  "44'/144'/0'/0/0",
   transactionBytes,
 );
 ```
+
+Each method returns an observable of the device action's state and a `cancel` function; the result is in the `output` of the `Completed` state.
+
+### Transaction bytes
+
+`signTransaction` expects the transaction serialized without the XRPL signing prefix: the XRP application prepends `STX\0` itself. For multi-signing, leave `SigningPubKey` empty: the application then prepends `SMT\0` instead and appends the account ID of the signing key. Serialize the transaction without `TxnSignature`, for example with `encode` from `ripple-binary-codec`, not `encodeForSigning` or `encodeForMultisigning`, which add the prefix: the application would then read it as a field header and misparse the transaction, and a signature made over it would not verify.
 
 ### Curves
 

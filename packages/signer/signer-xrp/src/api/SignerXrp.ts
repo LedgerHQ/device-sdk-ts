@@ -13,6 +13,15 @@ export interface SignerXrp {
     options?: AddressOptions,
   ) => GetAddressDAReturnType;
 
+  /**
+   * Signs a transaction with the key of `derivationPath`.
+   *
+   * `transaction` is the transaction serialized without the XRPL signing
+   * prefix: the bytes are sent unchanged and the XRP application prepends
+   * `STX\0` itself (`SMT\0`, and the signer's account ID appended, when
+   * `SigningPubKey` is empty for multi-signing). Do not pass the output of an
+   * encoder that already adds the prefix, such as `encodeForSigning`.
+   */
   signTransaction: (
     derivationPath: string,
     transaction: Uint8Array,
