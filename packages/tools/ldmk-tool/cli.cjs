@@ -44,7 +44,31 @@ const availableCommands = [
   {
     name: "generate-signer",
     description: "generate a new signer package skeleton for a cryptocurrency",
-    flags: [],
+    flags: [
+      {
+        name: "name",
+        description: "the cryptocurrency name (letters and numbers)",
+      },
+      {
+        name: "apis",
+        description:
+          '"all", or a comma-separated list of getAppConfig, getAddress, signTransaction, signMessage',
+      },
+      {
+        name: "context-module",
+        description: "depend on @ledgerhq/context-module",
+      },
+      {
+        name: "yes",
+        description:
+          "don't ask anything: --name is required, --apis defaults to all",
+      },
+      {
+        name: "package-only",
+        description:
+          "only write the package: don't touch the sample app, the docs or the release config",
+      },
+    ],
   },
   {
     name: "guardrails",
@@ -152,10 +176,39 @@ async function main() {
     case "help":
       help(availableCommands);
       break;
-    case "generate-signer":
+    case "generate-signer": {
+      // A misspelled flag, such as --package-ony, would silently write to the
+      // sample app, the docs and the release config.
+      const flags = [
+        "_",
+        "name",
+        "apis",
+        "context-module",
+        "yes",
+        "package-only",
+      ];
+      const unknown = [
+        ...Object.keys(argv)
+          .filter((key) => !flags.includes(key))
+          .map((key) => `--${key}`),
+        ...argv._.slice(1),
+      ];
+      if (unknown.length > 0) {
+        console.error(
+          chalk.red(`❌ Unknown argument(s): ${unknown.join(", ")}`),
+        );
+        process.exit(1);
+      }
       console.log(chalk.green("🚀 Generating new signer package"));
-      await generateSigner();
+      await generateSigner({
+        name: argv.name,
+        apis: argv.apis,
+        contextModule: argv["context-module"],
+        yes: argv.yes,
+        packageOnly: argv["package-only"],
+      });
       break;
+    }
     case "bump-snapshot":
       console.log(
         chalk.green(
