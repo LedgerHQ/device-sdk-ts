@@ -17,6 +17,14 @@ The Device Management Kit (DMK) is a TypeScript library that provides easy commu
 - **pnpm** is used as the package manager to install all the dependencies.
 - Use `gh` CLI (if available) for GitHub operations (create/update PRs, view workflows, comments, etc.)
 
+## Guardrails
+
+Architecture and file tree rules are checked by `ldmk-tool guardrails` (see [packages/tools/ldmk-tool/guardrails/README.md](packages/tools/ldmk-tool/guardrails/README.md)):
+
+- After changing a signer kit or a transport, run `pnpm guardrails` in that package and fix what it reports. Don't add `exceptions` to `guardrails.config.mjs` to silence a rule unless the user agrees, and always give a `reason`.
+- `pnpm ldmk-tool guardrails --repo` checks the other packages and the workspace graph.
+- Create new signer kits with `pnpm ldmk-tool generate-signer`; it writes a kit that passes the guardrails.
+
 ## Cursor Skills
 
 Skills are activated automatically when the user's request matches a trigger phrase.

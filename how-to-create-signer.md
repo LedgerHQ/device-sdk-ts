@@ -1763,9 +1763,32 @@ pnpm ldmk-tool generate-signer
 
 The command will prompt you for:
 1. **Cryptocurrency name**: Enter the name of your cryptocurrency (e.g., "XXX")
-2. **Context module usage**: Choose whether to include the `@ledgerhq/context-module` dependency
+2. **APIs**: Choose which of `getAppConfig`, `getAddress`, `signTransaction` and `signMessage` to include
+3. **Context module usage**: Choose whether to include the `@ledgerhq/context-module` dependency (declared as a peer dependency, like signer-eth)
 
 The generator creates a complete signer package from scratch following the architecture patterns described in this guide.
+
+Every question can also be answered with a flag:
+
+```bash
+pnpm ldmk-tool generate-signer --name XXX --apis all --context-module --yes
+```
+
+- `--apis` takes `all` or a comma-separated list, such as `getAddress,signTransaction`.
+- `--yes` asks nothing: `--name` is required, `--apis` defaults to `all`, and the context module is left out unless `--context-module` is passed.
+- `--package-only` writes only the package, without the sample app, docs and release config entries. CI generates a test kit with `--yes --package-only`.
+
+### Guardrails
+
+The generated package contains a one-line `guardrails.config.mjs`, which gives it the `signerKit` role:
+
+```js
+import { defineGuardrails, signerKit } from "@ledgerhq/ldmk-tool/guardrails";
+
+export default defineGuardrails({ role: signerKit });
+```
+
+As its last step, the generator runs `ldmk-tool guardrails --strict` on the new package: a freshly generated kit must pass every architecture and file tree rule, with no exceptions. CI checks this on every PR. Keep the kit passing as you implement it, with `pnpm guardrails` in the package. The rules, and how to bend them with `extraFolders` or `exceptions` when a kit really needs to differ, are described in [packages/tools/ldmk-tool/guardrails/README.md](packages/tools/ldmk-tool/guardrails/README.md).
 
 ### Example Session
 
@@ -1813,6 +1836,7 @@ packages/signer/signer-{cryptocurrency}/
 ├── tsconfig.json               # TypeScript configuration
 ├── tsconfig.prod.json          # Production TypeScript config
 ├── eslint.config.mjs           # ESLint configuration
+├── guardrails.config.mjs       # Guardrails role (architecture and file tree rules)
 ├── vitest.config.mjs           # Vitest configuration
 ├── vitest.setup.mjs            # Vitest setup
 ├── .prettierrc.js              # Prettier configuration
