@@ -1,3 +1,9 @@
+import {
+  type BtcLegacyErrorCodes,
+  DOGECOIN_PROFILE,
+  type LegacyCoinProfile,
+  LITECOIN_PROFILE,
+} from "@ledgerhq/device-signer-kit-bitcoin-legacy";
 import { type Container } from "inversify";
 
 import { type TestBatchContactFromFileUseCase } from "@root/src/application/usecases/TestBatchContactFromFileUseCase";
@@ -5,6 +11,7 @@ import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/
 import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
 import { type TestSolanaProgramUseCase } from "@root/src/application/usecases/TestSolanaProgramUseCase";
 import { pinnedVersions } from "@root/src/cli/pinnedVersions";
+import { makeBtcLegacyContainer } from "@root/src/di/btcLegacyContainer";
 import { makeEthereumContainer } from "@root/src/di/ethereumContainer";
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { makeSolanaContainer } from "@root/src/di/solanaContainer";
@@ -16,6 +23,7 @@ import {
 } from "@root/src/domain/models/config/LoggerConfig";
 import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import {
+  type BtcLegacyCoinApp,
   type ScenarioCoinApp,
   type ScenarioRun,
 } from "@root/src/domain/models/Scenario";
@@ -90,6 +98,28 @@ type CoinAppSlice = {
   readonly readAddressBook?: (path: string) => Partial<SignerConfig>;
 };
 
+/**
+ * Every legacy Bitcoin coin app runs the same way, through its own profile.
+ * Each case names its inputs' paths, so there is no run-wide derivation path,
+ * and no `--app-*-version` flag: a one-off version goes in the scenario file.
+ */
+const btcLegacySlice = (
+  profile: LegacyCoinProfile<BtcLegacyErrorCodes>,
+): CoinAppSlice => ({
+  makeContainer: (args) => makeBtcLegacyContainer({ ...args, profile }),
+  transactionUseCase: TYPES.TestBatchBtcLegacyTransactionFromFileUseCase,
+  derivationPath: () => "",
+  appVersionOverride: () => undefined,
+});
+
+const BTC_LEGACY_PROFILES: Record<
+  BtcLegacyCoinApp,
+  LegacyCoinProfile<BtcLegacyErrorCodes>
+> = {
+  Litecoin: LITECOIN_PROFILE,
+  Dogecoin: DOGECOIN_PROFILE,
+};
+
 const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {
   Ethereum: {
     makeContainer: makeEthereumContainer,
@@ -113,6 +143,12 @@ const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {
       tronAddressBook: readTronAddressBookFile(path),
     }),
   },
+  ...(Object.fromEntries(
+    Object.entries(BTC_LEGACY_PROFILES).map(([coinApp, profile]) => [
+      coinApp,
+      btcLegacySlice(profile),
+    ]),
+  ) as Record<BtcLegacyCoinApp, CoinAppSlice>),
 };
 
 function readAddressBook(

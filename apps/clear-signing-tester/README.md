@@ -78,6 +78,7 @@ requested `--device` is skipped rather than failed.
 | `solana-general-clear-sign` | stax, nanox, flex | Solana general (IDL-based) clear-signing fixtures |
 | `solana-programs`           | —                 | Live program transactions — disabled, see below   |
 | `tron`                      | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex   |
+| `btc-legacy`                | stax, nanox, flex | Coin apps on the legacy Bitcoin protocol          |
 
 The `solana-programs` group is **disabled**. Its cases pull transactions from an
 RPC rather than a fixture, so they carry no `expectedTexts` — and a case with
@@ -151,7 +152,7 @@ sits in is free — `erc7730/uniswap/` holds one scenario of each group.
 | `group`, `name`           | yes      | Selector `group:name`; the group is selectable on its own                    |
 | `action`                  | yes      | `signTransaction`, `signTypedData`, `registerContact`, `solanaProgram`       |
 | `devices`                 | yes      | Devices this scenario supports; a run picks one                              |
-| `coinApp`                 | yes      | `Ethereum`, `Solana` or `Tron`                                               |
+| `coinApp`                 | yes      | `Ethereum`, `Solana`, `Tron` or a legacy Bitcoin app (see below)             |
 | `cases`                   | yes\*    | The inputs; `solanaProgram` takes none, its input comes from the RPC         |
 | `mode`                    | no       | `parallel` (default) or `sequential`                                         |
 | `osVersion`, `appVersion` | no       | Override the device's pin, together                                          |
@@ -177,6 +178,40 @@ Disabled scenarios are skipped by every selector, including `all`. Naming one
 explicitly fails with what to do about it, and `cs-tester list` prints them
 under the enabled ones. Nine ship disabled today — alternate-chain fixtures
 nobody wired up, and three descriptors known to be broken.
+
+### Legacy Bitcoin apps
+
+The `btc-legacy` group signs with `@ledgerhq/device-signer-kit-bitcoin-legacy`,
+one scenario per coin app: `Litecoin` and `Dogecoin`. The `coinApp` picks the
+signer profile, so another coin on the protocol is a profile entry, a pin and a
+scenario file.
+
+```bash
+pnpm cs-tester cli test btc-legacy --device nanox
+```
+
+The legacy protocol has no single transaction to sign, so a case carries
+hw-app-btc's `createPaymentTransaction` argument as `transaction`, with hex
+strings for its bytes. Each case names its own input paths, so no derivation
+path flag applies:
+
+```json
+{
+  "transaction": {
+    "inputs": [[{ "version": "01000000", "inputs": […], "outputs": […], "locktime": "00000000" }, 1, null, null]],
+    "associatedKeysets": ["44'/2'/0'/0/0"],
+    "outputScriptHex": "01c022…"
+  },
+  "expectedTexts": ["4.99 LTC", "LcBryeHg1XTFpprQAk3EZTEKzTfMBgLNVX", "0.01 LTC"]
+}
+```
+
+The cases are the signer's reference transactions, recorded with hw-app-btc
+on the default Speculos seed.
+
+The `cs-tester` pull-request job runs the group when `signer-btc-legacy` or
+the tester changes, and `nightly_btc_legacy.yml` runs it every night on all
+three devices.
 
 ## App and OS versions
 

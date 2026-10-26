@@ -1,0 +1,121 @@
+{
+  "group": "btc-legacy",
+  "name": "dogecoin",
+  "action": "signTransaction",
+  "devices": ["flex", "stax", "nanox"],
+  "coinApp": "Dogecoin",
+  "mode": "parallel",
+  "cases": [
+    {
+      "description": "one input, one output",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "eaa8d810c854b9a614cc52aa9ee0e0c99fdd31ac086a0e61041f0007b7e4443000000000",
+                  "script": "48cf81c68923784e6e33d1a8f559a8ad75a3952dec6f577c2f9abb0ffe07ae2cf54983e718f733716188ac89ca51dcb3649f245bb31ec0548f2d5ae8d193c7294a3f0a0f56bd615c5621026024f7fc94cc49426df9687f8c146eb04464f3e3d3fa867e408a68738a2a8a1b",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "80588d4900000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "00f2052a01000000",
+                  "script": "76a9144fb4f23b006689f3fef238ab8305899250ab750b88ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            null
+          ]
+        ],
+        "associatedKeysets": ["44'/3'/0'/0/0"],
+        "outputScriptHex": "01805b6d29010000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+      },
+      "expectedTexts": [
+        "49.9 DOGE",
+        "DN71FgvVEH7V72LqjC3VqCLAfP2NMrz8a9",
+        "0.1 DOGE"
+      ]
+    },
+    {
+      "description": "two inputs, change, lock time and RBF sequences",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "eaa8d810c854b9a614cc52aa9ee0e0c99fdd31ac086a0e61041f0007b7e4443000000000",
+                  "script": "48cf81c68923784e6e33d1a8f559a8ad75a3952dec6f577c2f9abb0ffe07ae2cf54983e718f733716188ac89ca51dcb3649f245bb31ec0548f2d5ae8d193c7294a3f0a0f56bd615c5621026024f7fc94cc49426df9687f8c146eb04464f3e3d3fa867e408a68738a2a8a1b",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "80588d4900000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "00f2052a01000000",
+                  "script": "76a9144fb4f23b006689f3fef238ab8305899250ab750b88ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            4294967293
+          ],
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "878acc0210703f9032608b18babfe8f4c5cfaf30d7ee37ccef2a46db45f0eb3800000000",
+                  "script": "487e925cb14024fb90de872664da55bf102eeca16fdba727c41440aebbc1496dae8dc018335d51674fd7890198449838199c1469ed520b971d9329391b0482991d1971541346d59b5b2102b353d504fadc1d1da38ad73d23b96cd437d1f8f44c930c90319d694e7af5cc5b",
+                  "sequence": "ffffffff"
+                },
+                {
+                  "prevout": "142dc509c4d8f7f570debc58454c4a268ecd42e76abb7656714d7ab23e12839d01000000",
+                  "script": "4821db5885203691b069c623844d067ab2af096c4be04c7d79acebae2515450663e17490ebe4e7a74a45827797712805255df9084a3dd3680d404a678494f3a5bd2a815d389e67c98a2102e7ec75cb11bc5e9bb7cea6aa90d7b262ed6c4c5506862bc007659c11eeeeb767",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "005ed0b200000000",
+                  "script": "76a914b26e3063d8c7713accce19455e628c2ece20e3a488ac"
+                }
+              ],
+              "locktime": "a0252600"
+            },
+            0,
+            null,
+            4294967293
+          ]
+        ],
+        "associatedKeysets": ["44'/3'/0'/0/0", "44'/3'/0'/0/1"],
+        "changePath": "44'/3'/0'/1/0",
+        "outputScriptHex": "0200bca065010000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac00670476000000001976a914e912b4fbdb8986cda0e790a4f10dddf364f1b17988ac",
+        "lockTime": 2800000
+      },
+      "expectedTexts": [
+        "60 DOGE",
+        "DN71FgvVEH7V72LqjC3VqCLAfP2NMrz8a9",
+        "19.8 DOGE",
+        "DSPUPjkPjHpVKrP3YgDemVWg6sGMgtsC31",
+        "0.2 DOGE"
+      ]
+    }
+  ]
+}

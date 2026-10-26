@@ -1,0 +1,235 @@
+{
+  "group": "btc-legacy",
+  "name": "litecoin",
+  "action": "signTransaction",
+  "devices": ["flex", "stax", "nanox"],
+  "coinApp": "Litecoin",
+  "mode": "parallel",
+  "cases": [
+    {
+      "description": "one input, one output",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "423d1f6109a7d9173c218e7bdf5e2a9867c1ad07ee59c5eb1c204da052a0d9db00000000",
+                  "script": "480f531200a5ce6e67686b3e62f4a1faa3530ba0e12030eed116cdd8c790de4881eac6a223647223afd5b3bcdd4f587177229154ed44af5f3b6bde41864af3910b7995bff7b9ad05bf21021e339148aa57c4d4ccce6e3a0e403817ad1fee0270aaa99367348d3ee807b03e",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9146568ad6bf0606de398dc3e28fd1b2601a218bcef88ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            null
+          ]
+        ],
+        "associatedKeysets": ["44'/2'/0'/0/0"],
+        "outputScriptHex": "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+      },
+      "expectedTexts": [
+        "4.99 LTC",
+        "LcBryeHg1XTFpprQAk3EZTEKzTfMBgLNVX",
+        "0.01 LTC"
+      ]
+    },
+    {
+      "description": "two inputs, change, lock time and RBF sequences",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "423d1f6109a7d9173c218e7bdf5e2a9867c1ad07ee59c5eb1c204da052a0d9db00000000",
+                  "script": "480f531200a5ce6e67686b3e62f4a1faa3530ba0e12030eed116cdd8c790de4881eac6a223647223afd5b3bcdd4f587177229154ed44af5f3b6bde41864af3910b7995bff7b9ad05bf21021e339148aa57c4d4ccce6e3a0e403817ad1fee0270aaa99367348d3ee807b03e",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9146568ad6bf0606de398dc3e28fd1b2601a218bcef88ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            4294967293
+          ],
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "33c0b92c6b10670a320bdfe3c7680954d0c898a170b62006d46f3626cddb192f00000000",
+                  "script": "48c1b83ed717b52ccbd5f07692ac037ab8b01c1863c3a04961f1045155b4d872bec00d51a0505965f176e45436c5ce77d29cdad6a9bf1c725de58b21103f4530873a40aa41e688006c21024b78b966d5b24e1fd4030ccc4b6d1beb386e3d42a8da87a6e59987beef20559e",
+                  "sequence": "ffffffff"
+                },
+                {
+                  "prevout": "f2d14d2b793ae4bb10874528fdea19b234ddf0f201905b15046dd485caec3fd701000000",
+                  "script": "48484283215a94cc09c95f2163c4a6b6b36d46491341701aadb4c66f85dd24284d81b12f091ff8955f3f9654d517a6214674e2ddded52cf6d1cdd65e1d5edeb16b37e58cd12707a0c521023775a91b1886bd913210743a179a2acb9b3ecefdd366c424a4627928846444ae",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "00a3e11100000000",
+                  "script": "76a91436de3aa1522b2ba361430ff35b2b8da0a174332d88ac"
+                }
+              ],
+              "locktime": "a0252600"
+            },
+            0,
+            null,
+            4294967293
+          ]
+        ],
+        "associatedKeysets": ["44'/2'/0'/0/0", "44'/2'/0'/0/1"],
+        "changePath": "44'/2'/0'/1/0",
+        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914280cd281f64388bda5b7e6c7c620204c9dd2d30d88ac",
+        "lockTime": 2800000
+      },
+      "expectedTexts": [
+        "6 LTC",
+        "LcBryeHg1XTFpprQAk3EZTEKzTfMBgLNVX",
+        "1.98 LTC",
+        "LNsieo4SpxrP97pjKM7WYu9pec1voKbz2v",
+        "0.02 LTC"
+      ]
+    },
+    {
+      "description": "P2SH-wrapped SegWit input",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "e554f4c89667e254bc7ab619321dae8fc355ba048b8da78098cace93212409bf00000000",
+                  "script": "4842333d89dc46a8370291a76f1236358004d29c198067d2130aa0137db3ed9d6da8f7ddf5a3c0f4b73a56b79227357d2fb369cd4458afd89ac9fe6d1ecdd86ea2a39843584321fc712102e25a0f2a0e26db160f7aa8f4d77eeed09a7257ad4cf9631aff4fae8b4ef54723",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "a914905235fb96ef63021bf37bf107fd5833336d084387"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            null
+          ]
+        ],
+        "associatedKeysets": ["49'/2'/0'/0/0"],
+        "outputScriptHex": "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "segwit": true
+      },
+      "expectedTexts": [
+        "4.99 LTC",
+        "LcBryeHg1XTFpprQAk3EZTEKzTfMBgLNVX",
+        "0.01 LTC"
+      ]
+    },
+    {
+      "description": "native SegWit inputs, change, lock time and RBF sequences",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "63b03a723d72604072a575508ec9769bcb74f97b53c67f69274c2e49a1f9333d00000000",
+                  "script": "4877a7fa9e349d4cccdc2380326761ef58a5738e73fa4dd2ac04fec644d240bb4c926d41222dbca99f4e331c9060d2d68e13d900ac5cee8e40c0249056cc46edc6f845d6114bda0239210246c2ae6d4944542748480848a2d21e5ec51151efabd2baf2012fa8e2376389cf",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "0084d71700000000",
+                  "script": "0014a0ce41f71b72bdcf57f963ef978b82529696e9a8"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            0,
+            null,
+            4294967293
+          ],
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "f804bff6effc99587a202965a8ada7c03b25f7cac141528763d6b8d80e2bb35200000000",
+                  "script": "48834e6f40cbf7ec3e0d2fdd4543a9ab9dee48d922cba1e91ba6062419a1ceb6b95b8df66d97101daac3ab301067bb1b650f291a13b4a0e23e0b84fe16d82a28bd5806488d74ba36852102492288b758c0bec67a2901c9af79acbba0d091a304791a489155f7a9dff86bab",
+                  "sequence": "ffffffff"
+                },
+                {
+                  "prevout": "22e843a2bfc8559c0e3383618d1043c6cfd3c5feb655cb813117dc2166a6f1b401000000",
+                  "script": "480610d720dc48b028cff01a0c519e0e711cb6cdab04d0ced14b6a4146af381f926dde65dcce041c8dcc66a50fa431c224067baeeb34e4ab1d138ee39fad852979043cb0926fbc62e42102f4be63a36c2f145b72442dddd44421a140c5c07d33c0cb66333ff741481a540b",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "801d2c0400000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "00a3e11100000000",
+                  "script": "001453d1d8b1b3cb2a248bfae3470ba14769b2cd64ae"
+                }
+              ],
+              "locktime": "a0252600"
+            },
+            1,
+            null,
+            4294967293
+          ]
+        ],
+        "associatedKeysets": ["84'/2'/0'/0/0", "84'/2'/0'/0/1"],
+        "changePath": "84'/2'/0'/1/0",
+        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac805cd705000000001600147b24b805e3b225ab300030466fcb779fc6c3870d",
+        "lockTime": 2800000,
+        "segwit": true,
+        "additionals": ["bech32"]
+      },
+      "expectedTexts": [
+        "6 LTC",
+        "LcBryeHg1XTFpprQAk3EZTEKzTfMBgLNVX",
+        "0.98 LTC",
+        "ltc1q0vjtsp0rkgj6kvqqxprxljmhnlrv8pcdxe5szz",
+        "0.02 LTC"
+      ]
+    }
+  ]
+}

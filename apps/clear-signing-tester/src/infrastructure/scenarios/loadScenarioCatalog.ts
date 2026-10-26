@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
 
 import {
+  BTC_LEGACY_COIN_APPS,
   type Scenario,
   SCENARIO_DEVICES,
   type ScenarioAction,
@@ -18,7 +19,12 @@ const ACTIONS: readonly ScenarioAction[] = [
   "registerContact",
   "solanaProgram",
 ];
-const COIN_APPS: readonly ScenarioCoinApp[] = ["Ethereum", "Solana", "Tron"];
+const COIN_APPS: readonly ScenarioCoinApp[] = [
+  "Ethereum",
+  "Solana",
+  "Tron",
+  ...BTC_LEGACY_COIN_APPS,
+];
 const MODES = ["parallel", "sequential"] as const;
 
 type Json = Record<string, unknown>;

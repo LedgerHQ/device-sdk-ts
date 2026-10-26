@@ -26,6 +26,7 @@
     "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/device-contacts-kit": "workspace:^",
     "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-signer-kit-bitcoin-legacy": "workspace:^",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
     "@ledgerhq/device-signer-kit-solana": "workspace:^",
     "@ledgerhq/device-signer-kit-tron": "workspace:^",
