@@ -382,8 +382,8 @@ catalogs:
       specifier: ^0.1.5
       version: 0.1.5
     ws:
-      specifier: ^8.18.0
-      version: 8.21.3
+      specifier: ^8.22.0
+      version: 8.22.0
     xstate:
       specifier: 5.19.2
       version: 5.19.2
@@ -557,7 +557,7 @@ importers:
         version: 0.2.2
       ws:
         specifier: 'catalog:'
-        version: 8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     devDependencies:
       '@ledgerhq/device-mock-server-ui':
         specifier: workspace:^
@@ -1299,7 +1299,7 @@ importers:
         version: 7.5.1(reflect-metadata@0.2.2)
       isomorphic-ws:
         specifier: 'catalog:'
-        version: 5.0.0(ws@8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        version: 5.0.0(ws@8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -1314,7 +1314,7 @@ importers:
         version: 11.0.3
       ws:
         specifier: 'catalog:'
-        version: 8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       xstate:
         specifier: 'catalog:'
         version: 5.19.2
@@ -1336,7 +1336,7 @@ importers:
         version: link:../config/vitest
       '@statelyai/inspect':
         specifier: 'catalog:'
-        version: 0.4.0(ws@8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(xstate@5.19.2)
+        version: 0.4.0(ws@8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(xstate@5.19.2)
       '@types/semver':
         specifier: 'catalog:'
         version: 7.7.0
@@ -1515,7 +1515,7 @@ importers:
         version: link:../websocket-common
       isomorphic-ws:
         specifier: 'catalog:'
-        version: 5.0.0(ws@8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        version: 5.0.0(ws@8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -1552,7 +1552,7 @@ importers:
         version: 7.8.2
       ws:
         specifier: 'catalog:'
-        version: 8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
@@ -14683,6 +14683,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@8.22.0:
+    resolution: {integrity: sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xcase@2.0.1:
     resolution: {integrity: sha512-UmFXIPU+9Eg3E9m/728Bii0lAIuoc+6nbrNUKaRPJOFp91ih44qqGlWtxMB6kXFrRD6po+86ksHM5XHCfk6iPw==}
 
@@ -19599,10 +19611,10 @@ snapshots:
 
   '@standard-schema/utils@0.3.0': {}
 
-  '@statelyai/inspect@0.4.0(ws@8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))(xstate@5.19.2)':
+  '@statelyai/inspect@0.4.0(ws@8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(xstate@5.19.2)':
     dependencies:
       fast-safe-stringify: 2.1.1
-      isomorphic-ws: 5.0.0(ws@8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+      isomorphic-ws: 5.0.0(ws@8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       partysocket: 0.0.25
       safe-stable-stringify: 2.4.3
       superjson: 1.13.3
@@ -24124,9 +24136,9 @@ snapshots:
     dependencies:
       ws: 7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
-  isomorphic-ws@5.0.0(ws@8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
+  isomorphic-ws@5.0.0(ws@8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
     dependencies:
-      ws: 8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      ws: 8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
   istanbul-lib-coverage@3.2.2: {}
 
@@ -29180,6 +29192,11 @@ snapshots:
       utf-8-validate: 5.0.10
 
   ws@8.21.3(bufferutil@4.0.9)(utf-8-validate@5.0.10):
+    optionalDependencies:
+      bufferutil: 4.0.9
+      utf-8-validate: 5.0.10
+
+  ws@8.22.0(bufferutil@4.0.9)(utf-8-validate@5.0.10):
     optionalDependencies:
       bufferutil: 4.0.9
       utf-8-validate: 5.0.10
