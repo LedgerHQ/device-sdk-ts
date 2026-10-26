@@ -1,4 +1,14 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["index.ts", "src"]
+  "include": ["index.ts", "src"],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/__tests__",
+    "**/__mocks__",
+    "**/__test-utils__",
+    "**/__fixtures__"
+  ]
 }
