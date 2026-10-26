@@ -16,6 +16,14 @@ const config = {
   // metafile: true,
 };
 
+const TEST_FILES = [
+  "**/*.test.ts",
+  "**/*.test.tsx",
+  "**/*.spec.ts",
+  "**/*.spec.tsx",
+  "**/__tests__/**",
+];
+
 const buildBrowser = async (entryPoints, tsconfig) => {
   console.log(chalk.blue("Building browser bundle..."));
   return esbuild.build({
@@ -78,9 +86,9 @@ const buildTypes = async (tsconfig) => {
 };
 
 const build = async (entryPoints, tsconfig, platform) => {
-  const entryPointsArray = entryPoints.includes(",")
-    ? entryPoints.split(",")
-    : [entryPoints];
+  const entryPointsArray = await glob(entryPoints.split(","), {
+    ignore: TEST_FILES,
+  });
   const p = [];
   if (platform === "web") {
     console.log(chalk.magenta("Target:", platform));
