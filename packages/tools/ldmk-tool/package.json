@@ -7,17 +7,29 @@
   "bin": {
     "ldmk-tool": "./cli.cjs"
   },
+  "exports": {
+    "./guardrails": "./guardrails/index.mjs",
+    "./package.json": "./package.json"
+  },
   "files": [
     "*.cjs",
+    "guardrails/**/*.mjs",
+    "!guardrails/**/*.test.mjs",
     "!.prettierrc.cjs"
   ],
+  "scripts": {
+    "test:guardrails": "vitest run",
+    "test:guardrails:watch": "vitest"
+  },
   "dependencies": {
-    "@inquirer/prompts": "catalog:"
+    "@inquirer/prompts": "catalog:",
+    "dependency-cruiser": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "esbuild": "catalog:",
-    "esbuild-node-externals": "catalog:"
+    "esbuild-node-externals": "catalog:",
+    "vitest": "catalog:"
   }
 }
