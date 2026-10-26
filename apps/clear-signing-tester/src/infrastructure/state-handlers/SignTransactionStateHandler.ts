@@ -125,7 +125,13 @@ export class SignTransactionStateHandler implements StateHandler {
               "Detected 'blind signing ahead' screen, tapping 'Accept risk and continue'",
             );
             await this.deviceController.acceptBlindSigning();
-          } else {
+          } else if (await this.screenAnalyzer.isStepAcceptPage()) {
+            this.logger.debug("Accepting a review step");
+            await this.deviceController.signTransaction();
+          } else if (!(await this.screenAnalyzer.isLastPage())) {
+            // The last page can appear after the previous check read the page
+            // before it, and its next spot may be a button: on the legacy
+            // Bitcoin apps' Flex review, a tap there is "Reject".
             await this.deviceController.navigateNext();
           }
         },
