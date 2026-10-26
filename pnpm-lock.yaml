@@ -96,9 +96,6 @@ catalogs:
     '@rozenite/vite-plugin':
       specifier: 1.1.0
       version: 1.1.0
-    '@sentry/minimal':
-      specifier: 6.19.7
-      version: 6.19.7
     '@sentry/nextjs':
       specifier: ^9.33.0
       version: 9.33.0
@@ -1291,9 +1288,6 @@ importers:
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -2412,9 +2406,6 @@ importers:
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
         version: link:../device-management-kit
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:^
@@ -2532,9 +2523,6 @@ importers:
       '@ledgerhq/device-mockserver-client':
         specifier: workspace:^
         version: link:../../mockserver-client
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -2612,9 +2600,6 @@ importers:
 
   packages/transport/rn-ble:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       js-base64:
         specifier: 'catalog:'
         version: 3.7.8
@@ -2667,9 +2652,6 @@ importers:
 
   packages/transport/rn-hid:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -2707,9 +2689,6 @@ importers:
 
   packages/transport/speculos:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -2741,9 +2720,6 @@ importers:
 
   packages/transport/web-ble:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -2784,9 +2760,6 @@ importers:
 
   packages/transport/web-hid:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -6652,14 +6625,6 @@ packages:
     resolution: {integrity: sha512-0mtJAU+x10+q5aV/txyeuPjJ0TmObcD701R0tY0s71yJJOltqqMrmgNpqyuMI/VOASuzTZesiMYdbG6xb3zeSw==}
     engines: {node: '>=18'}
 
-  '@sentry/hub@6.19.7':
-    resolution: {integrity: sha512-y3OtbYFAqKHCWezF0EGGr5lcyI2KbaXW2Ik7Xp8Mu9TxbSTuwTe4rTntwg8ngPjUQU3SUHzgjqVB8qjiGqFXCA==}
-    engines: {node: '>=6'}
-
-  '@sentry/minimal@6.19.7':
-    resolution: {integrity: sha512-wcYmSJOdvk6VAPx8IcmZgN08XTXRwRtB1aOLZm+MVHjIZIhHoBGZJYTVQS/BWjldsamj2cX3YGbGXNunaCfYJQ==}
-    engines: {node: '>=6'}
-
   '@sentry/nextjs@9.33.0':
     resolution: {integrity: sha512-jMpByR9RWr2lKUviNIRFekSCGMsM2jGu7a7nAmjCuFpk4M3xAH8AqJFql9l7j63C0dpmvo950kd8tjpFlWlg+g==}
     engines: {node: '>=18'}
@@ -6686,14 +6651,6 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       react: ^16.14.0 || 17.x || 18.x || 19.x
-
-  '@sentry/types@6.19.7':
-    resolution: {integrity: sha512-jH84pDYE+hHIbVnab3Hr+ZXr1v8QABfhx39KknxqKWr2l0oEItzepV0URvbEhB446lk/S/59230dlUUIBGsXbg==}
-    engines: {node: '>=6'}
-
-  '@sentry/utils@6.19.7':
-    resolution: {integrity: sha512-z95ECmE3i9pbWoXQrD/7PgkBAzJYR+iXtPuTkpBjDKs86O3mT+PXOT3BAn79w2wkn7/i3vOGD2xVr1uiMl26dA==}
-    engines: {node: '>=6'}
 
   '@sentry/vercel-edge@9.33.0':
     resolution: {integrity: sha512-ORQFkKE1gzA7KQX0YlUHpGG4TFXxw8plTRS6QcWAt0kp/3KBZX9v6WAcwjyiR7iHozB29yChWVVKh/s3a6oTqg==}
@@ -13967,9 +13924,6 @@ packages:
     resolution: {integrity: sha512-Ibv4KAWfFkFdKJxnWfVtdOmB0Zi1RJVxcbPGiCDsFpCQSsmpWyuzHG3rQyI5YkobWwxFPEyQfu1hdo4qLG2zPw==}
     hasBin: true
 
-  tslib@1.14.1:
-    resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
-
   tslib@2.7.0:
     resolution: {integrity: sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==}
 
@@ -18892,18 +18846,6 @@ snapshots:
 
   '@sentry/core@9.33.0': {}
 
-  '@sentry/hub@6.19.7':
-    dependencies:
-      '@sentry/types': 6.19.7
-      '@sentry/utils': 6.19.7
-      tslib: 1.14.1
-
-  '@sentry/minimal@6.19.7':
-    dependencies:
-      '@sentry/hub': 6.19.7
-      '@sentry/types': 6.19.7
-      tslib: 1.14.1
-
   '@sentry/nextjs@9.33.0(@opentelemetry/context-async-hooks@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@14.2.35(@babel/core@7.28.3)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)(webpack@5.92.1(esbuild@0.25.4))':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -18986,13 +18928,6 @@ snapshots:
       '@sentry/core': 9.33.0
       hoist-non-react-statics: 3.3.2
       react: 18.3.1
-
-  '@sentry/types@6.19.7': {}
-
-  '@sentry/utils@6.19.7':
-    dependencies:
-      '@sentry/types': 6.19.7
-      tslib: 1.14.1
 
   '@sentry/vercel-edge@9.33.0':
     dependencies:
@@ -28371,8 +28306,6 @@ snapshots:
       mylas: 2.1.13
       normalize-path: 3.0.0
       plimit-lit: 1.6.1
-
-  tslib@1.14.1: {}
 
   tslib@2.7.0: {}
 

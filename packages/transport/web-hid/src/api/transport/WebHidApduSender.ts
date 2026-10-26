@@ -10,10 +10,8 @@ import {
   formatApduSentLog,
   FramerUtils,
   type LoggerPublisherService,
-  OpeningConnectionError,
   SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
-import * as Sentry from "@sentry/minimal";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 
 import { FRAME_SIZE } from "@api/data/WebHidConfig";
@@ -143,11 +141,9 @@ export class WebHidApduSender
       if (error instanceof DOMException && error.name === "InvalidStateError") {
         this.logger.info(`Device is already opened`);
       } else {
-        const connectionError = new OpeningConnectionError(error);
         this.logger.error(`Error while opening device`, {
           data: { error },
         });
-        Sentry.captureException(connectionError);
         throw error;
       }
     }
