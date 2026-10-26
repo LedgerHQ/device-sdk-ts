@@ -36,6 +36,9 @@
     "typecheck": {
       "dependsOn": ["^build", "^typecheck"]
     },
+    "guardrails": {
+      "cache": false
+    },
     "@ledgerhq/device-mock-server-ui#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
