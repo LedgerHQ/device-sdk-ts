@@ -47,6 +47,32 @@ const availableCommands = [
     flags: [],
   },
   {
+    name: "guardrails",
+    description:
+      "check the architecture and file tree rules of a package (see packages/tools/ldmk-tool/guardrails/README.md)",
+    flags: [
+      {
+        name: "package",
+        description:
+          "the package directory to check - defaults to the current directory",
+      },
+      {
+        name: "repo",
+        description:
+          "check package.json of the packages without a role, and the workspace graph",
+      },
+      {
+        name: "affected",
+        description:
+          "with --repo: only the packages changed against TURBO_SCM_BASE",
+      },
+      {
+        name: "strict",
+        description: "fail if the package has exceptions or extraFolders",
+      },
+    ],
+  },
+  {
     name: "help",
     description: "show available commands",
     flags: [],
@@ -208,6 +234,16 @@ async function main() {
           process.exitCode = e.exitCode || 1;
         });
       break;
+    case "guardrails": {
+      const guardrails = await import("./guardrails/run.mjs");
+      process.exitCode = await guardrails.main({
+        packageDir: argv.package,
+        repo: Boolean(argv.repo),
+        affected: Boolean(argv.affected),
+        strict: Boolean(argv.strict),
+      });
+      break;
+    }
     default:
       console.log(chalk.red(`Invalid command: "${command}"`));
       console.log(chalk.red(""));
