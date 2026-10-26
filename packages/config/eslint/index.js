@@ -161,6 +161,8 @@ export default [
     ignores: [
       ".*.js",
       ".*.mjs",
+      // Declarative config read by `ldmk-tool guardrails`, outside every tsconfig project.
+      "guardrails.config.mjs",
       "coverage/*",
       "_templates/*",
       "lib/*",
