@@ -95,5 +95,5 @@
       "zod@>=4.4.0": "4.3.6"
     }
   },
-  "packageManager": "pnpm@10.34.4"
+  "packageManager": "pnpm@10.34.8"
 }
