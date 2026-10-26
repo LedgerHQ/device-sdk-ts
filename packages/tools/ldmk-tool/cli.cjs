@@ -44,7 +44,31 @@ const availableCommands = [
   {
     name: "generate-signer",
     description: "generate a new signer package skeleton for a cryptocurrency",
-    flags: [],
+    flags: [
+      {
+        name: "name",
+        description: "the cryptocurrency name (letters and numbers)",
+      },
+      {
+        name: "apis",
+        description:
+          '"all", or a comma-separated list of getAppConfig, getAddress, signTransaction, signMessage',
+      },
+      {
+        name: "context-module",
+        description: "depend on @ledgerhq/context-module",
+      },
+      {
+        name: "yes",
+        description:
+          "don't ask anything: --name is required, --apis defaults to all",
+      },
+      {
+        name: "package-only",
+        description:
+          "only write the package: don't touch the sample app, the docs or the release config",
+      },
+    ],
   },
   {
     name: "guardrails",
@@ -154,7 +178,13 @@ async function main() {
       break;
     case "generate-signer":
       console.log(chalk.green("🚀 Generating new signer package"));
-      await generateSigner();
+      await generateSigner({
+        name: argv.name,
+        apis: argv.apis,
+        contextModule: argv["context-module"],
+        yes: Boolean(argv.yes),
+        packageOnly: Boolean(argv["package-only"]),
+      });
       break;
     case "bump-snapshot":
       console.log(

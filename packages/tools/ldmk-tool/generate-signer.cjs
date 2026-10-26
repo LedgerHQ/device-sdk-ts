@@ -805,7 +805,73 @@ export default Signer;
 // Main Generator Function
 // ============================================================================
 
-async function generateSigner() {
+const API_CHOICES = [
+  {
+    name: "getAppConfig - Get app configuration (SendCommandInApp)",
+    value: "getAppConfig",
+    checked: true,
+  },
+  {
+    name: "getAddress - Get address from derivation path (SendCommandInApp)",
+    value: "getAddress",
+    checked: true,
+  },
+  {
+    name: "signTransaction - Sign a transaction (CallTaskInApp)",
+    value: "signTransaction",
+    checked: true,
+  },
+  {
+    name: "signMessage - Sign a personal message (SendCommandInApp)",
+    value: "signMessage",
+    checked: true,
+  },
+];
+
+function validateCryptoName(value) {
+  const fs = require("fs");
+  if (!value || value.trim().length === 0) {
+    return "Cryptocurrency name is required";
+  }
+  if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(value)) {
+    return "Cryptocurrency name must start with a letter and contain only letters and numbers";
+  }
+  // Check if signer already exists
+  const kebabCase = value.toLowerCase();
+  const targetDir = `packages/signer/signer-${kebabCase}`;
+  if (fs.existsSync(targetDir)) {
+    return `Signer package already exists: ${targetDir}`;
+  }
+  return true;
+}
+
+// "all", or a comma-separated list of API values.
+function parseApis(apis) {
+  const all = API_CHOICES.map((choice) => choice.value);
+  if (apis === true || apis === "all") return all;
+  const selected = String(apis)
+    .split(",")
+    .map((api) => api.trim())
+    .filter(Boolean);
+  const unknown = selected.filter((api) => !all.includes(api));
+  if (selected.length === 0 || unknown.length > 0) {
+    throw new Error(
+      `--apis must be "all" or a comma-separated list of: ${all.join(", ")}`,
+    );
+  }
+  return selected;
+}
+
+/**
+ * Generates a new signer kit.
+ *
+ * Every option can also be answered interactively. With `yes`, nothing is
+ * asked: `name` is required, `apis` defaults to all of them and
+ * `contextModule` to false. With `packageOnly`, only the package itself is
+ * written: the sample app, the docs and the release config are not touched.
+ */
+async function generateSigner(options = {}) {
+  const { yes = false, packageOnly = false } = options;
   console.log(
     chalk.blue("🚀 Welcome to the Ledger Device SDK Signer Generator"),
   );
@@ -817,60 +883,36 @@ async function generateSigner() {
 
   try {
     const fs = require("fs");
-    const signerDir = "packages/signer";
 
     // Get cryptocurrency name
-    const cryptoName = await input({
-      message: "What is the name of your cryptocurrency?",
-      validate: (value) => {
-        if (!value || value.trim().length === 0) {
-          return "Cryptocurrency name is required";
-        }
-        if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(value)) {
-          return "Cryptocurrency name must start with a letter and contain only letters and numbers";
-        }
-        // Check if signer already exists
-        const kebabCase = value.toLowerCase();
-        const targetDir = `packages/signer/signer-${kebabCase}`;
-        if (fs.existsSync(targetDir)) {
-          return `Signer package already exists: ${targetDir}`;
-        }
-        return true;
-      },
-    });
+    let cryptoName;
+    if (options.name !== undefined) {
+      cryptoName = String(options.name);
+      const valid = validateCryptoName(cryptoName);
+      if (valid !== true) throw new Error(valid);
+    } else if (yes) {
+      throw new Error("--name is required with --yes");
+    } else {
+      cryptoName = await input({
+        message: "What is the name of your cryptocurrency?",
+        validate: validateCryptoName,
+      });
+    }
 
     // Ask which APIs to include
-    const selectedApis = await checkbox({
-      message: "Which APIs do you want to include?",
-      choices: [
-        {
-          name: "getAppConfig - Get app configuration (SendCommandInApp)",
-          value: "getAppConfig",
-          checked: true,
-        },
-        {
-          name: "getAddress - Get address from derivation path (SendCommandInApp)",
-          value: "getAddress",
-          checked: true,
-        },
-        {
-          name: "signTransaction - Sign a transaction (CallTaskInApp)",
-          value: "signTransaction",
-          checked: true,
-        },
-        {
-          name: "signMessage - Sign a personal message (SendCommandInApp)",
-          value: "signMessage",
-          checked: true,
-        },
-      ],
-      validate: (value) => {
-        if (value.length === 0) {
-          return "You must select at least one API";
-        }
-        return true;
-      },
-    });
+    const selectedApis =
+      options.apis !== undefined || yes
+        ? parseApis(options.apis ?? "all")
+        : await checkbox({
+            message: "Which APIs do you want to include?",
+            choices: API_CHOICES,
+            validate: (value) => {
+              if (value.length === 0) {
+                return "You must select at least one API";
+              }
+              return true;
+            },
+          });
 
     const includeGetAppConfig = selectedApis.includes("getAppConfig");
     const includeGetAddress = selectedApis.includes("getAddress");
@@ -878,10 +920,13 @@ async function generateSigner() {
     const includeSignMessage = selectedApis.includes("signMessage");
 
     // Ask about context module usage
-    const useContextModule = await confirm({
-      message: "Do you want to include the context-module dependency?",
-      default: false,
-    });
+    const useContextModule =
+      options.contextModule !== undefined || yes
+        ? Boolean(options.contextModule)
+        : await confirm({
+            message: "Do you want to include the context-module dependency?",
+            default: false,
+          });
 
     console.log(
       chalk.green("\n✅ Generating signer package for"),
@@ -965,7 +1010,16 @@ async function generateSigner() {
       }
     });
 
+    // With --package-only, nothing outside the new package is written.
+    function isOutsidePackage(filePath) {
+      const relative = path.relative(baseDir, filePath);
+      return relative.startsWith("..") || path.isAbsolute(relative);
+    }
+
     function writeFile(filePath, content) {
+      if (packageOnly && isOutsidePackage(filePath)) {
+        return;
+      }
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, content);
       console.log(chalk.green(`✅ Created ${filePath}`));
@@ -976,6 +1030,9 @@ async function generateSigner() {
     // manual follow-up instead of silently skipped or fatal.
     const manualSteps = [];
     function requireTarget(filePath, what) {
+      if (packageOnly) {
+        return false;
+      }
       if (fs.existsSync(filePath)) {
         return true;
       }
@@ -1051,6 +1108,7 @@ async function generateSigner() {
           "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
         "watch:types":
           'concurrently "tsc --watch -p tsconfig.prod.json" "tsc-alias --watch -p tsconfig.prod.json"',
+        guardrails: "pnpm ldmk-tool guardrails",
         lint: "eslint",
         "lint:fix": "pnpm lint --fix",
         prettier: "prettier . --check",
@@ -1082,8 +1140,8 @@ async function generateSigner() {
       },
     };
 
+    // Peer + dev, like signer-eth: one form only (guardrails rule deps/context-module-kind).
     if (useContextModule) {
-      packageJson.dependencies["@ledgerhq/context-module"] = "workspace:^";
       packageJson.peerDependencies["@ledgerhq/context-module"] = "workspace:^";
       packageJson.devDependencies["@ledgerhq/context-module"] = "workspace:^";
     }
@@ -1201,6 +1259,15 @@ export default [
     },
   },
 ];
+`,
+    );
+
+    // Generate guardrails.config.mjs (see packages/tools/ldmk-tool/guardrails/README.md)
+    writeFile(
+      `${baseDir}/guardrails.config.mjs`,
+      `import { defineGuardrails, signerKit } from "@ledgerhq/ldmk-tool/guardrails";
+
+export default defineGuardrails({ role: signerKit });
 `,
     );
 
@@ -1923,9 +1990,11 @@ All notable changes to this project will be documented in this file.
 - Initial signer implementation for ${cryptoName}
 `,
     );
-    console.log(
-      chalk.gray("\n📚 Generating documentation and sample app files..."),
-    );
+    if (!packageOnly) {
+      console.log(
+        chalk.gray("\n📚 Generating documentation and sample app files..."),
+      );
+    }
 
     // Generate documentation page dynamically based on selected methods
     const docsDir = `apps/docs/content/docs/references/signers`;
@@ -2339,7 +2408,9 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
     }
 
     // Generate sample app files
-    console.log(chalk.gray("\n📱 Generating sample app files..."));
+    if (!packageOnly) {
+      console.log(chalk.gray("\n📱 Generating sample app files..."));
+    }
 
     const sampleAppDir = "apps/sample/src";
 
@@ -2350,7 +2421,7 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
       `${sampleAppDir}/app/signers/${kebabCase}`,
     ];
     sampleDirs.forEach((dir) => {
-      if (!fs.existsSync(dir)) {
+      if (!packageOnly && !fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
     });
@@ -2702,29 +2773,54 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
       }
     }
 
+    // Self-check: a freshly generated kit must pass the guardrails, with no
+    // exceptions. If it doesn't, the templates above drifted from the rules.
+    console.log(chalk.gray("\n🛡️  Checking the guardrails..."));
+    const guardrailsCheck = require("child_process").spawnSync(
+      process.execPath,
+      [
+        path.join(__dirname, "cli.cjs"),
+        "guardrails",
+        "--package",
+        baseDir,
+        "--strict",
+      ],
+      { stdio: "inherit" },
+    );
+    if (guardrailsCheck.status !== 0) {
+      console.error(
+        chalk.red(
+          "\n❌ The generated kit breaks the guardrails. This is a generator bug: fix packages/tools/ldmk-tool/generate-signer.cjs.",
+        ),
+      );
+      process.exit(1);
+    }
+
     console.log(chalk.green("\n🎉 Signer package generated successfully!"));
     console.log(chalk.gray("\nGenerated files:"));
     console.log(
       chalk.cyan(`   ✓ Signer package: packages/signer/signer-${kebabCase}`),
     );
-    console.log(chalk.cyan(`   ✓ Documentation: ${docsDir}/${docFileName}`));
-    console.log(
-      chalk.cyan(
-        `   ✓ Sample provider: ${sampleAppDir}/providers/Signer${pascalCase}Provider/index.tsx`,
-      ),
-    );
-    console.log(
-      chalk.cyan(
-        `   ✓ Sample component: ${sampleAppDir}/components/Signer${pascalCase}View/index.tsx`,
-      ),
-    );
-    console.log(
-      chalk.cyan(
-        `   ✓ Sample page: ${sampleAppDir}/app/signers/${kebabCase}/page.tsx`,
-      ),
-    );
-    console.log(chalk.cyan(`   ✓ Release config: ${releaseConfigPath}`));
-    console.log(chalk.cyan(`   ✓ Release skill: ${releaseSkillPath}`));
+    if (!packageOnly) {
+      console.log(chalk.cyan(`   ✓ Documentation: ${docsDir}/${docFileName}`));
+      console.log(
+        chalk.cyan(
+          `   ✓ Sample provider: ${sampleAppDir}/providers/Signer${pascalCase}Provider/index.tsx`,
+        ),
+      );
+      console.log(
+        chalk.cyan(
+          `   ✓ Sample component: ${sampleAppDir}/components/Signer${pascalCase}View/index.tsx`,
+        ),
+      );
+      console.log(
+        chalk.cyan(
+          `   ✓ Sample page: ${sampleAppDir}/app/signers/${kebabCase}/page.tsx`,
+        ),
+      );
+      console.log(chalk.cyan(`   ✓ Release config: ${releaseConfigPath}`));
+      console.log(chalk.cyan(`   ✓ Release skill: ${releaseSkillPath}`));
+    }
     console.log(chalk.gray("\nNext steps:"));
     console.log(chalk.gray("1. Install dependencies from the root:"));
     console.log(chalk.cyan("   pnpm install"));
