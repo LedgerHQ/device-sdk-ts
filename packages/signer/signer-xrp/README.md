@@ -16,11 +16,11 @@ import { SignerXrpBuilder } from "@ledgerhq/device-signer-kit-xrp";
 const signer = new SignerXrpBuilder({ dmk, sessionId }).build();
 
 // Get address
-const address = await signer.getAddress("m/44'/0'/0'/0/0");
+const { observable: address$ } = signer.getAddress("44'/144'/0'/0/0");
 
 // Sign transaction
-const signature = await signer.signTransaction(
-  "m/44'/0'/0'/0/0",
+const { observable: signature$ } = signer.signTransaction(
+  "44'/144'/0'/0/0",
   transactionBytes,
 );
 ```
