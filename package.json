@@ -18,6 +18,7 @@
     "test:watch": "turbo run test:watch",
     "test:coverage": "turbo run test:coverage",
     "typecheck": "turbo run typecheck",
+    "guardrails": "pnpm ldmk-tool guardrails --repo; status=$?; turbo run guardrails --continue && exit $status",
     "dmk": "pnpm --filter @ledgerhq/device-management-kit",
     "devtools": "pnpm --filter @ledgerhq/device-management-kit-devtools",
     "speculos-device-controller": "pnpm --filter @ledgerhq/speculos-device-controller",

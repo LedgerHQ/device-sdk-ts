@@ -113,6 +113,49 @@ jobs:
           DANGER_GITHUB_API_BASE_URL: "https://api.github.com"
         run: pnpm danger:ci
 
+  guardrails:
+    name: Guardrails (architecture and file tree)
+    # Fails on a broken rule, but is not in `health-check.needs` yet, so it
+    # doesn't block the merge. Making it required is one line: add `guardrails`
+    # to `health-check.needs`. Rules: packages/tools/ldmk-tool/guardrails/README.md
+    needs: [setup]
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    env:
+      # Base reference used by `--affected` to detect changed packages.
+      TURBO_SCM_BASE: origin/${{ github.event.pull_request.base.ref }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Full history + the base branch are required to compute the
+          # merge-base for `--affected`.
+          fetch-depth: 0
+
+      - name: Fetch base branch for --affected
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+
+      - name: Guardrails
+        run: |
+          # --continue: report every package, not only the first failing one.
+          status=0
+          pnpm ldmk-tool guardrails --repo --affected || status=1
+          pnpm turbo run guardrails --affected --continue || status=1
+          exit $status
+
+      - name: Guardrails unit tests
+        # The checker's own tests. They are not part of `turbo run test`, so,
+        # like the rest of this job, they don't block a merge yet.
+        if: ${{ !cancelled() }}
+        run: pnpm --filter @ledgerhq/ldmk-tool test:guardrails
+
+      - name: Scaffold conformance
+        # A freshly generated signer kit must pass with no exceptions.
+        if: ${{ !cancelled() }}
+        run: |
+          pnpm ldmk-tool generate-signer --name Guardrailcoin --apis all --context-module --yes --package-only
+          pnpm ldmk-tool guardrails --package packages/signer/signer-guardrailcoin --strict
+
   checks:
     name: Checks (build, prettier, lint, typecheck, test)
     # Single job running each Turbo task as its own step. Because everything

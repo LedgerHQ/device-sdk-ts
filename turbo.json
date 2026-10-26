@@ -36,6 +36,10 @@
     "typecheck": {
       "dependsOn": ["^build", "^typecheck"]
     },
+    "guardrails": {
+      "cache": false,
+      "passThroughEnv": ["GITHUB_ACTIONS", "TURBO_SCM_BASE"]
+    },
     "@ledgerhq/device-mock-server-ui#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
