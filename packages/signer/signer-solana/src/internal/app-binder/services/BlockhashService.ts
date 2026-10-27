@@ -6,14 +6,13 @@ import { Connection } from "@solana/web3.js";
 import bs58 from "bs58";
 import { injectable } from "inversify";
 
-import { decodeV1Message } from "./utils/v1Message";
+import { decodeV1Message, V1_VERSION_BYTE } from "./utils/v1Message";
 
 const PUBLIC_KEY_LENGTH = 32;
 const BLOCKHASH_LENGTH = 32;
 const HEADER_SIZE = 3;
 const MIN_MESSAGE_LENGTH = 4;
 const V0_VERSION_MASK = 0x80;
-const V1_VERSION_BYTE = 0x81;
 // V1 (SIMD-0385): [1 version][3 header][4 configMask][32B LIFETIME TOKEN]…
 const V1_BLOCKHASH_OFFSET = 8;
 const SYSTEM_PROGRAM_ADDRESS = "11111111111111111111111111111111";
