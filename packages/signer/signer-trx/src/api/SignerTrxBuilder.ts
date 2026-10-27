@@ -33,7 +33,7 @@ export class SignerTrxBuilder {
    *
    * @returns the Tron signer instance
    */
-  
+
   public build() {
     return new DefaultSignerTrx({
       dmk: this._dmk,

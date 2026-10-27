@@ -1,4 +1,8 @@
 export type TransactionOptions = {
   skipOpenApp?: boolean;
-  // Tron-specific options are added in a later task
+  /**
+   * TRC10 token name signatures, as hex strings, appended after the
+   * transaction frames during signing (matches `@ledgerhq/hw-app-trx`).
+   */
+  tokenSignatures?: string[];
 };
