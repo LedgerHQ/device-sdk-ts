@@ -182,7 +182,7 @@ nobody wired up, and three descriptors known to be broken.
 ### Legacy Bitcoin apps
 
 The `btc-legacy` group signs with `@ledgerhq/device-signer-kit-bitcoin-legacy`,
-one scenario per coin app: `Litecoin` and `Dogecoin`. The `coinApp` picks the
+one scenario per coin app: `Litecoin`, `Dogecoin` and `Bitcoin Cash`. The `coinApp` picks the
 signer profile, so another coin on the protocol is a profile entry, a pin and a
 scenario file.
 
