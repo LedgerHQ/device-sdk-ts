@@ -4,11 +4,11 @@ import {
 } from "@ledgerhq/device-mockserver-client";
 import { test as base } from "@playwright/test";
 
+import { BtcLegacySignerDriver } from "./utils/drivers/BtcLegacySignerDriver";
 import { BtcSignerDriver } from "./utils/drivers/BtcSignerDriver";
 import { CommandsDriver } from "./utils/drivers/CommandsDriver";
 import { DeviceActionsDriver } from "./utils/drivers/DeviceActionsDriver";
 import { EthSignerDriver } from "./utils/drivers/EthSignerDriver";
-import { LtcSignerDriver } from "./utils/drivers/LtcSignerDriver";
 import { MockDeviceDriver } from "./utils/drivers/MockDeviceDriver";
 import { SettingsDriver } from "./utils/drivers/SettingsDriver";
 import { SidebarDriver } from "./utils/drivers/SidebarDriver";
@@ -32,7 +32,8 @@ type Fixtures = {
   sidebar: SidebarDriver;
   ethSigner: EthSignerDriver;
   btcSigner: BtcSignerDriver;
-  ltcSigner: LtcSignerDriver;
+  ltcSigner: BtcLegacySignerDriver;
+  dogeSigner: BtcLegacySignerDriver;
   trxSigner: TrxSignerDriver;
   xrpSigner: XrpSignerDriver;
   /** Build a Speculos driver for a connected device (its app must be opened). */
@@ -76,7 +77,10 @@ export const test = base.extend<Fixtures>({
     await use(new BtcSignerDriver(page));
   },
   ltcSigner: async ({ page }, use) => {
-    await use(new LtcSignerDriver(page));
+    await use(new BtcLegacySignerDriver(page, "Litecoin"));
+  },
+  dogeSigner: async ({ page }, use) => {
+    await use(new BtcLegacySignerDriver(page, "Dogecoin"));
   },
   trxSigner: async ({ page }, use) => {
     await use(new TrxSignerDriver(page));

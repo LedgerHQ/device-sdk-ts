@@ -49,3 +49,31 @@ The legacy protocol has no command for it: the kit reads the account key and its
 `getExtendedPublicKey` options:
 
 - `skipOpenApp`: do not open the app before sending the commands. Defaults to `false`.
+
+### Transaction
+
+```typescript
+const { observable, cancel } = signer.signTransaction({
+  inputs: [[previousTransaction, outputIndex, null, sequence]],
+  associatedKeysets: ["44'/2'/0'/0/0"],
+  changePath: "44'/2'/0'/1/0",
+  outputScriptHex,
+  lockTime: 0,
+});
+```
+
+The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, with `Uint8Array`s instead of `Buffer`s:
+
+- `inputs`: for each input, the previous transaction (`version`, `inputs`, `outputs` and `locktime`), the index of the spent output, an optional redeem script in hexadecimal, and an optional sequence (defaults to `0xffffffff`). As in hw-app-btc, the redeem script is only hashed: the signed input script holds the signature and the public key, so P2SH inputs are not supported.
+- `associatedKeysets`: the derivation path of each input's key.
+- `changePath`: the derivation path of the change output, if any.
+- `outputScriptHex`: the serialized outputs, count included.
+- `lockTime`: defaults to `0`. `sigHashType`: defaults to `SIGHASH_ALL`.
+
+Only inputs without SegWit are supported for now, in the `standard` transaction format of Litecoin (`LITECOIN_PROFILE`) and Dogecoin (`DOGECOIN_PROFILE`). The output is the signed transaction in hexadecimal.
+
+`signTransaction` options:
+
+- `skipOpenApp`: do not open the app before sending the commands. Defaults to `false`.
+
+The trusted input and signing tasks are services of the module (`btcLegacyTypes.GetTrustedInputTask`, `btcLegacyTypes.SignTransactionTask`). Their format steps are hooks behind `btcLegacyTypes.TrustedInputSerializer` and `btcLegacyTypes.TransactionSerializer`, bound to the `standard` format: a kit on another format rebinds them in its container.
