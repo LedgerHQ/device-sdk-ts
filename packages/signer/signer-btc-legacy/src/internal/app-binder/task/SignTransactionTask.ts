@@ -102,7 +102,14 @@ export class SignTransactionTask<ErrorCodes extends string> {
     outputScriptHex,
     lockTime,
     sigHashType,
+    segwit,
   }: LegacyCreateTransactionArg): InvalidStatusWordError | undefined {
+    if (segwit && !this.profile.segwit) {
+      return new InvalidStatusWordError(
+        `${this.profile.appName} has no SegWit`,
+      );
+    }
+
     if (inputs.length === 0) {
       return new InvalidStatusWordError("The transaction has no input");
     }
