@@ -51,6 +51,7 @@ export class TronAppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Uint8Array;
+    tokenSignatures?: string[];
     skipOpenApp?: boolean;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
@@ -61,6 +62,7 @@ export class TronAppBinder {
             new SignTransactionTask(internalApi, {
               derivationPath: args.derivationPath,
               transaction: args.transaction,
+              tokenSignatures: args.tokenSignatures,
             }).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
