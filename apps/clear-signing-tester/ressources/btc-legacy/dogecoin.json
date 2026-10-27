@@ -106,16 +106,15 @@
         ],
         "associatedKeysets": ["44'/3'/0'/0/0", "44'/3'/0'/0/1"],
         "changePath": "44'/3'/0'/1/0",
-        "outputScriptHex": "0200bca065010000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac00670476000000001976a914e912b4fbdb8986cda0e790a4f10dddf364f1b17988ac",
+        "outputScriptHex": "0200bca065010000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac00670476000000001976a9143c187d62313f9ed191e04fa15ebc75a3f6f465f888ac",
         "lockTime": 2800000
       },
       "expectedTexts": [
         "60 DOGE",
         "DN71FgvVEH7V72LqjC3VqCLAfP2NMrz8a9",
-        "19.8 DOGE",
-        "DSPUPjkPjHpVKrP3YgDemVWg6sGMgtsC31",
         "0.2 DOGE"
-      ]
+      ],
+      "unexpectedTexts": ["19.8 DOGE", "DAcrRM8rPhg4kM3WxFUBVPGRfDvomzFu4Z"]
     }
   ]
 }

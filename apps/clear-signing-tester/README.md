@@ -206,8 +206,10 @@ path flag applies:
 }
 ```
 
-The cases are the signer's reference transactions, recorded with hw-app-btc
-on the default Speculos seed.
+The cases are the signer's reference transactions, recorded with hw-app-btc.
+Their change outputs pay the change path's address on the default Speculos
+seed, so the app hides them: the change amount and address are
+`unexpectedTexts`.
 
 The `cs-tester` pull-request job runs the group when `signer-btc-legacy` or
 the tester changes, and `nightly_btc_legacy.yml` runs it every night on all

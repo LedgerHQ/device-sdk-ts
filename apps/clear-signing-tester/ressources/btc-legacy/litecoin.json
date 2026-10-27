@@ -106,16 +106,15 @@
         ],
         "associatedKeysets": ["44'/2'/0'/0/0", "44'/2'/0'/0/1"],
         "changePath": "44'/2'/0'/1/0",
-        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914280cd281f64388bda5b7e6c7c620204c9dd2d30d88ac",
+        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914e0a2c42fdff0e8db0940b4dea053614e23943bc688ac",
         "lockTime": 2800000
       },
       "expectedTexts": [
         "6 LTC",
         "LcBryeHg1XTFpprQAk3EZTEKzTfMBgLNVX",
-        "1.98 LTC",
-        "LNsieo4SpxrP97pjKM7WYu9pec1voKbz2v",
         "0.02 LTC"
-      ]
+      ],
+      "unexpectedTexts": ["1.98 LTC", "LfhicPSP4mk3R3MtpR3NsNGhvvfpYRKnCA"]
     },
     {
       "description": "P2SH-wrapped SegWit input",
@@ -218,7 +217,7 @@
         ],
         "associatedKeysets": ["84'/2'/0'/0/0", "84'/2'/0'/0/1"],
         "changePath": "84'/2'/0'/1/0",
-        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac805cd705000000001600147b24b805e3b225ab300030466fcb779fc6c3870d",
+        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac805cd7050000000016001469e32c4664355236987a9db5800d50b03447ef8f",
         "lockTime": 2800000,
         "segwit": true,
         "additionals": ["bech32"]
@@ -226,9 +225,11 @@
       "expectedTexts": [
         "6 LTC",
         "LcBryeHg1XTFpprQAk3EZTEKzTfMBgLNVX",
-        "0.98 LTC",
-        "ltc1q0vjtsp0rkgj6kvqqxprxljmhnlrv8pcdxe5szz",
         "0.02 LTC"
+      ],
+      "unexpectedTexts": [
+        "0.98 LTC",
+        "ltc1qd83jc3nyx4frdxr6nk6cqr2skq6y0mu0d8d7uk"
       ]
     }
   ]
