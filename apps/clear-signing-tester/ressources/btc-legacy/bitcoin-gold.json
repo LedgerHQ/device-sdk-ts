@@ -1,0 +1,124 @@
+{
+  "group": "btc-legacy",
+  "name": "bitcoin-gold",
+  "action": "signTransaction",
+  "devices": ["flex", "stax", "nanox"],
+  "coinApp": "Bitcoin Gold",
+  "mode": "parallel",
+  "cases": [
+    {
+      "description": "one input, one output",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "aa63f6dfda84799ef4a1a59eee9a9eac146124a7c0179a19a6cd626a64fabe8800000000",
+                  "script": "4892f853147106246134621f6d32238ddd3798badd8462999c31bb0c775b80fe58d6772b0636f2843716d543b2f748dc98bc025952210e380be87f1d5a77784d0414489c18b281424621023b807c94b43e1e4e84b57b1134f7a9dab49dc044dc422dfba2388bc98f072de9",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9145d511a96e4c2c86dfc0132afe2a39d35248ce57488ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            null
+          ]
+        ],
+        "associatedKeysets": ["44'/156'/0'/0/0"],
+        "outputScriptHex": "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "sigHashType": 65,
+        "additionals": ["bitcoin_gold", "bip143"]
+      },
+      "expectedTexts": [
+        "4.99 BTG",
+        "Gaoq8ZJnuipVeVTXvYi3iCWThR5uzPgk3c",
+        "0.01 BTG"
+      ]
+    },
+    {
+      "description": "two inputs, change, lock time and RBF sequences",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "aa63f6dfda84799ef4a1a59eee9a9eac146124a7c0179a19a6cd626a64fabe8800000000",
+                  "script": "4892f853147106246134621f6d32238ddd3798badd8462999c31bb0c775b80fe58d6772b0636f2843716d543b2f748dc98bc025952210e380be87f1d5a77784d0414489c18b281424621023b807c94b43e1e4e84b57b1134f7a9dab49dc044dc422dfba2388bc98f072de9",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9145d511a96e4c2c86dfc0132afe2a39d35248ce57488ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            4294967293
+          ],
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "2e577f6450cc6081ae219c17e088cead6a4beacb811041a31b9ba94b1aced8e400000000",
+                  "script": "484fe11a0d90bf3f42d74e8866db4a0e574140708c9de2a266c6fa426a32b8b22f34928ed241b41581acbdf392de1f11a3b6f568580e12d21c0d1dbc901850b5a84e17d6b9a19ef58221020a1f6fb7aa36d0a5e82a6bedec9d4ffc3ca662afeaf0af039f701cb0bd9c832e",
+                  "sequence": "ffffffff"
+                },
+                {
+                  "prevout": "058a878ececb513ef73872457bbae353e5559c433f66bb9ee5791570829db81f01000000",
+                  "script": "48175fb659472b470682990e458d7a61009f38384052e5ae2b00f2a66f0ee550b17e88886e0a918d42cdc2bbebb2391e539be35c8523aa88ae949b57f8798a2902ead84fde777352b121023ebf2ff72163867b0f7f2ea360e324a1a41f8d9834ded9f6df4b75d955931cff",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "00a3e11100000000",
+                  "script": "76a914585b9b4097f0e703d825a1f64b131a278b1515f788ac"
+                }
+              ],
+              "locktime": "60ae0a00"
+            },
+            0,
+            null,
+            4294967293
+          ]
+        ],
+        "associatedKeysets": ["44'/156'/0'/0/0", "44'/156'/0'/0/1"],
+        "changePath": "44'/156'/0'/1/0",
+        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914f2a27ce40af42f74b7ba7f7c1e237f773f09526988ac",
+        "lockTime": 800000,
+        "sigHashType": 65,
+        "additionals": ["bitcoin_gold", "bip143"]
+      },
+      "expectedTexts": [
+        "6 BTG",
+        "Gaoq8ZJnuipVeVTXvYi3iCWThR5uzPgk3c",
+        "0.02 BTG"
+      ],
+      "unexpectedTexts": ["1.98 BTG", "GfxrbQPsNwxfbEGv3jPJzs4QinRtkQvRtL"]
+    }
+  ]
+}
