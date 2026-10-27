@@ -35,7 +35,7 @@ The team ignores these comments, so don't write them:
 
 - The wording of code comments, JSDoc, log or error messages, READMEs and changelog entries: typos, grammar, a slightly stale line. Exception: a doc that describes public API behavior wrongly.
 - Mismatches between the wording of the PR title or description and the code. Review the code, not the description's wording.
-- Requests for more test cases when the changed code already has tests.
+- Requests for more test cases in a file that already has a co-located test file.
 - Hypothetical defensive checks ("if this ever receives…") on values that are typed or validated upstream. That includes caller-provided command arguments (the device rejects malformed APDUs) and prototype keys (`__proto__`, `toString`) in lookups on internal constant tables.
 - Dependency version choices in `pnpm-workspace.yaml` and the lockfile (range vs exact pin, version skew between packages).
 
@@ -57,7 +57,7 @@ The team ignores these comments, so don't write them:
    - No private keys, seeds or full payloads in logs.
    - Treat data from the device, the network or the CAL as untrusted.
    - No new dependency without a justification in the PR description.
-7. **Tests:** in `packages/*`, flag new logic that has no test at all, and a bug fix without a non-regression test. Tests are optional in `apps/*`. How to test each layer is described in `.github/instructions/tests.instructions.md`.
+7. **Tests:** in `packages/*`, flag each new or changed file with logic (command, task, service, device action, use case) that has no co-located `*.test.ts`, even when other files in the PR have tests. Also flag a bug fix without a non-regression test. Tests are optional in `apps/*`. How to test each layer is described in `.github/instructions/tests.instructions.md`.
 8. **Changesets:**
    - Flag a missing changeset when the source of a published package changes. Danger only warns about it.
    - The bump follows `CONTRIBUTING.md`:
