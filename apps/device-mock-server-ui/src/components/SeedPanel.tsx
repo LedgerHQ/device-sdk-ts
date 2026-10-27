@@ -6,11 +6,17 @@ import { Panel } from "@/components/Panel";
 
 interface SeedPanelProps {
   readonly token: string;
+  readonly seed: string;
+  readonly onSeedChange: (seed: string) => void;
   readonly onError: (message: string) => void;
 }
 
-export function SeedPanel({ token, onError }: SeedPanelProps) {
-  const [seed, setSeed] = useState("");
+export function SeedPanel({
+  token,
+  seed,
+  onSeedChange,
+  onError,
+}: SeedPanelProps) {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -45,7 +51,7 @@ export function SeedPanel({ token, onError }: SeedPanelProps) {
               placeholder="abandon abandon abandon … about"
               helperText="Leave empty to keep the current seed."
               value={seed}
-              onChange={(event) => setSeed(event.target.value)}
+              onChange={(event) => onSeedChange(event.target.value)}
             />
           </div>
           <Button
