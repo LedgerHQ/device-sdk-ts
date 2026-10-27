@@ -1,9 +1,10 @@
-import {
-  type CompiledTransactionMessage,
-  getCompiledTransactionMessageDecoder,
-} from "@solana/transaction-messages";
+import { type CompiledTransactionMessage } from "@solana/transaction-messages";
 
-const SIGNATURE_LENGTH = 64;
+import {
+  compiledTransactionMessageDecoder,
+  SIGNATURE_LENGTH,
+  V1_VERSION_BYTE,
+} from "./utils/v1Message";
 
 // SIMD-0385 "Transaction V1" wire format: VersionByte(0x81) is unsupported by
 // @solana/web3.js, so every message boundary is decoded via
@@ -12,9 +13,6 @@ const SIGNATURE_LENGTH = 64;
 // bytes and just reports how far it read (it can even report past the end of a
 // truncated buffer), so full-wire vs. bare-message detection stays our own
 // concern: an interpretation only counts when it ends exactly at the input end.
-const V1_VERSION_BYTE = 0x81;
-const compiledTransactionMessageDecoder =
-  getCompiledTransactionMessageDecoder();
 
 export type NormalizedTransactionInput = {
   messageBytes: Uint8Array;

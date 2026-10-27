@@ -1,6 +1,11 @@
 import { getCompiledTransactionMessageDecoder } from "@solana/transaction-messages";
 
 import {
+  InvalidSolanaTransactionError,
+  type SolanaV1TransactionRule,
+} from "@api/model/SolanaTransactionErrors";
+import { u32le } from "@internal/app-binder/clear-sign/idl-type-pool/__tests__/fixtures/builders";
+import {
   encodeV1Message,
   filledAddress,
   MAINNET_V1_MESSAGE_288,
@@ -8,17 +13,16 @@ import {
   SPEC_V1_INPUT,
   SPEC_V1_MESSAGE,
   SPEC_V1_OFFSETS,
-  u32le,
   withByte,
   withBytes,
   withTrailingBytes,
 } from "@internal/app-binder/services/__test-utils__/v1Fixtures";
 
-import { decodeV1Message, type V1Rule } from "./v1Message";
+import { decodeV1Message } from "./v1Message";
 
 const VALID = "VALID";
 
-const ruleOf = (bytes: Uint8Array): V1Rule | typeof VALID =>
+const ruleOf = (bytes: Uint8Array): SolanaV1TransactionRule | typeof VALID =>
   decodeV1Message(bytes).caseOf({
     Left: ({ rule }) => rule,
     Right: () => VALID,
@@ -200,7 +204,7 @@ describe("decodeV1Message", () => {
     const { configMask, instructionHeaders, instructionPayloads } =
       SPEC_V1_OFFSETS;
 
-    it.each<[string, Uint8Array, V1Rule | typeof VALID]>([
+    it.each<[string, Uint8Array, SolanaV1TransactionRule | typeof VALID]>([
       // Rule 1
       ["empty input", new Uint8Array(), "VERSION"],
       ["legacy first byte", withByte(SPEC_V1_MESSAGE, 0, 0x01), "VERSION"],
@@ -341,12 +345,18 @@ describe("decodeV1Message", () => {
       expect(ruleOf(withInstructions(0))).toBe(VALID);
     });
 
-    it("explains the failure in its detail", () => {
-      expect(
-        decodeV1Message(withByte(SPEC_V1_MESSAGE, configMask, 0x2f)).extract(),
-      ).toEqual({
+    it("explains the failure in its error", () => {
+      const error = decodeV1Message(
+        withByte(SPEC_V1_MESSAGE, configMask, 0x2f),
+      ).extract();
+
+      expect(error).toBeInstanceOf(InvalidSolanaTransactionError);
+      expect(error).toMatchObject({
+        _tag: "InvalidSolanaTransactionError",
         rule: "CONFIG_MASK",
-        detail: "Unknown config bits in mask 0x2f.",
+        originalError: new Error(
+          "Invalid Solana v1 transaction (CONFIG_MASK): Unknown config bits in mask 0x2f.",
+        ),
       });
     });
   });

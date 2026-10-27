@@ -1,12 +1,18 @@
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
+
+import {
+  u16le,
+  u32le,
+} from "@internal/app-binder/clear-sign/idl-type-pool/__tests__/fixtures/builders";
+
+import { concat } from "./ambiguousMessages";
+
 // Solana transaction v1 (SIMD-0385) message fixtures. A v1 message is laid out
 // as: version 0x81, a 3-byte header, a u32 LE config mask, a 32-byte lifetime
 // token, u8 instruction and address counts, the addresses, 4 bytes per set
 // mask bit of config values, one 4-byte header per instruction (program index,
 // account count, u16 LE data length), then each instruction's account indexes
 // and data. Signatures follow the message on the wire and are not part of it.
-
-const concat = (...parts: ArrayLike<number>[]) =>
-  Uint8Array.from(parts.flatMap((part) => Array.from(part)));
 
 /**
  * The spec's worked example: a 1,000,000-lamport System transfer from
@@ -21,10 +27,7 @@ export const SPEC_V1_MESSAGE_HEX =
   "0000000000000000000000000000000000000000000000000000000000000000" +
   "8813000000000000c20100000080000002020c0000010200000040420f0000000000";
 
-const fromHex = (hex: string) =>
-  Uint8Array.from(hex.match(/../g)!.map((byte) => parseInt(byte, 16)));
-
-export const SPEC_V1_MESSAGE = fromHex(SPEC_V1_MESSAGE_HEX);
+export const SPEC_V1_MESSAGE = hexaStringToBuffer(SPEC_V1_MESSAGE_HEX)!;
 
 // Shared with the device test vectors: two real mainnet v1 transactions, each
 // cut at `length - 64 * signatureCount` to keep the message only.
@@ -34,7 +37,7 @@ export const SPEC_V1_MESSAGE = fromHex(SPEC_V1_MESSAGE_HEX);
  * mask `0x1c` (CU limit 802, loaded data 384433, heap 32768), 7 addresses,
  * 3 instructions, no ComputeBudget instruction and no priority fee.
  */
-export const MAINNET_V1_MESSAGE_675 = fromHex(
+export const MAINNET_V1_MESSAGE_675 = hexaStringToBuffer(
   "810100041c00000059ec93e26bce14171fb983347e582451381bf47b63566b417ac0358ce9a7" +
     "f935030768a2dd43e2f07c3bd7f4f278523fb53032e1154d5870ba0e765051c1c22d825b8907" +
     "7d55a5bb1330763eb767f55ec077b41a0d075f7de1d73fbaca3c63d55471f2c87788bc41e59d" +
@@ -53,14 +56,14 @@ export const MAINNET_V1_MESSAGE_675 = fromHex(
     "be0a00c3ecfd485f7746be0c00c3ec0b019eda4abe2100c3ecd50af57246be1300c3ecd5512b" +
     "7746be2400c3ec35f5907546be1000c3ec19de4f7746be0800c3ec9157cc7546be0300c3ec21" +
     "71537746be1c00c3ec7b61976146be00010200000040e2000000000000",
-);
+)!;
 
 /**
  * Mainnet v1 transaction `4rqpsagr…uj38xbVg` cut to its 288-byte message:
  * mask `0x0c` (CU limit 151, loaded data 1024), 2 instructions, no
  * ComputeBudget instruction and no priority fee.
  */
-export const MAINNET_V1_MESSAGE_288 = fromHex(
+export const MAINNET_V1_MESSAGE_288 = hexaStringToBuffer(
   "810100020c000000b187de2bc3bb33054301e2c4a93cb449e61d62bb6dd1202269c3450b6c1d" +
     "006f02048c5a6b52e0b452d86dd1b5316bcf6cce69fc9bfd18cd01088b928887addcde9988f1" +
     "ffa3a2dfe617bdc4e3573251a322e3fcae81e5a457390e64751c00a465e20000000000000000" +
@@ -69,7 +72,7 @@ export const MAINNET_V1_MESSAGE_288 = fromHex(
     "000048e80100000000004154495001010109db79c78a5b3d57421690b87bf8898cf700000000" +
     "0000000000000000000000000000000000000000000000000000000000000000000000000000" +
     "00000000000001a0ce381f9117a9402ff1033295e884",
-);
+)!;
 
 /** Byte offsets of the spec message's fields. */
 export const SPEC_V1_OFFSETS = {
@@ -123,13 +126,6 @@ export type V1MessageInput = {
   configValues: ArrayLike<number>;
   instructions: V1InstructionInput[];
 };
-
-const u16le = (value: number) => [value & 0xff, (value >> 8) & 0xff];
-/** A u32 as 4 little-endian bytes. */
-export const u32le = (value: number) => [
-  ...u16le(value & 0xffff),
-  ...u16le(value >>> 16),
-];
 
 /**
  * Encodes a v1 message byte for byte, without any validation, so tests can

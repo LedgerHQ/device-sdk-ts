@@ -8,6 +8,11 @@ import {
 } from "@solana/transaction-messages";
 import { type Either, Left, Right } from "purify-ts";
 
+import {
+  InvalidSolanaTransactionError,
+  type SolanaV1TransactionRule,
+} from "@api/model/SolanaTransactionErrors";
+
 // Solana transaction v1 (SIMD-0385) message validation. The Kit decoder reads
 // the layout but checks almost nothing: it accepts unknown config bits,
 // duplicate addresses, out-of-range indexes and trailing bytes. This module
@@ -15,6 +20,7 @@ import { type Either, Left, Right } from "purify-ts";
 // message it accepts is one the chain and the device accept too.
 
 export const V1_VERSION_BYTE = 0x81;
+export const SIGNATURE_LENGTH = 64;
 
 const CONFIG_MASK_OFFSET = 4;
 const KNOWN_CONFIG_BITS =
@@ -30,41 +36,17 @@ const MIN_HEAP_SIZE = 32 * 1024;
 const MAX_HEAP_SIZE = 256 * 1024;
 const HEAP_SIZE_STEP = 1024;
 const MAX_TRANSACTION_SIZE = 4096;
-const SIGNATURE_LENGTH = 64;
 
-/** The spec rule a v1 message breaks. */
-export type V1Rule =
-  | "VERSION"
-  | "TRUNCATED"
-  | "CONFIG_MASK"
-  | "TRAILING_BYTES"
-  | "READONLY_SIGNERS"
-  | "SIGNATURE_COUNT"
-  | "INSTRUCTION_COUNT"
-  | "ADDRESS_COUNT"
-  | "DUPLICATE_ADDRESS"
-  | "HEAP_SIZE"
-  | "PROGRAM_INDEX"
-  | "ACCOUNT_INDEX"
-  | "MESSAGE_SIZE";
+export const compiledTransactionMessageDecoder =
+  getCompiledTransactionMessageDecoder();
 
-export type V1ValidationFailure = {
-  rule: V1Rule;
-  detail: string;
-};
-
-export type DecodedV1Message = V1CompiledTransactionMessage;
-
-const decoder = getCompiledTransactionMessageDecoder();
-
-const failure = (rule: V1Rule, detail: string): V1ValidationFailure => ({
-  rule,
-  detail,
-});
+const failure = (rule: SolanaV1TransactionRule, detail: string) =>
+  new InvalidSolanaTransactionError(rule, detail);
 
 /**
  * Decodes a v1 message (signatures already split off) and checks it against
- * every message rule of the v1 spec. Returns the first rule it breaks.
+ * every message rule of the v1 spec. Returns an error naming the first rule
+ * it breaks.
  *
  * The version byte and the config mask are checked on the raw bytes before
  * decoding: Kit reads no value for an unknown config bit, so its end offset
@@ -73,7 +55,7 @@ const failure = (rule: V1Rule, detail: string): V1ValidationFailure => ({
  */
 export function decodeV1Message(
   bytes: Uint8Array,
-): Either<V1ValidationFailure, DecodedV1Message> {
+): Either<InvalidSolanaTransactionError, V1CompiledTransactionMessage> {
   if (bytes[0] !== V1_VERSION_BYTE) {
     return Left(
       failure("VERSION", `First byte is ${toHex(bytes[0])}, expected 0x81.`),
@@ -88,13 +70,18 @@ export function decodeV1Message(
     );
   }
 
-  const maskFailure = checkConfigMask(readU32LE(bytes, CONFIG_MASK_OFFSET));
+  const maskFailure = checkConfigMask(
+    new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(
+      CONFIG_MASK_OFFSET,
+      true,
+    ),
+  );
   if (maskFailure) return Left(maskFailure);
 
   let message;
   let end;
   try {
-    [message, end] = decoder.read(bytes, 0);
+    [message, end] = compiledTransactionMessageDecoder.read(bytes, 0);
   } catch (error) {
     return Left(
       failure(
@@ -119,7 +106,7 @@ export function decodeV1Message(
   return fieldFailure ? Left(fieldFailure) : Right(message);
 }
 
-function checkConfigMask(mask: number): V1ValidationFailure | null {
+function checkConfigMask(mask: number): InvalidSolanaTransactionError | null {
   if ((mask & ~KNOWN_CONFIG_BITS) !== 0) {
     return failure(
       "CONFIG_MASK",
@@ -141,9 +128,9 @@ function checkConfigMask(mask: number): V1ValidationFailure | null {
 }
 
 function checkFields(
-  message: DecodedV1Message,
+  message: V1CompiledTransactionMessage,
   length: number,
-): V1ValidationFailure | null {
+): InvalidSolanaTransactionError | null {
   const {
     numSignerAccounts,
     numReadonlySignerAccounts,
@@ -229,16 +216,6 @@ function checkFields(
   }
 
   return null;
-}
-
-function readU32LE(bytes: Uint8Array, offset: number): number {
-  return (
-    (bytes[offset]! |
-      (bytes[offset + 1]! << 8) |
-      (bytes[offset + 2]! << 16) |
-      (bytes[offset + 3]! << 24)) >>>
-    0
-  );
 }
 
 function toHex(value: number | undefined): string {

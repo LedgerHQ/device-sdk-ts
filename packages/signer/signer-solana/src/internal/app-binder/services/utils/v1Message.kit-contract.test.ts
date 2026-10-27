@@ -4,6 +4,7 @@ import {
   type V1CompiledTransactionMessage,
 } from "@solana/transaction-messages";
 
+import { u32le } from "@internal/app-binder/clear-sign/idl-type-pool/__tests__/fixtures/builders";
 import { UNSTAKE_MESSAGE } from "@internal/app-binder/services/__test-utils__/ambiguousMessages";
 import {
   encodeV1Message,
@@ -11,7 +12,6 @@ import {
   SPEC_V1_INPUT,
   SPEC_V1_MESSAGE,
   SPEC_V1_OFFSETS,
-  u32le,
   withByte,
   withBytes,
   withTrailingBytes,
