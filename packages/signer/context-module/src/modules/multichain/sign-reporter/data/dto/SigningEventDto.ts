@@ -14,7 +14,6 @@ type SigningEventEnvDataDto = {
 };
 
 type EthChainDataDto = {
-  chain: "ETH";
   signatureId: string;
   signingMethod: "eth_signTransaction" | "eth_signTypedData";
   targetAddress: string | null;
@@ -26,7 +25,6 @@ type EthChainDataDto = {
 };
 
 type SolChainDataDto = {
-  chain: "SOL";
   signatureId: string;
   signingMethod: "sol_signTransaction";
   targetAddress: string | null;
