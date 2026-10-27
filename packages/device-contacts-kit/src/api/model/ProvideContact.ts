@@ -7,7 +7,7 @@
 export type ProvideContactInput = {
   readonly contactName: string;
   readonly scope: string;
-  /** Raw bytes, chain-dependent: a 20-byte address for Ethereum. */
+  /** Raw bytes, chain-dependent: a 20-byte address for Ethereum, a 32-byte public key for Solana. */
   readonly identifier: Uint8Array;
   readonly groupHandle: Uint8Array;
   readonly hmacProof: Uint8Array;
