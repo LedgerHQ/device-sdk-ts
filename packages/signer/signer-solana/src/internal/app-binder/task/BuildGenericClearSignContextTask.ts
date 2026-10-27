@@ -128,7 +128,28 @@ export class BuildGenericClearSignContextTask {
         programId: this.programIdOf(message, ix.programIdIndex),
       }))
       .filter(({ programId }) => programId !== COMPUTE_BUDGET_PROGRAM_ID);
-    if (remaining.length === 0) return none;
+    if (remaining.length === 0) {
+      this.logger.debug("[run] transaction instructions", {
+        data: {
+          summary: {
+            total: message.compiledInstructions.length,
+            skipped: message.compiledInstructions.length,
+            recognized: 0,
+            unrecognized: 0,
+            usesAlt:
+              message.addressLookupRefs?.some((ref) => ref !== undefined) ??
+              false,
+          },
+          instructions: message.compiledInstructions.map((ix) => ({
+            programId: this.programIdOf(message, ix.programIdIndex),
+            fn: `compute-budget:0x${ix.data[0]?.toString(16) ?? "??"}`,
+            accountCount: ix.accountKeyIndexes.length,
+            dataLength: ix.data.length,
+          })),
+        },
+      });
+      return none;
+    }
 
     const distinctProgramIds = Array.from(
       new Set(remaining.map((r) => r.programId)),
@@ -189,6 +210,65 @@ export class BuildGenericClearSignContextTask {
         candidate.context,
       );
     }
+
+    this.logger.debug("[run] transaction instructions", {
+      data: {
+        summary: {
+          total: message.compiledInstructions.length,
+          skipped: message.compiledInstructions.length - remaining.length,
+          recognized: matched.length,
+          unrecognized,
+          usesAlt:
+            message.addressLookupRefs?.some((ref) => ref !== undefined) ??
+            false,
+        },
+        instructions: message.compiledInstructions.map((ix) => {
+          const programId = this.programIdOf(message, ix.programIdIndex);
+          const accountCount = ix.accountKeyIndexes.length;
+          const dataLength = ix.data.length;
+          if (programId === COMPUTE_BUDGET_PROGRAM_ID) {
+            return {
+              programId,
+              fn: `compute-budget:0x${ix.data[0]?.toString(16) ?? "??"}`,
+              accountCount,
+              dataLength,
+            };
+          }
+          const candidate = (byProgram.get(programId) ?? [])
+            .filter(({ payload }) =>
+              this.discriminatorMatches(payload.discriminator, ix.data),
+            )
+            .sort(
+              (a, b) =>
+                b.payload.discriminator.length - a.payload.discriminator.length,
+            )[0];
+          if (candidate) {
+            return {
+              programId,
+              fn:
+                candidate.payload.instructionName ??
+                candidate.payload.discriminator ??
+                "(no discriminator)",
+              accountCount,
+              dataLength,
+            };
+          }
+          return {
+            programId,
+            discriminator: Array.from(ix.data.slice(0, 8), (b) =>
+              b.toString(16).padStart(2, "0"),
+            ).join(""),
+            recognized: false,
+            reason: byProgram.has(programId)
+              ? ("discriminator-not-matched" as const)
+              : ("program-not-in-cal" as const),
+            accountCount,
+            dataLength,
+          };
+        }),
+      },
+    });
+
     if (matched.length === 0) return none;
 
     const instructionInfoContexts = Array.from(templateByKey.values());

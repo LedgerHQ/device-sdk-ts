@@ -66,6 +66,7 @@ export type SolanaInstructionEnumVariant = {
 export type SolanaInstructionInfoPayload = {
   programId: string;
   discriminator: string;
+  instructionName?: string;
   instructionInfo: SolanaSignedDescriptor;
   substructures: SolanaInstructionSubstructure[];
   enumVariants: SolanaInstructionEnumVariant[];
