@@ -40,6 +40,7 @@ catalog:
   '@reduxjs/toolkit': ^2.11.2
   '@rozenite/plugin-bridge': 1.1.0
   '@rozenite/vite-plugin': 1.1.0
+  '@sentry/minimal': 6.19.7
   '@sentry/nextjs': ^9.33.0
   '@solana/addresses': ^8.3.0
   '@solana/kit': ^8.3.0
