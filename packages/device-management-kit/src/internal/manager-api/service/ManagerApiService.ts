@@ -1,4 +1,4 @@
-import { type EitherAsync } from "purify-ts";
+import { type EitherAsync, type Maybe } from "purify-ts";
 
 import { type GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
 import { type Application } from "@internal/manager-api/model/Application";
@@ -70,7 +70,7 @@ export interface ManagerApiService {
   ): EitherAsync<HttpFetchApiError, OsuFirmware>;
 
   /**
-   * Retrieves the latest firmware available for a given device.
+   * Retrieves the latest firmware available, if any, for a given device.
    *
    * @param currentFirmware - Current firmware obtained from getFirmwareVersion.
    * @param deviceVersion - Response of the GetDeviceVersion HTTP request.
@@ -79,7 +79,7 @@ export interface ManagerApiService {
   getLatestFirmwareVersion(
     currentFirmware: FinalFirmware,
     deviceVersion: DeviceVersion,
-  ): EitherAsync<HttpFetchApiError, OsuFirmware>;
+  ): EitherAsync<HttpFetchApiError, Maybe<OsuFirmware>>;
 
   /**
    * Retrieves the next final firmware following an OSU.
