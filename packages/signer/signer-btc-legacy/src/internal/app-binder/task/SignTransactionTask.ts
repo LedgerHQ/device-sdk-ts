@@ -70,6 +70,9 @@ type SignedInput = {
 const isUint = (value: number, max: number): boolean =>
   Number.isInteger(value) && value >= 0 && value <= max;
 
+// How an input is spent: legacy, or SegWit native or P2SH-wrapped.
+type InputKind = "legacy" | "native" | "wrapped";
+
 /**
  * Signs a transaction as hw-app-btc's `createTransaction` does: one trusted
  * input per input, then
@@ -174,8 +177,11 @@ export class SignTransactionTask<ErrorCodes extends string> {
       additionals = [],
     } = transaction;
     const outputScript = hexaStringToBuffer(outputScriptHex)!;
-    const bip143 = segwit;
-    const bech32 = segwit && additionals.includes("bech32");
+    const inputKind: InputKind = !segwit
+      ? "legacy"
+      : additionals.includes("bech32")
+        ? "native"
+        : "wrapped";
 
     const trustedInputs: Uint8Array[] = [];
     for (const [previousTransaction, outputIndex] of inputs) {
@@ -219,7 +225,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
       script: new Uint8Array(),
     });
 
-    if (bip143) {
+    if (segwit) {
       const hashError =
         (await this.hashInputs(
           api,
@@ -233,7 +239,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
 
     const signatures: Uint8Array[] = [];
     for (const [index, derivationPath] of associatedKeysets.entries()) {
-      const hashError = bip143
+      const hashError = segwit
         ? await this.hashInputs(api, [signedInputs[index]!])
         : ((await this.hashInputs(
             api,
@@ -265,8 +271,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
           TRUSTED_INPUT_PREVOUT_OFFSET + PREVOUT_LENGTH,
         ),
         script: this.inputScript(
-          segwit,
-          bech32,
+          inputKind,
           signatures[index]!,
           publicKeys[index]!,
         ),
@@ -297,24 +302,24 @@ export class SignTransactionTask<ErrorCodes extends string> {
   // A SegWit input's signature is in its witness: a native input has no
   // script, a P2SH-wrapped one pushes its witness program.
   private inputScript(
-    segwit: boolean,
-    bech32: boolean,
+    inputKind: InputKind,
     signature: Uint8Array,
     publicKey: Uint8Array,
   ): Uint8Array {
-    if (bech32) {
-      return new Uint8Array();
-    }
-
     const builder = new ByteArrayBuilder();
-    return segwit
-      ? builder
-          .encodeInLVFromBuffer(p2wpkhScript(hashPublicKey(publicKey)))
-          .build()
-      : builder
+    switch (inputKind) {
+      case "legacy":
+        return builder
           .encodeInLVFromBuffer(signature)
           .encodeInLVFromBuffer(publicKey)
           .build();
+      case "wrapped":
+        return builder
+          .encodeInLVFromBuffer(p2wpkhScript(hashPublicKey(publicKey)))
+          .build();
+      case "native":
+        return new Uint8Array();
+    }
   }
 
   // Streams the inputs with their scripts. With a transaction type, the
