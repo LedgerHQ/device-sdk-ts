@@ -5,7 +5,8 @@ import {
 
 import { decodeV1Message } from "./v1Message";
 
-const VERSIONED_MESSAGE_FLAG = 0x80;
+/** A versioned message starts with `0x80 | version`; `0x80` alone is v0. */
+export const VERSIONED_MESSAGE_FLAG = 0x80;
 const VERSION_MASK = 0x7f;
 
 /**

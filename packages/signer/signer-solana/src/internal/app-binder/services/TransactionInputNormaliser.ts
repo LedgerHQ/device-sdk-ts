@@ -1,5 +1,6 @@
 import { type CompiledTransactionMessage } from "@solana/transaction-messages";
 
+import { VERSIONED_MESSAGE_FLAG } from "./utils/messageVersion";
 import {
   compiledTransactionMessageDecoder,
   SIGNATURE_LENGTH,
@@ -13,8 +14,6 @@ import {
 // bytes and just reports how far it read (it can even report past the end of a
 // truncated buffer), so full-wire vs. bare-message detection stays our own
 // concern: an interpretation only counts when it ends exactly at the input end.
-// A versioned message starts with `0x80 | version`; `0x80` alone is v0.
-const VERSIONED_MESSAGE_FLAG = 0x80;
 
 export type NormalizedTransactionInput = {
   messageBytes: Uint8Array;
