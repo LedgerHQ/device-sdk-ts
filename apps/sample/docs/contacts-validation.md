@@ -32,9 +32,8 @@ EDIT SCOPE with the rotated `hmacRest` (the device step shows "Step 1 of 2").
   - **Rename** needs the OS `EDIT CONTACT NAME` dashboard command; on an OS that
     lacks it the device step shows "Ledger OS update required" or an error.
 - For Tron (section 5): **app-tron ≥ 0.8.0** (test provider **P4**).
-- **Solana** (section 7): no released Solana app supports Contacts. The kit
-  gates it behind an unreleased app version (`MIN_SOLANA_APP_VERSION = "10.0.0"`),
-  so the device step is expected to end with **"App update required"**.
+- **Solana** (section 7): **Solana app ≥ 1.19.0** (`MIN_SOLANA_APP_VERSION`).
+  On an older app the device step ends with **"App update required"**.
 - Open the sample app → **Contacts** in the left menu. The page works without a
   device; the device step asks for one ("Ledger device required") and starts on
   its own once a device is connected.
