@@ -1,4 +1,5 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
+import { type Message, PublicKey } from "@solana/web3.js";
 
 import {
   u16le,
@@ -177,3 +178,27 @@ export const SPEC_V1_INPUT: V1MessageInput = {
     },
   ],
 };
+
+/**
+ * Re-encodes a compiled legacy message as v1: same header, accounts,
+ * blockhash and instructions, no config. Legacy key order (writable signers,
+ * readonly signers, writable non-signers, readonly non-signers) is also the
+ * v1 order, so both describe the same transaction.
+ */
+export const v1FromLegacyMessage = (message: Message): Uint8Array =>
+  encodeV1Message({
+    numSignerAccounts: message.header.numRequiredSignatures,
+    numReadonlySignerAccounts: message.header.numReadonlySignedAccounts,
+    numReadonlyNonSignerAccounts: message.header.numReadonlyUnsignedAccounts,
+    configMask: 0,
+    lifetimeToken: new PublicKey(message.recentBlockhash).toBytes(),
+    addresses: message.accountKeys.map((key) => key.toBytes()),
+    configValues: [],
+    instructions: message.compiledInstructions.map(
+      ({ programIdIndex, accountKeyIndexes, data }) => ({
+        programIndex: programIdIndex,
+        accounts: accountKeyIndexes,
+        data,
+      }),
+    ),
+  });
