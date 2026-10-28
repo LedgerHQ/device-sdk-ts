@@ -3,6 +3,9 @@ name: "[Checks] Human Approval"
 # Bot approvals (Koda, Copilot, ...) never count towards merging: a PR needs at
 # least one approval from a human.
 # Make "Human approval" a required status check in the develop ruleset.
+# The check is skipped while a PR has no approval at all (a skipped required
+# check passes): the ruleset's own "required approvals" rule blocks those PRs.
+# It runs again on every approval, dismissal and push.
 
 on:
   pull_request:
@@ -17,26 +20,55 @@ permissions:
   pull-requests: read
 
 jobs:
-  human-approval:
-    name: Human approval
+  count-approvals:
+    name: Count approvals
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
+    outputs:
+      total: ${{ steps.count.outputs.total }}
+      human: ${{ steps.count.outputs.human }}
     steps:
-      - name: Count human approvals
-        if: github.event_name != 'merge_group'
+      - name: Count approvals
+        id: count
         # bash -eo pipefail: a failed reviews fetch must fail the check.
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          count=$(gh api --paginate "repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews" \
-            --jq '.[] | select(.user != null and .user.type != "Bot") | [.user.login, .state, .submitted_at] | @tsv' \
-            | jq -Rn '
-              [inputs | split("\t") | {login: .[0], state: .[1], at: .[2]}]
+          counts=$(gh api --paginate "repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews" \
+            --jq '.[] | select(.user != null) | [.user.login, .user.type, .state, .submitted_at] | @tsv' \
+            | jq -Rnc '
+              [inputs | split("\t") | {login: .[0], type: .[1], state: .[2], at: .[3]}]
               | map(select(.state != "COMMENTED"))
               | sort_by(.at)
-              | reduce .[] as $r ({}; .[$r.login] = $r.state)
-              | [.[] | select(. == "APPROVED")] | length
+              | reduce .[] as $r ({}; .[$r.login] = $r)
+              | [.[] | select(.state == "APPROVED")]
+              | {total: length, human: (map(select(.type != "Bot")) | length)}
             ')
-          echo "Human approvals: $count"
-          [ "$count" -ge 1 ] || { echo "::error::Needs a human approval; bot approvals do not count."; exit 1; }
+          total=$(jq -r .total <<< "$counts")
+          human=$(jq -r .human <<< "$counts")
+          echo "Approvals: $total (human: $human)"
+          echo "total=$total" >> "$GITHUB_OUTPUT"
+          echo "human=$human" >> "$GITHUB_OUTPUT"
+
+  human-approval:
+    name: Human approval
+    needs: count-approvals
+    # Skip only when counting succeeded with zero approvals: a failed count must
+    # fail this check, not skip it.
+    if: >-
+      !cancelled() && (
+        needs.count-approvals.result != 'success' ||
+        needs.count-approvals.outputs.total != '0'
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require a human approval
+        if: github.event_name != 'merge_group'
+        env:
+          COUNT_RESULT: ${{ needs.count-approvals.result }}
+          HUMAN: ${{ needs.count-approvals.outputs.human }}
+        run: |
+          [ "$COUNT_RESULT" = "success" ] || { echo "::error::Could not count approvals."; exit 1; }
+          [ "$HUMAN" -ge 1 ] || { echo "::error::Needs a human approval; bot approvals do not count."; exit 1; }
