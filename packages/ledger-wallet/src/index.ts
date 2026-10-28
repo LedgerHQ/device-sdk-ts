@@ -128,6 +128,16 @@ export type {
   CleanDeviceDARequiredInteraction,
   CleanDeviceDAState,
 } from "./api/device-action/OsUpdate/CleanDevice/types";
+export { ResolveOsUpdatePathDeviceAction } from "./api/device-action/OsUpdate/Resolve/ResolveOsUpdatePathDeviceAction";
+export type {
+  ResolveOsUpdatePathDAError,
+  ResolveOsUpdatePathDAInput,
+  ResolveOsUpdatePathDAIntermediateValue,
+  ResolveOsUpdatePathDAOutput,
+  ResolveOsUpdatePathDARequiredInteraction,
+  ResolveOsUpdatePathDAState,
+  ResolveOsUpdatePathSteps,
+} from "./api/device-action/OsUpdate/Resolve/types";
 export { RestoreAppsStorageDeviceAction } from "./api/device-action/OsUpdate/Restore/RestoreAppsStorage/RestoreAppsStorageDeviceAction";
 export type {
   RestoreAppsStorageDAError,
