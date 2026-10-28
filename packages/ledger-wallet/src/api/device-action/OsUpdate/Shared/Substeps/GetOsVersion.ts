@@ -6,7 +6,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts/Either";
 
-import { GetOsVersionError } from "@api/device-action/OsUpdate/Resolve/ResolveOsUpdatePathDeviceActionErrors";
+import { GetOsVersionError } from "@api/device-action/OsUpdate/Shared/SharedDeviceActionErrors";
 
 type GetOsVersionHandlerResponse = Promise<
   Either<GetOsVersionError, GetOsVersionResponse>

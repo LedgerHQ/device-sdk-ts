@@ -60,12 +60,12 @@ export interface SecureChannelService {
   /**
    * Construct a WebSocket connection for updating the firmware of the device.
    * @param deviceInfo - Response of the GetOsVersionCommand.
-   * @param osuFirmware - The osu firmware to be updated.
+   * @param firmware - The firmware to be updated.
    * @returns Either a WebSocketConnectionError or a WebSocket.
    */
   updateFirmware(
     deviceInfo: GetOsVersionResponse,
-    osuFirmware: OsuFirmware,
+    firmware: Pick<OsuFirmware, "perso" | "firmware" | "firmwareKey">,
   ): Either<WebSocketConnectionError, WebSocket>;
 
   /**

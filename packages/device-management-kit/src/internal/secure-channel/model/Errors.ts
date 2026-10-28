@@ -3,6 +3,7 @@ import {
   DeviceLockedError,
   OutOfMemoryDAError,
   RefusedByUserDAError,
+  UnknownDAError,
 } from "@api/device-action/os/Errors";
 import type { DmkError } from "@api/Error";
 
@@ -32,6 +33,16 @@ export type SecureChannelInstallDAErrors =
   | OutOfMemoryDAError
   | DeviceLockedError
   | RefusedByUserDAError;
+
+/**
+ * Errors that can possibly occur during a secure channel update firmware operation
+ */
+export type SecureChannelUpdateFirmwareDAErrors =
+  | SecureChannelError
+  | OutOfMemoryDAError
+  | DeviceLockedError
+  | RefusedByUserDAError
+  | UnknownDAError;
 
 export class WebSocketConnectionError implements DmkError {
   _tag = "WebSocketConnectionError";
@@ -74,6 +85,21 @@ export class SecureChannelError implements DmkError {
         return new AppAlreadyInstalledDAError();
       case SecureChannelErrorType.OutOfMemory:
         return new OutOfMemoryDAError();
+      default:
+        return this;
+    }
+  }
+
+  mapUpdateFirmwareDAErrors(): SecureChannelUpdateFirmwareDAErrors {
+    switch (this.errorType) {
+      case SecureChannelErrorType.OutOfMemory:
+        return new OutOfMemoryDAError();
+      case SecureChannelErrorType.DeviceLocked:
+        return new DeviceLockedError();
+      case SecureChannelErrorType.RefusedByUser:
+        return new RefusedByUserDAError();
+      case SecureChannelErrorType.Unknown:
+        return new UnknownDAError();
       default:
         return this;
     }
