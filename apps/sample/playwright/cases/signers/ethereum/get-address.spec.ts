@@ -83,4 +83,60 @@ test.describe("signer ethereum: get address", () => {
       expect(result.output!.address).toBe(EXPECTED_ADDRESS);
     });
   });
+
+  test("fails when the Ethereum app is not installed", async ({
+    device,
+    ethSigner,
+  }) => {
+    await test.step("Given a connected Stax without the Ethereum app", async () => {
+      await device.addAndConnect({
+        ...STAX_WITH_ETH,
+        apps: [{ name: "BOLOS", version: "1.9.1" }],
+      });
+    });
+
+    await test.step("When Get address is executed with default inputs", async () => {
+      await ethSigner.open();
+      await ethSigner.getAddress();
+    });
+
+    await test.step("Then opening the app fails with the unknown application error", async () => {
+      const error = await ethSigner.lastError();
+
+      expect(error).toContain("OpenAppCommandError");
+      expect(error).toContain("6807");
+    });
+  });
+
+  test("switches from another running app to Ethereum", async ({
+    device,
+    deviceActions,
+    ethSigner,
+  }) => {
+    // Both apps run on real Speculos instances.
+    test.setTimeout(180_000);
+
+    await test.step("Given a connected Stax running the Bitcoin app", async () => {
+      await device.addAndConnect({
+        ...STAX_WITH_ETH,
+        apps: [...STAX_WITH_ETH.apps!, { name: "Bitcoin", version: "2.4.6" }],
+      });
+      await deviceActions.goto();
+      await deviceActions.openApp("Bitcoin");
+      const opened = await deviceActions.lastResult();
+      expect(opened.status).toBe("completed");
+    });
+
+    await test.step("When Get address is executed with default inputs", async () => {
+      await ethSigner.open();
+      await ethSigner.getAddress();
+    });
+
+    await test.step("Then the Ethereum address is returned", async () => {
+      const result = await ethSigner.lastResult<GetAddressOutput>();
+
+      expect(result.status).toBe("completed");
+      expect(result.output!.address).toBe(EXPECTED_ADDRESS);
+    });
+  });
 });

@@ -24,9 +24,12 @@ const STAX_WITH_TRX: DeviceConfig = {
 const RAW_TRANSFER_TX =
   "0a023dce220895da42177db0050740d8e0a5feed2d5a68080112640a2d747970652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e747261637412330a1541c8599111f29c1e1e061265b4af93ea1f274ad78a121541c8599111f29c1e1e061265b4af93ea1f274ad78a1880c2d72f709d94a2feed2d";
 
-// The signature is a 65-byte buffer (r[32] + s[32] + v[1]), rendered by the
-// sample app as a 0x-prefixed hex string.
-const SIGNATURE_RE = /^0x[0-9a-f]{130}$/i;
+// The 65-byte signature (r[32] + s[32] + v[1]), rendered by the sample app as a
+// 0x-prefixed hex string. Deterministic (RFC 6979) for the fixed Speculos seed
+// and 44'/195'/0'/0/0; it recovers the address's public key from
+// the sha256 of the raw transaction outside DMK.
+const EXPECTED_SIGNATURE =
+  "0xcea9f6b444f07f5cac4b68d08c0d9204427ba2c744d91cbc8cf65a47680df87b47e7b75de15062a56178a751ce0ebfea526fb6dcfedb2f2abae179fdece3b07500";
 
 test.describe("signer tron: sign transaction", () => {
   test("signs a TRX transfer approved on the device screen", async ({
@@ -58,7 +61,7 @@ test.describe("signer tron: sign transaction", () => {
       const result = await trxSigner.lastResult<string>();
 
       expect(result.status).toBe("completed");
-      expect(result.output).toMatch(SIGNATURE_RE);
+      expect(result.output).toBe(EXPECTED_SIGNATURE);
     });
   });
 });
