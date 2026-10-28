@@ -1,0 +1,42 @@
+name: "[Checks] Human Approval"
+
+# Bot approvals (Koda, Copilot, ...) never count towards merging: a PR needs at
+# least one approval from a human.
+# Make "Human approval" a required status check in the develop ruleset.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  # Approvals were already enforced before enqueueing; report success so the
+  # required check does not block the merge queue.
+  merge_group:
+
+permissions:
+  pull-requests: read
+
+jobs:
+  human-approval:
+    name: Human approval
+    runs-on: ubuntu-latest
+    steps:
+      - name: Count human approvals
+        if: github.event_name != 'merge_group'
+        # bash -eo pipefail: a failed reviews fetch must fail the check.
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          count=$(gh api --paginate "repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews" \
+            --jq '.[] | select(.user != null and .user.type != "Bot") | [.user.login, .state, .submitted_at] | @tsv' \
+            | jq -Rn '
+              [inputs | split("\t") | {login: .[0], state: .[1], at: .[2]}]
+              | map(select(.state != "COMMENTED"))
+              | sort_by(.at)
+              | reduce .[] as $r ({}; .[$r.login] = $r.state)
+              | [.[] | select(. == "APPROVED")] | length
+            ')
+          echo "Human approvals: $count"
+          [ "$count" -ge 1 ] || { echo "::error::Needs a human approval; bot approvals do not count."; exit 1; }
