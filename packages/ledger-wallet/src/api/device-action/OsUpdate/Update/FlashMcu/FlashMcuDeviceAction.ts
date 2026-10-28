@@ -88,9 +88,7 @@ export class FlashMcuDeviceAction extends XStateDeviceAction<
       id: "FlashMcuDeviceAction",
       initial: "GetDeviceInfo",
       context: ({ input }) => ({
-        input: {
-          finalFirmware: input.finalFirmware,
-        },
+        input,
         intermediateValue: {
           requiredUserInteraction: UserInteractionRequired.None,
           step: FlashMcuSteps.Idle,
@@ -183,8 +181,8 @@ export class FlashMcuDeviceAction extends XStateDeviceAction<
           invoke: {
             src: "resolveMcuVersion",
             input: ({ context }) => ({
+              ...context.input,
               deviceInfo: context._internalState.deviceInfo!,
-              finalFirmware: context.input.finalFirmware,
             }),
             onDone: {
               actions: assign({

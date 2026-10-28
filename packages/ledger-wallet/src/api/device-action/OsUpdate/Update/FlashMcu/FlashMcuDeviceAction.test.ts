@@ -25,6 +25,7 @@ import { flashMcu } from "@api/device-action/OsUpdate/Update/FlashMcu/Substeps/F
 import { resolveMcuVersion } from "@api/device-action/OsUpdate/Update/FlashMcu/Substeps/ResolveMcuVersion";
 import {
   type FlashMcuDAError,
+  type FlashMcuDAInput,
   type FlashMcuDAState,
   FlashMcuSteps,
 } from "@api/device-action/OsUpdate/Update/FlashMcu/types";
@@ -154,12 +155,9 @@ describe("FlashMcuDeviceAction", () => {
     return handler;
   };
 
-  const makeDeviceAction = () =>
-    new FlashMcuDeviceAction({
-      input: {
-        finalFirmware,
-      },
-    });
+  const makeDeviceAction = (
+    input: FlashMcuDAInput = { mode: "osUpdate", finalFirmware },
+  ) => new FlashMcuDeviceAction({ input });
 
   describe("Success", () => {
     it("Should flash the MCU when the device is already in bootloader mode", () =>
@@ -184,7 +182,54 @@ describe("FlashMcuDeviceAction", () => {
             onDone: () => {
               expect(resolveMcuVersionHandler).toHaveBeenCalledWith(
                 expect.objectContaining({
-                  input: { deviceInfo: getOsVersionResponse, finalFirmware },
+                  input: {
+                    mode: "osUpdate",
+                    deviceInfo: getOsVersionResponse,
+                    finalFirmware,
+                  },
+                }),
+              );
+              expect(flashMcuHandler).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    deviceInfo: getOsVersionResponse,
+                    version: "1.12",
+                  },
+                }),
+              );
+              resolve();
+            },
+            onError: reject,
+          },
+        );
+      }));
+
+    it("Should flash the MCU in bootloader recovery mode without a final firmware", () =>
+      new Promise<void>((resolve, reject) => {
+        setupGetOsVersion();
+        const resolveMcuVersionHandler = setupResolveMcuVersion();
+        const flashMcuHandler = setupFlashMcu();
+
+        const expectedStates: FlashMcuDAState[] = [
+          pendingState(FlashMcuSteps.GetDeviceInfo),
+          pendingState(FlashMcuSteps.ResolveMcuVersion),
+          pendingState(FlashMcuSteps.FlashMcuOrBootloader),
+          pendingState(FlashMcuSteps.FlashMcuOrBootloader),
+          completedState(),
+        ];
+
+        testDeviceActionStates(
+          makeDeviceAction({ mode: "bootloaderRecovery" }),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: () => {
+              expect(resolveMcuVersionHandler).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: {
+                    mode: "bootloaderRecovery",
+                    deviceInfo: getOsVersionResponse,
+                  },
                 }),
               );
               expect(flashMcuHandler).toHaveBeenCalledWith(
