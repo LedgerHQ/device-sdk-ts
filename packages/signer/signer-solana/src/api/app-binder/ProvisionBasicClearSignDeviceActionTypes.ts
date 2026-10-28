@@ -7,6 +7,7 @@ import {
   type SignTransactionDAError,
   type SignTransactionDASimpleIntermediateValue,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type TokenAccountOwners } from "@api/app-binder/TokenAccountOwners";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
@@ -14,9 +15,12 @@ import { type TxInspectorResult } from "@internal/app-binder/services/Transactio
 /**
  * Best-effort outcome: this machine only streams legacy SPL / token descriptors
  * to the device, it never signs. Any failure is swallowed (the caller signs
- * blind), so the output is always `Right`.
+ * blind), so the output is always `Right`, carrying the token account owners
+ * the accepted descriptors attested.
  */
-export type ProvisionBasicClearSignDAOutput = void;
+export type ProvisionBasicClearSignDAOutput = {
+  tokenAccountOwners: TokenAccountOwners;
+};
 
 export type ProvisionBasicClearSignDAInput = {
   readonly derivationPath: string;
@@ -37,4 +41,5 @@ export type ProvisionBasicClearSignDAIntermediateValue =
 export type ProvisionBasicClearSignDAInternalState = {
   readonly inspectorResult: TxInspectorResult | null;
   readonly solanaTransactionContext: SolanaTransactionContextResultSuccess | null;
+  readonly tokenAccountOwners: TokenAccountOwners;
 };

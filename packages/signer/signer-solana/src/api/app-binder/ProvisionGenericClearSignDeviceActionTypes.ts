@@ -8,6 +8,7 @@ import {
   type SignTransactionDAError,
   type SignTransactionDASimpleIntermediateValue,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type TokenAccountOwners } from "@api/app-binder/TokenAccountOwners";
 import { type ChallengeBoundRequirements } from "@internal/app-binder/task/BuildGenericClearSignContextTask";
 
 /**
@@ -28,6 +29,8 @@ export type ProvisionGenericClearSignDAOutput = {
   unrecognizedProgramIds: string[];
   /** `true` when `"degraded"` specifically because an ACCOUNT_SCHEMA pre-check failed (stale CAL descriptor). */
   staleDescriptor: boolean;
+  /** Token account owners attested to the device while streaming descriptors. */
+  tokenAccountOwners: TokenAccountOwners;
 };
 
 export type ProvisionGenericClearSignDAInput = {
@@ -50,4 +53,5 @@ export type ProvisionGenericClearSignDAInternalState = {
   readonly challengeBoundRequirements: ChallengeBoundRequirements | null;
   readonly unrecognizedProgramIds: string[];
   readonly staleDescriptor: boolean;
+  readonly tokenAccountOwners: TokenAccountOwners;
 };
