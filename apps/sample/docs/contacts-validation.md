@@ -146,8 +146,8 @@ and address validation, the no-device state) are covered by
    injected into the signer (`withAddressBook`, rebuilt whenever the book
    changes). A SOL transfer — or an SPL `TransferChecked` to the contact's
    associated token account — to a registered wallet should show the contact
-   name. The signer gates the step behind its own unreleased `contacts` feature
-   version; **Settings → Solana disabled features → Contacts** turns it off.
+   name. The signer gates the step behind its own `contacts` feature (Solana app
+   ≥ 1.19.0); **Settings → Solana disabled features → Contacts** turns it off.
 
 ---
 
