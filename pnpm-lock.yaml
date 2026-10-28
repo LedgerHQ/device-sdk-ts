@@ -277,8 +277,8 @@ catalogs:
       specifier: ^1.3.0
       version: 1.5.2
     postcss:
-      specifier: ^8.5.24
-      version: 8.5.28
+      specifier: ^8.5.32
+      version: 8.5.32
     prettier:
       specifier: 3.5.3
       version: 3.5.3
@@ -798,7 +798,7 @@ importers:
         version: 18.3.12
       autoprefixer:
         specifier: 'catalog:'
-        version: 10.4.20(postcss@8.5.28)
+        version: 10.4.20(postcss@8.5.32)
       globals:
         specifier: 'catalog:'
         version: 16.0.0
@@ -1176,13 +1176,13 @@ importers:
         version: 5.1.34
       autoprefixer:
         specifier: 'catalog:'
-        version: 10.4.20(postcss@8.5.28)
+        version: 10.4.20(postcss@8.5.32)
       globals:
         specifier: 'catalog:'
         version: 16.0.0
       postcss:
         specifier: 'catalog:'
-        version: 8.5.28
+        version: 8.5.32
       tailwindcss:
         specifier: ^4.1.17
         version: 4.3.3
@@ -11782,6 +11782,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@3.3.20:
+    resolution: {integrity: sha512-uKdg2G3GNCKQn9byYOpxbGqrT2fGO5KRt5J/8b3pok8rT6qxGWF6hxMyJiEYtAf+FVyYuD9hRaDqX5uPFYJ4ZQ==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+
   nanoid@3.3.8:
     resolution: {integrity: sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -12348,6 +12353,10 @@ packages:
 
   postcss@8.5.28:
     resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
+    engines: {node: ^10 || ^12 || >=14}
+
+  postcss@8.5.32:
+    resolution: {integrity: sha512-LJlKCCAUFKOuZxipUdYw1NzIITEsPcgyOG9LkvRJvuKj/bRzbuRY0ARXvL0pWGpsZvn8jku+LMep2eU0seHp8g==}
     engines: {node: ^10 || ^12 || >=14}
 
   postgres-array@2.0.0:
@@ -13501,6 +13510,10 @@ packages:
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
+    engines: {node: '>=0.10.0'}
+
+  source-map-js@1.2.2:
+    resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
 
   source-map-support@0.5.21:
@@ -19755,7 +19768,7 @@ snapshots:
       '@alloc/quick-lru': 5.3.0
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
-      postcss: 8.5.28
+      postcss: 8.5.32
       tailwindcss: 4.3.3
 
   '@tailwindcss/vite@4.3.3(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
@@ -20952,14 +20965,14 @@ snapshots:
       stubborn-fs: 1.2.5
       when-exit: 2.1.2
 
-  autoprefixer@10.4.20(postcss@8.5.28):
+  autoprefixer@10.4.20(postcss@8.5.32):
     dependencies:
       browserslist: 4.25.4
       caniuse-lite: 1.0.30001739
       fraction.js: 4.3.7
       normalize-range: 0.1.2
       picocolors: 1.1.1
-      postcss: 8.5.28
+      postcss: 8.5.32
       postcss-value-parser: 4.2.0
 
   available-typed-arrays@1.0.7:
@@ -25705,6 +25718,8 @@ snapshots:
 
   nanoid@3.3.19: {}
 
+  nanoid@3.3.20: {}
+
   nanoid@3.3.8: {}
 
   natural-compare@1.4.0: {}
@@ -26337,6 +26352,12 @@ snapshots:
       nanoid: 3.3.19
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  postcss@8.5.32:
+    dependencies:
+      nanoid: 3.3.20
+      picocolors: 1.1.1
+      source-map-js: 1.2.2
 
   postgres-array@2.0.0: {}
 
@@ -27898,6 +27919,8 @@ snapshots:
       smart-buffer: 4.2.0
 
   source-map-js@1.2.1: {}
+
+  source-map-js@1.2.2: {}
 
   source-map-support@0.5.21:
     dependencies:
