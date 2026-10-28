@@ -11,9 +11,18 @@ import { type FinalFirmware } from "@api/device-action/OsUpdate/Shared/types";
 
 import { type FlashMcuDAErrors } from "./FlashMcuDeviceActionErrors";
 
-export type FlashMcuDAInput = {
-  finalFirmware: FinalFirmware;
-};
+/*
+ * A planned MCU flash knows the firmware it is making room for, while a
+ * bootloader recovery has to derive it from whatever the broken device reports.
+ */
+export type FlashMcuDAInput =
+  | {
+      mode: "osUpdate";
+      finalFirmware: FinalFirmware;
+    }
+  | {
+      mode: "bootloaderRecovery";
+    };
 
 export type SecureChannelFlashMcuDAErrors =
   | SecureChannelError
