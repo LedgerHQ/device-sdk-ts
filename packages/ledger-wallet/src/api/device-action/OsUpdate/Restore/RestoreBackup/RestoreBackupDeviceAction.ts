@@ -6,6 +6,7 @@ import {
   isDashboardName,
   type Language,
   LANGUAGE_ID_TO_LANGUAGE,
+  OutOfMemoryDAError,
   RefusedByUserDAError,
   type StateMachineTypes,
   UserInteractionRequired,
@@ -32,6 +33,7 @@ import {
   type RestoreBackupDAIntermediateValue,
   type RestoreBackupDAInternalState,
   type RestoreBackupDAOutput,
+  RestoreBackupStatus,
   RestoreBackupSteps,
 } from "@api/device-action/OsUpdate/Restore/RestoreBackup/types";
 import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
@@ -51,6 +53,27 @@ const hasBackedUpNonEnglishLanguage = (languageId: number | undefined) => {
 
 const isRefusedByUser = (error: unknown): boolean =>
   error instanceof RefusedByUserDAError;
+
+const isOutOfMemory = (error: unknown): boolean =>
+  error instanceof OutOfMemoryDAError;
+
+const computeRestoreStatus = (
+  state: RestoreBackupDAInternalState,
+): RestoreBackupStatus => {
+  if (state.isOutOfMemory) {
+    return RestoreBackupStatus.OUT_OF_MEMORY;
+  }
+  const isFullyRestored =
+    !state.isMasterConsentRejected &&
+    state.restoredLanguage !== false &&
+    state.restoredCLS !== false &&
+    (state.restoredApps ?? []).every(
+      (app) => app.restoredApp && app.restoredAppStorage !== false,
+    );
+  return isFullyRestored
+    ? RestoreBackupStatus.FULL
+    : RestoreBackupStatus.PARTIAL;
+};
 
 const mergeAppsStorageResults = (
   restoredApps: RestoreAppResult[] | undefined,
@@ -140,6 +163,7 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
         hasBackedUpCustomLockScreen: ({ context }) =>
           context.input.backup.clsHexImage !== undefined,
         hasError: ({ context }) => context._internalState.error !== null,
+        isOutOfMemory: ({ context }) => context._internalState.isOutOfMemory,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -166,6 +190,8 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
           currentApp: null,
           isDeviceOnboarded: false,
           isMasterConsentGranted: false,
+          isMasterConsentRejected: false,
+          isOutOfMemory: false,
           restoredLanguage: hasBackedUpNonEnglishLanguage(
             input.backup.languageId,
           )
@@ -393,6 +419,7 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
                   _internalState: ({ context }) => ({
                     ...context._internalState,
                     isMasterConsentGranted: false,
+                    isMasterConsentRejected: true,
                   }),
                 }),
                 target: "Success",
@@ -449,10 +476,18 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => {
                   return _.event.output.caseOf<RestoreBackupDAInternalState>({
-                    Left: (error) =>
-                      isRefusedByUser(error)
-                        ? _.context._internalState
-                        : { ..._.context._internalState, error },
+                    Left: (error) => {
+                      if (isRefusedByUser(error)) {
+                        return _.context._internalState;
+                      }
+                      if (isOutOfMemory(error)) {
+                        return {
+                          ..._.context._internalState,
+                          isOutOfMemory: true,
+                        };
+                      }
+                      return { ..._.context._internalState, error };
+                    },
                     Right: () => ({
                       ..._.context._internalState,
                       restoredLanguage: true,
@@ -473,6 +508,10 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
             {
               guard: "hasError",
               target: "Error",
+            },
+            {
+              guard: "isOutOfMemory",
+              target: "Success",
             },
             {
               guard: "isDeviceOnboarded",
@@ -522,13 +561,22 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => {
                   return _.event.output.caseOf<RestoreBackupDAInternalState>({
-                    Left: (error) =>
-                      isRefusedByUser(error)
-                        ? {
-                            ..._.context._internalState,
-                            appsToRestoreStorage: [],
-                          }
-                        : { ..._.context._internalState, error },
+                    Left: (error) => {
+                      if (isRefusedByUser(error)) {
+                        return {
+                          ..._.context._internalState,
+                          appsToRestoreStorage: [],
+                        };
+                      }
+                      if (isOutOfMemory(error)) {
+                        return {
+                          ..._.context._internalState,
+                          isOutOfMemory: true,
+                          appsToRestoreStorage: [],
+                        };
+                      }
+                      return { ..._.context._internalState, error };
+                    },
                     Right: (output) => {
                       const installedAppNames = new Set([
                         ...output.successfullyInstalled.map(
@@ -572,6 +620,10 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
             {
               guard: "hasError",
               target: "Error",
+            },
+            {
+              guard: "isOutOfMemory",
+              target: "Success",
             },
             {
               target: "RestoreAppsStorage",
@@ -744,6 +796,7 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
           return Left(context._internalState.error);
         }
         return Right({
+          restoreStatus: computeRestoreStatus(context._internalState),
           restoredLanguage: context._internalState.restoredLanguage,
           restoredCLS: context._internalState.restoredCLS,
           restoredApps: context._internalState.restoredApps,
