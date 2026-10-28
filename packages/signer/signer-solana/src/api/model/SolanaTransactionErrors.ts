@@ -16,8 +16,39 @@ export type SolanaV1TransactionRule =
   | "ACCOUNT_INDEX"
   | "MESSAGE_SIZE";
 
+/**
+ * Why a transaction version is refused:
+ * - `unknownVersion`: no Solana app supports it (version 2 and above).
+ * - `appVersion`: the connected Solana app is too old for it.
+ */
+export type SolanaTransactionVersionNotSupportedReason =
+  | "unknownVersion"
+  | "appVersion";
+
+export const SOLANA_TRANSACTION_VERSION_NOT_SUPPORTED_ERROR_TAG =
+  "SolanaTransactionVersionNotSupportedError";
 export const INVALID_SOLANA_TRANSACTION_ERROR_TAG =
   "InvalidSolanaTransactionError";
+
+/**
+ * The transaction uses a message version the signer refuses, before anything
+ * is sent to the device.
+ */
+export class SolanaTransactionVersionNotSupportedError implements DmkError {
+  readonly _tag = SOLANA_TRANSACTION_VERSION_NOT_SUPPORTED_ERROR_TAG;
+  readonly originalError: Error;
+
+  constructor(
+    readonly version: number,
+    readonly reason: SolanaTransactionVersionNotSupportedReason,
+  ) {
+    this.originalError = new Error(
+      reason === "appVersion"
+        ? `Solana transaction version ${version} is not supported by this Solana app version. Update the Solana app.`
+        : `Solana transaction version ${version} is not supported.`,
+    );
+  }
+}
 
 /**
  * The transaction breaks a validity rule of its message version, so neither
@@ -36,3 +67,23 @@ export class InvalidSolanaTransactionError implements DmkError {
     );
   }
 }
+
+// The guards are structural (`_tag`) rather than `instanceof`, for the same
+// dual-package reason as `isSolanaAppError`.
+
+export const isSolanaTransactionVersionNotSupportedError = (
+  error: unknown,
+): error is SolanaTransactionVersionNotSupportedError =>
+  typeof error === "object" &&
+  error !== null &&
+  (error as { _tag?: unknown })._tag ===
+    SOLANA_TRANSACTION_VERSION_NOT_SUPPORTED_ERROR_TAG &&
+  typeof (error as { version?: unknown }).version === "number";
+
+export const isInvalidSolanaTransactionError = (
+  error: unknown,
+): error is InvalidSolanaTransactionError =>
+  typeof error === "object" &&
+  error !== null &&
+  (error as { _tag?: unknown })._tag === INVALID_SOLANA_TRANSACTION_ERROR_TAG &&
+  typeof (error as { rule?: unknown }).rule === "string";

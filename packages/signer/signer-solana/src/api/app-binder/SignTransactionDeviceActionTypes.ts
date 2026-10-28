@@ -9,6 +9,10 @@ import {
 
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
+import {
+  type InvalidSolanaTransactionError,
+  type SolanaTransactionVersionNotSupportedError,
+} from "@api/model/SolanaTransactionErrors";
 import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
@@ -65,7 +69,9 @@ export type SignTransactionDAInput = {
 
 export type SignTransactionDAError =
   | OpenAppDAError
-  | SendCommandInAppDAError<SolanaAppErrorCodes>;
+  | SendCommandInAppDAError<SolanaAppErrorCodes>
+  | SolanaTransactionVersionNotSupportedError
+  | InvalidSolanaTransactionError;
 
 type SignTransactionDARequiredInteraction =
   | UserInteractionRequired
