@@ -1,5 +1,6 @@
 export type OsuFirmware = {
   id: number;
+  notes: string | null;
   perso: string;
   firmware: string;
   firmwareKey: string;
@@ -21,4 +22,5 @@ export type FinalFirmware = {
 export type McuFirmware = {
   id: number;
   name: string;
+  fromBootloaderVersion: string;
 };
