@@ -70,14 +70,14 @@ jobs:
           TRON_SIDE: ${{ steps.filter.outputs.signer-trx == 'true' || steps.filter.outputs.contacts-kit == 'true' }}
         run: |
           if [ "$ALL" = "true" ]; then
-            scenarios="core contacts solana tron"
+            scenarios="core contacts solana solana-general-clear-sign tron"
           else
             scenarios=""
             if [ "$ETH_SIDE" = "true" ]; then
               scenarios="$scenarios core contacts"
             fi
             if [ "$SOLANA_SIDE" = "true" ]; then
-              scenarios="$scenarios solana"
+              scenarios="$scenarios solana solana-general-clear-sign"
             fi
             if [ "$TRON_SIDE" = "true" ]; then
               scenarios="$scenarios tron"
