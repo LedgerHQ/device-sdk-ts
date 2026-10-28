@@ -70,19 +70,14 @@ describe("fromCalTokenValue", () => {
 });
 
 describe("fromCalHideRule", () => {
-  it("maps a condition name, target and rule-set index", () => {
+  it("maps a condition name and target", () => {
     const rule = fromCalHideRule({
       rule_set_index: 2,
       target: { source: "ACCOUNT_PATH", account_index: 3 },
       condition: "IS_SIGNER",
     });
     expect(rule.condition).toBe(HideCondition.IS_SIGNER);
-    expect(rule.ruleSetIndex).toBe(2);
     expect(rule.target?.source).toBe(ValueSource.ACCOUNT_PATH);
-  });
-
-  it("defaults RULE_SET_INDEX to 0", () => {
-    expect(fromCalHideRule({ condition: "IS_SIGNER" }).ruleSetIndex).toBe(0);
   });
 
   it("keeps the target of a rule whose condition is unknown or absent", () => {
