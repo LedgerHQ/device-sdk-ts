@@ -1294,9 +1294,6 @@ importers:
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -2415,9 +2412,6 @@ importers:
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
         version: link:../device-management-kit
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:^
@@ -2535,9 +2529,6 @@ importers:
       '@ledgerhq/device-mockserver-client':
         specifier: workspace:^
         version: link:../../mockserver-client
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -2615,9 +2606,6 @@ importers:
 
   packages/transport/rn-ble:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       js-base64:
         specifier: 'catalog:'
         version: 3.7.8
@@ -2670,9 +2658,6 @@ importers:
 
   packages/transport/rn-hid:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -2710,9 +2695,6 @@ importers:
 
   packages/transport/speculos:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -2744,9 +2726,6 @@ importers:
 
   packages/transport/web-ble:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
