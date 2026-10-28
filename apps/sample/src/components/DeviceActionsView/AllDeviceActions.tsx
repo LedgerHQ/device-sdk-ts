@@ -76,6 +76,10 @@ import {
   type CreateBackupDAIntermediateValue,
   type CreateBackupDAOutput,
   CreateBackupDeviceAction,
+  type RestoreAppsStorageDAError,
+  type RestoreAppsStorageDAIntermediateValue,
+  type RestoreAppsStorageDAOutput,
+  RestoreAppsStorageDeviceAction,
 } from "@ledgerhq/dmk-ledger-wallet";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -486,6 +490,59 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         CreateBackupDAInput,
         CreateBackupDAError,
         CreateBackupDAIntermediateValue
+      >,
+      {
+        title: `${SECURE_CHANNEL_ICON} Restore Apps Storage`,
+        description:
+          "Restore per-app storage backups (as produced by Create Backup) onto the device",
+        executeDeviceAction: (
+          { backupAppJson, isMasterConsentGranted, unlockTimeout },
+          inspect,
+        ) => {
+          const backupApp = JSON.parse(backupAppJson) as Array<{
+            appName: string;
+            data: `0x${string}` | undefined;
+          }>;
+          const deviceAction = new RestoreAppsStorageDeviceAction({
+            input: {
+              backupApp,
+              isMasterConsentGranted,
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          backupAppJson: JSON.stringify([
+            { appName: "Ethereum", data: "0x00" },
+          ]),
+          isMasterConsentGranted: false,
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        labelSelector: {
+          backupAppJson: "Backup apps (JSON array of {appName, data})",
+        },
+        validateValues: ({ backupAppJson }) => {
+          try {
+            return Array.isArray(JSON.parse(backupAppJson));
+          } catch {
+            return false;
+          }
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        RestoreAppsStorageDAOutput,
+        {
+          backupAppJson: string;
+          isMasterConsentGranted: boolean;
+          unlockTimeout: number;
+        },
+        RestoreAppsStorageDAError,
+        RestoreAppsStorageDAIntermediateValue
       >,
     ],
     [deviceModelId, dmk, sessionId],
