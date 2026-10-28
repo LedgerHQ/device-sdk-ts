@@ -20,6 +20,7 @@ type HexTransaction = {
   inputs: { prevout: string; script: string; sequence: string }[];
   outputs?: { amount: string; script: string }[];
   locktime?: string;
+  extraData?: string;
 };
 
 /** {@link LegacyCreateTransactionArg} as a fixture writes it. */
@@ -53,6 +54,7 @@ const toTransaction = (tx: HexTransaction): LegacyTransaction => ({
     script: bytes(output.script),
   })),
   locktime: tx.locktime === undefined ? undefined : bytes(tx.locktime),
+  extraData: tx.extraData === undefined ? undefined : bytes(tx.extraData),
 });
 
 const toCreateTransactionArg = (
