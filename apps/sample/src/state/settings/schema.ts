@@ -90,7 +90,7 @@ export const initialState: SettingsState = {
     url: "https://nft.api.live.ledger.com",
   },
   reporterConfig: {
-    url: "https://blind-signing.api.ledger.com/ingest/v1",
+    url: "https://blind-signing.api.ledger.com/ingest",
   },
   originToken: process.env.NEXT_PUBLIC_GATING_TOKEN || "origin-token",
   datasourceConfig: {
