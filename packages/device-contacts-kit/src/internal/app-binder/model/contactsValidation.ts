@@ -9,6 +9,8 @@
  */
 import { type DmkError } from "@ledgerhq/device-management-kit";
 
+import { BLOCKCHAIN_FAMILY_BY_NAME } from "@internal/app-binder/model/contactsConstants";
+
 // ---- SDK-mirrored constants -------------------------------------------------
 // Source of truth: ledger-secure-sdk/app_features/address_book/include/
 
@@ -18,6 +20,7 @@ export const GROUP_HANDLE_SIZE = 64; // identity.h:47
 export const HMAC_PROOF_LENGTH = 32; // CX_SHA256_SIZE
 export const MAX_BIP32_DEPTH = 10; // bip32.h:15 (MAX_BIP32_PATH)
 export const ETH_ADDRESS_BYTES = 20; // protocol convention, no header
+export const SOLANA_ADDRESS_BYTES = 32; // ed25519 public key, no header
 
 // ---- error type -------------------------------------------------------------
 
@@ -181,4 +184,70 @@ export function validateChainId(value: number | bigint): void {
       `chainId ${value} exceeds uint64 range (max ${UINT64_MAX}).`,
     );
   }
+}
+
+// ---- blockchain family validation ------------------------------------------
+
+/** An address identifier to check, named after its input field. */
+type IdentifierField = {
+  readonly field: string;
+  readonly value: Uint8Array;
+};
+
+/**
+ * Check a blockchain family, its address identifiers and its chain id:
+ * - Ethereum: 20-byte addresses, and CHAIN_ID is mandatory (multiple networks
+ *   share the same address format).
+ * - Solana: 32-byte public keys, and no CHAIN_ID (the firmware specification
+ *   only defines one for Ethereum).
+ * - Any other known family: non-empty identifiers.
+ *
+ * A chain id, when present, is range-checked. Returns the family byte encoded
+ * in the `BLOCKCHAIN_FAMILY` TLV.
+ */
+export function validateFamilyIdentifiers(options: {
+  blockchainFamily: string;
+  identifiers: readonly IdentifierField[];
+  chainId?: bigint;
+}): number {
+  const { blockchainFamily, identifiers, chainId } = options;
+  const family = blockchainFamily.toLowerCase();
+  const familyByte = BLOCKCHAIN_FAMILY_BY_NAME[family];
+  if (familyByte === undefined) {
+    throw new ContactsValidationError(
+      `Unsupported blockchain family: ${blockchainFamily}`,
+    );
+  }
+
+  if (family === "ethereum") {
+    for (const { field, value } of identifiers) {
+      validateByteLength(value, { field, expectedBytes: ETH_ADDRESS_BYTES });
+    }
+    if (chainId === undefined) {
+      throw new ContactsValidationError(
+        "chainId is required for the Ethereum blockchain family.",
+      );
+    }
+  } else if (family === "solana") {
+    for (const { field, value } of identifiers) {
+      validateByteLength(value, { field, expectedBytes: SOLANA_ADDRESS_BYTES });
+    }
+    if (chainId !== undefined) {
+      throw new ContactsValidationError(
+        "chainId is not allowed for the Solana blockchain family.",
+      );
+    }
+  } else {
+    for (const { field, value } of identifiers) {
+      if (value.length === 0) {
+        throw new ContactsValidationError(`${field} must not be empty.`);
+      }
+    }
+  }
+
+  if (chainId !== undefined) {
+    validateChainId(chainId);
+  }
+
+  return familyByte;
 }

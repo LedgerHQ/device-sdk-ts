@@ -16,11 +16,9 @@ import {
 
 import { type ProvideContactInput } from "@api/model/ProvideContact";
 import { ProvideContactCommand } from "@internal/app-binder/command/ProvideContactCommand";
-import {
-  BLOCKCHAIN_FAMILY_BY_NAME,
-  SUB_CMD_PROVIDE_CONTACT,
-} from "@internal/app-binder/model/contactsConstants";
+import { SUB_CMD_PROVIDE_CONTACT } from "@internal/app-binder/model/contactsConstants";
 import { type ContactsErrorCodes } from "@internal/app-binder/model/contactsErrors";
+import { validateFamilyIdentifiers } from "@internal/app-binder/model/contactsValidation";
 import {
   CONTACTS_TLV_TAG,
   encodeTlvAscii,
@@ -40,11 +38,11 @@ import { sendFramedContactsPayload } from "@internal/app-binder/services/sendFra
 export function buildProvideContactPayload(
   input: ProvideContactInput,
 ): Uint8Array {
-  const family =
-    BLOCKCHAIN_FAMILY_BY_NAME[input.blockchainFamily.toLowerCase()];
-  if (family === undefined) {
-    throw new Error(`Unsupported blockchain family: ${input.blockchainFamily}`);
-  }
+  const family = validateFamilyIdentifiers({
+    blockchainFamily: input.blockchainFamily,
+    identifiers: [{ field: "identifier", value: input.identifier }],
+    chainId: input.chainId,
+  });
 
   const builder = new ByteArrayBuilder();
   encodeTlvUInt8(
