@@ -1,9 +1,37 @@
 /* Only what Lumen components need: no preflight, which would restyle the
    styled-components UI around them. Tailwind layers its utilities, and any
    unlayered global style beats a layered one, so they are made important. */
+@layer theme, base, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities) source(none) important;
 @import "@ledgerhq/lumen-ui-react/tailwind.css";
 @import "@ledgerhq/device-mockserver-react/tailwind.css";
+/* The Contacts page is built with Lumen + Tailwind utilities, like Ledger Wallet. */
+@source "../components/ContactsView";
 
 @config "../../tailwind.config.mjs";
+
+/* The slice of Tailwind's preflight that Lumen form controls and text rely on,
+   scoped to the Contacts page and Lumen dialogs (portalled to <body>). Layered
+   below the utilities, so Lumen's own classes still win. */
+@layer base {
+  :where([data-lumen-scope], [role="dialog"]),
+  :where([data-lumen-scope], [role="dialog"]) :where(*, ::before, ::after) {
+    box-sizing: border-box;
+  }
+  :where([data-lumen-scope], [role="dialog"])
+    :where(input, textarea, select, button) {
+    margin: 0;
+    padding: 0;
+    border: 0 solid;
+    background-color: transparent;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+  }
+  :where([data-lumen-scope], [role="dialog"]) :where(h1, h2, h3, h4, p) {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+}
