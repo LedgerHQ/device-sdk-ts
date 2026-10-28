@@ -1,4 +1,4 @@
-import { EitherAsync } from "purify-ts";
+import { EitherAsync, Just, Nothing } from "purify-ts";
 
 import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandResultFactory } from "@api/command/model/CommandResult";
@@ -38,6 +38,7 @@ describe("GetFirmwareMetadataTask", () => {
   const OSU_VERSION = {
     id: 362,
     perso: "perso_11",
+    notes: "notes",
   } as OsuFirmware;
 
   const NEXT_FIRMWARE_VERSION = {
@@ -51,10 +52,12 @@ describe("GetFirmwareMetadataTask", () => {
     {
       id: 3,
       name: "other_version",
+      fromBootloaderVersion: "1.0",
     },
     {
       id: 1,
       name: "mcu_version",
+      fromBootloaderVersion: "1.0",
     },
   ] as McuFirmware[];
 
@@ -79,7 +82,7 @@ describe("GetFirmwareMetadataTask", () => {
       EitherAsync(async () => FIRMWARE_VERSION),
     );
     MANAGER_MOCK.getLatestFirmwareVersion.mockReturnValue(
-      EitherAsync(async () => OSU_VERSION),
+      EitherAsync(async () => Just(OSU_VERSION)),
     );
     MANAGER_MOCK.getNextFirmwareVersion.mockReturnValue(
       EitherAsync(async () => NEXT_FIRMWARE_VERSION),
@@ -93,9 +96,7 @@ describe("GetFirmwareMetadataTask", () => {
       .mockResolvedValueOnce(CommandResultFactory({ data: OS_VERSION }))
       .mockResolvedValueOnce(CommandResultFactory({ data: CUSTOM_IMAGE_SIZE }));
     MANAGER_MOCK.getLatestFirmwareVersion.mockReturnValueOnce(
-      EitherAsync(async ({ throwE }) => {
-        throwE(new Error("error"));
-      }),
+      EitherAsync(async () => Nothing),
     );
 
     // WHEN

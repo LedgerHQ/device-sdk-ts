@@ -8,7 +8,6 @@ import type { InternalApi } from "@api/device-action/DeviceAction";
 import { InvalidGetFirmwareMetadataResponseError } from "@api/device-action/task/Errors";
 import {
   type CustomImage,
-  type FirmwareUpdate,
   type FirmwareUpdateContext,
   type FirmwareVersion,
 } from "@api/device-session/DeviceSessionState";
@@ -68,29 +67,44 @@ export class GetFirmwareMetadataTask {
     const { deviceVersion, currentFirmware } = result.unsafeCoerce();
 
     // Fetch latest firmware available, if any
-    const maybeUpdate = await manager
-      .getLatestFirmwareVersion(currentFirmware, deviceVersion)
-      .chain((osuFirmware) =>
-        manager.getNextFirmwareVersion(osuFirmware).chain((finalFirmware) =>
-          manager
-            .getMcuList()
-            .map((mcus) => mcus.find((mcu) => mcu.name === firmwareVersion.mcu))
-            .map(
-              (mcu) =>
-                mcu === undefined ||
-                !finalFirmware.mcuVersions.includes(mcu.id),
-            )
-            .map((mcuUpdateRequired) => ({
-              osuFirmware,
-              finalFirmware,
-              mcuUpdateRequired,
-            })),
-        ),
-      );
-    const availableUpdate: FirmwareUpdate | undefined = maybeUpdate.caseOf({
-      Right: (data) => data,
-      Left: (_error) => undefined,
+    const maybeOsuFirmwareResult = await manager.getLatestFirmwareVersion(
+      currentFirmware,
+      deviceVersion,
+    );
+
+    const availableUpdate = await maybeOsuFirmwareResult.caseOf({
+      Left: () => undefined,
+      Right: async (maybeOsuFirmware) =>
+        maybeOsuFirmware.caseOf({
+          Nothing: () => undefined,
+          Just: async (osuFirmware) => {
+            const firmwareUpdateResult = await manager
+              .getNextFirmwareVersion(osuFirmware)
+              .chain((finalFirmware) =>
+                manager
+                  .getMcuList()
+                  .map((mcus) =>
+                    mcus.find((mcu) => mcu.name === firmwareVersion.mcu),
+                  )
+                  .map(
+                    (mcu) =>
+                      mcu === undefined ||
+                      !finalFirmware.mcuVersions.includes(mcu.id),
+                  )
+                  .map((mcuUpdateRequired) => ({
+                    osuFirmware,
+                    finalFirmware,
+                    mcuUpdateRequired,
+                  })),
+              );
+            return firmwareUpdateResult.caseOf({
+              Left: () => undefined,
+              Right: (update) => update,
+            });
+          },
+        }),
     });
+
     const firmwareUpdateContext = {
       currentFirmware,
       availableUpdate,
