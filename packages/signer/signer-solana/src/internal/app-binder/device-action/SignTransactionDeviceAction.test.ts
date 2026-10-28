@@ -43,10 +43,10 @@ import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
 
 /**
  * The parent is a thin orchestrator: setup (open app / config / web3 opt-in),
- * then the gate, then the generic clear-sign machine and/or basic clear-sign
- * machine, then the (delayed) terminal-sign machine. These tests cover the
- * orchestration only;
- * each child machine's behaviour is covered by its own test file.
+ * then the gate, then the generic clear-sign provisioning and/or basic
+ * clear-sign provisioning, then the generic or basic terminal-sign machine.
+ * These tests cover the orchestration only; each child machine's behaviour is
+ * covered by its own test file.
  */
 
 const defaultDerivation = "44'/501'/0'/0'";
@@ -336,7 +336,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       );
     }));
 
-  it("generic available + armed then terminal delayed sign (alreadyArmed, refreshed)", () =>
+  it("generic available + provisioned then terminal delayed sign (refreshed)", () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue(
         session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
@@ -383,7 +383,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       );
     }));
 
-  it("generic available + armed, RPC but no delayed then delayed sign on original (no refresh)", () =>
+  it("generic available + provisioned, RPC but no delayed then delayed sign on original (no refresh)", () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue(
         session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
@@ -400,7 +400,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
 
         unrecognizedProgramIds: [],
       });
-      // withRpc (no delayed): the armed device still terminates on SIGN
+      // withRpc (no delayed): the provisioned device still terminates on SIGN
       // MESSAGE DELAYED (0x09), but signs the original blockhash — no refresh.
       run(
         withRpc,
@@ -429,7 +429,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       );
     }));
 
-  it("not armed, RPC but no delayed then terminal one-shot sign (no refresh)", () =>
+  it("generic not provisioned, RPC but no delayed then terminal one-shot sign (no refresh)", () =>
     new Promise<void>((resolve, reject) => {
       // Generic unavailable on legacyVersion then basic then terminal. With an RPC
       // source but no `delayed: true`, refresh is withheld: one-shot 0x06.
@@ -541,7 +541,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
           try {
             expect(buildGenericMock).toHaveBeenCalled();
             expect(inspectMock).toHaveBeenCalled(); // basic ran
-            // RPC + delayed, not armed then terminal does the legacy delayed flow.
+            // RPC + delayed, generic not provisioned then terminal does the legacy delayed flow.
             expect(previewMock).toHaveBeenCalled();
             expect(delayedSignMock).toHaveBeenCalled();
             expect(states[states.length - 1]!.status).toBe(
@@ -962,7 +962,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       );
     }));
 
-  it("e2e sequence: generic clear-sign armed then terminal refresh + delayed sign", () =>
+  it("e2e sequence: generic clear-sign provisioned then terminal refresh + delayed sign", () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue(
         session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),

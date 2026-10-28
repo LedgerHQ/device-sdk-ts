@@ -119,8 +119,8 @@ export class ProvideGenericClearSignContextTask {
   /**
    * Streams a single descriptor to the device. Failures of a
    * {@link FATAL_PROVIDE_CONTEXT_TYPES} descriptor abort generic clear-signing
-   * by throwing; any other descriptor's failure is logged and swallowed so the
-   * device can still clear-sign the rest with degraded UX.
+   * by returning the failed result; any other descriptor's failure is logged and
+   * swallowed so the device can still clear-sign the rest with degraded UX.
    */
   private async provideDescriptor(
     context: ClearSignContext,

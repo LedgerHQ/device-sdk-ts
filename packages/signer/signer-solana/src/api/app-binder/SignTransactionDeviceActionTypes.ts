@@ -42,7 +42,7 @@ export const signTransactionDAStateSteps = Object.freeze({
 /**
  * Which clear-signing path produced the signature.
  * `full` = device ran the merge engine
- * `srfc39-only` = partial CAL coverage, device auto-rendered per-instruction without merge
+ * `srfc39-only` = partial CAL coverage, device auto-rendered per-instruction without merge (not produced today)
  * `none` = blind/legacy fallback (no instruction recognised or capability absent).
  */
 export type ClearSignMode = "full" | "srfc39-only" | "none";

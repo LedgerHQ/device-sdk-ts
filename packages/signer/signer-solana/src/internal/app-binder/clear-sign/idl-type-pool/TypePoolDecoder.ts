@@ -290,8 +290,8 @@ class TypePoolDecoder {
     this.selectedEnumVariants.push({ enumId, variantIndex });
     const cached = this.enumCache.get(variantCacheKey(enumId, variantIndex));
     if (cached === undefined) {
-      // No variant info: emit the raw discriminator and stop descending (the
-      // cursor-end check then surfaces the under-consumption).
+      // No variant info: emit the raw discriminator and stop descending. The
+      // payload bytes are left unread (nothing checks `cursorEnd`).
       this.emit(steps, variantIndex);
       return;
     }
