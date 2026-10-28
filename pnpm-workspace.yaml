@@ -75,6 +75,7 @@ catalog:
   concurrently: ^9.1.0
   crypto-js: ^4.2.0
   danger: 13.0.4
+  dependency-cruiser: 18.7.0
   electron: 39.8.10
   electron-builder: 26.15.3
   electron-vite: 4.0.1
