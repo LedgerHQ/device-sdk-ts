@@ -852,6 +852,309 @@ describe("RestoreBackupDeviceAction", () => {
           { onDone: resolve, onError: reject },
         );
       }));
+
+    describe("Security Key app", () => {
+      const SECURITY_KEY = "Security Key";
+
+      const mockInstallOrUpdateApps = (output: Either<unknown, unknown>) =>
+        createMockActorMachine(output) as unknown as ReturnType<
+          typeof installOrUpdateApps
+        >;
+
+      // The restore storage actor records the apps it receives, in order, and
+      // restores the storage of each of them.
+      const setupRestoreAppsStorageCapturingInput = () => {
+        const receivedAppNames: string[][] = [];
+        vi.mocked(restoreAppsStorage).mockReturnValue(
+          createMachine({
+            context: ({
+              input,
+            }: {
+              input: { backupApps: { appName: string }[] };
+            }) => {
+              const appNames = input.backupApps.map((app) => app.appName);
+              receivedAppNames.push(appNames);
+              return {
+                appNames,
+                intermediateValue: {
+                  requiredUserInteraction: UserInteractionRequired.None,
+                },
+              };
+            },
+            initial: "ready",
+            states: {
+              ready: { after: { 0: "done" } },
+              done: { type: "final" },
+            },
+            output: ({ context }: { context: { appNames: string[] } }) =>
+              Right(
+                context.appNames.map((appName) => ({
+                  appName,
+                  restoredAppStorage: true,
+                })),
+              ),
+          }) as unknown as ReturnType<typeof restoreAppsStorage>,
+        );
+        return receivedAppNames;
+      };
+
+      const setupUntilInstallOrUpdateApps = () => {
+        setupWaitForAppAndVersion();
+        setupGetIsOnboarded();
+        setupDeviceModel(DeviceModelId.STAX);
+        setupRequestMasterConsent();
+      };
+
+      const statesUntilInstallOrUpdateApps = (): RestoreBackupDAState[] => [
+        pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+        pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+        pendingState(RestoreBackupSteps.GetIsOnboarded),
+        pendingState(
+          RestoreBackupSteps.RequestMasterConsent,
+          UserInteractionRequired.GrantConsent,
+        ),
+        pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+        pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+      ];
+
+      const installed = (...appNames: string[]) =>
+        Right({
+          successfullyInstalled: appNames.map((versionName) => ({
+            versionName,
+          })),
+          alreadyInstalled: [],
+          missingApplications: [],
+        });
+
+      // Factory calls order: Security Key pass first, then the other apps.
+      const setupInstallPasses = (
+        securityKeyPass: Either<unknown, unknown>,
+        otherAppsPass: Either<unknown, unknown> = installed(),
+      ) =>
+        vi
+          .mocked(installOrUpdateApps)
+          .mockReturnValueOnce(mockInstallOrUpdateApps(securityKeyPass))
+          .mockReturnValueOnce(mockInstallOrUpdateApps(otherAppsPass));
+
+      const backupWithSecurityKey = () =>
+        makeBackup({
+          installedApps: [
+            { appName: "App1", data: "0xaa" },
+            { appName: SECURITY_KEY, data: "0xbb" },
+          ],
+          clsHexImage: "0x0102",
+        });
+
+      it("should install the Security Key app and restore its data in a first pass, before the other apps", async () => {
+        setupUntilInstallOrUpdateApps();
+        setupInstallPasses(installed(SECURITY_KEY), installed("App1"));
+        const receivedAppNames = setupRestoreAppsStorageCapturingInput();
+        setupUploadCustomLockScreen();
+
+        await new Promise<void>((resolve, reject) =>
+          testDeviceActionStates(
+            makeDeviceAction(backupWithSecurityKey()),
+            [
+              ...statesUntilInstallOrUpdateApps(),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+              pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              pendingState(RestoreBackupSteps.UploadCustomLockScreen),
+              pendingState(RestoreBackupSteps.UploadCustomLockScreen),
+              completedState({
+                restoreStatus: RestoreBackupStatus.FULL,
+                restoredLanguage: undefined,
+                restoredCLS: true,
+                restoredApps: [
+                  {
+                    appName: "App1",
+                    restoredApp: true,
+                    restoredAppStorage: true,
+                  },
+                  {
+                    appName: SECURITY_KEY,
+                    restoredApp: true,
+                    restoredAppStorage: true,
+                  },
+                ],
+              }),
+            ],
+            makeDeviceActionInternalApiMock(),
+            { onDone: resolve, onError: reject },
+          ),
+        );
+
+        expect(vi.mocked(installOrUpdateApps).mock.calls[0]![2]).toEqual([
+          { name: SECURITY_KEY },
+        ]);
+        expect(vi.mocked(installOrUpdateApps).mock.calls[1]![2]).toEqual([
+          { name: "App1" },
+        ]);
+        expect(receivedAppNames).toEqual([[SECURITY_KEY], ["App1"]]);
+      });
+
+      it("should keep the restored Security Key app when the other apps install runs out of memory", async () => {
+        setupUntilInstallOrUpdateApps();
+        setupInstallPasses(
+          installed(SECURITY_KEY),
+          Left(new OutOfMemoryDAError()),
+        );
+        const receivedAppNames = setupRestoreAppsStorageCapturingInput();
+        setupUploadCustomLockScreen(); // registered but never invoked
+
+        await new Promise<void>((resolve, reject) =>
+          testDeviceActionStates(
+            makeDeviceAction(backupWithSecurityKey()),
+            [
+              ...statesUntilInstallOrUpdateApps(),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+              pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+              completedState({
+                restoreStatus: RestoreBackupStatus.OUT_OF_MEMORY,
+                restoredLanguage: undefined,
+                restoredCLS: false,
+                restoredApps: [
+                  {
+                    appName: "App1",
+                    restoredApp: false,
+                    restoredAppStorage: false,
+                  },
+                  {
+                    appName: SECURITY_KEY,
+                    restoredApp: true,
+                    restoredAppStorage: true,
+                  },
+                ],
+              }),
+            ],
+            makeDeviceActionInternalApiMock(),
+            { onDone: resolve, onError: reject },
+          ),
+        );
+
+        expect(receivedAppNames).toEqual([[SECURITY_KEY]]);
+      });
+
+      it("should stop when the Security Key app install runs out of memory", () =>
+        new Promise<void>((resolve, reject) => {
+          setupUntilInstallOrUpdateApps();
+          setupInstallPasses(Left(new OutOfMemoryDAError()));
+          setupRestoreAppsStorage(); // registered but never invoked
+          setupUploadCustomLockScreen(); // registered but never invoked
+
+          testDeviceActionStates(
+            makeDeviceAction(backupWithSecurityKey()),
+            [
+              ...statesUntilInstallOrUpdateApps(),
+              completedState({
+                restoreStatus: RestoreBackupStatus.OUT_OF_MEMORY,
+                restoredLanguage: undefined,
+                restoredCLS: false,
+                restoredApps: [
+                  {
+                    appName: "App1",
+                    restoredApp: false,
+                    restoredAppStorage: false,
+                  },
+                  {
+                    appName: SECURITY_KEY,
+                    restoredApp: false,
+                    restoredAppStorage: false,
+                  },
+                ],
+              }),
+            ],
+            makeDeviceActionInternalApiMock(),
+            { onDone: resolve, onError: reject },
+          );
+        }));
+
+      it("should keep going with the other apps when the user refuses the Security Key app install", async () => {
+        setupUntilInstallOrUpdateApps();
+        setupInstallPasses(Left(new RefusedByUserDAError()), installed("App1"));
+        const receivedAppNames = setupRestoreAppsStorageCapturingInput();
+        setupUploadCustomLockScreen();
+
+        await new Promise<void>((resolve, reject) =>
+          testDeviceActionStates(
+            makeDeviceAction(backupWithSecurityKey()),
+            [
+              ...statesUntilInstallOrUpdateApps(),
+              pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+              pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              pendingState(RestoreBackupSteps.UploadCustomLockScreen),
+              pendingState(RestoreBackupSteps.UploadCustomLockScreen),
+              completedState({
+                restoreStatus: RestoreBackupStatus.PARTIAL,
+                restoredLanguage: undefined,
+                restoredCLS: true,
+                restoredApps: [
+                  {
+                    appName: "App1",
+                    restoredApp: true,
+                    restoredAppStorage: true,
+                  },
+                  {
+                    appName: SECURITY_KEY,
+                    restoredApp: false,
+                    restoredAppStorage: false,
+                  },
+                ],
+              }),
+            ],
+            makeDeviceActionInternalApiMock(),
+            { onDone: resolve, onError: reject },
+          ),
+        );
+
+        expect(receivedAppNames).toEqual([["App1"]]);
+      });
+
+      it("should skip the Security Key app storage restore and the other apps steps when it is the only app and has no data", () =>
+        new Promise<void>((resolve, reject) => {
+          setupUntilInstallOrUpdateApps();
+          setupInstallPasses(
+            Right({
+              successfullyInstalled: [],
+              alreadyInstalled: [SECURITY_KEY],
+              missingApplications: [],
+            }),
+          );
+          setupRestoreAppsStorage(); // registered but never invoked
+
+          testDeviceActionStates(
+            makeDeviceAction(
+              makeBackup({
+                installedApps: [{ appName: SECURITY_KEY, data: undefined }],
+              }),
+            ),
+            [
+              ...statesUntilInstallOrUpdateApps(),
+              completedState({
+                restoreStatus: RestoreBackupStatus.FULL,
+                restoredLanguage: undefined,
+                restoredCLS: undefined,
+                restoredApps: [
+                  {
+                    appName: SECURITY_KEY,
+                    restoredApp: true,
+                    restoredAppStorage: undefined,
+                  },
+                ],
+              }),
+            ],
+            makeDeviceActionInternalApiMock(),
+            { onDone: resolve, onError: reject },
+          );
+        }));
+    });
   });
 
   // ─── Error ──────────────────────────────────────────────────────────────────
