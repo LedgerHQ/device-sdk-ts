@@ -11,10 +11,10 @@ Path-specific rules live in `.github/instructions/*.instructions.md`.
 
 - Review only what this PR changes. Don't comment on existing code the PR doesn't touch, even if it breaks these rules. Exception: a change that breaks or relies on code elsewhere, e.g. a modified public API whose callers or docs aren't updated.
 - Comment only on real defects or clear rule violations. If unsure, stay silent.
-- Use one comment per issue and give a concrete fix. Start every comment with one of the team's review keywords:
-  - `[MUST]`: it must be resolved: a bug, a security issue, or a clear violation of the repo rules (public API, changeset bump, typed errors…).
-  - `[SHOULD]`: a real issue that should be resolved, with less certainty than `[MUST]`; the author may decide to leave it (missing test, outdated docs).
-  - `[COULD]`: a clearly better alternative that prevents a future problem. Never for style, naming or personal preference. Most reviews should have no `[COULD]` at all.
+- Use one comment per issue and give a concrete fix. Start every comment with one of the team's review keywords, in bold, exactly as written here:
+  - `**[MUST]**`: it must be resolved: a bug, a security issue, or a clear violation of the repo rules (public API, changeset bump, typed errors…).
+  - `**[SHOULD]**`: a real issue that should be resolved, with less certainty than `[MUST]`; the author may decide to leave it (missing test, outdated docs).
+  - `**[COULD]**`: a clearly better alternative that prevents a future problem. Never for style, naming or personal preference. Most reviews should have no `[COULD]` at all.
   - Don't use `[ASK]` or `[COMMENT]`: if unsure, stay silent, and no praise.
 - One comment per root cause: if the same defect shows in several files, comment once where it should be fixed and mention the other files.
 - No praise, no summary of the diff, no restating what the code does.
@@ -62,7 +62,7 @@ The team ignores comments that cost review time without preventing a bug. Before
    - No private keys, seeds or full payloads in logs.
    - Treat data from the device, the network or the CAL as untrusted.
    - No new dependency without a justification in the PR description.
-7. **Tests:** in `packages/*`, list every new or changed logic file (command, task, service, device action, use case, utility) without a co-located `*.test.ts` in a single comment, even when other files in the PR have tests. Use `[MUST]` if the list includes a command, task, device action or parsing/encoding utility; otherwise `[SHOULD]`. Also flag a bug fix without a non-regression test. Tests are optional in `apps/*`. How to test each layer is described in `.github/instructions/tests.instructions.md`.
+7. **Tests:** in `packages/*`, list every new or changed logic file (command, task, service, device action, use case, utility) without a co-located `*.test.ts` in a single comment, even when other files in the PR have tests. Use `**[MUST]**` if the list includes a command, task, device action or parsing/encoding utility; otherwise `**[SHOULD]**`. Also flag a bug fix without a non-regression test. Tests are optional in `apps/*`. How to test each layer is described in `.github/instructions/tests.instructions.md`.
 8. **Changesets:**
    - Flag a missing changeset when the source of a published package changes. Danger only warns about it. Don't flag it when a pending changeset in `.changeset/` already covers the same package and change (for example, the scaffold changeset of a package that isn't released yet).
    - The bump follows `CONTRIBUTING.md`:
