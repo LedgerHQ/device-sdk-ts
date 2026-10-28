@@ -115,7 +115,7 @@ export const CONTACTS_FAMILIES: Readonly<
     },
     format: (bytes) => bs58.encode(bytes),
     availabilityNote:
-      "No released Solana app supports Contacts yet: the kit gates it behind an unreleased app version, so the device step ends with “App update required”.",
+      "Contacts needs Solana app 1.19.0 or later: on an older app the device step ends with “App update required”.",
   },
 };
 
