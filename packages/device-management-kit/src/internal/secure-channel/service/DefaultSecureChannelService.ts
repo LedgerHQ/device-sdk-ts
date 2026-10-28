@@ -83,13 +83,13 @@ export class DefaultSecureChannelService implements SecureChannelService {
 
   updateFirmware(
     deviceInfo: GetOsVersionResponse,
-    osuFirmware: OsuFirmware,
+    firmware: Pick<OsuFirmware, "perso" | "firmware" | "firmwareKey">,
   ): Either<WebSocketConnectionError, WebSocket> {
     const params: UpdateFirmwareParams = {
       targetId: deviceInfo.targetId.toString(),
-      perso: osuFirmware.perso,
-      firmware: osuFirmware.firmware,
-      firmwareKey: osuFirmware.firmwareKey,
+      perso: firmware.perso,
+      firmware: firmware.firmware,
+      firmwareKey: firmware.firmwareKey,
     };
     return this.dataSource.updateFirmware(params);
   }
