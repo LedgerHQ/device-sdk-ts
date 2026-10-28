@@ -234,8 +234,8 @@ const subscription = observable.subscribe({
 Give the signer the user's address book to have the device show a saved contact
 name in place of the raw recipient address when it reviews a transaction:
 
-```ts
-const signer = new SignerSolanaBuilder({ dmk, sessionId })
+```typescript
+const signerSolana = new SignerSolanaBuilder({ dmk, sessionId })
   .withAddressBook({
     contactGroups: [
       {
@@ -271,6 +271,10 @@ Points to know:
   recipient that does not match, an app too old to support contacts, or a
   contact the device rejects all leave the transaction signing as before,
   against the raw address.
+
+> **Note:** Contacts are supported on every device model except Nano S, and
+> need Solana app 1.19.0 or later. Register contacts on the device with
+> [`@ledgerhq/device-contacts-kit`](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/device-contacts-kit).
 
 ---
 

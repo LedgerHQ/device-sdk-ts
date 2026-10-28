@@ -66,11 +66,17 @@ export class SignerSolanaBuilder {
   }
 
   /**
-   * Provide the Solana-compatible address book used to clear-sign contact
-   * names.
+   * Provide the user's address book, so the device shows a saved contact name
+   * in place of the raw recipient address when it reviews a transaction.
    *
-   * The snapshot must be complete: the signer neither mutates nor persists it,
-   * and reads it as-is. Rebuild the signer to pick up later changes.
+   * - The snapshot must be complete, and it is read as-is: the signer neither
+   *   mutates nor persists it. Build a new signer to pick up later changes.
+   * - Only Solana entries belong here, each with its base58 wallet public key.
+   * - Best effort: a recipient that does not match, an app too old to support
+   *   contacts (Solana app 1.19.0, any model but Nano S) or a contact the
+   *   device rejects leave the transaction signing against the raw address.
+   *
+   * See the "Address book" section of the README for the matching rules.
    *
    * @param addressBook a complete Solana address-book snapshot
    * @returns this
