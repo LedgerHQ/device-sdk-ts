@@ -64,6 +64,10 @@ export function toAccountResets(
           {
             account_index: reset.account_index,
             require_pre_balance_zero: reset.require_pre_balance_zero,
+            value_kind: reset.value_kind,
+            token: reset.token,
+            require_native_pre_balance_zero:
+              reset.require_native_pre_balance_zero,
           },
         ],
   );

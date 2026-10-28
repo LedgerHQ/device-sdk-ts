@@ -28,6 +28,7 @@ import {
   type ParsedValue,
   type ParsedValueFlowPort,
   type TokenKind,
+  ValueKind,
   type ValueSource,
 } from "./records";
 
@@ -210,12 +211,31 @@ export function fromCalOwnerAssociation(
   };
 }
 
+const VALUE_KIND_BY_NAME: Readonly<Record<string, ValueKind>> = {
+  splToken: ValueKind.SPL_TOKEN,
+  native: ValueKind.NATIVE,
+};
+
 export function fromCalAccountReset(
   reset: CalAccountReset,
 ): ParsedAccountReset {
+  const valueKind = VALUE_KIND_BY_NAME[reset.value_kind ?? ""];
+  if (valueKind === undefined) {
+    decodeError(
+      `unknown or missing ACCOUNT_RESET value_kind "${reset.value_kind ?? ""}"`,
+    );
+  }
+  if (valueKind === ValueKind.SPL_TOKEN && !reset.token) {
+    decodeError(
+      "ACCOUNT_RESET with value_kind 'splToken' is missing the required TOKEN field",
+    );
+  }
   return {
     accountIndex: reset.account_index,
     requirePreBalanceZero: reset.require_pre_balance_zero ?? false,
+    valueKind,
+    tokenValue: reset.token ? fromCalTokenValue(reset.token) : undefined,
+    requireNativePreBalanceZero: reset.require_native_pre_balance_zero ?? false,
   };
 }
 
