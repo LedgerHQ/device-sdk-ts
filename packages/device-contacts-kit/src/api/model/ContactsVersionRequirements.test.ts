@@ -32,7 +32,7 @@ describe("ContactsVersionRequirements", () => {
       const appVersions = {
         [ETHEREUM_APP_NAME]: "1.23.0",
         [TRON_APP_NAME]: "0.8.0",
-        [SOLANA_APP_NAME]: "10.0.0",
+        [SOLANA_APP_NAME]: "1.19.0",
       };
 
       expect(CONTACTS_VERSION_REQUIREMENTS).toEqual({

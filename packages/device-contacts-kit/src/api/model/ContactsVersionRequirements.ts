@@ -64,11 +64,7 @@ const MIN_OS_VERSION_NANO_SP = "1.7.0";
 
 const MIN_ETHEREUM_APP_VERSION = "1.23.0";
 const MIN_TRON_APP_VERSION = "0.8.0";
-// TEMPORARY (DSDK-1571) — the Solana app does not support Contacts yet and its
-// implementation is not scheduled, so this unreleased version keeps every
-// existing build out. Pin it to the first Contacts-enabled release once the
-// Solana app team names it.
-const MIN_SOLANA_APP_VERSION = "10.0.0";
+const MIN_SOLANA_APP_VERSION = "1.19.0";
 
 const MIN_APP_VERSION = {
   [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION,
