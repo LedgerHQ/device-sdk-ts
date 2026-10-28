@@ -16,8 +16,17 @@ export const SCENARIO_DEVICES: readonly ScenarioDevice[] = [
   "apex",
 ];
 
+/**
+ * Coin apps on the legacy Bitcoin protocol, each signed through its profile of
+ * signer-btc-legacy. Named as on the device, which is also how Speculinho finds
+ * them once it strips the spaces.
+ */
+export const BTC_LEGACY_COIN_APPS = ["Litecoin", "Dogecoin"] as const;
+
+export type BtcLegacyCoinApp = (typeof BTC_LEGACY_COIN_APPS)[number];
+
 /** Coin app a scenario exercises. */
-export type ScenarioCoinApp = "Ethereum" | "Solana" | "Tron";
+export type ScenarioCoinApp = "Ethereum" | "Solana" | "Tron" | BtcLegacyCoinApp;
 
 /**
  * What a scenario asks the device to do. The action decides which flow runs;

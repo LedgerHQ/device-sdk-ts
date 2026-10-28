@@ -29,6 +29,7 @@ export const TYPES = {
   DMKServiceController: Symbol.for("DMKServiceController"),
   SolanaDMKServiceController: Symbol.for("SolanaDMKServiceController"),
   TronDMKServiceController: Symbol.for("TronDMKServiceController"),
+  BtcLegacyDMKServiceController: Symbol.for("BtcLegacyDMKServiceController"),
   SpeculinhoServiceController: Symbol.for("SpeculinhoServiceController"),
   ServiceControllers: Symbol.for("ServiceControllers"),
 
@@ -59,6 +60,9 @@ export const TYPES = {
   TestBatchTronTransactionFromFileUseCase: Symbol.for(
     "TestBatchTronTransactionFromFileUseCase",
   ),
+  TestBatchBtcLegacyTransactionFromFileUseCase: Symbol.for(
+    "TestBatchBtcLegacyTransactionFromFileUseCase",
+  ),
 
   // Solana program-level testing (fetches transactions by program ID via RPC)
   SolanaRpcAdapter: Symbol.for("SolanaRpcAdapter"),
@@ -72,6 +76,7 @@ export const TYPES = {
   SignerConfig: Symbol.for("SignerConfig"),
   SolanaRpcConfig: Symbol.for("SolanaRpcConfig"),
   CalConfig: Symbol.for("CalConfig"),
+  BtcLegacyProfile: Symbol.for("BtcLegacyProfile"),
 
   // Logger
   LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),

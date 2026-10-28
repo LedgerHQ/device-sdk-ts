@@ -8,4 +8,5 @@ export const DOGECOIN_PROFILE: LegacyCoinProfile<BtcLegacyErrorCodes> = {
   appName: "Dogecoin",
   errors: BTC_LEGACY_ERRORS,
   xpubVersion: 0x02facafd,
+  segwit: false,
 };

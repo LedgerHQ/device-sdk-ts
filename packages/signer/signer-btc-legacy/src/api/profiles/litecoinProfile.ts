@@ -8,4 +8,5 @@ export const LITECOIN_PROFILE: LegacyCoinProfile<BtcLegacyErrorCodes> = {
   appName: "Litecoin",
   errors: BTC_LEGACY_ERRORS,
   xpubVersion: 0x019da462,
+  segwit: true,
 };

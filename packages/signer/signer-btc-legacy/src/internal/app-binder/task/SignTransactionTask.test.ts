@@ -10,6 +10,7 @@ import {
 
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
+import { DOGECOIN_PROFILE } from "@api/profiles/dogecoinProfile";
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import {
   BtcLegacyAppCommandError,
@@ -197,5 +198,18 @@ describe("SignTransactionTask", () => {
         expect(sendCommand).not.toHaveBeenCalled();
       },
     );
+
+    it("should fail before any APDU when the coin has no SegWit", async () => {
+      const result = await getTask(DOGECOIN_PROFILE).run(api, {
+        ...base,
+        segwit: true,
+      });
+
+      expect(result).toStrictEqual({
+        status: "ERROR",
+        error: new InvalidStatusWordError("Dogecoin has no SegWit"),
+      });
+      expect(sendCommand).not.toHaveBeenCalled();
+    });
   });
 });

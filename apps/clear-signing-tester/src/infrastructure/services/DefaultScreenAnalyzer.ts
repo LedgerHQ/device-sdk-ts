@@ -128,6 +128,17 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     return isLastPage;
   }
 
+  async isStepAcceptPage(): Promise<boolean> {
+    const data = await this.readScreenContent();
+    const isStepAccept = data.text.trim().toLowerCase() === "accept";
+
+    if (isStepAccept) {
+      this.logger.debug("Current screen accepts a review step");
+    }
+
+    return isStepAccept;
+  }
+
   async canRefuseTransaction(): Promise<boolean> {
     const data = await this.readScreenContent();
     const refuseTexts = ["refuse", "decline", "reject"];
