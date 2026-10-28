@@ -40,7 +40,6 @@ const trustedNameCert = {
 const defaultArgs = {
   contextModule: contextModuleMock,
   loggerFactory: mockLoggerFactory,
-  transactionBytes: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
   options: {
     tokenAddress: "someAddress",
     createATA: undefined,
