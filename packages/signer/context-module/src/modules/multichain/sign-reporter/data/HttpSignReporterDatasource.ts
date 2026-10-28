@@ -82,7 +82,6 @@ export class HttpSignReporterDatasource implements SignReporterDatasource {
           ...base,
           chain: "ETH",
           chainData: {
-            chain: "ETH",
             signatureId: params.signatureId,
             signingMethod: params.signingMethod,
             targetAddress: params.targetAddress,
@@ -104,7 +103,6 @@ export class HttpSignReporterDatasource implements SignReporterDatasource {
           ...base,
           chain: "SOL",
           chainData: {
-            chain: "SOL",
             signatureId: params.signatureId,
             signingMethod: params.signingMethod,
             targetAddress: params.targetAddress,
