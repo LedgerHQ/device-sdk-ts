@@ -30,6 +30,14 @@ export class DeviceActionsDriver {
     });
   }
 
+  /** Navigate to the /ledger-wallet route. */
+  async gotoLedgerWallet(): Promise<void> {
+    await this.page.getByTestId("CTA_route-to-/ledger-wallet").click();
+    await this.page.waitForURL("http://localhost:3000/ledger-wallet", {
+      timeout: 10_000,
+    });
+  }
+
   /**
    * Open a device action by its (partial) title, then click Execute. Matching by
    * text avoids depending on the emoji-prefixed test id of secure-channel rows.
@@ -60,6 +68,15 @@ export class DeviceActionsDriver {
       .click();
   }
 
+  /** Open the Open app action, fill the app name, and Execute it. */
+  async openApp(appName: string): Promise<void> {
+    await this.page.getByTestId("CTA_command-Open app").click();
+    const input = this.page.getByTestId("input-text_appName");
+    await input.waitFor({ state: "visible" });
+    await input.fill(appName);
+    await this.send();
+  }
+
   /** Open the Install App action, fill the app name, and Execute it. */
   async installApp(appName: string): Promise<void> {
     await this.open("Install App");
@@ -75,6 +92,24 @@ export class DeviceActionsDriver {
     const input = this.page.getByTestId("input-text_appName");
     await input.waitFor({ state: "visible" });
     await input.fill(appName);
+    await this.send();
+  }
+
+  /** Open the Upload Custom Lock Screen (Hex) action, fill the image, and Execute it. */
+  async uploadCustomLockScreen(imageDataHex: string): Promise<void> {
+    await this.open("Upload Custom Lock Screen (Hex)");
+    const input = this.page.getByTestId("input-text_imageDataHex");
+    await input.waitFor({ state: "visible" });
+    await input.fill(imageDataHex);
+    await this.send();
+  }
+
+  /** Open the Install OS Update action, fill the update, and Execute it. */
+  async installOsUpdate(osUpdate: unknown): Promise<void> {
+    await this.open("Install OS Update");
+    const input = this.page.getByTestId("input-text_osUpdateJson");
+    await input.waitFor({ state: "visible" });
+    await input.fill(JSON.stringify(osUpdate));
     await this.send();
   }
 
