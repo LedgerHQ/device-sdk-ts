@@ -29,6 +29,8 @@ export type {
   LegacyErrorConfig,
 } from "@api/model/LegacyCoinProfile";
 export type { TransactionOptions } from "@api/model/TransactionOptions";
+export { BITCOIN_CASH_PROFILE } from "@api/profiles/bitcoinCashProfile";
+export { BITCOIN_GOLD_PROFILE } from "@api/profiles/bitcoinGoldProfile";
 export { DOGECOIN_PROFILE } from "@api/profiles/dogecoinProfile";
 export { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 export * from "@api/SignerBtcLegacy";

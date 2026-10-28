@@ -5,7 +5,8 @@
       "Solana": "1.17.1",
       "Tron": "0.7.8",
       "Litecoin": "2.4.13",
-      "Dogecoin": "2.4.13"
+      "Dogecoin": "2.4.13",
+      "Bitcoin Cash": "2.4.13"
     }
   },
   "nanox": {
@@ -14,7 +15,8 @@
       "Solana": "1.17.1",
       "Tron": "0.7.8",
       "Litecoin": "2.4.13",
-      "Dogecoin": "2.4.13"
+      "Dogecoin": "2.4.13",
+      "Bitcoin Cash": "2.4.13"
     }
   },
   "flex": {
@@ -23,7 +25,8 @@
       "Solana": "1.17.1",
       "Tron": "0.7.8",
       "Litecoin": "2.4.13",
-      "Dogecoin": "2.4.13"
+      "Dogecoin": "2.4.13",
+      "Bitcoin Cash": "2.4.13"
     }
   }
 }

@@ -2,6 +2,8 @@ import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
+import { BITCOIN_CASH_PROFILE } from "@api/profiles/bitcoinCashProfile";
+import { BITCOIN_GOLD_PROFILE } from "@api/profiles/bitcoinGoldProfile";
 import { DOGECOIN_PROFILE } from "@api/profiles/dogecoinProfile";
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import { type BtcLegacyErrorCodes } from "@internal/app-binder/command/utils/btcLegacyApplicationErrors";
@@ -937,5 +939,728 @@ export const REFERENCE_TRANSACTIONS: {
     ],
     signedTransaction:
       "0x0100000000010271401675b273a2f9189cc26f0feaade658e6e1476db503c6d397da2f7393a9600000000000fdffffff5ba53926b2a4035076a7e2b1be792c298b7f07d03c59fc6aa5bcd0402072cb250100000000fdffffff020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac805cd705000000001600147b24b805e3b225ab300030466fcb779fc6c3870d02483045022100b0d88cd9396a4191afce9223561e366b0576853fb2c51b2df7473d67144e3967022004331c064b96a3450cbcad7bebe1061c1c0fbdaa8208edf2dbeefb2677cc5c6e012103217a1a30898af08d4afc46cac681fc2b0a283d6c3ad9b09a7a27d2a2aaf9d33602473044022019dc7d7887562ebe897b0bab6210cb47f8d9cd3a67015659f0c3b6d97bc7121c022038fee82c9b4eddfabb37d60b03f2c0716977a3d7f64ec42610b0653b2f838a0d01210276729aafec17da024f155881bcaaf686719579106a033eb7c5a980186d5584be80b92a00",
+  },
+  {
+    name: "Bitcoin Cash: one input, one output",
+    profile: BITCOIN_CASH_PROFILE,
+    transaction: {
+      inputs: [
+        [
+          {
+            version: hexaStringToBuffer("01000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "fa5b55d3ca7d51192bbba307401e3d6e61c4d2896d90ccfce8aae40dfafdb4ac00000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "489cbf783ab9532a94e162dc2c37456809ab128aa33bbe7d35a06574e3fa2c9f7f181459bbb79b1a2be44a63298dd23ccdbcc1ca79f14f8f5f50346d956b82000a7a742bb9fc5c8f38210204f1c86c42de2644b8827bf73010d6b6c3b3c85e81f1838d794f567930bc7ff5",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("40ef5a0700000000")!,
+                script: hexaStringToBuffer(
+                  "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+                )!,
+              },
+              {
+                amount: hexaStringToBuffer("0065cd1d00000000")!,
+                script: hexaStringToBuffer(
+                  "76a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("00000000")!,
+          },
+          1,
+          null,
+          null,
+        ],
+      ],
+      associatedKeysets: ["44'/145'/0'/0/0"],
+      outputScriptHex:
+        "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+      sigHashType: 0x41,
+      additionals: ["bitcoin_cash", "bip143"],
+    },
+    exchanges: [
+      ["e042000009000000010100000001", "9000"],
+      [
+        "e042800025fa5b55d3ca7d51192bbba307401e3d6e61c4d2896d90ccfce8aae40dfafdb4ac000000006b",
+        "9000",
+      ],
+      [
+        "e042800032489cbf783ab9532a94e162dc2c37456809ab128aa33bbe7d35a06574e3fa2c9f7f181459bbb79b1a2be44a63298dd23ccdbc",
+        "9000",
+      ],
+      [
+        "e042800032c1ca79f14f8f5f50346d956b82000a7a742bb9fc5c8f38210204f1c86c42de2644b8827bf73010d6b6c3b3c85e81f1838d79",
+        "9000",
+      ],
+      ["e04280000b4f567930bc7ff5ffffffff", "9000"],
+      ["e04280000102", "9000"],
+      [
+        "e04280002240ef5a07000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "9000",
+      ],
+      [
+        "e0428000220065cd1d000000001976a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388ac",
+        "9000",
+      ],
+      [
+        "e04280000400000000",
+        "3200cd13cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000000065cd1d00000000ab52bcf4fab3d4a39000",
+      ],
+      [
+        "e040000015058000002c80000091800000000000000000000000",
+        "4104bbe40d5c63bd949ad001bb3eab9352afb5e3cf8e58c9b4b7c9ad3cc06f19f0fd835623f5f77911725a7382c48c1fac0c3385c00a3d867cdc822a333ed6a72bb9223144626275434161396a4734586e5539674b595758385677354c754571695061776e37552d7f2a42c1d7a423a8bf21d2b4dd81029e8cdf58663c2173121ac6e93c649000",
+      ],
+      ["e0440002050100000001", "9000"],
+      [
+        "e04480023b01383200cd13cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000000065cd1d00000000ab52bcf4fab3d4a300",
+        "9000",
+      ],
+      ["e044800204ffffffff", "9000"],
+      [
+        "e04a80002301c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "00009000",
+      ],
+      ["e0440080050100000001", "9000"],
+      [
+        "e04480803b01383200cd13cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000000065cd1d00000000ab52bcf4fab3d4a319",
+        "9000",
+      ],
+      [
+        "e04480801d76a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388acffffffff",
+        "9000",
+      ],
+      [
+        "e04800001b058000002c80000091800000000000000000000000000000000041",
+        "3045022100940ade69d11166dec49a5cb591e0499545150794c02b3fe6bbf14a90239faf7a022064a8f1cc35c04467e282d9e7e7efc52ab3854f7dbada7c87f74c04194cba3609419000",
+      ],
+    ],
+    signedTransaction:
+      "0x0100000001cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000006b483045022100940ade69d11166dec49a5cb591e0499545150794c02b3fe6bbf14a90239faf7a022064a8f1cc35c04467e282d9e7e7efc52ab3854f7dbada7c87f74c04194cba3609412103bbe40d5c63bd949ad001bb3eab9352afb5e3cf8e58c9b4b7c9ad3cc06f19f0fdffffffff01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac00000000",
+  },
+  {
+    name: "Bitcoin Cash: two inputs, change, lock time and RBF sequences",
+    profile: BITCOIN_CASH_PROFILE,
+    transaction: {
+      inputs: [
+        [
+          {
+            version: hexaStringToBuffer("01000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "fa5b55d3ca7d51192bbba307401e3d6e61c4d2896d90ccfce8aae40dfafdb4ac00000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "489cbf783ab9532a94e162dc2c37456809ab128aa33bbe7d35a06574e3fa2c9f7f181459bbb79b1a2be44a63298dd23ccdbcc1ca79f14f8f5f50346d956b82000a7a742bb9fc5c8f38210204f1c86c42de2644b8827bf73010d6b6c3b3c85e81f1838d794f567930bc7ff5",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("40ef5a0700000000")!,
+                script: hexaStringToBuffer(
+                  "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+                )!,
+              },
+              {
+                amount: hexaStringToBuffer("0065cd1d00000000")!,
+                script: hexaStringToBuffer(
+                  "76a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("00000000")!,
+          },
+          1,
+          null,
+          4294967293,
+        ],
+        [
+          {
+            version: hexaStringToBuffer("01000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "21e79e6ae8be56f45920feda8bf38d11130d9fe93a423027808e09086d6fe5af00000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "48b9c30e8706ec99d5b4a14c420bfa42f9c87dea99849632b64c5fda77a8f0d5a31d3df555ae2bfefe3efc243ae3da101d684c0c88e88522cc2d55c97d7e015515407e53cf6a8f7d0f210294c0ffc479d72f359511651a81702621006309ff687caeaef48020bb42cb11c7",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+              {
+                prevout: hexaStringToBuffer(
+                  "49f5168ec6d460b920ae1b036f68c5282c946e1044584803a9b04f3e7eed767501000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "4828be3e4a0159976745e55c189117a8ce7d3012ed5f0903ac465b60c0c804d985bc0370a951d9c01a7b771b040850f1f2a11db70f4beedbd4f6c3bf1614669e2517458ec076b375ef2102c58929a6d88f3034e46be5e3264274ecd18258a4b0e0bb6d0d9e17eeab925540",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("00a3e11100000000")!,
+                script: hexaStringToBuffer(
+                  "76a9145cc2d0238a9ece1b26b8f22a96d62aca848bcc6188ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("60ae0a00")!,
+          },
+          0,
+          null,
+          4294967293,
+        ],
+      ],
+      associatedKeysets: ["44'/145'/0'/0/0", "44'/145'/0'/0/1"],
+      changePath: "44'/145'/0'/1/0",
+      outputScriptHex:
+        "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a9145b5aa420c4b2272bc06ad7c2785d806a5208524788ac",
+      lockTime: 800000,
+      sigHashType: 0x41,
+      additionals: ["bitcoin_cash", "bip143"],
+    },
+    exchanges: [
+      ["e042000009000000010100000001", "9000"],
+      [
+        "e042800025fa5b55d3ca7d51192bbba307401e3d6e61c4d2896d90ccfce8aae40dfafdb4ac000000006b",
+        "9000",
+      ],
+      [
+        "e042800032489cbf783ab9532a94e162dc2c37456809ab128aa33bbe7d35a06574e3fa2c9f7f181459bbb79b1a2be44a63298dd23ccdbc",
+        "9000",
+      ],
+      [
+        "e042800032c1ca79f14f8f5f50346d956b82000a7a742bb9fc5c8f38210204f1c86c42de2644b8827bf73010d6b6c3b3c85e81f1838d79",
+        "9000",
+      ],
+      ["e04280000b4f567930bc7ff5ffffffff", "9000"],
+      ["e04280000102", "9000"],
+      [
+        "e04280002240ef5a07000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "9000",
+      ],
+      [
+        "e0428000220065cd1d000000001976a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388ac",
+        "9000",
+      ],
+      [
+        "e04280000400000000",
+        "320026d2cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000000065cd1d0000000000c52f5d3da9004c9000",
+      ],
+      ["e042000009000000000100000002", "9000"],
+      [
+        "e04280002521e79e6ae8be56f45920feda8bf38d11130d9fe93a423027808e09086d6fe5af000000006b",
+        "9000",
+      ],
+      [
+        "e04280003248b9c30e8706ec99d5b4a14c420bfa42f9c87dea99849632b64c5fda77a8f0d5a31d3df555ae2bfefe3efc243ae3da101d68",
+        "9000",
+      ],
+      [
+        "e0428000324c0c88e88522cc2d55c97d7e015515407e53cf6a8f7d0f210294c0ffc479d72f359511651a81702621006309ff687caeaef4",
+        "9000",
+      ],
+      ["e04280000b8020bb42cb11c7ffffffff", "9000"],
+      [
+        "e04280002549f5168ec6d460b920ae1b036f68c5282c946e1044584803a9b04f3e7eed7675010000006b",
+        "9000",
+      ],
+      [
+        "e0428000324828be3e4a0159976745e55c189117a8ce7d3012ed5f0903ac465b60c0c804d985bc0370a951d9c01a7b771b040850f1f2a1",
+        "9000",
+      ],
+      [
+        "e0428000321db70f4beedbd4f6c3bf1614669e2517458ec076b375ef2102c58929a6d88f3034e46be5e3264274ecd18258a4b0e0bb6d0d",
+        "9000",
+      ],
+      ["e04280000b9e17eeab925540ffffffff", "9000"],
+      ["e04280000101", "9000"],
+      [
+        "e04280002200a3e111000000001976a9145cc2d0238a9ece1b26b8f22a96d62aca848bcc6188ac",
+        "9000",
+      ],
+      [
+        "e04280000460ae0a00",
+        "3200ff5f4c48f197a692a1cd16a25dae5140db7c5af9e539138791a92292921d03cd4f580000000000a3e11100000000c5977f87e8b2d9829000",
+      ],
+      [
+        "e040000015058000002c80000091800000000000000000000000",
+        "4104bbe40d5c63bd949ad001bb3eab9352afb5e3cf8e58c9b4b7c9ad3cc06f19f0fd835623f5f77911725a7382c48c1fac0c3385c00a3d867cdc822a333ed6a72bb9223144626275434161396a4734586e5539674b595758385677354c754571695061776e37552d7f2a42c1d7a423a8bf21d2b4dd81029e8cdf58663c2173121ac6e93c649000",
+      ],
+      [
+        "e040000015058000002c80000091800000000000000000000001",
+        "410488d6897f8b36430343542f510d0c30fed8256258e35e8d0bf4a90ad8db090a81150fd2d11c9742efd4b8dee6906aa722ba9b7cd1d3cfc66e8c64c43e93233703223139545559566d38704d55475a666b3733654146507248475070644e47584666774e0b262b5263e2b261b940b7c74862a45cb3cac647e47592d8ab1f38ae6dc8fe359000",
+      ],
+      ["e0440002050100000002", "9000"],
+      [
+        "e04480023b0138320026d2cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000000065cd1d0000000000c52f5d3da9004c00",
+        "9000",
+      ],
+      ["e044800204fdffffff", "9000"],
+      [
+        "e04480023b01383200ff5f4c48f197a692a1cd16a25dae5140db7c5af9e539138791a92292921d03cd4f580000000000a3e11100000000c5977f87e8b2d98200",
+        "9000",
+      ],
+      ["e044800204fdffffff", "9000"],
+      ["e04aff0015058000002c80000091800000000000000100000000", "9000"],
+      [
+        "e04a000032020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a9145b5aa4",
+        "009000",
+      ],
+      ["e04a80001320c4b2272bc06ad7c2785d806a5208524788ac", "00009000"],
+      ["e0440080050100000001", "9000"],
+      [
+        "e04480803b0138320026d2cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000000065cd1d0000000000c52f5d3da9004c19",
+        "9000",
+      ],
+      [
+        "e04480801d76a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388acfdffffff",
+        "9000",
+      ],
+      [
+        "e04800001b058000002c8000009180000000000000000000000000000c350041",
+        "304402200980781419e615af9ad257a7b5f1106c0f94f5d115cde63ee926009008bd615502201f17091ec1d47889297a5677e2043bde78ae8d23ac3c036fcfafe1c16c7cc938419000",
+      ],
+      ["e0440080050100000001", "9000"],
+      [
+        "e04480803b01383200ff5f4c48f197a692a1cd16a25dae5140db7c5af9e539138791a92292921d03cd4f580000000000a3e11100000000c5977f87e8b2d98219",
+        "9000",
+      ],
+      [
+        "e04480801d76a9145cc2d0238a9ece1b26b8f22a96d62aca848bcc6188acfdffffff",
+        "9000",
+      ],
+      [
+        "e04800001b058000002c8000009180000000000000000000000100000c350041",
+        "31440220263dd8a9fe069e158964a6d5b196f837587cf292042995b7a5f6a1d8c6ddbcf2022004b9165c244cb9e3a488d0baa7621d48b765a0804ee68069ede27e9b67ee99c7419000",
+      ],
+    ],
+    signedTransaction:
+      "0x0100000002cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000006a47304402200980781419e615af9ad257a7b5f1106c0f94f5d115cde63ee926009008bd615502201f17091ec1d47889297a5677e2043bde78ae8d23ac3c036fcfafe1c16c7cc938412103bbe40d5c63bd949ad001bb3eab9352afb5e3cf8e58c9b4b7c9ad3cc06f19f0fdfdffffff4c48f197a692a1cd16a25dae5140db7c5af9e539138791a92292921d03cd4f58000000006a4730440220263dd8a9fe069e158964a6d5b196f837587cf292042995b7a5f6a1d8c6ddbcf2022004b9165c244cb9e3a488d0baa7621d48b765a0804ee68069ede27e9b67ee99c741210388d6897f8b36430343542f510d0c30fed8256258e35e8d0bf4a90ad8db090a81fdffffff020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a9145b5aa420c4b2272bc06ad7c2785d806a5208524788ac00350c00",
+  },
+  {
+    name: "Bitcoin Gold: one input, one output",
+    profile: BITCOIN_GOLD_PROFILE,
+    transaction: {
+      inputs: [
+        [
+          {
+            version: hexaStringToBuffer("01000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "aa63f6dfda84799ef4a1a59eee9a9eac146124a7c0179a19a6cd626a64fabe8800000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "4892f853147106246134621f6d32238ddd3798badd8462999c31bb0c775b80fe58d6772b0636f2843716d543b2f748dc98bc025952210e380be87f1d5a77784d0414489c18b281424621023b807c94b43e1e4e84b57b1134f7a9dab49dc044dc422dfba2388bc98f072de9",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("40ef5a0700000000")!,
+                script: hexaStringToBuffer(
+                  "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+                )!,
+              },
+              {
+                amount: hexaStringToBuffer("0065cd1d00000000")!,
+                script: hexaStringToBuffer(
+                  "76a9145d511a96e4c2c86dfc0132afe2a39d35248ce57488ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("00000000")!,
+          },
+          1,
+          null,
+          null,
+        ],
+      ],
+      associatedKeysets: ["44'/156'/0'/0/0"],
+      outputScriptHex:
+        "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+      sigHashType: 0x41,
+      additionals: ["bitcoin_gold", "bip143"],
+    },
+    exchanges: [
+      ["e042000009000000010100000001", "9000"],
+      [
+        "e042800025aa63f6dfda84799ef4a1a59eee9a9eac146124a7c0179a19a6cd626a64fabe88000000006b",
+        "9000",
+      ],
+      [
+        "e0428000324892f853147106246134621f6d32238ddd3798badd8462999c31bb0c775b80fe58d6772b0636f2843716d543b2f748dc98bc",
+        "9000",
+      ],
+      [
+        "e042800032025952210e380be87f1d5a77784d0414489c18b281424621023b807c94b43e1e4e84b57b1134f7a9dab49dc044dc422dfba2",
+        "9000",
+      ],
+      ["e04280000b388bc98f072de9ffffffff", "9000"],
+      ["e04280000102", "9000"],
+      [
+        "e04280002240ef5a07000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "9000",
+      ],
+      [
+        "e0428000220065cd1d000000001976a9145d511a96e4c2c86dfc0132afe2a39d35248ce57488ac",
+        "9000",
+      ],
+      [
+        "e04280000400000000",
+        "3200e2ad29bef45057d9ccdae3a7f7f9264e8d262f30ceaa9c6f19a4a4f21e2bad1dfcbf010000000065cd1d0000000034447134d7309ee19000",
+      ],
+      [
+        "e040000015058000002c8000009c800000000000000000000000",
+        "41049ad2ab92d6d7b6147e8cad76b54d1c8b3a2c298c1c8c2049526659ac2e8bf0afe61334a0b33210425a038fc162ae8ef03927c4294c8347f7017fda3b1252e3912247534d4c5241505a685175356f455769527568336f37695a7a4578616e7341653573e19c1c226eaa2c81b4ade818f7172c430d3235a6dfb66c813ec2dded709aff999000",
+      ],
+      ["e0440002050100000001", "9000"],
+      [
+        "e04480023b01383200e2ad29bef45057d9ccdae3a7f7f9264e8d262f30ceaa9c6f19a4a4f21e2bad1dfcbf010000000065cd1d0000000034447134d7309ee100",
+        "9000",
+      ],
+      ["e044800204ffffffff", "9000"],
+      [
+        "e04a80002301c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "00009000",
+      ],
+      ["e0440080050100000001", "9000"],
+      [
+        "e04480803b01383200e2ad29bef45057d9ccdae3a7f7f9264e8d262f30ceaa9c6f19a4a4f21e2bad1dfcbf010000000065cd1d0000000034447134d7309ee119",
+        "9000",
+      ],
+      [
+        "e04480801d76a9145d511a96e4c2c86dfc0132afe2a39d35248ce57488acffffffff",
+        "9000",
+      ],
+      [
+        "e04800001b058000002c8000009c800000000000000000000000000000000041",
+        "30450221009645e891ade841f0298383d3c10e947ee095c1c624a8524e43dc6b799e9076b5022075c3b4a181f61be1931c3f8757df8a10e01777eee45d7ec2c070363490858a92419000",
+      ],
+    ],
+    signedTransaction:
+      "0x010000000129bef45057d9ccdae3a7f7f9264e8d262f30ceaa9c6f19a4a4f21e2bad1dfcbf010000006b4830450221009645e891ade841f0298383d3c10e947ee095c1c624a8524e43dc6b799e9076b5022075c3b4a181f61be1931c3f8757df8a10e01777eee45d7ec2c070363490858a924121039ad2ab92d6d7b6147e8cad76b54d1c8b3a2c298c1c8c2049526659ac2e8bf0afffffffff01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac00000000",
+  },
+  {
+    name: "Bitcoin Gold: two inputs, change, lock time and RBF sequences",
+    profile: BITCOIN_GOLD_PROFILE,
+    transaction: {
+      inputs: [
+        [
+          {
+            version: hexaStringToBuffer("01000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "aa63f6dfda84799ef4a1a59eee9a9eac146124a7c0179a19a6cd626a64fabe8800000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "4892f853147106246134621f6d32238ddd3798badd8462999c31bb0c775b80fe58d6772b0636f2843716d543b2f748dc98bc025952210e380be87f1d5a77784d0414489c18b281424621023b807c94b43e1e4e84b57b1134f7a9dab49dc044dc422dfba2388bc98f072de9",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("40ef5a0700000000")!,
+                script: hexaStringToBuffer(
+                  "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+                )!,
+              },
+              {
+                amount: hexaStringToBuffer("0065cd1d00000000")!,
+                script: hexaStringToBuffer(
+                  "76a9145d511a96e4c2c86dfc0132afe2a39d35248ce57488ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("00000000")!,
+          },
+          1,
+          null,
+          4294967293,
+        ],
+        [
+          {
+            version: hexaStringToBuffer("01000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "2e577f6450cc6081ae219c17e088cead6a4beacb811041a31b9ba94b1aced8e400000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "484fe11a0d90bf3f42d74e8866db4a0e574140708c9de2a266c6fa426a32b8b22f34928ed241b41581acbdf392de1f11a3b6f568580e12d21c0d1dbc901850b5a84e17d6b9a19ef58221020a1f6fb7aa36d0a5e82a6bedec9d4ffc3ca662afeaf0af039f701cb0bd9c832e",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+              {
+                prevout: hexaStringToBuffer(
+                  "058a878ececb513ef73872457bbae353e5559c433f66bb9ee5791570829db81f01000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "48175fb659472b470682990e458d7a61009f38384052e5ae2b00f2a66f0ee550b17e88886e0a918d42cdc2bbebb2391e539be35c8523aa88ae949b57f8798a2902ead84fde777352b121023ebf2ff72163867b0f7f2ea360e324a1a41f8d9834ded9f6df4b75d955931cff",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("00a3e11100000000")!,
+                script: hexaStringToBuffer(
+                  "76a914585b9b4097f0e703d825a1f64b131a278b1515f788ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("60ae0a00")!,
+          },
+          0,
+          null,
+          4294967293,
+        ],
+      ],
+      associatedKeysets: ["44'/156'/0'/0/0", "44'/156'/0'/0/1"],
+      changePath: "44'/156'/0'/1/0",
+      outputScriptHex:
+        "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a91415b0c4af8e640d7720543eddc40d08be12457a1b88ac",
+      lockTime: 800000,
+      sigHashType: 0x41,
+      additionals: ["bitcoin_gold", "bip143"],
+    },
+    exchanges: [
+      ["e042000009000000010100000001", "9000"],
+      [
+        "e042800025aa63f6dfda84799ef4a1a59eee9a9eac146124a7c0179a19a6cd626a64fabe88000000006b",
+        "9000",
+      ],
+      [
+        "e0428000324892f853147106246134621f6d32238ddd3798badd8462999c31bb0c775b80fe58d6772b0636f2843716d543b2f748dc98bc",
+        "9000",
+      ],
+      [
+        "e042800032025952210e380be87f1d5a77784d0414489c18b281424621023b807c94b43e1e4e84b57b1134f7a9dab49dc044dc422dfba2",
+        "9000",
+      ],
+      ["e04280000b388bc98f072de9ffffffff", "9000"],
+      ["e04280000102", "9000"],
+      [
+        "e04280002240ef5a07000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "9000",
+      ],
+      [
+        "e0428000220065cd1d000000001976a9145d511a96e4c2c86dfc0132afe2a39d35248ce57488ac",
+        "9000",
+      ],
+      [
+        "e04280000400000000",
+        "3200df2929bef45057d9ccdae3a7f7f9264e8d262f30ceaa9c6f19a4a4f21e2bad1dfcbf010000000065cd1d00000000b86cda87d60300cd9000",
+      ],
+      ["e042000009000000000100000002", "9000"],
+      [
+        "e0428000252e577f6450cc6081ae219c17e088cead6a4beacb811041a31b9ba94b1aced8e4000000006b",
+        "9000",
+      ],
+      [
+        "e042800032484fe11a0d90bf3f42d74e8866db4a0e574140708c9de2a266c6fa426a32b8b22f34928ed241b41581acbdf392de1f11a3b6",
+        "9000",
+      ],
+      [
+        "e042800032f568580e12d21c0d1dbc901850b5a84e17d6b9a19ef58221020a1f6fb7aa36d0a5e82a6bedec9d4ffc3ca662afeaf0af039f",
+        "9000",
+      ],
+      ["e04280000b701cb0bd9c832effffffff", "9000"],
+      [
+        "e042800025058a878ececb513ef73872457bbae353e5559c433f66bb9ee5791570829db81f010000006b",
+        "9000",
+      ],
+      [
+        "e04280003248175fb659472b470682990e458d7a61009f38384052e5ae2b00f2a66f0ee550b17e88886e0a918d42cdc2bbebb2391e539b",
+        "9000",
+      ],
+      [
+        "e042800032e35c8523aa88ae949b57f8798a2902ead84fde777352b121023ebf2ff72163867b0f7f2ea360e324a1a41f8d9834ded9f6df",
+        "9000",
+      ],
+      ["e04280000b4b75d955931cffffffffff", "9000"],
+      ["e04280000101", "9000"],
+      [
+        "e04280002200a3e111000000001976a914585b9b4097f0e703d825a1f64b131a278b1515f788ac",
+        "9000",
+      ],
+      [
+        "e04280000460ae0a00",
+        "32009db4a0d76fb568e51d65602a44a1737d5996b670870cbf92e82513799e9bb6c2f1b80000000000a3e11100000000f6bed85c0a8b32de9000",
+      ],
+      [
+        "e040000015058000002c8000009c800000000000000000000000",
+        "41049ad2ab92d6d7b6147e8cad76b54d1c8b3a2c298c1c8c2049526659ac2e8bf0afe61334a0b33210425a038fc162ae8ef03927c4294c8347f7017fda3b1252e3912247534d4c5241505a685175356f455769527568336f37695a7a4578616e7341653573e19c1c226eaa2c81b4ade818f7172c430d3235a6dfb66c813ec2dded709aff999000",
+      ],
+      [
+        "e040000015058000002c8000009c800000000000000000000001",
+        "4104047444b81b5b0bf8b0ec65f250d90a5e0ceb565dd3847674397184bf5bb9b16e61e0ad14fae71958295086772b5dc905e3cf3a0ff4fbdbe480e5f0ef29bc124122475275376377466f4836423432586443767832636369767737596339485a5a55677080ee739b9b3875fe506675b47a8256aa4267063f68c0933b1458ca22930d4bbf9000",
+      ],
+      ["e0440002050100000002", "9000"],
+      [
+        "e04480023b01383200df2929bef45057d9ccdae3a7f7f9264e8d262f30ceaa9c6f19a4a4f21e2bad1dfcbf010000000065cd1d00000000b86cda87d60300cd00",
+        "9000",
+      ],
+      ["e044800204fdffffff", "9000"],
+      [
+        "e04480023b013832009db4a0d76fb568e51d65602a44a1737d5996b670870cbf92e82513799e9bb6c2f1b80000000000a3e11100000000f6bed85c0a8b32de00",
+        "9000",
+      ],
+      ["e044800204fdffffff", "9000"],
+      ["e04aff0015058000002c8000009c800000000000000100000000", "9000"],
+      [
+        "e04a000032020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a91415b0c4",
+        "009000",
+      ],
+      ["e04a800013af8e640d7720543eddc40d08be12457a1b88ac", "00009000"],
+      ["e0440080050100000001", "9000"],
+      [
+        "e04480803b01383200df2929bef45057d9ccdae3a7f7f9264e8d262f30ceaa9c6f19a4a4f21e2bad1dfcbf010000000065cd1d00000000b86cda87d60300cd19",
+        "9000",
+      ],
+      [
+        "e04480801d76a9145d511a96e4c2c86dfc0132afe2a39d35248ce57488acfdffffff",
+        "9000",
+      ],
+      [
+        "e04800001b058000002c8000009c80000000000000000000000000000c350041",
+        "31440220669515346db401e9d1d5e7db400df97d9f64e4fb6e631e2b413a3aaeac412a680220086007a8cd176f1c0d70bd7c5566f54ae29628245e1b8f191ce204bde60e5626419000",
+      ],
+      ["e0440080050100000001", "9000"],
+      [
+        "e04480803b013832009db4a0d76fb568e51d65602a44a1737d5996b670870cbf92e82513799e9bb6c2f1b80000000000a3e11100000000f6bed85c0a8b32de19",
+        "9000",
+      ],
+      [
+        "e04480801d76a914585b9b4097f0e703d825a1f64b131a278b1515f788acfdffffff",
+        "9000",
+      ],
+      [
+        "e04800001b058000002c8000009c80000000000000000000000100000c350041",
+        "304402203281c608b020adf638965509f26d1260ad475509a11245277f2816adac6169de02202b0173683f4c05050c062b8840ff94dbf66beac6c4ac4898ef0f494cb8999cf3419000",
+      ],
+    ],
+    signedTransaction:
+      "0x010000000229bef45057d9ccdae3a7f7f9264e8d262f30ceaa9c6f19a4a4f21e2bad1dfcbf010000006a4730440220669515346db401e9d1d5e7db400df97d9f64e4fb6e631e2b413a3aaeac412a680220086007a8cd176f1c0d70bd7c5566f54ae29628245e1b8f191ce204bde60e56264121039ad2ab92d6d7b6147e8cad76b54d1c8b3a2c298c1c8c2049526659ac2e8bf0affdffffffa0d76fb568e51d65602a44a1737d5996b670870cbf92e82513799e9bb6c2f1b8000000006a47304402203281c608b020adf638965509f26d1260ad475509a11245277f2816adac6169de02202b0173683f4c05050c062b8840ff94dbf66beac6c4ac4898ef0f494cb8999cf3412103047444b81b5b0bf8b0ec65f250d90a5e0ceb565dd3847674397184bf5bb9b16efdffffff020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a91415b0c4af8e640d7720543eddc40d08be12457a1b88ac00350c00",
+  },
+  {
+    name: "Bitcoin Cash: cashaddr recipient",
+    profile: BITCOIN_CASH_PROFILE,
+    transaction: {
+      inputs: [
+        [
+          {
+            version: hexaStringToBuffer("01000000")!,
+            inputs: [
+              {
+                prevout: hexaStringToBuffer(
+                  "fa5b55d3ca7d51192bbba307401e3d6e61c4d2896d90ccfce8aae40dfafdb4ac00000000",
+                )!,
+                script: hexaStringToBuffer(
+                  "489cbf783ab9532a94e162dc2c37456809ab128aa33bbe7d35a06574e3fa2c9f7f181459bbb79b1a2be44a63298dd23ccdbcc1ca79f14f8f5f50346d956b82000a7a742bb9fc5c8f38210204f1c86c42de2644b8827bf73010d6b6c3b3c85e81f1838d794f567930bc7ff5",
+                )!,
+                sequence: hexaStringToBuffer("ffffffff")!,
+              },
+            ],
+            outputs: [
+              {
+                amount: hexaStringToBuffer("40ef5a0700000000")!,
+                script: hexaStringToBuffer(
+                  "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+                )!,
+              },
+              {
+                amount: hexaStringToBuffer("0065cd1d00000000")!,
+                script: hexaStringToBuffer(
+                  "76a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388ac",
+                )!,
+              },
+            ],
+            locktime: hexaStringToBuffer("00000000")!,
+          },
+          1,
+          null,
+          null,
+        ],
+      ],
+      associatedKeysets: ["44'/145'/0'/0/0"],
+      outputScriptHex:
+        "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+      sigHashType: 0x41,
+      additionals: ["bitcoin_cash", "bip143", "cashaddr"],
+    },
+    exchanges: [
+      ["e042000009000000010100000001", "9000"],
+      [
+        "e042800025fa5b55d3ca7d51192bbba307401e3d6e61c4d2896d90ccfce8aae40dfafdb4ac000000006b",
+        "9000",
+      ],
+      [
+        "e042800032489cbf783ab9532a94e162dc2c37456809ab128aa33bbe7d35a06574e3fa2c9f7f181459bbb79b1a2be44a63298dd23ccdbc",
+        "9000",
+      ],
+      [
+        "e042800032c1ca79f14f8f5f50346d956b82000a7a742bb9fc5c8f38210204f1c86c42de2644b8827bf73010d6b6c3b3c85e81f1838d79",
+        "9000",
+      ],
+      ["e04280000b4f567930bc7ff5ffffffff", "9000"],
+      ["e04280000102", "9000"],
+      [
+        "e04280002240ef5a07000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "9000",
+      ],
+      [
+        "e0428000220065cd1d000000001976a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388ac",
+        "9000",
+      ],
+      [
+        "e04280000400000000",
+        "3200ef65cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000000065cd1d00000000bba3a538c2b845119000",
+      ],
+      [
+        "e040000015058000002c80000091800000000000000000000000",
+        "4104bbe40d5c63bd949ad001bb3eab9352afb5e3cf8e58c9b4b7c9ad3cc06f19f0fd835623f5f77911725a7382c48c1fac0c3385c00a3d867cdc822a333ed6a72bb9223144626275434161396a4734586e5539674b595758385677354c754571695061776e37552d7f2a42c1d7a423a8bf21d2b4dd81029e8cdf58663c2173121ac6e93c649000",
+      ],
+      ["e0440003050100000001", "9000"],
+      [
+        "e04480033b01383200ef65cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000000065cd1d00000000bba3a538c2b8451100",
+        "9000",
+      ],
+      ["e044800304ffffffff", "9000"],
+      [
+        "e04a80002301c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "00009000",
+      ],
+      ["e0440080050100000001", "9000"],
+      [
+        "e04480803b01383200ef65cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000000065cd1d00000000bba3a538c2b8451119",
+        "9000",
+      ],
+      [
+        "e04480801d76a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388acffffffff",
+        "9000",
+      ],
+      [
+        "e04800001b058000002c80000091800000000000000000000000000000000041",
+        "3045022100940ade69d11166dec49a5cb591e0499545150794c02b3fe6bbf14a90239faf7a022064a8f1cc35c04467e282d9e7e7efc52ab3854f7dbada7c87f74c04194cba3609419000",
+      ],
+    ],
+    signedTransaction:
+      "0x0100000001cfb50141e3dec3c28ab981560b70fe023d9d836b895ebebc71d8407bfeb17730010000006b483045022100940ade69d11166dec49a5cb591e0499545150794c02b3fe6bbf14a90239faf7a022064a8f1cc35c04467e282d9e7e7efc52ab3854f7dbada7c87f74c04194cba3609412103bbe40d5c63bd949ad001bb3eab9352afb5e3cf8e58c9b4b7c9ad3cc06f19f0fdffffffff01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac00000000",
   },
 ];

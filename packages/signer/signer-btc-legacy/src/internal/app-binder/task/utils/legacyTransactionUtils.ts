@@ -7,6 +7,7 @@ const MAX_SCRIPT_BLOCK = 50;
 export const DEFAULT_LOCKTIME = 0;
 export const DEFAULT_SEQUENCE = 0xffffffff;
 export const SIGHASH_ALL = 0x01;
+export const SIGHASH_ALL_FORKID = 0x41;
 
 export const compressPublicKey = (publicKey: Uint8Array): Uint8Array => {
   const prefix = ((publicKey.at(64) ?? 0) & 1) === 0 ? 0x02 : 0x03;

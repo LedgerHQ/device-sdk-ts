@@ -1,4 +1,5 @@
 import {
+  BITCOIN_CASH_PROFILE,
   type BtcLegacyErrorCodes,
   DOGECOIN_PROFILE,
   type LegacyCoinProfile,
@@ -118,6 +119,7 @@ const BTC_LEGACY_PROFILES: Record<
 > = {
   Litecoin: LITECOIN_PROFILE,
   Dogecoin: DOGECOIN_PROFILE,
+  "Bitcoin Cash": BITCOIN_CASH_PROFILE,
 };
 
 const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {

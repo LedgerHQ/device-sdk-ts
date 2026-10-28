@@ -21,7 +21,11 @@ export const SCENARIO_DEVICES: readonly ScenarioDevice[] = [
  * signer-btc-legacy. Named as on the device, which is also how Speculinho finds
  * them once it strips the spaces.
  */
-export const BTC_LEGACY_COIN_APPS = ["Litecoin", "Dogecoin"] as const;
+export const BTC_LEGACY_COIN_APPS = [
+  "Litecoin",
+  "Dogecoin",
+  "Bitcoin Cash",
+] as const;
 
 export type BtcLegacyCoinApp = (typeof BTC_LEGACY_COIN_APPS)[number];
 

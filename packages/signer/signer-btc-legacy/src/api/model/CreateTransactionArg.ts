@@ -40,6 +40,8 @@ export type LegacyCreateTransactionArg = {
   // The inputs spend SegWit outputs, signed with BIP143: native with "bech32"
   // in additionals, P2SH-wrapped otherwise.
   segwit?: boolean;
-  // hw-app-btc's flags. The kit reads "bech32" and ignores the others.
+  // hw-app-btc's flags. The kit reads "bech32", and "cashaddr" for a Bitcoin
+  // Cash transaction to show its outputs as cashaddr addresses. It ignores the
+  // others.
   additionals?: string[];
 };
