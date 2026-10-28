@@ -42,16 +42,18 @@
     "@ledgerhq/signer-utils": "workspace:^",
     "pako": "^2.1.0",
     "purify-ts": "catalog:",
+    "semver": "catalog:",
     "xstate": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
-    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",
     "@types/pako": "^2.0.3",
+    "@types/semver": "catalog:",
     "ts-node": "catalog:"
   },
   "peerDependencies": {

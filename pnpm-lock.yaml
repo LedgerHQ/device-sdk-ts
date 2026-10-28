@@ -1423,6 +1423,9 @@ importers:
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
       xstate:
         specifier: 'catalog:'
         version: 5.19.2
@@ -1448,6 +1451,9 @@ importers:
       '@types/pako':
         specifier: ^2.0.3
         version: 2.0.4
+      '@types/semver':
+        specifier: 'catalog:'
+        version: 7.7.0
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@24.13.2)(typescript@5.9.2)
@@ -16610,6 +16616,7 @@ snapshots:
       - supports-color
 
   '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
@@ -16619,7 +16626,9 @@ snapshots:
       - '@babel/core'
       - '@babel/preset-env'
       - bufferutil
+      - bufferutil
       - supports-color
+      - utf-8-validate
       - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
