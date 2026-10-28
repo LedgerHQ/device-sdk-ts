@@ -8,6 +8,8 @@ import {
 import {
   ETHEREUM_APP_NAME,
   resolveContactsVersionRequirements,
+  SOLANA_APP_NAME,
+  TRON_APP_NAME,
 } from "@api/model/ContactsVersionRequirements";
 
 import {
@@ -107,6 +109,21 @@ describe("isContactsAppVersionSupportedForSession", () => {
       isContactsAppVersionSupportedForSession(api, runningApp("Bitcoin")),
     ).toBe(false);
   });
+
+  it.each([TRON_APP_NAME, SOLANA_APP_NAME])(
+    "returns true for the %s app at its minimum version",
+    (appName) => {
+      const version = flexSupport.minAppVersion[appName];
+      if (version === undefined) throw new Error(`${appName} min version`);
+      const api = createInternalApi(createReadyState());
+      expect(
+        isContactsAppVersionSupportedForSession(
+          api,
+          runningApp(appName, version),
+        ),
+      ).toBe(true);
+    },
+  );
 
   it("returns true for a prerelease build of the minimum app version", () => {
     const api = createInternalApi(createReadyState());

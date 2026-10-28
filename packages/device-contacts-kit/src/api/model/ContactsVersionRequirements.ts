@@ -52,6 +52,7 @@ export type ContactsVersionRequirements = Readonly<
 /** Names of embedded apps supporting Contacts. */
 export const ETHEREUM_APP_NAME = "Ethereum";
 export const TRON_APP_NAME = "Tron";
+export const SOLANA_APP_NAME = "Solana";
 
 const UNSUPPORTED: ContactsModelUnsupported = { supported: false };
 
@@ -63,10 +64,15 @@ const MIN_OS_VERSION_NANO_SP = "1.7.0";
 
 const MIN_ETHEREUM_APP_VERSION = "1.23.0";
 const MIN_TRON_APP_VERSION = "0.8.0";
+// TEMPORARY (DSDK-1571) — placeholder until the Solana app team names its first
+// Contacts-enabled release. "0.0.0" lets every Solana build through the app
+// guard, so it must be pinned to that release before this is published.
+const MIN_SOLANA_APP_VERSION = "0.0.0";
 
 const MIN_APP_VERSION = {
   [ETHEREUM_APP_NAME]: MIN_ETHEREUM_APP_VERSION,
   [TRON_APP_NAME]: MIN_TRON_APP_VERSION,
+  [SOLANA_APP_NAME]: MIN_SOLANA_APP_VERSION,
 };
 
 // TEMPORARY (DSDK-1481) — per-model cutoff below which the OS still requires the
