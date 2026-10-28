@@ -67,16 +67,17 @@ requested `--device` is skipped rather than failed.
 
 ### Groups
 
-| Group                | Devices           | What it covers                                  |
-| -------------------- | ----------------- | ----------------------------------------------- |
-| `core`               | stax, nanox       | Ethereum transaction and typed-data fixtures    |
-| `contacts`           | flex              | Ethereum Address Book registration and signing  |
-| `gating`             | stax, flex        | Unauthenticated callers fall back to gating     |
-| `erc7730`            | stax, nanox, flex | Per-dapp calldata descriptors                   |
-| `erc7730-typed-data` | stax, nanox, flex | Per-dapp typed-data descriptors                 |
-| `solana`             | stax, nanox, flex | Solana transaction fixtures                     |
-| `solana-programs`    | —                 | Live program transactions — disabled, see below |
-| `tron`               | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex |
+| Group                       | Devices           | What it covers                                    |
+| --------------------------- | ----------------- | ------------------------------------------------- |
+| `core`                      | stax, nanox       | Ethereum transaction and typed-data fixtures      |
+| `contacts`                  | flex              | Ethereum Address Book registration and signing    |
+| `gating`                    | stax, flex        | Unauthenticated callers fall back to gating       |
+| `erc7730`                   | stax, nanox, flex | Per-dapp calldata descriptors                     |
+| `erc7730-typed-data`        | stax, nanox, flex | Per-dapp typed-data descriptors                   |
+| `solana`                    | stax, nanox, flex | Solana transaction fixtures                       |
+| `solana-general-clear-sign` | stax, nanox, flex | Solana general (IDL-based) clear-signing fixtures |
+| `solana-programs`           | —                 | Live program transactions — disabled, see below   |
+| `tron`                      | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex   |
 
 The `solana-programs` group is **disabled**. Its cases pull transactions from an
 RPC rather than a fixture, so they carry no `expectedTexts` — and a case with
