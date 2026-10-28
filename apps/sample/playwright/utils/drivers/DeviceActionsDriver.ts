@@ -218,6 +218,23 @@ export class DeviceActionsDriver {
   }
 
   /**
+   * Return the required user interactions of every emitted state, in order,
+   * with consecutive repeats collapsed. Expands the collapsed history first.
+   */
+  async userInteractionSequence(): Promise<string[]> {
+    const showAll = this.page.getByText(/^Show all \(\d+\)$/);
+    if ((await showAll.count()) > 0) {
+      await showAll.click();
+      await expect(this.page.getByText(/^Show last \d+$/)).toBeVisible();
+    }
+    const texts = await this.page.locator(RESPONSE_ITEMS).allInnerTexts();
+    return texts
+      .map((text) => /"requiredUserInteraction": "([^"]+)"/.exec(text)?.[1])
+      .filter((interaction): interaction is string => interaction !== undefined)
+      .filter((interaction, i, all) => interaction !== all[i - 1]);
+  }
+
+  /**
    * Wait until the last emitted device-action state renders the given terminal
    * error and return its text. Errors are rendered via `util.inspect` (not JSON),
    * so they are matched by their `_tag` (e.g. `RefusedByUserDAError`) rather than
