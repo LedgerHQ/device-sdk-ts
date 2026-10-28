@@ -55,16 +55,20 @@ jobs:
   human-approval:
     name: Human approval
     needs: count-approvals
+    # Skip only when counting succeeded with zero approvals: a failed count must
+    # fail this check, not skip it.
     if: >-
       !cancelled() && (
-        github.event_name == 'merge_group' ||
-        (needs.count-approvals.result == 'success' && needs.count-approvals.outputs.total != '0')
+        needs.count-approvals.result != 'success' ||
+        needs.count-approvals.outputs.total != '0'
       )
     runs-on: ubuntu-latest
     steps:
       - name: Require a human approval
         if: github.event_name != 'merge_group'
         env:
+          COUNT_RESULT: ${{ needs.count-approvals.result }}
           HUMAN: ${{ needs.count-approvals.outputs.human }}
         run: |
+          [ "$COUNT_RESULT" = "success" ] || { echo "::error::Could not count approvals."; exit 1; }
           [ "$HUMAN" -ge 1 ] || { echo "::error::Needs a human approval; bot approvals do not count."; exit 1; }
