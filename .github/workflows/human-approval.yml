@@ -15,6 +15,10 @@ on:
   # Approvals were already enforced before enqueueing; report success so the
   # required check does not block the merge queue.
   merge_group:
+  # Called by fork_pull_request.yml, which reports the result on the fork's
+  # head commit: a fork's own runs wait for approval and use its copy of this
+  # file.
+  workflow_call:
 
 permissions:
   pull-requests: read

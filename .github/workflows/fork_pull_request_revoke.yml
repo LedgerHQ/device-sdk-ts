@@ -1,0 +1,23 @@
+name: "[Checks] Fork Pull Request revoke"
+
+# The `safe-to-test` label approved one commit: any new push needs a new review.
+# Kept out of fork_pull_request.yml so the workflow that checks out fork code
+# never runs on `synchronize`.
+on:
+  pull_request_target:
+    types: [synchronize]
+
+permissions: {}
+
+jobs:
+  revoke:
+    name: Remove safe-to-test
+    if: github.event.pull_request.head.repo.fork && contains(github.event.pull_request.labels.*.name, 'safe-to-test')
+    runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: write
+    steps:
+      - run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label safe-to-test
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}

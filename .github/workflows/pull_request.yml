@@ -4,6 +4,15 @@ on:
     types: [opened, synchronize, reopened, edited]
     branches-ignore:
       - main
+  # Called by fork_pull_request.yml once a maintainer labels a fork PR.
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        default: ""
+    secrets:
+      GATING_TOKEN:
+        required: false
 
 env:
   FORCE_COLOR: "1"
@@ -14,7 +23,9 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref_name != 'develop' && github.ref || github.run_id }}
+  # The PR number, not github.ref: under pull_request_target the ref is the
+  # base branch, shared by every PR targeting it.
+  group: ${{ github.workflow }}-${{ github.ref_name != 'develop' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -111,6 +122,18 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
 
+      # On a fork call the checkout is the base branch, so the dangerfile stays
+      # trusted; only the changesets, which Danger parses as data, come from the
+      # reviewed commit.
+      - name: Use the PR changesets
+        if: ${{ inputs.ref != '' }}
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$REF"
+          rm -rf .changeset
+          git checkout FETCH_HEAD -- .changeset
+
       - name: Danger
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -133,6 +156,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
           # Full history + the base branch are required so Turbo can compute the
           # merge-base for `--affected`.
           fetch-depth: 0
@@ -277,7 +302,8 @@ jobs:
     needs: [setup, detect-changes]
     if: needs.detect-changes.outputs.cs-scenarios != ''
     name: Clear Signing Test (${{ matrix.device }})
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    # Speculinho is only reachable from the self-hosted runner.
+    runs-on: ${{ (!github.event.pull_request.head.repo.fork || github.event_name == 'pull_request_target') && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     permissions:
       contents: read
     strategy:
@@ -286,6 +312,9 @@ jobs:
         device: [stax, nanox, flex]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
       # A scenario that does not support the device is skipped by name, so one
       # selection serves all three: contacts is flex-only, core is Nano and Stax.
       - uses: ./.github/actions/cs-tester-composite

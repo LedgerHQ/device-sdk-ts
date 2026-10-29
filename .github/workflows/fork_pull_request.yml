@@ -1,0 +1,67 @@
+name: "[Checks] Fork Pull Request"
+
+# A fork PR gets the secrets and the self-hosted runner only once a maintainer
+# has read its code and added the `safe-to-test` label. pull_request_target
+# runs this file from the base branch, so a fork cannot change what it does.
+on:
+  # No `synchronize`: a new push is handled by fork_pull_request_revoke.yml,
+  # and a label-gated checkout must never run on a push.
+  pull_request_target:
+    types: [labeled]
+
+permissions: {}
+
+jobs:
+  checks:
+    if: github.event.label.name == 'safe-to-test' && github.event.pull_request.head.repo.fork
+    # What pull_request.yml asks for: Danger and auto-assign write to the PR.
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    uses: ./.github/workflows/pull_request.yml
+    with:
+      # The commit the maintainer reviewed, not the branch, which the fork can
+      # move after the label is added.
+      ref: ${{ github.event.pull_request.head.sha }}
+    secrets:
+      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+
+  # After the checks, so the approvals are counted just before reporting and
+  # not before a long CI run during which one can be dismissed.
+  approval:
+    needs: [checks]
+    if: ${{ !cancelled() && github.event.label.name == 'safe-to-test' && github.event.pull_request.head.repo.fork }}
+    permissions:
+      pull-requests: read
+    uses: ./.github/workflows/human-approval.yml
+
+  # Called jobs are reported as "checks / Run health check" on the base
+  # commit, and a job of the required name here would be skipped on other
+  # events, which satisfies the required check. The statuses are posted only
+  # for the reviewed commit, so a later push stays blocked until it is labeled
+  # again.
+  report:
+    name: Report required checks
+    needs: [checks, approval]
+    if: ${{ !cancelled() && github.event.label.name == 'safe-to-test' && github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-22.04
+    permissions:
+      checks: write
+    steps:
+      - run: |
+          post() {
+            gh api "repos/$GITHUB_REPOSITORY/check-runs" \
+              -f name="$1" \
+              -f head_sha="$HEAD_SHA" \
+              -f status=completed \
+              -f conclusion="$2" \
+              -f "details_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          }
+          post "Run health check" "$HEALTH"
+          post "Human approval" "$APPROVAL"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEALTH: ${{ needs.checks.result == 'success' && 'success' || 'failure' }}
+          APPROVAL: ${{ needs.approval.result == 'success' && 'success' || 'failure' }}
