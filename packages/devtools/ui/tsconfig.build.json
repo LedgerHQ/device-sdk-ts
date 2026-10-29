@@ -4,5 +4,15 @@
   "compilerOptions": {
     "emitDeclarationOnly": false,
     "outDir": "./lib/build"
-  }
+  },
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/__tests__",
+    "**/__mocks__",
+    "**/__test-utils__",
+    "**/__fixtures__"
+  ]
 }
