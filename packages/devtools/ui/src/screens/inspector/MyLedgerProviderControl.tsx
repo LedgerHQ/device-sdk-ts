@@ -1,51 +1,6 @@
 import React, { useEffect, useState } from "react";
-import styled from "styled-components";
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #f5f5f5;
-  border-radius: 8px;
-  margin-bottom: 16px;
-`;
-
-const Label = styled.label`
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-`;
-
-const Input = styled.input`
-  width: 80px;
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: monospace;
-
-  &:focus {
-    outline: none;
-    border-color: #2196f3;
-  }
-`;
-
-const RefreshButton = styled.button`
-  padding: 4px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: #f0f0f0;
-    border-color: #bbb;
-  }
-`;
+import { IconButton, TextInput } from "@ledgerhq/lumen-ui-react";
+import { Refresh } from "@ledgerhq/lumen-ui-react/symbols";
 
 type MyLedgerProviderControlProps = {
   currentValue: number | null;
@@ -92,19 +47,25 @@ export const MyLedgerProviderControl: React.FC<
   };
 
   return (
-    <Container>
-      <Label htmlFor="provider-input">My Ledger API provider:</Label>
-      <Input
-        id="provider-input"
+    <div className="flex items-center gap-8">
+      <TextInput
+        className="w-256"
+        label="My Ledger API provider"
         type="number"
         min="0"
         value={inputValue}
         onChange={handleChange}
         onBlur={() => setIsEditing(false)}
+        hideClearButton
       />
-      <RefreshButton onClick={handleRefresh} title="Refresh">
-        🔄
-      </RefreshButton>
-    </Container>
+      <IconButton
+        aria-label="Refresh provider"
+        title="Refresh provider"
+        icon={Refresh}
+        size="sm"
+        appearance="gray"
+        onClick={handleRefresh}
+      />
+    </div>
   );
 };

@@ -1,53 +1,5 @@
 import React from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
-import styled from "styled-components";
-
-const ResizeHandle = styled(Separator)<{
-  $direction: "horizontal" | "vertical";
-}>`
-  background: #e0e0e0;
-  transition: background 0.15s ease;
-
-  &:hover {
-    background: #bbb;
-  }
-
-  &[data-resize-handle-active] {
-    background: #999;
-  }
-
-  /* Horizontal split: thin horizontal bar between top/bottom panels */
-  ${({ $direction }) =>
-    $direction === "horizontal" &&
-    `
-    height: 4px;
-    cursor: row-resize;
-  `}
-
-  /* Vertical split: thin vertical bar between left/right panels */
-  ${({ $direction }) =>
-    $direction === "vertical" &&
-    `
-    width: 4px;
-    cursor: col-resize;
-  `}
-`;
-
-const PanelContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-`;
-
-const SplitViewContainer = styled.div`
-  display: flex;
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-`;
 
 type SplitViewProps = {
   direction: "horizontal" | "vertical";
@@ -72,16 +24,18 @@ export const SplitView: React.FC<SplitViewProps> = ({
     direction === "horizontal" ? "vertical" : "horizontal";
 
   return (
-    <SplitViewContainer>
+    <div className="flex size-full min-h-0 min-w-0 flex-1">
       <Group orientation={panelOrientation} style={{ flex: 1 }}>
         <Panel defaultSize={defaultFirstSize} minSize={minFirstSize}>
-          <PanelContainer>{first}</PanelContainer>
+          <div className="flex h-full flex-col overflow-hidden">{first}</div>
         </Panel>
-        <ResizeHandle $direction={direction} />
+        <Separator
+          className={`bg-muted-strong transition-colors hover:bg-muted-strong-hover data-[resize-handle-active]:bg-active ${direction === "horizontal" ? "h-4 cursor-row-resize" : "w-4 cursor-col-resize"}`}
+        />
         <Panel minSize={minSecondSize}>
-          <PanelContainer>{second}</PanelContainer>
+          <div className="flex h-full flex-col overflow-hidden">{second}</div>
         </Panel>
       </Group>
-    </SplitViewContainer>
+    </div>
   );
 };

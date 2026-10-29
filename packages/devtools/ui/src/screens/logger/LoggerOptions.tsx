@@ -1,7 +1,5 @@
 import React from "react";
-import { Flex } from "@ledgerhq/react-ui";
-import { Typography } from "antd";
-import styled from "styled-components";
+import { Checkbox } from "@ledgerhq/lumen-ui-react";
 
 import { type LogData } from "./types";
 
@@ -33,29 +31,26 @@ export const defaultLoggerOptions: LoggerOptions = {
   filterText: "",
 };
 
-const ParamContainer = styled(Flex).attrs({
-  flexDirection: "column",
-  alignItems: "flex-start",
-  justifyContent: "flex-start",
-})``;
+const Option: React.FC<{
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}> = ({ label, checked, onChange }) => (
+  <label className="flex cursor-pointer items-center gap-8 body-3">
+    <Checkbox checked={checked} onCheckedChange={onChange} />
+    {label}
+  </label>
+);
 
-const ParamTitle = styled(Typography.Title).attrs({
-  level: 5,
-})`
-  margin-bottom: 20px;
-`;
-
-const OptionsContainer = styled(Flex).attrs({
-  columnGap: 4,
-  flexDirection: "row",
-  flexWrap: "wrap",
-  flexGrow: 1,
-  overflow: "scroll",
-})``;
-
-const Input = styled.input`
-  margin-right: 4px;
-`;
+const OptionGroup: React.FC<React.PropsWithChildren<{ title: string }>> = ({
+  title,
+  children,
+}) => (
+  <div className="flex flex-col gap-8">
+    <h5 className="body-2-semi-bold whitespace-nowrap">{title}</h5>
+    <div className="flex flex-wrap gap-x-16 gap-y-8">{children}</div>
+  </div>
+);
 
 export const LoggerOptionsView: React.FC<LoggerProps> = ({
   options,
@@ -63,118 +58,72 @@ export const LoggerOptionsView: React.FC<LoggerProps> = ({
   uniqueTags,
 }) => {
   return (
-    <Flex flexDirection="column" borderRadius={8} padding={5} rowGap={5}>
-      <ParamContainer>
-        <ParamTitle style={{ color: "white", whiteSpace: "nowrap" }}>
-          Log levels
-        </ParamTitle>
-        <OptionsContainer>
-          {/** checkbox to select all / unselect all verbosity*/}
-          <label>
-            <Input
-              type="checkbox"
-              checked={Object.values(options.activeLevels).every(Boolean)}
-              onChange={(e) => {
-                const newActiveLevels = Object.fromEntries(
-                  Object.keys(options.activeLevels).map((level) => [
-                    level,
-                    e.target.checked,
-                  ]),
-                );
-                // setOptions({ ...options, activeLevels: newActiveLevels });
-                setOptions({
-                  ...options,
-                  activeLevels:
-                    newActiveLevels as LoggerOptions["activeLevels"],
-                });
-              }}
-            />
-            All
-          </label>
-          {["debug", "info", "warning", "error", "fatal"].map((level) => (
-            <label key={level}>
-              <Input
-                type="checkbox"
-                checked={options.activeLevels[level as LogData["verbosity"]]}
-                onChange={(e) => {
-                  setOptions({
-                    ...options,
-                    activeLevels: {
-                      ...options.activeLevels,
-                      [level as LogData["verbosity"]]: e.target.checked,
-                    },
-                  });
-                }}
-              />
-              {level}
-            </label>
-          ))}
-        </OptionsContainer>
-      </ParamContainer>
-      {/* <ParamContainer>
-        <ParamTitle>Columns</ParamTitle>
-        <OptionsContainer>
-          <label>
-            <Input
-              type="checkbox"
-              checked={options.showTimestamp}
-              onChange={(e) => {
-                setOptions({ ...options, showTimestamp: e.target.checked });
-              }}
-            />
-            Timestamp
-          </label>
-          <label>
-            <Input
-              type="checkbox"
-              checked={options.showTag}
-              onChange={(e) => {
-                setOptions({ ...options, showTag: e.target.checked });
-              }}
-            />
-            Tag
-          </label>
-        </OptionsContainer>
-      </ParamContainer> */}
-      <ParamContainer>
-        <ParamTitle style={{ color: "white", whiteSpace: "nowrap" }}>
-          Tags
-        </ParamTitle>
-        <OptionsContainer>
-          <label>
-            <Input
-              type="checkbox"
-              checked={uniqueTags.size === options.includeTags.size}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  uniqueTags.forEach((tag) => options.includeTags.add(tag));
-                } else {
-                  options.includeTags.clear();
-                }
-                setOptions({ ...options });
-              }}
-            />
-            All
-          </label>
-          {Array.from(uniqueTags).map((tag) => (
-            <label key={tag}>
-              <Input
-                type="checkbox"
-                checked={options.includeTags.has(tag)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    options.includeTags.add(tag);
-                  } else {
-                    options.includeTags.delete(tag);
-                  }
-                  setOptions({ ...options });
-                }}
-              />
-              {tag}
-            </label>
-          ))}
-        </OptionsContainer>
-      </ParamContainer>
-    </Flex>
+    <div className="flex max-h-480 flex-col gap-24 overflow-auto p-16">
+      <OptionGroup title="Log levels">
+        <Option
+          label="All"
+          checked={Object.values(options.activeLevels).every(Boolean)}
+          onChange={(checked) => {
+            const newActiveLevels = Object.fromEntries(
+              Object.keys(options.activeLevels).map((level) => [
+                level,
+                checked,
+              ]),
+            );
+            setOptions({
+              ...options,
+              activeLevels: newActiveLevels as LoggerOptions["activeLevels"],
+            });
+          }}
+        />
+        {["debug", "info", "warning", "error", "fatal"].map((level) => (
+          <Option
+            key={level}
+            label={level}
+            checked={
+              options.activeLevels[level as LogData["verbosity"]] ?? false
+            }
+            onChange={(checked) => {
+              setOptions({
+                ...options,
+                activeLevels: {
+                  ...options.activeLevels,
+                  [level as LogData["verbosity"]]: checked,
+                },
+              });
+            }}
+          />
+        ))}
+      </OptionGroup>
+      <OptionGroup title="Tags">
+        <Option
+          label="All"
+          checked={uniqueTags.size === options.includeTags.size}
+          onChange={(checked) => {
+            if (checked) {
+              uniqueTags.forEach((tag) => options.includeTags.add(tag));
+            } else {
+              options.includeTags.clear();
+            }
+            setOptions({ ...options });
+          }}
+        />
+        {Array.from(uniqueTags).map((tag) => (
+          <Option
+            key={tag}
+            label={tag}
+            checked={options.includeTags.has(tag)}
+            onChange={(checked) => {
+              if (checked) {
+                options.includeTags.add(tag);
+              } else {
+                options.includeTags.delete(tag);
+              }
+              setOptions({ ...options });
+            }}
+          />
+        ))}
+      </OptionGroup>
+    </div>
   );
 };
