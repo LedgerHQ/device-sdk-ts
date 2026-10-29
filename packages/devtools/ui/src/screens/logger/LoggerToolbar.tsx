@@ -1,14 +1,10 @@
 import React from "react";
-import {
-  IconButton,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@ledgerhq/lumen-ui-react";
-import { Download, Settings, Trash } from "@ledgerhq/lumen-ui-react/symbols";
+import { IconButton } from "@ledgerhq/lumen-ui-react";
+import { Download, Trash } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { FilterInput } from "./FilterInput";
-import { type LoggerOptions, LoggerOptionsView } from "./LoggerOptions";
+import { type LoggerOptions } from "./LoggerOptions";
+import { PauseButton } from "./PauseButton";
 import { SearchInput } from "./SearchInput";
 
 export const LoggerToolbar: React.FC<{
@@ -16,7 +12,8 @@ export const LoggerToolbar: React.FC<{
   downloadLogs: () => void;
   options: LoggerOptions;
   setOptions: (options: LoggerOptions) => void;
-  uniqueTags: Set<string>;
+  paused: boolean;
+  onTogglePaused: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   matchCount: number;
@@ -26,12 +23,14 @@ export const LoggerToolbar: React.FC<{
   onSearchFirst: () => void;
   onSearchLast: () => void;
   searchInputRef?: React.RefObject<HTMLInputElement>;
+  filterInputRef?: React.RefObject<HTMLInputElement>;
 }> = ({
   clearLogs,
   downloadLogs,
   options,
   setOptions,
-  uniqueTags,
+  paused,
+  onTogglePaused,
   searchQuery,
   onSearchChange,
   matchCount,
@@ -41,45 +40,13 @@ export const LoggerToolbar: React.FC<{
   onSearchFirst,
   onSearchLast,
   searchInputRef,
+  filterInputRef,
 }) => (
-  <div className="flex flex-1 items-center gap-8">
-    <IconButton
-      aria-label="Clear logs"
-      title="Clear logs"
-      icon={Trash}
-      size="sm"
-      appearance="no-background"
-      onClick={clearLogs}
-    />
-    <Popover>
-      <PopoverTrigger
-        aria-label="Log options"
-        title="Log options"
-        render={
-          <button className="flex size-40 shrink-0 cursor-pointer items-center justify-center rounded-full text-base transition-colors hover:bg-base-transparent-hover active:bg-base-transparent-pressed">
-            <Settings size={20} />
-          </button>
-        }
-      />
-      <PopoverContent side="bottom" align="start" width="fixed">
-        <LoggerOptionsView
-          options={options}
-          setOptions={setOptions}
-          uniqueTags={uniqueTags}
-        />
-      </PopoverContent>
-    </Popover>
-    <IconButton
-      aria-label="Download logs"
-      title="Download logs"
-      icon={Download}
-      size="sm"
-      appearance="no-background"
-      onClick={downloadLogs}
-    />
+  <div className="flex h-56 shrink-0 items-center gap-12 border-b border-muted-subtle px-12">
     <FilterInput
       value={options.filterText}
       onChange={(filterText) => setOptions({ ...options, filterText })}
+      inputRef={filterInputRef}
     />
     <SearchInput
       value={searchQuery}
@@ -92,5 +59,27 @@ export const LoggerToolbar: React.FC<{
       onLast={onSearchLast}
       inputRef={searchInputRef}
     />
+    <span className="flex-1" />
+    <div className="flex gap-6">
+      <PauseButton paused={paused} onToggle={onTogglePaused} />
+      <IconButton
+        aria-label="Clear logs"
+        title="Clear logs"
+        icon={Trash}
+        size="xs"
+        appearance="transparent"
+        className="rounded-sm"
+        onClick={clearLogs}
+      />
+      <IconButton
+        aria-label="Export logs"
+        title="Export logs"
+        icon={Download}
+        size="xs"
+        appearance="transparent"
+        className="rounded-sm"
+        onClick={downloadLogs}
+      />
+    </div>
   </div>
 );

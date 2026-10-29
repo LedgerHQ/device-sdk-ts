@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { type ColumnSizingState } from "@tanstack/react-table";
 
+import { TableHeader } from "./logsTable/TableHeader";
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
+import { LogCounts } from "./LogCounts";
 import { LoggerToolbar } from "./LoggerToolbar";
 import { LogsTable } from "./logsTable";
 import { type LogData } from "./types";
@@ -25,12 +28,19 @@ export const Logger: React.FC<Props> = ({
   isConnected = true,
 }) => {
   const [nonce, setNonce] = React.useState(0);
+  const [pausedLogs, setPausedLogs] = React.useState<LogData[] | null>(null);
+  const visibleLogs = pausedLogs ?? logs;
   const { options, setOptions, displayedLogs, uniqueTags } =
     useLogsDataAndOptions({
-      logs,
+      logs: visibleLogs,
     });
 
-  const data = displayedLogs;
+  const [newestFirst, setNewestFirst] = React.useState(false);
+  const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
+  const data = useMemo(
+    () => (newestFirst ? [...displayedLogs].reverse() : displayedLogs),
+    [displayedLogs, newestFirst],
+  );
 
   // Track previous displayedLogs length to detect significant shrinking (e.g., from filtering)
   const prevDisplayedLogsLengthRef = useRef(displayedLogs.length);
@@ -61,11 +71,12 @@ export const Logger: React.FC<Props> = ({
     goToPrevious,
     goToFirst,
     goToLast,
-  } = useSearchState(displayedLogs);
+  } = useSearchState(data);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const filterInputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcuts (Ctrl/Cmd+F, Ctrl/Cmd+G / Ctrl/Cmd+Shift+G)
+  // Keyboard shortcuts (Ctrl/Cmd+F, Ctrl/Cmd+K, Ctrl/Cmd+G / Ctrl/Cmd+Shift+G)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl/Cmd+F to focus search
@@ -73,6 +84,12 @@ export const Logger: React.FC<Props> = ({
         e.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
+      }
+      // Ctrl/Cmd+K to focus filter
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        filterInputRef.current?.focus();
+        filterInputRef.current?.select();
       }
       // Ctrl/Cmd+G / Ctrl/Cmd+Shift+G for navigation
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "g") {
@@ -98,6 +115,7 @@ export const Logger: React.FC<Props> = ({
 
   const onClickClearLogs = useCallback(() => {
     clearLogs();
+    setPausedLogs((previous) => previous && []);
     setNonce((prevNonce) => prevNonce + 1);
   }, [clearLogs]);
 
@@ -134,30 +152,48 @@ export const Logger: React.FC<Props> = ({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex shrink-0 flex-col border-b border-muted-subtle px-12 py-8">
-        <LoggerToolbar
-          clearLogs={onClickClearLogs}
-          downloadLogs={downloadLogs}
-          options={options}
-          setOptions={setOptions}
-          uniqueTags={uniqueTags}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          matchCount={matchIndices.length}
-          currentMatchIndex={currentMatchIndex}
-          onSearchNext={goToNext}
-          onSearchPrevious={goToPrevious}
-          onSearchFirst={goToFirst}
-          onSearchLast={goToLast}
-          searchInputRef={searchInputRef}
+      <LoggerToolbar
+        clearLogs={onClickClearLogs}
+        downloadLogs={downloadLogs}
+        options={options}
+        setOptions={setOptions}
+        paused={pausedLogs !== null}
+        onTogglePaused={() => setPausedLogs(pausedLogs ? null : logs)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        matchCount={matchIndices.length}
+        currentMatchIndex={currentMatchIndex}
+        onSearchNext={goToNext}
+        onSearchPrevious={goToPrevious}
+        onSearchFirst={goToFirst}
+        onSearchLast={goToLast}
+        searchInputRef={searchInputRef}
+        filterInputRef={filterInputRef}
+      />
+      <TableHeader
+        options={options}
+        setOptions={setOptions}
+        uniqueTags={uniqueTags}
+        newestFirst={newestFirst}
+        onToggleSort={() => setNewestFirst(!newestFirst)}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
+      >
+        <LogCounts
+          paused={pausedLogs !== null}
+          total={visibleLogs.length}
+          displayed={displayedLogs.length}
         />
-      </div>
+      </TableHeader>
       <LogsTable
         data={data}
-        key={tableKey}
+        key={`${tableKey}-${newestFirst}`}
         highlightedIndices={highlightedIndices}
         currentHighlightIndex={currentMatchRowIndex}
         scrollToIndex={currentMatchRowIndex}
+        follow={pausedLogs === null && !newestFirst}
+        columnSizing={columnSizing}
+        onColumnSizingChange={setColumnSizing}
       />
     </div>
   );

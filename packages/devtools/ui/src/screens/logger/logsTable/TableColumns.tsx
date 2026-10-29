@@ -5,7 +5,6 @@ import { createColumnHelper, type RowData } from "@tanstack/react-table";
 import { type LogData } from "../types";
 import {
   MessageCell,
-  PayloadCell,
   TagCell,
   TimestampCell,
   VerbosityCell,
@@ -22,40 +21,32 @@ const columnHelper = createColumnHelper<LogData>();
 
 export const createColumns = () => [
   columnHelper.accessor("timestamp", {
-    header: "Timestamp",
+    header: "Time",
     cell: (info) => <TimestampCell {...info.row.original} />,
     enableSorting: true,
-    size: 85,
+    size: 104,
     meta: { flexible: false },
   }),
   columnHelper.accessor("tag", {
     header: "Tag",
     cell: (info) => <TagCell {...info.row.original} />,
     enableSorting: false,
-    size: 210,
+    size: 170,
     meta: { flexible: false },
   }),
   columnHelper.accessor("verbosity", {
-    header: "Verbosity",
+    header: "Level",
     cell: (info) => <VerbosityCell {...info.row.original} />,
     enableSorting: false,
-    size: 65,
+    size: 64,
     meta: { flexible: false },
   }),
   columnHelper.accessor("message", {
     header: "Message",
     cell: (info) => <MessageCell {...info.row.original} />,
     enableSorting: false,
-    size: 300, // flex-grow weight (proportional)
-    minSize: 100,
-    meta: { flexible: true },
-  }),
-  columnHelper.accessor("payload", {
-    header: "Payload",
-    cell: (info) => <PayloadCell key={info.cell.id} {...info.row.original} />,
-    enableSorting: false,
-    size: 200, // flex-grow weight (proportional)
-    minSize: 100,
+    size: 300,
+    minSize: 200,
     meta: { flexible: true },
   }),
 ];

@@ -1,88 +1,54 @@
 import React from "react";
-import { Inspector } from "react-inspector";
-import { useTheme } from "@ledgerhq/lumen-ui-react";
 
+import { LEVEL_TEXT } from "../logLevels";
+import { hasPayload, PayloadPreview } from "../LogPayload";
 import { type LogData } from "../types";
 
-type Verbosity = LogData["verbosity"];
-
-const verbosityTextColor: Record<Verbosity, string> = {
-  debug: "text-muted",
-  info: "text-base",
-  warning: "text-warning",
-  error: "text-error",
-  fatal: "text-error",
-};
-
-const LogText: React.FC<
-  React.PropsWithChildren<{ verbosity: Verbosity; className?: string }>
-> = ({ verbosity, className = "", children }) => (
-  <p
-    className={`shrink-0 self-center body-3 ${verbosityTextColor[verbosity] ?? "text-muted"} ${className}`}
-  >
-    {children}
-  </p>
-);
-
-export const TimestampCell: React.FC<LogData> = ({ timestamp, verbosity }) => {
+export const TimestampCell: React.FC<LogData> = ({ timestamp }) => {
   return (
-    <div>
-      <LogText verbosity={verbosity} className="font-mono! whitespace-nowrap">
-        {new Date(timestamp).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          fractionalSecondDigits: 2,
-          hour12: false,
-        })}
-      </LogText>
-    </div>
+    <p className="font-mono! body-3 whitespace-nowrap text-muted">
+      {new Date(timestamp).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        fractionalSecondDigits: 3,
+        hour12: false,
+      })}
+    </p>
   );
 };
 
-export const TagCell: React.FC<LogData> = ({ tag, verbosity }) => {
+export const TagCell: React.FC<LogData> = ({ tag }) => {
   return (
-    <div className="min-w-0">
-      <LogText verbosity={verbosity} className="truncate font-semibold!">
-        {tag}
-      </LogText>
-    </div>
+    <p className="truncate font-mono! body-3 text-muted" title={tag}>
+      {tag}
+    </p>
   );
 };
 
 export const VerbosityCell: React.FC<LogData> = ({ verbosity }) => {
   return (
-    <div>
-      <LogText verbosity={verbosity} className="whitespace-nowrap">
-        {verbosity}
-      </LogText>
-    </div>
+    <span className={`font-mono! body-3 ${LEVEL_TEXT[verbosity]}`}>
+      {verbosity}
+    </span>
   );
 };
 
-export const MessageCell: React.FC<LogData> = ({ message, verbosity }) => {
+export const MessageCell: React.FC<LogData> = ({ message, payload }) => {
   return (
-    <div className="min-w-0">
-      <LogText verbosity={verbosity} className="break-words">
-        {message}
-      </LogText>
-    </div>
-  );
-};
-
-export const PayloadCell: React.FC<LogData> = ({ payload }) => {
-  const { colorScheme } = useTheme();
-  if (typeof payload !== "string" && Object.entries(payload).length === 0) {
-    return null;
-  }
-  return (
-    <div className="[&_*]:bg-transparent!">
-      <Inspector
-        data={payload}
-        expandLevel={0}
-        table={false}
-        theme={colorScheme === "dark" ? "chromeDark" : "chromeLight"}
-      />
-    </div>
+    <p className="min-w-0 font-mono! body-3 break-all whitespace-pre-wrap text-base">
+      {message}
+      {hasPayload(payload) && (
+        <>
+          {" "}
+          <span
+            className="ml-8 font-mono! body-4 break-normal wrap-anywhere text-muted [&_*]:text-muted!"
+            title="Click to show the payload"
+          >
+            <PayloadPreview payload={payload} />
+          </span>
+        </>
+      )}
+    </p>
   );
 };

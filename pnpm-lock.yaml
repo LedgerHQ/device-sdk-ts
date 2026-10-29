@@ -1464,9 +1464,6 @@ importers:
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
-      react-inspector:
-        specifier: 9.0.0
-        version: 9.0.0(react@18.3.1)
       react-resizable-panels:
         specifier: ^4.4.1
         version: 4.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -12391,11 +12388,6 @@ packages:
     engines: {node: '>=10'}
     peerDependencies:
       react: '>=17.0.0'
-
-  react-inspector@9.0.0:
-    resolution: {integrity: sha512-w/VJucSeHxlwRa2nfM2k7YhpT1r5EtlDOClSR+L7DyQP91QMdfFEDXDs9bPYN4kzP7umFtom7L0b2GGjph4Kow==}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -25909,10 +25901,6 @@ snapshots:
       scheduler: 0.23.2
 
   react-freeze@1.0.4(react@18.3.1):
-    dependencies:
-      react: 18.3.1
-
-  react-inspector@9.0.0(react@18.3.1):
     dependencies:
       react: 18.3.1
 
