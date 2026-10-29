@@ -1,48 +1,22 @@
-import styled from "styled-components";
-
 /**
  * Shared container for filter and search inputs.
  * Uses flex: 1 to share available width.
  */
-export const InputContainer = styled.div`
-  position: relative;
-  flex: 1;
-  min-width: 150px;
-`;
+export const INPUT_CONTAINER = "relative min-w-160 flex-1";
 
 /**
  * Shared wrapper that provides the bordered box appearance.
  * Can contain the input and additional controls (like search nav buttons).
  */
-export const InputWrapper = styled.div<{ $focused?: boolean }>`
-  display: flex;
-  align-items: center;
-  height: 28px;
-  border: 1px solid ${({ $focused }) => ($focused ? "#999" : "#ccc")};
-  border-radius: 4px;
-  background-color: #fff;
-  overflow: hidden;
-`;
+export const INPUT_WRAPPER =
+  "flex h-32 items-center overflow-hidden rounded-sm bg-muted transition-colors hover:bg-muted-hover focus-within:ring-2 focus-within:ring-active";
 
 /**
- * Shared styled input used in both FilterInput and SearchInput.
- * Border and background are handled by InputWrapper.
+ * Shared input used in both FilterInput and SearchInput.
  */
-export const StyledInput = styled.input`
-  flex: 1;
-  padding: 6px 10px;
-  border: none;
-  font-size: 12px;
-  font-family: monospace;
-  background-color: transparent;
-  color: #333;
-  min-width: 0;
+export const INPUT =
+  "min-w-0 flex-1 bg-transparent px-10 font-mono! body-3 text-base outline-none placeholder:text-muted-subtle";
 
-  &:focus {
-    outline: none;
-  }
-
-  &::placeholder {
-    color: #999;
-  }
-`;
+/** Small icon button that sits inside an input wrapper. */
+export const INPUT_ICON_BUTTON =
+  "flex h-full shrink-0 cursor-pointer items-center justify-center px-6 text-muted transition-colors hover:bg-muted-transparent-hover hover:text-base disabled:cursor-default disabled:text-disabled disabled:hover:bg-transparent";

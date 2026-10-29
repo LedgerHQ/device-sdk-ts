@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { type Connector } from "@ledgerhq/device-management-kit-devtools-core";
-import { StyleProvider } from "@ledgerhq/react-ui/styles/index";
-import styled from "styled-components";
+import { ThemeProvider } from "@ledgerhq/lumen-ui-react";
 
 import { DashboardFooter } from "./components/DashboardFooter";
 import {
@@ -13,22 +12,7 @@ import { SplitView } from "./components/SplitView";
 import { useConnectorMessages } from "./hooks/useConnectorMessages";
 import { Inspector } from "./screens/inspector";
 import { Logger } from "./screens/logger";
-import { MockCapture } from "./screens/mock-capture";
 import { ErrorBoundary } from "./ErrorBoundary";
-
-const DashboardContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-`;
-
-const ContentArea = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-`;
 
 const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
   const {
@@ -44,13 +28,8 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     isInspectorConnected,
     providerValue,
     apduResponses,
-    apduExchanges,
-    isRecordingExchanges,
     sendMessage,
     clearLogs,
-    startRecordingExchanges,
-    stopRecordingExchanges,
-    clearRecordedExchanges,
     startListening,
     stopListening,
     startDiscovering,
@@ -92,27 +71,12 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     />
   );
 
-  const mockCapture = (
-    <MockCapture
-      apduExchanges={apduExchanges}
-      isRecording={isRecordingExchanges}
-      isConnected={isLoggerConnected}
-      startRecording={startRecordingExchanges}
-      stopRecording={stopRecordingExchanges}
-      clearRecorded={clearRecordedExchanges}
-      sessionStates={sessionStates}
-      connectedDevices={connectedDevices}
-    />
-  );
-
   const content = (() => {
     switch (currentScreen) {
       case DashboardScreen.logs:
         return logger;
       case DashboardScreen.inspector:
         return inspector;
-      case DashboardScreen.mockCapture:
-        return mockCapture;
       case DashboardScreen.splitHorizontal:
         return (
           <SplitView direction="horizontal" first={logger} second={inspector} />
@@ -127,14 +91,16 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
   })();
 
   return (
-    <DashboardContainer>
+    <div className="flex h-screen flex-col overflow-hidden bg-canvas text-base">
       <DashboardNavigationBar
         currentScreen={currentScreen}
         onScreenChange={setCurrentScreen}
         isLoggerConnected={isLoggerConnected}
         isInspectorConnected={isInspectorConnected}
       />
-      <ContentArea>{content}</ContentArea>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {content}
+      </div>
       <DashboardFooter
         isDebugOpen={isDebugOpen}
         onToggleDebug={() => setIsDebugOpen(!isDebugOpen)}
@@ -146,7 +112,7 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
         receivedMessages={receivedMessages}
         sendMessage={sendMessage}
       />
-    </DashboardContainer>
+    </div>
   );
 };
 
@@ -156,10 +122,10 @@ export function DashboardWithErrorBoundary({
   connector: Connector;
 }) {
   return (
-    <ErrorBoundary>
-      <StyleProvider selectedPalette="light">
+    <ThemeProvider colorScheme="system">
+      <ErrorBoundary>
         <Dashboard connector={connector} />
-      </StyleProvider>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 }

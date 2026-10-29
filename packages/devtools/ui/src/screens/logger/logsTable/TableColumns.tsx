@@ -1,6 +1,6 @@
 // @ts-expect-error marked as unused but it must be in use for JSX
 import React from "react";
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, type RowData } from "@tanstack/react-table";
 
 import { type LogData } from "../types";
 import {
@@ -10,6 +10,13 @@ import {
   TimestampCell,
   VerbosityCell,
 } from "./LogTableCells";
+
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    flexible?: boolean;
+  }
+}
 
 const columnHelper = createColumnHelper<LogData>();
 

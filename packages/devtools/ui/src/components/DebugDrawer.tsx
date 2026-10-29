@@ -6,78 +6,11 @@
  */
 
 import React from "react";
-import styled from "styled-components";
+import { IconButton } from "@ledgerhq/lumen-ui-react";
+import { Close } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { DebugDevTools } from "../screens/debugDevTools";
 import { type Message } from "../shared/PluginEvents";
-
-const DrawerOverlay = styled.div<{ $isOpen: boolean }>`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
-  visibility: ${({ $isOpen }) => ($isOpen ? "visible" : "hidden")};
-  transition:
-    opacity 0.2s ease,
-    visibility 0.2s ease;
-  z-index: 100;
-`;
-
-const DrawerContainer = styled.div<{ $isOpen: boolean }>`
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: white;
-  border-top: 2px solid #ddd;
-  transform: translateY(${({ $isOpen }) => ($isOpen ? "0" : "100%")});
-  transition: transform 0.25s ease;
-  z-index: 101;
-  display: flex;
-  flex-direction: column;
-`;
-
-const DrawerHeader = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
-  flex-shrink: 0;
-`;
-
-const DrawerTitle = styled.h4`
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-`;
-
-const CloseButton = styled.button`
-  padding: 4px 8px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: #666;
-  font-size: 18px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-
-  &:hover {
-    background: #e0e0e0;
-  }
-`;
-
-const DrawerContent = styled.div`
-  flex: 1;
-  overflow: hidden;
-`;
 
 type DebugDrawerProps = {
   isOpen: boolean;
@@ -96,20 +29,31 @@ export const DebugDrawer: React.FC<DebugDrawerProps> = ({
 }) => {
   return (
     <>
-      <DrawerOverlay $isOpen={isOpen} onClick={onClose} />
-      <DrawerContainer $isOpen={isOpen}>
-        <DrawerHeader>
-          <DrawerTitle>Debug DevTools</DrawerTitle>
-          <CloseButton onClick={onClose}>×</CloseButton>
-        </DrawerHeader>
-        <DrawerContent>
+      <div
+        className={`fixed inset-0 z-100 bg-canvas-overlay transition-opacity duration-200 ${isOpen ? "visible opacity-100" : "invisible opacity-0"}`}
+        onClick={onClose}
+      />
+      <div
+        className={`fixed inset-x-0 bottom-0 z-101 flex h-1/2 flex-col rounded-t-lg bg-canvas-sheet transition-transform duration-300 ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-muted-subtle px-16 py-8">
+          <h4 className="heading-5-semi-bold">Debug DevTools</h4>
+          <IconButton
+            aria-label="Close debug panel"
+            icon={Close}
+            size="sm"
+            appearance="no-background"
+            onClick={onClose}
+          />
+        </div>
+        <div className="min-h-0 flex-1 overflow-hidden">
           <DebugDevTools
             sentMessages={sentMessages}
             receivedMessages={receivedMessages}
             sendMessage={sendMessage}
           />
-        </DrawerContent>
-      </DrawerContainer>
+        </div>
+      </div>
     </>
   );
 };

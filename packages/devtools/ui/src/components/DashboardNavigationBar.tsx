@@ -1,106 +1,53 @@
 import React from "react";
-import styled from "styled-components";
+import {
+  Divider,
+  IconButton,
+  SegmentedControl,
+  SegmentedControlButton,
+} from "@ledgerhq/lumen-ui-react";
 
 export enum DashboardScreen {
   logs = "logs",
   inspector = "inspector",
-  mockCapture = "mockCapture",
   splitHorizontal = "splitHorizontal",
   splitVertical = "splitVertical",
 }
 
-const NavContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #f8f8f8;
-  border-bottom: 1px solid #e0e0e0;
-  flex-shrink: 0;
-`;
+type IconProps = { size?: number; className?: string };
 
-const NavGroup = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-`;
-
-const Divider = styled.div`
-  width: 1px;
-  height: 24px;
-  background: #ddd;
-  margin: 0 8px;
-`;
-
-const NavButton = styled.button<{
-  $isActive?: boolean;
-  $isConnected?: boolean;
-}>`
-  padding: 6px 12px;
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#2196F3" : "#ddd")};
-  border-radius: 4px;
-  background: ${({ $isActive }) => ($isActive ? "#e3f2fd" : "white")};
-  color: ${({ $isActive }) => ($isActive ? "#1976d2" : "#333")};
-  font-weight: ${({ $isActive }) => ($isActive ? "600" : "normal")};
-  font-size: 13px;
-  cursor: pointer;
-  opacity: ${({ $isConnected }) => ($isConnected === false ? 0.5 : 1)};
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: ${({ $isActive }) => ($isActive ? "#e3f2fd" : "#f5f5f5")};
-    border-color: ${({ $isActive }) => ($isActive ? "#2196F3" : "#bbb")};
-  }
-`;
-
-const SplitButton = styled.button<{ $isActive?: boolean }>`
-  padding: 6px 8px;
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#2196F3" : "#ddd")};
-  border-radius: 4px;
-  background: ${({ $isActive }) => ($isActive ? "#e3f2fd" : "white")};
-  color: ${({ $isActive }) => ($isActive ? "#1976d2" : "#666")};
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: ${({ $isActive }) => ($isActive ? "#e3f2fd" : "#f5f5f5")};
-    border-color: ${({ $isActive }) => ($isActive ? "#2196F3" : "#bbb")};
-  }
-`;
-
-const ConnectionIndicator = styled.span<{ $connected: boolean }>`
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${({ $connected }) => ($connected ? "#4CAF50" : "#ff9800")};
-  margin-right: 6px;
-`;
-
-const SplitLabel = styled.span`
-  font-size: 12px;
-  color: #666;
-  margin-right: 4px;
-`;
-
-// Simple SVG icons for split buttons
-const SplitHorizontalIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+const SplitHorizontalIcon = ({ size = 16, className }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="currentColor"
+    className={className}
+  >
     <rect x="2" y="2" width="12" height="5" rx="1" opacity="0.6" />
     <rect x="2" y="9" width="12" height="5" rx="1" />
   </svg>
 );
 
-const SplitVerticalIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+const SplitVerticalIcon = ({ size = 16, className }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="currentColor"
+    className={className}
+  >
     <rect x="2" y="2" width="5" height="12" rx="1" opacity="0.6" />
     <rect x="9" y="2" width="5" height="12" rx="1" />
   </svg>
+);
+
+const ConnectionIndicator: React.FC<{ connected: boolean }> = ({
+  connected,
+}) => (
+  <span
+    className={`size-8 shrink-0 rounded-full ${connected ? "bg-success-strong" : "bg-warning-strong"}`}
+    title={connected ? "Connected" : "Not connected"}
+  />
 );
 
 type DashboardNavigationBarProps = {
@@ -117,55 +64,61 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
   isInspectorConnected,
 }) => {
   return (
-    <NavContainer>
-      {/* Main view buttons */}
-      <NavGroup>
-        <NavButton
-          $isActive={currentScreen === DashboardScreen.logs}
-          $isConnected={isLoggerConnected}
-          onClick={() => onScreenChange(DashboardScreen.logs)}
+    <div className="flex shrink-0 items-center gap-12 border-b border-muted-subtle px-12 py-8">
+      <SegmentedControl
+        selectedValue={currentScreen}
+        onSelectedChange={(value) => onScreenChange(value as DashboardScreen)}
+        tabLayout="fixed"
+        className="w-256 shrink-0"
+        aria-label="Screen"
+      >
+        <SegmentedControlButton
+          value={DashboardScreen.logs}
+          trailingContent={
+            <ConnectionIndicator connected={isLoggerConnected} />
+          }
         >
-          <ConnectionIndicator $connected={isLoggerConnected} />
           Logger
-        </NavButton>
-        <NavButton
-          $isActive={currentScreen === DashboardScreen.inspector}
-          $isConnected={isInspectorConnected}
-          onClick={() => onScreenChange(DashboardScreen.inspector)}
+        </SegmentedControlButton>
+        <SegmentedControlButton
+          value={DashboardScreen.inspector}
+          trailingContent={
+            <ConnectionIndicator connected={isInspectorConnected} />
+          }
         >
-          <ConnectionIndicator $connected={isInspectorConnected} />
           Inspector
-        </NavButton>
-        <NavButton
-          $isActive={currentScreen === DashboardScreen.mockCapture}
-          $isConnected={isLoggerConnected}
-          onClick={() => onScreenChange(DashboardScreen.mockCapture)}
-        >
-          <ConnectionIndicator $connected={isLoggerConnected} />
-          Mock Capture
-        </NavButton>
-      </NavGroup>
+        </SegmentedControlButton>
+      </SegmentedControl>
 
-      <Divider />
+      <Divider orientation="vertical" className="h-24" />
 
-      {/* Split view buttons */}
-      <NavGroup>
-        <SplitLabel>Split:</SplitLabel>
-        <SplitButton
-          $isActive={currentScreen === DashboardScreen.splitHorizontal}
+      <div className="flex items-center gap-4">
+        <span className="body-3 text-muted">Split</span>
+        <IconButton
+          aria-label="Split horizontal (top/bottom)"
+          title="Split horizontal (top/bottom)"
+          icon={SplitHorizontalIcon}
+          size="sm"
+          appearance={
+            currentScreen === DashboardScreen.splitHorizontal
+              ? "gray"
+              : "no-background"
+          }
           onClick={() => onScreenChange(DashboardScreen.splitHorizontal)}
-          title="Split Horizontal (top/bottom)"
-        >
-          <SplitHorizontalIcon />
-        </SplitButton>
-        <SplitButton
-          $isActive={currentScreen === DashboardScreen.splitVertical}
+        />
+        <IconButton
+          aria-label="Split vertical (left/right)"
+          title="Split vertical (left/right)"
+          icon={SplitVerticalIcon}
+          size="sm"
+          appearance={
+            currentScreen === DashboardScreen.splitVertical
+              ? "gray"
+              : "no-background"
+          }
           onClick={() => onScreenChange(DashboardScreen.splitVertical)}
-          title="Split Vertical (left/right)"
-        >
-          <SplitVerticalIcon />
-        </SplitButton>
-      </NavGroup>
-    </NavContainer>
+        />
+      </div>
+    </div>
   );
 };

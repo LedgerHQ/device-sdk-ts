@@ -1,0 +1,11 @@
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/preflight.css';
+@import 'tailwindcss/utilities.css';
+@import '@ledgerhq/device-management-kit-devtools-ui/tailwind.css';
+
+@config "../../../tailwind.config.ts";
+
+body {
+  margin: 0;
+  font-family: Inter, sans-serif;
+}

@@ -1,32 +1,6 @@
 import React from "react";
-import styled from "styled-components";
-
-const FooterContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 6px 12px;
-  background: #f0f0f0;
-  border-top: 1px solid #ddd;
-  flex-shrink: 0;
-`;
-
-const DebugButton = styled.button<{ $isOpen: boolean }>`
-  padding: 4px 10px;
-  border: 1px solid ${({ $isOpen }) => ($isOpen ? "#ff9800" : "#bbb")};
-  border-radius: 4px;
-  background: ${({ $isOpen }) => ($isOpen ? "#fff3e0" : "#fafafa")};
-  color: ${({ $isOpen }) => ($isOpen ? "#e65100" : "#666")};
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: ${({ $isOpen }) => ($isOpen ? "#ffe0b2" : "#f0f0f0")};
-    border-color: ${({ $isOpen }) => ($isOpen ? "#ff9800" : "#999")};
-  }
-`;
+import { Button } from "@ledgerhq/lumen-ui-react";
+import { Bug } from "@ledgerhq/lumen-ui-react/symbols";
 
 type DashboardFooterProps = {
   isDebugOpen: boolean;
@@ -38,10 +12,15 @@ export const DashboardFooter: React.FC<DashboardFooterProps> = ({
   onToggleDebug,
 }) => {
   return (
-    <FooterContainer>
-      <DebugButton $isOpen={isDebugOpen} onClick={onToggleDebug}>
+    <div className="flex shrink-0 items-center justify-end border-t border-muted-subtle px-12 py-4">
+      <Button
+        appearance={isDebugOpen ? "gray" : "no-background"}
+        size="sm"
+        icon={Bug}
+        onClick={onToggleDebug}
+      >
         {isDebugOpen ? "Close Debug Panel" : "Debug DevTools"}
-      </DebugButton>
-    </FooterContainer>
+      </Button>
+    </div>
   );
 };

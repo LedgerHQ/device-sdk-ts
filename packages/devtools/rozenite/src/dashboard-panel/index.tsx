@@ -1,6 +1,8 @@
 import { Dashboard } from "@ledgerhq/device-management-kit-devtools-ui";
 import { useRozeniteConnector } from "../shared/useRozeniteConnector";
 
+import "./globals.css";
+
 export default function RozeniteDashboard() {
   const connector = useRozeniteConnector();
   if (!connector) {

@@ -5,7 +5,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import styled from "styled-components";
 
 import { type LogData } from "../types";
 import { TABLE_CONFIG } from "./constants";
@@ -14,40 +13,6 @@ import { TableBody } from "./TableBody";
 import { createColumns } from "./TableColumns";
 import { TableHeader } from "./TableHeader";
 import { useScrollLogic } from "./useScrollLogic";
-
-const ScrollContainer = styled.div<{ height: number; disableScroll: boolean }>`
-  height: ${({ height }) => height}px;
-  overflow: ${({ disableScroll }) => (disableScroll ? "hidden" : "auto")};
-  overflow-anchor: auto;
-  position: relative;
-  width: 100%;
-`;
-
-const TableWrapper = styled.div`
-  width: 100%;
-  min-width: fit-content;
-`;
-
-const StyledTable = styled.table`
-  display: grid;
-`;
-
-const TableContainer = styled.div`
-  flex: 1;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-`;
-
-const EmptyState = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  color: #999;
-  font-size: 14px;
-`;
 
 type ScrollableLogTableProps = {
   data: Array<LogData>;
@@ -152,23 +117,27 @@ export const LogsTable: React.FC<ScrollableLogTableProps> = ({
   // Show empty state when there are no logs to display
   if (data.length === 0) {
     return (
-      <TableContainer ref={scrollZoneRef}>
-        <EmptyState>No logs to display</EmptyState>
-      </TableContainer>
+      <div
+        className="relative flex min-h-0 flex-1 flex-col"
+        ref={scrollZoneRef}
+      >
+        <div className="flex flex-1 items-center justify-center body-2 text-muted">
+          No logs to display
+        </div>
+      </div>
     );
   }
 
   return (
-    <TableContainer ref={scrollZoneRef}>
-      <ScrollContainer
-        className="container"
+    <div className="relative flex min-h-0 flex-1 flex-col" ref={scrollZoneRef}>
+      <div
+        className={`relative w-full [overflow-anchor:auto] ${isResizingColumn ? "overflow-hidden" : "overflow-auto"}`}
         ref={scrollContainerRef}
         onScroll={onScroll}
-        height={scrollZoneHeight}
-        disableScroll={!!isResizingColumn}
+        style={{ height: scrollZoneHeight }}
       >
-        <TableWrapper>
-          <StyledTable>
+        <div className="w-full min-w-fit">
+          <table className="grid">
             <TableHeader headerGroups={table.getHeaderGroups()} />
             <TableBody
               virtualizer={rowVirtualizer}
@@ -176,10 +145,10 @@ export const LogsTable: React.FC<ScrollableLogTableProps> = ({
               highlightedIndices={highlightedIndices}
               currentHighlightIndex={currentHighlightIndex}
             />
-          </StyledTable>
-        </TableWrapper>
-      </ScrollContainer>
+          </table>
+        </div>
+      </div>
       <ScrollDownButton enabled={autoScrollEnabled} onClick={scrollToBottom} />
-    </TableContainer>
+    </div>
   );
 };
