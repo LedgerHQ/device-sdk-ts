@@ -12,7 +12,7 @@ export const DashboardFooter: React.FC<DashboardFooterProps> = ({
   onToggleDebug,
 }) => {
   return (
-    <div className="flex shrink-0 items-center justify-end border-t border-muted-subtle px-12 py-4">
+    <div className="flex shrink-0 items-center justify-end px-12 py-4">
       <Button
         appearance={isDebugOpen ? "gray" : "no-background"}
         size="sm"

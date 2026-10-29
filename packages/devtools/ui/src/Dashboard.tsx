@@ -1,11 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { type Connector } from "@ledgerhq/device-management-kit-devtools-core";
-import { ThemeProvider } from "@ledgerhq/lumen-ui-react";
+import {
+  type ColorSchemeName,
+  ThemeProvider,
+  useTheme,
+} from "@ledgerhq/lumen-ui-react";
 
 import { DashboardFooter } from "./components/DashboardFooter";
 import {
   DashboardNavigationBar,
   DashboardScreen,
+  SplitMode,
 } from "./components/DashboardNavigationBar";
 import { DebugDrawer } from "./components/DebugDrawer";
 import { SplitView } from "./components/SplitView";
@@ -14,7 +19,37 @@ import { Inspector } from "./screens/inspector";
 import { Logger } from "./screens/logger";
 import { ErrorBoundary } from "./ErrorBoundary";
 
-const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
+const COLOR_SCHEME_STORAGE_KEY = "devtools-color-scheme";
+
+function loadColorScheme(): ColorSchemeName {
+  try {
+    const stored = localStorage.getItem(COLOR_SCHEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark") {
+      return stored;
+    }
+  } catch {
+    // Ignore errors, follow the system
+  }
+  return "system";
+}
+
+function saveColorScheme(colorScheme: ColorSchemeName): void {
+  try {
+    localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, colorScheme);
+  } catch {
+    // Ignore errors (e.g., storage full, private mode)
+  }
+}
+
+const Dashboard: React.FC<{
+  connector: Connector;
+  onColorSchemeChange: (colorScheme: ColorSchemeName) => void;
+}> = ({ connector, onColorSchemeChange }) => {
+  const { colorScheme } = useTheme();
+  useEffect(() => {
+    document.documentElement.style.colorScheme = colorScheme;
+  }, [colorScheme]);
+
   const {
     receivedMessages,
     sentMessages,
@@ -43,6 +78,7 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
   const [currentScreen, setCurrentScreen] = useState<DashboardScreen>(
     DashboardScreen.logs,
   );
+  const [split, setSplit] = useState(SplitMode.off);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
 
   const logger = (
@@ -72,21 +108,17 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
   );
 
   const content = (() => {
-    switch (currentScreen) {
-      case DashboardScreen.logs:
-        return logger;
-      case DashboardScreen.inspector:
-        return inspector;
-      case DashboardScreen.splitHorizontal:
+    switch (split) {
+      case SplitMode.horizontal:
         return (
           <SplitView direction="horizontal" first={logger} second={inspector} />
         );
-      case DashboardScreen.splitVertical:
+      case SplitMode.vertical:
         return (
           <SplitView direction="vertical" first={logger} second={inspector} />
         );
       default:
-        return logger;
+        return currentScreen === DashboardScreen.inspector ? inspector : logger;
     }
   })();
 
@@ -95,8 +127,12 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
       <DashboardNavigationBar
         currentScreen={currentScreen}
         onScreenChange={setCurrentScreen}
+        split={split}
+        onSplitChange={setSplit}
         isLoggerConnected={isLoggerConnected}
         isInspectorConnected={isInspectorConnected}
+        colorScheme={colorScheme}
+        onColorSchemeChange={onColorSchemeChange}
       />
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {content}
@@ -121,10 +157,18 @@ export function DashboardWithErrorBoundary({
 }: {
   connector: Connector;
 }) {
+  const [colorScheme, setColorScheme] = useState(loadColorScheme);
+  const changeColorScheme = (next: ColorSchemeName) => {
+    setColorScheme(next);
+    saveColorScheme(next);
+  };
   return (
-    <ThemeProvider colorScheme="system">
+    <ThemeProvider colorScheme={colorScheme}>
       <ErrorBoundary>
-        <Dashboard connector={connector} />
+        <Dashboard
+          connector={connector}
+          onColorSchemeChange={changeColorScheme}
+        />
       </ErrorBoundary>
     </ThemeProvider>
   );

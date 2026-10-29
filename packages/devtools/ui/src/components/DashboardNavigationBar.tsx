@@ -1,51 +1,42 @@
 import React from "react";
 import {
-  Divider,
+  type ColorSchemeName,
   IconButton,
   SegmentedControl,
   SegmentedControlButton,
 } from "@ledgerhq/lumen-ui-react";
+import { Moon, Sun } from "@ledgerhq/lumen-ui-react/symbols";
 
 export enum DashboardScreen {
   logs = "logs",
   inspector = "inspector",
-  splitHorizontal = "splitHorizontal",
-  splitVertical = "splitVertical",
 }
 
-type IconProps = { size?: number; className?: string };
+export enum SplitMode {
+  off = "off",
+  horizontal = "horizontal",
+  vertical = "vertical",
+}
 
-const SplitHorizontalIcon = ({ size = 16, className }: IconProps) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 16 16"
-    fill="currentColor"
-    className={className}
-  >
-    <rect x="2" y="2" width="12" height="5" rx="1" opacity="0.6" />
-    <rect x="2" y="9" width="12" height="5" rx="1" />
-  </svg>
-);
-
-const SplitVerticalIcon = ({ size = 16, className }: IconProps) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 16 16"
-    fill="currentColor"
-    className={className}
-  >
-    <rect x="2" y="2" width="5" height="12" rx="1" opacity="0.6" />
-    <rect x="9" y="2" width="5" height="12" rx="1" />
-  </svg>
-);
+const SPLITS = [
+  { mode: SplitMode.off, title: "No split", path: "" },
+  {
+    mode: SplitMode.horizontal,
+    title: "Split horizontally (stacked)",
+    path: "M2 8h12",
+  },
+  {
+    mode: SplitMode.vertical,
+    title: "Split vertically (side by side)",
+    path: "M8 2.5v11",
+  },
+];
 
 const ConnectionIndicator: React.FC<{ connected: boolean }> = ({
   connected,
 }) => (
   <span
-    className={`size-8 shrink-0 rounded-full ${connected ? "bg-success-strong" : "bg-warning-strong"}`}
+    className={`size-8 shrink-0 rounded-full ${connected ? "bg-(--color-light-green-500)" : "bg-(--color-light-yellow-500)"}`}
     title={connected ? "Connected" : "Not connected"}
   />
 );
@@ -53,23 +44,35 @@ const ConnectionIndicator: React.FC<{ connected: boolean }> = ({
 type DashboardNavigationBarProps = {
   currentScreen: DashboardScreen;
   onScreenChange: (screen: DashboardScreen) => void;
+  split: SplitMode;
+  onSplitChange: (split: SplitMode) => void;
   isLoggerConnected: boolean;
   isInspectorConnected: boolean;
+  colorScheme: "light" | "dark";
+  onColorSchemeChange: (colorScheme: ColorSchemeName) => void;
 };
 
 export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
   currentScreen,
   onScreenChange,
+  split,
+  onSplitChange,
   isLoggerConnected,
   isInspectorConnected,
+  colorScheme,
+  onColorSchemeChange,
 }) => {
+  const nextColorScheme = colorScheme === "dark" ? "light" : "dark";
   return (
-    <div className="flex shrink-0 items-center gap-12 border-b border-muted-subtle px-12 py-8">
+    <div className="flex shrink-0 items-center gap-16 border-b border-muted-subtle px-12 py-8">
       <SegmentedControl
         selectedValue={currentScreen}
-        onSelectedChange={(value) => onScreenChange(value as DashboardScreen)}
+        onSelectedChange={(value) => {
+          onScreenChange(value as DashboardScreen);
+          onSplitChange(SplitMode.off);
+        }}
         tabLayout="fixed"
-        className="w-256 shrink-0"
+        className="w-256 shrink-0 bg-muted-transparent"
         aria-label="Screen"
       >
         <SegmentedControlButton
@@ -90,33 +93,44 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
         </SegmentedControlButton>
       </SegmentedControl>
 
-      <Divider orientation="vertical" className="h-24" />
-
-      <div className="flex items-center gap-4">
-        <span className="body-3 text-muted">Split</span>
+      <div className="ml-auto flex items-center gap-6">
+        <SegmentedControl
+          selectedValue={split}
+          onSelectedChange={(value) => onSplitChange(value as SplitMode)}
+          tabLayout="fit"
+          className="bg-muted-transparent"
+          aria-label="Split"
+        >
+          {SPLITS.map(({ mode, title, path }) => (
+            <SegmentedControlButton
+              key={mode}
+              value={mode}
+              title={title}
+              aria-label={title}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                aria-hidden="true"
+              >
+                <rect x="2" y="2.5" width="12" height="11" rx="1.5" />
+                {path && <path d={path} />}
+              </svg>
+            </SegmentedControlButton>
+          ))}
+        </SegmentedControl>
         <IconButton
-          aria-label="Split horizontal (top/bottom)"
-          title="Split horizontal (top/bottom)"
-          icon={SplitHorizontalIcon}
-          size="sm"
-          appearance={
-            currentScreen === DashboardScreen.splitHorizontal
-              ? "gray"
-              : "no-background"
-          }
-          onClick={() => onScreenChange(DashboardScreen.splitHorizontal)}
-        />
-        <IconButton
-          aria-label="Split vertical (left/right)"
-          title="Split vertical (left/right)"
-          icon={SplitVerticalIcon}
-          size="sm"
-          appearance={
-            currentScreen === DashboardScreen.splitVertical
-              ? "gray"
-              : "no-background"
-          }
-          onClick={() => onScreenChange(DashboardScreen.splitVertical)}
+          aria-label={`Switch to ${nextColorScheme} theme`}
+          title={`Switch to ${nextColorScheme} theme`}
+          icon={colorScheme === "dark" ? Sun : Moon}
+          size="xs"
+          appearance="transparent"
+          className="rounded-sm"
+          onClick={() => onColorSchemeChange(nextColorScheme)}
         />
       </div>
     </div>

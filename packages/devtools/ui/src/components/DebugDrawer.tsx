@@ -36,7 +36,7 @@ export const DebugDrawer: React.FC<DebugDrawerProps> = ({
       <div
         className={`fixed inset-x-0 bottom-0 z-101 flex h-1/2 flex-col rounded-t-lg bg-canvas-sheet transition-transform duration-300 ${isOpen ? "translate-y-0" : "translate-y-full"}`}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-muted-subtle px-16 py-8">
+        <div className="flex shrink-0 items-center justify-between px-16 py-8">
           <h4 className="heading-5-semi-bold">Debug DevTools</h4>
           <IconButton
             aria-label="Close debug panel"

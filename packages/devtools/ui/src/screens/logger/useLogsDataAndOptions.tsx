@@ -17,10 +17,8 @@ export const useLogsDataAndOptions = ({ logs }: { logs: LogData[] }) => {
       if (!options.activeLevels[log.verbosity]) {
         return false;
       }
-      if (options.includeTags.size > 0) {
-        if (!options.includeTags.has(log.tag)) {
-          return false;
-        }
+      if (options.excludeTags.has(log.tag)) {
+        return false;
       }
       if (filterTokens.length > 0 && !matchesFilter(log, filterTokens)) {
         return false;
