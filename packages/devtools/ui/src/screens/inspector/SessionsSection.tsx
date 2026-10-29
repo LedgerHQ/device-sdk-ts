@@ -13,12 +13,6 @@ import {
 
 import { type ApduResponse } from "../../hooks/useConnectorMessages";
 import { DeviceCard } from "./DeviceCard";
-import {
-  CenteredMessage,
-  DeviceList,
-  SectionTitle,
-  SubsectionTitle,
-} from "./styles";
 
 type SessionsSectionProps = {
   devices: ConnectedDevice[];
@@ -64,9 +58,9 @@ export const SessionsSection: React.FC<SessionsSectionProps> = ({
   // Empty state
   if (devices.length === 0 && !isAnyDiscoveryActive) {
     return (
-      <CenteredMessage>
-        <p>No devices connected yet.</p>
-      </CenteredMessage>
+      <div className="flex flex-1 items-center justify-center p-24 body-2 text-muted">
+        No devices connected yet.
+      </div>
     );
   }
 
@@ -74,42 +68,40 @@ export const SessionsSection: React.FC<SessionsSectionProps> = ({
     <>
       {/* Active Sessions */}
       {activeDevices.length > 0 && (
-        <>
-          <SectionTitle>Active Sessions ({activeDevices.length})</SectionTitle>
-          <DeviceList style={{ marginBottom: 16 }}>
-            {activeDevices.map((device) => (
-              <DeviceCard
-                key={device.sessionId}
-                device={device}
-                state={sessionStates.get(device.sessionId)}
-                onDisconnect={() => onDisconnect(device.sessionId)}
-                onSendApdu={onSendApdu}
-                apduResponses={apduResponses}
-              />
-            ))}
-          </DeviceList>
-        </>
+        <section className="flex flex-col gap-12">
+          <h4 className="heading-5-semi-bold">
+            Active Sessions ({activeDevices.length})
+          </h4>
+          {activeDevices.map((device) => (
+            <DeviceCard
+              key={device.sessionId}
+              device={device}
+              state={sessionStates.get(device.sessionId)}
+              onDisconnect={() => onDisconnect(device.sessionId)}
+              onSendApdu={onSendApdu}
+              apduResponses={apduResponses}
+            />
+          ))}
+        </section>
       )}
 
       {/* Disconnected Sessions */}
       {disconnectedDevices.length > 0 && (
-        <>
-          <SubsectionTitle>
+        <section className="flex flex-col gap-12">
+          <h5 className="body-1-semi-bold text-muted">
             Inactive Sessions ({disconnectedDevices.length})
-          </SubsectionTitle>
-          <DeviceList>
-            {disconnectedDevices.map((device) => (
-              <DeviceCard
-                key={device.sessionId}
-                device={device}
-                state={sessionStates.get(device.sessionId)}
-                onDisconnect={() => onDisconnect(device.sessionId)}
-                onSendApdu={onSendApdu}
-                apduResponses={apduResponses}
-              />
-            ))}
-          </DeviceList>
-        </>
+          </h5>
+          {disconnectedDevices.map((device) => (
+            <DeviceCard
+              key={device.sessionId}
+              device={device}
+              state={sessionStates.get(device.sessionId)}
+              onDisconnect={() => onDisconnect(device.sessionId)}
+              onSendApdu={onSendApdu}
+              apduResponses={apduResponses}
+            />
+          ))}
+        </section>
       )}
     </>
   );

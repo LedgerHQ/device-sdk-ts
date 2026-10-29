@@ -6,7 +6,7 @@
  * via the connector (WebSocket or Rozenite).
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type ConnectedDevice,
   type DeviceSessionState,
@@ -50,17 +50,6 @@ export type ApduResponse = {
   error?: string;
 };
 
-/**
- * A single APDU exchange (request + response) captured passively from the DMK
- * logs of the host app. Used to derive mock-server mocks.
- */
-export type ApduExchange = {
-  sessionId?: string;
-  apdu: string;
-  response: string;
-  timestamp: string;
-};
-
 export type ConnectorMessagesState = {
   receivedMessages: Message[];
   sentMessages: Message[];
@@ -75,13 +64,8 @@ export type ConnectorMessagesState = {
   isInspectorConnected: boolean;
   providerValue: number | null;
   apduResponses: Map<string, ApduResponse>;
-  apduExchanges: ApduExchange[];
-  isRecordingExchanges: boolean;
   sendMessage: (type: string, payload: string) => void;
   clearLogs: () => void;
-  startRecordingExchanges: () => void;
-  stopRecordingExchanges: () => void;
-  clearRecordedExchanges: () => void;
   startListening: () => void;
   stopListening: () => void;
   startDiscovering: () => void;
@@ -139,9 +123,6 @@ export function useConnectorMessages(
   const [apduResponses, setApduResponses] = useState<Map<string, ApduResponse>>(
     new Map(),
   );
-  const [apduExchanges, setApduExchanges] = useState<ApduExchange[]>([]);
-  const [isRecordingExchanges, setIsRecordingExchanges] = useState(false);
-  const isRecordingExchangesRef = useRef(false);
 
   // === Tracked Connector (keeps all sent messages in state) ===
   const trackedConnector: Connector = useMemo(
@@ -180,12 +161,7 @@ export function useConnectorMessages(
           handleApduResponse(payload, setApduResponses);
           break;
         case LOGGER_MESSAGE_TYPES.ADD_LOG:
-          handleLogMessage(
-            payload,
-            setLogs,
-            setApduExchanges,
-            isRecordingExchangesRef.current,
-          );
+          handleLogMessage(payload, setLogs);
           break;
       }
     });
@@ -235,20 +211,6 @@ export function useConnectorMessages(
     setLogs([]);
   }, []);
 
-  const startRecordingExchanges = useCallback(() => {
-    isRecordingExchangesRef.current = true;
-    setIsRecordingExchanges(true);
-  }, []);
-
-  const stopRecordingExchanges = useCallback(() => {
-    isRecordingExchangesRef.current = false;
-    setIsRecordingExchanges(false);
-  }, []);
-
-  const clearRecordedExchanges = useCallback(() => {
-    setApduExchanges([]);
-  }, []);
-
   // === Derived State ===
   const isLoggerConnected = connectedModules.has(DEVTOOLS_MODULES.LOGGER);
   const isInspectorConnected = connectedModules.has(
@@ -270,14 +232,9 @@ export function useConnectorMessages(
     isInspectorConnected,
     providerValue,
     apduResponses,
-    apduExchanges,
-    isRecordingExchanges,
     // Actions
     sendMessage: trackedConnector.sendMessage,
     clearLogs,
-    startRecordingExchanges,
-    stopRecordingExchanges,
-    clearRecordedExchanges,
     startListening,
     stopListening,
     startDiscovering,

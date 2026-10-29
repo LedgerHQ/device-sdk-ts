@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { Divider, Flex } from "@ledgerhq/react-ui";
 
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
 import { LoggerToolbar } from "./LoggerToolbar";
@@ -134,8 +133,8 @@ export const Logger: React.FC<Props> = ({
   }
 
   return (
-    <Flex flex={1} flexDirection="column" minHeight={0} overflow="hidden">
-      <Flex flexDirection="column" px={6} py={2} flexShrink={0}>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 flex-col border-b border-muted-subtle px-12 py-8">
         <LoggerToolbar
           clearLogs={onClickClearLogs}
           downloadLogs={downloadLogs}
@@ -152,8 +151,7 @@ export const Logger: React.FC<Props> = ({
           onSearchLast={goToLast}
           searchInputRef={searchInputRef}
         />
-      </Flex>
-      <Divider mb={3} flexShrink={0} />
+      </div>
       <LogsTable
         data={data}
         key={tableKey}
@@ -161,6 +159,6 @@ export const Logger: React.FC<Props> = ({
         currentHighlightIndex={currentMatchRowIndex}
         scrollToIndex={currentMatchRowIndex}
       />
-    </Flex>
+    </div>
   );
 };

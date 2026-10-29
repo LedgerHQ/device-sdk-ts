@@ -1,55 +1,7 @@
 import React from "react";
 import { flexRender, type HeaderGroup } from "@tanstack/react-table";
-import styled from "styled-components";
 
 import { type LogData } from "../types";
-import { TABLE_STYLES } from "./constants";
-
-const StyledThead = styled.thead`
-  display: grid;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background-color: white;
-`;
-
-const StyledTr = styled.tr`
-  display: flex;
-  width: 100%;
-  background-color: ghostwhite;
-`;
-
-const StyledTh = styled.th<{
-  size: number;
-  minSize: number;
-  flexible: boolean;
-}>`
-  display: flex;
-  flex: ${({ flexible, size, minSize }) =>
-    flexible ? `${size} 1 ${minSize}px` : `0 0 ${size}px`};
-  min-width: ${({ flexible, size, minSize }) => (flexible ? minSize : size)}px;
-  position: relative;
-  overflow: hidden;
-`;
-
-const HeaderContent = styled.div<{ canSort: boolean }>`
-  font-size: ${TABLE_STYLES.HEADER_FONT_SIZE}px;
-  cursor: ${({ canSort }) => (canSort ? "pointer" : "default")};
-  user-select: ${({ canSort }) => (canSort ? "none" : "auto")};
-`;
-
-const Resizer = styled.div`
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: ${TABLE_STYLES.RESIZER_WIDTH};
-  margin-right: ${TABLE_STYLES.RESIZER_MARGIN};
-  height: 100%;
-  cursor: col-resize;
-  background-color: lightgrey;
-  touch-action: none;
-  user-select: none;
-`;
 
 type TableHeaderProps = {
   headerGroups: HeaderGroup<LogData>[];
@@ -57,24 +9,30 @@ type TableHeaderProps = {
 
 export const TableHeader: React.FC<TableHeaderProps> = ({ headerGroups }) => {
   return (
-    <StyledThead>
+    <thead className="sticky top-0 z-1 grid bg-canvas">
       {headerGroups.map((headerGroup) => (
-        <StyledTr key={headerGroup.id}>
+        <tr
+          key={headerGroup.id}
+          className="flex w-full border-b border-muted-subtle bg-muted-transparent"
+        >
           {headerGroup.headers.map((header) => {
             const flexible =
               (header.column.columnDef.meta as { flexible?: boolean })
                 ?.flexible ?? false;
             const size = header.getSize();
             const minSize = header.column.columnDef.minSize ?? 50;
+            const canSort = header.column.getCanSort();
             return (
-              <StyledTh
+              <th
                 key={header.id}
-                size={size}
-                minSize={minSize}
-                flexible={flexible}
+                className="relative flex overflow-hidden px-4 py-6"
+                style={{
+                  flex: flexible ? `${size} 1 ${minSize}px` : `0 0 ${size}px`,
+                  minWidth: flexible ? minSize : size,
+                }}
               >
-                <HeaderContent
-                  canSort={header.column.getCanSort()}
+                <div
+                  className={`body-3-semi-bold text-muted ${canSort ? "cursor-pointer select-none hover:text-base" : ""}`}
                   onClick={header.column.getToggleSortingHandler()}
                 >
                   {flexRender(
@@ -82,20 +40,21 @@ export const TableHeader: React.FC<TableHeaderProps> = ({ headerGroups }) => {
                     header.getContext(),
                   )}
                   {{
-                    asc: " 🔼",
-                    desc: " 🔽",
+                    asc: " ▲",
+                    desc: " ▼",
                   }[header.column.getIsSorted() as string] ?? null}
-                </HeaderContent>
-                <Resizer
+                </div>
+                <div
+                  className="absolute top-0 right-0 mr-2 h-full w-2 cursor-col-resize touch-none bg-muted-strong select-none hover:bg-active"
                   onDoubleClick={() => header.column.resetSize()}
                   onMouseDown={header.getResizeHandler()}
                   onTouchStart={header.getResizeHandler()}
                 />
-              </StyledTh>
+              </th>
             );
           })}
-        </StyledTr>
+        </tr>
       ))}
-    </StyledThead>
+    </thead>
   );
 };

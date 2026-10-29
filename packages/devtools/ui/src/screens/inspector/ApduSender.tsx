@@ -1,106 +1,8 @@
 import React, { useState } from "react";
-import styled from "styled-components";
+import { Button, TextInput } from "@ledgerhq/lumen-ui-react";
+import { ChevronRight } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { type ApduResponse } from "../../hooks/useConnectorMessages";
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #eee;
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-`;
-
-const ToggleIcon = styled.span<{ $expanded: boolean }>`
-  font-size: 12px;
-  color: #666;
-  transition: transform 0.15s ease;
-  transform: rotate(${({ $expanded }) => ($expanded ? "90deg" : "0deg")});
-`;
-
-const Title = styled.span`
-  font-size: 12px;
-  font-weight: 600;
-  color: #666;
-`;
-
-const Content = styled.div<{ $expanded: boolean }>`
-  display: ${({ $expanded }) => ($expanded ? "flex" : "none")};
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const InputRow = styled.div`
-  display: flex;
-  gap: 8px;
-  align-items: center;
-`;
-
-const Input = styled.input`
-  flex: 1;
-  padding: 6px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 12px;
-  font-family: monospace;
-
-  &:focus {
-    outline: none;
-    border-color: #2196f3;
-  }
-
-  &::placeholder {
-    color: #999;
-  }
-`;
-
-const Button = styled.button`
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  background: #2196f3;
-  color: white;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover:not(:disabled) {
-    background: #1976d2;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const ResponseContainer = styled.div<{ $success: boolean }>`
-  padding: 8px;
-  border-radius: 4px;
-  background: ${({ $success }) => ($success ? "#e8f5e9" : "#ffebee")};
-  border: 1px solid ${({ $success }) => ($success ? "#c8e6c9" : "#ffcdd2")};
-  font-size: 12px;
-  font-family: monospace;
-`;
-
-const ResponseLabel = styled.span`
-  font-weight: 600;
-  color: #333;
-`;
-
-const ResponseData = styled.span`
-  color: #555;
-  word-break: break-all;
-`;
 
 type ApduSenderProps = {
   sessionId: string;
@@ -115,6 +17,7 @@ export const ApduSender: React.FC<ApduSenderProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [apduInput, setApduInput] = useState("");
+  const [inputError, setInputError] = useState<string | null>(null);
   const [lastRequestId, setLastRequestId] = useState<string | null>(null);
 
   const handleSend = () => {
@@ -122,9 +25,7 @@ export const ApduSender: React.FC<ApduSenderProps> = ({
     // Remove spaces and validate hex
     const cleanHex = apduInput.replace(/\s/g, "").toUpperCase();
     if (!/^[0-9A-F]*$/.test(cleanHex) || cleanHex.length % 2 !== 0) {
-      alert(
-        "Invalid hex string. Please enter a valid APDU in hex format (e.g., E0C4000000)",
-      );
+      setInputError("Invalid hex string (e.g., E0C4000000)");
       return;
     }
     const requestId = onSend(sessionId, cleanHex);
@@ -141,51 +42,73 @@ export const ApduSender: React.FC<ApduSenderProps> = ({
   };
 
   return (
-    <Container>
-      <Header onClick={() => setExpanded(!expanded)}>
-        <ToggleIcon $expanded={expanded}>▶</ToggleIcon>
-        <Title>Send APDU</Title>
-      </Header>
-      <Content $expanded={expanded}>
-        <InputRow>
-          <Input
-            type="text"
-            placeholder="APDU hex (e.g., E0C4000000)"
-            value={apduInput}
-            onChange={(e) => setApduInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          />
-          <Button onClick={handleSend} disabled={!apduInput.trim()}>
-            Send
-          </Button>
-        </InputRow>
-        {lastResponse && (
-          <ResponseContainer $success={lastResponse.success}>
-            {lastResponse.success ? (
-              <>
-                {lastResponse.data && lastResponse.data.length > 0 && (
-                  <>
-                    <ResponseLabel>Data: </ResponseLabel>
-                    <ResponseData>
-                      {formatBytes(lastResponse.data)}
-                    </ResponseData>
-                    <br />
-                  </>
-                )}
-                <ResponseLabel>Status: </ResponseLabel>
-                <ResponseData>
-                  {formatBytes(lastResponse.statusCode)}
-                </ResponseData>
-              </>
-            ) : (
-              <>
-                <ResponseLabel>Error: </ResponseLabel>
-                <ResponseData>{lastResponse.error}</ResponseData>
-              </>
-            )}
-          </ResponseContainer>
-        )}
-      </Content>
-    </Container>
+    <div className="flex flex-col gap-8 border-t border-muted-subtle pt-12">
+      <button
+        className="flex cursor-pointer items-center gap-8 body-3-semi-bold text-muted select-none hover:text-base"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <ChevronRight
+          size={12}
+          className={`transition-transform ${expanded ? "rotate-90" : ""}`}
+        />
+        Send APDU
+      </button>
+      {expanded && (
+        <>
+          <div className="flex items-start gap-8">
+            <TextInput
+              className="flex-1"
+              placeholder="APDU hex (e.g., E0C4000000)"
+              value={apduInput}
+              onChange={(e) => {
+                setApduInput(e.target.value);
+                setInputError(null);
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              status={inputError ? "error" : undefined}
+              helperText={inputError ?? undefined}
+            />
+            <Button
+              appearance="accent"
+              size="lg"
+              onClick={handleSend}
+              disabled={!apduInput.trim()}
+            >
+              Send
+            </Button>
+          </div>
+          {lastResponse && (
+            <div
+              className={`rounded-sm p-8 font-mono! body-3 ${lastResponse.success ? "bg-success-transparent" : "bg-error-transparent"}`}
+            >
+              {lastResponse.success ? (
+                <>
+                  {lastResponse.data && lastResponse.data.length > 0 && (
+                    <>
+                      <span className="font-semibold">Data: </span>
+                      <span className="break-all text-muted">
+                        {formatBytes(lastResponse.data)}
+                      </span>
+                      <br />
+                    </>
+                  )}
+                  <span className="font-semibold">Status: </span>
+                  <span className="break-all text-muted">
+                    {formatBytes(lastResponse.statusCode)}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="font-semibold text-error">Error: </span>
+                  <span className="break-all text-muted">
+                    {lastResponse.error}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 };

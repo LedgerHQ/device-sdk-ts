@@ -3,22 +3,10 @@ import {
   type ConnectedDevice,
   type DeviceSessionState,
 } from "@ledgerhq/device-management-kit";
+import { Button, Tag, type TagProps } from "@ledgerhq/lumen-ui-react";
 
 import { type ApduResponse } from "../../hooks/useConnectorMessages";
 import { ApduSender } from "./ApduSender";
-import {
-  BadgeRow,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  CardHeaderLeft,
-  CardSection,
-  CardTitle,
-  SectionLabel,
-  SmallText,
-  StatusBadge,
-} from "./styles";
 
 type DeviceCardProps = {
   device: ConnectedDevice;
@@ -28,47 +16,47 @@ type DeviceCardProps = {
   apduResponses: Map<string, ApduResponse>;
 };
 
+type TagAppearance = NonNullable<TagProps["appearance"]>;
+
 const isConnected = (state?: DeviceSessionState): boolean => {
   if (!state) return true; // Assume connected if no state yet
   return state.deviceStatus !== "NOT CONNECTED";
 };
 
 /**
- * Map deviceStatus string to a badge variant.
+ * Map deviceStatus string to a tag appearance.
  */
-function getDeviceStatusBadgeVariant(
-  status: string,
-): "success" | "warning" | "error" | "info" | "neutral" {
+function getDeviceStatusTagAppearance(status: string): TagAppearance {
   switch (status) {
     case "CONNECTED":
       return "success";
     case "LOCKED":
       return "warning";
     case "BUSY":
-      return "info";
+      return "accent-subtle";
     case "NOT CONNECTED":
       return "error";
     default:
-      return "neutral";
+      return "gray";
   }
 }
 
 /**
- * Map sessionStateType string to a badge variant.
+ * Map sessionStateType string to a tag appearance.
  */
-function getSessionStateBadgeVariant(
+function getSessionStateTagAppearance(
   stateType: string | number,
-): "success" | "warning" | "error" | "info" | "neutral" {
+): TagAppearance {
   const stateStr = String(stateType);
   switch (stateStr) {
     case "ReadyWithSecureChannel":
       return "success";
     case "ReadyWithoutSecureChannel":
-      return "info";
+      return "accent-subtle";
     case "Connected":
-      return "neutral";
+      return "gray";
     default:
-      return "neutral";
+      return "gray";
   }
 }
 
@@ -89,51 +77,61 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
   const connected = isConnected(state);
 
   return (
-    <Card $variant={connected ? "default" : "disconnected"}>
-      <CardHeader>
-        <CardHeaderLeft>
-          <CardTitle>{device.name || "Unknown Device"}</CardTitle>
+    <div
+      className={`flex flex-col gap-12 rounded-md border border-muted-subtle p-16 ${connected ? "bg-surface" : "bg-muted-transparent opacity-60"}`}
+    >
+      <div className="flex items-center justify-between gap-8">
+        <div className="flex items-center gap-8">
+          <h5 className="body-1-semi-bold">
+            {device.name || "Unknown Device"}
+          </h5>
           {state && (
-            <StatusBadge
-              $variant={getDeviceStatusBadgeVariant(state.deviceStatus)}
-            >
-              {state.deviceStatus}
-            </StatusBadge>
+            <Tag
+              size="sm"
+              appearance={getDeviceStatusTagAppearance(state.deviceStatus)}
+              label={state.deviceStatus}
+            />
           )}
-        </CardHeaderLeft>
+        </div>
         {connected && (
-          <Button $variant="danger" onClick={onDisconnect}>
+          <Button appearance="red" size="sm" onClick={onDisconnect}>
             Disconnect
           </Button>
         )}
-      </CardHeader>
+      </div>
 
-      <CardBody>
-        <SmallText>Session ID: {device.sessionId}</SmallText>
-        <SmallText>Model: {device.modelId}</SmallText>
-        <SmallText>Transport: {device.transport}</SmallText>
-        <SmallText>Type: {device.type}</SmallText>
-      </CardBody>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-12 gap-y-2 body-3">
+        <dt className="text-muted">Session ID</dt>
+        <dd className="truncate font-mono">{device.sessionId}</dd>
+        <dt className="text-muted">Model</dt>
+        <dd>{device.modelId}</dd>
+        <dt className="text-muted">Transport</dt>
+        <dd>{device.transport}</dd>
+        <dt className="text-muted">Type</dt>
+        <dd>{device.type}</dd>
+      </dl>
 
       {state && (
-        <CardSection>
-          <SectionLabel>Session State</SectionLabel>
-          <BadgeRow>
-            <StatusBadge
-              $variant={getSessionStateBadgeVariant(state.sessionStateType)}
-            >
-              {formatSessionStateType(state.sessionStateType)}
-            </StatusBadge>
-          </BadgeRow>
+        <div className="flex flex-col gap-6 border-t border-muted-subtle pt-12">
+          <p className="body-3-semi-bold text-muted">Session State</p>
+          <div className="flex flex-wrap items-center gap-6">
+            <Tag
+              size="sm"
+              appearance={getSessionStateTagAppearance(state.sessionStateType)}
+              label={formatSessionStateType(state.sessionStateType)}
+            />
+          </div>
           {"currentApp" in state && state.currentApp && (
-            <SmallText>
+            <p className="body-3 text-muted">
               Current App: {state.currentApp.name} v{state.currentApp.version}
-            </SmallText>
+            </p>
           )}
           {"firmwareVersion" in state && state.firmwareVersion && (
-            <SmallText>Firmware: {state.firmwareVersion.os}</SmallText>
+            <p className="body-3 text-muted">
+              Firmware: {state.firmwareVersion.os}
+            </p>
           )}
-        </CardSection>
+        </div>
       )}
 
       {connected && (
@@ -143,6 +141,6 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
           responses={apduResponses}
         />
       )}
-    </Card>
+    </div>
   );
 };

@@ -18,7 +18,6 @@ import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
 import { DeviceDiscoverySection } from "./DeviceDiscoverySection";
 import { MyLedgerProviderControl } from "./MyLedgerProviderControl";
 import { SessionsSection } from "./SessionsSection";
-import { Container } from "./styles";
 
 type InspectorProps = {
   devices: ConnectedDevice[];
@@ -99,7 +98,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   const isAnyDiscoveryActive = isListening || isActivelyDiscovering;
 
   return (
-    <Container>
+    <div className="flex flex-1 flex-col gap-24 overflow-auto p-16">
       <MyLedgerProviderControl
         currentValue={providerValue}
         onGet={getProvider}
@@ -125,6 +124,6 @@ export const Inspector: React.FC<InspectorProps> = ({
         apduResponses={apduResponses}
         isAnyDiscoveryActive={isAnyDiscoveryActive}
       />
-    </Container>
+    </div>
   );
 };
