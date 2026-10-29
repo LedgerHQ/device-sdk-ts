@@ -3,6 +3,7 @@ import {
   BITCOIN_GOLD_PROFILE,
   type BtcLegacyErrorCodes,
   DOGECOIN_PROFILE,
+  HORIZEN_PROFILE,
   type LegacyCoinProfile,
   LITECOIN_PROFILE,
 } from "@ledgerhq/device-signer-kit-bitcoin-legacy";
@@ -122,6 +123,7 @@ const BTC_LEGACY_PROFILES: Record<
   Dogecoin: DOGECOIN_PROFILE,
   "Bitcoin Cash": BITCOIN_CASH_PROFILE,
   "Bitcoin Gold": BITCOIN_GOLD_PROFILE,
+  Horizen: HORIZEN_PROFILE,
 };
 
 const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {

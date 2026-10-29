@@ -16,6 +16,8 @@ export type LegacyTransaction = {
   inputs: LegacyTransactionInput[];
   outputs?: LegacyTransactionOutput[];
   locktime?: Uint8Array;
+  // What follows the lock time, such as Horizen's joinsplits.
+  extraData?: Uint8Array;
 };
 
 export type LegacyCreateTransactionArg = {
