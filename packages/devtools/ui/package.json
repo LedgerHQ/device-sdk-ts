@@ -50,7 +50,6 @@
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.10.8",
     "class-variance-authority": "0.7.1",
-    "react-inspector": "9.0.0",
     "react-resizable-panels": "^4.4.1",
     "rxjs": "catalog:"
   },

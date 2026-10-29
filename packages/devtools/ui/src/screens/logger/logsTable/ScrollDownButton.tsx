@@ -15,9 +15,9 @@ export const ScrollDownButton: React.FC<ScrollDownButtonProps> = ({
     aria-label="Scroll to latest logs"
     title="Scroll to latest logs"
     icon={ArrowDown}
-    appearance="base"
-    size="md"
+    appearance="accent"
+    size="sm"
     onClick={onClick}
-    className={`absolute right-24 bottom-24 shadow-md transition-opacity duration-300 ${enabled ? "pointer-events-none opacity-0" : "opacity-100"}`}
+    className={`absolute right-16 bottom-16 shadow-md transition-opacity duration-300 ${enabled ? "pointer-events-none opacity-0" : "opacity-100"}`}
   />
 );

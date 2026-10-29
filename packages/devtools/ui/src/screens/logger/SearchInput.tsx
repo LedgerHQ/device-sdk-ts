@@ -8,12 +8,11 @@ import {
 
 import {
   INPUT,
-  INPUT_CONTAINER,
   INPUT_ICON_BUTTON,
   INPUT_WRAPPER,
+  SHORTCUT_HINT,
+  SHORTCUT_MODIFIER,
 } from "./inputStyles";
-
-const NAV_BUTTON = `${INPUT_ICON_BUTTON} border-l border-muted-subtle`;
 
 const DoubleChevron: React.FC<{ direction: "up" | "down" }> = ({
   direction,
@@ -78,14 +77,15 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   }, [onChange, effectiveRef]);
 
   return (
-    <div className={INPUT_CONTAINER}>
-      <div className={`${INPUT_WRAPPER} pl-10`}>
+    <div className="relative w-400 shrink-0">
+      <div className={INPUT_WRAPPER}>
         <Search size={16} className="shrink-0 text-muted" />
         <input
           ref={effectiveRef}
           className={INPUT}
           type="text"
-          placeholder="Search (Ctrl/Cmd+F)"
+          placeholder="Find"
+          aria-label="Find in logs"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -99,13 +99,15 @@ export const SearchInput: React.FC<SearchInputProps> = ({
             <Close size={12} />
           </button>
         )}
-        {value && (
-          <span className="px-4 body-4 whitespace-nowrap text-muted">
+        {value ? (
+          <span className="body-4 whitespace-nowrap text-muted">
             {displayIndex}/{matchCount}
           </span>
+        ) : (
+          <kbd className={SHORTCUT_HINT}>{SHORTCUT_MODIFIER}F</kbd>
         )}
         <button
-          className={NAV_BUTTON}
+          className={INPUT_ICON_BUTTON}
           onClick={onPrevious}
           disabled={!hasMatches}
           title="Previous match (Shift+Enter)"
@@ -113,7 +115,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           <ChevronUp size={16} />
         </button>
         <button
-          className={NAV_BUTTON}
+          className={INPUT_ICON_BUTTON}
           onClick={onNext}
           disabled={!hasMatches}
           title="Next match (Enter)"
@@ -121,7 +123,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           <ChevronDown size={16} />
         </button>
         <button
-          className={NAV_BUTTON}
+          className={INPUT_ICON_BUTTON}
           onClick={onFirst}
           disabled={!hasMatches}
           title="First match"
@@ -129,7 +131,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           <DoubleChevron direction="up" />
         </button>
         <button
-          className={NAV_BUTTON}
+          className={INPUT_ICON_BUTTON}
           onClick={onLast}
           disabled={!hasMatches}
           title="Last match"
