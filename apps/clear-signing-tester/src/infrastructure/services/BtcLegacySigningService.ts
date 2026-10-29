@@ -17,9 +17,11 @@ import {
 /** {@link LegacyTransaction} as a fixture writes it, with hex strings for bytes. */
 type HexTransaction = {
   version: string;
+  nVersionGroupId?: string;
   inputs: { prevout: string; script: string; sequence: string }[];
   outputs?: { amount: string; script: string }[];
   locktime?: string;
+  nExpiryHeight?: string;
   extraData?: string;
 };
 
@@ -44,6 +46,8 @@ const bytes = (hex: string): Uint8Array => {
 
 const toTransaction = (tx: HexTransaction): LegacyTransaction => ({
   version: bytes(tx.version),
+  nVersionGroupId:
+    tx.nVersionGroupId === undefined ? undefined : bytes(tx.nVersionGroupId),
   inputs: tx.inputs.map((input) => ({
     prevout: bytes(input.prevout),
     script: bytes(input.script),
@@ -54,6 +58,8 @@ const toTransaction = (tx: HexTransaction): LegacyTransaction => ({
     script: bytes(output.script),
   })),
   locktime: tx.locktime === undefined ? undefined : bytes(tx.locktime),
+  nExpiryHeight:
+    tx.nExpiryHeight === undefined ? undefined : bytes(tx.nExpiryHeight),
   extraData: tx.extraData === undefined ? undefined : bytes(tx.extraData),
 });
 

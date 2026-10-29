@@ -4,6 +4,7 @@ import {
   type BtcLegacyErrorCodes,
   DOGECOIN_PROFILE,
   HORIZEN_PROFILE,
+  KOMODO_PROFILE,
   type LegacyCoinProfile,
   LITECOIN_PROFILE,
 } from "@ledgerhq/device-signer-kit-bitcoin-legacy";
@@ -124,6 +125,7 @@ const BTC_LEGACY_PROFILES: Record<
   "Bitcoin Cash": BITCOIN_CASH_PROFILE,
   "Bitcoin Gold": BITCOIN_GOLD_PROFILE,
   Horizen: HORIZEN_PROFILE,
+  Komodo: KOMODO_PROFILE,
 };
 
 const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {

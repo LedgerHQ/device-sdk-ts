@@ -1,0 +1,132 @@
+{
+  "group": "btc-legacy",
+  "name": "komodo",
+  "action": "signTransaction",
+  "devices": ["flex", "stax", "nanox"],
+  "coinApp": "Komodo",
+  "mode": "parallel",
+  "cases": [
+    {
+      "description": "one input, one output",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "04000080",
+              "nVersionGroupId": "85202f89",
+              "inputs": [
+                {
+                  "prevout": "13c4c36f8d5d5995ca3ed4903fa89fb637f1a71f671f79408e03531b94cc694b00000000",
+                  "script": "48815076f45af0acf6d03c4f643514476f9ee3375bfc69b57705a1de1ca3882fa08f5713e3ba8fbd82359f3d9d10f38a4fc3db502d5766927ccf9b0e20bb32ba80a8af79ea73c592dc210256aaf6d34891bb895838fbfbe742e7fd83cd1a33e996fa6e0feb8f6ea6a57d62",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9149041fff478803ac84bb15613dfffabd3f240671288ac"
+                }
+              ],
+              "locktime": "00000000",
+              "nExpiryHeight": "00000000",
+              "extraData": "0000000000000000000000"
+            },
+            1,
+            null,
+            null
+          ]
+        ],
+        "associatedKeysets": ["44'/141'/0'/0/0"],
+        "outputScriptHex": "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "lockTime": 1700000000,
+        "additionals": ["komodo", "sapling"]
+      },
+      "expectedTexts": [
+        "4.99 KMD",
+        "RSF6nws8Xh1me2XSTn34NxVmYWkff9x6GZ",
+        "0.01 KMD"
+      ]
+    },
+    {
+      "description": "two inputs, change and RBF sequences",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "04000080",
+              "nVersionGroupId": "85202f89",
+              "inputs": [
+                {
+                  "prevout": "13c4c36f8d5d5995ca3ed4903fa89fb637f1a71f671f79408e03531b94cc694b00000000",
+                  "script": "48815076f45af0acf6d03c4f643514476f9ee3375bfc69b57705a1de1ca3882fa08f5713e3ba8fbd82359f3d9d10f38a4fc3db502d5766927ccf9b0e20bb32ba80a8af79ea73c592dc210256aaf6d34891bb895838fbfbe742e7fd83cd1a33e996fa6e0feb8f6ea6a57d62",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9149041fff478803ac84bb15613dfffabd3f240671288ac"
+                }
+              ],
+              "locktime": "00000000",
+              "nExpiryHeight": "00000000",
+              "extraData": "0000000000000000000000"
+            },
+            1,
+            null,
+            4294967293
+          ],
+          [
+            {
+              "version": "04000080",
+              "nVersionGroupId": "85202f89",
+              "inputs": [
+                {
+                  "prevout": "e729bb6de4876ccd04ee8d24419e38e2e7e83cdbadfd9057311d8b6e069909e100000000",
+                  "script": "4803122b8b665091775b6a736238bfe1b6340166b0cc041d5cd862b3bbfc9e74ecae8ca64d9924552cacb998e10693f4ac4e12289fd8793f01c2f3be11271866c205e3dad82f04fa5c21029e6ff236361ecc22db55f5e3e2108e3b6a718280c4b9512962195b4af906d234",
+                  "sequence": "ffffffff"
+                },
+                {
+                  "prevout": "b822e95d17d596ce41c81a173342736cac3dfbbab88cc7bd7b96152e40c98da701000000",
+                  "script": "48dd80ec7da085e0ee63ef8c728db8cd640fabebbe3a8f6f453fc5b7d2eb2376a70425b3b1162cfd6ef74e6f8a470a8fffb7333d35783be44602aa3cad19685b343f711727d5088188210278591ede7ce2089aedfebdc008c4fcd241e11787f517da949f0d790f1cddf818",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "00a3e11100000000",
+                  "script": "76a914e97a8d35730f08b23da7b7981d11a4aef03e91bd88ac"
+                }
+              ],
+              "locktime": "c0ae4465",
+              "nExpiryHeight": "00000000",
+              "extraData": "0000000000000000000000"
+            },
+            0,
+            null,
+            4294967293
+          ]
+        ],
+        "associatedKeysets": ["44'/141'/0'/0/0", "44'/141'/0'/0/1"],
+        "changePath": "44'/141'/0'/1/0",
+        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914227ae9a9721b06740dd48da031c70d7dabd3132688ac",
+        "lockTime": 1700000000,
+        "additionals": ["komodo", "sapling"]
+      },
+      "expectedTexts": [
+        "6 KMD",
+        "RSF6nws8Xh1me2XSTn34NxVmYWkff9x6GZ",
+        "0.02 KMD"
+      ],
+      "unexpectedTexts": ["1.98 KMD", "RCRWJAYNURJbGnugF29LGUyanBNDsdvfoZ"]
+    }
+  ]
+}

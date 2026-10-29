@@ -192,8 +192,8 @@ nobody wired up, and three descriptors known to be broken.
 
 The `btc-legacy` group signs with `@ledgerhq/device-signer-kit-bitcoin-legacy`,
 one scenario per coin app: `Litecoin`, `Dogecoin`, `Bitcoin Cash`,
-`Bitcoin Gold` and `Horizen`. The `coinApp` picks the signer profile, so another
-coin on the protocol is a profile entry, a pin and a scenario file.
+`Bitcoin Gold`, `Horizen` and `Komodo`. The `coinApp` picks the signer profile, so
+another coin on the protocol is a profile entry, a pin and a scenario file.
 
 ```bash
 pnpm cs-tester cli test btc-legacy --device nanox
