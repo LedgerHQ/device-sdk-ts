@@ -87,6 +87,7 @@ const Dashboard: React.FC<{
     DashboardScreen.logs,
   );
   const [aiOpen, setAiOpen] = useState(false);
+  const [showLiveScreen, setShowLiveScreen] = useState(true);
   const [aiRequest, setAiRequest] = useState<AiPanelRequest | null>(null);
   const explainWithAi = (request: AiSelection) => {
     const token = mockServer?.sessionToken;
@@ -126,6 +127,7 @@ const Dashboard: React.FC<{
       mockServer={mockServer}
       rewriteMockServerUrl={rewriteMockServerUrl}
       onExplain={explainWithAi}
+      showLiveScreen={showLiveScreen}
     />
   );
 
@@ -136,6 +138,14 @@ const Dashboard: React.FC<{
         onScreenChange={setCurrentScreen}
         aiOpen={aiOpen}
         onToggleAi={() => setAiOpen(!aiOpen)}
+        liveScreen={
+          currentScreen === DashboardScreen.inspector && mockServer
+            ? {
+                shown: showLiveScreen,
+                onToggle: () => setShowLiveScreen(!showLiveScreen),
+              }
+            : undefined
+        }
         isLoggerConnected={isLoggerConnected}
         isInspectorConnected={isInspectorConnected}
         mockServerWebsiteUrl={mockServerWebsiteUrl}
