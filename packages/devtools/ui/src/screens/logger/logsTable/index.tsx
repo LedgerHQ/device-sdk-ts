@@ -1,185 +1,217 @@
-import React, { useEffect, useLayoutEffect, useMemo } from "react";
-import {
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import styled from "styled-components";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { flushSync } from "react-dom";
 
 import { type LogData } from "../types";
-import { TABLE_CONFIG } from "./constants";
+import { LogRow } from "./LogRow";
 import { ScrollDownButton } from "./ScrollDownButton";
-import { TableBody } from "./TableBody";
-import { createColumns } from "./TableColumns";
-import { TableHeader } from "./TableHeader";
-import { useScrollLogic } from "./useScrollLogic";
+import { type ColumnSizing } from "./TableColumns";
+import { useFollowBottom } from "./useFollowBottom";
 
-const ScrollContainer = styled.div<{ height: number; disableScroll: boolean }>`
-  height: ${({ height }) => height}px;
-  overflow: ${({ disableScroll }) => (disableScroll ? "hidden" : "auto")};
-  overflow-anchor: auto;
-  position: relative;
-  width: 100%;
-`;
+// Like Dozzle, only a window of the newest logs is rendered; older ones are a click away
+const WINDOW_STEP = 500;
 
-const TableWrapper = styled.div`
-  width: 100%;
-  min-width: fit-content;
-`;
-
-const StyledTable = styled.table`
-  display: grid;
-`;
-
-const TableContainer = styled.div`
-  flex: 1;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-`;
-
-const EmptyState = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  color: #999;
-  font-size: 14px;
-`;
-
-type ScrollableLogTableProps = {
+type LogsTableProps = {
   data: Array<LogData>;
   highlightedIndices?: Set<number>;
   currentHighlightIndex?: number;
   scrollToIndex?: number;
+  follow: boolean;
+  newestFirst: boolean;
+  columnSizing: ColumnSizing;
 };
 
-export const LogsTable: React.FC<ScrollableLogTableProps> = ({
+const LIST_BUTTON =
+  "w-full cursor-pointer py-4 text-center font-mono! body-4 text-muted hover:bg-base-transparent-hover hover:text-base";
+
+export const LogsTable: React.FC<LogsTableProps> = ({
   data,
   highlightedIndices,
   currentHighlightIndex,
   scrollToIndex,
+  follow,
+  newestFirst,
+  columnSizing,
 }) => {
-  const {
-    autoScrollEnabled,
-    onScroll,
-    scrollContainerRef,
-    scrollZoneHeight,
-    scrollToBottom,
-    scrollZoneRef,
-  } = useScrollLogic({ data });
-
-  const columns = useMemo(() => createColumns(), []);
-
-  const table = useReactTable({
-    data,
-    columns,
-    defaultColumn: {
-      minSize: TABLE_CONFIG.MIN_COLUMN_SIZE,
-      maxSize: TABLE_CONFIG.MAX_COLUMN_SIZE,
-    },
-    columnResizeMode: "onChange",
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    debugTable: true,
-    getRowId: (originalRow) =>
-      `${originalRow.timestamp}-${originalRow.message}`,
-  });
-
-  const { rows } = table.getRowModel();
-
-  const rowVirtualizer = useVirtualizer({
-    count: rows.length,
-    estimateSize: () => TABLE_CONFIG.ROW_HEIGHT_ESTIMATE,
-    getScrollElement: () => scrollContainerRef.current,
-    getItemKey: (index) => rows[index]?.id ?? String(index),
-    measureElement:
-      typeof window !== "undefined" &&
-      navigator.userAgent.indexOf("Firefox") === -1
-        ? (element) => element?.getBoundingClientRect().height
-        : undefined,
-    overscan: TABLE_CONFIG.OVERSCAN,
-  });
-
-  // Skip during column resize to avoid scroll position jumping
-  const isResizingColumn = table.getState().columnSizingInfo.isResizingColumn;
-
-  // Notify virtualizer when container height changes
-  useEffect(() => {
-    if (isResizingColumn) return;
-    rowVirtualizer.measure();
-  }, [scrollZoneHeight, rowVirtualizer, isResizingColumn]);
-
-  // Observe the scroll container for size changes
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const observer = new ResizeObserver(() => {
-      // Skip measure during column resize
-      if (table.getState().columnSizingInfo.isResizingColumn) return;
-      requestAnimationFrame(() => {
-        rowVirtualizer.measure();
-      });
+  const [expandedLogs, setExpandedLogs] = useState<Set<LogData>>(new Set());
+  const toggleLog = useCallback((log: LogData) => {
+    setExpandedLogs((previous) => {
+      const next = new Set(previous);
+      if (!next.delete(log)) next.add(log);
+      return next;
     });
+  }, []);
 
-    observer.observe(container);
+  const {
+    containerRef,
+    contentRef,
+    onScroll,
+    atBottom,
+    setAtBottom,
+    scrollToBottom,
+  } = useFollowBottom(follow);
 
-    return () => {
-      observer.disconnect();
-    };
-  }, [rowVirtualizer, scrollContainerRef, table]);
+  const [windowSize, setWindowSize] = useState(WINDOW_STEP);
+  // While the reader is scrolled up the rows on screen stay put: new logs are counted, not rendered
+  const [pinned, setPinned] = useState<{
+    first: LogData;
+    last: LogData;
+  } | null>(null);
 
-  // Scroll to current search match
+  const pinnedStart = pinned ? data.indexOf(pinned.first) : -1;
+  const pinnedEnd = pinned ? data.indexOf(pinned.last) : -1;
+  const isPinned = pinnedStart >= 0 && pinnedEnd >= pinnedStart;
+  const [start, end] = isPinned
+    ? [pinnedStart, pinnedEnd + 1]
+    : newestFirst
+      ? [0, Math.min(data.length, windowSize)]
+      : [Math.max(0, data.length - windowSize), data.length];
+  const rows = data.slice(start, end);
+  const olderCount = newestFirst ? data.length - end : start;
+  const newerCount = isPinned ? data.length - end : 0;
+
+  // Pin what is on screen when the reader leaves the bottom, not on every new log
   useEffect(() => {
-    if (scrollToIndex !== undefined && scrollToIndex >= 0) {
-      rowVirtualizer.scrollToIndex(scrollToIndex, { align: "center" });
+    if (atBottom) {
+      setPinned(null);
+    } else if (follow && !newestFirst && rows.length > 0) {
+      setPinned(
+        (previous) => previous ?? { first: rows[0]!, last: rows.at(-1)! },
+      );
     }
-  }, [scrollToIndex, rowVirtualizer]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [atBottom]);
 
-  // Reset virtualizer when data changes and is small (helps with filter transitions)
-  // Scroll to top first to avoid invalid scroll position, then recalculate
-  // Use useLayoutEffect to run synchronously before browser paints
+  const showOlder = () => {
+    const container = containerRef.current;
+    // Browsers do not anchor the scroll position at the very top, so keep it by hand
+    const fromBottom = container
+      ? container.scrollHeight - container.scrollTop
+      : 0;
+    flushSync(() => {
+      if (isPinned) {
+        setPinned({
+          first: data[Math.max(0, start - WINDOW_STEP)]!,
+          last: data[end - 1]!,
+        });
+      } else {
+        setWindowSize((size) => size + WINDOW_STEP);
+      }
+    });
+    if (container && !newestFirst) {
+      container.scrollTop = container.scrollHeight - fromBottom;
+    }
+  };
+
+  const jumpToLatest = () => {
+    flushSync(() => {
+      setPinned(null);
+      setAtBottom(true);
+    });
+    scrollToBottom();
+  };
+
+  // Bring the current search match into the window, then into view once
+  useEffect(() => {
+    if (scrollToIndex === undefined || scrollToIndex < 0) return;
+    if (scrollToIndex >= start && scrollToIndex < end) return;
+    if (newestFirst) {
+      setWindowSize(scrollToIndex + 1);
+    } else {
+      setPinned({
+        first: data[Math.max(0, scrollToIndex - WINDOW_STEP / 2)]!,
+        last: data[Math.min(data.length - 1, scrollToIndex + WINDOW_STEP / 2)]!,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollToIndex]);
+
+  const scrolledToIndexRef = useRef<number | undefined>(undefined);
   useLayoutEffect(() => {
-    if (rows.length < 100 && rows.length > 0) {
-      rowVirtualizer.scrollToOffset(0);
-      rowVirtualizer.measure();
-    }
-  }, [rows.length, rowVirtualizer]);
-
-  // Show empty state when there are no logs to display
-  if (data.length === 0) {
-    return (
-      <TableContainer ref={scrollZoneRef}>
-        <EmptyState>No logs to display</EmptyState>
-      </TableContainer>
+    if (scrollToIndex === undefined || scrollToIndex < 0) return;
+    if (scrolledToIndexRef.current === scrollToIndex) return;
+    const row = contentRef.current?.querySelector(
+      `[data-index="${scrollToIndex}"]`,
     );
-  }
+    if (!row) return;
+    scrolledToIndexRef.current = scrollToIndex;
+    setAtBottom(false);
+    row.scrollIntoView({ block: "center" });
+  });
+
+  const olderButton = olderCount > 0 && (
+    <button type="button" className={LIST_BUTTON} onClick={showOlder}>
+      Show {Math.min(olderCount, WINDOW_STEP)} older{" "}
+      {olderCount === 1 ? "log" : "logs"}
+      {olderCount > WINDOW_STEP && ` of ${olderCount}`}
+    </button>
+  );
 
   return (
-    <TableContainer ref={scrollZoneRef}>
-      <ScrollContainer
-        className="container"
-        ref={scrollContainerRef}
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div
+        ref={containerRef}
+        className="min-h-0 flex-1 overflow-auto"
         onScroll={onScroll}
-        height={scrollZoneHeight}
-        disableScroll={!!isResizingColumn}
       >
-        <TableWrapper>
-          <StyledTable>
-            <TableHeader headerGroups={table.getHeaderGroups()} />
-            <TableBody
-              virtualizer={rowVirtualizer}
-              rows={rows}
-              highlightedIndices={highlightedIndices}
-              currentHighlightIndex={currentHighlightIndex}
-            />
-          </StyledTable>
-        </TableWrapper>
-      </ScrollContainer>
-      <ScrollDownButton enabled={autoScrollEnabled} onClick={scrollToBottom} />
-    </TableContainer>
+        <div ref={contentRef} className="w-full min-w-fit">
+          {data.length === 0 ? (
+            <p className="p-24 text-center body-2 text-muted">
+              No logs to display
+            </p>
+          ) : (
+            <>
+              {!newestFirst && olderButton}
+              {rows.map((log, offset) => (
+                <LogRow
+                  key={start + offset}
+                  log={log}
+                  index={start + offset}
+                  highlighted={highlightedIndices?.has(start + offset) ?? false}
+                  currentMatch={currentHighlightIndex === start + offset}
+                  expanded={expandedLogs.has(log)}
+                  onToggle={toggleLog}
+                  columnSizing={columnSizing}
+                />
+              ))}
+              {newestFirst && olderButton}
+              {newerCount > 0 && (
+                <button
+                  type="button"
+                  className={LIST_BUTTON}
+                  onClick={jumpToLatest}
+                >
+                  {newerCount} newer {newerCount === 1 ? "log" : "logs"}
+                </button>
+              )}
+              {follow && (
+                // Hidden rather than removed: a height change here would move the reader back to the bottom
+                <div
+                  className={`flex h-24 items-center justify-center gap-4 ${atBottom ? "" : "invisible"}`}
+                  aria-label={atBottom ? "Following new logs" : undefined}
+                >
+                  {[
+                    "",
+                    "[animation-delay:200ms]",
+                    "[animation-delay:400ms]",
+                  ].map((delay) => (
+                    <span
+                      key={delay}
+                      className={`size-4 animate-pulse rounded-full bg-muted-strong ${delay}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+      <ScrollDownButton enabled={atBottom} onClick={jumpToLatest} />
+    </div>
   );
 };

@@ -1,101 +1,158 @@
 import React from "react";
-import { flexRender, type HeaderGroup } from "@tanstack/react-table";
-import styled from "styled-components";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@ledgerhq/lumen-ui-react";
+import { ChevronDown, ChevronUp } from "@ledgerhq/lumen-ui-react/symbols";
 
-import { type LogData } from "../types";
-import { TABLE_STYLES } from "./constants";
-
-const StyledThead = styled.thead`
-  display: grid;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background-color: white;
-`;
-
-const StyledTr = styled.tr`
-  display: flex;
-  width: 100%;
-  background-color: ghostwhite;
-`;
-
-const StyledTh = styled.th<{
-  size: number;
-  minSize: number;
-  flexible: boolean;
-}>`
-  display: flex;
-  flex: ${({ flexible, size, minSize }) =>
-    flexible ? `${size} 1 ${minSize}px` : `0 0 ${size}px`};
-  min-width: ${({ flexible, size, minSize }) => (flexible ? minSize : size)}px;
-  position: relative;
-  overflow: hidden;
-`;
-
-const HeaderContent = styled.div<{ canSort: boolean }>`
-  font-size: ${TABLE_STYLES.HEADER_FONT_SIZE}px;
-  cursor: ${({ canSort }) => (canSort ? "pointer" : "default")};
-  user-select: ${({ canSort }) => (canSort ? "none" : "auto")};
-`;
-
-const Resizer = styled.div`
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: ${TABLE_STYLES.RESIZER_WIDTH};
-  margin-right: ${TABLE_STYLES.RESIZER_MARGIN};
-  height: 100%;
-  cursor: col-resize;
-  background-color: lightgrey;
-  touch-action: none;
-  user-select: none;
-`;
+import {
+  isLevelFilterActive,
+  isTagFilterActive,
+  LevelFilter,
+  type LoggerOptions,
+  TagFilter,
+} from "../LoggerOptions";
+import { TABLE_CONFIG } from "./constants";
+import {
+  columnMinSize,
+  COLUMNS,
+  columnSize,
+  type ColumnSizing,
+  columnStyle,
+} from "./TableColumns";
 
 type TableHeaderProps = {
-  headerGroups: HeaderGroup<LogData>[];
+  options: LoggerOptions;
+  setOptions: (options: LoggerOptions) => void;
+  uniqueTags: Set<string>;
+  newestFirst: boolean;
+  onToggleSort: () => void;
+  columnSizing: ColumnSizing;
+  onColumnSizingChange: React.Dispatch<React.SetStateAction<ColumnSizing>>;
+  children?: React.ReactNode;
 };
 
-export const TableHeader: React.FC<TableHeaderProps> = ({ headerGroups }) => {
+const FILTERS = {
+  tag: { Filter: TagFilter, isActive: isTagFilterActive },
+  verbosity: { Filter: LevelFilter, isActive: isLevelFilterActive },
+} as const;
+
+const HEADER_LABEL = "body-4-semi-bold text-muted uppercase";
+
+export const TableHeader: React.FC<TableHeaderProps> = ({
+  options,
+  setOptions,
+  uniqueTags,
+  newestFirst,
+  onToggleSort,
+  columnSizing,
+  onColumnSizingChange,
+  children,
+}) => {
+  const startResize =
+    (id: string, startSize: number, minSize: number) =>
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const onMove = (move: MouseEvent) => {
+        const size = Math.min(
+          TABLE_CONFIG.MAX_COLUMN_SIZE,
+          Math.max(minSize, startSize + move.clientX - startX),
+        );
+        onColumnSizingChange((previous) => ({ ...previous, [id]: size }));
+      };
+      const onUp = () => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    };
+
+  const resetSize = (id: string) =>
+    onColumnSizingChange((previous) =>
+      Object.fromEntries(
+        Object.entries(previous).filter(([key]) => key !== id),
+      ),
+    );
+
   return (
-    <StyledThead>
-      {headerGroups.map((headerGroup) => (
-        <StyledTr key={headerGroup.id}>
-          {headerGroup.headers.map((header) => {
-            const flexible =
-              (header.column.columnDef.meta as { flexible?: boolean })
-                ?.flexible ?? false;
-            const size = header.getSize();
-            const minSize = header.column.columnDef.minSize ?? 50;
-            return (
-              <StyledTh
-                key={header.id}
-                size={size}
-                minSize={minSize}
-                flexible={flexible}
-              >
-                <HeaderContent
-                  canSort={header.column.getCanSort()}
-                  onClick={header.column.getToggleSortingHandler()}
+    <div className="flex gap-8 bg-surface py-4 pr-8 pl-8">
+      <span className="w-4 shrink-0" />
+      <div className="flex min-w-0 flex-1 items-center gap-8 pr-8">
+        <span className="w-12 shrink-0" />
+        {COLUMNS.map((column) => {
+          const { id, flexible, header: label } = column;
+          const size = columnSize(column, columnSizing);
+          const minSize = columnMinSize(column);
+          const filter = FILTERS[id as keyof typeof FILTERS];
+          return (
+            <div
+              key={id}
+              className="relative flex overflow-hidden"
+              style={columnStyle(column, columnSizing)}
+            >
+              {filter ? (
+                <Popover>
+                  <PopoverTrigger
+                    aria-label={`Filter by ${label.toLowerCase()}`}
+                    render={
+                      <button
+                        className={`-mx-4 flex cursor-pointer items-center gap-4 rounded-xs px-4 hover:bg-base-transparent-hover hover:text-base ${HEADER_LABEL}`}
+                      >
+                        {label}
+                        <ChevronDown size={12} />
+                        {filter.isActive(options) && (
+                          <span className="size-4 rounded-full bg-active" />
+                        )}
+                      </button>
+                    }
+                  />
+                  <PopoverContent side="bottom" align="start">
+                    <div className="flex max-h-320 flex-col gap-8 overflow-auto p-12 text-base">
+                      <filter.Filter
+                        options={options}
+                        setOptions={setOptions}
+                        uniqueTags={uniqueTags}
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : id === "timestamp" ? (
+                <button
+                  type="button"
+                  onClick={onToggleSort}
+                  title={
+                    newestFirst ? "Show oldest first" : "Show newest first"
+                  }
+                  className={`-mx-4 flex cursor-pointer items-center gap-4 rounded-xs px-4 hover:bg-base-transparent-hover hover:text-base ${HEADER_LABEL}`}
                 >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
+                  {label}
+                  {newestFirst ? (
+                    <ChevronDown size={12} />
+                  ) : (
+                    <ChevronUp size={12} />
                   )}
-                  {{
-                    asc: " 🔼",
-                    desc: " 🔽",
-                  }[header.column.getIsSorted() as string] ?? null}
-                </HeaderContent>
-                <Resizer
-                  onDoubleClick={() => header.column.resetSize()}
-                  onMouseDown={header.getResizeHandler()}
-                  onTouchStart={header.getResizeHandler()}
+                </button>
+              ) : (
+                <span className={HEADER_LABEL}>{label}</span>
+              )}
+              {!flexible && (
+                <span
+                  role="separator"
+                  aria-orientation="vertical"
+                  title="Drag to resize, double-click to reset"
+                  onMouseDown={startResize(id, size, minSize)}
+                  onDoubleClick={() => resetSize(id)}
+                  className="absolute inset-y-0 right-0 w-6 cursor-col-resize border-r-2 border-transparent hover:border-muted"
                 />
-              </StyledTh>
-            );
-          })}
-        </StyledTr>
-      ))}
-    </StyledThead>
+              )}
+            </div>
+          );
+        })}
+        {children}
+      </div>
+    </div>
   );
 };

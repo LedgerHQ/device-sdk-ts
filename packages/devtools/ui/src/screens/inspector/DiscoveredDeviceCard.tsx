@@ -1,99 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
-import styled from "styled-components";
-
-import {
-  Button,
-  Card,
-  CardTitle,
-  CollapsibleContent,
-  CollapsibleHeader,
-  CollapsibleToggle,
-  SmallText,
-} from "./styles";
-
-// ============================================================================
-// Two-column layout
-// ============================================================================
-
-const CardColumns = styled.div`
-  display: flex;
-  gap: 16px;
-`;
-
-const LeftColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-`;
-
-const RightColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
-`;
-
-const DeviceInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 4px;
-`;
-
-// ============================================================================
-// Compact connect options styled components
-// ============================================================================
-
-const OptionsLabel = styled.span`
-  font-size: 11px;
-  font-weight: 600;
-  color: #888;
-`;
-
-const OptionRow = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #555;
-  cursor: pointer;
-  white-space: nowrap;
-`;
-
-const PollingRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #555;
-  white-space: nowrap;
-`;
-
-const PollingInput = styled.input`
-  width: 60px;
-  padding: 2px 6px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 11px;
-  font-family: monospace;
-
-  &:focus {
-    outline: none;
-    border-color: #2196f3;
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-`;
-
-// ============================================================================
-// Component
-// ============================================================================
+import { Button, Checkbox } from "@ledgerhq/lumen-ui-react";
+import { ChevronRight } from "@ledgerhq/lumen-ui-react/symbols";
 
 type DiscoveredDeviceCardProps = {
   device: DiscoveredDevice;
@@ -123,44 +31,46 @@ export const DiscoveredDeviceCard: React.FC<DiscoveredDeviceCardProps> = ({
   }, [onConnect, isRefresherDisabled, pollingInterval]);
 
   return (
-    <Card $variant="discovered">
-      <CardColumns>
-        <LeftColumn>
-          <CardTitle>{device.name || "Unknown Device"}</CardTitle>
-          <DeviceInfo>
-            <SmallText>ID: {device.id}</SmallText>
-            <SmallText>Model: {device.deviceModel.name}</SmallText>
-            <SmallText>Transport: {device.transport}</SmallText>
-            {device.rssi !== undefined && device.rssi !== null && (
-              <SmallText>Signal: {device.rssi} dBm</SmallText>
-            )}
-          </DeviceInfo>
-        </LeftColumn>
+    <div className="flex gap-16 rounded-md border border-active bg-active-subtle p-16">
+      <div className="flex min-w-0 flex-1 flex-col gap-4">
+        <h5 className="body-1-semi-bold">{device.name || "Unknown Device"}</h5>
+        <div className="flex flex-col gap-2 body-3 text-muted">
+          <p className="truncate">ID: {device.id}</p>
+          <p>Model: {device.deviceModel.name}</p>
+          <p>Transport: {device.transport}</p>
+          {device.rssi !== undefined && device.rssi !== null && (
+            <p>Signal: {device.rssi} dBm</p>
+          )}
+        </div>
+      </div>
 
-        <RightColumn>
-          <Button $variant="success" onClick={handleConnect}>
-            Connect
-          </Button>
-          <CollapsibleHeader
-            onClick={() => setOptionsExpanded(!optionsExpanded)}
-          >
-            <CollapsibleToggle $expanded={optionsExpanded}>
-              &#9654;
-            </CollapsibleToggle>
-            <OptionsLabel>Options</OptionsLabel>
-          </CollapsibleHeader>
-          <CollapsibleContent $expanded={optionsExpanded}>
-            <OptionRow>
-              <input
-                type="checkbox"
+      <div className="flex shrink-0 flex-col items-end gap-8">
+        <Button appearance="accent" size="sm" onClick={handleConnect}>
+          Connect
+        </Button>
+        <button
+          className="flex cursor-pointer items-center gap-4 body-4-semi-bold text-muted select-none hover:text-base"
+          onClick={() => setOptionsExpanded(!optionsExpanded)}
+        >
+          <ChevronRight
+            size={12}
+            className={`transition-transform ${optionsExpanded ? "rotate-90" : ""}`}
+          />
+          Options
+        </button>
+        {optionsExpanded && (
+          <div className="flex flex-col gap-8 body-4 text-muted">
+            <label className="flex cursor-pointer items-center gap-6 whitespace-nowrap">
+              <Checkbox
                 checked={isRefresherDisabled}
-                onChange={(e) => setIsRefresherDisabled(e.target.checked)}
+                onCheckedChange={setIsRefresherDisabled}
               />
               Disable refresher
-            </OptionRow>
-            <PollingRow>
-              <span>Polling (ms):</span>
-              <PollingInput
+            </label>
+            <label className="flex items-center gap-6 whitespace-nowrap">
+              Polling (ms):
+              <input
+                className="w-64 rounded-xs bg-muted px-6 py-2 font-mono! body-4 text-base outline-none focus:ring-2 focus:ring-active disabled:text-disabled"
                 type="number"
                 min="1000"
                 placeholder="1000"
@@ -168,10 +78,10 @@ export const DiscoveredDeviceCard: React.FC<DiscoveredDeviceCardProps> = ({
                 onChange={(e) => setPollingInterval(e.target.value)}
                 disabled={isRefresherDisabled}
               />
-            </PollingRow>
-          </CollapsibleContent>
-        </RightColumn>
-      </CardColumns>
-    </Card>
+            </label>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };

@@ -1,36 +1,55 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { type Connector } from "@ledgerhq/device-management-kit-devtools-core";
-import { StyleProvider } from "@ledgerhq/react-ui/styles/index";
-import styled from "styled-components";
+import {
+  type ColorSchemeName,
+  ThemeProvider,
+  useTheme,
+} from "@ledgerhq/lumen-ui-react";
 
 import { DashboardFooter } from "./components/DashboardFooter";
 import {
   DashboardNavigationBar,
   DashboardScreen,
+  SplitMode,
 } from "./components/DashboardNavigationBar";
 import { DebugDrawer } from "./components/DebugDrawer";
 import { SplitView } from "./components/SplitView";
 import { useConnectorMessages } from "./hooks/useConnectorMessages";
 import { Inspector } from "./screens/inspector";
 import { Logger } from "./screens/logger";
-import { MockCapture } from "./screens/mock-capture";
 import { ErrorBoundary } from "./ErrorBoundary";
 
-const DashboardContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-`;
+const COLOR_SCHEME_STORAGE_KEY = "devtools-color-scheme";
 
-const ContentArea = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-`;
+function loadColorScheme(): ColorSchemeName {
+  try {
+    const stored = localStorage.getItem(COLOR_SCHEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark") {
+      return stored;
+    }
+  } catch {
+    // Ignore errors, follow the system
+  }
+  return "system";
+}
 
-const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
+function saveColorScheme(colorScheme: ColorSchemeName): void {
+  try {
+    localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, colorScheme);
+  } catch {
+    // Ignore errors (e.g., storage full, private mode)
+  }
+}
+
+const Dashboard: React.FC<{
+  connector: Connector;
+  onColorSchemeChange: (colorScheme: ColorSchemeName) => void;
+}> = ({ connector, onColorSchemeChange }) => {
+  const { colorScheme } = useTheme();
+  useEffect(() => {
+    document.documentElement.style.colorScheme = colorScheme;
+  }, [colorScheme]);
+
   const {
     receivedMessages,
     sentMessages,
@@ -44,13 +63,8 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     isInspectorConnected,
     providerValue,
     apduResponses,
-    apduExchanges,
-    isRecordingExchanges,
     sendMessage,
     clearLogs,
-    startRecordingExchanges,
-    stopRecordingExchanges,
-    clearRecordedExchanges,
     startListening,
     stopListening,
     startDiscovering,
@@ -64,6 +78,7 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
   const [currentScreen, setCurrentScreen] = useState<DashboardScreen>(
     DashboardScreen.logs,
   );
+  const [split, setSplit] = useState(SplitMode.off);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
 
   const logger = (
@@ -92,49 +107,36 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     />
   );
 
-  const mockCapture = (
-    <MockCapture
-      apduExchanges={apduExchanges}
-      isRecording={isRecordingExchanges}
-      isConnected={isLoggerConnected}
-      startRecording={startRecordingExchanges}
-      stopRecording={stopRecordingExchanges}
-      clearRecorded={clearRecordedExchanges}
-      sessionStates={sessionStates}
-      connectedDevices={connectedDevices}
-    />
-  );
-
   const content = (() => {
-    switch (currentScreen) {
-      case DashboardScreen.logs:
-        return logger;
-      case DashboardScreen.inspector:
-        return inspector;
-      case DashboardScreen.mockCapture:
-        return mockCapture;
-      case DashboardScreen.splitHorizontal:
+    switch (split) {
+      case SplitMode.horizontal:
         return (
           <SplitView direction="horizontal" first={logger} second={inspector} />
         );
-      case DashboardScreen.splitVertical:
+      case SplitMode.vertical:
         return (
           <SplitView direction="vertical" first={logger} second={inspector} />
         );
       default:
-        return logger;
+        return currentScreen === DashboardScreen.inspector ? inspector : logger;
     }
   })();
 
   return (
-    <DashboardContainer>
+    <div className="flex h-screen flex-col overflow-hidden bg-canvas text-base">
       <DashboardNavigationBar
         currentScreen={currentScreen}
         onScreenChange={setCurrentScreen}
+        split={split}
+        onSplitChange={setSplit}
         isLoggerConnected={isLoggerConnected}
         isInspectorConnected={isInspectorConnected}
+        colorScheme={colorScheme}
+        onColorSchemeChange={onColorSchemeChange}
       />
-      <ContentArea>{content}</ContentArea>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {content}
+      </div>
       <DashboardFooter
         isDebugOpen={isDebugOpen}
         onToggleDebug={() => setIsDebugOpen(!isDebugOpen)}
@@ -146,7 +148,7 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
         receivedMessages={receivedMessages}
         sendMessage={sendMessage}
       />
-    </DashboardContainer>
+    </div>
   );
 };
 
@@ -155,11 +157,19 @@ export function DashboardWithErrorBoundary({
 }: {
   connector: Connector;
 }) {
+  const [colorScheme, setColorScheme] = useState(loadColorScheme);
+  const changeColorScheme = (next: ColorSchemeName) => {
+    setColorScheme(next);
+    saveColorScheme(next);
+  };
   return (
-    <ErrorBoundary>
-      <StyleProvider selectedPalette="light">
-        <Dashboard connector={connector} />
-      </StyleProvider>
-    </ErrorBoundary>
+    <ThemeProvider colorScheme={colorScheme}>
+      <ErrorBoundary>
+        <Dashboard
+          connector={connector}
+          onColorSchemeChange={changeColorScheme}
+        />
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 }

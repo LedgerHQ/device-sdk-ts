@@ -8,34 +8,7 @@ import { type DevToolsModule } from "@ledgerhq/device-management-kit-devtools-co
 
 import { mapConnectorMessageToLogData } from "../screens/logger/mapConnectorMessageToLogData";
 import { type LogData } from "../screens/logger/types";
-import { type ApduExchange, type ApduResponse } from "./useConnectorMessages";
-
-const APDU_EXCHANGE_LOG = "apdu-exchange";
-
-/**
- * Extracts a structured APDU exchange from a log message, if the log carries
- * the `apdu-exchange` payload emitted by DMK. Returns null otherwise.
- */
-function tryExtractApduExchange(logData: LogData): ApduExchange | null {
-  const data = logData.payload;
-  if (
-    typeof data !== "object" ||
-    data === null ||
-    Array.isArray(data) ||
-    data["type"] !== APDU_EXCHANGE_LOG ||
-    typeof data["apdu"] !== "string" ||
-    typeof data["response"] !== "string"
-  ) {
-    return null;
-  }
-  return {
-    sessionId:
-      typeof data["sessionId"] === "string" ? data["sessionId"] : undefined,
-    apdu: data["apdu"],
-    response: data["response"],
-    timestamp: logData.timestamp,
-  };
-}
+import { type ApduResponse } from "./useConnectorMessages";
 
 /**
  * Handle module connected handshake message.
@@ -57,19 +30,11 @@ export function handleModuleConnected(
  */
 export function handleLogMessage(
   payload: string,
-  setLogs: Dispatch<SetStateAction<LogData[]>>,
-  setApduExchanges: Dispatch<SetStateAction<ApduExchange[]>>,
-  isRecordingExchanges: boolean,
+  addLog: (log: LogData) => void,
 ): boolean {
   const logData = mapConnectorMessageToLogData(payload);
   if (logData !== null) {
-    setLogs((prev) => [...prev, logData]);
-    if (isRecordingExchanges) {
-      const exchange = tryExtractApduExchange(logData);
-      if (exchange !== null) {
-        setApduExchanges((prev) => [...prev, exchange]);
-      }
-    }
+    addLog(logData);
     return true;
   }
   return false;

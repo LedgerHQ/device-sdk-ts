@@ -1,73 +1,30 @@
-import React, { useCallback, useRef, useState } from "react";
-import { Icons } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import React, { useCallback, useRef } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Close,
+  Search,
+} from "@ledgerhq/lumen-ui-react/symbols";
 
-import { InputContainer, InputWrapper, StyledInput } from "./inputStyles";
+import {
+  INPUT,
+  INPUT_ICON_BUTTON,
+  INPUT_WRAPPER,
+  SHORTCUT_HINT,
+  SHORTCUT_MODIFIER,
+} from "./inputStyles";
 
-const MatchCounter = styled.span`
-  font-size: 11px;
-  color: #666;
-  white-space: nowrap;
-  padding: 0 4px;
-`;
-
-const NavButton = styled.button`
-  background: none;
-  border: none;
-  border-left: 1px solid #eee;
-  padding: 4px 6px;
-  cursor: pointer;
-  opacity: 0.65;
-  color: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    opacity: 1;
-    background-color: #f5f5f5;
-  }
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: default;
-    &:hover {
-      background-color: transparent;
-    }
-  }
-`;
-
-const ClearButton = styled.button`
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  opacity: 0.5;
-  color: #666;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    opacity: 1;
-  }
-`;
-
-const DoubleChevronWrapper = styled.span`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 0;
-  transform: scale(0.85);
-
-  svg {
-    display: block;
-  }
-
-  svg:first-child {
-    margin-bottom: -8px;
-  }
-`;
+const DoubleChevron: React.FC<{ direction: "up" | "down" }> = ({
+  direction,
+}) => {
+  const Chevron = direction === "up" ? ChevronUp : ChevronDown;
+  return (
+    <span className="flex flex-col items-center leading-0 [&>svg:first-child]:-mb-8">
+      <Chevron size={12} />
+      <Chevron size={12} />
+    </span>
+  );
+};
 
 type SearchInputProps = {
   value: string;
@@ -94,7 +51,6 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 }) => {
   const localRef = useRef<HTMLInputElement>(null);
   const effectiveRef = inputRef ?? localRef;
-  const [isFocused, setIsFocused] = useState(false);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -121,55 +77,68 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   }, [onChange, effectiveRef]);
 
   return (
-    <InputContainer>
-      <InputWrapper $focused={isFocused}>
-        <StyledInput
+    <div className="relative w-400 shrink-0">
+      <div className={INPUT_WRAPPER}>
+        <Search size={16} className="shrink-0 text-muted" />
+        <input
           ref={effectiveRef}
+          className={INPUT}
           type="text"
-          placeholder="Search (Ctrl/Cmd+F)"
+          placeholder="Find"
+          aria-label="Find in logs"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           onKeyDown={handleKeyDown}
         />
         {value && (
-          <ClearButton onClick={handleClear} title="Clear search">
-            <Icons.Close size="XS" />
-          </ClearButton>
+          <button
+            className={INPUT_ICON_BUTTON}
+            onClick={handleClear}
+            title="Clear search"
+          >
+            <Close size={12} />
+          </button>
         )}
-        {value && (
-          <MatchCounter>
+        {value ? (
+          <span className="body-4 whitespace-nowrap text-muted">
             {displayIndex}/{matchCount}
-          </MatchCounter>
+          </span>
+        ) : (
+          <kbd className={SHORTCUT_HINT}>{SHORTCUT_MODIFIER}F</kbd>
         )}
-        <NavButton
+        <button
+          className={INPUT_ICON_BUTTON}
           onClick={onPrevious}
           disabled={!hasMatches}
           title="Previous match (Shift+Enter)"
         >
-          <Icons.ChevronBigTop size="XS" />
-        </NavButton>
-        <NavButton
+          <ChevronUp size={16} />
+        </button>
+        <button
+          className={INPUT_ICON_BUTTON}
           onClick={onNext}
           disabled={!hasMatches}
           title="Next match (Enter)"
         >
-          <Icons.ChevronBigBottom size="XS" />
-        </NavButton>
-        <NavButton onClick={onFirst} disabled={!hasMatches} title="First match">
-          <DoubleChevronWrapper>
-            <Icons.ChevronBigTop size="XS" />
-            <Icons.ChevronBigTop size="XS" />
-          </DoubleChevronWrapper>
-        </NavButton>
-        <NavButton onClick={onLast} disabled={!hasMatches} title="Last match">
-          <DoubleChevronWrapper>
-            <Icons.ChevronBigBottom size="XS" />
-            <Icons.ChevronBigBottom size="XS" />
-          </DoubleChevronWrapper>
-        </NavButton>
-      </InputWrapper>
-    </InputContainer>
+          <ChevronDown size={16} />
+        </button>
+        <button
+          className={INPUT_ICON_BUTTON}
+          onClick={onFirst}
+          disabled={!hasMatches}
+          title="First match"
+        >
+          <DoubleChevron direction="up" />
+        </button>
+        <button
+          className={INPUT_ICON_BUTTON}
+          onClick={onLast}
+          disabled={!hasMatches}
+          title="Last match"
+        >
+          <DoubleChevron direction="down" />
+        </button>
+      </div>
+    </div>
   );
 };

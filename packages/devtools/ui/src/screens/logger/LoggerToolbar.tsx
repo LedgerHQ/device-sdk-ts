@@ -1,26 +1,19 @@
 import React from "react";
-import { Flex, Icons, Tooltip } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { IconButton } from "@ledgerhq/lumen-ui-react";
+import { Download, Trash } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { FilterInput } from "./FilterInput";
-import { type LoggerOptions, LoggerOptionsView } from "./LoggerOptions";
+import { type LoggerOptions } from "./LoggerOptions";
+import { PauseButton } from "./PauseButton";
 import { SearchInput } from "./SearchInput";
-
-const ButtonContainer = styled.div`
-  opacity: 0.65;
-  cursor: pointer;
-  flex-shrink: 0;
-  &:hover {
-    opacity: 1;
-  }
-`;
 
 export const LoggerToolbar: React.FC<{
   clearLogs: () => void;
   downloadLogs: () => void;
   options: LoggerOptions;
   setOptions: (options: LoggerOptions) => void;
-  uniqueTags: Set<string>;
+  paused: boolean;
+  onTogglePaused: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   matchCount: number;
@@ -30,12 +23,14 @@ export const LoggerToolbar: React.FC<{
   onSearchFirst: () => void;
   onSearchLast: () => void;
   searchInputRef?: React.RefObject<HTMLInputElement>;
+  filterInputRef?: React.RefObject<HTMLInputElement>;
 }> = ({
   clearLogs,
   downloadLogs,
   options,
   setOptions,
-  uniqueTags,
+  paused,
+  onTogglePaused,
   searchQuery,
   onSearchChange,
   matchCount,
@@ -45,33 +40,13 @@ export const LoggerToolbar: React.FC<{
   onSearchFirst,
   onSearchLast,
   searchInputRef,
+  filterInputRef,
 }) => (
-  <Flex flexDirection="row" columnGap={5} alignItems="center" flex={1}>
-    <ButtonContainer onClick={clearLogs}>
-      <Icons.DeleteStop size="S" />
-    </ButtonContainer>
-    <Tooltip
-      trigger="click"
-      placement="bottom"
-      interactive
-      content={
-        <LoggerOptionsView
-          options={options}
-          setOptions={setOptions}
-          uniqueTags={uniqueTags}
-        />
-      }
-    >
-      <ButtonContainer>
-        <Icons.Settings size="S" />
-      </ButtonContainer>
-    </Tooltip>
-    <ButtonContainer onClick={downloadLogs}>
-      <Icons.Download size="S" />
-    </ButtonContainer>
+  <div className="flex h-56 shrink-0 items-center gap-12 border-b border-muted-subtle px-12">
     <FilterInput
       value={options.filterText}
       onChange={(filterText) => setOptions({ ...options, filterText })}
+      inputRef={filterInputRef}
     />
     <SearchInput
       value={searchQuery}
@@ -84,5 +59,27 @@ export const LoggerToolbar: React.FC<{
       onLast={onSearchLast}
       inputRef={searchInputRef}
     />
-  </Flex>
+    <span className="flex-1" />
+    <div className="flex gap-6">
+      <PauseButton paused={paused} onToggle={onTogglePaused} />
+      <IconButton
+        aria-label="Clear logs"
+        title="Clear logs"
+        icon={Trash}
+        size="xs"
+        appearance="transparent"
+        className="rounded-sm"
+        onClick={clearLogs}
+      />
+      <IconButton
+        aria-label="Export logs"
+        title="Export logs"
+        icon={Download}
+        size="xs"
+        appearance="transparent"
+        className="rounded-sm"
+        onClick={downloadLogs}
+      />
+    </div>
+  </div>
 );

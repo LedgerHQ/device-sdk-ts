@@ -8,17 +8,10 @@
 
 import React from "react";
 import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
+import { Button, Spinner } from "@ledgerhq/lumen-ui-react";
+import { Bluetooth, Search } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { DiscoveredDeviceCard } from "./DiscoveredDeviceCard";
-import {
-  Button,
-  ButtonGroup,
-  DeviceList,
-  ItalicNote,
-  Section,
-  SectionTitle,
-  SmallText,
-} from "./styles";
 
 type DeviceDiscoverySectionProps = {
   discoveredDevices: DiscoveredDevice[];
@@ -50,13 +43,14 @@ export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
   const isAnyDiscoveryActive = isListening || isActivelyDiscovering;
 
   return (
-    <Section>
-      <SectionTitle>Device Discovery</SectionTitle>
+    <section className="flex flex-col gap-12 border-b border-muted-subtle pb-24">
+      <h4 className="heading-5-semi-bold">Device Discovery</h4>
 
-      <ButtonGroup>
+      <div className="flex flex-wrap gap-12">
         <Button
-          $variant={isListening ? "warning" : "primary"}
-          $size="medium"
+          appearance={isListening ? "red" : "base"}
+          size="sm"
+          icon={Search}
           onClick={isListening ? stopListening : startListening}
           disabled={isActivelyDiscovering}
         >
@@ -64,24 +58,27 @@ export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
         </Button>
 
         <Button
-          $variant={isActivelyDiscovering ? "warning" : "success"}
-          $size="medium"
+          appearance={isActivelyDiscovering ? "red" : "accent"}
+          size="sm"
+          icon={Bluetooth}
           onClick={isActivelyDiscovering ? stopDiscovering : startDiscovering}
           disabled={isListening}
         >
           {isActivelyDiscovering ? "Stop Discovery" : "Start Discovery"}
         </Button>
-      </ButtonGroup>
+      </div>
 
-      {isListening && discoveredDevices.length === 0 && (
-        <SmallText>Listening for available devices...</SmallText>
-      )}
-      {isActivelyDiscovering && discoveredDevices.length === 0 && (
-        <SmallText>Discovering devices...</SmallText>
+      {isAnyDiscoveryActive && discoveredDevices.length === 0 && (
+        <p className="flex items-center gap-8 body-3 text-muted">
+          <Spinner size={16} />
+          {isListening
+            ? "Listening for available devices..."
+            : "Discovering devices..."}
+        </p>
       )}
 
       {discoveredDevices.length > 0 && (
-        <DeviceList>
+        <div className="flex flex-col gap-12">
           {discoveredDevices.map((device) => (
             <DiscoveredDeviceCard
               key={device.id}
@@ -89,21 +86,21 @@ export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
               onConnect={(options) => connectDevice(device.id, options)}
             />
           ))}
-        </DeviceList>
+        </div>
       )}
 
       {!isAnyDiscoveryActive && discoveredDevices.length === 0 && (
-        <SmallText>
+        <p className="body-3 text-muted">
           Use &quot;Listen for Devices&quot; to see already-paired devices, or
           &quot;Start Discovery&quot; to scan for new devices.
-        </SmallText>
+        </p>
       )}
 
-      <ItalicNote>
+      <p className="body-3 text-muted-subtle italic">
         Note: this may not work in web apps due to browser security
         restrictions. WebHID and WebBLE require a user gesture (click) in the
         app context to trigger device discovery.
-      </ItalicNote>
-    </Section>
+      </p>
+    </section>
   );
 };

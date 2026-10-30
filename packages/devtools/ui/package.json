@@ -15,6 +15,7 @@
       "import": "./lib/esm/index.js",
       "require": "./lib/cjs/index.js"
     },
+    "./tailwind.css": "./tailwind.css",
     "./*": {
       "types": "./lib/types/*",
       "import": "./lib/esm/*",
@@ -22,7 +23,8 @@
     }
   },
   "files": [
-    "./lib"
+    "./lib",
+    "./tailwind.css"
   ],
   "scripts": {
     "prebuild": "rimraf lib",
@@ -40,15 +42,14 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/device-mockserver-client": "workspace:^",
-    "@ledgerhq/react-ui": "catalog:",
-    "@tanstack/react-table": "8.20.5",
-    "@tanstack/react-virtual": "3.10.8",
-    "antd": "5.20.0",
-    "react-inspector": "9.0.0",
+    "@ledgerhq/lumen-design-core": "0.1.34",
+    "@ledgerhq/lumen-ui-react": "0.1.66",
+    "@radix-ui/react-dialog": "1.1.15",
+    "@radix-ui/react-slot": "1.2.4",
+    "@radix-ui/react-tooltip": "1.2.8",
+    "class-variance-authority": "0.7.1",
     "react-resizable-panels": "^4.4.1",
-    "rxjs": "catalog:",
-    "styled-components": "catalog:"
+    "rxjs": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
@@ -60,8 +61,6 @@
     "@ledgerhq/vitest-config-dmk": "workspace:^",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@types/styled-components": "catalog:",
-    "@types/styled-system": "^5.1.15",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
