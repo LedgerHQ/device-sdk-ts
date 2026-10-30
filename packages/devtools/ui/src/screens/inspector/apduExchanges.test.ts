@@ -79,6 +79,18 @@ describe("extractApduExchanges", () => {
     ).toEqual(["getAppAndVersion", "openApp", "getOsVersion"]);
   });
 
+  it("tags each exchange with the layer that answers it", () => {
+    expect(
+      extractApduExchanges([
+        exchange("e004000000", "6d00"),
+        exchange("b001000000", appAndVersion("BOLOS")),
+        exchange(`e0d8000008${ascii("Ethereum")}`, "9000"),
+        exchange("e004000000", "9000"),
+        exchange("b0a7000000", "9000"),
+      ]).map(({ layer }) => layer),
+    ).toEqual([undefined, "OS", "OS", "Ethereum", "OS"]);
+  });
+
   it("tracks the open app per session", () => {
     expect(
       commands([
