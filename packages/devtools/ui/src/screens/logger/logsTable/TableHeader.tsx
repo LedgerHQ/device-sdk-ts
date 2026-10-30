@@ -6,6 +6,7 @@ import {
 } from "@ledgerhq/lumen-ui-react";
 import { ChevronDown, ChevronUp } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { WithTooltip } from "../../../components/WithTooltip";
 import {
   isLevelFilterActive,
   isTagFilterActive,
@@ -120,21 +121,25 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                   </PopoverContent>
                 </Popover>
               ) : id === "timestamp" ? (
-                <button
-                  type="button"
-                  onClick={onToggleSort}
-                  title={
+                <WithTooltip
+                  label={
                     newestFirst ? "Show oldest first" : "Show newest first"
                   }
-                  className={`-mx-4 flex cursor-pointer items-center gap-4 rounded-xs px-4 hover:bg-base-transparent-hover hover:text-base ${HEADER_LABEL}`}
+                  side="bottom"
                 >
-                  {label}
-                  {newestFirst ? (
-                    <ChevronDown size={12} />
-                  ) : (
-                    <ChevronUp size={12} />
-                  )}
-                </button>
+                  <button
+                    type="button"
+                    onClick={onToggleSort}
+                    className={`-mx-4 flex cursor-pointer items-center gap-4 rounded-xs px-4 hover:bg-base-transparent-hover hover:text-base ${HEADER_LABEL}`}
+                  >
+                    {label}
+                    {newestFirst ? (
+                      <ChevronDown size={12} />
+                    ) : (
+                      <ChevronUp size={12} />
+                    )}
+                  </button>
+                </WithTooltip>
               ) : (
                 <span className={HEADER_LABEL}>{label}</span>
               )}

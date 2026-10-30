@@ -6,6 +6,7 @@ import {
   Search,
 } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { WithTooltip } from "../../components/WithTooltip";
 import {
   INPUT,
   INPUT_ICON_BUTTON,
@@ -91,13 +92,15 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           onKeyDown={handleKeyDown}
         />
         {value && (
-          <button
-            className={INPUT_ICON_BUTTON}
-            onClick={handleClear}
-            title="Clear search"
-          >
-            <Close size={12} />
-          </button>
+          <WithTooltip label="Clear search" side="bottom">
+            <button
+              aria-label="Clear search"
+              className={INPUT_ICON_BUTTON}
+              onClick={handleClear}
+            >
+              <Close size={12} />
+            </button>
+          </WithTooltip>
         )}
         {value ? (
           <span className="body-4 whitespace-nowrap text-muted">
@@ -106,38 +109,46 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         ) : (
           <kbd className={SHORTCUT_HINT}>{SHORTCUT_MODIFIER}F</kbd>
         )}
-        <button
-          className={INPUT_ICON_BUTTON}
-          onClick={onPrevious}
-          disabled={!hasMatches}
-          title="Previous match (Shift+Enter)"
-        >
-          <ChevronUp size={16} />
-        </button>
-        <button
-          className={INPUT_ICON_BUTTON}
-          onClick={onNext}
-          disabled={!hasMatches}
-          title="Next match (Enter)"
-        >
-          <ChevronDown size={16} />
-        </button>
-        <button
-          className={INPUT_ICON_BUTTON}
-          onClick={onFirst}
-          disabled={!hasMatches}
-          title="First match"
-        >
-          <DoubleChevron direction="up" />
-        </button>
-        <button
-          className={INPUT_ICON_BUTTON}
-          onClick={onLast}
-          disabled={!hasMatches}
-          title="Last match"
-        >
-          <DoubleChevron direction="down" />
-        </button>
+        <WithTooltip label="Previous match (Shift+Enter)" side="bottom">
+          <button
+            aria-label="Previous match (Shift+Enter)"
+            className={INPUT_ICON_BUTTON}
+            onClick={onPrevious}
+            disabled={!hasMatches}
+          >
+            <ChevronUp size={16} />
+          </button>
+        </WithTooltip>
+        <WithTooltip label="Next match (Enter)" side="bottom">
+          <button
+            aria-label="Next match (Enter)"
+            className={INPUT_ICON_BUTTON}
+            onClick={onNext}
+            disabled={!hasMatches}
+          >
+            <ChevronDown size={16} />
+          </button>
+        </WithTooltip>
+        <WithTooltip label="First match" side="bottom">
+          <button
+            aria-label="First match"
+            className={INPUT_ICON_BUTTON}
+            onClick={onFirst}
+            disabled={!hasMatches}
+          >
+            <DoubleChevron direction="up" />
+          </button>
+        </WithTooltip>
+        <WithTooltip label="Last match" side="bottom">
+          <button
+            aria-label="Last match"
+            className={INPUT_ICON_BUTTON}
+            onClick={onLast}
+            disabled={!hasMatches}
+          >
+            <DoubleChevron direction="down" />
+          </button>
+        </WithTooltip>
       </div>
     </div>
   );
