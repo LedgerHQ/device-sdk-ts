@@ -5,7 +5,6 @@ import {
   PopoverTrigger,
 } from "@ledgerhq/lumen-ui-react";
 import { ChevronDown, ChevronUp } from "@ledgerhq/lumen-ui-react/symbols";
-import { type ColumnSizingState } from "@tanstack/react-table";
 
 import {
   isLevelFilterActive,
@@ -15,7 +14,13 @@ import {
   TagFilter,
 } from "../LoggerOptions";
 import { TABLE_CONFIG } from "./constants";
-import { createColumns } from "./TableColumns";
+import {
+  columnMinSize,
+  COLUMNS,
+  columnSize,
+  type ColumnSizing,
+  columnStyle,
+} from "./TableColumns";
 
 type TableHeaderProps = {
   options: LoggerOptions;
@@ -23,8 +28,8 @@ type TableHeaderProps = {
   uniqueTags: Set<string>;
   newestFirst: boolean;
   onToggleSort: () => void;
-  columnSizing: ColumnSizingState;
-  onColumnSizingChange: React.Dispatch<React.SetStateAction<ColumnSizingState>>;
+  columnSizing: ColumnSizing;
+  onColumnSizingChange: React.Dispatch<React.SetStateAction<ColumnSizing>>;
   children?: React.ReactNode;
 };
 
@@ -32,8 +37,6 @@ const FILTERS = {
   tag: { Filter: TagFilter, isActive: isTagFilterActive },
   verbosity: { Filter: LevelFilter, isActive: isLevelFilterActive },
 } as const;
-
-const COLUMNS = createColumns();
 
 const HEADER_LABEL = "body-4-semi-bold text-muted uppercase";
 
@@ -80,20 +83,15 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
       <div className="flex min-w-0 flex-1 items-center gap-8 pr-8">
         <span className="w-12 shrink-0" />
         {COLUMNS.map((column) => {
-          const flexible = column.meta?.flexible ?? false;
-          const id = column.accessorKey;
-          const size = columnSizing[id] ?? column.size ?? 150;
-          const minSize = column.minSize ?? 50;
-          const label = String(column.header);
-          const filter = FILTERS[column.accessorKey as keyof typeof FILTERS];
+          const { id, flexible, header: label } = column;
+          const size = columnSize(column, columnSizing);
+          const minSize = columnMinSize(column);
+          const filter = FILTERS[id as keyof typeof FILTERS];
           return (
             <div
               key={id}
               className="relative flex overflow-hidden"
-              style={{
-                flex: flexible ? `${size} 1 ${minSize}px` : `0 0 ${size}px`,
-                minWidth: flexible ? minSize : size,
-              }}
+              style={columnStyle(column, columnSizing)}
             >
               {filter ? (
                 <Popover>

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { type ColumnSizingState } from "@tanstack/react-table";
 
+import { type ColumnSizing } from "./logsTable/TableColumns";
 import { TableHeader } from "./logsTable/TableHeader";
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
 import { LogCounts } from "./LogCounts";
@@ -36,7 +36,7 @@ export const Logger: React.FC<Props> = ({
     });
 
   const [newestFirst, setNewestFirst] = React.useState(false);
-  const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
+  const [columnSizing, setColumnSizing] = React.useState<ColumnSizing>({});
   const data = useMemo(
     () => (newestFirst ? [...displayedLogs].reverse() : displayedLogs),
     [displayedLogs, newestFirst],
@@ -50,8 +50,7 @@ export const Logger: React.FC<Props> = ({
     const currentLength = displayedLogs.length;
     prevDisplayedLogsLengthRef.current = currentLength;
 
-    // If data shrunk significantly, increment nonce to force LogsTable remount
-    // This resets the virtualizer state which can get corrupted when filtering
+    // If data shrunk significantly (e.g. a new filter), remount LogsTable to follow the latest logs again
     if (
       currentLength < prevLength * 0.5 ||
       (currentLength < 100 && currentLength < prevLength)
@@ -75,10 +74,20 @@ export const Logger: React.FC<Props> = ({
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const filterInputRef = useRef<HTMLInputElement>(null);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
+
+  const rootRef = useRef<HTMLDivElement>(null);
 
   // Keyboard shortcuts (Ctrl/Cmd+F, Ctrl/Cmd+K, Ctrl/Cmd+G / Ctrl/Cmd+Shift+G)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const root = rootRef.current;
+      // Only while the Logger is on screen, and never over typing in another view's field
+      if (!root || root.offsetParent === null) return;
+      const field = (e.target as Element | null)?.closest?.(
+        "input, textarea, select, [contenteditable='true']",
+      );
+      if (field && !root.contains(field)) return;
       // Ctrl/Cmd+F to focus search
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
         e.preventDefault();
@@ -151,7 +160,7 @@ export const Logger: React.FC<Props> = ({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div ref={rootRef} className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <LoggerToolbar
         clearLogs={onClickClearLogs}
         downloadLogs={downloadLogs}
@@ -170,21 +179,26 @@ export const Logger: React.FC<Props> = ({
         searchInputRef={searchInputRef}
         filterInputRef={filterInputRef}
       />
-      <TableHeader
-        options={options}
-        setOptions={setOptions}
-        uniqueTags={uniqueTags}
-        newestFirst={newestFirst}
-        onToggleSort={() => setNewestFirst(!newestFirst)}
-        columnSizing={columnSizing}
-        onColumnSizingChange={setColumnSizing}
-      >
-        <LogCounts
-          paused={pausedLogs !== null}
-          total={visibleLogs.length}
-          displayed={displayedLogs.length}
-        />
-      </TableHeader>
+      {/* Scrolled by the rows, so the headings stay above their columns */}
+      <div ref={headerScrollRef} className="shrink-0 overflow-hidden">
+        <div className="min-w-fit">
+          <TableHeader
+            options={options}
+            setOptions={setOptions}
+            uniqueTags={uniqueTags}
+            newestFirst={newestFirst}
+            onToggleSort={() => setNewestFirst(!newestFirst)}
+            columnSizing={columnSizing}
+            onColumnSizingChange={setColumnSizing}
+          >
+            <LogCounts
+              paused={pausedLogs !== null}
+              total={visibleLogs.length}
+              displayed={displayedLogs.length}
+            />
+          </TableHeader>
+        </div>
+      </div>
       <LogsTable
         data={data}
         key={`${tableKey}-${newestFirst}`}
@@ -192,8 +206,13 @@ export const Logger: React.FC<Props> = ({
         currentHighlightIndex={currentMatchRowIndex}
         scrollToIndex={currentMatchRowIndex}
         follow={pausedLogs === null && !newestFirst}
+        newestFirst={newestFirst}
         columnSizing={columnSizing}
-        onColumnSizingChange={setColumnSizing}
+        onHorizontalScroll={(scrollLeft) => {
+          if (headerScrollRef.current) {
+            headerScrollRef.current.scrollLeft = scrollLeft;
+          }
+        }}
       />
     </div>
   );

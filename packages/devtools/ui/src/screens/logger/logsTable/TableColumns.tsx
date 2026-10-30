@@ -1,8 +1,7 @@
-// @ts-expect-error marked as unused but it must be in use for JSX
-import React from "react";
-import { createColumnHelper, type RowData } from "@tanstack/react-table";
+import type React from "react";
 
 import { type LogData } from "../types";
+import { TABLE_CONFIG } from "./constants";
 import {
   MessageCell,
   TagCell,
@@ -10,43 +9,57 @@ import {
   VerbosityCell,
 } from "./LogTableCells";
 
-declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface ColumnMeta<TData extends RowData, TValue> {
-    flexible?: boolean;
-  }
-}
+export type ColumnSizing = Record<string, number>;
 
-const columnHelper = createColumnHelper<LogData>();
+type LogColumn = {
+  id: "timestamp" | "tag" | "verbosity" | "message";
+  header: string;
+  Cell: React.FC<LogData>;
+  size: number;
+  minSize?: number;
+  flexible: boolean;
+};
 
-export const createColumns = () => [
-  columnHelper.accessor("timestamp", {
+export const COLUMNS: LogColumn[] = [
+  {
+    id: "timestamp",
     header: "Time",
-    cell: (info) => <TimestampCell {...info.row.original} />,
-    enableSorting: true,
+    Cell: TimestampCell,
     size: 104,
-    meta: { flexible: false },
-  }),
-  columnHelper.accessor("tag", {
-    header: "Tag",
-    cell: (info) => <TagCell {...info.row.original} />,
-    enableSorting: false,
-    size: 170,
-    meta: { flexible: false },
-  }),
-  columnHelper.accessor("verbosity", {
+    flexible: false,
+  },
+  { id: "tag", header: "Tag", Cell: TagCell, size: 170, flexible: false },
+  {
+    id: "verbosity",
     header: "Level",
-    cell: (info) => <VerbosityCell {...info.row.original} />,
-    enableSorting: false,
+    Cell: VerbosityCell,
     size: 64,
-    meta: { flexible: false },
-  }),
-  columnHelper.accessor("message", {
+    flexible: false,
+  },
+  {
+    id: "message",
     header: "Message",
-    cell: (info) => <MessageCell {...info.row.original} />,
-    enableSorting: false,
+    Cell: MessageCell,
     size: 300,
     minSize: 200,
-    meta: { flexible: true },
-  }),
+    flexible: true,
+  },
 ];
+
+export const columnSize = (column: LogColumn, columnSizing: ColumnSizing) =>
+  columnSizing[column.id] ?? column.size;
+
+export const columnMinSize = (column: LogColumn) =>
+  column.minSize ?? TABLE_CONFIG.MIN_COLUMN_SIZE;
+
+export const columnStyle = (
+  column: LogColumn,
+  columnSizing: ColumnSizing,
+): React.CSSProperties => {
+  const size = columnSize(column, columnSizing);
+  const minSize = columnMinSize(column);
+  return {
+    flex: column.flexible ? `${size} 1 ${minSize}px` : `0 0 ${size}px`,
+    minWidth: column.flexible ? minSize : size,
+  };
+};

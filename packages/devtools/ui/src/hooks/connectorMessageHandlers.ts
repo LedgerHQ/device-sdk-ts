@@ -30,11 +30,11 @@ export function handleModuleConnected(
  */
 export function handleLogMessage(
   payload: string,
-  setLogs: Dispatch<SetStateAction<LogData[]>>,
+  addLog: (log: LogData) => void,
 ): boolean {
   const logData = mapConnectorMessageToLogData(payload);
   if (logData !== null) {
-    setLogs((prev) => [...prev, logData]);
+    addLog(logData);
     return true;
   }
   return false;

@@ -6,7 +6,7 @@
  * via the connector (WebSocket or Rozenite).
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   type ConnectedDevice,
   type DeviceSessionState,
@@ -86,6 +86,10 @@ export type ConnectorMessagesState = {
 // Hook
 // ============================================================================
 
+const FLUSH_INTERVAL_MS = 250;
+// Every view rescans the logs on each flush, so a long session must not grow them forever
+const MAX_LOGS = 20_000;
+
 /**
  * Central hook for managing DevTools connector state and communication.
  *
@@ -130,16 +134,39 @@ export function useConnectorMessages(
       ...connector,
       sendMessage: (type: string, payload: string) => {
         connector.sendMessage(type, payload);
-        setSentMessages((prev) => [...prev, { type, payload }]);
+        setSentMessages((prev) =>
+          [...prev, { type, payload }].slice(-MAX_LOGS),
+        );
       },
     }),
     [connector],
   );
 
+  // Shared with clearLogs, so a clear also drops the logs waiting for the next flush
+  const pendingLogsRef = useRef<LogData[]>([]);
+
   // === Message Listener ===
   useEffect(() => {
+    // Logs and the debug message list are added in batches, like Dozzle: a polling
+    // device sends several logs per second, and adding them one by one re-rendered
+    // the dashboard and copied both lists for every line.
+    let pendingMessages: Message[] = [];
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+    const flush = () => {
+      flushTimer = undefined;
+      const messages = pendingMessages;
+      const newLogs = pendingLogsRef.current;
+      pendingMessages = [];
+      pendingLogsRef.current = [];
+      setReceivedMessages((prev) => [...prev, ...messages].slice(-MAX_LOGS));
+      if (newLogs.length > 0) {
+        setLogs((prev) => [...prev, ...newLogs].slice(-MAX_LOGS));
+      }
+    };
+
     const { unsubscribe } = connector.listenToMessages((type, payload) => {
-      setReceivedMessages((prev) => [...prev, { type, payload }]);
+      pendingMessages.push({ type, payload });
+      flushTimer ??= setTimeout(flush, FLUSH_INTERVAL_MS);
 
       switch (type) {
         case MODULE_CONNECTED_MESSAGE_TYPE:
@@ -161,11 +188,16 @@ export function useConnectorMessages(
           handleApduResponse(payload, setApduResponses);
           break;
         case LOGGER_MESSAGE_TYPES.ADD_LOG:
-          handleLogMessage(payload, setLogs);
+          handleLogMessage(payload, (log) => pendingLogsRef.current.push(log));
           break;
       }
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      clearTimeout(flushTimer);
+      // Logs queued for this connector must not be flushed by the next one
+      pendingLogsRef.current = [];
+    };
   }, [connector]);
 
   // === Commands (using tracked connector to log all sent messages) ===
@@ -208,6 +240,7 @@ export function useConnectorMessages(
   }, [discoveryCommands]);
 
   const clearLogs = useCallback(() => {
+    pendingLogsRef.current = [];
     setLogs([]);
   }, []);
 
