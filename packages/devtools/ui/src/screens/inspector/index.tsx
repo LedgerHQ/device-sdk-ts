@@ -50,6 +50,7 @@ type InspectorProps = {
   rewriteMockServerUrl?: (url: string) => string;
   onExplain: (request: AiSelection) => void;
   showLiveScreen: boolean;
+  showSessions: boolean;
 };
 
 const INSPECTOR_CODE_EXAMPLE = `import { DevToolsDmkInspector } from "@ledgerhq/device-management-kit-devtools-core";
@@ -80,6 +81,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   rewriteMockServerUrl,
   onExplain,
   showLiveScreen,
+  showSessions,
 }) => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
@@ -114,21 +116,23 @@ export const Inspector: React.FC<InspectorProps> = ({
 
   return (
     <div className="flex min-h-0 flex-1">
-      <InspectorRail
-        devices={devices}
-        sessionStates={sessionStates}
-        selectedSessionId={selectedDevice?.sessionId ?? null}
-        onSelect={setSelectedSessionId}
-        discoveredDevices={discoveredDevices}
-        isListening={isListening}
-        isActivelyDiscovering={isActivelyDiscovering}
-        startListening={startListening}
-        stopListening={stopListening}
-        startDiscovering={startDiscovering}
-        stopDiscovering={stopDiscovering}
-        connectDevice={connectDevice}
-        mockServer={mockServer}
-      />
+      {showSessions && (
+        <InspectorRail
+          devices={devices}
+          sessionStates={sessionStates}
+          selectedSessionId={selectedDevice?.sessionId ?? null}
+          onSelect={setSelectedSessionId}
+          discoveredDevices={discoveredDevices}
+          isListening={isListening}
+          isActivelyDiscovering={isActivelyDiscovering}
+          startListening={startListening}
+          stopListening={stopListening}
+          startDiscovering={startDiscovering}
+          stopDiscovering={stopDiscovering}
+          connectDevice={connectDevice}
+          mockServer={mockServer}
+        />
+      )}
       {selectedDevice ? (
         <>
           <DevicePanel

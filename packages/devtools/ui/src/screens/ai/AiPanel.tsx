@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { IconButton, Spinner } from "@ledgerhq/lumen-ui-react";
 import { ArrowUp, Check, SparksFill } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { ResizablePanel } from "../../components/ResizablePanel";
 import { WithTooltip } from "../../components/WithTooltip";
 import { INPUT, INPUT_WRAPPER } from "../logger/inputStyles";
 import { AiAnswer } from "./AiAnswer";
@@ -306,66 +307,75 @@ export const AiPanel: React.FC<{
   })();
 
   return (
-    <aside className="flex w-400 shrink-0 flex-col border-l border-muted-subtle bg-surface">
-      <div className="flex items-center gap-8 border-b border-muted-subtle px-16 py-12">
-        <SparksFill size={16} className="text-active" />
-        <h2 className="body-2-semi-bold">AI debugging</h2>
-        {lastRequest.current && (
-          <span className="truncate body-4 text-muted">
-            · {lastRequest.current.summary}
-          </span>
-        )}
-        <span className="flex-1" />
-        {running && (
-          <button type="button" className={BUTTON} onClick={stop}>
-            Stop
-          </button>
-        )}
-      </div>
-      {ready && (
-        <div className="flex items-center gap-6 px-16 pt-12">
-          <Chip selected={!readCode} onClick={() => setReadCode(false)}>
-            Quick
-          </Chip>
-          {status.canReadCode && (
-            <WithTooltip label="Let Claude read DMK's source code to confirm the cause. Slower.">
-              <Chip selected={readCode} onClick={() => setReadCode(true)}>
-                Read the code
-              </Chip>
-            </WithTooltip>
+    <ResizablePanel
+      name="ai"
+      defaultWidth={400}
+      minWidth={320}
+      maxWidth={800}
+      edge="left"
+      className="border-l border-muted-subtle bg-surface"
+    >
+      <aside className="flex min-h-0 flex-1 flex-col">
+        <div className="flex items-center gap-8 border-b border-muted-subtle px-16 py-12">
+          <SparksFill size={16} className="text-active" />
+          <h2 className="body-2-semi-bold">AI debugging</h2>
+          {lastRequest.current && (
+            <span className="truncate body-4 text-muted">
+              · {lastRequest.current.summary}
+            </span>
           )}
           <span className="flex-1" />
-          <span className="body-4 text-muted">{status.model}</span>
+          {running && (
+            <button type="button" className={BUTTON} onClick={stop}>
+              Stop
+            </button>
+          )}
         </div>
-      )}
-      <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
-      {ready && sessionId && (
-        <div className="flex items-center gap-8 border-t border-muted-subtle px-16 py-12">
-          <div className={`flex-1 ${INPUT_WRAPPER}`}>
-            <input
-              className={INPUT}
-              type="text"
-              placeholder="Ask a follow-up…"
-              aria-label="Ask a follow-up question"
-              value={question}
-              disabled={running}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && ask()}
-            />
+        {ready && (
+          <div className="flex items-center gap-6 px-16 pt-12">
+            <Chip selected={!readCode} onClick={() => setReadCode(false)}>
+              Quick
+            </Chip>
+            {status.canReadCode && (
+              <WithTooltip label="Let Claude read DMK's source code to confirm the cause. Slower.">
+                <Chip selected={readCode} onClick={() => setReadCode(true)}>
+                  Read the code
+                </Chip>
+              </WithTooltip>
+            )}
+            <span className="flex-1" />
+            <span className="body-4 text-muted">{status.model}</span>
           </div>
-          <WithTooltip label="Ask">
-            <IconButton
-              aria-label="Ask"
-              icon={ArrowUp}
-              size="xs"
-              appearance="transparent"
-              className="rounded-sm [&>svg]:text-active"
-              disabled={running || !question.trim()}
-              onClick={ask}
-            />
-          </WithTooltip>
-        </div>
-      )}
-    </aside>
+        )}
+        <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
+        {ready && sessionId && (
+          <div className="flex items-center gap-8 border-t border-muted-subtle px-16 py-12">
+            <div className={`flex-1 ${INPUT_WRAPPER}`}>
+              <input
+                className={INPUT}
+                type="text"
+                placeholder="Ask a follow-up…"
+                aria-label="Ask a follow-up question"
+                value={question}
+                disabled={running}
+                onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && ask()}
+              />
+            </div>
+            <WithTooltip label="Ask">
+              <IconButton
+                aria-label="Ask"
+                icon={ArrowUp}
+                size="xs"
+                appearance="transparent"
+                className="rounded-sm [&>svg]:text-active"
+                disabled={running || !question.trim()}
+                onClick={ask}
+              />
+            </WithTooltip>
+          </div>
+        )}
+      </aside>
+    </ResizablePanel>
   );
 };
