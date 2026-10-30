@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Close } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { WithTooltip } from "../../components/WithTooltip";
 import {
   INPUT,
   INPUT_CONTAINER,
@@ -23,6 +24,7 @@ export const FilterInput: React.FC<FilterInputProps> = ({
   inputRef: externalInputRef,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const listId = useId();
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const { recentFilters, removeFilter } = useRecentFilters(value);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,7 +55,9 @@ export const FilterInput: React.FC<FilterInputProps> = ({
       }
       return !prev;
     });
-  }, []);
+    // The arrow keys and Enter drive the list from the input
+    inputRef.current?.focus();
+  }, [inputRef]);
 
   const handleSelectFilter = useCallback(
     (filter: string) => {
@@ -76,7 +80,10 @@ export const FilterInput: React.FC<FilterInputProps> = ({
         }
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        if (showDropdown && recentFilters.length > 0) {
+        if (!showDropdown) {
+          setShowDropdown(true);
+          setHighlightedIndex(recentFilters.length > 0 ? 0 : -1);
+        } else if (recentFilters.length > 0) {
           setHighlightedIndex((prev) =>
             prev < recentFilters.length - 1 ? prev + 1 : prev,
           );
@@ -141,32 +148,52 @@ export const FilterInput: React.FC<FilterInputProps> = ({
           type="text"
           placeholder="Filter"
           aria-label="Filter logs"
+          role="combobox"
+          aria-expanded={showDropdown}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={
+            showDropdown && highlightedIndex >= 0
+              ? `${listId}-${highlightedIndex}`
+              : undefined
+          }
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
         />
         {value ? (
-          <button
-            className={INPUT_ICON_BUTTON}
-            onClick={handleClear}
-            title="Clear filter"
-          >
-            <Close size={12} />
-          </button>
+          <WithTooltip label="Clear filter" side="bottom">
+            <button
+              aria-label="Clear filter"
+              className={INPUT_ICON_BUTTON}
+              onClick={handleClear}
+            >
+              <Close size={12} />
+            </button>
+          </WithTooltip>
         ) : (
           <kbd className={SHORTCUT_HINT}>{SHORTCUT_MODIFIER}K</kbd>
         )}
-        <button
-          type="button"
-          className={`${INPUT_ICON_BUTTON} ${showDropdown ? "text-base" : ""}`}
-          onClick={toggleDropdown}
-          title="Recent filters"
-        >
-          <ChevronDown size={16} />
-        </button>
+        <WithTooltip label="Recent filters" side="bottom">
+          <button
+            aria-label="Recent filters"
+            aria-haspopup="listbox"
+            aria-expanded={showDropdown}
+            type="button"
+            className={`${INPUT_ICON_BUTTON} ${showDropdown ? "text-base" : ""}`}
+            onClick={toggleDropdown}
+          >
+            <ChevronDown size={16} />
+          </button>
+        </WithTooltip>
       </div>
       {showDropdown && (
-        <div className="absolute inset-x-0 top-full z-1000 mt-4 max-h-320 overflow-y-auto rounded-sm border border-muted-subtle bg-canvas-sheet py-4 shadow-xl">
+        <div
+          id={listId}
+          role="listbox"
+          aria-label="Recent filters"
+          className="absolute inset-x-0 top-full z-1000 mt-4 max-h-320 overflow-y-auto rounded-sm border border-muted-subtle bg-canvas-sheet py-4 shadow-xl"
+        >
           <div className="border-b border-muted-subtle px-10 py-6 body-4-semi-bold text-muted uppercase">
             Recent filters
           </div>
@@ -178,17 +205,22 @@ export const FilterInput: React.FC<FilterInputProps> = ({
             recentFilters.map((filter, index) => (
               <div
                 key={filter}
+                id={`${listId}-${index}`}
+                role="option"
+                aria-selected={index === highlightedIndex}
                 className={`group flex cursor-pointer items-center justify-between px-10 py-8 font-mono! body-3 hover:bg-base-transparent-hover ${index === highlightedIndex ? "bg-active-subtle" : ""}`}
                 onClick={() => handleSelectFilter(filter)}
               >
                 <span className="flex-1 truncate">{filter}</span>
-                <button
-                  className="ml-8 flex cursor-pointer items-center text-muted opacity-50 group-hover:opacity-100 hover:text-base"
-                  onClick={(e) => handleRemoveFilter(e, filter)}
-                  title="Remove from recent"
-                >
-                  <Close size={12} />
-                </button>
+                <WithTooltip label="Remove from recent" side="bottom">
+                  <button
+                    aria-label="Remove from recent"
+                    className="ml-8 flex cursor-pointer items-center text-muted opacity-50 group-hover:opacity-100 hover:text-base focus-visible:opacity-100"
+                    onClick={(e) => handleRemoveFilter(e, filter)}
+                  >
+                    <Close size={12} />
+                  </button>
+                </WithTooltip>
               </div>
             ))
           )}

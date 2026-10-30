@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { IconButton } from "@ledgerhq/lumen-ui-react";
 import { Check, ChevronRight, Copy } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { WithTooltip } from "../../components/WithTooltip";
 import { type LogData } from "./types";
 
 type Branch = Record<string, unknown> | unknown[];
@@ -20,19 +21,20 @@ const CopyButton: React.FC<{ text: string; label: string }> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   return (
-    <IconButton
-      aria-label={label}
-      title={label}
-      icon={copied ? Check : Copy}
-      size="xs"
-      appearance="no-background"
-      onClick={() => {
-        void navigator.clipboard.writeText(text).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        });
-      }}
-    />
+    <WithTooltip label={label}>
+      <IconButton
+        aria-label={label}
+        icon={copied ? Check : Copy}
+        size="xs"
+        appearance="no-background"
+        onClick={() => {
+          void navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          });
+        }}
+      />
+    </WithTooltip>
   );
 };
 
@@ -182,7 +184,7 @@ export const LogPayload: React.FC<{ payload: LogData["payload"] }> = ({
   );
   return (
     <div className="group relative rounded-sm bg-muted px-12 py-8 pr-40 font-mono! body-3">
-      <div className="absolute top-4 right-4 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute top-4 right-4 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <CopyButton text={json} label="Copy payload" />
       </div>
       {typeof payload === "string" ? (
