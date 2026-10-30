@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { IconButton } from "@ledgerhq/lumen-ui-react";
 import { Check, ChevronRight, Copy } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { WithTooltip } from "../../components/WithTooltip";
 import { type LogData } from "./types";
 
 type Branch = Record<string, unknown> | unknown[];
@@ -20,19 +21,20 @@ const CopyButton: React.FC<{ text: string; label: string }> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   return (
-    <IconButton
-      aria-label={label}
-      title={label}
-      icon={copied ? Check : Copy}
-      size="xs"
-      appearance="no-background"
-      onClick={() => {
-        void navigator.clipboard.writeText(text).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        });
-      }}
-    />
+    <WithTooltip label={label}>
+      <IconButton
+        aria-label={label}
+        icon={copied ? Check : Copy}
+        size="xs"
+        appearance="no-background"
+        onClick={() => {
+          void navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          });
+        }}
+      />
+    </WithTooltip>
   );
 };
 

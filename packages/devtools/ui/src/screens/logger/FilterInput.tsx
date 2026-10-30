@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, Close } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { WithTooltip } from "../../components/WithTooltip";
 import {
   INPUT,
   INPUT_CONTAINER,
@@ -146,24 +147,28 @@ export const FilterInput: React.FC<FilterInputProps> = ({
           onKeyDown={handleKeyDown}
         />
         {value ? (
-          <button
-            className={INPUT_ICON_BUTTON}
-            onClick={handleClear}
-            title="Clear filter"
-          >
-            <Close size={12} />
-          </button>
+          <WithTooltip label="Clear filter" side="bottom">
+            <button
+              aria-label="Clear filter"
+              className={INPUT_ICON_BUTTON}
+              onClick={handleClear}
+            >
+              <Close size={12} />
+            </button>
+          </WithTooltip>
         ) : (
           <kbd className={SHORTCUT_HINT}>{SHORTCUT_MODIFIER}K</kbd>
         )}
-        <button
-          type="button"
-          className={`${INPUT_ICON_BUTTON} ${showDropdown ? "text-base" : ""}`}
-          onClick={toggleDropdown}
-          title="Recent filters"
-        >
-          <ChevronDown size={16} />
-        </button>
+        <WithTooltip label="Recent filters" side="bottom">
+          <button
+            aria-label="Recent filters"
+            type="button"
+            className={`${INPUT_ICON_BUTTON} ${showDropdown ? "text-base" : ""}`}
+            onClick={toggleDropdown}
+          >
+            <ChevronDown size={16} />
+          </button>
+        </WithTooltip>
       </div>
       {showDropdown && (
         <div className="absolute inset-x-0 top-full z-1000 mt-4 max-h-320 overflow-y-auto rounded-sm border border-muted-subtle bg-canvas-sheet py-4 shadow-xl">
@@ -182,13 +187,15 @@ export const FilterInput: React.FC<FilterInputProps> = ({
                 onClick={() => handleSelectFilter(filter)}
               >
                 <span className="flex-1 truncate">{filter}</span>
-                <button
-                  className="ml-8 flex cursor-pointer items-center text-muted opacity-50 group-hover:opacity-100 hover:text-base"
-                  onClick={(e) => handleRemoveFilter(e, filter)}
-                  title="Remove from recent"
-                >
-                  <Close size={12} />
-                </button>
+                <WithTooltip label="Remove from recent" side="bottom">
+                  <button
+                    aria-label="Remove from recent"
+                    className="ml-8 flex cursor-pointer items-center text-muted opacity-50 group-hover:opacity-100 hover:text-base"
+                    onClick={(e) => handleRemoveFilter(e, filter)}
+                  >
+                    <Close size={12} />
+                  </button>
+                </WithTooltip>
               </div>
             ))
           )}

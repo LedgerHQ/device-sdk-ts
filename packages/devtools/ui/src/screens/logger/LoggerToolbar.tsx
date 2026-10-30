@@ -2,6 +2,7 @@ import React from "react";
 import { IconButton } from "@ledgerhq/lumen-ui-react";
 import { Download, Trash } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { WithTooltip } from "../../components/WithTooltip";
 import { FilterInput } from "./FilterInput";
 import { type LoggerOptions } from "./LoggerOptions";
 import { PauseButton } from "./PauseButton";
@@ -62,24 +63,26 @@ export const LoggerToolbar: React.FC<{
     <span className="flex-1" />
     <div className="flex gap-6">
       <PauseButton paused={paused} onToggle={onTogglePaused} />
-      <IconButton
-        aria-label="Clear logs"
-        title="Clear logs"
-        icon={Trash}
-        size="xs"
-        appearance="transparent"
-        className="rounded-sm"
-        onClick={clearLogs}
-      />
-      <IconButton
-        aria-label="Export logs"
-        title="Export logs"
-        icon={Download}
-        size="xs"
-        appearance="transparent"
-        className="rounded-sm"
-        onClick={downloadLogs}
-      />
+      <WithTooltip label="Clear logs" side="bottom">
+        <IconButton
+          aria-label="Clear logs"
+          icon={Trash}
+          size="xs"
+          appearance="transparent"
+          className="rounded-sm"
+          onClick={clearLogs}
+        />
+      </WithTooltip>
+      <WithTooltip label="Export logs" side="bottom">
+        <IconButton
+          aria-label="Export logs"
+          icon={Download}
+          size="xs"
+          appearance="transparent"
+          className="rounded-sm"
+          onClick={downloadLogs}
+        />
+      </WithTooltip>
     </div>
   </div>
 );

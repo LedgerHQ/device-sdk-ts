@@ -7,6 +7,8 @@ import {
 } from "@ledgerhq/lumen-ui-react";
 import { Moon, Sun } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { WithTooltip } from "./WithTooltip";
+
 export enum DashboardScreen {
   logs = "logs",
   inspector = "inspector",
@@ -102,36 +104,35 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
           aria-label="Split"
         >
           {SPLITS.map(({ mode, title, path }) => (
-            <SegmentedControlButton
-              key={mode}
-              value={mode}
-              title={title}
-              aria-label={title}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                aria-hidden="true"
-              >
-                <rect x="2" y="2.5" width="12" height="11" rx="1.5" />
-                {path && <path d={path} />}
-              </svg>
+            // The tooltip goes inside: the control finds its buttons among its direct children
+            <SegmentedControlButton key={mode} value={mode} aria-label={title}>
+              <WithTooltip label={title} side="bottom">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  aria-hidden="true"
+                >
+                  <rect x="2" y="2.5" width="12" height="11" rx="1.5" />
+                  {path && <path d={path} />}
+                </svg>
+              </WithTooltip>
             </SegmentedControlButton>
           ))}
         </SegmentedControl>
-        <IconButton
-          aria-label={`Switch to ${nextColorScheme} theme`}
-          title={`Switch to ${nextColorScheme} theme`}
-          icon={colorScheme === "dark" ? Sun : Moon}
-          size="xs"
-          appearance="transparent"
-          className="rounded-sm"
-          onClick={() => onColorSchemeChange(nextColorScheme)}
-        />
+        <WithTooltip label={`Switch to ${nextColorScheme} theme`} side="bottom">
+          <IconButton
+            aria-label={`Switch to ${nextColorScheme} theme`}
+            icon={colorScheme === "dark" ? Sun : Moon}
+            size="xs"
+            appearance="transparent"
+            className="rounded-sm"
+            onClick={() => onColorSchemeChange(nextColorScheme)}
+          />
+        </WithTooltip>
       </div>
     </div>
   );

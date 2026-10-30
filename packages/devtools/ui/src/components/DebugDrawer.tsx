@@ -11,6 +11,7 @@ import { Close } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { DebugDevTools } from "../screens/debugDevTools";
 import { type Message } from "../shared/PluginEvents";
+import { WithTooltip } from "./WithTooltip";
 
 type DebugDrawerProps = {
   isOpen: boolean;
@@ -38,13 +39,15 @@ export const DebugDrawer: React.FC<DebugDrawerProps> = ({
       >
         <div className="flex shrink-0 items-center justify-between px-16 py-8">
           <h4 className="heading-5-semi-bold">Debug DevTools</h4>
-          <IconButton
-            aria-label="Close debug panel"
-            icon={Close}
-            size="sm"
-            appearance="no-background"
-            onClick={onClose}
-          />
+          <WithTooltip label="Close debug panel" side="bottom">
+            <IconButton
+              aria-label="Close debug panel"
+              icon={Close}
+              size="sm"
+              appearance="no-background"
+              onClick={onClose}
+            />
+          </WithTooltip>
         </div>
         <div className="min-h-0 flex-1 overflow-hidden">
           <DebugDevTools

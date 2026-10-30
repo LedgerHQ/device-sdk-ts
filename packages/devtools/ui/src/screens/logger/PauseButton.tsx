@@ -1,6 +1,8 @@
 import React from "react";
 import { IconButton } from "@ledgerhq/lumen-ui-react";
 
+import { WithTooltip } from "../../components/WithTooltip";
+
 type IconProps = { size?: number; className?: string };
 
 // Lumen's Pause is circled and it has no Play, so both are drawn in its outline style.
@@ -36,13 +38,17 @@ export const PauseButton: React.FC<{
   paused: boolean;
   onToggle: () => void;
 }> = ({ paused, onToggle }) => (
-  <IconButton
-    aria-label={paused ? "Resume incoming logs" : "Pause incoming logs"}
-    title={paused ? "Resume incoming logs" : "Pause incoming logs"}
-    icon={paused ? Play : Pause}
-    size="xs"
-    appearance="transparent"
-    className={`rounded-sm ${paused ? "bg-active-subtle hover:bg-active-subtle-hover [&>svg]:text-active" : ""}`}
-    onClick={onToggle}
-  />
+  <WithTooltip
+    label={paused ? "Resume incoming logs" : "Pause incoming logs"}
+    side="bottom"
+  >
+    <IconButton
+      aria-label={paused ? "Resume incoming logs" : "Pause incoming logs"}
+      icon={paused ? Play : Pause}
+      size="xs"
+      appearance="transparent"
+      className={`rounded-sm ${paused ? "bg-active-subtle hover:bg-active-subtle-hover [&>svg]:text-active" : ""}`}
+      onClick={onToggle}
+    />
+  </WithTooltip>
 );
