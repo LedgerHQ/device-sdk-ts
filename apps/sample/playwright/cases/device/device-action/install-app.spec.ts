@@ -119,6 +119,112 @@ test.describe("device action: install app", () => {
     });
   });
 
+  test("fails when the device locks during the install", async ({
+    device,
+    deviceActions,
+    mockClient,
+  }) => {
+    test.setTimeout(120_000);
+
+    await test.step("Given a connected device that locks on the 3rd install block", async () => {
+      const dev = await device.addAndConnect(NANO_X);
+      await mockClient.addMock(dev.id, {
+        prefix: "e0f0",
+        responses: ["9000", "9000", "5515"],
+      });
+    });
+
+    await test.step("When the Install App device action is executed for Bitcoin", async () => {
+      await deviceActions.goto();
+      await deviceActions.installApp(APP_TO_INSTALL);
+    });
+
+    await test.step("Then progress reaches the 2nd of 6 blocks", async () => {
+      await deviceActions.expectAnyResponseContains('"progress": 0.33', {
+        timeout: 60_000,
+      });
+    });
+
+    await test.step("And the install fails with DeviceLockedError", async () => {
+      await deviceActions.expectError("DeviceLockedError", {
+        timeout: 60_000,
+      });
+    });
+  });
+
+  test("completes without installing when the app is already installed", async ({
+    device,
+    deviceActions,
+    mockClient,
+  }) => {
+    test.setTimeout(120_000);
+
+    await test.step("Given a connected device with Bitcoin installed", async () => {
+      const dev = await device.addAndConnect(NANO_X_WITH_BITCOIN);
+      // Any install block would now fail, proving none is sent.
+      await mockClient.addMock(dev.id, { prefix: "e0f0", response: "6a84" });
+    });
+
+    await test.step("When the Install App device action is executed for Bitcoin", async () => {
+      await deviceActions.goto();
+      await deviceActions.installApp(APP_TO_INSTALL);
+    });
+
+    await test.step("Then it completes", async () => {
+      const response = await deviceActions.lastResponse<InstallAppResponse>({
+        until: '"completed"',
+        timeout: 60_000,
+      });
+      expect(response.status).toBe("completed");
+    });
+  });
+
+  test("fails when the app is unknown to the Manager API", async ({
+    device,
+    deviceActions,
+  }) => {
+    test.setTimeout(120_000);
+
+    await test.step("Given a connected device", async () => {
+      await device.addAndConnect(NANO_X);
+    });
+
+    await test.step("When the Install App device action is executed for an unknown app", async () => {
+      await deviceActions.goto();
+      await deviceActions.installApp("NotAnApp");
+    });
+
+    await test.step("Then it fails because the app is not in the catalog", async () => {
+      await deviceActions.expectError(
+        "App to install not found in manager API",
+        { timeout: 60_000 },
+      );
+    });
+  });
+
+  test("fails to install a plugin whose parent app is not installed", async ({
+    device,
+    deviceActions,
+  }) => {
+    test.setTimeout(120_000);
+
+    await test.step("Given a connected device without Ethereum installed", async () => {
+      await device.addAndConnect(NANO_X);
+    });
+
+    await test.step("When the Install App device action is executed for the 1inch plugin", async () => {
+      await deviceActions.goto();
+      await deviceActions.installApp("1inch");
+    });
+
+    await test.step("Then it fails because Ethereum is missing", async () => {
+      await deviceActions.expectError(
+        "Dep app is not installed on the device",
+        { timeout: 60_000 },
+      );
+    });
+  });
+
   test("fails on the 5th install block after the first four succeed", async ({
     device,
     deviceActions,

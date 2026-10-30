@@ -21,11 +21,11 @@ interface GetAddressOutput {
   chainCode?: string;
 }
 
-// A mainnet Tron address is a Base58Check string starting with "T" and 34
-// characters long. The exact value is deterministic (fixed Speculos seed +
-// path 44'/195'/0'/0/0), but we assert on the format to stay robust to the
-// emulator's seed configuration.
-const TRON_ADDRESS_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
+// Deterministic: fixed Speculos seed (well-known test mnemonic) + derivation
+// path 44'/195'/0'/0/0, derived with BIP-32 outside DMK.
+const EXPECTED_ADDRESS = "TXQ69biZpJvofiNdai4jrehHTNkGPoUAdk";
+const EXPECTED_PUBLIC_KEY =
+  "0441bf179a21ed3af2bd108e5d190a90b32a216cce963445bd6df284a4f28699d5dfb929b0c8db99e5ee05260a9176449187576b792bcd2d5eb86f33524aca4d98";
 
 test.describe("signer tron: get address", () => {
   test("returns an address with default inputs (no options selected)", async ({
@@ -49,8 +49,8 @@ test.describe("signer tron: get address", () => {
       const result = await trxSigner.lastResult<GetAddressOutput>();
 
       expect(result.status).toBe("completed");
-      expect(result.output!.address).toMatch(TRON_ADDRESS_RE);
-      expect(result.output!.publicKey).toMatch(/^[0-9a-fA-F]+$/);
+      expect(result.output!.address).toBe(EXPECTED_ADDRESS);
+      expect(result.output!.publicKey).toBe(EXPECTED_PUBLIC_KEY);
     });
   });
 
@@ -83,7 +83,7 @@ test.describe("signer tron: get address", () => {
       const result = await trxSigner.lastResult<GetAddressOutput>();
 
       expect(result.status).toBe("completed");
-      expect(result.output!.address).toMatch(TRON_ADDRESS_RE);
+      expect(result.output!.address).toBe(EXPECTED_ADDRESS);
     });
   });
 });

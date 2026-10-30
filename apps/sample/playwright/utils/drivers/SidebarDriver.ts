@@ -20,6 +20,49 @@ export class SidebarDriver {
     ).toContainText(status, { timeout });
   }
 
+  /** Select the device session whose card shows the given device name. */
+  async selectSession(name: string): Promise<void> {
+    await this.page
+      .getByTestId("text_device-name")
+      .filter({ hasText: name })
+      .first()
+      .click();
+  }
+
+  /** Disconnect the (first) device session from its options dropdown. */
+  async disconnect(): Promise<void> {
+    await this.page.getByTestId("dropdown_device-option").first().click();
+    await this.page.getByTestId("CTA_disconnect-device").first().click();
+  }
+
+  /**
+   * Reconnect the (first) device session from its options dropdown, and wait
+   * for its card to be replaced by the card of the new session.
+   */
+  async reconnect(): Promise<void> {
+    await this.page
+      .getByTestId("text_device-name")
+      .first()
+      .evaluate((name) => name.setAttribute("data-old-session", ""));
+    await this.page.getByTestId("dropdown_device-option").first().click();
+    await this.page.getByTestId("CTA_reconnect-device").first().click();
+    await expect(this.page.locator("[data-old-session]")).toHaveCount(0, {
+      timeout: 15_000,
+    });
+  }
+
+  /** Assert the number of listed device sessions. */
+  async expectSessionCount(count: number): Promise<void> {
+    await expect(this.page.getByTestId("text_device-name")).toHaveCount(count, {
+      timeout: 15_000,
+    });
+  }
+
+  /** Assert no device session is listed anymore. */
+  async expectNoSession(): Promise<void> {
+    await this.expectSessionCount(0);
+  }
+
   /** Assert the mock session card shows an active session. */
   async expectActiveMockSession(): Promise<void> {
     await expect(this.page.getByTestId("card_mock-session")).toContainText(
