@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { IconButton, Spinner } from "@ledgerhq/lumen-ui-react";
 import { ArrowUp, Check, SparksFill } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { ResizablePanel } from "../../components/ResizablePanel";
 import { WithTooltip } from "../../components/WithTooltip";
 import { INPUT, INPUT_WRAPPER } from "../logger/inputStyles";
 import { AiAnswer } from "./AiAnswer";
@@ -31,14 +32,16 @@ const PRIMARY_BUTTON =
 
 const Chip: React.FC<{
   selected: boolean;
+  disabled: boolean;
   onClick: () => void;
   children: React.ReactNode;
-}> = ({ selected, onClick, children }) => (
+}> = ({ selected, disabled, onClick, children }) => (
   <button
     type="button"
     aria-pressed={selected}
+    disabled={disabled}
     onClick={onClick}
-    className={`cursor-pointer rounded-sm px-10 py-4 body-4 ${selected ? "bg-active-subtle body-4-semi-bold text-active" : "bg-muted-transparent text-muted hover:bg-muted-transparent-hover"}`}
+    className={`cursor-pointer rounded-sm px-10 py-4 body-4 disabled:cursor-default disabled:opacity-50 ${selected ? "bg-active-subtle body-4-semi-bold text-active" : "bg-muted-transparent text-muted hover:bg-muted-transparent-hover"}`}
   >
     {children}
   </button>
@@ -102,10 +105,30 @@ const TurnView: React.FC<{ turn: Turn; running: boolean }> = ({
   </div>
 );
 
+// Session tokens the app shared, and anything that looks like a credential
+const redact = (text: string, secrets: string[]) =>
+  secrets
+    .reduce(
+      (redacted, secret) => redacted.replaceAll(secret, "<redacted>"),
+      text,
+    )
+    .replace(/\b(bearer\s+)[^\s"',;]+/gi, "$1<redacted>")
+    .replace(
+      /\b((?:session[_-]?)?token|api[_-]?key|secret|password|authorization)(["']?\s*[:=]\s*["']?)(?!<redacted>)[^\s"',;&]+/gi,
+      "$1$2<redacted>",
+    );
+
+const redactRequest = (request: AiRequest, secrets: string[]): AiRequest =>
+  request.kind === "explain"
+    ? { ...request, context: redact(request.context, secrets) }
+    : { ...request, question: redact(request.question, secrets) };
+
 export const AiPanel: React.FC<{
   ai: AiClient | undefined;
   request: AiPanelRequest | null;
-}> = ({ ai, request }) => {
+  /** Never sent to Claude: every request is redacted here. */
+  secrets: string[];
+}> = ({ ai, request, secrets }) => {
   const [status, setStatus] = useState<AiStatus | null>(null);
   const [readCode, setReadCode] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -113,6 +136,11 @@ export const AiPanel: React.FC<{
   const [running, setRunning] = useState(false);
   const [question, setQuestion] = useState("");
   const stopRef = useRef<(() => void) | null>(null);
+  // What the last turn asked, so Retry repeats a failed follow-up, not the first question
+  const lastRunRef = useRef<{
+    aiRequest: AiRequest;
+    turnQuestion: string | null;
+  } | null>(null);
 
   const checkStatus = useCallback(
     (refresh = false) => {
@@ -150,29 +178,33 @@ export const AiPanel: React.FC<{
       setTurns((previous) => (reset ? [turn] : [...previous, turn]));
       if (reset) setSessionId(null);
       setRunning(true);
-      stopRef.current = ai.analyze(aiRequest, (event) => {
-        switch (event.type) {
-          case "step":
-            updateLast((t) => ({ ...t, steps: [...t.steps, event.text] }));
-            break;
-          case "text":
-            updateLast((t) => ({ ...t, text: t.text + event.text }));
-            break;
-          case "done":
-            updateLast((t) => ({ ...t, answer: event.answer }));
-            setSessionId(event.sessionId);
-            setRunning(false);
-            stopRef.current = null;
-            break;
-          case "error":
-            updateLast((t) => ({ ...t, error: event.message }));
-            setRunning(false);
-            stopRef.current = null;
-            break;
-        }
-      });
+      lastRunRef.current = { aiRequest, turnQuestion };
+      stopRef.current = ai.analyze(
+        redactRequest(aiRequest, secrets),
+        (event) => {
+          switch (event.type) {
+            case "step":
+              updateLast((t) => ({ ...t, steps: [...t.steps, event.text] }));
+              break;
+            case "text":
+              updateLast((t) => ({ ...t, text: t.text + event.text }));
+              break;
+            case "done":
+              updateLast((t) => ({ ...t, answer: event.answer }));
+              setSessionId(event.sessionId);
+              setRunning(false);
+              stopRef.current = null;
+              break;
+            case "error":
+              updateLast((t) => ({ ...t, error: event.message }));
+              setRunning(false);
+              stopRef.current = null;
+              break;
+          }
+        },
+      );
     },
-    [ai],
+    [ai, secrets],
   );
 
   const lastRequest = useRef<AiPanelRequest | null>(null);
@@ -200,6 +232,16 @@ export const AiPanel: React.FC<{
       explain(request);
     }
   }, [request, ready, explain]);
+
+  const retry = () => {
+    const last = lastRunRef.current;
+    if (!last || last.aiRequest.kind === "explain") {
+      explain(lastRequest.current!);
+      return;
+    }
+    setTurns((previous) => previous.slice(0, -1));
+    run(last.aiRequest, last.turnQuestion, false);
+  };
 
   const stop = () => {
     stopRef.current?.();
@@ -296,7 +338,7 @@ export const AiPanel: React.FC<{
           <button
             type="button"
             className={`self-start ${PRIMARY_BUTTON}`}
-            onClick={() => explain(lastRequest.current!)}
+            onClick={retry}
           >
             Retry
           </button>
@@ -306,66 +348,83 @@ export const AiPanel: React.FC<{
   })();
 
   return (
-    <aside className="flex w-400 shrink-0 flex-col border-l border-muted-subtle bg-surface">
-      <div className="flex items-center gap-8 border-b border-muted-subtle px-16 py-12">
-        <SparksFill size={16} className="text-active" />
-        <h2 className="body-2-semi-bold">AI debugging</h2>
-        {lastRequest.current && (
-          <span className="truncate body-4 text-muted">
-            · {lastRequest.current.summary}
-          </span>
-        )}
-        <span className="flex-1" />
-        {running && (
-          <button type="button" className={BUTTON} onClick={stop}>
-            Stop
-          </button>
-        )}
-      </div>
-      {ready && (
-        <div className="flex items-center gap-6 px-16 pt-12">
-          <Chip selected={!readCode} onClick={() => setReadCode(false)}>
-            Quick
-          </Chip>
-          {status.canReadCode && (
-            <WithTooltip label="Let Claude read DMK's source code to confirm the cause. Slower.">
-              <Chip selected={readCode} onClick={() => setReadCode(true)}>
-                Read the code
-              </Chip>
-            </WithTooltip>
+    <ResizablePanel
+      name="ai"
+      defaultWidth={400}
+      minWidth={320}
+      maxWidth={800}
+      edge="left"
+      className="border-l border-muted-subtle bg-surface"
+    >
+      <aside className="flex min-h-0 flex-1 flex-col">
+        <div className="flex items-center gap-8 border-b border-muted-subtle px-16 py-12">
+          <SparksFill size={16} className="text-active" />
+          <h2 className="body-2-semi-bold">AI debugging</h2>
+          {lastRequest.current && (
+            <span className="truncate body-4 text-muted">
+              · {lastRequest.current.summary}
+            </span>
           )}
           <span className="flex-1" />
-          <span className="body-4 text-muted">{status.model}</span>
+          {running && (
+            <button type="button" className={BUTTON} onClick={stop}>
+              Stop
+            </button>
+          )}
         </div>
-      )}
-      <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
-      {ready && sessionId && (
-        <div className="flex items-center gap-8 border-t border-muted-subtle px-16 py-12">
-          <div className={`flex-1 ${INPUT_WRAPPER}`}>
-            <input
-              className={INPUT}
-              type="text"
-              placeholder="Ask a follow-up…"
-              aria-label="Ask a follow-up question"
-              value={question}
+        {ready && (
+          <div className="flex items-center gap-6 px-16 pt-12">
+            <Chip
+              selected={!readCode}
               disabled={running}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && ask()}
-            />
+              onClick={() => setReadCode(false)}
+            >
+              Quick
+            </Chip>
+            {status.canReadCode && (
+              <WithTooltip label="Let Claude read DMK's source code to confirm the cause. Slower.">
+                <Chip
+                  selected={readCode}
+                  disabled={running}
+                  onClick={() => setReadCode(true)}
+                >
+                  Read the code
+                </Chip>
+              </WithTooltip>
+            )}
+            <span className="flex-1" />
+            <span className="body-4 text-muted">{status.model}</span>
           </div>
-          <WithTooltip label="Ask">
-            <IconButton
-              aria-label="Ask"
-              icon={ArrowUp}
-              size="xs"
-              appearance="transparent"
-              className="rounded-sm [&>svg]:text-active"
-              disabled={running || !question.trim()}
-              onClick={ask}
-            />
-          </WithTooltip>
-        </div>
-      )}
-    </aside>
+        )}
+        <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
+        {ready && sessionId && (
+          <div className="flex items-center gap-8 border-t border-muted-subtle px-16 py-12">
+            <div className={`flex-1 ${INPUT_WRAPPER}`}>
+              <input
+                className={INPUT}
+                type="text"
+                placeholder="Ask a follow-up…"
+                aria-label="Ask a follow-up question"
+                value={question}
+                disabled={running}
+                onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && ask()}
+              />
+            </div>
+            <WithTooltip label="Ask">
+              <IconButton
+                aria-label="Ask"
+                icon={ArrowUp}
+                size="xs"
+                appearance="transparent"
+                className="rounded-sm [&>svg]:text-active"
+                disabled={running || !question.trim()}
+                onClick={ask}
+              />
+            </WithTooltip>
+          </div>
+        )}
+      </aside>
+    </ResizablePanel>
   );
 };

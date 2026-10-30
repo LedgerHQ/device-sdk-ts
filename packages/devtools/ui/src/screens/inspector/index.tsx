@@ -50,6 +50,7 @@ type InspectorProps = {
   rewriteMockServerUrl?: (url: string) => string;
   onExplain: (request: AiSelection) => void;
   showLiveScreen: boolean;
+  showSessions: boolean;
 };
 
 const INSPECTOR_CODE_EXAMPLE = `import { DevToolsDmkInspector } from "@ledgerhq/device-management-kit-devtools-core";
@@ -80,9 +81,14 @@ export const Inspector: React.FC<InspectorProps> = ({
   rewriteMockServerUrl,
   onExplain,
   showLiveScreen,
+  showSessions,
 }) => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
+  );
+  // Per session, so switching sessions does not bring cleared exchanges back
+  const [clearedUpTo, setClearedUpTo] = useState<Map<string, number>>(
+    new Map(),
   );
   const exchanges = useMemo(() => extractApduExchanges(logs), [logs]);
 
@@ -114,21 +120,23 @@ export const Inspector: React.FC<InspectorProps> = ({
 
   return (
     <div className="flex min-h-0 flex-1">
-      <InspectorRail
-        devices={devices}
-        sessionStates={sessionStates}
-        selectedSessionId={selectedDevice?.sessionId ?? null}
-        onSelect={setSelectedSessionId}
-        discoveredDevices={discoveredDevices}
-        isListening={isListening}
-        isActivelyDiscovering={isActivelyDiscovering}
-        startListening={startListening}
-        stopListening={stopListening}
-        startDiscovering={startDiscovering}
-        stopDiscovering={stopDiscovering}
-        connectDevice={connectDevice}
-        mockServer={mockServer}
-      />
+      {showSessions && (
+        <InspectorRail
+          devices={devices}
+          sessionStates={sessionStates}
+          selectedSessionId={selectedDevice?.sessionId ?? null}
+          onSelect={setSelectedSessionId}
+          discoveredDevices={discoveredDevices}
+          isListening={isListening}
+          isActivelyDiscovering={isActivelyDiscovering}
+          startListening={startListening}
+          stopListening={stopListening}
+          startDiscovering={startDiscovering}
+          stopDiscovering={stopDiscovering}
+          connectDevice={connectDevice}
+          mockServer={mockServer}
+        />
+      )}
       {selectedDevice ? (
         <>
           <DevicePanel
@@ -137,6 +145,12 @@ export const Inspector: React.FC<InspectorProps> = ({
             exchanges={selectedExchanges}
             onSendApdu={sendApdu}
             apduResponses={apduResponses}
+            clearedUpTo={clearedUpTo.get(selectedDevice.sessionId)}
+            onClear={(lastId) =>
+              setClearedUpTo((previous) =>
+                new Map(previous).set(selectedDevice.sessionId, lastId),
+              )
+            }
             onExplain={onExplain}
           />
           {selectedDevice.transport === MOCK_SERVER_TRANSPORT &&

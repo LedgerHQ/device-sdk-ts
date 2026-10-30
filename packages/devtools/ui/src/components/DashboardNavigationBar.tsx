@@ -13,12 +13,33 @@ import {
   Sun,
 } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { AI_UNAVAILABLE } from "../screens/ai/SelectionBar";
 import { WithTooltip } from "./WithTooltip";
 
 export enum DashboardScreen {
   logs = "logs",
   inspector = "inspector",
 }
+
+// Lumen has no sidebar icon: a window with its left column marked
+const SidebarIcon: React.FC<{
+  size?: React.ComponentProps<typeof Moon>["size"];
+  className?: string;
+}> = ({ size = 16, className }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.4"
+    aria-hidden="true"
+    className={className}
+  >
+    <rect x="2" y="2.5" width="12" height="11" rx="1.5" />
+    <path d="M6 2.5v11" />
+  </svg>
+);
 
 const ConnectionIndicator: React.FC<{ connected: boolean }> = ({
   connected,
@@ -34,6 +55,9 @@ type DashboardNavigationBarProps = {
   onScreenChange: (screen: DashboardScreen) => void;
   aiOpen: boolean;
   onToggleAi: () => void;
+  aiAvailable: boolean;
+  /** Only on the Inspector, whose sessions menu can hide. */
+  sessions?: { shown: boolean; onToggle: () => void };
   /** Only when a live screen can show (the Inspector, with the app's mock server). */
   liveScreen?: { shown: boolean; onToggle: () => void };
   isLoggerConnected: boolean;
@@ -48,6 +72,8 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
   onScreenChange,
   aiOpen,
   onToggleAi,
+  aiAvailable,
+  sessions,
   liveScreen,
   isLoggerConnected,
   isInspectorConnected,
@@ -84,6 +110,30 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
       </SegmentedControl>
 
       <div className="ml-auto flex items-center gap-6">
+        {sessions && (
+          <WithTooltip
+            label={
+              sessions.shown
+                ? "Hide the sessions menu"
+                : "Show the sessions menu"
+            }
+            side="bottom"
+          >
+            <IconButton
+              aria-label={
+                sessions.shown
+                  ? "Hide the sessions menu"
+                  : "Show the sessions menu"
+              }
+              aria-pressed={sessions.shown}
+              icon={SidebarIcon}
+              size="xs"
+              appearance="transparent"
+              className={`rounded-sm ${sessions.shown ? "bg-active-subtle [&>svg]:text-active" : ""}`}
+              onClick={sessions.onToggle}
+            />
+          </WithTooltip>
+        )}
         {liveScreen && (
           <WithTooltip
             label={
@@ -107,7 +157,13 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
           </WithTooltip>
         )}
         <WithTooltip
-          label={aiOpen ? "Hide the AI panel" : "Show the AI panel"}
+          label={
+            !aiAvailable
+              ? AI_UNAVAILABLE
+              : aiOpen
+                ? "Hide the AI panel"
+                : "Show the AI panel"
+          }
           side="bottom"
         >
           <IconButton
@@ -116,8 +172,9 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
             icon={SparksFill}
             size="xs"
             appearance="transparent"
-            className={`rounded-sm ${aiOpen ? "bg-active-subtle [&>svg]:text-active" : ""}`}
+            className={`rounded-sm disabled:pointer-events-none ${aiOpen ? "bg-active-subtle [&>svg]:text-active" : ""}`}
             onClick={onToggleAi}
+            disabled={!aiAvailable}
           />
         </WithTooltip>
         {mockServerWebsiteUrl && (

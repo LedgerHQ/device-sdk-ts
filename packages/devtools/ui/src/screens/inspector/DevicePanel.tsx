@@ -24,6 +24,8 @@ type DevicePanelProps = {
   exchanges: ApduExchange[];
   onSendApdu: (sessionId: string, apduHex: string) => string;
   apduResponses: Map<string, ApduResponse>;
+  clearedUpTo: number | undefined;
+  onClear: (lastId: number) => void;
   onExplain: (request: AiSelection) => void;
 };
 
@@ -33,12 +35,14 @@ export const DevicePanel: React.FC<DevicePanelProps> = ({
   exchanges,
   onSendApdu,
   apduResponses,
+  clearedUpTo,
+  onClear,
   onExplain,
 }) => {
   const ready = state && "currentApp" in state ? state : undefined;
   const status = useDebouncedStatus(state?.deviceStatus ?? "");
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-16 p-16">
+    <div className="flex min-w-320 flex-1 flex-col gap-16 p-16">
       <div className="flex items-center gap-8">
         <DeviceIcon modelId={device.modelId} />
         <h4 className="heading-5-semi-bold">{device.name || device.modelId}</h4>
@@ -98,6 +102,8 @@ export const DevicePanel: React.FC<DevicePanelProps> = ({
       <ApduList
         key={device.sessionId}
         exchanges={exchanges}
+        clearedUpTo={clearedUpTo}
+        onClear={onClear}
         onExplain={onExplain}
       />
     </div>
