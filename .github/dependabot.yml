@@ -8,8 +8,9 @@ updates:
       timezone: "Europe/Paris"
     labels:
       - "dependencies"
-    reviewers:
-      - "LedgerHQ/live-devices"
+    # Let fresh releases settle before upgrading (supply-chain guard)
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: "⬆️ (ci) [NO-ISSUE]: "
     groups:
@@ -26,8 +27,12 @@ updates:
       timezone: "Europe/Paris"
     labels:
       - "dependencies"
-    reviewers:
-      - "LedgerHQ/live-devices"
+    # Let fresh releases settle before upgrading (supply-chain guard);
+    # our own packages are released together and stay up to date
+    cooldown:
+      default-days: 7
+      exclude:
+        - "@ledgerhq/*"
     commit-message:
       prefix: "⬆️ (repo) [NO-ISSUE]: "
     groups:
@@ -48,6 +53,11 @@ updates:
          - "typescript*"
         exclude-patterns:
           - "typescript-eslint"
+      # Everything else non-major in one PR; majors stay separate PRs
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     ignore:
       - dependency-name: "purify-ts"
         versions: [2.1.1] # https://github.com/gigobyte/purify/releases/tag/v2.1.1 Broken ESM build
