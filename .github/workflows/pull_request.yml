@@ -170,6 +170,17 @@ jobs:
         continue-on-error: true
         run: pnpm turbo run test:coverage --affected
 
+      # The DevTools' APDU names come from the command classes of every signer,
+      # which Turbo does not count as inputs of the DevTools packages
+      - name: Generated files
+        id: generated
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: |
+          pnpm --filter @ledgerhq/device-management-kit-devtools-ui generate:apdu-commands
+          git diff --exit-code -- packages/devtools/ui/src/screens/inspector/apduCommands.ts \
+            || { echo "Run pnpm generate:apdu-commands in packages/devtools/ui and commit the result."; exit 1; }
+
       - uses: sonarsource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8
         if: ${{ steps.test.outcome == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         env:
@@ -217,6 +228,7 @@ jobs:
           LINT_OUTCOME: ${{ steps.lint.outcome }}
           TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
           TEST_OUTCOME: ${{ steps.test.outcome }}
+          GENERATED_OUTCOME: ${{ steps.generated.outcome }}
           PLAYWRIGHT_OUTCOME: ${{ steps.playwright.outcome }}
         run: |
           icon() {
@@ -238,11 +250,12 @@ jobs:
             echo "| Lint | $(icon "$LINT_OUTCOME") |"
             echo "| Typecheck | $(icon "$TYPECHECK_OUTCOME") |"
             echo "| Test | $(icon "$TEST_OUTCOME") |"
+            echo "| Generated files | $(icon "$GENERATED_OUTCOME") |"
             echo "| Playwright (sample) | $(icon "$PLAYWRIGHT_OUTCOME") |"
           } >> "$GITHUB_STEP_SUMMARY"
 
           failed=0
-          for outcome in "$BUILD_OUTCOME" "$PRETTIER_OUTCOME" "$LINT_OUTCOME" "$TYPECHECK_OUTCOME" "$TEST_OUTCOME" "$PLAYWRIGHT_OUTCOME"; do
+          for outcome in "$BUILD_OUTCOME" "$PRETTIER_OUTCOME" "$LINT_OUTCOME" "$TYPECHECK_OUTCOME" "$TEST_OUTCOME" "$GENERATED_OUTCOME" "$PLAYWRIGHT_OUTCOME"; do
             if [ "$outcome" = "failure" ]; then
               failed=1
             fi
