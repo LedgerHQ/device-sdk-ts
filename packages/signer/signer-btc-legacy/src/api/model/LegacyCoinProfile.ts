@@ -11,6 +11,11 @@ export type LegacyErrorConfig<ErrorCodes extends string> = {
   ) => DeviceExchangeError<ErrorCodes>;
 };
 
+// How the coin hashes and serializes its transactions: "bip143" hashes every
+// transaction with BIP143, even without SegWit inputs, and "sapling" is the v4
+// format of Komodo, hashed with BIP143.
+export type TransactionFormat = "legacy" | "bip143" | "sapling";
+
 export type LegacyCoinProfile<ErrorCodes extends string> = {
   appName: string;
   errors: LegacyErrorConfig<ErrorCodes>;
@@ -21,6 +26,5 @@ export type LegacyCoinProfile<ErrorCodes extends string> = {
   // The default sighash type: SIGHASH_ALL, or SIGHASH_ALL | SIGHASH_FORKID for
   // Bitcoin Cash and Bitcoin Gold.
   sigHashType: number;
-  // Every transaction is hashed with BIP143, even without SegWit inputs.
-  bip143: boolean;
+  transactionFormat: TransactionFormat;
 };

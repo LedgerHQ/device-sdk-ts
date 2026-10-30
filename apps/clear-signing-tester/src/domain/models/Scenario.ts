@@ -27,6 +27,7 @@ export const BTC_LEGACY_COIN_APPS = [
   "Bitcoin Cash",
   "Bitcoin Gold",
   "Horizen",
+  "Komodo",
 ] as const;
 
 export type BtcLegacyCoinApp = (typeof BTC_LEGACY_COIN_APPS)[number];

@@ -11,5 +11,5 @@ export const BITCOIN_CASH_PROFILE: LegacyCoinProfile<BtcLegacyErrorCodes> = {
   xpubVersion: 0x0488b21e,
   segwit: false,
   sigHashType: SIGHASH_ALL_FORKID,
-  bip143: true,
+  transactionFormat: "bip143",
 };

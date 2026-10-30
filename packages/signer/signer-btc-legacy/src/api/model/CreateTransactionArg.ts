@@ -13,10 +13,15 @@ export type LegacyTransactionOutput = {
 
 export type LegacyTransaction = {
   version: Uint8Array;
+  // Sapling transactions, such as Komodo's.
+  nVersionGroupId?: Uint8Array;
   inputs: LegacyTransactionInput[];
   outputs?: LegacyTransactionOutput[];
   locktime?: Uint8Array;
-  // What follows the lock time, such as Horizen's joinsplits.
+  // Sapling transactions, such as Komodo's.
+  nExpiryHeight?: Uint8Array;
+  // What follows the lock time and the expiry height, such as Horizen's
+  // joinsplits or Komodo's empty Sapling part.
   extraData?: Uint8Array;
 };
 

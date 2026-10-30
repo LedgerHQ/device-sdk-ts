@@ -17,6 +17,7 @@ export const TRANSACTION_TYPE = {
   BIP143: 0x02,
   // Bitcoin Cash, the app shows the outputs as cashaddr addresses.
   CASHADDR: 0x03,
+  SAPLING: 0x05,
 } as const;
 
 export type TransactionType =

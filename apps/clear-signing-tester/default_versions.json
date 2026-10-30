@@ -8,7 +8,8 @@
       "Dogecoin": "2.4.13",
       "Bitcoin Cash": "2.4.13",
       "Bitcoin Gold": "2.4.13",
-      "Horizen": "2.4.13"
+      "Horizen": "2.4.13",
+      "Komodo": "2.4.13"
     }
   },
   "nanox": {
@@ -20,7 +21,8 @@
       "Dogecoin": "2.4.13",
       "Bitcoin Cash": "2.4.13",
       "Bitcoin Gold": "2.4.13",
-      "Horizen": "2.4.13"
+      "Horizen": "2.4.13",
+      "Komodo": "2.4.13"
     }
   },
   "flex": {
@@ -32,7 +34,8 @@
       "Dogecoin": "2.4.13",
       "Bitcoin Cash": "2.4.13",
       "Bitcoin Gold": "2.4.13",
-      "Horizen": "2.4.13"
+      "Horizen": "2.4.13",
+      "Komodo": "2.4.13"
     }
   }
 }

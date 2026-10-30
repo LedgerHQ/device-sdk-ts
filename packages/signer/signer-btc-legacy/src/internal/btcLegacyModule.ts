@@ -1,6 +1,8 @@
 import { ContainerModule } from "inversify";
 
+import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
 import { BtcLegacyAppBinder } from "@internal/app-binder/BtcLegacyAppBinder";
+import { SaplingTransactionSerializer } from "@internal/app-binder/task/format/SaplingTransactionSerializer";
 import { StandardTransactionSerializer } from "@internal/app-binder/task/format/StandardTransactionSerializer";
 import { StandardTrustedInputSerializer } from "@internal/app-binder/task/format/StandardTrustedInputSerializer";
 import { GetTrustedInputTask } from "@internal/app-binder/task/GetTrustedInputTask";
@@ -23,7 +25,10 @@ export const btcLegacyModuleFactory = () =>
     bind(btcLegacyTypes.TrustedInputSerializer).to(
       StandardTrustedInputSerializer,
     );
-    bind(btcLegacyTypes.TransactionSerializer).to(
-      StandardTransactionSerializer,
+    bind(btcLegacyTypes.TransactionSerializer).toDynamicValue((context) =>
+      context.get<LegacyCoinProfile<string>>(btcLegacyTypes.Profile)
+        .transactionFormat === "sapling"
+        ? new SaplingTransactionSerializer()
+        : new StandardTransactionSerializer(),
     );
   });
