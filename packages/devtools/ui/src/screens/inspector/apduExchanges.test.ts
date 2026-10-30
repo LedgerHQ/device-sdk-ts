@@ -79,6 +79,18 @@ describe("extractApduExchanges", () => {
     ).toEqual(["getAppAndVersion", "openApp", "getOsVersion"]);
   });
 
+  it("tags each exchange with the layer that answers it", () => {
+    expect(
+      extractApduExchanges([
+        exchange("e004000000", "6d00"),
+        exchange("b001000000", appAndVersion("BOLOS")),
+        exchange(`e0d8000008${ascii("Ethereum")}`, "9000"),
+        exchange("e004000000", "9000"),
+        exchange("b0a7000000", "9000"),
+      ]).map(({ layer }) => layer),
+    ).toEqual([undefined, "OS", "OS", "Ethereum", "OS"]);
+  });
+
   it("tracks the open app per session", () => {
     expect(
       commands([
@@ -91,5 +103,32 @@ describe("extractApduExchanges", () => {
       "signTransaction / startTransaction / storeTransaction",
       "getAppConfiguration",
     ]);
+  });
+
+  it("keeps names and ids when the log cap drops the exchange that opened the app", () => {
+    const logs = [
+      exchange("b001000000", appAndVersion("Bitcoin")),
+      exchange("e104000000", "9000"),
+    ];
+    const before = extractApduExchanges(logs);
+    const after = extractApduExchanges([
+      ...logs.slice(1),
+      exchange("e104000000", "9000"),
+    ]);
+    expect(after.map(({ command }) => command)).toEqual([
+      "signPsbt",
+      "signPsbt",
+    ]);
+    expect(after[0]!.id).toBe(before[1]!.id);
+  });
+
+  it("skips logs whose payload is not an object", () => {
+    const withPayload = (payload: unknown): LogData => ({
+      ...exchange("b001000000", "9000"),
+      payload: payload as LogData["payload"],
+    });
+    expect(
+      extractApduExchanges([withPayload(null), withPayload("text")]),
+    ).toEqual([]);
   });
 });
