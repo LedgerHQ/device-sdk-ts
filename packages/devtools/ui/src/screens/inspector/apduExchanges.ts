@@ -1,4 +1,11 @@
+import { isDashboardName } from "@ledgerhq/device-management-kit";
+
 import { type LogData } from "../logger/types";
+import {
+  APP_COMMANDS,
+  COMMON_COMMANDS,
+  DASHBOARD_COMMANDS,
+} from "./apduCommands";
 
 export type ApduExchange = {
   id: string;
@@ -8,17 +15,6 @@ export type ApduExchange = {
   sent: string[];
   received: string[];
   statusWord: string;
-};
-
-/** OS commands every app answers; app commands share CLA e0, so they keep their raw CLA INS. */
-const COMMAND_NAMES: Record<string, string> = {
-  b001: "GET_APP_AND_VERSION",
-  b0a7: "CLOSE_APP",
-  e001: "GET_OS_VERSION",
-  e010: "GET_BATTERY_STATUS",
-  e0d8: "OPEN_APP",
-  e0de: "LIST_APPS",
-  e0df: "LIST_APPS_CONTINUE",
 };
 
 const STATUS_NAMES: Record<string, string> = {
@@ -38,6 +34,35 @@ export const statusName = (statusWord: string) =>
 const toBytes = (hex: string) =>
   hex.toLowerCase().match(/.{1,2}/g) ?? ([] as string[]);
 
+const toAscii = (bytes: string[]) =>
+  String.fromCharCode(...bytes.map((byte) => parseInt(byte, 16)));
+
+/** Apps reuse each other's CLA INS, so a command is only named against the app open when it was sent. */
+const commandName = (app: string | undefined, key: string) => {
+  if (key.startsWith("b0")) return COMMON_COMMANDS[key];
+  if (app === undefined) return undefined;
+  return isDashboardName(app)
+    ? DASHBOARD_COMMANDS[key]
+    : APP_COMMANDS[app]?.[key];
+};
+
+/** The app a successful exchange leaves open, when it tells: GET_APP_AND_VERSION names it, OPEN_APP and CLOSE_APP switch it. */
+const appAfter = (
+  app: string | undefined,
+  key: string,
+  sent: string[],
+  data: string[],
+) => {
+  if (key === "b001" && data[0] === "01") {
+    return toAscii(data.slice(2, 2 + parseInt(data[1] ?? "0", 16)));
+  }
+  if (key === "b0a7") return "BOLOS";
+  if (key === "e0d8" && (app === undefined || isDashboardName(app))) {
+    return toAscii(sent.slice(5));
+  }
+  return app;
+};
+
 const isApduExchangePayload = (
   payload: LogData["payload"],
 ): payload is { sessionId: string; apdu: string; response: string } =>
@@ -47,21 +72,29 @@ const isApduExchangePayload = (
   typeof payload["apdu"] === "string" &&
   typeof payload["response"] === "string";
 
-export const extractApduExchanges = (logs: LogData[]): ApduExchange[] =>
-  logs.flatMap((log, index) => {
+export const extractApduExchanges = (logs: LogData[]): ApduExchange[] => {
+  const openApps = new Map<string, string | undefined>();
+  return logs.flatMap((log, index) => {
     if (!isApduExchangePayload(log.payload)) return [];
+    const { sessionId } = log.payload;
     const sent = toBytes(log.payload.apdu);
     const received = toBytes(log.payload.response);
-    const header = sent.slice(0, 2).join("");
+    const statusWord = received.slice(-2).join("");
+    const key = sent.slice(0, 2).join("");
+    const app = openApps.get(sessionId);
+    if (statusWord === "9000") {
+      openApps.set(sessionId, appAfter(app, key, sent, received.slice(0, -2)));
+    }
     return [
       {
         id: `${log.timestamp}-${index}`,
         timestamp: log.timestamp,
-        sessionId: log.payload.sessionId,
-        command: COMMAND_NAMES[header] ?? sent.slice(0, 2).join(" "),
+        sessionId,
+        command: commandName(app, key) ?? sent.slice(0, 2).join(" "),
         sent,
         received,
-        statusWord: received.slice(-2).join(""),
+        statusWord,
       },
     ];
   });
+};
