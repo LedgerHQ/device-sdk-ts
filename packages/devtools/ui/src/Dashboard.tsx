@@ -74,6 +74,14 @@ const Dashboard: React.FC<{
     sendApdu,
   } = useConnectorMessages(connector);
 
+  // The mock server website joins the session given in the URL fragment. Without
+  // the app's token it would open another session, and the URL comes from the
+  // app, so only a website is linked
+  const mockServerWebsiteUrl =
+    mockServer?.sessionToken && /^https?:\/\//i.test(mockServer.url)
+      ? `${mockServer.url.replace(/\/$/, "")}/#token=${mockServer.sessionToken}`
+      : null;
+
   const [currentScreen, setCurrentScreen] = useState<DashboardScreen>(
     DashboardScreen.logs,
   );
@@ -151,6 +159,7 @@ const Dashboard: React.FC<{
         onSplitChange={setSplit}
         isLoggerConnected={isLoggerConnected}
         isInspectorConnected={isInspectorConnected}
+        mockServerWebsiteUrl={mockServerWebsiteUrl}
         colorScheme={colorScheme}
         onColorSchemeChange={onColorSchemeChange}
       />
