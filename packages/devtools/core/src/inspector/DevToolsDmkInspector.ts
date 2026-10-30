@@ -10,9 +10,17 @@ import {
   handleSendApdu,
   handleSetProvider,
 } from "./commandHandlers";
-import { INSPECTOR_COMMAND_TYPES } from "./constants";
+import { INSPECTOR_COMMAND_TYPES, INSPECTOR_MESSAGE_TYPES } from "./constants";
 import { createDeviceObserver } from "./deviceObserver";
 import { DiscoveryHandler } from "./DiscoveryHandler";
+
+export type DevToolsDmkInspectorOptions = {
+  /**
+   * The mock server the app's mock transport talks to. The dashboard uses it to
+   * show the live screen of mock devices.
+   */
+  mockServer?: { url: string; sessionToken?: string };
+};
 
 /**
  * DevToolsDmkInspector enables the devtools dashboard to inspect and interact
@@ -22,6 +30,7 @@ import { DiscoveryHandler } from "./DiscoveryHandler";
  * - Device sessions: list connected devices, observe session states
  * - Actions: disconnect sessions, send APDUs
  * - Configuration: get/set provider
+ * - Mock server: share its URL and session with the dashboard
  *
  * @example
  * ```ts
@@ -41,7 +50,11 @@ export class DevToolsDmkInspector {
   private readonly discoveryHandler: DiscoveryHandler;
   private commandListenerUnsubscribe: (() => void) | null = null;
 
-  constructor(connector: Connector, dmk: DeviceManagementKit) {
+  constructor(
+    connector: Connector,
+    dmk: DeviceManagementKit,
+    options: DevToolsDmkInspectorOptions = {},
+  ) {
     this.ctx = { connector, dmk };
 
     // Send handshake
@@ -49,6 +62,13 @@ export class DevToolsDmkInspector {
       MODULE_CONNECTED_MESSAGE_TYPE,
       JSON.stringify({ module: DEVTOOLS_MODULES.DMK_INSPECTOR }),
     );
+
+    if (options.mockServer) {
+      connector.sendMessage(
+        INSPECTOR_MESSAGE_TYPES.MOCK_SERVER_CONFIG,
+        JSON.stringify(options.mockServer),
+      );
+    }
 
     // Start observing devices
     this.destroyDeviceObserver = createDeviceObserver(dmk, connector);

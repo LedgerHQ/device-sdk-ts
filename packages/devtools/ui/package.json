@@ -43,6 +43,7 @@
     "generate:apdu-commands": "tsx scripts/generate-apdu-commands.ts"
   },
   "dependencies": {
+    "@ledgerhq/device-mockserver-react": "workspace:^",
     "@ledgerhq/lumen-design-core": "0.1.34",
     "@ledgerhq/lumen-ui-react": "0.1.66",
     "@radix-ui/react-dialog": "1.1.15",

@@ -12,6 +12,8 @@ export const INSPECTOR_MESSAGE_TYPES = {
   APDU_RESPONSE: "apduResponse",
   /** List of discovered (available) devices updated */
   DISCOVERED_DEVICES_UPDATE: "discoveredDevicesUpdate",
+  /** Mock server the app's transport talks to, so the dashboard can show its device screens */
+  MOCK_SERVER_CONFIG: "mockServerConfig",
 } as const;
 
 /**

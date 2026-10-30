@@ -12,12 +12,17 @@ import {
   type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 
-import { type ApduResponse } from "../../hooks/useConnectorMessages";
+import {
+  type ApduResponse,
+  type MockServerConfig,
+} from "../../hooks/useConnectorMessages";
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
 import { type LogData } from "../logger/types";
 import { extractApduExchanges } from "./apduExchanges";
 import { DevicePanel } from "./DevicePanel";
+import { MOCK_SERVER_TRANSPORT } from "./deviceStatus";
 import { InspectorRail } from "./InspectorRail";
+import { MockScreenPanel } from "./MockScreenPanel";
 
 type InspectorProps = {
   devices: ConnectedDevice[];
@@ -40,6 +45,8 @@ type InspectorProps = {
   sendApdu: (sessionId: string, apduHex: string) => string;
   apduResponses: Map<string, ApduResponse>;
   logs: LogData[];
+  mockServer: MockServerConfig | null;
+  rewriteMockServerUrl?: (url: string) => string;
 };
 
 const INSPECTOR_CODE_EXAMPLE = `import { DevToolsDmkInspector } from "@ledgerhq/device-management-kit-devtools-core";
@@ -66,6 +73,8 @@ export const Inspector: React.FC<InspectorProps> = ({
   sendApdu,
   apduResponses,
   logs,
+  mockServer,
+  rewriteMockServerUrl,
 }) => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
@@ -113,15 +122,25 @@ export const Inspector: React.FC<InspectorProps> = ({
         startDiscovering={startDiscovering}
         stopDiscovering={stopDiscovering}
         connectDevice={connectDevice}
+        mockServer={mockServer}
       />
       {selectedDevice ? (
-        <DevicePanel
-          device={selectedDevice}
-          state={sessionStates.get(selectedDevice.sessionId)}
-          exchanges={selectedExchanges}
-          onSendApdu={sendApdu}
-          apduResponses={apduResponses}
-        />
+        <>
+          <DevicePanel
+            device={selectedDevice}
+            state={sessionStates.get(selectedDevice.sessionId)}
+            exchanges={selectedExchanges}
+            onSendApdu={sendApdu}
+            apduResponses={apduResponses}
+          />
+          {selectedDevice.transport === MOCK_SERVER_TRANSPORT && (
+            <MockScreenPanel
+              mockServer={mockServer}
+              rewriteUrl={rewriteMockServerUrl}
+              deviceId={selectedDevice.id}
+            />
+          )}
+        </>
       ) : (
         <div className="flex flex-1 items-center justify-center body-2 text-muted">
           Connect a device to inspect its session.

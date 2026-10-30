@@ -34,6 +34,7 @@ import {
   handleDeviceSessionStateUpdate,
   handleDiscoveredDevicesUpdate,
   handleLogMessage,
+  handleMockServerConfig,
   handleModuleConnected,
   handleProviderValue,
 } from "./connectorMessageHandlers";
@@ -50,6 +51,11 @@ export type ApduResponse = {
   error?: string;
 };
 
+export type MockServerConfig = {
+  url: string;
+  sessionToken?: string;
+};
+
 export type ConnectorMessagesState = {
   receivedMessages: Message[];
   sentMessages: Message[];
@@ -64,6 +70,7 @@ export type ConnectorMessagesState = {
   isInspectorConnected: boolean;
   providerValue: number | null;
   apduResponses: Map<string, ApduResponse>;
+  mockServer: MockServerConfig | null;
   sendMessage: (type: string, payload: string) => void;
   clearLogs: () => void;
   startListening: () => void;
@@ -125,6 +132,7 @@ export function useConnectorMessages(
   const [apduResponses, setApduResponses] = useState<Map<string, ApduResponse>>(
     new Map(),
   );
+  const [mockServer, setMockServer] = useState<MockServerConfig | null>(null);
 
   // === Tracked Connector (keeps all sent messages in state) ===
   const trackedConnector: Connector = useMemo(
@@ -178,6 +186,9 @@ export function useConnectorMessages(
           break;
         case INSPECTOR_MESSAGE_TYPES.APDU_RESPONSE:
           handleApduResponse(payload, setApduResponses);
+          break;
+        case INSPECTOR_MESSAGE_TYPES.MOCK_SERVER_CONFIG:
+          handleMockServerConfig(payload, setMockServer);
           break;
         case LOGGER_MESSAGE_TYPES.ADD_LOG:
           handleLogMessage(payload, (log) => pendingLogs.push(log));
@@ -254,6 +265,7 @@ export function useConnectorMessages(
     isInspectorConnected,
     providerValue,
     apduResponses,
+    mockServer,
     // Actions
     sendMessage: trackedConnector.sendMessage,
     clearLogs,

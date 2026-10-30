@@ -1,3 +1,4 @@
 /* Tailwind only emits utilities it has seen, and skips node_modules. */
 @source "./lib";
 @import "@ledgerhq/lumen-ui-react/tailwind.css";
+@import "@ledgerhq/device-mockserver-react/tailwind.css";
