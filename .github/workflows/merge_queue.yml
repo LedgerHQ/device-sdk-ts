@@ -26,7 +26,7 @@ jobs:
           # `--affected`.
           fetch-depth: 0
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@3ccb6fc43384540c4feb7401da3e6853e8a85fad
 
       - name: Build
         id: build
