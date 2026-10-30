@@ -161,6 +161,7 @@ export type {
   RestoreBackupDAState,
   RestoreBackupSteps,
 } from "./api/device-action/OsUpdate/Restore/RestoreBackup/types";
+export { RestoreBackupStatus } from "./api/device-action/OsUpdate/Restore/RestoreBackup/types";
 export type {
   BaseFirmware,
   FinalFirmware,

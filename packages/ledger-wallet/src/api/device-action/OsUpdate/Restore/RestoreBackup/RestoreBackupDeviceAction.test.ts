@@ -1,6 +1,7 @@
 import {
   DeviceActionStatus,
   DeviceModelId,
+  OutOfMemoryDAError,
   RefusedByUserDAError,
   type TransportDeviceModel,
   UnknownDAError,
@@ -29,6 +30,7 @@ import {
   type RestoreBackupDAOutput,
   type RestoreBackupDARequiredInteraction,
   type RestoreBackupDAState,
+  RestoreBackupStatus,
   RestoreBackupSteps,
 } from "@api/device-action/OsUpdate/Restore/RestoreBackup/types";
 import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
@@ -336,6 +338,7 @@ describe("RestoreBackupDeviceAction", () => {
           pendingState(RestoreBackupSteps.UploadCustomLockScreen),
           pendingState(RestoreBackupSteps.UploadCustomLockScreen),
           completedState({
+            restoreStatus: RestoreBackupStatus.FULL,
             restoredLanguage: true,
             restoredCLS: true,
             restoredApps: [
@@ -368,6 +371,7 @@ describe("RestoreBackupDeviceAction", () => {
           pendingState(RestoreBackupSteps.WaitForAppAndVersion),
           pendingState(RestoreBackupSteps.GetIsOnboarded),
           completedState({
+            restoreStatus: RestoreBackupStatus.FULL,
             restoredLanguage: undefined,
             restoredCLS: undefined,
             restoredApps: undefined,
@@ -407,6 +411,7 @@ describe("RestoreBackupDeviceAction", () => {
           pendingState(RestoreBackupSteps.InstallLanguagePackage),
           pendingState(RestoreBackupSteps.InstallLanguagePackage),
           completedState({
+            restoreStatus: RestoreBackupStatus.PARTIAL,
             restoredLanguage: true,
             restoredCLS: false,
             restoredApps: [
@@ -439,6 +444,7 @@ describe("RestoreBackupDeviceAction", () => {
           pendingState(RestoreBackupSteps.WaitForAppAndVersion),
           pendingState(RestoreBackupSteps.GetIsOnboarded),
           completedState({
+            restoreStatus: RestoreBackupStatus.FULL,
             restoredLanguage: undefined,
             restoredCLS: undefined,
             restoredApps: undefined,
@@ -470,6 +476,7 @@ describe("RestoreBackupDeviceAction", () => {
             UserInteractionRequired.GrantConsent,
           ),
           completedState({
+            restoreStatus: RestoreBackupStatus.PARTIAL,
             restoredLanguage: undefined,
             restoredCLS: undefined,
             restoredApps: undefined,
@@ -507,6 +514,7 @@ describe("RestoreBackupDeviceAction", () => {
           pendingState(RestoreBackupSteps.UploadCustomLockScreen),
           pendingState(RestoreBackupSteps.UploadCustomLockScreen),
           completedState({
+            restoreStatus: RestoreBackupStatus.FULL,
             restoredLanguage: undefined,
             restoredCLS: true,
             restoredApps: undefined,
@@ -535,6 +543,7 @@ describe("RestoreBackupDeviceAction", () => {
           pendingState(RestoreBackupSteps.WaitForAppAndVersion),
           pendingState(RestoreBackupSteps.GetIsOnboarded),
           completedState({
+            restoreStatus: RestoreBackupStatus.PARTIAL,
             restoredLanguage: undefined,
             restoredCLS: false,
             restoredApps: undefined,
@@ -566,6 +575,7 @@ describe("RestoreBackupDeviceAction", () => {
             UserInteractionRequired.GrantConsent,
           ),
           completedState({
+            restoreStatus: RestoreBackupStatus.FULL,
             restoredLanguage: undefined,
             restoredCLS: undefined,
             restoredApps: undefined,
@@ -667,7 +677,163 @@ describe("RestoreBackupDeviceAction", () => {
           pendingState(RestoreBackupSteps.UploadCustomLockScreen),
           pendingState(RestoreBackupSteps.UploadCustomLockScreen),
           completedState({
+            restoreStatus: RestoreBackupStatus.PARTIAL,
             restoredLanguage: false,
+            restoredCLS: false,
+            restoredApps: [
+              {
+                appName: "App1",
+                restoredApp: false,
+                restoredAppStorage: false,
+              },
+            ],
+          }),
+        ];
+
+        testDeviceActionStates(
+          makeDeviceAction(backup),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          { onDone: resolve, onError: reject },
+        );
+      }));
+
+    it("should report a partial restore when an app storage is not restored", () =>
+      new Promise<void>((resolve, reject) => {
+        setupWaitForAppAndVersion();
+        setupGetIsOnboarded();
+        setupDeviceModel(DeviceModelId.STAX);
+        setupRequestMasterConsent();
+        setupInstallOrUpdateApps(
+          Right({
+            successfullyInstalled: [{ versionName: "App1" }],
+            alreadyInstalled: [],
+            missingApplications: [],
+          }),
+        );
+        setupRestoreAppsStorage(
+          Right([{ appName: "App1", restoredAppStorage: false }]),
+        );
+
+        const backup = makeBackup({
+          installedApps: [{ appName: "App1", data: "0xaa" }],
+        });
+
+        const expectedStates: RestoreBackupDAState[] = [
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.GetIsOnboarded),
+          pendingState(
+            RestoreBackupSteps.RequestMasterConsent,
+            UserInteractionRequired.GrantConsent,
+          ),
+          pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+          pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+          pendingState(RestoreBackupSteps.RestoreAppsStorage),
+          pendingState(RestoreBackupSteps.RestoreAppsStorage),
+          completedState({
+            restoreStatus: RestoreBackupStatus.PARTIAL,
+            restoredLanguage: undefined,
+            restoredCLS: undefined,
+            restoredApps: [
+              {
+                appName: "App1",
+                restoredApp: true,
+                restoredAppStorage: false,
+              },
+            ],
+          }),
+        ];
+
+        testDeviceActionStates(
+          makeDeviceAction(backup),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          { onDone: resolve, onError: reject },
+        );
+      }));
+
+    it("should stop and report out of memory when the language pack install runs out of memory", () =>
+      new Promise<void>((resolve, reject) => {
+        setupWaitForAppAndVersion();
+        setupGetIsOnboarded();
+        setupDeviceModel(DeviceModelId.STAX);
+        setupRequestMasterConsent();
+        setupInstallLanguagePackage(Left(new OutOfMemoryDAError()));
+        setupInstallOrUpdateApps(); // registered but never invoked
+        setupRestoreAppsStorage(); // registered but never invoked
+        setupUploadCustomLockScreen(); // registered but never invoked
+
+        const backup = makeBackup({
+          languageId: 1, // french
+          installedApps: [{ appName: "App1", data: "0xaa" }],
+          clsHexImage: "0x0102",
+        });
+
+        const expectedStates: RestoreBackupDAState[] = [
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.GetIsOnboarded),
+          pendingState(
+            RestoreBackupSteps.RequestMasterConsent,
+            UserInteractionRequired.GrantConsent,
+          ),
+          pendingState(RestoreBackupSteps.InstallLanguagePackage),
+          pendingState(RestoreBackupSteps.InstallLanguagePackage),
+          completedState({
+            restoreStatus: RestoreBackupStatus.OUT_OF_MEMORY,
+            restoredLanguage: false,
+            restoredCLS: false,
+            restoredApps: [
+              {
+                appName: "App1",
+                restoredApp: false,
+                restoredAppStorage: false,
+              },
+            ],
+          }),
+        ];
+
+        testDeviceActionStates(
+          makeDeviceAction(backup),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          { onDone: resolve, onError: reject },
+        );
+      }));
+
+    it("should stop and report out of memory when the apps install runs out of memory", () =>
+      new Promise<void>((resolve, reject) => {
+        setupWaitForAppAndVersion();
+        setupGetIsOnboarded();
+        setupDeviceModel(DeviceModelId.STAX);
+        setupRequestMasterConsent();
+        setupInstallLanguagePackage();
+        setupInstallOrUpdateApps(Left(new OutOfMemoryDAError()));
+        setupRestoreAppsStorage(); // registered but never invoked
+        setupUploadCustomLockScreen(); // registered but never invoked
+
+        const backup = makeBackup({
+          languageId: 1, // french
+          installedApps: [{ appName: "App1", data: "0xaa" }],
+          clsHexImage: "0x0102",
+        });
+
+        const expectedStates: RestoreBackupDAState[] = [
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.GetIsOnboarded),
+          pendingState(
+            RestoreBackupSteps.RequestMasterConsent,
+            UserInteractionRequired.GrantConsent,
+          ),
+          pendingState(RestoreBackupSteps.InstallLanguagePackage),
+          pendingState(RestoreBackupSteps.InstallLanguagePackage),
+          pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+          pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+          completedState({
+            restoreStatus: RestoreBackupStatus.OUT_OF_MEMORY,
+            restoredLanguage: true,
             restoredCLS: false,
             restoredApps: [
               {
