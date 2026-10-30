@@ -1,7 +1,33 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, net, protocol } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+
+// The renderer CSP cannot list every mock server host, so the renderer calls
+// mockserver://proxy/<http|https>/<host:port>/<path> and the main process
+// forwards it. The target sits in the path because custom schemes drop ports.
+const MOCK_SERVER_SCHEME = 'mockserver'
+
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: MOCK_SERVER_SCHEME,
+    privileges: { standard: true, supportFetchAPI: true, corsEnabled: true }
+  }
+])
+
+function forwardMockServerRequest(request: Request): Promise<Response> | Response {
+  const { pathname, search } = new URL(request.url)
+  const [, target, host, ...path] = pathname.split('/')
+  if (target !== 'http' && target !== 'https') {
+    return new Response(null, { status: 400 })
+  }
+  return net.fetch(`${target}://${host}/${path.join('/')}${search}`, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
+    duplex: 'half'
+  } as RequestInit)
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -48,6 +74,8 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
+
+  protocol.handle(MOCK_SERVER_SCHEME, forwardMockServerRequest)
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
