@@ -1,8 +1,4 @@
 export const TABLE_CONFIG = {
-  ROW_HEIGHT_ESTIMATE: 24,
-  OVERSCAN: 5,
   MIN_COLUMN_SIZE: 50,
   MAX_COLUMN_SIZE: 500,
 } as const;
-
-export const SCROLL_THRESHOLD = 1;

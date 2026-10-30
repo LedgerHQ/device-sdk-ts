@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { type ColumnSizingState } from "@tanstack/react-table";
 
+import { type ColumnSizing } from "./logsTable/TableColumns";
 import { TableHeader } from "./logsTable/TableHeader";
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
 import { LogCounts } from "./LogCounts";
@@ -36,7 +36,7 @@ export const Logger: React.FC<Props> = ({
     });
 
   const [newestFirst, setNewestFirst] = React.useState(false);
-  const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
+  const [columnSizing, setColumnSizing] = React.useState<ColumnSizing>({});
   const data = useMemo(
     () => (newestFirst ? [...displayedLogs].reverse() : displayedLogs),
     [displayedLogs, newestFirst],
@@ -50,8 +50,7 @@ export const Logger: React.FC<Props> = ({
     const currentLength = displayedLogs.length;
     prevDisplayedLogsLengthRef.current = currentLength;
 
-    // If data shrunk significantly, increment nonce to force LogsTable remount
-    // This resets the virtualizer state which can get corrupted when filtering
+    // If data shrunk significantly (e.g. a new filter), remount LogsTable to follow the latest logs again
     if (
       currentLength < prevLength * 0.5 ||
       (currentLength < 100 && currentLength < prevLength)
@@ -192,8 +191,8 @@ export const Logger: React.FC<Props> = ({
         currentHighlightIndex={currentMatchRowIndex}
         scrollToIndex={currentMatchRowIndex}
         follow={pausedLogs === null && !newestFirst}
+        newestFirst={newestFirst}
         columnSizing={columnSizing}
-        onColumnSizingChange={setColumnSizing}
       />
     </div>
   );
