@@ -74,6 +74,11 @@ const Dashboard: React.FC<{
     sendApdu,
   } = useConnectorMessages(connector);
 
+  // The mock server website joins the session given in the URL fragment
+  const mockServerWebsiteUrl = mockServer
+    ? `${mockServer.url.replace(/\/$/, "")}/${mockServer.sessionToken ? `#token=${mockServer.sessionToken}` : ""}`
+    : null;
+
   const [currentScreen, setCurrentScreen] = useState<DashboardScreen>(
     DashboardScreen.logs,
   );
@@ -129,6 +134,7 @@ const Dashboard: React.FC<{
         onSplitChange={setSplit}
         isLoggerConnected={isLoggerConnected}
         isInspectorConnected={isInspectorConnected}
+        mockServerWebsiteUrl={mockServerWebsiteUrl}
         colorScheme={colorScheme}
         onColorSchemeChange={onColorSchemeChange}
       />

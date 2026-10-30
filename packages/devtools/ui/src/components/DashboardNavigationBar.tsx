@@ -5,7 +5,7 @@ import {
   SegmentedControl,
   SegmentedControlButton,
 } from "@ledgerhq/lumen-ui-react";
-import { Moon, Sun } from "@ledgerhq/lumen-ui-react/symbols";
+import { ExternalLink, Moon, Sun } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { WithTooltip } from "./WithTooltip";
 
@@ -50,6 +50,7 @@ type DashboardNavigationBarProps = {
   onSplitChange: (split: SplitMode) => void;
   isLoggerConnected: boolean;
   isInspectorConnected: boolean;
+  mockServerWebsiteUrl: string | null;
   colorScheme: "light" | "dark";
   onColorSchemeChange: (colorScheme: ColorSchemeName) => void;
 };
@@ -61,6 +62,7 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
   onSplitChange,
   isLoggerConnected,
   isInspectorConnected,
+  mockServerWebsiteUrl,
   colorScheme,
   onColorSchemeChange,
 }) => {
@@ -123,6 +125,20 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
             </SegmentedControlButton>
           ))}
         </SegmentedControl>
+        {mockServerWebsiteUrl && (
+          <WithTooltip label="Open the mock server website" side="bottom">
+            <IconButton
+              aria-label="Open the mock server website"
+              icon={ExternalLink}
+              size="xs"
+              appearance="transparent"
+              className="rounded-sm"
+              onClick={() =>
+                window.open(mockServerWebsiteUrl, "_blank", "noopener")
+              }
+            />
+          </WithTooltip>
+        )}
         <WithTooltip label={`Switch to ${nextColorScheme} theme`} side="bottom">
           <IconButton
             aria-label={`Switch to ${nextColorScheme} theme`}
