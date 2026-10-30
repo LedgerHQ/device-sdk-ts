@@ -61,7 +61,6 @@ const Dashboard: React.FC<{
     isActivelyDiscovering,
     isLoggerConnected,
     isInspectorConnected,
-    providerValue,
     apduResponses,
     sendMessage,
     clearLogs,
@@ -70,8 +69,6 @@ const Dashboard: React.FC<{
     startDiscovering,
     stopDiscovering,
     connectDevice,
-    getProvider,
-    setProvider,
     sendApdu,
   } = useConnectorMessages(connector);
 
@@ -92,18 +89,15 @@ const Dashboard: React.FC<{
       discoveredDevices={discoveredDevices}
       isListening={isListening}
       isActivelyDiscovering={isActivelyDiscovering}
-      sendMessage={sendMessage}
       isConnected={isInspectorConnected}
       startListening={startListening}
       stopListening={stopListening}
       startDiscovering={startDiscovering}
       stopDiscovering={stopDiscovering}
       connectDevice={connectDevice}
-      providerValue={providerValue}
-      getProvider={getProvider}
-      setProvider={setProvider}
       sendApdu={sendApdu}
       apduResponses={apduResponses}
+      logs={logs}
     />
   );
 
