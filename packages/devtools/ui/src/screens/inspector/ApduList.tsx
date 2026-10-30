@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { IconButton } from "@ledgerhq/lumen-ui-react";
+import { IconButton, Tag } from "@ledgerhq/lumen-ui-react";
 import {
   ChevronRight,
   Download,
@@ -17,7 +17,7 @@ import { parseFilterQuery } from "../logger/filterUtils";
 import { INPUT, INPUT_CONTAINER, INPUT_WRAPPER } from "../logger/inputStyles";
 import { ScrollDownButton } from "../logger/logsTable/ScrollDownButton";
 import { PauseButton } from "../logger/PauseButton";
-import { type ApduExchange, statusName } from "./apduExchanges";
+import { type ApduExchange, OS_LAYER, statusName } from "./apduExchanges";
 import { matchesText } from "./apduFilter";
 import { CopyButton } from "./CopyButton";
 import { useScrollLogic } from "./useScrollLogic";
@@ -46,6 +46,7 @@ const statusTone = (statusWord: string) => {
 const searchableText = (exchange: ApduExchange) =>
   [
     exchange.command,
+    exchange.layer,
     exchange.sent.join(" "),
     exchange.sent.join(""),
     exchange.received.join(" "),
@@ -80,7 +81,17 @@ const ApduRowContent: React.FC<ApduRowProps> = ({
             className={`shrink-0 text-muted transition-transform ${open ? "rotate-90" : ""}`}
           />
           <span className="text-muted">{formatTime(exchange.timestamp)}</span>
-          <span className="min-w-0 flex-1 truncate">{exchange.command}</span>
+          <span className="flex min-w-0 flex-1 items-center gap-8">
+            <Tag
+              size="sm"
+              appearance={
+                exchange.layer === OS_LAYER ? "accent-subtle" : "gray"
+              }
+              label={exchange.layer ?? "Unknown"}
+              className="max-w-128 shrink-0"
+            />
+            <span className="truncate">{exchange.command}</span>
+          </span>
           <span className="body-4 whitespace-nowrap text-muted">
             {exchange.sent.length} B → {exchange.received.length} B
           </span>

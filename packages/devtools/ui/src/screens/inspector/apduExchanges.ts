@@ -11,6 +11,8 @@ export type ApduExchange = {
   id: string;
   timestamp: string;
   sessionId: string;
+  /** Who answered: the OS, the app open at the time, or undefined while that app is unknown. */
+  layer: string | undefined;
   command: string;
   sent: string[];
   received: string[];
@@ -34,6 +36,8 @@ export const statusName = (statusWord: string) =>
 const toBytes = (hex: string) =>
   hex.toLowerCase().match(/.{1,2}/g) ?? ([] as string[]);
 
+export const OS_LAYER = "OS";
+
 const toAscii = (bytes: string[]) =>
   String.fromCharCode(...bytes.map((byte) => parseInt(byte, 16)));
 
@@ -45,6 +49,11 @@ const commandName = (app: string | undefined, key: string) => {
     ? DASHBOARD_COMMANDS[key]
     : APP_COMMANDS[app]?.[key];
 };
+
+const layerOf = (app: string | undefined, key: string) =>
+  key.startsWith("b0") || (app !== undefined && isDashboardName(app))
+    ? OS_LAYER
+    : app;
 
 /** The app a successful exchange leaves open, when it tells: GET_APP_AND_VERSION names it, OPEN_APP and CLOSE_APP switch it. */
 const appAfter = (
@@ -90,6 +99,7 @@ export const extractApduExchanges = (logs: LogData[]): ApduExchange[] => {
         id: `${log.timestamp}-${index}`,
         timestamp: log.timestamp,
         sessionId,
+        layer: layerOf(app, key),
         command: commandName(app, key) ?? sent.slice(0, 2).join(" "),
         sent,
         received,
