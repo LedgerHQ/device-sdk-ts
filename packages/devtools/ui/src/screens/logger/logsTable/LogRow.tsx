@@ -1,4 +1,5 @@
 import React from "react";
+import { Checkbox } from "@ledgerhq/lumen-ui-react";
 import { ChevronRight } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { LEVEL_DOT } from "../logLevels";
@@ -13,6 +14,12 @@ type LogRowProps = {
   currentMatch: boolean;
   expanded: boolean;
   onToggle: (log: LogData) => void;
+  selected: boolean;
+  /** `extend` (shift-click) selects every row since the last one picked. */
+  onSelect: (index: number, extend: boolean) => void;
+  /** Pressing a row and dragging over others selects them (see useDragSelect). */
+  onRowMouseDown: (index: number, event: React.MouseEvent) => void;
+  onRowMouseEnter: (index: number) => void;
   columnSizing: ColumnSizing;
 };
 
@@ -30,12 +37,29 @@ const LogRowContent: React.FC<LogRowProps> = ({
   currentMatch,
   expanded,
   onToggle,
+  selected,
+  onSelect,
+  onRowMouseDown,
+  onRowMouseEnter,
   columnSizing,
 }) => {
   const expandable = hasPayload(log.payload);
   const open = expandable && expanded;
   return (
-    <div data-index={index} className="flex w-full gap-8 py-2 pr-8 pl-8">
+    <div
+      data-index={index}
+      className={`flex w-full gap-8 py-2 pr-8 pl-8 ${selected ? "bg-active-subtle" : ""}`}
+      onMouseDown={(event) => onRowMouseDown(index, event)}
+      onMouseEnter={() => onRowMouseEnter(index)}
+    >
+      <div className="flex shrink-0 pt-4">
+        <Checkbox
+          aria-label="Select this log"
+          checked={selected}
+          className="size-16"
+          onClick={(event) => onSelect(index, event.shiftKey)}
+        />
+      </div>
       <div className="flex shrink-0 py-2">
         <span className={`w-4 rounded-full ${LEVEL_DOT[log.verbosity]}`} />
       </div>

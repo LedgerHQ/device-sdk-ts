@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { IconButton, Tag } from "@ledgerhq/lumen-ui-react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { Checkbox, IconButton, Tag } from "@ledgerhq/lumen-ui-react";
 import {
   ChevronRight,
   Download,
@@ -7,6 +7,9 @@ import {
 } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { WithTooltip } from "../../components/WithTooltip";
+import { SelectionBar } from "../ai/SelectionBar";
+import { type AiSelection } from "../ai/types";
+import { useDragSelect } from "../ai/useDragSelect";
 import { parseFilterQuery } from "../logger/filterUtils";
 import { INPUT, INPUT_CONTAINER, INPUT_WRAPPER } from "../logger/inputStyles";
 import { ScrollDownButton } from "../logger/logsTable/ScrollDownButton";
@@ -50,18 +53,45 @@ const searchableText = (exchange: ApduExchange) =>
 
 type ApduRowProps = {
   exchange: ApduExchange;
+  index: number;
   open: boolean;
   onToggle: (id: string) => void;
+  selected: boolean;
+  /** `extend` (shift-click) selects every row since the last one picked. */
+  onSelect: (index: number, extend: boolean) => void;
+  /** Pressing a row and dragging over others selects them (see useDragSelect). */
+  onRowMouseDown: (index: number, event: React.MouseEvent) => void;
+  onRowMouseEnter: (index: number) => void;
 };
+
+const toContextLine = (exchange: ApduExchange) =>
+  `[${exchange.timestamp}] [${exchange.layer ?? "unknown app"}] ${exchange.command} | => ${exchange.sent.join("")} | <= ${exchange.received.join("")}`;
 
 const ApduRowContent: React.FC<ApduRowProps> = ({
   exchange,
+  index,
   open,
   onToggle,
+  selected,
+  onSelect,
+  onRowMouseDown,
+  onRowMouseEnter,
 }) => {
   const tone = statusTone(exchange.statusWord);
   return (
-    <div className="flex gap-8 px-8 py-2">
+    <div
+      className={`flex gap-8 px-8 py-2 ${selected ? "bg-active-subtle" : ""}`}
+      onMouseDown={(event) => onRowMouseDown(index, event)}
+      onMouseEnter={() => onRowMouseEnter(index)}
+    >
+      <div className="flex shrink-0 pt-4">
+        <Checkbox
+          aria-label="Select this APDU"
+          checked={selected}
+          className="size-16"
+          onClick={(event) => onSelect(index, event.shiftKey)}
+        />
+      </div>
       <span className={`w-4 shrink-0 rounded-full ${tone.bar}`} />
       <div className="min-w-0 flex-1">
         <button
@@ -134,13 +164,19 @@ const ApduRow = React.memo(
   ApduRowContent,
   (previous, next) =>
     previous.exchange.id === next.exchange.id &&
+    previous.index === next.index &&
     previous.open === next.open &&
-    previous.onToggle === next.onToggle,
+    previous.onToggle === next.onToggle &&
+    previous.selected === next.selected &&
+    previous.onSelect === next.onSelect &&
+    previous.onRowMouseDown === next.onRowMouseDown &&
+    previous.onRowMouseEnter === next.onRowMouseEnter,
 );
 
-export const ApduList: React.FC<{ exchanges: ApduExchange[] }> = ({
-  exchanges,
-}) => {
+export const ApduList: React.FC<{
+  exchanges: ApduExchange[];
+  onExplain: (request: AiSelection) => void;
+}> = ({ exchanges, onExplain }) => {
   const [filterText, setFilterText] = useState("");
   const [pausedExchanges, setPausedExchanges] = useState<ApduExchange[] | null>(
     null,
@@ -161,6 +197,40 @@ export const ApduList: React.FC<{ exchanges: ApduExchange[] }> = ({
       matchesText(searchableText(exchange), tokens),
     );
   }, [sourceExchanges, filterText]);
+
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Read through refs so a new APDU does not re-render every row's select handler
+  const visibleRef = useRef(visibleExchanges);
+  visibleRef.current = visibleExchanges;
+  const lastSelectedRef = useRef<number | null>(null);
+  const select = useCallback((index: number, extend: boolean) => {
+    const rows = visibleRef.current;
+    const exchange = rows[index];
+    if (!exchange) return;
+    const last = lastSelectedRef.current;
+    lastSelectedRef.current = index;
+    setSelectedIds((previous) => {
+      const next = new Set(previous);
+      if (extend && last !== null) {
+        for (let i = Math.min(last, index); i <= Math.max(last, index); i++) {
+          next.add(rows[i]!.id);
+        }
+      } else if (!next.delete(exchange.id)) {
+        next.add(exchange.id);
+      }
+      return next;
+    });
+  }, []);
+  const { onRowMouseDown, onRowMouseEnter } = useDragSelect(
+    (index) => visibleRef.current[index]?.id,
+    selectedIds,
+    setSelectedIds,
+  );
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    lastSelectedRef.current = null;
+  };
+  const selectedExchanges = exchanges.filter(({ id }) => selectedIds.has(id));
 
   const toggle = useCallback((id: string) => {
     setOpenIds((previous) => {
@@ -264,12 +334,17 @@ export const ApduList: React.FC<{ exchanges: ApduExchange[] }> = ({
                 No APDU exchanged yet
               </p>
             ) : (
-              visibleExchanges.map((exchange) => (
+              visibleExchanges.map((exchange, index) => (
                 <ApduRow
                   key={exchange.id}
                   exchange={exchange}
+                  index={index}
                   open={openIds.has(exchange.id)}
                   onToggle={toggle}
+                  selected={selectedIds.has(exchange.id)}
+                  onSelect={select}
+                  onRowMouseDown={onRowMouseDown}
+                  onRowMouseEnter={onRowMouseEnter}
                 />
               ))
             )}
@@ -293,6 +368,19 @@ export const ApduList: React.FC<{ exchanges: ApduExchange[] }> = ({
         </div>
         <ScrollDownButton enabled={atBottom} onClick={jumpToLatest} />
       </div>
+      {selectedExchanges.length > 0 && (
+        <SelectionBar
+          label={`${selectedExchanges.length} ${selectedExchanges.length === 1 ? "APDU" : "APDUs"} selected`}
+          detail={`${formatTime(selectedExchanges[0]!.timestamp)} → ${formatTime(selectedExchanges.at(-1)!.timestamp)} · shift-click to extend`}
+          onClear={clearSelection}
+          onExplain={() =>
+            onExplain({
+              context: selectedExchanges.map(toContextLine).join("\n"),
+              summary: `${selectedExchanges.length} ${selectedExchanges.length === 1 ? "APDU" : "APDUs"}`,
+            })
+          }
+        />
+      )}
     </div>
   );
 };

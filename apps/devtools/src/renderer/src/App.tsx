@@ -30,7 +30,7 @@ function App(): React.JSX.Element {
 
   return (
     <>
-      <Dashboard connector={connector} rewriteMockServerUrl={toMockServerProxyUrl} />
+      <Dashboard connector={connector} rewriteMockServerUrl={toMockServerProxyUrl} ai={window.ai} />
     </>
   )
 }

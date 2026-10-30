@@ -10,11 +10,11 @@ import { DashboardFooter } from "./components/DashboardFooter";
 import {
   DashboardNavigationBar,
   DashboardScreen,
-  SplitMode,
 } from "./components/DashboardNavigationBar";
 import { DebugDrawer } from "./components/DebugDrawer";
-import { SplitView } from "./components/SplitView";
 import { useConnectorMessages } from "./hooks/useConnectorMessages";
+import { AiPanel, type AiPanelRequest } from "./screens/ai/AiPanel";
+import { type AiClient, type AiSelection } from "./screens/ai/types";
 import { Inspector } from "./screens/inspector";
 import { Logger } from "./screens/logger";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -45,7 +45,8 @@ const Dashboard: React.FC<{
   connector: Connector;
   onColorSchemeChange: (colorScheme: ColorSchemeName) => void;
   rewriteMockServerUrl?: (url: string) => string;
-}> = ({ connector, onColorSchemeChange, rewriteMockServerUrl }) => {
+  ai?: AiClient;
+}> = ({ connector, onColorSchemeChange, rewriteMockServerUrl, ai }) => {
   const { colorScheme } = useTheme();
   useEffect(() => {
     document.documentElement.style.colorScheme = colorScheme;
@@ -85,11 +86,25 @@ const Dashboard: React.FC<{
   const [currentScreen, setCurrentScreen] = useState<DashboardScreen>(
     DashboardScreen.logs,
   );
-  const [split, setSplit] = useState(SplitMode.off);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiRequest, setAiRequest] = useState<AiPanelRequest | null>(null);
+  const explainWithAi = (request: AiSelection) => {
+    const token = mockServer?.sessionToken;
+    const context = token
+      ? request.context.replaceAll(token, "<session-token>")
+      : request.context;
+    setAiOpen(true);
+    setAiRequest({ ...request, context, id: (aiRequest?.id ?? 0) + 1 });
+  };
   const [isDebugOpen, setIsDebugOpen] = useState(false);
 
   const logger = (
-    <Logger logs={logs} clearLogs={clearLogs} isConnected={isLoggerConnected} />
+    <Logger
+      logs={logs}
+      clearLogs={clearLogs}
+      isConnected={isLoggerConnected}
+      onExplain={explainWithAi}
+    />
   );
 
   const inspector = (
@@ -110,39 +125,28 @@ const Dashboard: React.FC<{
       logs={logs}
       mockServer={mockServer}
       rewriteMockServerUrl={rewriteMockServerUrl}
+      onExplain={explainWithAi}
     />
   );
-
-  const content = (() => {
-    switch (split) {
-      case SplitMode.horizontal:
-        return (
-          <SplitView direction="horizontal" first={logger} second={inspector} />
-        );
-      case SplitMode.vertical:
-        return (
-          <SplitView direction="vertical" first={logger} second={inspector} />
-        );
-      default:
-        return currentScreen === DashboardScreen.inspector ? inspector : logger;
-    }
-  })();
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-canvas text-base">
       <DashboardNavigationBar
         currentScreen={currentScreen}
         onScreenChange={setCurrentScreen}
-        split={split}
-        onSplitChange={setSplit}
+        aiOpen={aiOpen}
+        onToggleAi={() => setAiOpen(!aiOpen)}
         isLoggerConnected={isLoggerConnected}
         isInspectorConnected={isInspectorConnected}
         mockServerWebsiteUrl={mockServerWebsiteUrl}
         colorScheme={colorScheme}
         onColorSchemeChange={onColorSchemeChange}
       />
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {content}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          {currentScreen === DashboardScreen.inspector ? inspector : logger}
+        </div>
+        {aiOpen && <AiPanel ai={ai} request={aiRequest} />}
       </div>
       <DashboardFooter
         isDebugOpen={isDebugOpen}
@@ -162,10 +166,13 @@ const Dashboard: React.FC<{
 export function DashboardWithErrorBoundary({
   connector,
   rewriteMockServerUrl,
+  ai,
 }: {
   connector: Connector;
   /** Lets a host route the mock server calls elsewhere, e.g. through a proxy its CSP allows. */
   rewriteMockServerUrl?: (url: string) => string;
+  /** Runs Claude for the AI panel; only a host that can run Claude Code provides one. */
+  ai?: AiClient;
 }) {
   const [colorScheme, setColorScheme] = useState(loadColorScheme);
   const changeColorScheme = (next: ColorSchemeName) => {
@@ -179,6 +186,7 @@ export function DashboardWithErrorBoundary({
           connector={connector}
           onColorSchemeChange={changeColorScheme}
           rewriteMockServerUrl={rewriteMockServerUrl}
+          ai={ai}
         />
       </ErrorBoundary>
     </ThemeProvider>

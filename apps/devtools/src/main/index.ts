@@ -136,10 +136,12 @@ app.on('window-all-closed', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 import { setupWebsocketServer, stopWebsocketServer } from './setupWebsocketServer'
+import { setupAi } from './ai'
 
 // Start the WebSocket server when the app is ready
 app.whenReady().then(() => {
   setupWebsocketServer()
+  setupAi()
 })
 
 // Stop the WebSocket server when the app is about to quit

@@ -6,6 +6,7 @@ import {
 import { Tag } from "@ledgerhq/lumen-ui-react";
 
 import { type ApduResponse } from "../../hooks/useConnectorMessages";
+import { type AiSelection } from "../ai/types";
 import { type ApduExchange } from "./apduExchanges";
 import { ApduList } from "./ApduList";
 import { ApduSender } from "./ApduSender";
@@ -23,6 +24,7 @@ type DevicePanelProps = {
   exchanges: ApduExchange[];
   onSendApdu: (sessionId: string, apduHex: string) => string;
   apduResponses: Map<string, ApduResponse>;
+  onExplain: (request: AiSelection) => void;
 };
 
 export const DevicePanel: React.FC<DevicePanelProps> = ({
@@ -31,6 +33,7 @@ export const DevicePanel: React.FC<DevicePanelProps> = ({
   exchanges,
   onSendApdu,
   apduResponses,
+  onExplain,
 }) => {
   const ready = state && "currentApp" in state ? state : undefined;
   const status = useDebouncedStatus(state?.deviceStatus ?? "");
@@ -92,7 +95,11 @@ export const DevicePanel: React.FC<DevicePanelProps> = ({
         />
       )}
 
-      <ApduList key={device.sessionId} exchanges={exchanges} />
+      <ApduList
+        key={device.sessionId}
+        exchanges={exchanges}
+        onExplain={onExplain}
+      />
     </div>
   );
 };
