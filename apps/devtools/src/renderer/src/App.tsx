@@ -3,6 +3,13 @@ import { Dashboard } from '@ledgerhq/device-management-kit-devtools-ui'
 import { useEffect, useRef, useState } from 'react'
 import { DEFAULT_DASHBOARD_WS_URL } from '@ledgerhq/device-management-kit-devtools-websocket-common'
 
+// The main process forwards mockserver:// requests, see MOCK_SERVER_SCHEME there
+function toMockServerProxyUrl(url: string): string {
+  const { origin, protocol, host, pathname } = new URL(url)
+  window.electron.ipcRenderer.send('mock-server:allow', origin)
+  return `mockserver://proxy/${protocol.slice(0, -1)}/${host}${pathname}`
+}
+
 function App(): React.JSX.Element {
   const [connector, setConnector] = useState<DevToolsWebSocketConnector | null>(null)
 
@@ -24,7 +31,7 @@ function App(): React.JSX.Element {
 
   return (
     <>
-      <Dashboard connector={connector} />
+      <Dashboard connector={connector} rewriteMockServerUrl={toMockServerProxyUrl} />
     </>
   )
 }
