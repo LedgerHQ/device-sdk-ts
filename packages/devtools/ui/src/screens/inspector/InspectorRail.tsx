@@ -6,9 +6,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Spinner } from "@ledgerhq/lumen-ui-react";
 
+import { type MockServerConfig } from "../../hooks/useConnectorMessages";
 import { DeviceIcon } from "./DeviceIcon";
 import {
   isConnected,
+  MOCK_SERVER_TRANSPORT,
   STATUS_DOT,
   transportLabel,
   useDebouncedStatus,
@@ -65,6 +67,7 @@ type InspectorRailProps = {
   startDiscovering: () => void;
   stopDiscovering: () => void;
   connectDevice: (deviceId: string) => void;
+  mockServer: MockServerConfig | null;
 };
 
 export const InspectorRail: React.FC<InspectorRailProps> = ({
@@ -80,60 +83,90 @@ export const InspectorRail: React.FC<InspectorRailProps> = ({
   startDiscovering,
   stopDiscovering,
   connectDevice,
-}) => (
-  <div className="flex w-288 shrink-0 flex-col gap-16 overflow-auto border-r border-muted-subtle p-12">
-    <section className="flex flex-col gap-4">
-      <span className={`px-4 pb-4 ${SECTION_LABEL}`}>
-        Sessions · {devices.length}
-      </span>
-      {devices.length === 0 && (
-        <p className="px-4 body-3 text-muted">No device connected yet.</p>
-      )}
-      {devices.map((device) => (
-        <SessionRow
-          key={device.sessionId}
-          device={device}
-          state={sessionStates.get(device.sessionId)}
-          selected={device.sessionId === selectedSessionId}
-          onSelect={() => onSelect(device.sessionId)}
-        />
-      ))}
-    </section>
+  mockServer,
+}) => {
+  const usesMockServer = devices.some(
+    (device) => device.transport === MOCK_SERVER_TRANSPORT,
+  );
 
-    <section className="flex flex-col gap-4">
-      <div className="flex items-center gap-6 px-4 pb-4">
-        <span className={`flex-1 ${SECTION_LABEL}`}>Discovered</span>
-        <button
-          type="button"
-          className={SMALL_BUTTON}
-          onClick={isListening ? stopListening : startListening}
-          disabled={isActivelyDiscovering}
-        >
-          {isListening ? "Stop" : "Listen"}
-        </button>
-        <button
-          type="button"
-          className={SMALL_BUTTON}
-          onClick={isActivelyDiscovering ? stopDiscovering : startDiscovering}
-          disabled={isListening}
-        >
-          {isActivelyDiscovering ? "Stop" : "Discover"}
-        </button>
-      </div>
-      {(isListening || isActivelyDiscovering) &&
-        discoveredDevices.length === 0 && (
-          <p className="flex items-center gap-8 px-4 body-3 text-muted">
-            <Spinner size={16} />
-            {isListening ? "Listening…" : "Discovering…"}
-          </p>
+  return (
+    <div className="flex w-288 shrink-0 flex-col gap-16 overflow-auto border-r border-muted-subtle p-12">
+      <section className="flex flex-col gap-4">
+        <span className={`px-4 pb-4 ${SECTION_LABEL}`}>
+          Sessions · {devices.length}
+        </span>
+        {devices.length === 0 && (
+          <p className="px-4 body-3 text-muted">No device connected yet.</p>
         )}
-      {discoveredDevices.map((device) => (
-        <DiscoveredDeviceCard
-          key={device.id}
-          device={device}
-          onConnect={() => connectDevice(device.id)}
-        />
-      ))}
-    </section>
-  </div>
-);
+        {devices.map((device) => (
+          <SessionRow
+            key={device.sessionId}
+            device={device}
+            state={sessionStates.get(device.sessionId)}
+            selected={device.sessionId === selectedSessionId}
+            onSelect={() => onSelect(device.sessionId)}
+          />
+        ))}
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center gap-6 px-4 pb-4">
+          <span className={`flex-1 ${SECTION_LABEL}`}>Discovered</span>
+          <button
+            type="button"
+            className={SMALL_BUTTON}
+            onClick={isListening ? stopListening : startListening}
+            disabled={isActivelyDiscovering}
+          >
+            {isListening ? "Stop" : "Listen"}
+          </button>
+          <button
+            type="button"
+            className={SMALL_BUTTON}
+            onClick={isActivelyDiscovering ? stopDiscovering : startDiscovering}
+            disabled={isListening}
+          >
+            {isActivelyDiscovering ? "Stop" : "Discover"}
+          </button>
+        </div>
+        {(isListening || isActivelyDiscovering) &&
+          discoveredDevices.length === 0 && (
+            <p className="flex items-center gap-8 px-4 body-3 text-muted">
+              <Spinner size={16} />
+              {isListening ? "Listening…" : "Discovering…"}
+            </p>
+          )}
+        {discoveredDevices.map((device) => (
+          <DiscoveredDeviceCard
+            key={device.id}
+            device={device}
+            onConnect={() => connectDevice(device.id)}
+          />
+        ))}
+      </section>
+
+      {usesMockServer && (
+        <section className="mt-auto flex flex-col gap-6 border-t border-muted-subtle px-4 pt-12">
+          <span className={SECTION_LABEL}>Mock server</span>
+          {mockServer ? (
+            <>
+              <span className="truncate font-mono! body-3">
+                {mockServer.url}
+              </span>
+              <span className="truncate font-mono! body-4 text-muted">
+                {mockServer.sessionToken
+                  ? `Session ${mockServer.sessionToken.slice(0, 8)}…`
+                  : "No session token shared"}
+              </span>
+            </>
+          ) : (
+            <p className="body-3 text-muted">
+              Pass <code>mockServer</code> to <code>DevToolsDmkInspector</code>{" "}
+              to see the device screens.
+            </p>
+          )}
+        </section>
+      )}
+    </div>
+  );
+};

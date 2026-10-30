@@ -8,7 +8,10 @@ import { type DevToolsModule } from "@ledgerhq/device-management-kit-devtools-co
 
 import { mapConnectorMessageToLogData } from "../screens/logger/mapConnectorMessageToLogData";
 import { type LogData } from "../screens/logger/types";
-import { type ApduResponse } from "./useConnectorMessages";
+import {
+  type ApduResponse,
+  type MockServerConfig,
+} from "./useConnectorMessages";
 
 /**
  * Handle module connected handshake message.
@@ -101,6 +104,54 @@ export function handleProviderValue(
   } catch (e) {
     console.error("Failed to parse providerValue payload", e);
   }
+}
+
+// Parseable, over HTTP(S) and with a host: anything else would break the screen or the proxy
+const isWebUrl = (url: string): boolean => {
+  try {
+    const { protocol, host } = new URL(url);
+    return (protocol === "http:" || protocol === "https:") && host !== "";
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * The mock server config the app sent, `null` when it has none, or `undefined`
+ * when the message is not one: it comes from the app, so its shape is checked.
+ */
+export function parseMockServerConfig(
+  payload: string,
+): MockServerConfig | null | undefined {
+  try {
+    const config: unknown = JSON.parse(payload);
+    if (config === null) return null;
+    if (typeof config !== "object") return undefined;
+    const { url, sessionToken } = config as Record<string, unknown>;
+    if (typeof url !== "string" || !isWebUrl(url)) return undefined;
+    if (sessionToken !== undefined && typeof sessionToken !== "string") {
+      return undefined;
+    }
+    return sessionToken === undefined ? { url } : { url, sessionToken };
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Handle mock server config message.
+ */
+export function handleMockServerConfig(
+  payload: string,
+  setMockServer: Dispatch<SetStateAction<MockServerConfig | null>>,
+): void {
+  const config = parseMockServerConfig(payload);
+  if (config === undefined) {
+    // Not the payload: a rejected config can still hold a valid session token
+    console.error("Ignored an invalid mockServerConfig payload");
+    return;
+  }
+  setMockServer(config);
 }
 
 /**
