@@ -1440,6 +1440,9 @@ importers:
 
   packages/devtools/ui:
     dependencies:
+      '@ledgerhq/device-mockserver-react':
+        specifier: workspace:^
+        version: link:../../mockserver-device-react
       '@ledgerhq/lumen-design-core':
         specifier: 0.1.34
         version: 0.1.34

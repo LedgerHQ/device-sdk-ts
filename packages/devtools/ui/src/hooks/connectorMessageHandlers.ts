@@ -8,7 +8,10 @@ import { type DevToolsModule } from "@ledgerhq/device-management-kit-devtools-co
 
 import { mapConnectorMessageToLogData } from "../screens/logger/mapConnectorMessageToLogData";
 import { type LogData } from "../screens/logger/types";
-import { type ApduResponse } from "./useConnectorMessages";
+import {
+  type ApduResponse,
+  type MockServerConfig,
+} from "./useConnectorMessages";
 
 /**
  * Handle module connected handshake message.
@@ -100,6 +103,20 @@ export function handleProviderValue(
     setProviderValue(provider);
   } catch (e) {
     console.error("Failed to parse providerValue payload", e);
+  }
+}
+
+/**
+ * Handle mock server config message.
+ */
+export function handleMockServerConfig(
+  payload: string,
+  setMockServer: Dispatch<SetStateAction<MockServerConfig | null>>,
+): void {
+  try {
+    setMockServer(JSON.parse(payload) as MockServerConfig);
+  } catch (e) {
+    console.error("Failed to parse mockServerConfig payload", e);
   }
 }
 

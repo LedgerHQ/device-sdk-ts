@@ -44,7 +44,8 @@ function saveColorScheme(colorScheme: ColorSchemeName): void {
 const Dashboard: React.FC<{
   connector: Connector;
   onColorSchemeChange: (colorScheme: ColorSchemeName) => void;
-}> = ({ connector, onColorSchemeChange }) => {
+  rewriteMockServerUrl?: (url: string) => string;
+}> = ({ connector, onColorSchemeChange, rewriteMockServerUrl }) => {
   const { colorScheme } = useTheme();
   useEffect(() => {
     document.documentElement.style.colorScheme = colorScheme;
@@ -61,6 +62,7 @@ const Dashboard: React.FC<{
     isActivelyDiscovering,
     isLoggerConnected,
     isInspectorConnected,
+    mockServer,
     apduResponses,
     sendMessage,
     clearLogs,
@@ -98,6 +100,8 @@ const Dashboard: React.FC<{
       sendApdu={sendApdu}
       apduResponses={apduResponses}
       logs={logs}
+      mockServer={mockServer}
+      rewriteMockServerUrl={rewriteMockServerUrl}
     />
   );
 
@@ -148,8 +152,11 @@ const Dashboard: React.FC<{
 
 export function DashboardWithErrorBoundary({
   connector,
+  rewriteMockServerUrl,
 }: {
   connector: Connector;
+  /** Lets a host route the mock server calls elsewhere, e.g. through a proxy its CSP allows. */
+  rewriteMockServerUrl?: (url: string) => string;
 }) {
   const [colorScheme, setColorScheme] = useState(loadColorScheme);
   const changeColorScheme = (next: ColorSchemeName) => {
@@ -162,6 +169,7 @@ export function DashboardWithErrorBoundary({
         <Dashboard
           connector={connector}
           onColorSchemeChange={changeColorScheme}
+          rewriteMockServerUrl={rewriteMockServerUrl}
         />
       </ErrorBoundary>
     </ThemeProvider>
