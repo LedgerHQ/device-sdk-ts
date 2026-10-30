@@ -16,6 +16,7 @@ import {
   type PcztOrchardBundle,
   type PcztTransaction,
 } from "@api/model/PcztTransaction";
+import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
 import { PcztHeaderCommand } from "@internal/app-binder/command/PcztHeaderCommand";
 import { PcztIronwoodActionCommand } from "@internal/app-binder/command/PcztIronwoodActionCommand";
 import { PcztOrchardActionCommand } from "@internal/app-binder/command/PcztOrchardActionCommand";
@@ -25,6 +26,7 @@ import { SignPcztIronwoodCommand } from "@internal/app-binder/command/SignPcztIr
 import { SignPcztOrchardCommand } from "@internal/app-binder/command/SignPcztOrchardCommand";
 import { SignPcztTransparentCommand } from "@internal/app-binder/command/SignPcztTransparentCommand";
 import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { OutputAccountRefusedError } from "@internal/app-binder/command/utils/OutputAccountRefusedError";
 import {
   pcztP1,
   pcztP2,
@@ -33,8 +35,15 @@ import {
   serializePcztHeader,
   serializeTransparentInputs,
   serializeTransparentOutputs,
+  shieldedMetadataPacketIndices,
 } from "@internal/app-binder/command/utils/pcztSerializer";
+import { UnsupportedOutputAccountDeclarationError } from "@internal/app-binder/command/utils/UnsupportedOutputAccountDeclarationError";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+import {
+  isAppVersionAtLeast,
+  MIN_APP_VERSION_FOR_OUTPUT_ACCOUNT,
+  resolveOutputAccounts,
+} from "@internal/app-binder/task/utils/outputAccountDeclaration";
 
 export type SignPcztTransactionTaskArgs = {
   transaction: PcztTransaction;
@@ -59,9 +68,36 @@ const EMPTY_ORCHARD_BUNDLE: PcztOrchardBundle = {
 const V6_TX_VERSION = 6;
 
 /**
+ * A 6a80 on the metadata packet of an action that declares an output account is
+ * reported as {@link OutputAccountRefusedError}; any other failure (another
+ * status, another packet, an undeclared action) is returned unchanged.
+ * `actionIndex` is `-1` when the failing packet is not a metadata packet.
+ */
+const mapOutputAccountRefusal = (
+  error: SignPcztTransactionTaskError,
+  pool: "orchard" | "ironwood",
+  actionIndex: number,
+  accounts: readonly (number | undefined)[],
+): SignPcztTransactionTaskError => {
+  const account = actionIndex >= 0 ? accounts[actionIndex] : undefined;
+  if (
+    account !== undefined &&
+    "errorCode" in error &&
+    error.errorCode === "6a80"
+  ) {
+    return new OutputAccountRefusedError(pool, actionIndex, account);
+  }
+  return error;
+};
+
+/**
  * Drives the device PCZT signing protocol end-to-end, supporting both V5
  * (Orchard) and V6 (Orchard + Ironwood) transactions:
  *
+ * 0. when the transaction declares the account a shielded output pays
+ *    (`outputZip32Derivation`), validates the declarations and checks the
+ *    installed app version with `GET_APP_CONFIG` (3.9.5 or later) before any
+ *    PCZT APDU is sent; a transaction without a declaration skips this step;
  * 1. streams the PCZT bundle in the fixed order — `PCZT_HEADER`,
  *    `PCZT_TRANSPARENT_INPUT`, `PCZT_TRANSPARENT_OUTPUT`, `PCZT_ORCHARD_ACTION`,
  *    and for V6: `PCZT_IRONWOOD_ACTION` (a null Ironwood bundle on a V6
@@ -117,6 +153,28 @@ export class SignPcztTransactionTask {
 
     const hasIronwood = isV6 && ironwoodBundle !== null;
 
+    // 0. Output account declarations: validated before any APDU, then gated on
+    //    the app version (fail-closed) so an older app never receives bytes it
+    //    would misparse.
+    const declared = resolveOutputAccounts(this.args.transaction);
+    if (declared instanceof InvalidArgumentError) {
+      return DmkResultFactory({ error: declared });
+    }
+    if (declared.count > 0) {
+      const configResult = await this.api.sendCommand(
+        new GetAppConfigCommand(),
+      );
+      if (!isSuccessCommandResult(configResult)) {
+        return DmkResultFactory({ error: configResult.error });
+      }
+      const { version } = configResult.data;
+      if (!isAppVersionAtLeast(version, MIN_APP_VERSION_FOR_OUTPUT_ACCOUNT)) {
+        return DmkResultFactory({
+          error: new UnsupportedOutputAccountDeclarationError(version),
+        });
+      }
+    }
+
     // 1. Stream the PCZT bundle, in order.
     const headerResult = await this.api.sendCommand(
       new PcztHeaderCommand({ data: serializePcztHeader(global) }),
@@ -153,7 +211,8 @@ export class SignPcztTransactionTask {
       }
     }
 
-    const orchardPackets = serializeOrchardActions(bundle);
+    const orchardPackets = serializeOrchardActions(bundle, declared.orchard);
+    const orchardMetadata = shieldedMetadataPacketIndices(bundle);
     for (let i = 0; i < orchardPackets.length; i += 1) {
       const result = await this.api.sendCommand(
         new PcztOrchardActionCommand({
@@ -165,7 +224,14 @@ export class SignPcztTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(result)) {
-        return DmkResultFactory({ error: result.error });
+        return DmkResultFactory({
+          error: mapOutputAccountRefusal(
+            result.error,
+            "orchard",
+            orchardMetadata.indexOf(i),
+            declared.orchard,
+          ),
+        });
       }
     }
 
@@ -177,7 +243,11 @@ export class SignPcztTransactionTask {
     // (6d00) on the first INS_PCZT_IRONWOOD_ACTION APDU, after Orchard streaming
     // has already sent P2=CONTINUE — leaving the device waiting for more data.
     if (hasIronwood) {
-      const ironwoodPackets = serializeIronwoodActions(ironwoodBundle!);
+      const ironwoodPackets = serializeIronwoodActions(
+        ironwoodBundle!,
+        declared.ironwood,
+      );
+      const ironwoodMetadata = shieldedMetadataPacketIndices(ironwoodBundle!);
       for (let i = 0; i < ironwoodPackets.length; i += 1) {
         const result = await this.api.sendCommand(
           new PcztIronwoodActionCommand({
@@ -187,7 +257,14 @@ export class SignPcztTransactionTask {
           }),
         );
         if (!isSuccessCommandResult(result)) {
-          return DmkResultFactory({ error: result.error });
+          return DmkResultFactory({
+            error: mapOutputAccountRefusal(
+              result.error,
+              "ironwood",
+              ironwoodMetadata.indexOf(i),
+              declared.ironwood,
+            ),
+          });
         }
       }
     }

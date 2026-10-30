@@ -411,6 +411,7 @@ type PcztOrchardAction = {
   value: bigint; // output-note value, zatoshis
   rseed: Uint8Array; // 32 bytes
   rcv: Uint8Array; // randomized commitment value, 32 bytes (required)
+  outputZip32Derivation?: PcztZip32Derivation | null; // account of the same seed the output pays
 };
 
 type PcztOrchardBundle = {
@@ -440,6 +441,7 @@ type PcztIronwoodAction = {
   value: bigint; // output-note value, zatoshis
   rseed: Uint8Array; // 32 bytes
   rcv: Uint8Array; // randomized commitment value, 32 bytes (required)
+  outputZip32Derivation?: PcztZip32Derivation | null; // account of the same seed the output pays
 };
 
 type PcztIronwoodBundle = {
@@ -448,7 +450,34 @@ type PcztIronwoodBundle = {
   valueBalance: bigint; // net value balance, zatoshis (signed)
   anchor: Uint8Array; // Ironwood commitment-tree anchor, 32 bytes
 };
+
+type PcztZip32Derivation = {
+  path: string; // hardened "32'/<coin type>'/<account>'"
+  seedFingerprint?: Uint8Array; // 32 bytes (default 32 zero bytes)
+};
 ```
+
+#### Declaring the account an output pays
+
+When a shielded output pays another account of the same seed, set its `outputZip32Derivation`
+(the PCZT output `zip32_derivation`). The Zcash app then proves that the output belongs to that
+account and shows it on the review as `Account index <n>`, whatever OVK policy the sender used.
+Without the field, the action is serialized exactly as before.
+
+Before any APDU is sent, the signer refuses a declaration with an `InvalidArgumentError` when:
+
+- the path is not `32'/<coin type>'/<account>'` with every component hardened;
+- its purpose, coin type or seed fingerprint differ from the action's signing path;
+- it names the account being spent (the account of any action's signing path);
+- the account is above `100`, or the transaction declares more than 4 distinct accounts.
+
+The declaration is sent only to Zcash app **3.9.5** or later. When a transaction carries one,
+the signer reads the app version (`GET_APP_CONFIG`) before `PCZT_HEADER`:
+
+| Error `errorCode`            | When                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `unsupported_output_account` | The app is older than 3.9.5 or its version cannot be read; no transaction APDU was sent.                                       |
+| `output_account_refused`     | The device refused (`6a80`) an action carrying a declaration — most likely the output does not belong to the declared account. |
 
 #### Parameters (options)
 

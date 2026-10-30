@@ -270,3 +270,60 @@ export const v6TransactionWithTransparentOrchardAndIronwood =
     orchardBundle: sampleOrchardBundle(),
     ironwoodBundle: sampleIronwoodBundle(),
   });
+
+/** ZIP 32 source path of the sample spends below (account 0). */
+export const ZIP32_SOURCE_PATH = "32'/133'/0'";
+
+/** An Orchard action spending from ZIP 32 account 0 (a real ZIP 32 path). */
+export const sampleOrchardActionZip32 = (): PcztOrchardAction => ({
+  ...sampleOrchardAction(),
+  signingPath: ZIP32_SOURCE_PATH,
+});
+
+/** An Ironwood action spending from ZIP 32 account 0 (a real ZIP 32 path). */
+export const sampleIronwoodActionZip32 = (): PcztIronwoodAction => ({
+  ...sampleIronwoodAction(),
+  signingPath: ZIP32_SOURCE_PATH,
+});
+
+/** The same action declaring that its output pays ZIP 32 account `account`. */
+export const withOutputAccount = <
+  T extends PcztOrchardAction | PcztIronwoodAction,
+>(
+  action: T,
+  account: number,
+): T => ({
+  ...action,
+  outputZip32Derivation: { path: `32'/133'/${account}'` },
+});
+
+/** V5 transaction whose single Orchard action declares output account `account`. */
+export const orchardTransactionDeclaringAccount = (
+  account: number,
+): PcztTransaction => ({
+  global: SAMPLE_GLOBAL,
+  transparentInputs: [],
+  transparentOutputs: [],
+  orchardBundle: {
+    ...sampleOrchardBundle(),
+    actions: [withOutputAccount(sampleOrchardActionZip32(), account)],
+  },
+});
+
+/** V6 transaction declaring `orchardAccount` and `ironwoodAccount` on its two actions. */
+export const v6TransactionDeclaringAccounts = (
+  orchardAccount: number,
+  ironwoodAccount: number,
+): PcztTransaction => ({
+  global: SAMPLE_GLOBAL_V6,
+  transparentInputs: [],
+  transparentOutputs: [],
+  orchardBundle: {
+    ...sampleOrchardBundle(),
+    actions: [withOutputAccount(sampleOrchardActionZip32(), orchardAccount)],
+  },
+  ironwoodBundle: {
+    ...sampleIronwoodBundle(),
+    actions: [withOutputAccount(sampleIronwoodActionZip32(), ironwoodAccount)],
+  },
+});
