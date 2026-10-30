@@ -66,8 +66,9 @@ async function forwardMockServerRequest(request: Request): Promise<Response> {
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    // Fits the sessions, a device, its live screen and the AI panel side by side
+    width: 1280,
+    height: 800,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -136,10 +137,12 @@ app.on('window-all-closed', () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 import { setupWebsocketServer, stopWebsocketServer } from './setupWebsocketServer'
+import { setupAi } from './ai'
 
 // Start the WebSocket server when the app is ready
 app.whenReady().then(() => {
   setupWebsocketServer()
+  setupAi()
 })
 
 // Stop the WebSocket server when the app is about to quit

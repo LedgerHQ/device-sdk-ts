@@ -17,6 +17,7 @@ import {
   type MockServerConfig,
 } from "../../hooks/useConnectorMessages";
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
+import { type AiSelection } from "../ai/types";
 import { type LogData } from "../logger/types";
 import { extractApduExchanges } from "./apduExchanges";
 import { DevicePanel } from "./DevicePanel";
@@ -47,6 +48,7 @@ type InspectorProps = {
   logs: LogData[];
   mockServer: MockServerConfig | null;
   rewriteMockServerUrl?: (url: string) => string;
+  onExplain: (request: AiSelection) => void;
 };
 
 const INSPECTOR_CODE_EXAMPLE = `import { DevToolsDmkInspector } from "@ledgerhq/device-management-kit-devtools-core";
@@ -75,6 +77,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   logs,
   mockServer,
   rewriteMockServerUrl,
+  onExplain,
 }) => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
@@ -132,6 +135,7 @@ export const Inspector: React.FC<InspectorProps> = ({
             exchanges={selectedExchanges}
             onSendApdu={sendApdu}
             apduResponses={apduResponses}
+            onExplain={onExplain}
           />
           {selectedDevice.transport === MOCK_SERVER_TRANSPORT && (
             <MockScreenPanel

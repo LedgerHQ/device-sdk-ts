@@ -5,7 +5,12 @@ import {
   SegmentedControl,
   SegmentedControlButton,
 } from "@ledgerhq/lumen-ui-react";
-import { ExternalLink, Moon, Sun } from "@ledgerhq/lumen-ui-react/symbols";
+import {
+  ExternalLink,
+  Moon,
+  SparksFill,
+  Sun,
+} from "@ledgerhq/lumen-ui-react/symbols";
 
 import { WithTooltip } from "./WithTooltip";
 
@@ -13,26 +18,6 @@ export enum DashboardScreen {
   logs = "logs",
   inspector = "inspector",
 }
-
-export enum SplitMode {
-  off = "off",
-  horizontal = "horizontal",
-  vertical = "vertical",
-}
-
-const SPLITS = [
-  { mode: SplitMode.off, title: "No split", path: "" },
-  {
-    mode: SplitMode.horizontal,
-    title: "Split horizontally (stacked)",
-    path: "M2 8h12",
-  },
-  {
-    mode: SplitMode.vertical,
-    title: "Split vertically (side by side)",
-    path: "M8 2.5v11",
-  },
-];
 
 const ConnectionIndicator: React.FC<{ connected: boolean }> = ({
   connected,
@@ -46,8 +31,8 @@ const ConnectionIndicator: React.FC<{ connected: boolean }> = ({
 type DashboardNavigationBarProps = {
   currentScreen: DashboardScreen;
   onScreenChange: (screen: DashboardScreen) => void;
-  split: SplitMode;
-  onSplitChange: (split: SplitMode) => void;
+  aiOpen: boolean;
+  onToggleAi: () => void;
   isLoggerConnected: boolean;
   isInspectorConnected: boolean;
   mockServerWebsiteUrl: string | null;
@@ -58,8 +43,8 @@ type DashboardNavigationBarProps = {
 export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
   currentScreen,
   onScreenChange,
-  split,
-  onSplitChange,
+  aiOpen,
+  onToggleAi,
   isLoggerConnected,
   isInspectorConnected,
   mockServerWebsiteUrl,
@@ -71,10 +56,7 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
     <div className="flex shrink-0 items-center gap-16 border-b border-muted-subtle px-12 py-8">
       <SegmentedControl
         selectedValue={currentScreen}
-        onSelectedChange={(value) => {
-          onScreenChange(value as DashboardScreen);
-          onSplitChange(SplitMode.off);
-        }}
+        onSelectedChange={(value) => onScreenChange(value as DashboardScreen)}
         tabLayout="fixed"
         className="w-256 shrink-0 bg-muted-transparent"
         aria-label="Screen"
@@ -98,33 +80,20 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
       </SegmentedControl>
 
       <div className="ml-auto flex items-center gap-6">
-        <SegmentedControl
-          selectedValue={split}
-          onSelectedChange={(value) => onSplitChange(value as SplitMode)}
-          tabLayout="fit"
-          className="bg-muted-transparent"
-          aria-label="Split"
+        <WithTooltip
+          label={aiOpen ? "Hide the AI panel" : "Show the AI panel"}
+          side="bottom"
         >
-          {SPLITS.map(({ mode, title, path }) => (
-            // The tooltip goes inside: the control finds its buttons among its direct children
-            <SegmentedControlButton key={mode} value={mode} aria-label={title}>
-              <WithTooltip label={title} side="bottom">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  aria-hidden="true"
-                >
-                  <rect x="2" y="2.5" width="12" height="11" rx="1.5" />
-                  {path && <path d={path} />}
-                </svg>
-              </WithTooltip>
-            </SegmentedControlButton>
-          ))}
-        </SegmentedControl>
+          <IconButton
+            aria-label={aiOpen ? "Hide the AI panel" : "Show the AI panel"}
+            aria-pressed={aiOpen}
+            icon={SparksFill}
+            size="xs"
+            appearance="transparent"
+            className={`rounded-sm ${aiOpen ? "bg-active-subtle [&>svg]:text-active" : ""}`}
+            onClick={onToggleAi}
+          />
+        </WithTooltip>
         {mockServerWebsiteUrl && (
           <WithTooltip label="Open the mock server website" side="bottom">
             <IconButton

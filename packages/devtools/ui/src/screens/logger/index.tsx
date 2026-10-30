@@ -3,6 +3,9 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { type ColumnSizing } from "./logsTable/TableColumns";
 import { TableHeader } from "./logsTable/TableHeader";
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
+import { SelectionBar } from "../ai/SelectionBar";
+import { type AiSelection } from "../ai/types";
+import { useDragSelect } from "../ai/useDragSelect";
 import { LogCounts } from "./LogCounts";
 import { LoggerToolbar } from "./LoggerToolbar";
 import { LogsTable } from "./logsTable";
@@ -14,7 +17,20 @@ type Props = {
   logs: Array<LogData>;
   clearLogs: () => void;
   isConnected?: boolean;
+  onExplain: (request: AiSelection) => void;
 };
+
+const formatTime = (timestamp: string) =>
+  new Date(timestamp).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    fractionalSecondDigits: 3,
+    hour12: false,
+  });
+
+const toContextLine = (log: LogData) =>
+  `[${log.timestamp}] [${log.verbosity.toUpperCase()}] ${log.tag} ${log.message}${log.payloadJSON && log.payloadJSON !== "{}" ? ` | ${log.payloadJSON}` : ""}`;
 
 const LOGGER_CODE_EXAMPLE = `import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
 
@@ -26,6 +42,7 @@ export const Logger: React.FC<Props> = ({
   logs,
   clearLogs,
   isConnected = true,
+  onExplain,
 }) => {
   const [nonce, setNonce] = React.useState(0);
   const [pausedLogs, setPausedLogs] = React.useState<LogData[] | null>(null);
@@ -40,6 +57,50 @@ export const Logger: React.FC<Props> = ({
   const data = useMemo(
     () => (newestFirst ? [...displayedLogs].reverse() : displayedLogs),
     [displayedLogs, newestFirst],
+  );
+
+  const [selected, setSelected] = React.useState<Set<LogData>>(new Set());
+  // Read through refs so a new log does not re-render every row's select handler
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  // The anchor is the log itself: filters, sorting and new logs move its index
+  const lastSelectedRef = useRef<LogData | null>(null);
+  const selectLog = useCallback((index: number, extend: boolean) => {
+    const rows = dataRef.current;
+    const log = rows[index];
+    if (!log) return;
+    const last = lastSelectedRef.current
+      ? rows.indexOf(lastSelectedRef.current)
+      : -1;
+    lastSelectedRef.current = log;
+    setSelected((previous) => {
+      const next = new Set(previous);
+      if (extend && last >= 0) {
+        for (let i = Math.min(last, index); i <= Math.max(last, index); i++) {
+          next.add(rows[i]!);
+        }
+      } else if (!next.delete(log)) {
+        next.add(log);
+      }
+      return next;
+    });
+  }, []);
+  const { onRowMouseDown, onRowMouseEnter } = useDragSelect(
+    (index) => dataRef.current[index],
+    (log) => dataRef.current.indexOf(log),
+    selected,
+    setSelected,
+    (log) => {
+      lastSelectedRef.current = log;
+    },
+  );
+  const clearSelection = useCallback(() => {
+    setSelected(new Set());
+    lastSelectedRef.current = null;
+  }, []);
+  const selectedLogs = useMemo(
+    () => visibleLogs.filter((log) => selected.has(log)),
+    [visibleLogs, selected],
   );
 
   // Track previous displayedLogs length to detect significant shrinking (e.g., from filtering)
@@ -124,9 +185,10 @@ export const Logger: React.FC<Props> = ({
 
   const onClickClearLogs = useCallback(() => {
     clearLogs();
+    clearSelection();
     setPausedLogs((previous) => previous && []);
     setNonce((prevNonce) => prevNonce + 1);
-  }, [clearLogs]);
+  }, [clearLogs, clearSelection]);
 
   const downloadLogs = useCallback(() => {
     const logsToExport = logs.map((log) => {
@@ -213,7 +275,24 @@ export const Logger: React.FC<Props> = ({
             headerScrollRef.current.scrollLeft = scrollLeft;
           }
         }}
+        selected={selected}
+        onSelect={selectLog}
+        onRowMouseDown={onRowMouseDown}
+        onRowMouseEnter={onRowMouseEnter}
       />
+      {selectedLogs.length > 0 && (
+        <SelectionBar
+          label={`${selectedLogs.length} ${selectedLogs.length === 1 ? "log" : "logs"} selected`}
+          detail={`${formatTime(selectedLogs[0]!.timestamp)} → ${formatTime(selectedLogs.at(-1)!.timestamp)} · shift-click to extend`}
+          onClear={clearSelection}
+          onExplain={() =>
+            onExplain({
+              context: selectedLogs.map(toContextLine).join("\n"),
+              summary: `${selectedLogs.length} ${selectedLogs.length === 1 ? "log" : "logs"}`,
+            })
+          }
+        />
+      )}
     </div>
   );
 };

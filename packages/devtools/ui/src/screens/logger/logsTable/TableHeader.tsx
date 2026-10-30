@@ -80,6 +80,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
 
   return (
     <div className="flex gap-8 bg-surface py-4 pr-8 pl-8">
+      <span className="w-16 shrink-0" />
       <span className="w-4 shrink-0" />
       <div className="flex min-w-0 flex-1 items-center gap-8 pr-8">
         <span className="w-12 shrink-0" />

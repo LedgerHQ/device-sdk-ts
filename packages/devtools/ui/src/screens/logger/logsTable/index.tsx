@@ -39,6 +39,10 @@ type LogsTableProps = {
   columnSizing: ColumnSizing;
   /** Lets the column header, outside this scroll container, follow the rows sideways. */
   onHorizontalScroll: (scrollLeft: number) => void;
+  selected: Set<LogData>;
+  onSelect: (index: number, extend: boolean) => void;
+  onRowMouseDown: (index: number, event: React.MouseEvent) => void;
+  onRowMouseEnter: (index: number) => void;
 };
 
 const LIST_BUTTON =
@@ -53,6 +57,10 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   newestFirst,
   columnSizing,
   onHorizontalScroll,
+  selected,
+  onSelect,
+  onRowMouseDown,
+  onRowMouseEnter,
 }) => {
   const [expandedLogs, setExpandedLogs] = useState<Set<LogData>>(new Set());
   const {
@@ -230,6 +238,10 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                   currentMatch={currentHighlightIndex === start + offset}
                   expanded={expandedLogs.has(log)}
                   onToggle={toggleLog}
+                  selected={selected.has(log)}
+                  onSelect={onSelect}
+                  onRowMouseDown={onRowMouseDown}
+                  onRowMouseEnter={onRowMouseEnter}
                   columnSizing={columnSizing}
                 />
               ))}
