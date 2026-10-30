@@ -8,6 +8,7 @@ import {
 import {
   ExternalLink,
   Moon,
+  Screens,
   SparksFill,
   Sun,
 } from "@ledgerhq/lumen-ui-react/symbols";
@@ -33,6 +34,8 @@ type DashboardNavigationBarProps = {
   onScreenChange: (screen: DashboardScreen) => void;
   aiOpen: boolean;
   onToggleAi: () => void;
+  /** Only when a live screen can show (the Inspector, with the app's mock server). */
+  liveScreen?: { shown: boolean; onToggle: () => void };
   isLoggerConnected: boolean;
   isInspectorConnected: boolean;
   mockServerWebsiteUrl: string | null;
@@ -45,6 +48,7 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
   onScreenChange,
   aiOpen,
   onToggleAi,
+  liveScreen,
   isLoggerConnected,
   isInspectorConnected,
   mockServerWebsiteUrl,
@@ -80,6 +84,28 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
       </SegmentedControl>
 
       <div className="ml-auto flex items-center gap-6">
+        {liveScreen && (
+          <WithTooltip
+            label={
+              liveScreen.shown ? "Hide the live screen" : "Show the live screen"
+            }
+            side="bottom"
+          >
+            <IconButton
+              aria-label={
+                liveScreen.shown
+                  ? "Hide the live screen"
+                  : "Show the live screen"
+              }
+              aria-pressed={liveScreen.shown}
+              icon={Screens}
+              size="xs"
+              appearance="transparent"
+              className={`rounded-sm ${liveScreen.shown ? "bg-active-subtle [&>svg]:text-active" : ""}`}
+              onClick={liveScreen.onToggle}
+            />
+          </WithTooltip>
+        )}
         <WithTooltip
           label={aiOpen ? "Hide the AI panel" : "Show the AI panel"}
           side="bottom"

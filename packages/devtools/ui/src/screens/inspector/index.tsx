@@ -49,6 +49,7 @@ type InspectorProps = {
   mockServer: MockServerConfig | null;
   rewriteMockServerUrl?: (url: string) => string;
   onExplain: (request: AiSelection) => void;
+  showLiveScreen: boolean;
 };
 
 const INSPECTOR_CODE_EXAMPLE = `import { DevToolsDmkInspector } from "@ledgerhq/device-management-kit-devtools-core";
@@ -78,6 +79,7 @@ export const Inspector: React.FC<InspectorProps> = ({
   mockServer,
   rewriteMockServerUrl,
   onExplain,
+  showLiveScreen,
 }) => {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
@@ -137,13 +139,14 @@ export const Inspector: React.FC<InspectorProps> = ({
             apduResponses={apduResponses}
             onExplain={onExplain}
           />
-          {selectedDevice.transport === MOCK_SERVER_TRANSPORT && (
-            <MockScreenPanel
-              mockServer={mockServer}
-              rewriteUrl={rewriteMockServerUrl}
-              deviceId={selectedDevice.id}
-            />
-          )}
+          {selectedDevice.transport === MOCK_SERVER_TRANSPORT &&
+            showLiveScreen && (
+              <MockScreenPanel
+                mockServer={mockServer}
+                rewriteUrl={rewriteMockServerUrl}
+                deviceId={selectedDevice.id}
+              />
+            )}
         </>
       ) : (
         <div className="flex flex-1 items-center justify-center body-2 text-muted">
