@@ -16,6 +16,7 @@ import {
   type PcztOrchardBundle,
   type PcztTransaction,
 } from "@api/model/PcztTransaction";
+import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
 import { PcztHeaderCommand } from "@internal/app-binder/command/PcztHeaderCommand";
 import { PcztIronwoodActionCommand } from "@internal/app-binder/command/PcztIronwoodActionCommand";
 import { PcztOrchardActionCommand } from "@internal/app-binder/command/PcztOrchardActionCommand";
@@ -28,13 +29,19 @@ import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
   pcztP1,
   pcztP2,
-  serializeIronwoodActions,
-  serializeOrchardActions,
+  serializeIronwoodActionsIndexed,
+  serializeOrchardActionsIndexed,
   serializePcztHeader,
   serializeTransparentInputs,
-  serializeTransparentOutputs,
+  serializeTransparentOutputsIndexed,
 } from "@internal/app-binder/command/utils/pcztSerializer";
+import { UserAddressRefusedError } from "@internal/app-binder/command/utils/UserAddressRefusedError";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+import {
+  isAppVersionAtLeast,
+  MIN_APP_VERSION_FOR_USER_ADDRESS,
+} from "@internal/app-binder/task/utils/appVersion";
+import { resolveUserAddressReceivers } from "@internal/app-binder/task/utils/userAddressReceivers";
 
 export type SignPcztTransactionTaskArgs = {
   transaction: PcztTransaction;
@@ -58,10 +65,40 @@ const EMPTY_ORCHARD_BUNDLE: PcztOrchardBundle = {
 /** Transaction version that introduces Ironwood bundles (NU6.3). */
 const V6_TX_VERSION = 6;
 
+/** IncorrectData: how the device refuses a malformed output packet. */
+const STATUS_INCORRECT_DATA = "6a80";
+
+type OutputPool = "transparent" | "orchard" | "ironwood";
+
+/**
+ * Turns a 6a80 on the last packet of an output that carried the user address
+ * receivers into a `UserAddressRefusedError`. Anything else passes through.
+ */
+const mapUserAddressRefusal = (
+  error: SignPcztTransactionTaskError,
+  pool: OutputPool,
+  packetIndex: number,
+  lastPacketIndices: number[],
+  values: (Uint8Array | undefined)[],
+): SignPcztTransactionTaskError => {
+  if ((error as { errorCode?: string }).errorCode !== STATUS_INCORRECT_DATA) {
+    return error;
+  }
+  const outputIndex = lastPacketIndices.indexOf(packetIndex);
+  if (outputIndex === -1 || values[outputIndex] === undefined) {
+    return error;
+  }
+  return new UserAddressRefusedError(pool, outputIndex);
+};
+
 /**
  * Drives the device PCZT signing protocol end-to-end, supporting both V5
  * (Orchard) and V6 (Orchard + Ironwood) transactions:
  *
+ * 0. when an output carries `userAddressReceivers`, validates them before any
+ *    APDU, then reads the app version (`GetAppConfig`) and drops every list
+ *    below 3.11.0 or when the version is unreadable (the transaction then signs
+ *    as without lists);
  * 1. streams the PCZT bundle in the fixed order — `PCZT_HEADER`,
  *    `PCZT_TRANSPARENT_INPUT`, `PCZT_TRANSPARENT_OUTPUT`, `PCZT_ORCHARD_ACTION`,
  *    and for V6: `PCZT_IRONWOOD_ACTION` (a null Ironwood bundle on a V6
@@ -117,6 +154,34 @@ export class SignPcztTransactionTask {
 
     const hasIronwood = isV6 && ironwoodBundle !== null;
 
+    // User address receivers: validated before any APDU, sent only to an app
+    // that accepts them.
+    const resolved = resolveUserAddressReceivers(this.args.transaction);
+    if (resolved instanceof InvalidArgumentError) {
+      return DmkResultFactory({ error: resolved });
+    }
+    let userTransparent = resolved.transparent;
+    let userOrchard = resolved.orchard;
+    let userIronwood = resolved.ironwood;
+    if (resolved.count > 0) {
+      const configResult = await this.api.sendCommand(
+        new GetAppConfigCommand(),
+      );
+      if (!isSuccessCommandResult(configResult)) {
+        return DmkResultFactory({ error: configResult.error });
+      }
+      if (
+        !isAppVersionAtLeast(
+          configResult.data.version,
+          MIN_APP_VERSION_FOR_USER_ADDRESS,
+        )
+      ) {
+        userTransparent = [];
+        userOrchard = [];
+        userIronwood = [];
+      }
+    }
+
     // 1. Stream the PCZT bundle, in order.
     const headerResult = await this.api.sendCommand(
       new PcztHeaderCommand({ data: serializePcztHeader(global) }),
@@ -139,7 +204,8 @@ export class SignPcztTransactionTask {
       }
     }
 
-    const outputPackets = serializeTransparentOutputs(transparentOutputs);
+    const { packets: outputPackets, lastPacketIndices: outputLast } =
+      serializeTransparentOutputsIndexed(transparentOutputs, userTransparent);
     for (let i = 0; i < outputPackets.length; i += 1) {
       const result = await this.api.sendCommand(
         new PcztTransparentOutputCommand({
@@ -149,11 +215,20 @@ export class SignPcztTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(result)) {
-        return DmkResultFactory({ error: result.error });
+        return DmkResultFactory({
+          error: mapUserAddressRefusal(
+            result.error,
+            "transparent",
+            i,
+            outputLast,
+            userTransparent,
+          ),
+        });
       }
     }
 
-    const orchardPackets = serializeOrchardActions(bundle);
+    const { packets: orchardPackets, lastPacketIndices: orchardLast } =
+      serializeOrchardActionsIndexed(bundle, userOrchard);
     for (let i = 0; i < orchardPackets.length; i += 1) {
       const result = await this.api.sendCommand(
         new PcztOrchardActionCommand({
@@ -165,7 +240,15 @@ export class SignPcztTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(result)) {
-        return DmkResultFactory({ error: result.error });
+        return DmkResultFactory({
+          error: mapUserAddressRefusal(
+            result.error,
+            "orchard",
+            i,
+            orchardLast,
+            userOrchard,
+          ),
+        });
       }
     }
 
@@ -177,7 +260,8 @@ export class SignPcztTransactionTask {
     // (6d00) on the first INS_PCZT_IRONWOOD_ACTION APDU, after Orchard streaming
     // has already sent P2=CONTINUE — leaving the device waiting for more data.
     if (hasIronwood) {
-      const ironwoodPackets = serializeIronwoodActions(ironwoodBundle!);
+      const { packets: ironwoodPackets, lastPacketIndices: ironwoodLast } =
+        serializeIronwoodActionsIndexed(ironwoodBundle!, userIronwood);
       for (let i = 0; i < ironwoodPackets.length; i += 1) {
         const result = await this.api.sendCommand(
           new PcztIronwoodActionCommand({
@@ -187,7 +271,15 @@ export class SignPcztTransactionTask {
           }),
         );
         if (!isSuccessCommandResult(result)) {
-          return DmkResultFactory({ error: result.error });
+          return DmkResultFactory({
+            error: mapUserAddressRefusal(
+              result.error,
+              "ironwood",
+              i,
+              ironwoodLast,
+              userIronwood,
+            ),
+          });
         }
       }
     }
