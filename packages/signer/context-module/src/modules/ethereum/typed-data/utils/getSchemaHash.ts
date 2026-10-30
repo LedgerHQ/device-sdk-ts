@@ -1,4 +1,5 @@
-import SHA224 from "crypto-js/sha224";
+import { sha224 } from "@noble/hashes/sha2.js";
+import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils.js";
 
 import type { TypedDataSchema } from "@/modules/ethereum/model/TypedDataContext";
 
@@ -30,5 +31,5 @@ function sortSchema(schema: TypedDataSchema): TypedDataSchema {
 export function getSchemaHash(schema: TypedDataSchema): SchemaHash {
   const sortedSchema = sortSchema(schema);
   const schemaStr = JSON.stringify(sortedSchema);
-  return SHA224(schemaStr).toString();
+  return bytesToHex(sha224(utf8ToBytes(schemaStr)));
 }
