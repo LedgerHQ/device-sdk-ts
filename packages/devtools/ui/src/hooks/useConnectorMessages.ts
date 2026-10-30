@@ -86,6 +86,8 @@ export type ConnectorMessagesState = {
 // Hook
 // ============================================================================
 
+const FLUSH_INTERVAL_MS = 250;
+
 /**
  * Central hook for managing DevTools connector state and communication.
  *
@@ -138,8 +140,25 @@ export function useConnectorMessages(
 
   // === Message Listener ===
   useEffect(() => {
+    // Logs and the debug message list are added in batches, like Dozzle: a polling
+    // device sends several logs per second, and adding them one by one re-rendered
+    // the dashboard and copied both lists for every line.
+    let pendingMessages: Message[] = [];
+    let pendingLogs: LogData[] = [];
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+    const flush = () => {
+      flushTimer = undefined;
+      const messages = pendingMessages;
+      const newLogs = pendingLogs;
+      pendingMessages = [];
+      pendingLogs = [];
+      setReceivedMessages((prev) => [...prev, ...messages]);
+      if (newLogs.length > 0) setLogs((prev) => [...prev, ...newLogs]);
+    };
+
     const { unsubscribe } = connector.listenToMessages((type, payload) => {
-      setReceivedMessages((prev) => [...prev, { type, payload }]);
+      pendingMessages.push({ type, payload });
+      flushTimer ??= setTimeout(flush, FLUSH_INTERVAL_MS);
 
       switch (type) {
         case MODULE_CONNECTED_MESSAGE_TYPE:
@@ -161,11 +180,14 @@ export function useConnectorMessages(
           handleApduResponse(payload, setApduResponses);
           break;
         case LOGGER_MESSAGE_TYPES.ADD_LOG:
-          handleLogMessage(payload, setLogs);
+          handleLogMessage(payload, (log) => pendingLogs.push(log));
           break;
       }
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      clearTimeout(flushTimer);
+    };
   }, [connector]);
 
   // === Commands (using tracked connector to log all sent messages) ===
