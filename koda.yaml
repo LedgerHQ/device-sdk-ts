@@ -4,4 +4,7 @@
 agentFilesDir: agent-files
 setup: corepack enable && pnpm install
 lint: pnpm lint
+typecheck: pnpm typecheck
 test: pnpm test
+# Used by the review-dependency-updates skill
+max_fix_attempts: 1

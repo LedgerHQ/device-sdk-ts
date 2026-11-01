@@ -176,6 +176,28 @@ The description format is similar to gitmoji:
 
 _For external contributors:_ a member of the Ledger will be required to validate the execution of the CI for external contributions
 
+### Dependency updates
+
+Dependency upgrades are automated; a maintainer only reviews and merges the resulting PRs.
+
+| What                             | Tool                                                                       | When                |
+| -------------------------------- | -------------------------------------------------------------------------- | ------------------- |
+| GitHub Actions versions          | Dependabot (`.github/dependabot.yml`), one grouped PR                      | daily               |
+| npm libraries                    | Dependabot (`.github/dependabot.yml`), grouped by tool + minor/patch       | weekly (Sunday)     |
+| Node, pnpm and proto toolchain   | `update_toolchain.yml`                                                     | weekly (Sunday)     |
+| Review and fix of Dependabot PRs | Koda (`review-dependency-updates.yml` + `review-dependency-updates` skill) | weekdays, 07:00 UTC |
+
+Dependabot waits 7 days after a release before proposing it (`cooldown`), except for `@ledgerhq/*` packages and
+security updates. Reviewers are assigned from `CODEOWNERS`.
+
+Koda reviews the open Dependabot PRs: it analyzes red CI, pushes small mechanical fixes (lint, types, lockfile, renamed
+APIs) and posts a Slack report listing the PRs that are ready to merge. It never merges: a human approval is required on
+`develop`.
+
+Why Koda rather than a custom routine: Ledger already runs the same review in production on about ten repositories
+(Cloud Wallet, `LedgerHQ/team-cloud-wallet-koda`), and Koda is already configured on this repository (`koda.yaml`). Our
+skill is a copy of theirs adapted to Dependabot only, no merging, and our commit and changeset conventions.
+
 ### Developer Portal
 
 Ledger provides the tools and resources you need to build on top of our platform. They are accessible in the [Ledger Developer Portal](https://developers.ledger.com/).

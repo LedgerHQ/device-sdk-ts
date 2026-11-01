@@ -1,0 +1,38 @@
+name: "[Automation] Review Dependency Updates"
+
+# Koda reviews the open Dependabot PRs: it reports the green ones as ready to
+# merge, triages the red ones and pushes small mechanical fixes for review.
+# Koda cannot merge here: bot approvals never count (see human-approval.yml).
+# The review steps live in agent-files/skills/review-dependency-updates.
+
+on:
+  schedule:
+    - cron: "0 7 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-dependency-updates:
+    name: "Review Dependency Updates"
+    runs-on: ["ledgerhq-device-sdk"]
+    timeout-minutes: 90
+    # Two concurrent runs would rebase and fix the same PRs.
+    concurrency:
+      group: review-dependency-updates
+      cancel-in-progress: false
+    steps:
+      - name: Review dependency updates
+        uses: LedgerHQ/cairn@3061b490adfa95ce5d51f070f71b032d758bc7b5 # stable
+        with:
+          workflow: koda
+          github-context: "true"
+          url: ${{ vars.CAIRN_URL }}
+          token: ${{ secrets.CAIRN_TOKEN }}
+          wait: "true"
+          timeout: "5100"
+          interval: "30"
+          input: |-
+            prompt: Review the dependency update PRs of this repository, using the `review-dependency-updates` skill. Post the Slack report to the channel `${{ vars.SLACK_CHANNEL_ID }}`.
+            maxIterations: 250
