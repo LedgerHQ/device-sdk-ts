@@ -8,6 +8,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type PcztTransaction } from "@api/model/PcztTransaction";
+import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
 import { INS_PCZT_HEADER } from "@internal/app-binder/command/PcztHeaderCommand";
 import { INS_PCZT_IRONWOOD_ACTION } from "@internal/app-binder/command/PcztIronwoodActionCommand";
 import { INS_PCZT_ORCHARD_ACTION } from "@internal/app-binder/command/PcztOrchardActionCommand";
@@ -17,6 +18,8 @@ import { INS_PCZT_SIGN_IRONWOOD } from "@internal/app-binder/command/SignPcztIro
 import { INS_PCZT_SIGN_ORCHARD } from "@internal/app-binder/command/SignPcztOrchardCommand";
 import { INS_PCZT_SIGN_TRANSPARENT } from "@internal/app-binder/command/SignPcztTransparentCommand";
 import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { UserAddressRefusedError } from "@internal/app-binder/command/utils/UserAddressRefusedError";
+import { ZcashAppCommandErrorFactory } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import {
   allDummyIronwoodBundle,
   allDummyOrchardBundle,
@@ -27,8 +30,14 @@ import {
   publicToPrivateTransaction,
   publicToPublicTransaction,
   sampleIronwoodBundle,
+  sampleTransparentOutput,
+  transparentUserAddressReceivers,
+  UA_SHIELDED_VALUE_HEX,
+  UA_TRANSPARENT_VALUE_HEX,
+  v5TransactionWithUserAddressReceivers,
   v6TransactionWithOrchardAndIronwood,
   v6TransactionWithTransparentOrchardAndIronwood,
+  v6TransactionWithUserAddressReceivers,
 } from "@internal/app-binder/task/__fixtures__/pcztFixtures";
 
 import { SignPcztTransactionTask } from "./SignPcztTransactionTask";
@@ -463,5 +472,280 @@ describe("SignPcztTransactionTask", () => {
         new Uint8Array(64).fill(0x10),
       );
     }
+  });
+
+  describe("user address receivers", () => {
+    type Sent = { name: string; raw: Uint8Array };
+    let sent: Sent[];
+    let appVersion: string | null;
+    let failOn: ((cmd: Sent) => boolean) | null;
+    let failWith: ReturnType<typeof ZcashAppCommandErrorFactory>;
+
+    const refusal = (errorCode: "6a80" | "6a84") =>
+      ZcashAppCommandErrorFactory({ errorCode, message: errorCode });
+
+    beforeEach(() => {
+      sent = [];
+      appVersion = "3.11.0";
+      failOn = null;
+      failWith = refusal("6a80");
+      const base = vi.mocked(apiMock.sendCommand).getMockImplementation()!;
+      vi.mocked(apiMock.sendCommand).mockImplementation(((
+        command: unknown,
+        ...rest: unknown[]
+      ) => {
+        const cmd = command as CapturedCommand;
+        const entry = { name: cmd.name, raw: cmd.getApdu().getRawApdu() };
+        sent.push(entry);
+        if (cmd instanceof GetAppConfigCommand) {
+          return Promise.resolve(
+            appVersion === null
+              ? CommandResultFactory({
+                  error: new InvalidStatusWordError("no config"),
+                })
+              : CommandResultFactory({ data: { version: appVersion } }),
+          );
+        }
+        if (failOn?.(entry)) {
+          return Promise.resolve(CommandResultFactory({ error: failWith }));
+        }
+        return (base as (...a: unknown[]) => Promise<unknown>)(
+          command,
+          ...rest,
+        );
+      }) as never);
+    });
+
+    const hex = (raw: Uint8Array) =>
+      Array.from(raw, (b) => b.toString(16).padStart(2, "0")).join("");
+    const pcztApdus = () => sent.filter((c) => c.name !== "getAppConfig");
+    const ins = (c: Sent) => c.raw[1]!;
+    const stripLists = (tx: PcztTransaction): PcztTransaction => ({
+      ...tx,
+      transparentOutputs: tx.transparentOutputs.map((o) => ({
+        ...o,
+        userAddressReceivers: undefined,
+      })),
+      orchardBundle: tx.orchardBundle && {
+        ...tx.orchardBundle,
+        actions: tx.orchardBundle.actions.map((a) => ({
+          ...a,
+          userAddressReceivers: undefined,
+        })),
+      },
+      ironwoodBundle: tx.ironwoodBundle && {
+        ...tx.ironwoodBundle,
+        actions: tx.ironwoodBundle.actions.map((a) => ({
+          ...a,
+          userAddressReceivers: undefined,
+        })),
+      },
+    });
+
+    it("sends no GetAppConfig when no list is present", async () => {
+      const result = await run(privateToPrivateTransaction());
+      expect(isSuccessDmkResult(result)).toBe(true);
+      expect(sent.some((c) => c.name === "getAppConfig")).toBe(false);
+      expect(ins(sent[0]!)).toBe(INS_PCZT_HEADER);
+    });
+
+    it("V5, app 3.11.0: reads the version first, tags the packets and signs", async () => {
+      const result = await run(v5TransactionWithUserAddressReceivers());
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+      expect(sent[0]!.name).toBe("getAppConfig");
+      expect(ins(sent[1]!)).toBe(INS_PCZT_HEADER);
+      const outputTagged = sent.filter(
+        (c) =>
+          ins(c) === INS_PCZT_TRANSPARENT_OUTPUT &&
+          hex(c.raw).endsWith("0258" + UA_TRANSPARENT_VALUE_HEX),
+      );
+      expect(outputTagged).toHaveLength(1);
+      const orchardTagged = sent.filter(
+        (c) =>
+          ins(c) === INS_PCZT_ORCHARD_ACTION &&
+          hex(c.raw).endsWith("0241" + UA_SHIELDED_VALUE_HEX),
+      );
+      expect(orchardTagged).toHaveLength(1);
+      if (isSuccessDmkResult(result)) {
+        expect(result.data.orchard).toHaveLength(1);
+        expect(result.data.transparentInputSigs).toHaveLength(1);
+      }
+    });
+
+    it("V6, app 3.11.0: tags Orchard (empty list) and Ironwood packets and signs", async () => {
+      const result = await run(v6TransactionWithUserAddressReceivers());
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+      expect(sent[0]!.name).toBe("getAppConfig");
+      expect(ins(sent[1]!)).toBe(INS_PCZT_HEADER);
+      expect(
+        sent.filter(
+          (c) =>
+            ins(c) === INS_PCZT_ORCHARD_ACTION && hex(c.raw).endsWith("0200"),
+        ),
+      ).toHaveLength(1);
+      expect(
+        sent.filter(
+          (c) =>
+            ins(c) === INS_PCZT_IRONWOOD_ACTION &&
+            hex(c.raw).endsWith("0241" + UA_SHIELDED_VALUE_HEX),
+        ),
+      ).toHaveLength(1);
+      if (isSuccessDmkResult(result)) {
+        expect(result.data.ironwood).toHaveLength(1);
+      }
+    });
+
+    it.each([
+      ["3.10.0", "3.10.0"],
+      ["an older app", "3.9.5"],
+    ])(
+      "streams exactly the no-list APDUs on %s and signs",
+      async (_, version) => {
+        appVersion = version;
+        const tagged = await run(v5TransactionWithUserAddressReceivers());
+        const taggedApdus = pcztApdus().map((c) => hex(c.raw));
+        sent = [];
+        await run(stripLists(v5TransactionWithUserAddressReceivers()));
+        const plainApdus = pcztApdus().map((c) => hex(c.raw));
+
+        expect(isSuccessDmkResult(tagged)).toBe(true);
+        expect(taggedApdus).toEqual(plainApdus);
+      },
+    );
+
+    it("streams exactly the no-list APDUs when the version is unreadable", async () => {
+      appVersion = "dev";
+      const tagged = await run(v6TransactionWithUserAddressReceivers());
+      const taggedApdus = pcztApdus().map((c) => hex(c.raw));
+      sent = [];
+      await run(stripLists(v6TransactionWithUserAddressReceivers()));
+
+      expect(isSuccessDmkResult(tagged)).toBe(true);
+      expect(taggedApdus).toEqual(pcztApdus().map((c) => hex(c.raw)));
+    });
+
+    it("returns the GetAppConfig error and sends no PCZT APDU", async () => {
+      appVersion = null;
+      const result = await run(v5TransactionWithUserAddressReceivers());
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+      }
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
+      expect(sent[0]!.name).toBe("getAppConfig");
+    });
+
+    it("rejects an invalid list before any APDU", async () => {
+      const result = await run({
+        ...publicToPublicTransaction(),
+        transparentOutputs: [
+          {
+            ...sampleTransparentOutput(),
+            userAddressReceivers: [
+              ...transparentUserAddressReceivers(),
+            ].reverse(),
+          },
+        ],
+      });
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBeInstanceOf(InvalidArgumentError);
+      }
+      expect(apiMock.sendCommand).not.toHaveBeenCalled();
+    });
+
+    it("maps 6a80 on the derivation packet of a tagged transparent output", async () => {
+      failOn = (c) =>
+        ins(c) === INS_PCZT_TRANSPARENT_OUTPUT &&
+        hex(c.raw).endsWith(UA_TRANSPARENT_VALUE_HEX);
+      const result = await run(v5TransactionWithUserAddressReceivers());
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        const error = result.error as UserAddressRefusedError;
+        expect(error).toBeInstanceOf(UserAddressRefusedError);
+        expect(error.pool).toBe("transparent");
+        expect(error.index).toBe(0);
+        expect(error.errorCode).toBe("user_address_refused");
+      }
+      // stops at the refusal: no Orchard packet.
+      expect(sent.some((c) => ins(c) === INS_PCZT_ORCHARD_ACTION)).toBe(false);
+    });
+
+    it("maps 6a80 on the metadata packet of a tagged Orchard action", async () => {
+      failOn = (c) =>
+        ins(c) === INS_PCZT_ORCHARD_ACTION &&
+        hex(c.raw).endsWith("0241" + UA_SHIELDED_VALUE_HEX);
+      const result = await run(v5TransactionWithUserAddressReceivers());
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        const error = result.error as UserAddressRefusedError;
+        expect(error).toBeInstanceOf(UserAddressRefusedError);
+        expect(error.pool).toBe("orchard");
+        expect(error.index).toBe(0);
+      }
+    });
+
+    it("maps 6a80 on the metadata packet of a tagged Ironwood action", async () => {
+      failOn = (c) =>
+        ins(c) === INS_PCZT_IRONWOOD_ACTION &&
+        hex(c.raw).endsWith("0241" + UA_SHIELDED_VALUE_HEX);
+      const result = await run(v6TransactionWithUserAddressReceivers());
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        const error = result.error as UserAddressRefusedError;
+        expect(error).toBeInstanceOf(UserAddressRefusedError);
+        expect(error.pool).toBe("ironwood");
+        expect(error.index).toBe(0);
+      }
+    });
+
+    it("passes 6a80 through on another packet of a tagged output", async () => {
+      // the spend-fields packet (first packet after the count) of the action.
+      let orchardPackets = 0;
+      failOn = (c) => {
+        if (ins(c) !== INS_PCZT_ORCHARD_ACTION) return false;
+        orchardPackets += 1;
+        return orchardPackets === 2;
+      };
+      const result = await run(v5TransactionWithUserAddressReceivers());
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBe(failWith);
+      }
+    });
+
+    it("passes 6a80 through on an untagged output", async () => {
+      failOn = (c) =>
+        ins(c) === INS_PCZT_ORCHARD_ACTION && c.raw.length - 5 === 115;
+      const result = await run(
+        stripLists(v5TransactionWithUserAddressReceivers()),
+      );
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBe(failWith);
+      }
+    });
+
+    it("passes 6a84 on a tagged packet through unchanged", async () => {
+      failWith = refusal("6a84");
+      failOn = (c) =>
+        ins(c) === INS_PCZT_ORCHARD_ACTION &&
+        hex(c.raw).endsWith("0241" + UA_SHIELDED_VALUE_HEX);
+      const result = await run(v5TransactionWithUserAddressReceivers());
+
+      expect(isSuccessDmkResult(result)).toBe(false);
+      if (!isSuccessDmkResult(result)) {
+        expect(result.error).toBe(failWith);
+      }
+    });
   });
 });

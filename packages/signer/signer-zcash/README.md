@@ -284,6 +284,27 @@ The legacy transparent [`signTransaction`](#use-case-3-sign-transaction) path is
 > `zcash_unstable` feature flag. Without it the device returns an error on the first
 > Ironwood APDU. Pass `txVersion: 5` for standard V5 transactions.
 
+**User address receivers.** When the user entered a unified address, set
+`userAddressReceivers` on each shielded action and transparent output that pays it. The list
+holds the receivers of that address other than the one the output pays; the Zcash app inserts
+the paid receiver itself and shows the whole address for the user to compare.
+
+- Each item is `{ typecode, receiver }`, with the typecodes in `PCZT_RECEIVER_TYPECODE`
+  (P2PKH `0x00` and P2SH `0x01`: 20 bytes; Sapling `0x02` and Orchard `0x03`: 43 bytes), in
+  strictly ascending typecode order, never P2PKH and P2SH together.
+- Shielded action (Orchard or Ironwood): P2PKH, P2SH and Sapling are allowed. An empty list
+  means the user entered an Orchard-only address.
+- Transparent output: Sapling and Orchard are allowed, and the list must not be empty. It is
+  never allowed on a change output (one that carries a `derivation`).
+- `null`, `undefined` and absent are equivalent: nothing is sent.
+- An invalid list is rejected with an `InvalidArgumentError` before any APDU.
+- The receivers are sent only to Zcash app **3.11.0 or later**. For an older app, or when the
+  version cannot be read, they are omitted without an error and the transaction signs; the
+  device shows its fallback display. If reading the version fails, that error is returned.
+- If the device refuses an output that carried a list, the task returns a
+  `UserAddressRefusedError` (`errorCode: "user_address_refused"`) with the `pool` and `index` of
+  the output. The refusal can have another cause, as the device validates the whole output.
+
 ```typescript
 import { type PcztTransaction } from "@ledgerhq/device-signer-kit-zcash";
 
