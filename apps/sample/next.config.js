@@ -7,7 +7,7 @@ const path = require("path");
 
 const API_URL = process.env.API_URL || "http://127.0.0.1:5328";
 
-// Container (EKS) builds set BUILD_STANDALONE=true; Vercel builds are unaffected.
+// Container (EKS) builds set BUILD_STANDALONE=true; local builds are unaffected.
 const standalone =
   process.env.BUILD_STANDALONE === "true"
     ? {
@@ -36,12 +36,8 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*",
-        // In the container the Flask API runs in the same pod (API_URL set at
-        // build time); on Vercel it is served by the Python function at /api/.
-        destination:
-          process.env.NODE_ENV === "development" || process.env.API_URL
-            ? `${API_URL}/api/:path*`
-            : "/api/",
+        // The Flask API: started by `pnpm dev` locally, in the same pod in the container.
+        destination: `${API_URL}/api/:path*`,
       },
     ];
   },
@@ -62,7 +58,6 @@ const sentryWebpackPluginOptions = {
   tunnelRoute: "/monitoring", // Routes browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers (increases server load)
   hideSourceMaps: true, // Hides source maps from generated client bundles
   disableLogger: true, // Automatically tree-shake Sentry logger statements to reduce bundle size
-  automaticVercelMonitors: true, // Enables automatic instrumentation of Vercel Cron Monitors
 };
 
 module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);

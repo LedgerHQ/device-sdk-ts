@@ -20,9 +20,6 @@
     <a href="https://nextjs.org/">
       <img alt="NextJs" src="https://img.shields.io/badge/Next.js-000?logo=nextdotjs&logoColor=fff&style=for-the-badge" />
     </a>
-    <a href="https://vercel.com/">
-      <img alt="Vercel" src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" />
-    </a>
     <a href="https://www.npmjs.com/">
       <img alt="NPM" src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white" />
     </a>
@@ -73,7 +70,7 @@ This repository contains the **web implementation** of the Device Management Kit
 
 The Device Management Kit is structured as a monorepository that centralizes all TypeScript code related to the Device Management Kit in one place.
 
-This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and release different packages on NPM registry and a sample demo application on Vercel.
+This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and release different packages on NPM registry and a sample demo application.
 
 ### Packages
 

@@ -12,7 +12,7 @@ RUN corepack enable && corepack prepare pnpm@10.34.4 --activate
 
 WORKDIR /repo
 COPY . .
-# Same install scope as Vercel (root vercel.json): skip the Electron devtools app.
+# Skip the Electron devtools app: the sample app does not need it.
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm install --frozen-lockfile --filter "!@ledgerhq/device-management-kit-devtools"
 
