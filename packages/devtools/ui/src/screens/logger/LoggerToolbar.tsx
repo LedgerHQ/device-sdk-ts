@@ -43,7 +43,7 @@ export const LoggerToolbar: React.FC<{
   searchInputRef,
   filterInputRef,
 }) => (
-  <div className="flex h-56 shrink-0 items-center gap-12 border-b border-muted-subtle px-12">
+  <div className="flex min-h-56 shrink-0 flex-wrap items-center gap-x-12 gap-y-8 border-b border-muted-subtle px-12 py-12">
     <FilterInput
       value={options.filterText}
       onChange={(filterText) => setOptions({ ...options, filterText })}

@@ -24,6 +24,8 @@ type LogsTableProps = {
   follow: boolean;
   newestFirst: boolean;
   columnSizing: ColumnSizing;
+  /** Lets the column header, outside this scroll container, follow the rows sideways. */
+  onHorizontalScroll: (scrollLeft: number) => void;
 };
 
 const LIST_BUTTON =
@@ -37,6 +39,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   follow,
   newestFirst,
   columnSizing,
+  onHorizontalScroll,
 }) => {
   const [expandedLogs, setExpandedLogs] = useState<Set<LogData>>(new Set());
   const toggleLog = useCallback((log: LogData) => {
@@ -63,9 +66,10 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     last: LogData;
   } | null>(null);
 
-  const pinnedStart = pinned ? data.indexOf(pinned.first) : -1;
   const pinnedEnd = pinned ? data.indexOf(pinned.last) : -1;
-  const isPinned = pinnedStart >= 0 && pinnedEnd >= pinnedStart;
+  // The log cap may have dropped the window's first rows: keep what is left of it
+  const pinnedStart = pinned ? Math.max(0, data.indexOf(pinned.first)) : -1;
+  const isPinned = pinnedEnd >= 0 && pinnedEnd >= pinnedStart;
   const [start, end] = isPinned
     ? [pinnedStart, pinnedEnd + 1]
     : newestFirst
@@ -108,7 +112,22 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     }
   };
 
+  // Newest first puts the latest logs at the top
+  const [atTop, setAtTop] = useState(true);
+  const atLatest = newestFirst ? atTop : atBottom;
+  const handleScroll = () => {
+    onScroll();
+    const container = containerRef.current;
+    if (!container) return;
+    setAtTop(container.scrollTop <= 4);
+    onHorizontalScroll(container.scrollLeft);
+  };
+
   const jumpToLatest = () => {
+    if (newestFirst) {
+      if (containerRef.current) containerRef.current.scrollTop = 0;
+      return;
+    }
     flushSync(() => {
       setPinned(null);
       setAtBottom(true);
@@ -133,7 +152,11 @@ export const LogsTable: React.FC<LogsTableProps> = ({
 
   const scrolledToIndexRef = useRef<number | undefined>(undefined);
   useLayoutEffect(() => {
-    if (scrollToIndex === undefined || scrollToIndex < 0) return;
+    if (scrollToIndex === undefined || scrollToIndex < 0) {
+      // Forget the last match, so finding it again scrolls to it again
+      scrolledToIndexRef.current = undefined;
+      return;
+    }
     if (scrolledToIndexRef.current === scrollToIndex) return;
     const row = contentRef.current?.querySelector(
       `[data-index="${scrollToIndex}"]`,
@@ -157,7 +180,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
       <div
         ref={containerRef}
         className="min-h-0 flex-1 overflow-auto"
-        onScroll={onScroll}
+        onScroll={handleScroll}
       >
         <div ref={contentRef} className="w-full min-w-fit">
           {data.length === 0 ? (
@@ -211,7 +234,11 @@ export const LogsTable: React.FC<LogsTableProps> = ({
           )}
         </div>
       </div>
-      <ScrollDownButton enabled={atBottom} onClick={jumpToLatest} />
+      <ScrollDownButton
+        enabled={atLatest}
+        onClick={jumpToLatest}
+        up={newestFirst}
+      />
     </div>
   );
 };

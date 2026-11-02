@@ -6,7 +6,7 @@
  * via the connector (WebSocket or Rozenite).
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   type ConnectedDevice,
   type DeviceSessionState,
@@ -140,20 +140,22 @@ export function useConnectorMessages(
     [connector],
   );
 
+  // Shared with clearLogs, so a clear also drops the logs waiting for the next flush
+  const pendingLogsRef = useRef<LogData[]>([]);
+
   // === Message Listener ===
   useEffect(() => {
     // Logs and the debug message list are added in batches, like Dozzle: a polling
     // device sends several logs per second, and adding them one by one re-rendered
     // the dashboard and copied both lists for every line.
     let pendingMessages: Message[] = [];
-    let pendingLogs: LogData[] = [];
     let flushTimer: ReturnType<typeof setTimeout> | undefined;
     const flush = () => {
       flushTimer = undefined;
       const messages = pendingMessages;
-      const newLogs = pendingLogs;
+      const newLogs = pendingLogsRef.current;
       pendingMessages = [];
-      pendingLogs = [];
+      pendingLogsRef.current = [];
       setReceivedMessages((prev) => [...prev, ...messages]);
       if (newLogs.length > 0) {
         setLogs((prev) => [...prev, ...newLogs].slice(-MAX_LOGS));
@@ -184,7 +186,7 @@ export function useConnectorMessages(
           handleApduResponse(payload, setApduResponses);
           break;
         case LOGGER_MESSAGE_TYPES.ADD_LOG:
-          handleLogMessage(payload, (log) => pendingLogs.push(log));
+          handleLogMessage(payload, (log) => pendingLogsRef.current.push(log));
           break;
       }
     });
@@ -234,6 +236,7 @@ export function useConnectorMessages(
   }, [discoveryCommands]);
 
   const clearLogs = useCallback(() => {
+    pendingLogsRef.current = [];
     setLogs([]);
   }, []);
 

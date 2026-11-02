@@ -43,6 +43,17 @@ const LogRowContent: React.FC<LogRowProps> = ({
         <div
           className={`flex items-start gap-8 rounded-xs pr-8 ${rowBackground(highlighted, currentMatch)} ${expandable ? "cursor-pointer" : ""}`}
           onClick={expandable ? () => onToggle(log) : undefined}
+          {...(expandable && {
+            role: "button",
+            tabIndex: 0,
+            "aria-expanded": open,
+            onKeyDown: (event: React.KeyboardEvent) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onToggle(log);
+              }
+            },
+          })}
         >
           <ChevronRight
             size={12}

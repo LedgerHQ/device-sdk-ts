@@ -78,7 +78,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   }, [onChange, effectiveRef]);
 
   return (
-    <div className="relative w-400 shrink-0">
+    <div className="relative w-400 min-w-160 shrink">
       <div className={INPUT_WRAPPER}>
         <Search size={16} className="shrink-0 text-muted" />
         <input

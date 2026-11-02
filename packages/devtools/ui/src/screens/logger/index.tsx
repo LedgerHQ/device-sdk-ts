@@ -74,6 +74,7 @@ export const Logger: React.FC<Props> = ({
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const filterInputRef = useRef<HTMLInputElement>(null);
+  const headerScrollRef = useRef<HTMLDivElement>(null);
 
   // Keyboard shortcuts (Ctrl/Cmd+F, Ctrl/Cmd+K, Ctrl/Cmd+G / Ctrl/Cmd+Shift+G)
   useEffect(() => {
@@ -169,21 +170,26 @@ export const Logger: React.FC<Props> = ({
         searchInputRef={searchInputRef}
         filterInputRef={filterInputRef}
       />
-      <TableHeader
-        options={options}
-        setOptions={setOptions}
-        uniqueTags={uniqueTags}
-        newestFirst={newestFirst}
-        onToggleSort={() => setNewestFirst(!newestFirst)}
-        columnSizing={columnSizing}
-        onColumnSizingChange={setColumnSizing}
-      >
-        <LogCounts
-          paused={pausedLogs !== null}
-          total={visibleLogs.length}
-          displayed={displayedLogs.length}
-        />
-      </TableHeader>
+      {/* Scrolled by the rows, so the headings stay above their columns */}
+      <div ref={headerScrollRef} className="shrink-0 overflow-hidden">
+        <div className="min-w-fit">
+          <TableHeader
+            options={options}
+            setOptions={setOptions}
+            uniqueTags={uniqueTags}
+            newestFirst={newestFirst}
+            onToggleSort={() => setNewestFirst(!newestFirst)}
+            columnSizing={columnSizing}
+            onColumnSizingChange={setColumnSizing}
+          >
+            <LogCounts
+              paused={pausedLogs !== null}
+              total={visibleLogs.length}
+              displayed={displayedLogs.length}
+            />
+          </TableHeader>
+        </div>
+      </div>
       <LogsTable
         data={data}
         key={`${tableKey}-${newestFirst}`}
@@ -193,6 +199,11 @@ export const Logger: React.FC<Props> = ({
         follow={pausedLogs === null && !newestFirst}
         newestFirst={newestFirst}
         columnSizing={columnSizing}
+        onHorizontalScroll={(scrollLeft) => {
+          if (headerScrollRef.current) {
+            headerScrollRef.current.scrollLeft = scrollLeft;
+          }
+        }}
       />
     </div>
   );

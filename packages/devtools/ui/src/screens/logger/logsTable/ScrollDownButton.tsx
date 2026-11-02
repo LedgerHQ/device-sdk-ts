@@ -1,17 +1,20 @@
 import React from "react";
 import { IconButton } from "@ledgerhq/lumen-ui-react";
-import { ArrowDown } from "@ledgerhq/lumen-ui-react/symbols";
+import { ArrowDown, ArrowUp } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { WithTooltip } from "../../../components/WithTooltip";
 
 type ScrollDownButtonProps = {
   onClick: () => void;
   enabled: boolean;
+  /** The latest rows are at the top. */
+  up?: boolean;
 };
 
 export const ScrollDownButton: React.FC<ScrollDownButtonProps> = ({
   onClick,
   enabled,
+  up = false,
 }) => (
   <WithTooltip
     label="Scroll to latest logs"
@@ -20,7 +23,7 @@ export const ScrollDownButton: React.FC<ScrollDownButtonProps> = ({
   >
     <IconButton
       aria-label="Scroll to latest logs"
-      icon={ArrowDown}
+      icon={up ? ArrowUp : ArrowDown}
       appearance="accent"
       size="sm"
       onClick={onClick}
