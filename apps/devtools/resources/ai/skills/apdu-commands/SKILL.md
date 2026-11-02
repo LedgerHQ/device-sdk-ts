@@ -1,16 +1,10 @@
 ---
 name: apdu-commands
-description: Name a Ledger APDU from its CLA and INS bytes, for the OS, the dashboard and every app DMK has a signer for. Use when an APDU in the selection has no command name, or to check one.
+description: Name a Ledger APDU from its CLA and INS bytes, for the OS, the dashboard and every app with a DMK signer. Use when an APDU has no command name, or to check one.
 ---
 
 # APDU commands
 
-`commands.md`, next to this file, lists every command DMK, its signers and its trusted apps can send, by CLA and INS (the first two bytes of the APDU), grouped by who answers it:
+`commands.md`, beside this file, lists every command DMK, its signers and its trusted apps send, by CLA and INS. Its sections: CLA `b0` (answered the same by any app or the dashboard), the dashboard (`BOLOS`), then one per app under the name `getAppAndVersion` reports.
 
-- **Any app or the dashboard (CLA b0)**: the same meaning whatever is open.
-- **Dashboard only (BOLOS)**: CLA e0 commands of the dashboard. Inside an app the same bytes belong to that app.
-- **One section per app**, under the name the device reports in `getAppAndVersion` (`Ethereum`, `Solana`, `Bitcoin Cash`, …).
-
-To name an APDU, find which app was open when it was sent (see `explain-device-exchange`), then look up CLA and INS in that app's section. When several names share a line, P1 and P2 tell them apart (for example the first chunk of a transaction against the next ones).
-
-An app missing from `commands.md` has no DMK signer (for example Cardano or Stellar): say the command is unknown to DMK rather than guessing from another app, since apps reuse the same CLA and INS for different commands.
+Find the app open when the APDU was sent, then its line in that app's section; P1 and P2 tell apart the names sharing a line. An app without a section has no DMK signer (for example Cardano or Stellar): say DMK does not know the command, and never borrow another app's meaning, since apps reuse CLA and INS.
