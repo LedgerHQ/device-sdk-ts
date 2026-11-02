@@ -104,4 +104,21 @@ describe("extractApduExchanges", () => {
       "getAppConfiguration",
     ]);
   });
+
+  it("keeps names and ids when the log cap drops the exchange that opened the app", () => {
+    const logs = [
+      exchange("b001000000", appAndVersion("Bitcoin")),
+      exchange("e104000000", "9000"),
+    ];
+    const before = extractApduExchanges(logs);
+    const after = extractApduExchanges([
+      ...logs.slice(1),
+      exchange("e104000000", "9000"),
+    ]);
+    expect(after.map(({ command }) => command)).toEqual([
+      "signPsbt",
+      "signPsbt",
+    ]);
+    expect(after[0]!.id).toBe(before[1]!.id);
+  });
 });

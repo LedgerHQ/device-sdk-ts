@@ -85,6 +85,7 @@ export const DevicePanel: React.FC<DevicePanelProps> = ({
 
       {isConnected(state) && (
         <ApduSender
+          key={device.sessionId}
           sessionId={device.sessionId}
           onSend={onSendApdu}
           responses={apduResponses}

@@ -273,10 +273,11 @@ export const ApduList: React.FC<{ exchanges: ApduExchange[] }> = ({
                 />
               ))
             )}
-            {atBottom && !paused && visibleExchanges.length > 0 && (
+            {!paused && visibleExchanges.length > 0 && (
+              // Hidden rather than removed: a height change here would move the reader back to the bottom
               <div
-                className="flex h-24 items-center justify-center gap-4"
-                aria-label="Following new APDUs"
+                className={`flex h-24 items-center justify-center gap-4 ${atBottom ? "" : "invisible"}`}
+                aria-label={atBottom ? "Following new APDUs" : undefined}
               >
                 {["", "[animation-delay:200ms]", "[animation-delay:400ms]"].map(
                   (delay) => (

@@ -81,30 +81,45 @@ const isApduExchangePayload = (
   typeof payload["apdu"] === "string" &&
   typeof payload["response"] === "string";
 
+// Keyed by the log itself: once the log cap drops older logs, an exchange keeps its
+// id, and the app it left open still names the exchanges after it
+const processed = new WeakMap<
+  LogData,
+  { exchange: ApduExchange; openApp: string | undefined }
+>();
+let nextId = 0;
+
 export const extractApduExchanges = (logs: LogData[]): ApduExchange[] => {
   const openApps = new Map<string, string | undefined>();
-  return logs.flatMap((log, index) => {
+  return logs.flatMap((log) => {
     if (!isApduExchangePayload(log.payload)) return [];
+    const cached = processed.get(log);
+    if (cached) {
+      openApps.set(cached.exchange.sessionId, cached.openApp);
+      return [cached.exchange];
+    }
     const { sessionId } = log.payload;
     const sent = toBytes(log.payload.apdu);
     const received = toBytes(log.payload.response);
     const statusWord = received.slice(-2).join("");
     const key = sent.slice(0, 2).join("");
     const app = openApps.get(sessionId);
-    if (statusWord === "9000") {
-      openApps.set(sessionId, appAfter(app, key, sent, received.slice(0, -2)));
-    }
-    return [
-      {
-        id: `${log.timestamp}-${index}`,
-        timestamp: log.timestamp,
-        sessionId,
-        layer: layerOf(app, key),
-        command: commandName(app, key) ?? sent.slice(0, 2).join(" "),
-        sent,
-        received,
-        statusWord,
-      },
-    ];
+    const openApp =
+      statusWord === "9000"
+        ? appAfter(app, key, sent, received.slice(0, -2))
+        : app;
+    openApps.set(sessionId, openApp);
+    const exchange: ApduExchange = {
+      id: String(nextId++),
+      timestamp: log.timestamp,
+      sessionId,
+      layer: layerOf(app, key),
+      command: commandName(app, key) ?? sent.slice(0, 2).join(" "),
+      sent,
+      received,
+      statusWord,
+    };
+    processed.set(log, { exchange, openApp });
+    return [exchange];
   });
 };
