@@ -5,8 +5,7 @@ import { DEFAULT_DASHBOARD_WS_URL } from '@ledgerhq/device-management-kit-devtoo
 
 // The main process forwards mockserver:// requests, see MOCK_SERVER_SCHEME there
 function toMockServerProxyUrl(url: string): string {
-  const { origin, protocol, host, pathname } = new URL(url)
-  window.electron.ipcRenderer.send('mock-server:allow', origin)
+  const { protocol, host, pathname } = new URL(url)
   return `mockserver://proxy/${protocol.slice(0, -1)}/${host}${pathname}`
 }
 

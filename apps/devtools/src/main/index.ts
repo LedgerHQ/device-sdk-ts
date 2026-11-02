@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, net, protocol } from 'electron'
+import { app, shell, BrowserWindow, dialog, ipcMain, net, protocol } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -8,8 +8,29 @@ import icon from '../../resources/icon.png?asset'
 // forwards it. The target sits in the path because custom schemes drop ports.
 const MOCK_SERVER_SCHEME = 'mockserver'
 
-// Only the mock server the dashboard shows, so the proxy cannot reach other hosts
-let allowedMockServerOrigin: string | null = null
+// The connected app names its mock server, so the user approves each origin the proxy may reach
+const mockServerApprovals = new Map<string, Promise<boolean>>()
+
+function approveMockServer(origin: string): Promise<boolean> {
+  let approval = mockServerApprovals.get(origin)
+  if (!approval) {
+    const options = {
+      type: 'question' as const,
+      buttons: ['Allow', 'Deny'],
+      defaultId: 1,
+      cancelId: 1,
+      message: `Show the mock device screen from ${origin}?`,
+      detail:
+        'The app connected to the DevTools says it uses this mock server. The DevTools will send it requests for the device screen. Deny if you do not recognise it.'
+    }
+    const window = BrowserWindow.getAllWindows()[0]
+    approval = (
+      window ? dialog.showMessageBox(window, options) : dialog.showMessageBox(options)
+    ).then(({ response }) => response === 0)
+    mockServerApprovals.set(origin, approval)
+  }
+  return approval
+}
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -18,22 +39,28 @@ protocol.registerSchemesAsPrivileged([
   }
 ])
 
-function forwardMockServerRequest(request: Request): Promise<Response> | Response {
+async function forwardMockServerRequest(request: Request): Promise<Response> {
   const { pathname, search } = new URL(request.url)
   const [, target, host, ...path] = pathname.split('/')
   if (target !== 'http' && target !== 'https') {
     return new Response(null, { status: 400 })
   }
   const url = `${target}://${host}/${path.join('/')}${search}`
-  if (new URL(url).origin !== allowedMockServerOrigin) {
+  if (!(await approveMockServer(new URL(url).origin))) {
     return new Response(null, { status: 403 })
   }
-  return net.fetch(url, {
-    method: request.method,
-    headers: request.headers,
-    body: request.body,
-    duplex: 'half'
-  } as RequestInit)
+  try {
+    return await net.fetch(url, {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      duplex: 'half',
+      // A redirect would reach an origin nobody approved, so it fails the request
+      redirect: 'manual'
+    } as RequestInit)
+  } catch {
+    return new Response(null, { status: 502 })
+  }
 }
 
 function createWindow(): void {
@@ -83,9 +110,6 @@ app.whenReady().then(() => {
   })
 
   protocol.handle(MOCK_SERVER_SCHEME, forwardMockServerRequest)
-  ipcMain.on('mock-server:allow', (_event, origin: string) => {
-    allowedMockServerOrigin = origin
-  })
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))

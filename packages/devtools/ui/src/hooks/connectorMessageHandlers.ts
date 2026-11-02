@@ -114,7 +114,7 @@ export function handleMockServerConfig(
   setMockServer: Dispatch<SetStateAction<MockServerConfig | null>>,
 ): void {
   try {
-    setMockServer(JSON.parse(payload) as MockServerConfig);
+    setMockServer(JSON.parse(payload) as MockServerConfig | null);
   } catch (e) {
     console.error("Failed to parse mockServerConfig payload", e);
   }

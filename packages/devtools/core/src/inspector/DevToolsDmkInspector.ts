@@ -63,12 +63,11 @@ export class DevToolsDmkInspector {
       JSON.stringify({ module: DEVTOOLS_MODULES.DMK_INSPECTOR }),
     );
 
-    if (options.mockServer) {
-      connector.sendMessage(
-        INSPECTOR_MESSAGE_TYPES.MOCK_SERVER_CONFIG,
-        JSON.stringify(options.mockServer),
-      );
-    }
+    // Sent even when absent, so the dashboard drops a previous app's mock server
+    connector.sendMessage(
+      INSPECTOR_MESSAGE_TYPES.MOCK_SERVER_CONFIG,
+      JSON.stringify(options.mockServer ?? null),
+    );
 
     // Start observing devices
     this.destroyDeviceObserver = createDeviceObserver(dmk, connector);
