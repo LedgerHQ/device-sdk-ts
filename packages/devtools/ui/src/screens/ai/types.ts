@@ -30,7 +30,12 @@ export type AiVerdict = "bug" | "not-bug" | "unsure";
 
 export type AiEvent =
   /** A tool Claude used, worded for the user ("Reading SignTransactionTask.ts"). */
-  | { type: "step"; text: string }
+  | {
+      type: "step";
+      text: string;
+      /** Claude is filing the Jira ticket: from here a ticket may exist even if the answer never arrives. */
+      createsTicket?: boolean;
+    }
   /** The next piece of the answer. */
   | { type: "text"; text: string }
   /** The full answer, replacing what streamed: text written before using a tool is not part of it. */

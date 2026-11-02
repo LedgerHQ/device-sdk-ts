@@ -114,8 +114,8 @@ export const buildQuery = (
       settings: { disableClaudeAiConnectors: !filing },
       plugins: [{ type: 'local', path: paths.pluginDir }],
       skills: 'all',
-      tools: ['Skill', 'Read', 'Grep', 'Glob'],
       // Filing a ticket reads nothing new, so what it files only comes from the analysis
+      tools: filing ? ['Skill'] : ['Skill', 'Read', 'Grep', 'Glob'],
       allowedTools: filing ? ['Skill', JIRA_CREATE_TOOL] : ['Skill', 'Read', 'Grep', 'Glob'],
       hooks: {
         PreToolUse: [{ matcher: 'Read|Grep|Glob', hooks: [stayInside([cwd, paths.pluginDir])] }]
@@ -140,10 +140,12 @@ const TICKET = /Ticket:\s*([A-Z][A-Z0-9]+-\d+)\s+(https?:\/\/\S+)/
 
 /** What the UI acts on in an answer, read from the format the skills ask for. */
 export const readAnswer = (
-  answer: string
+  answer: string,
+  filing: boolean
 ): Pick<AiEvent & { type: 'done' }, 'verdict' | 'ticket'> => {
   const verdict = answer.match(VERDICT)?.[1]?.toLowerCase()
-  const ticket = answer.match(TICKET)
+  // Any other answer may quote a ticket line as an example
+  const ticket = filing ? answer.match(TICKET) : null
   return {
     verdict: verdict === undefined ? undefined : VERDICTS[verdict],
     ticket: ticket ? { key: ticket[1], url: ticket[2] } : undefined

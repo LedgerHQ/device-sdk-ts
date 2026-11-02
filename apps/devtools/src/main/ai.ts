@@ -10,6 +10,7 @@ import {
   ATLASSIAN_SERVER,
   buildQuery,
   describeTool,
+  JIRA_CREATE_TOOL,
   MODEL_NAME,
   readAnswer
 } from './aiOptions'
@@ -89,7 +90,8 @@ const analyze = async (
         if (block.type === 'tool_use') {
           emit({
             type: 'step',
-            text: describeTool(block.name, block.input as Record<string, unknown>)
+            text: describeTool(block.name, block.input as Record<string, unknown>),
+            createsTicket: block.name === JIRA_CREATE_TOOL
           })
         }
       }
@@ -99,7 +101,7 @@ const analyze = async (
           type: 'done',
           sessionId: message.session_id,
           answer: message.result,
-          ...readAnswer(message.result)
+          ...readAnswer(message.result, request.kind === 'createTicket')
         })
       } else {
         const reason = message.subtype === 'success' ? message.result : message.errors.join('\n')
