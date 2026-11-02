@@ -31,10 +31,4 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deployment
 
-The app runs as a container on Ledger's AWS infrastructure (see [`Dockerfile`](./Dockerfile)):
-
-- A merge to `develop` deploys [app.devicesdk.ledger-test.com](https://app.devicesdk.ledger-test.com).
-- A merge to `main` deploys [app.devicesdk.ledger.com](https://app.devicesdk.ledger.com).
-- A pull request labelled `preview-sample` gets its own preview environment. The bot posts its URL on the pull request.
-
-The workflows are in [`.github/workflows/sample-*.yml`](../../.github/workflows).
+A merge to `main` deploys [app.devicesdk.ledger.com](https://app.devicesdk.ledger.com). See the [`Dockerfile`](./Dockerfile) and the [`.github/workflows/sample-*.yml`](../../.github/workflows) workflows.
