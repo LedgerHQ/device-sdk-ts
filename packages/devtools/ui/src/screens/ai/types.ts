@@ -19,7 +19,14 @@ export type AiRequest =
       sessionId: string;
       question: string;
       readCode: boolean;
+    }
+  | {
+      /** File the bug an earlier answer found as a Jira ticket. */
+      kind: "createTicket";
+      sessionId: string;
     };
+
+export type AiVerdict = "bug" | "not-bug" | "unsure";
 
 export type AiEvent =
   /** A tool Claude used, worded for the user ("Reading SignTransactionTask.ts"). */
@@ -27,7 +34,15 @@ export type AiEvent =
   /** The next piece of the answer. */
   | { type: "text"; text: string }
   /** The full answer, replacing what streamed: text written before using a tool is not part of it. */
-  | { type: "done"; sessionId: string; answer: string }
+  | {
+      type: "done";
+      sessionId: string;
+      answer: string;
+      /** From the answer's Verdict section, when it has one. */
+      verdict?: AiVerdict;
+      /** The ticket filed, when the answer reports one. */
+      ticket?: { key: string; url: string };
+    }
   | { type: "error"; message: string };
 
 export type AiStatus =
@@ -38,6 +53,8 @@ export type AiStatus =
       /** The skills every analysis uses. */
       skills: string[];
       canReadCode: boolean;
+      /** Claude Code's Atlassian connector is connected, so Claude can file Jira tickets. */
+      canCreateTickets: boolean;
     }
   | { ready: false; error: string };
 

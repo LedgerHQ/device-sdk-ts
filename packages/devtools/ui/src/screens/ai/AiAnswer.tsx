@@ -64,8 +64,18 @@ const parse = (markdown: string): Section[] => {
 
 const Inline: React.FC<{ text: string }> = ({ text }) => (
   <>
-    {text.split(/(\*\*[^*]+\*\*|`[^`]+`)/).map((part, i) =>
-      part.startsWith("**") && part.endsWith("**") ? (
+    {text.split(/(\*\*[^*]+\*\*|`[^`]+`|https?:\/\/[^\s)]+)/).map((part, i) =>
+      part.startsWith("http") ? (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noreferrer"
+          className="text-active underline"
+        >
+          {part}
+        </a>
+      ) : part.startsWith("**") && part.endsWith("**") ? (
         <strong key={i}>{part.slice(2, -2)}</strong>
       ) : part.startsWith("`") && part.endsWith("`") ? (
         <code key={i} className="font-mono! body-4">

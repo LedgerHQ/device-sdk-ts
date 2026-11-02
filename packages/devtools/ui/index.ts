@@ -4,4 +4,5 @@ export type {
   AiEvent,
   AiRequest,
   AiStatus,
+  AiVerdict,
 } from "./src/screens/ai/types";

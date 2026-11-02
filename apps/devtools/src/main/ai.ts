@@ -4,7 +4,15 @@ import { join, resolve } from 'path'
 import type { SDKMessage } from '@anthropic-ai/claude-agent-sdk'
 import type { AiEvent, AiRequest, AiStatus } from '@ledgerhq/device-management-kit-devtools-ui'
 
-import { type AiPaths, ANALYSIS_SKILLS, buildQuery, describeTool, MODEL_NAME } from './aiOptions'
+import {
+  type AiPaths,
+  ANALYSIS_SKILLS,
+  ATLASSIAN_SERVER,
+  buildQuery,
+  describeTool,
+  MODEL_NAME,
+  readAnswer
+} from './aiOptions'
 
 // The skills the DevTools gives Claude; a packaged app unpacks resources/ beside its archive
 const PLUGIN_DIR = join(__dirname, '../../resources/ai').replace('app.asar', 'app.asar.unpacked')
@@ -43,15 +51,18 @@ const getStatus = async (): Promise<AiStatus> => {
     const signedIn = [account.email, account.tokenSource, account.apiKeySource].some(
       (source) => source !== undefined && source !== 'none'
     )
-    return signedIn
-      ? {
-          ready: true,
-          account: account.email,
-          model: MODEL_NAME,
-          skills: ANALYSIS_SKILLS,
-          canReadCode: PATHS.canReadCode
-        }
-      : { ready: false, error: 'Claude Code is not signed in.' }
+    if (!signedIn) return { ready: false, error: 'Claude Code is not signed in.' }
+    const servers = await probe.mcpServerStatus()
+    return {
+      ready: true,
+      account: account.email,
+      model: MODEL_NAME,
+      skills: ANALYSIS_SKILLS,
+      canReadCode: PATHS.canReadCode,
+      canCreateTickets: servers.some(
+        (server) => server.name === ATLASSIAN_SERVER && server.status === 'connected'
+      )
+    }
   } catch (error) {
     return { ready: false, error: error instanceof Error ? error.message : String(error) }
   } finally {
@@ -84,7 +95,12 @@ const analyze = async (
       }
     } else if (message.type === 'result') {
       if (message.subtype === 'success' && !message.is_error) {
-        emit({ type: 'done', sessionId: message.session_id, answer: message.result })
+        emit({
+          type: 'done',
+          sessionId: message.session_id,
+          answer: message.result,
+          ...readAnswer(message.result)
+        })
       } else {
         const reason = message.subtype === 'success' ? message.result : message.errors.join('\n')
         emit({ type: 'error', message: reason || message.subtype })

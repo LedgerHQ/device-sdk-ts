@@ -8,6 +8,7 @@ import { INPUT, INPUT_WRAPPER } from "../logger/inputStyles";
 import { AiAnswer } from "./AiAnswer";
 import {
   type AiClient,
+  type AiEvent,
   type AiRequest,
   type AiSelection,
   type AiStatus,
@@ -21,10 +22,13 @@ type Turn = {
   steps: string[];
   text: string;
   answer: string | null;
+  verdict: (AiEvent & { type: "done" })["verdict"];
+  ticket: (AiEvent & { type: "done" })["ticket"];
   error: string | null;
 };
 
 const LABEL = "body-4-semi-bold text-muted uppercase";
+
 const BUTTON =
   "cursor-pointer rounded-sm bg-muted-transparent px-12 py-6 body-3-semi-bold hover:bg-muted-transparent-hover";
 const PRIMARY_BUTTON =
@@ -118,10 +122,16 @@ const redact = (text: string, secrets: string[]) =>
       "$1$2<redacted>",
     );
 
-const redactRequest = (request: AiRequest, secrets: string[]): AiRequest =>
-  request.kind === "explain"
-    ? { ...request, context: redact(request.context, secrets) }
-    : { ...request, question: redact(request.question, secrets) };
+const redactRequest = (request: AiRequest, secrets: string[]): AiRequest => {
+  switch (request.kind) {
+    case "explain":
+      return { ...request, context: redact(request.context, secrets) };
+    case "followUp":
+      return { ...request, question: redact(request.question, secrets) };
+    case "createTicket":
+      return request;
+  }
+};
 
 export const AiPanel: React.FC<{
   ai: AiClient | undefined;
@@ -173,6 +183,8 @@ export const AiPanel: React.FC<{
         steps: [],
         text: "",
         answer: null,
+        verdict: undefined,
+        ticket: undefined,
         error: null,
       };
       setTurns((previous) => (reset ? [turn] : [...previous, turn]));
@@ -190,7 +202,12 @@ export const AiPanel: React.FC<{
               updateLast((t) => ({ ...t, text: t.text + event.text }));
               break;
             case "done":
-              updateLast((t) => ({ ...t, answer: event.answer }));
+              updateLast((t) => ({
+                ...t,
+                answer: event.answer,
+                verdict: event.verdict,
+                ticket: event.ticket,
+              }));
               setSessionId(event.sessionId);
               setRunning(false);
               stopRef.current = null;
@@ -248,6 +265,15 @@ export const AiPanel: React.FC<{
     stopRef.current = null;
     setRunning(false);
     updateLast((t) => ({ ...t, error: t.answer === null ? "Stopped." : null }));
+  };
+
+  const foundBug = turns.some((turn) => turn.verdict === "bug");
+  const ticket = turns.find((turn) => turn.ticket)?.ticket;
+  const canCreateTickets = status?.ready === true && status.canCreateTickets;
+
+  const createTicket = () => {
+    if (!sessionId) return;
+    run({ kind: "createTicket", sessionId }, "Create a Jira ticket", false);
   };
 
   const ask = () => {
@@ -422,6 +448,36 @@ export const AiPanel: React.FC<{
                 onClick={ask}
               />
             </WithTooltip>
+            {foundBug &&
+              (ticket ? (
+                <a
+                  href={ticket.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`whitespace-nowrap ${BUTTON}`}
+                >
+                  {ticket.key} ↗
+                </a>
+              ) : canCreateTickets ? (
+                <button
+                  type="button"
+                  className={`whitespace-nowrap ${PRIMARY_BUTTON} disabled:cursor-default disabled:opacity-50`}
+                  disabled={running}
+                  onClick={createTicket}
+                >
+                  Create Jira ticket
+                </button>
+              ) : (
+                <WithTooltip label="Connect Atlassian in Claude (claude.ai › Settings › Connectors) to create tickets">
+                  <button
+                    type="button"
+                    disabled
+                    className={`cursor-default whitespace-nowrap opacity-50 ${PRIMARY_BUTTON}`}
+                  >
+                    Create Jira ticket
+                  </button>
+                </WithTooltip>
+              ))}
           </div>
         )}
       </aside>
