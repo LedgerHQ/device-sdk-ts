@@ -10,6 +10,8 @@ import {
 
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
+import { BITCOIN_CASH_PROFILE } from "@api/profiles/bitcoinCashProfile";
+import { DOGECOIN_PROFILE } from "@api/profiles/dogecoinProfile";
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import {
   BtcLegacyAppCommandError,
@@ -71,6 +73,24 @@ describe("SignTransactionTask", () => {
       });
     },
   );
+
+  it("should default to the profile's sighash type", async () => {
+    const { transaction, exchanges, signedTransaction } =
+      REFERENCE_TRANSACTIONS.find(
+        (reference) => reference.profile === BITCOIN_CASH_PROFILE,
+      )!;
+    const { api } = replay(exchanges);
+
+    const result = await getTask(BITCOIN_CASH_PROFILE).run(api, {
+      ...transaction,
+      sigHashType: undefined,
+    });
+
+    expect(result).toStrictEqual({
+      status: "SUCCESS",
+      data: signedTransaction,
+    });
+  });
 
   it("should return the error of a rejected signature", async () => {
     const { transaction, exchanges } = ONE_INPUT!;
@@ -197,5 +217,18 @@ describe("SignTransactionTask", () => {
         expect(sendCommand).not.toHaveBeenCalled();
       },
     );
+
+    it("should fail before any APDU when the coin has no SegWit", async () => {
+      const result = await getTask(DOGECOIN_PROFILE).run(api, {
+        ...base,
+        segwit: true,
+      });
+
+      expect(result).toStrictEqual({
+        status: "ERROR",
+        error: new InvalidStatusWordError("Dogecoin has no SegWit"),
+      });
+      expect(sendCommand).not.toHaveBeenCalled();
+    });
   });
 });

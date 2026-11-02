@@ -4,8 +4,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
+import { KOMODO_PROFILE } from "@api/profiles/komodoProfile";
 import { LITECOIN_PROFILE } from "@api/profiles/litecoinProfile";
 import { BtcLegacyAppBinder } from "@internal/app-binder/BtcLegacyAppBinder";
+import { SaplingTransactionSerializer } from "@internal/app-binder/task/format/SaplingTransactionSerializer";
 import { StandardTransactionSerializer } from "@internal/app-binder/task/format/StandardTransactionSerializer";
 import { StandardTrustedInputSerializer } from "@internal/app-binder/task/format/StandardTrustedInputSerializer";
 import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
@@ -78,6 +80,16 @@ describe("btcLegacyModuleFactory", () => {
 
     expect(container.get(btcLegacyTypes.TrustedInputSerializer)).toBe(
       serializer,
+    );
+  });
+
+  it("should bind the sapling format for a profile in that format", () => {
+    container
+      .rebindSync(btcLegacyTypes.Profile)
+      .toConstantValue(KOMODO_PROFILE);
+
+    expect(container.get(btcLegacyTypes.TransactionSerializer)).toBeInstanceOf(
+      SaplingTransactionSerializer,
     );
   });
 });

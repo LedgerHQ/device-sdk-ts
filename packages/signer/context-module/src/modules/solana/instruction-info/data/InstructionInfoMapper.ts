@@ -85,7 +85,8 @@ export function toAccountResets(
  * regardless, and the device resolves the `target` of every rule it receives —
  * so dropping the entry here would cost the host the `ALT_RESOLUTION` for that
  * target and make the device refuse to sign. A missing condition only means no
- * requirement keys off this rule's predicate.
+ * requirement keys off this rule's predicate. (In a v1 message every target is
+ * a static account, so no `ALT_RESOLUTION` applies.)
  */
 export function toHideRules(dtos: CalHideRuleDto[] = []): SolanaCalHideRule[] {
   return dtos.map((rule) => ({

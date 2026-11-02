@@ -1,0 +1,118 @@
+{
+  "group": "btc-legacy",
+  "name": "horizen",
+  "action": "signTransaction",
+  "devices": ["flex", "stax", "nanox"],
+  "coinApp": "Horizen",
+  "mode": "parallel",
+  "cases": [
+    {
+      "description": "previous transaction with extra data",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "02000000",
+              "inputs": [
+                {
+                  "prevout": "f7923e851e3ff6426373218dfc6488b168ab869d8e8f1eb0d84ddc51149ff3fd00000000",
+                  "script": "48017836ef8ae19b3dde72d12a6f2db46b5e04f3ecd1a7951b17c00ccc891960d4b70393b2e812d8506de70d79f1f28c6f11fdb3f83e57535b16a8c5c14066bf86f6e93fec1cd5115021025b912fa2cdc4b534c1eb012f5d5479e543b641a5d30553bbdc76638513a6fbe9",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9142e8adb3c6943292fa748be8e0dcc679f25bebfbb88ac"
+                }
+              ],
+              "locktime": "00000000",
+              "extraData": "00"
+            },
+            1,
+            null,
+            null
+          ]
+        ],
+        "associatedKeysets": ["44'/121'/0'/0/0"],
+        "outputScriptHex": "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "additionals": ["zencash"]
+      },
+      "expectedTexts": [
+        "4.99 ZEN",
+        "zni3phrcTaSipB8RmqvHSBkC6wkCkNukVas",
+        "0.01 ZEN"
+      ]
+    },
+    {
+      "description": "two inputs, one without extra data, and change",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "02000000",
+              "inputs": [
+                {
+                  "prevout": "f7923e851e3ff6426373218dfc6488b168ab869d8e8f1eb0d84ddc51149ff3fd00000000",
+                  "script": "48017836ef8ae19b3dde72d12a6f2db46b5e04f3ecd1a7951b17c00ccc891960d4b70393b2e812d8506de70d79f1f28c6f11fdb3f83e57535b16a8c5c14066bf86f6e93fec1cd5115021025b912fa2cdc4b534c1eb012f5d5479e543b641a5d30553bbdc76638513a6fbe9",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9142e8adb3c6943292fa748be8e0dcc679f25bebfbb88ac"
+                }
+              ],
+              "locktime": "00000000",
+              "extraData": "00"
+            },
+            1,
+            null,
+            null
+          ],
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "f51fcba55d4f08fe6c7f54b9cc292d69639a0fce92b463a52c8a1aee320bda9600000000",
+                  "script": "48bb211c3abfa43442351a5ab299018cd319ce82177f9161c9e89931667c5d491d3dcb1e09d80ee7f140a935827b3ebc9b0e0394e5258672299c5899fbfbbccd45774a6e0d8a30e2f2210253bbbdbd9fb9145841c198657fad589ae590cabeff845439bcf3a07784cbd292",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "00a3e11100000000",
+                  "script": "76a91442d102132f4a6968757a3347ef2174077cf7d26388ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            0,
+            null,
+            null
+          ]
+        ],
+        "associatedKeysets": ["44'/121'/0'/0/0", "44'/121'/0'/0/1"],
+        "changePath": "44'/121'/0'/1/0",
+        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a9141c5687761fd5c4f657cb8f8e5202b373eb71721888ac",
+        "additionals": ["zencash"]
+      },
+      "expectedTexts": [
+        "6 ZEN",
+        "zni3phrcTaSipB8RmqvHSBkC6wkCkNukVas",
+        "0.02 ZEN"
+      ],
+      "unexpectedTexts": ["1.98 ZEN", "znTfkZwtiBjACrZ8G3sBnakSXafcF2DpVyX"]
+    }
+  ]
+}

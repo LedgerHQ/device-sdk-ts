@@ -16,6 +16,7 @@ import { Right } from "purify-ts";
 import { describe, expect, it, vi } from "vitest";
 
 import { COMPUTE_BUDGET_PROGRAM_ID } from "@internal/app-binder/constants";
+import { v1FromLegacyMessage } from "@internal/app-binder/services/__test-utils__/v1Fixtures";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 import { BuildGenericClearSignContextTask } from "./BuildGenericClearSignContextTask";
@@ -250,5 +251,41 @@ describe("BuildGenericClearSignContextTask", () => {
 
     expect(result.mode).toBe("none");
     expect(result.staleDescriptor).toBe(false);
+  });
+});
+
+describe("BuildGenericClearSignContextTask — v1 messages", () => {
+  it("returns mode `full` with no ALT requirements, ComputeBudget skipped from CAL", async () => {
+    const payer = Keypair.generate();
+    const tx = new Transaction();
+    tx.recentBlockhash = DUMMY_BLOCKHASH;
+    tx.feePayer = payer.publicKey;
+    tx.add(
+      makeIx(new PublicKey(COMPUTE_BUDGET_PROGRAM_ID), [0x02, 0x40, 0x42]),
+      makeIx(KNOWN_PROGRAM, [0x01, 0x02, 0xaa]),
+    );
+    const { task, getContexts } = makeTask(
+      v1FromLegacyMessage(tx.compileMessage()),
+      [instructionInfoContext(KNOWN_PROGRAM.toBase58(), "0102")],
+    );
+
+    const result = await task.run();
+
+    expect(result.mode).toBe("full");
+    expect(result.instructionInfoContexts).toHaveLength(1);
+    expect(result.unrecognizedProgramIds).toEqual([]);
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: [{ programId: KNOWN_PROGRAM.toBase58() }],
+      }),
+      [ClearSignContextType.SOLANA_INSTRUCTION_INFO],
+    );
+    expect(result.challengeBoundRequirements).toMatchObject({
+      altResolutions: [],
+      tokenAmountAltRefs: [],
+      tokenAccountStateAltRefs: [],
+      mintAltRefs: [],
+      trustedNameAltRefs: [],
+    });
   });
 });

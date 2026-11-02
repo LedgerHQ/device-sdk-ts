@@ -35,6 +35,14 @@ export {
   isSolanaAppError,
   SolanaAppCommandError,
 } from "@api/model/SolanaAppErrors";
+export {
+  InvalidSolanaTransactionError,
+  isInvalidSolanaTransactionError,
+  isSolanaTransactionVersionNotSupportedError,
+  SolanaTransactionVersionNotSupportedError,
+  type SolanaTransactionVersionNotSupportedReason,
+  type SolanaV1TransactionRule,
+} from "@api/model/SolanaTransactionErrors";
 export type { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 export type { Transaction } from "@api/model/Transaction";
 export type {

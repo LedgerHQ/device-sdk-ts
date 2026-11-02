@@ -3,6 +3,7 @@ import {
   CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
 
+import { TRANSACTION_TYPE } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
   BTC_LEGACY_ERRORS,
   BtcLegacyAppCommandError,
@@ -30,6 +31,19 @@ describe("LegacyStartUntrustedHashTransactionInputCommand", () => {
       expect(toHex(command.getApdu().getRawApdu())).toBe(apdu);
     },
   );
+
+  it("should start a new transaction with its transaction type", () => {
+    const command = new LegacyStartUntrustedHashTransactionInputCommand(
+      {
+        newTransaction: true,
+        firstRound: false,
+        transactionData,
+        transactionType: TRANSACTION_TYPE.BIP143,
+      },
+      BTC_LEGACY_ERRORS,
+    );
+    expect(toHex(command.getApdu().getRawApdu())).toBe("e0448002050100000002");
+  });
 
   it("should map an app error", () => {
     const result = new LegacyStartUntrustedHashTransactionInputCommand(

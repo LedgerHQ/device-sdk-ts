@@ -16,6 +16,13 @@ export interface ScreenAnalyzerService {
   isLastPage(): Promise<boolean>;
 
   /**
+   * Check if the current screen accepts one step of a review that goes on
+   * after it, such as one output on the legacy Bitcoin apps of a Nano
+   * @returns Promise<boolean> - True if the screen is a bare "Accept"
+   */
+  isStepAcceptPage(): Promise<boolean>;
+
+  /**
    * Check if the current screen allows transaction refusal
    * @returns Promise<boolean> - True if can refuse transaction
    */

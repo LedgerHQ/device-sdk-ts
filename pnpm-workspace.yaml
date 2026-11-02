@@ -75,7 +75,7 @@ catalog:
   concurrently: ^9.1.0
   crypto-js: ^4.2.0
   danger: 13.0.4
-  electron: 39.8.10
+  electron: 42.11.16
   electron-builder: 26.15.3
   electron-vite: 4.0.1
   esbuild: 0.25.4
@@ -137,10 +137,10 @@ catalog:
   usb: ^2.16.0
   util: ^0.12.5
   uuid: 11.0.3
-  vite: 7.3.6
+  vite: 7.3.7
   vitest: 3.2.6
   vitest-react-native: ^0.1.5
-  ws: ^8.18.0
+  ws: ^8.22.0
   xstate: 5.19.2
   zx: 8.5.3
 

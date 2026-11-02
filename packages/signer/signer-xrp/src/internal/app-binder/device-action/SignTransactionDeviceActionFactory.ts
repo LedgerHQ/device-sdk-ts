@@ -1,8 +1,8 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 import { type Curve } from "@api/model/Curve";
-import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 import { DEFAULT_CURVE } from "@internal/app-binder/constants";
+import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 
 /**
  * Build the device action that opens the XRP app, if needed, and runs

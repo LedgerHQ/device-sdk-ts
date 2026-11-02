@@ -55,6 +55,17 @@ Hooks run automatically on agent events. Configured in [.cursor/hooks.json](.cur
 | [format.cjs](.cursor/scripts/hooks/format.cjs) | `afterFileEdit` | Auto-formats edited files with Prettier |
 | [post-task-checks.cjs](.cursor/scripts/hooks/post-task-checks.cjs) | `stop` | Runs tests, lint, and typecheck on changed packages |
 
+## GitHub Copilot Review
+
+Copilot reviews PRs using these instruction files:
+
+| File | Scope |
+|------|-------|
+| [copilot-instructions.md](.github/copilot-instructions.md) | Repo-wide review rules (focus areas, intentional patterns not to flag) |
+| [instructions/](.github/instructions/) | Path-scoped rules (`applyTo`): signers, device actions, transports, tests, apps, CI |
+
+When you change a repo convention (lint rules, architecture, changeset policy), update these files too. Put rules that only apply to some paths in a scoped `instructions/` file, not in the repo-wide file.
+
 ## Sandbox permissions
 
 The following commands require `required_permissions: ["all"]` because the default sandbox blocks post-install scripts, native module builds, or network access they need:

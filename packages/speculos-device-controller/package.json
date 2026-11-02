@@ -39,8 +39,7 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
-    "@sentry/minimal": "catalog:"
+    "@ledgerhq/device-management-kit": "workspace:^"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:^",

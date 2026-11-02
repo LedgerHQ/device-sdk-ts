@@ -2,10 +2,12 @@ import {
   type ApplicationDependency,
   type DeviceActionStateMachine,
   hexaStringToBuffer,
+  type InstallOrUpdateAppsDAOutput,
   type InternalApi,
   isDashboardName,
   type Language,
   LANGUAGE_ID_TO_LANGUAGE,
+  OutOfMemoryDAError,
   RefusedByUserDAError,
   type StateMachineTypes,
   UserInteractionRequired,
@@ -32,12 +34,14 @@ import {
   type RestoreBackupDAIntermediateValue,
   type RestoreBackupDAInternalState,
   type RestoreBackupDAOutput,
+  RestoreBackupStatus,
   RestoreBackupSteps,
 } from "@api/device-action/OsUpdate/Restore/RestoreBackup/types";
 import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
 import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion";
 
 const DEFAULT_LANGUAGE = "english";
+const SECURITY_KEY_APP_NAME = "Security Key";
 
 const langIdToLanguage = (
   languageId: number | undefined,
@@ -51,6 +55,70 @@ const hasBackedUpNonEnglishLanguage = (languageId: number | undefined) => {
 
 const isRefusedByUser = (error: unknown): boolean =>
   error instanceof RefusedByUserDAError;
+
+const isOutOfMemory = (error: unknown): boolean =>
+  error instanceof OutOfMemoryDAError;
+
+const computeRestoreStatus = (
+  state: RestoreBackupDAInternalState,
+): RestoreBackupStatus => {
+  if (state.isOutOfMemory) {
+    return RestoreBackupStatus.OUT_OF_MEMORY;
+  }
+  const isFullyRestored =
+    !state.isMasterConsentRejected &&
+    state.restoredLanguage !== false &&
+    state.restoredCLS !== false &&
+    (state.restoredApps ?? []).every(
+      (app) => app.restoredApp && app.restoredAppStorage !== false,
+    );
+  return isFullyRestored
+    ? RestoreBackupStatus.FULL
+    : RestoreBackupStatus.PARTIAL;
+};
+
+const isSecurityKeyApp = (app: BackupApp): boolean =>
+  app.appName === SECURITY_KEY_APP_NAME;
+
+// The Security Key app is installed and restored in its own pass, before the
+// other apps: a single install plan would put the other apps' dependencies
+// first.
+const getSecurityKeyApps = (apps: BackupApp[]): BackupApp[] =>
+  apps.filter(isSecurityKeyApp);
+
+const getOtherApps = (apps: BackupApp[]): BackupApp[] =>
+  apps.filter((app) => !isSecurityKeyApp(app));
+
+const toApplicationDependencies = (
+  apps: BackupApp[],
+): ApplicationDependency[] =>
+  apps.map((app): ApplicationDependency => ({ name: app.appName }));
+
+const applyInstallResult = (
+  state: RestoreBackupDAInternalState,
+  backupApps: BackupApp[],
+  output: InstallOrUpdateAppsDAOutput,
+): RestoreBackupDAInternalState => {
+  const installedAppNames = new Set([
+    ...output.successfullyInstalled.map(
+      (installedApp) => installedApp.versionName,
+    ),
+    ...output.alreadyInstalled,
+  ]);
+  return {
+    ...state,
+    restoredApps: state.restoredApps?.map(
+      (result): RestoreAppResult => ({
+        ...result,
+        restoredApp:
+          result.restoredApp || installedAppNames.has(result.appName),
+      }),
+    ),
+    appsToRestoreStorage: backupApps.filter(
+      (app) => installedAppNames.has(app.appName) && app.data !== undefined,
+    ),
+  };
+};
 
 const mergeAppsStorageResults = (
   restoredApps: RestoreAppResult[] | undefined,
@@ -110,12 +178,15 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
           unlockTimeout,
           langIdToLanguage(backup.languageId) ?? DEFAULT_LANGUAGE,
         ),
+        installSecurityKeyAppFirst: installOrUpdateApps(
+          internalAPI,
+          unlockTimeout,
+          toApplicationDependencies(getSecurityKeyApps(backup.installedApps)),
+        ),
         installOrUpdateApps: installOrUpdateApps(
           internalAPI,
           unlockTimeout,
-          backup.installedApps.map(
-            (app): ApplicationDependency => ({ name: app.appName }),
-          ),
+          toApplicationDependencies(getOtherApps(backup.installedApps)),
         ),
         restoreAppsStorage: restoreAppsStorage(internalAPI, unlockTimeout),
         uploadCustomLockScreen: uploadCustomLockScreenDevice(
@@ -133,13 +204,18 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
           isMasterConsentSupported(internalAPI.getDeviceModel().id),
         hasBackedUpNonEnglishLanguage: ({ context }) =>
           hasBackedUpNonEnglishLanguage(context.input.backup.languageId),
-        hasAppsToReinstall: ({ context }) =>
-          context.input.backup.installedApps.length > 0,
+        hasSecurityKeyAppToReinstall: ({ context }) =>
+          getSecurityKeyApps(context.input.backup.installedApps).length > 0,
+        hasOtherAppsToReinstall: ({ context }) =>
+          getOtherApps(context.input.backup.installedApps).length > 0,
         isCustomLockScreenFeatureSupported: () =>
           isCustomLockScreenSupported(internalAPI.getDeviceModel().id),
         hasBackedUpCustomLockScreen: ({ context }) =>
           context.input.backup.clsHexImage !== undefined,
         hasError: ({ context }) => context._internalState.error !== null,
+        isOutOfMemory: ({ context }) => context._internalState.isOutOfMemory,
+        hasAppsToRestoreStorage: ({ context }) =>
+          context._internalState.appsToRestoreStorage.length > 0,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -166,6 +242,8 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
           currentApp: null,
           isDeviceOnboarded: false,
           isMasterConsentGranted: false,
+          isMasterConsentRejected: false,
+          isOutOfMemory: false,
           restoredLanguage: hasBackedUpNonEnglishLanguage(
             input.backup.languageId,
           )
@@ -393,6 +471,7 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
                   _internalState: ({ context }) => ({
                     ...context._internalState,
                     isMasterConsentGranted: false,
+                    isMasterConsentRejected: true,
                   }),
                 }),
                 target: "Success",
@@ -449,10 +528,18 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => {
                   return _.event.output.caseOf<RestoreBackupDAInternalState>({
-                    Left: (error) =>
-                      isRefusedByUser(error)
-                        ? _.context._internalState
-                        : { ..._.context._internalState, error },
+                    Left: (error) => {
+                      if (isRefusedByUser(error)) {
+                        return _.context._internalState;
+                      }
+                      if (isOutOfMemory(error)) {
+                        return {
+                          ..._.context._internalState,
+                          isOutOfMemory: true,
+                        };
+                      }
+                      return { ..._.context._internalState, error };
+                    },
                     Right: () => ({
                       ..._.context._internalState,
                       restoredLanguage: true,
@@ -475,6 +562,10 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
               target: "Error",
             },
             {
+              guard: "isOutOfMemory",
+              target: "Success",
+            },
+            {
               guard: "isDeviceOnboarded",
               target: "CheckAppsToReinstall",
             },
@@ -486,7 +577,160 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
         CheckAppsToReinstall: {
           always: [
             {
-              guard: "hasAppsToReinstall",
+              guard: "hasSecurityKeyAppToReinstall",
+              target: "InstallSecurityKeyAppFirst",
+            },
+            {
+              target: "CheckOtherAppsToReinstall",
+            },
+          ],
+        },
+        InstallSecurityKeyAppFirst: {
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              step: RestoreBackupSteps.InstallOrUpdateApps,
+            }),
+          }),
+          invoke: {
+            src: "installSecurityKeyAppFirst",
+            input: ({ context }) => ({
+              unlockTimeout: context.input.unlockTimeout,
+              applications: toApplicationDependencies(
+                getSecurityKeyApps(context.input.backup.installedApps),
+              ),
+              allowMissingApplication: true,
+            }),
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: (_) => ({
+                  ..._.event.snapshot.context.intermediateValue,
+                  step: _.context.intermediateValue.step,
+                }),
+              }),
+            },
+            onDone: {
+              actions: assign({
+                _internalState: (_) => {
+                  return _.event.output.caseOf<RestoreBackupDAInternalState>({
+                    Left: (error) => {
+                      if (isRefusedByUser(error)) {
+                        return {
+                          ..._.context._internalState,
+                          appsToRestoreStorage: [],
+                        };
+                      }
+                      if (isOutOfMemory(error)) {
+                        return {
+                          ..._.context._internalState,
+                          isOutOfMemory: true,
+                          appsToRestoreStorage: [],
+                        };
+                      }
+                      return { ..._.context._internalState, error };
+                    },
+                    Right: (output) =>
+                      applyInstallResult(
+                        _.context._internalState,
+                        getSecurityKeyApps(
+                          _.context.input.backup.installedApps,
+                        ),
+                        output,
+                      ),
+                  });
+                },
+              }),
+              target: "CheckInstallSecurityKeyAppFirst",
+            },
+            onError: {
+              actions: "assignErrorFromEvent",
+              target: "Error",
+            },
+          },
+        },
+        CheckInstallSecurityKeyAppFirst: {
+          always: [
+            {
+              guard: "hasError",
+              target: "Error",
+            },
+            {
+              guard: "isOutOfMemory",
+              target: "Success",
+            },
+            {
+              guard: "hasAppsToRestoreStorage",
+              target: "RestoreSecurityKeyAppStorageFirst",
+            },
+            {
+              target: "CheckOtherAppsToReinstall",
+            },
+          ],
+        },
+        RestoreSecurityKeyAppStorageFirst: {
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              step: RestoreBackupSteps.RestoreAppsStorage,
+            }),
+          }),
+          invoke: {
+            src: "restoreAppsStorage",
+            input: ({ context }) => ({
+              backupApps: context._internalState.appsToRestoreStorage,
+              isMasterConsentGranted:
+                context._internalState.isMasterConsentGranted,
+              unlockTimeout: context.input.unlockTimeout,
+            }),
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: (_) => ({
+                  ..._.event.snapshot.context.intermediateValue,
+                  step: _.context.intermediateValue.step,
+                }),
+              }),
+            },
+            onDone: {
+              actions: assign({
+                _internalState: (_) => {
+                  return _.event.output.caseOf<RestoreBackupDAInternalState>({
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                    Right: (appsStorageResults) => ({
+                      ..._.context._internalState,
+                      restoredApps: mergeAppsStorageResults(
+                        _.context._internalState.restoredApps,
+                        appsStorageResults,
+                      ),
+                    }),
+                  });
+                },
+              }),
+              target: "CheckRestoreSecurityKeyAppStorageFirst",
+            },
+            onError: {
+              actions: "assignErrorFromEvent",
+              target: "Error",
+            },
+          },
+        },
+        CheckRestoreSecurityKeyAppStorageFirst: {
+          always: [
+            {
+              guard: "hasError",
+              target: "Error",
+            },
+            {
+              target: "CheckOtherAppsToReinstall",
+            },
+          ],
+        },
+        CheckOtherAppsToReinstall: {
+          always: [
+            {
+              guard: "hasOtherAppsToReinstall",
               target: "InstallOrUpdateApps",
             },
             {
@@ -505,8 +749,8 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
             src: "installOrUpdateApps",
             input: ({ context }) => ({
               unlockTimeout: context.input.unlockTimeout,
-              applications: context.input.backup.installedApps.map(
-                (app): ApplicationDependency => ({ name: app.appName }),
+              applications: toApplicationDependencies(
+                getOtherApps(context.input.backup.installedApps),
               ),
               allowMissingApplication: true,
             }),
@@ -522,40 +766,28 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => {
                   return _.event.output.caseOf<RestoreBackupDAInternalState>({
-                    Left: (error) =>
-                      isRefusedByUser(error)
-                        ? {
-                            ..._.context._internalState,
-                            appsToRestoreStorage: [],
-                          }
-                        : { ..._.context._internalState, error },
-                    Right: (output) => {
-                      const installedAppNames = new Set([
-                        ...output.successfullyInstalled.map(
-                          (installedApp) => installedApp.versionName,
-                        ),
-                        ...output.alreadyInstalled,
-                      ]);
-                      const { backup: contextBackup } = _.context.input;
-                      return {
-                        ..._.context._internalState,
-                        restoredApps:
-                          _.context._internalState.restoredApps?.map(
-                            (result): RestoreAppResult => ({
-                              ...result,
-                              restoredApp: installedAppNames.has(
-                                result.appName,
-                              ),
-                            }),
-                          ),
-                        appsToRestoreStorage:
-                          contextBackup.installedApps.filter(
-                            (app: BackupApp) =>
-                              installedAppNames.has(app.appName) &&
-                              app.data !== undefined,
-                          ),
-                      };
+                    Left: (error) => {
+                      if (isRefusedByUser(error)) {
+                        return {
+                          ..._.context._internalState,
+                          appsToRestoreStorage: [],
+                        };
+                      }
+                      if (isOutOfMemory(error)) {
+                        return {
+                          ..._.context._internalState,
+                          isOutOfMemory: true,
+                          appsToRestoreStorage: [],
+                        };
+                      }
+                      return { ..._.context._internalState, error };
                     },
+                    Right: (output) =>
+                      applyInstallResult(
+                        _.context._internalState,
+                        getOtherApps(_.context.input.backup.installedApps),
+                        output,
+                      ),
                   });
                 },
               }),
@@ -572,6 +804,10 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
             {
               guard: "hasError",
               target: "Error",
+            },
+            {
+              guard: "isOutOfMemory",
+              target: "Success",
             },
             {
               target: "RestoreAppsStorage",
@@ -744,6 +980,7 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
           return Left(context._internalState.error);
         }
         return Right({
+          restoreStatus: computeRestoreStatus(context._internalState),
           restoredLanguage: context._internalState.restoredLanguage,
           restoredCLS: context._internalState.restoredCLS,
           restoredApps: context._internalState.restoredApps,

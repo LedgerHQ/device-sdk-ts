@@ -66,6 +66,15 @@ describe("AltResolutionContextLoader", () => {
       ).toBe(false);
     });
 
+    it("returns false for an empty request list (a v1 message has no lookup tables)", () => {
+      expect(
+        makeLoader().canHandle(
+          { deviceModelId: DeviceModelId.NANO_X, requests: [] },
+          [ClearSignContextType.SOLANA_ALT_RESOLUTION],
+        ),
+      ).toBe(false);
+    });
+
     it("rejects out-of-range entryIndex", () => {
       const loader = makeLoader();
       const types = [ClearSignContextType.SOLANA_ALT_RESOLUTION];

@@ -1,6 +1,6 @@
 # Ledger Bitcoin Legacy Signer Implementation
 
-This module provides the implementation of the Ledger signer of the Device Management Kit for the apps on the legacy Bitcoin protocol (CLA `0xE0`), such as Litecoin, Dogecoin or Bitcoin Cash. Each coin is a profile of this kit: its app name and its error map.
+This module provides the implementation of the Ledger signer of the Device Management Kit for the apps on the legacy Bitcoin protocol (CLA `0xE0`), such as Litecoin, Dogecoin or Bitcoin Cash. Each coin is a profile of this kit: its app name, its error map, its extended public key version, whether it has SegWit and how it signs.
 
 It also exports its inversify module (`btcLegacyModuleFactory`), its tokens (`btcLegacyTypes`) and its services, for the signer kits built on the same protocol, such as `@ledgerhq/device-signer-kit-zcash`.
 
@@ -64,16 +64,24 @@ const { observable, cancel } = signer.signTransaction({
 
 The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, with `Uint8Array`s instead of `Buffer`s:
 
-- `inputs`: for each input, the previous transaction (`version`, `inputs`, `outputs` and `locktime`), the index of the spent output, an optional redeem script in hexadecimal, and an optional sequence (defaults to `0xffffffff`). As in hw-app-btc, the redeem script is only hashed: the signed input script holds the signature and the public key, so P2SH inputs are not supported.
+- `inputs`: for each input, the previous transaction (`version`, `inputs`, `outputs`, `locktime`, and when it has them `nVersionGroupId`, `nExpiryHeight` and `extraData`), the index of the spent output, an optional redeem script in hexadecimal, and an optional sequence (defaults to `0xffffffff`). As in hw-app-btc, the redeem script is only hashed: the signed input script holds the signature and the public key, so P2SH inputs are not supported.
 - `associatedKeysets`: the derivation path of each input's key.
 - `changePath`: the derivation path of the change output, if any.
 - `outputScriptHex`: the serialized outputs, count included.
-- `lockTime`: defaults to `0`. `sigHashType`: defaults to `SIGHASH_ALL`.
+- `lockTime`: defaults to `0`. `sigHashType`: defaults to the profile's, `SIGHASH_ALL` or, for Bitcoin Cash and Bitcoin Gold, `SIGHASH_ALL | SIGHASH_FORKID`.
+- `segwit`: the inputs spend SegWit outputs and are signed with BIP143. They are native with `"bech32"` in `additionals`, P2SH-wrapped otherwise. The kit fails before any APDU when the profile has no SegWit, such as Dogecoin.
+- `additionals`: hw-app-btc's flags. The kit reads `"bech32"`, and `"cashaddr"` for a Bitcoin Cash transaction to show its outputs as cashaddr addresses. It ignores the others.
 
-Only inputs without SegWit are supported for now, in the `standard` transaction format of Litecoin (`LITECOIN_PROFILE`) and Dogecoin (`DOGECOIN_PROFILE`). The output is the signed transaction in hexadecimal.
+Each profile picks a transaction format (the profile's `transactionFormat`):
+
+- `legacy`: Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`) and Horizen (`HORIZEN_PROFILE`). Only SegWit inputs are hashed with BIP143.
+- `bip143`: Bitcoin Cash (`BITCOIN_CASH_PROFILE`) and Bitcoin Gold (`BITCOIN_GOLD_PROFILE`). Every transaction is hashed with BIP143.
+- `sapling`: Komodo (`KOMODO_PROFILE`). Its v4 transactions are hashed with BIP143 with no expiry height, as Ledger Wallet sends them, and the app commits the outputs before signing the inputs.
+
+The output is the signed transaction in hexadecimal.
 
 `signTransaction` options:
 
 - `skipOpenApp`: do not open the app before sending the commands. Defaults to `false`.
 
-The trusted input and signing tasks are services of the module (`btcLegacyTypes.GetTrustedInputTask`, `btcLegacyTypes.SignTransactionTask`). Their format steps are hooks behind `btcLegacyTypes.TrustedInputSerializer` and `btcLegacyTypes.TransactionSerializer`, bound to the `standard` format: a kit on another format rebinds them in its container.
+The trusted input and signing tasks are services of the module (`btcLegacyTypes.GetTrustedInputTask`, `btcLegacyTypes.SignTransactionTask`). Their format steps are hooks behind `btcLegacyTypes.TrustedInputSerializer` and `btcLegacyTypes.TransactionSerializer`, bound to the profile's format: a kit on another format rebinds them in its container.

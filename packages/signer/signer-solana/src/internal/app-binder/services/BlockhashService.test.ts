@@ -15,6 +15,12 @@ import {
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import bs58 from "bs58";
 
+import {
+  SPEC_V1_MESSAGE,
+  SPEC_V1_OFFSETS,
+  withByte,
+  withTrailingBytes,
+} from "./__test-utils__/v1Fixtures";
 import { BlockhashService } from "./BlockhashService";
 
 vi.mock("@solana/web3.js", async (importOriginal) => {
@@ -312,6 +318,23 @@ describe("BlockhashService", () => {
       expect(
         service.getRefreshBlocker(new Uint8Array([0xde, 0xad, 0xbe, 0xef])),
       ).toBe("undecodable");
+    });
+
+    it.each([
+      [
+        "an unknown config bit",
+        withByte(SPEC_V1_MESSAGE, SPEC_V1_OFFSETS.configMask, 0x2f),
+      ],
+      ["a trailing byte", withTrailingBytes(SPEC_V1_MESSAGE, [0])],
+    ])(
+      "should block refresh for an invalid v1 message that Kit decodes (%s)",
+      (_, message) => {
+        expect(service.getRefreshBlocker(message)).toBe("undecodable");
+      },
+    );
+
+    it("should allow refresh for the valid spec v1 message", () => {
+      expect(service.getRefreshBlocker(SPEC_V1_MESSAGE)).toBeNull();
     });
   });
 

@@ -1,5 +1,21 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.15.0
+
+### Minor Changes
+
+- [#1995](https://github.com/LedgerHQ/device-sdk-ts/pull/1995) [`d0fed0d`](https://github.com/LedgerHQ/device-sdk-ts/commit/d0fed0d2f6cf29bad88e7f8d5f0ca6fe7a11ee11) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Refuse unsupported or invalid Solana transaction versions early with typed errors
+
+### Patch Changes
+
+- [#1997](https://github.com/LedgerHQ/device-sdk-ts/pull/1997) [`4f8d776`](https://github.com/LedgerHQ/device-sdk-ts/commit/4f8d7768049b491b9e321b4d3022d35b6de6f635) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Parse Solana v1 transactions for clear signing, still behind the closed v1 gate
+
+- [#2002](https://github.com/LedgerHQ/device-sdk-ts/pull/2002) [`839be48`](https://github.com/LedgerHQ/device-sdk-ts/commit/839be4854c54f3ed36056ff9d2211cb3997b5197) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Accept Solana v1 transactions on Solana app 1.18.0 and later
+
+- [#1937](https://github.com/LedgerHQ/device-sdk-ts/pull/1937) [`e3341e0`](https://github.com/LedgerHQ/device-sdk-ts/commit/e3341e0c26fe42241869949b481b0f5fc1e35141) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Skip delayed signing when Solana runs inside Exchange so swap payouts are signed once, without a preview that wipes swap memory
+
+- [#1993](https://github.com/LedgerHQ/device-sdk-ts/pull/1993) [`0374cf2`](https://github.com/LedgerHQ/device-sdk-ts/commit/0374cf236b5fd0ee2fc7a5d71b8087dd660da0da) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add an internal Solana v1 message validator
+
 ## 1.14.0
 
 ### Minor Changes

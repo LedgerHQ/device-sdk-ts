@@ -62,6 +62,16 @@ export class EthSignerDriver {
   }
 
   /**
+   * Open the Sign message action and Execute it with its default inputs
+   * ("Hello World"). The action stays pending until the message is reviewed and
+   * signed on the device screen.
+   */
+  async signMessage(): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign message").click();
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
    * Open the Sign typed message action, fill the EIP-712 JSON message and
    * Execute it. The action opens the Ethereum app and then waits for the message
    * to be reviewed and approved on the device screen.
@@ -91,5 +101,15 @@ export class EthSignerDriver {
       /"status": "(completed|error)"/,
       { timeout },
     );
+  }
+
+  /**
+   * Wait for the device action to fail and return the rendered error text
+   * (errored device actions are dumped with `util.inspect`, not as JSON).
+   */
+  async lastError({
+    timeout = 90_000,
+  }: { timeout?: number } = {}): Promise<string> {
+    return this.responses.lastText(/_tag: '/, { timeout });
   }
 }

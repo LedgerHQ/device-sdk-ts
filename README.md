@@ -107,6 +107,7 @@ A brief overview of this project's packages:
 | @ledgerhq/device-signer-kit-solana      | packages/signer/signer-solana      | Solana coin application dedicated handlers   |
 | @ledgerhq/device-signer-kit-zcash       | packages/signer/signer-zcash       | Zcash coin application dedicated handlers    |
 | @ledgerhq/device-signer-kit-icp         | packages/signer/signer-icp         | ICP coin application dedicated handlers      |
+| @ledgerhq/device-signer-kit-xrp         | packages/signer/signer-xrp         | XRP coin application dedicated handlers      |
 
 ### Trusted Apps
 

@@ -7,6 +7,7 @@ const MAX_SCRIPT_BLOCK = 50;
 export const DEFAULT_LOCKTIME = 0;
 export const DEFAULT_SEQUENCE = 0xffffffff;
 export const SIGHASH_ALL = 0x01;
+export const SIGHASH_ALL_FORKID = 0x41;
 
 export const compressPublicKey = (publicKey: Uint8Array): Uint8Array => {
   const prefix = ((publicKey.at(64) ?? 0) & 1) === 0 ? 0x02 : 0x03;
@@ -18,6 +19,13 @@ export const compressPublicKey = (publicKey: Uint8Array): Uint8Array => {
 
 export const hashPublicKey = (buffer: Uint8Array): Uint8Array =>
   ripemd160(sha256(buffer));
+
+// The script code a SegWit input signs, and the program of its output.
+export const p2pkhScript = (publicKeyHash: Uint8Array): Uint8Array =>
+  Uint8Array.of(0x76, 0xa9, 0x14, ...publicKeyHash, 0x88, 0xac);
+
+export const p2wpkhScript = (publicKeyHash: Uint8Array): Uint8Array =>
+  Uint8Array.of(0x00, 0x14, ...publicKeyHash);
 
 export const createVarint = (value: number): Uint8Array => {
   if (value < 0xfd) {

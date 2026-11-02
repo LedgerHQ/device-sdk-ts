@@ -1,0 +1,167 @@
+{
+  "group": "btc-legacy",
+  "name": "bitcoin-cash",
+  "action": "signTransaction",
+  "devices": ["flex", "stax", "nanox"],
+  "coinApp": "Bitcoin Cash",
+  "mode": "parallel",
+  "cases": [
+    {
+      "description": "one input, one output",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "fa5b55d3ca7d51192bbba307401e3d6e61c4d2896d90ccfce8aae40dfafdb4ac00000000",
+                  "script": "489cbf783ab9532a94e162dc2c37456809ab128aa33bbe7d35a06574e3fa2c9f7f181459bbb79b1a2be44a63298dd23ccdbcc1ca79f14f8f5f50346d956b82000a7a742bb9fc5c8f38210204f1c86c42de2644b8827bf73010d6b6c3b3c85e81f1838d794f567930bc7ff5",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            null
+          ]
+        ],
+        "associatedKeysets": ["44'/145'/0'/0/0"],
+        "outputScriptHex": "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "sigHashType": 65,
+        "additionals": ["bitcoin_cash", "bip143"]
+      },
+      "expectedTexts": [
+        "4.99 BCH",
+        "1HxuiRyqvsDCa2AEzc3wHSAZnFJ53nCBqF",
+        "0.01 BCH"
+      ]
+    },
+    {
+      "description": "two inputs, change, lock time and RBF sequences",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "fa5b55d3ca7d51192bbba307401e3d6e61c4d2896d90ccfce8aae40dfafdb4ac00000000",
+                  "script": "489cbf783ab9532a94e162dc2c37456809ab128aa33bbe7d35a06574e3fa2c9f7f181459bbb79b1a2be44a63298dd23ccdbcc1ca79f14f8f5f50346d956b82000a7a742bb9fc5c8f38210204f1c86c42de2644b8827bf73010d6b6c3b3c85e81f1838d794f567930bc7ff5",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            4294967293
+          ],
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "21e79e6ae8be56f45920feda8bf38d11130d9fe93a423027808e09086d6fe5af00000000",
+                  "script": "48b9c30e8706ec99d5b4a14c420bfa42f9c87dea99849632b64c5fda77a8f0d5a31d3df555ae2bfefe3efc243ae3da101d684c0c88e88522cc2d55c97d7e015515407e53cf6a8f7d0f210294c0ffc479d72f359511651a81702621006309ff687caeaef48020bb42cb11c7",
+                  "sequence": "ffffffff"
+                },
+                {
+                  "prevout": "49f5168ec6d460b920ae1b036f68c5282c946e1044584803a9b04f3e7eed767501000000",
+                  "script": "4828be3e4a0159976745e55c189117a8ce7d3012ed5f0903ac465b60c0c804d985bc0370a951d9c01a7b771b040850f1f2a11db70f4beedbd4f6c3bf1614669e2517458ec076b375ef2102c58929a6d88f3034e46be5e3264274ecd18258a4b0e0bb6d0d9e17eeab925540",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "00a3e11100000000",
+                  "script": "76a9145cc2d0238a9ece1b26b8f22a96d62aca848bcc6188ac"
+                }
+              ],
+              "locktime": "60ae0a00"
+            },
+            0,
+            null,
+            4294967293
+          ]
+        ],
+        "associatedKeysets": ["44'/145'/0'/0/0", "44'/145'/0'/0/1"],
+        "changePath": "44'/145'/0'/1/0",
+        "outputScriptHex": "020046c323000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac803dcd0b000000001976a914aa80846e9dcba371785a685494f931fbdd2942a688ac",
+        "lockTime": 800000,
+        "sigHashType": 65,
+        "additionals": ["bitcoin_cash", "bip143"]
+      },
+      "expectedTexts": [
+        "6 BCH",
+        "1HxuiRyqvsDCa2AEzc3wHSAZnFJ53nCBqF",
+        "0.02 BCH"
+      ],
+      "unexpectedTexts": ["1.98 BCH", "1GYXq9jfoTafm6Uo5tticHxDHanVH45A3k"]
+    },
+    {
+      "description": "cashaddr recipient",
+      "transaction": {
+        "inputs": [
+          [
+            {
+              "version": "01000000",
+              "inputs": [
+                {
+                  "prevout": "fa5b55d3ca7d51192bbba307401e3d6e61c4d2896d90ccfce8aae40dfafdb4ac00000000",
+                  "script": "489cbf783ab9532a94e162dc2c37456809ab128aa33bbe7d35a06574e3fa2c9f7f181459bbb79b1a2be44a63298dd23ccdbcc1ca79f14f8f5f50346d956b82000a7a742bb9fc5c8f38210204f1c86c42de2644b8827bf73010d6b6c3b3c85e81f1838d794f567930bc7ff5",
+                  "sequence": "ffffffff"
+                }
+              ],
+              "outputs": [
+                {
+                  "amount": "40ef5a0700000000",
+                  "script": "76a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac"
+                },
+                {
+                  "amount": "0065cd1d00000000",
+                  "script": "76a9148a2cc8f91be0e9946ecdbae3a736c81c1414b45388ac"
+                }
+              ],
+              "locktime": "00000000"
+            },
+            1,
+            null,
+            null
+          ]
+        ],
+        "associatedKeysets": ["44'/145'/0'/0/0"],
+        "outputScriptHex": "01c022be1d000000001976a914ba14e4e64c1e23f8b113f1d32d4ec7777e61451488ac",
+        "sigHashType": 65,
+        "additionals": ["bitcoin_cash", "bip143", "cashaddr"]
+      },
+      "expectedTexts": [
+        "4.99 BCH",
+        "qzapfe8xfs0z8793z0caxt2wcamhuc29zsdu76mmzf",
+        "0.01 BCH"
+      ],
+      "unexpectedTexts": ["1HxuiRyqvsDCa2AEzc3wHSAZnFJ53nCBqF"]
+    }
+  ]
+}

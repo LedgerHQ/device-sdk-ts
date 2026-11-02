@@ -4,17 +4,23 @@ import {
 } from "@ledgerhq/device-mockserver-client";
 import { test as base } from "@playwright/test";
 
+import { AleoSignerDriver } from "./utils/drivers/AleoSignerDriver";
 import { BtcLegacySignerDriver } from "./utils/drivers/BtcLegacySignerDriver";
 import { BtcSignerDriver } from "./utils/drivers/BtcSignerDriver";
 import { CommandsDriver } from "./utils/drivers/CommandsDriver";
+import { CosmosSignerDriver } from "./utils/drivers/CosmosSignerDriver";
 import { DeviceActionsDriver } from "./utils/drivers/DeviceActionsDriver";
 import { EthSignerDriver } from "./utils/drivers/EthSignerDriver";
+import { HyperliquidSignerDriver } from "./utils/drivers/HyperliquidSignerDriver";
 import { MockDeviceDriver } from "./utils/drivers/MockDeviceDriver";
+import { PolkadotSignerDriver } from "./utils/drivers/PolkadotSignerDriver";
 import { SettingsDriver } from "./utils/drivers/SettingsDriver";
 import { SidebarDriver } from "./utils/drivers/SidebarDriver";
+import { SolSignerDriver } from "./utils/drivers/SolSignerDriver";
 import { SpeculosDriver } from "./utils/drivers/SpeculosDriver";
 import { TrxSignerDriver } from "./utils/drivers/TrxSignerDriver";
 import { XrpSignerDriver } from "./utils/drivers/XrpSignerDriver";
+import { ZcashSignerDriver } from "./utils/drivers/ZcashSignerDriver";
 import { setupMockServerSession } from "./utils/setup";
 
 type Fixtures = {
@@ -34,6 +40,12 @@ type Fixtures = {
   btcSigner: BtcSignerDriver;
   ltcSigner: BtcLegacySignerDriver;
   dogeSigner: BtcLegacySignerDriver;
+  solSigner: SolSignerDriver;
+  cosmosSigner: CosmosSignerDriver;
+  polkadotSigner: PolkadotSignerDriver;
+  aleoSigner: AleoSignerDriver;
+  zcashSigner: ZcashSignerDriver;
+  hyperliquidSigner: HyperliquidSignerDriver;
   trxSigner: TrxSignerDriver;
   xrpSigner: XrpSignerDriver;
   /** Build a Speculos driver for a connected device (its app must be opened). */
@@ -81,6 +93,24 @@ export const test = base.extend<Fixtures>({
   },
   dogeSigner: async ({ page }, use) => {
     await use(new BtcLegacySignerDriver(page, "Dogecoin"));
+  },
+  solSigner: async ({ page }, use) => {
+    await use(new SolSignerDriver(page));
+  },
+  cosmosSigner: async ({ page }, use) => {
+    await use(new CosmosSignerDriver(page));
+  },
+  polkadotSigner: async ({ page }, use) => {
+    await use(new PolkadotSignerDriver(page));
+  },
+  aleoSigner: async ({ page }, use) => {
+    await use(new AleoSignerDriver(page));
+  },
+  zcashSigner: async ({ page }, use) => {
+    await use(new ZcashSignerDriver(page));
+  },
+  hyperliquidSigner: async ({ page }, use) => {
+    await use(new HyperliquidSignerDriver(page));
   },
   trxSigner: async ({ page }, use) => {
     await use(new TrxSignerDriver(page));

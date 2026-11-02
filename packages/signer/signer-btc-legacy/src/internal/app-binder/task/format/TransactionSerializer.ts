@@ -19,5 +19,7 @@ export interface TransactionSerializer {
     // The outputs as the caller gave them, count included.
     outputScript: Uint8Array;
     lockTime: number;
+    // One per input when they spend SegWit outputs.
+    witnesses?: Uint8Array[];
   }): Uint8Array;
 }

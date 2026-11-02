@@ -18,7 +18,7 @@ const accountEndingWith = (fill: number, tail: number[]) => {
   return account;
 };
 
-const concat = (...parts: ArrayLike<number>[]) =>
+export const concat = (...parts: ArrayLike<number>[]) =>
   Uint8Array.from(parts.flatMap((part) => Array.from(part)));
 
 const FEE_PAYER = new Uint8Array(32).fill(0x11);

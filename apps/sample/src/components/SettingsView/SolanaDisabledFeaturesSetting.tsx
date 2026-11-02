@@ -18,6 +18,7 @@ const featureLabels: Record<SolanaSignerFeaturesNames, string> = {
   transactionChecks: "Transaction checks",
   delayedSigning: "Delayed signing",
   genericClearSign: "Generic clear sign",
+  v1Transactions: "v1 transactions",
 };
 
 const featureOptions: Option[] = (

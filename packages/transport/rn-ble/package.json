@@ -39,7 +39,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@sentry/minimal": "catalog:",
     "js-base64": "catalog:",
     "purify-ts": "catalog:",
     "uuid": "catalog:"

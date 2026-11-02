@@ -17,6 +17,12 @@ import {
 import { Buffer } from "buffer";
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  encodeV1Message,
+  filledAddress,
+  SPEC_V1_INPUT,
+} from "@internal/app-binder/services/__test-utils__/v1Fixtures";
+
 import { SolanaSigningReportTask } from "./SolanaSigningReportTask";
 
 // Real-transaction helpers — used to exercise the extractProgramIds branches.
@@ -233,5 +239,40 @@ describe("SolanaSigningReportTask — extractProgramIds with real transaction", 
     const [params] = signReport.mock.calls[0]! as [SolSignReportParams];
     expect(params.programIds).toContain(SYSTEM_PROGRAM.toBase58());
     expect(params.targetAddress).toBeNull();
+  });
+});
+
+describe("SolanaSigningReportTask — extractProgramIds with a v1 message", () => {
+  it("filters ComputeBudget and selects the non-System program as targetAddress", async () => {
+    const signReport = vi.fn().mockResolvedValue(undefined);
+    const messageBytes = encodeV1Message({
+      ...SPEC_V1_INPUT,
+      numReadonlyNonSignerAccounts: 3,
+      addresses: [
+        filledAddress(0x11),
+        COMPUTE_BUDGET_PROGRAM.toBytes(),
+        KNOWN_PROGRAM.toBytes(),
+        SYSTEM_PROGRAM.toBytes(),
+      ],
+      instructions: [
+        { programIndex: 1, accounts: [], data: [0x02, 0xc2, 0x01, 0, 0] },
+        { programIndex: 3, accounts: [0], data: [0x02] },
+        { programIndex: 2, accounts: [0], data: [0x01] },
+      ],
+    });
+
+    await new SolanaSigningReportTask({
+      ...baseArgs,
+      messageBytes,
+      isBlindSign: false,
+      contextModule: makeContextModule(signReport),
+    }).run();
+
+    const [params] = signReport.mock.calls[0]! as [SolSignReportParams];
+    expect(params.programIds).toEqual([
+      SYSTEM_PROGRAM.toBase58(),
+      KNOWN_PROGRAM.toBase58(),
+    ]);
+    expect(params.targetAddress).toBe(KNOWN_PROGRAM.toBase58());
   });
 });

@@ -48,6 +48,8 @@ jobs:
               - 'packages/signer/signer-trx/**'
             signer-utils:
               - 'packages/signer/signer-utils/**'
+            signer-btc-legacy:
+              - 'packages/signer/signer-btc-legacy/**'
             solana-tools:
               - 'packages/tools/solana-tools/**'
             contacts-kit:
@@ -68,9 +70,10 @@ jobs:
           SOLANA_SIDE: ${{ steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.solana-tools == 'true' }}
           # Tron signs contacts too, so the kit moves the Tron group as well.
           TRON_SIDE: ${{ steps.filter.outputs.signer-trx == 'true' || steps.filter.outputs.contacts-kit == 'true' }}
+          BTC_LEGACY_SIDE: ${{ steps.filter.outputs.signer-btc-legacy == 'true' }}
         run: |
           if [ "$ALL" = "true" ]; then
-            scenarios="core contacts solana solana-general-clear-sign tron"
+            scenarios="core contacts solana solana-general-clear-sign tron btc-legacy"
           else
             scenarios=""
             if [ "$ETH_SIDE" = "true" ]; then
@@ -81,6 +84,9 @@ jobs:
             fi
             if [ "$TRON_SIDE" = "true" ]; then
               scenarios="$scenarios tron"
+            fi
+            if [ "$BTC_LEGACY_SIDE" = "true" ]; then
+              scenarios="$scenarios btc-legacy"
             fi
             scenarios="${scenarios# }"
           fi

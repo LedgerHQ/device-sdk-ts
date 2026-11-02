@@ -25,6 +25,14 @@ export class MockDeviceDriver {
   /** Open the app, select the transport device and wait until it is connected. */
   async connect(transport: string = "MOCKSERVER"): Promise<void> {
     await this.page.goto(BASE_URL);
+    await this.connectOnCurrentPage(transport);
+  }
+
+  /**
+   * Select the transport device without reloading the app, so the connection
+   * goes through the same DMK instance, and wait until it is connected.
+   */
+  async connectOnCurrentPage(transport: string = "MOCKSERVER"): Promise<void> {
     await this.page.getByTestId(`CTA_select-device-${transport}`).click();
     // The session refresher flips the status to BUSY for the length of every
     // poll, so a connected device reads CONNECTED or BUSY depending on when it
