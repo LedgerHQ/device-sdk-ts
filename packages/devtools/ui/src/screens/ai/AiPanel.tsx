@@ -6,8 +6,10 @@ import { ResizablePanel } from "../../components/ResizablePanel";
 import { WithTooltip } from "../../components/WithTooltip";
 import { INPUT, INPUT_WRAPPER } from "../logger/inputStyles";
 import { AiAnswer } from "./AiAnswer";
+import { redactRequest } from "./redact";
 import {
   type AiClient,
+  type AiEvent,
   type AiRequest,
   type AiSelection,
   type AiStatus,
@@ -21,10 +23,15 @@ type Turn = {
   steps: string[];
   text: string;
   answer: string | null;
+  verdict: (AiEvent & { type: "done" })["verdict"];
+  ticket: (AiEvent & { type: "done" })["ticket"];
+  /** Claude started filing a ticket in this turn. */
+  createsTicket: boolean;
   error: string | null;
 };
 
 const LABEL = "body-4-semi-bold text-muted uppercase";
+
 const BUTTON =
   "cursor-pointer rounded-sm bg-muted-transparent px-12 py-6 body-3-semi-bold hover:bg-muted-transparent-hover";
 const PRIMARY_BUTTON =
@@ -105,24 +112,6 @@ const TurnView: React.FC<{ turn: Turn; running: boolean }> = ({
   </div>
 );
 
-// Session tokens the app shared, and anything that looks like a credential
-const redact = (text: string, secrets: string[]) =>
-  secrets
-    .reduce(
-      (redacted, secret) => redacted.replaceAll(secret, "<redacted>"),
-      text,
-    )
-    .replace(/\b(bearer\s+)[^\s"',;]+/gi, "$1<redacted>")
-    .replace(
-      /\b((?:session[_-]?)?token|api[_-]?key|secret|password|authorization)(["']?\s*[:=]\s*["']?)(?!<redacted>)[^\s"',;&]+/gi,
-      "$1$2<redacted>",
-    );
-
-const redactRequest = (request: AiRequest, secrets: string[]): AiRequest =>
-  request.kind === "explain"
-    ? { ...request, context: redact(request.context, secrets) }
-    : { ...request, question: redact(request.question, secrets) };
-
 export const AiPanel: React.FC<{
   ai: AiClient | undefined;
   request: AiPanelRequest | null;
@@ -156,6 +145,14 @@ export const AiPanel: React.FC<{
   );
 
   useEffect(() => checkStatus(), [checkStatus]);
+
+  // Rechecks without blanking the panel, for a connector connected meanwhile
+  const refreshStatus = () => {
+    ai
+      ?.status(true)
+      .then(setStatus)
+      .catch(() => undefined);
+  };
   useEffect(() => () => stopRef.current?.(), []);
 
   const updateLast = (update: (turn: Turn) => Turn) =>
@@ -173,6 +170,9 @@ export const AiPanel: React.FC<{
         steps: [],
         text: "",
         answer: null,
+        verdict: undefined,
+        ticket: undefined,
+        createsTicket: false,
         error: null,
       };
       setTurns((previous) => (reset ? [turn] : [...previous, turn]));
@@ -184,13 +184,22 @@ export const AiPanel: React.FC<{
         (event) => {
           switch (event.type) {
             case "step":
-              updateLast((t) => ({ ...t, steps: [...t.steps, event.text] }));
+              updateLast((t) => ({
+                ...t,
+                steps: [...t.steps, event.text],
+                createsTicket: t.createsTicket || event.createsTicket === true,
+              }));
               break;
             case "text":
               updateLast((t) => ({ ...t, text: t.text + event.text }));
               break;
             case "done":
-              updateLast((t) => ({ ...t, answer: event.answer }));
+              updateLast((t) => ({
+                ...t,
+                answer: event.answer,
+                verdict: event.verdict,
+                ticket: event.ticket,
+              }));
               setSessionId(event.sessionId);
               setRunning(false);
               stopRef.current = null;
@@ -248,6 +257,24 @@ export const AiPanel: React.FC<{
     stopRef.current = null;
     setRunning(false);
     updateLast((t) => ({ ...t, error: t.answer === null ? "Stopped." : null }));
+  };
+
+  // A follow-up may revise the verdict: only the latest one counts
+  const verdict = [...turns].reverse().find((turn) => turn.verdict)?.verdict;
+  const foundBug = verdict === "bug";
+  const ticket = turns.find((turn) => turn.ticket)?.ticket;
+  // Stopped or failed after Jira was asked: the ticket may exist, so do not file it twice
+  const ticketUnknown = turns.some(
+    (turn, i) =>
+      turn.createsTicket &&
+      turn.answer === null &&
+      !(running && i === turns.length - 1),
+  );
+  const canCreateTickets = status?.ready === true && status.canCreateTickets;
+
+  const createTicket = () => {
+    if (!sessionId) return;
+    run({ kind: "createTicket", sessionId }, "Create a Jira ticket", false);
   };
 
   const ask = () => {
@@ -422,6 +449,48 @@ export const AiPanel: React.FC<{
                 onClick={ask}
               />
             </WithTooltip>
+            {ticket ? (
+              <a
+                href={ticket.url}
+                target="_blank"
+                rel="noreferrer"
+                className={`whitespace-nowrap ${BUTTON}`}
+              >
+                {ticket.key} ↗
+              </a>
+            ) : !foundBug ? null : ticketUnknown ? (
+              <span className="body-4 text-muted">
+                The ticket may already exist: check Jira
+              </span>
+            ) : canCreateTickets ? (
+              <button
+                type="button"
+                className={`whitespace-nowrap ${PRIMARY_BUTTON} disabled:cursor-default disabled:opacity-50`}
+                disabled={running}
+                onClick={createTicket}
+              >
+                Create Jira ticket
+              </button>
+            ) : (
+              <>
+                <WithTooltip label="Connect Atlassian in Claude (claude.ai › Settings › Connectors) to create tickets">
+                  <button
+                    type="button"
+                    disabled
+                    className={`cursor-default whitespace-nowrap opacity-50 ${PRIMARY_BUTTON}`}
+                  >
+                    Create Jira ticket
+                  </button>
+                </WithTooltip>
+                <button
+                  type="button"
+                  className={`whitespace-nowrap ${BUTTON}`}
+                  onClick={refreshStatus}
+                >
+                  Check again
+                </button>
+              </>
+            )}
           </div>
         )}
       </aside>

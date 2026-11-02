@@ -11,7 +11,7 @@ type Section = { title: string | null; blocks: Block[] };
 const LABEL = "body-4-semi-bold text-muted uppercase";
 
 /** Splits the answer the explain-device-exchange skill asks for: `##` sections, paragraphs, lists and fenced blocks. */
-const parse = (markdown: string): Section[] => {
+export const parseAnswer = (markdown: string): Section[] => {
   const sections: Section[] = [{ title: null, blocks: [] }];
   const lines = markdown.split("\n");
   let index = 0;
@@ -64,8 +64,18 @@ const parse = (markdown: string): Section[] => {
 
 const Inline: React.FC<{ text: string }> = ({ text }) => (
   <>
-    {text.split(/(\*\*[^*]+\*\*|`[^`]+`)/).map((part, i) =>
-      part.startsWith("**") && part.endsWith("**") ? (
+    {text.split(/(\*\*[^*]+\*\*|`[^`]+`|https?:\/\/[^\s)]+)/).map((part, i) =>
+      part.startsWith("http") ? (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noreferrer"
+          className="text-active underline"
+        >
+          {part}
+        </a>
+      ) : part.startsWith("**") && part.endsWith("**") ? (
         <strong key={i}>{part.slice(2, -2)}</strong>
       ) : part.startsWith("`") && part.endsWith("`") ? (
         <code key={i} className="font-mono! body-4">
@@ -136,7 +146,7 @@ const BlockView: React.FC<{ block: Block }> = ({ block }) => {
 
 export const AiAnswer: React.FC<{ markdown: string }> = ({ markdown }) => (
   <div className="flex flex-col gap-16">
-    {parse(markdown).map((section, i) => {
+    {parseAnswer(markdown).map((section, i) => {
       const firstText =
         section.blocks[0]?.kind === "paragraph" ? section.blocks[0].text : "";
       const isResult = section.title?.toLowerCase() === "result";
