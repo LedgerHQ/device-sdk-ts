@@ -3,7 +3,7 @@ import {
   type DmkRequestConfig,
 } from "@ledgerhq/device-management-kit";
 
-type Method = "get" | "post" | "patch" | "delete";
+type Method = "get" | "post" | "put" | "patch" | "delete";
 
 export type DmkNetworkClientStub = DmkNetworkClient & {
   responses: Record<Method, Record<string, unknown>>;
@@ -24,7 +24,7 @@ export const httpClientStubBuilder = (): DmkNetworkClientStub => {
     configs: { method: Method; endpoint: string; config?: DmkRequestConfig }[];
 
     constructor() {
-      this.responses = { get: {}, post: {}, patch: {}, delete: {} };
+      this.responses = { get: {}, post: {}, put: {}, patch: {}, delete: {} };
       this.calls = [];
       this.configs = [];
     }
@@ -43,6 +43,16 @@ export const httpClientStubBuilder = (): DmkNetworkClientStub => {
       this.calls.push({ method: "post", endpoint, body: body as object });
       this.configs.push({ method: "post", endpoint, config });
       return Promise.resolve(this.responses.post[endpoint]);
+    }
+
+    put(
+      endpoint: string,
+      body?: unknown,
+      config?: DmkRequestConfig,
+    ): Promise<unknown> {
+      this.calls.push({ method: "put", endpoint, body: body as object });
+      this.configs.push({ method: "put", endpoint, config });
+      return Promise.resolve(this.responses.put[endpoint]);
     }
 
     patch(
