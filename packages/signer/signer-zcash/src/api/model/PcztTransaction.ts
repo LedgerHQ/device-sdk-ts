@@ -48,6 +48,44 @@ export type PcztTransparentInput = {
   derivation: PcztBip32Derivation;
 };
 
+/** Receiver typecodes of a unified address (ZIP 316). */
+export const PCZT_RECEIVER_TYPECODE = {
+  P2PKH: 0x00,
+  P2SH: 0x01,
+  SAPLING: 0x02,
+  ORCHARD: 0x03,
+} as const;
+
+/**
+ * One receiver of the unified address the user entered.
+ *
+ * `receiver` has the fixed length of its typecode: 20 bytes for P2PKH and P2SH,
+ * 43 bytes for Sapling and Orchard.
+ */
+export type PcztUserAddressReceiver = {
+  /** One of {@link PCZT_RECEIVER_TYPECODE}. */
+  typecode: number;
+  receiver: Uint8Array;
+};
+
+/*
+ * `userAddressReceivers` (on the three output types below) holds the receivers
+ * of the unified address the user entered, other than the one the output pays.
+ * The device inserts the paid receiver itself and shows the whole address.
+ *
+ * - They are sent only to Zcash app 3.11.0 or later, and silently omitted for
+ *   an older app, which then shows its fallback display.
+ * - Items are in strictly ascending typecode order; P2PKH and P2SH are never
+ *   both present.
+ * - Shielded actions accept P2PKH, P2SH and Sapling. An empty list means the
+ *   user entered an Orchard-only address.
+ * - A transparent output accepts Sapling and Orchard, and the list is never
+ *   empty. It is never allowed on a transparent change output (one that
+ *   carries a `derivation`).
+ * - `null`, `undefined` and absent are equivalent: nothing is sent.
+ * - An invalid list is rejected before any APDU is sent.
+ */
+
 /** A single `transparent::Output`. */
 export type PcztTransparentOutput = {
   /** Output value in zatoshis. */
@@ -55,6 +93,8 @@ export type PcztTransparentOutput = {
   scriptPubKey: Uint8Array;
   /** Optional `bip32_derivation` (entry count `0` or `1`). */
   derivation?: PcztBip32Derivation | null;
+  /** Receivers of the unified address the user entered (see above). */
+  userAddressReceivers?: PcztUserAddressReceiver[] | null;
 };
 
 /** A single `orchard::Action` (spend + output halves). */
@@ -96,6 +136,8 @@ export type PcztOrchardAction = {
   rseed: Uint8Array;
   /** Randomized commitment value, 32 bytes (required by the device). */
   rcv: Uint8Array;
+  /** Receivers of the unified address the user entered (see above). */
+  userAddressReceivers?: PcztUserAddressReceiver[] | null;
 };
 
 /** The Orchard action bundle plus its trailer. */
@@ -154,6 +196,8 @@ export type PcztIronwoodAction = {
    * Carried to the device; required for PCZT v2 parsing.
    */
   notePlaintextVersion: number;
+  /** Receivers of the unified address the user entered (see above). */
+  userAddressReceivers?: PcztUserAddressReceiver[] | null;
 };
 
 /** The Ironwood action bundle plus its trailer (V6 transactions only). */

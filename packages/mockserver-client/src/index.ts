@@ -11,6 +11,7 @@ export {
   deviceConfigCodec,
   type DeviceConnectivityType,
 } from "./model/Device";
+export type { Health } from "./model/Health";
 export { type Mock, type MockConfig, mockConfigCodec } from "./model/Mock";
 export type { Session } from "./model/Session";
 export { type SessionExport, sessionExportCodec } from "./model/SessionExport";

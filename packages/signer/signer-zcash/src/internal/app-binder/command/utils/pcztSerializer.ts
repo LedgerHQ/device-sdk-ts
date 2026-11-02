@@ -35,6 +35,23 @@ import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 /** Default ZIP-32 seed fingerprint when the PCZT omits one (32 zero bytes). */
 const DEFAULT_SEED_FINGERPRINT = new Uint8Array(32);
 
+/** Output extension tag: receivers of the unified address the user entered. */
+export const OUTPUT_EXTENSION_USER_ADDRESS_TAG = 0x02;
+
+/** One entry of an output extension block: `tag u8 · len u8 · value[len]`. */
+export const outputExtension = (tag: number, value: Uint8Array): Uint8Array =>
+  concatUint8Arrays(Uint8Array.of(tag, value.length), value);
+
+/**
+ * Packets of one output list, and for each output the index (in `packets`) of
+ * its last packet: the transparent `bip32_derivation` packet or the shielded
+ * output metadata packet. This is where the device answers for the output.
+ */
+export type SerializedOutputs = {
+  packets: Uint8Array[];
+  lastPacketIndices: number[];
+};
+
 /** `path_len u8` followed by big-endian `u32` path components. */
 const packDerivationPath = (path: string): Uint8Array => {
   const components = DerivationPathUtils.splitPath(path);
@@ -155,20 +172,41 @@ export const serializeTransparentInputs = (
 /** `PCZT_TRANSPARENT_OUTPUT` packet sequence. */
 export const serializeTransparentOutputs = (
   outputs: PcztTransparentOutput[],
-): Uint8Array[] => {
-  const packets: Uint8Array[] = [createVarint(outputs.length)];
+  userAddresses?: (Uint8Array | undefined)[],
+): Uint8Array[] =>
+  serializeTransparentOutputsIndexed(outputs, userAddresses).packets;
 
-  for (const output of outputs) {
+/** Same as {@link serializeTransparentOutputs}, with each output's last packet index. */
+export const serializeTransparentOutputsIndexed = (
+  outputs: PcztTransparentOutput[],
+  userAddresses?: (Uint8Array | undefined)[],
+): SerializedOutputs => {
+  const packets: Uint8Array[] = [createVarint(outputs.length)];
+  const lastPacketIndices: number[] = [];
+
+  for (let i = 0; i < outputs.length; i += 1) {
+    const output = outputs[i]!;
     const value = new ByteArrayBuilder();
     value.add64BitUIntToData(output.value, false);
     packets.push(value.build());
 
     packets.push(...fieldPackets(output.scriptPubKey));
 
-    packets.push(bip32DerivationPacket(output.derivation));
+    // The extension is passed explicitly, never read off the public object.
+    // It follows a zero-count derivation: nothing may follow a derivation.
+    const userAddress = userAddresses?.[i];
+    packets.push(
+      userAddress === undefined
+        ? bip32DerivationPacket(output.derivation)
+        : concatUint8Arrays(
+            bip32DerivationPacket(output.derivation),
+            outputExtension(OUTPUT_EXTENSION_USER_ADDRESS_TAG, userAddress),
+          ),
+    );
+    lastPacketIndices.push(packets.length - 1);
   }
 
-  return packets;
+  return { packets, lastPacketIndices };
 };
 
 // Shared serializer for Orchard/Ironwood bundles. Both pools share a common
@@ -181,21 +219,27 @@ export const serializeTransparentOutputs = (
 // warn if one type is accidentally used in place of the other. Ironwood-only
 // additions (e.g. `notePlaintextVersion`, added for PCZT v2) are serialized
 // via `'<field>' in action` guards below — any future Ironwood-only field
-// requires the same treatment or the omission will be silent.
+// requires the same treatment or the omission will be silent. The user
+// address extension is the same: it is passed in `userAddresses`, never read off
+// the action, and goes after `rcv` (Orchard) or after `notePlaintextVersion`
+// (Ironwood).
 const serializeShieldedActions = (
   bundle: PcztOrchardBundle | PcztIronwoodBundle,
-): Uint8Array[] => {
+  userAddresses?: (Uint8Array | undefined)[],
+): SerializedOutputs => {
   const packets: Uint8Array[] = [createVarint(bundle.actions.length)];
+  const lastPacketIndices: number[] = [];
 
   // No trailer when there are zero actions: this is *not* a missing field. The
   // device parser finalizes the bundle the moment it reads a count of 0 and
   // never reads flags/value_sum/anchor. Emitting a trailer here would leave
   // unexpected bytes and fail the parser's group-end check.
   if (bundle.actions.length === 0) {
-    return packets;
+    return { packets, lastPacketIndices };
   }
 
-  for (const action of bundle.actions) {
+  for (let i = 0; i < bundle.actions.length; i += 1) {
+    const action = bundle.actions[i]!;
     const spend = new ByteArrayBuilder();
     spend.addBufferToData(action.cvNet);
     spend.addBufferToData(action.nullifier);
@@ -227,7 +271,14 @@ const serializeShieldedActions = (
         (action as { notePlaintextVersion: number }).notePlaintextVersion,
       );
     }
+    const userAddress = userAddresses?.[i];
+    if (userAddress !== undefined) {
+      metadata.addBufferToData(
+        outputExtension(OUTPUT_EXTENSION_USER_ADDRESS_TAG, userAddress),
+      );
+    }
     packets.push(metadata.build());
+    lastPacketIndices.push(packets.length - 1);
   }
 
   const trailer = new ByteArrayBuilder();
@@ -241,13 +292,20 @@ const serializeShieldedActions = (
   trailer.addBufferToData(bundle.anchor);
   packets.push(trailer.build());
 
-  return packets;
+  return { packets, lastPacketIndices };
 };
 
 /** `PCZT_ORCHARD_ACTION` packet sequence (including the trailer when action count > 0). */
 export const serializeOrchardActions = (
   bundle: PcztOrchardBundle,
-): Uint8Array[] => serializeShieldedActions(bundle);
+  userAddresses?: (Uint8Array | undefined)[],
+): Uint8Array[] => serializeShieldedActions(bundle, userAddresses).packets;
+
+/** Same as {@link serializeOrchardActions}, with each action's metadata packet index. */
+export const serializeOrchardActionsIndexed = (
+  bundle: PcztOrchardBundle,
+  userAddresses?: (Uint8Array | undefined)[],
+): SerializedOutputs => serializeShieldedActions(bundle, userAddresses);
 
 /**
  * `PCZT_IRONWOOD_ACTION` packet sequence (including the trailer when action count > 0).
@@ -258,7 +316,14 @@ export const serializeOrchardActions = (
  */
 export const serializeIronwoodActions = (
   bundle: PcztIronwoodBundle,
-): Uint8Array[] => serializeShieldedActions(bundle);
+  userAddresses?: (Uint8Array | undefined)[],
+): Uint8Array[] => serializeShieldedActions(bundle, userAddresses).packets;
+
+/** Same as {@link serializeIronwoodActions}, with each action's metadata packet index. */
+export const serializeIronwoodActionsIndexed = (
+  bundle: PcztIronwoodBundle,
+  userAddresses?: (Uint8Array | undefined)[],
+): SerializedOutputs => serializeShieldedActions(bundle, userAddresses);
 
 /**
  * P1 framing for packet `index` of a `total`-packet command:

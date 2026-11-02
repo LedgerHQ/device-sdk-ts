@@ -7,6 +7,7 @@ import {
   type PcztTransaction,
   type PcztTransparentInput,
   type PcztTransparentOutput,
+  type PcztUserAddressReceiver,
 } from "@api/model/PcztTransaction";
 
 /** Deterministic byte array of `length`, every byte set to `fill`. */
@@ -270,3 +271,79 @@ export const v6TransactionWithTransparentOrchardAndIronwood =
     orchardBundle: sampleOrchardBundle(),
     ironwoodBundle: sampleIronwoodBundle(),
   });
+
+/*
+ * Receivers of one unified address, from the ZIP 316 test vector in
+ * librustzcash `components/zcash_address/src/kind/unified/address/test_vectors.rs`
+ * (the vector with P2PKH, Sapling and Orchard receivers, lines 89-107).
+ */
+export const UA_P2PKH_RECEIVER = hexToBytes(
+  "cad268758c5e71493066446b98e71df9d1d6a5ca",
+);
+export const UA_SAPLING_RECEIVER = hexToBytes(
+  "9f6e0bf90a18fc0b9b83ae9f23ad4358648638482b5def8975635b66fd8a708335f9235a3186ec0f033f84",
+);
+export const UA_ORCHARD_RECEIVER = hexToBytes(
+  "cecbe5e689a453a3fe10ccf7617e6c1fb382819d7fc9200a1f42092ac84a30378f8c1fb90dff71a6d5042d",
+);
+
+/** `typecode · receiver` items as the device expects them in tag 0x02. */
+export const UA_SHIELDED_VALUE_HEX =
+  "00" + bytesToHex(UA_P2PKH_RECEIVER) + "02" + bytesToHex(UA_SAPLING_RECEIVER);
+export const UA_TRANSPARENT_VALUE_HEX =
+  "02" +
+  bytesToHex(UA_SAPLING_RECEIVER) +
+  "03" +
+  bytesToHex(UA_ORCHARD_RECEIVER);
+
+export const shieldedUserAddressReceivers = (): PcztUserAddressReceiver[] => [
+  { typecode: 0x00, receiver: UA_P2PKH_RECEIVER },
+  { typecode: 0x02, receiver: UA_SAPLING_RECEIVER },
+];
+
+export const transparentUserAddressReceivers =
+  (): PcztUserAddressReceiver[] => [
+    { typecode: 0x02, receiver: UA_SAPLING_RECEIVER },
+    { typecode: 0x03, receiver: UA_ORCHARD_RECEIVER },
+  ];
+
+/** V5 transaction: a transparent output and an Orchard action, both tagged. */
+export const v5TransactionWithUserAddressReceivers = (): PcztTransaction => ({
+  global: SAMPLE_GLOBAL,
+  transparentInputs: [sampleTransparentInput()],
+  transparentOutputs: [
+    {
+      ...sampleTransparentOutput(),
+      userAddressReceivers: transparentUserAddressReceivers(),
+    },
+  ],
+  orchardBundle: {
+    ...sampleOrchardBundle(),
+    actions: [
+      {
+        ...sampleOrchardAction(),
+        userAddressReceivers: shieldedUserAddressReceivers(),
+      },
+    ],
+  },
+});
+
+/** V6 transaction: an Orchard action and an Ironwood action, both tagged. */
+export const v6TransactionWithUserAddressReceivers = (): PcztTransaction => ({
+  global: SAMPLE_GLOBAL_V6,
+  transparentInputs: [],
+  transparentOutputs: [],
+  orchardBundle: {
+    ...sampleOrchardBundle(),
+    actions: [{ ...sampleOrchardAction(), userAddressReceivers: [] }],
+  },
+  ironwoodBundle: {
+    ...sampleIronwoodBundle(),
+    actions: [
+      {
+        ...sampleIronwoodAction(),
+        userAddressReceivers: shieldedUserAddressReceivers(),
+      },
+    ],
+  },
+});
