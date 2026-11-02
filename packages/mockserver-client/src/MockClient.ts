@@ -86,27 +86,44 @@ export class MockClient {
   // --- Devices --------------------------------------------------------------
 
   async listDevices(): Promise<Device[]> {
-    const data = await this.client.get("devices", await this.authRequestConfig());
+    const data = await this.client.get(
+      "devices",
+      await this.authRequestConfig(),
+    );
     return this.decode(array(deviceCodec), data);
   }
 
   async addDevice(config: DeviceConfig = {}): Promise<Device> {
-    const data = await this.client.post("devices", config, await this.authRequestConfig());
+    const data = await this.client.post(
+      "devices",
+      config,
+      await this.authRequestConfig(),
+    );
     return this.decode(deviceCodec, data);
   }
 
   async getDevice(deviceId: string): Promise<Device> {
-    const data = await this.client.get(`devices/${deviceId}`, await this.authRequestConfig());
+    const data = await this.client.get(
+      `devices/${deviceId}`,
+      await this.authRequestConfig(),
+    );
     return this.decode(deviceCodec, data);
   }
 
   async editDevice(deviceId: string, config: DeviceConfig): Promise<Device> {
-    const data = await this.client.patch(`devices/${deviceId}`, config, await this.authRequestConfig());
+    const data = await this.client.patch(
+      `devices/${deviceId}`,
+      config,
+      await this.authRequestConfig(),
+    );
     return this.decode(deviceCodec, data);
   }
 
   async deleteDevice(deviceId: string): Promise<boolean> {
-    await this.client.delete(`devices/${deviceId}`, await this.authRequestConfig());
+    await this.client.delete(
+      `devices/${deviceId}`,
+      await this.authRequestConfig(),
+    );
     return true;
   }
 
@@ -160,12 +177,19 @@ export class MockClient {
   // --- Mocks (device-scoped) ------------------------------------------------
 
   async listMocks(deviceId: string): Promise<Mock[]> {
-    const data = await this.client.get(`devices/${deviceId}/mocks`, await this.authRequestConfig());
+    const data = await this.client.get(
+      `devices/${deviceId}/mocks`,
+      await this.authRequestConfig(),
+    );
     return this.decode(array(mockCodec), data);
   }
 
   async addMock(deviceId: string, config: MockConfig): Promise<Mock> {
-    const data = await this.client.post(`devices/${deviceId}/mocks`, config, await this.authRequestConfig());
+    const data = await this.client.post(
+      `devices/${deviceId}/mocks`,
+      config,
+      await this.authRequestConfig(),
+    );
     return this.decode(mockCodec, data);
   }
 
@@ -183,12 +207,18 @@ export class MockClient {
   }
 
   async deleteMock(deviceId: string, mockId: string): Promise<boolean> {
-    await this.client.delete(`devices/${deviceId}/mocks/${mockId}`, await this.authRequestConfig());
+    await this.client.delete(
+      `devices/${deviceId}/mocks/${mockId}`,
+      await this.authRequestConfig(),
+    );
     return true;
   }
 
   async clearMocks(deviceId: string): Promise<boolean> {
-    await this.client.delete(`devices/${deviceId}/mocks`, await this.authRequestConfig());
+    await this.client.delete(
+      `devices/${deviceId}/mocks`,
+      await this.authRequestConfig(),
+    );
     return true;
   }
 
@@ -199,7 +229,10 @@ export class MockClient {
    * proxying its APDUs). Throws if the device has no active instance.
    */
   async getSpeculos(deviceId: string): Promise<SpeculosInstance> {
-    const data = await this.client.get(`devices/${deviceId}/speculos`, await this.authRequestConfig());
+    const data = await this.client.get(
+      `devices/${deviceId}/speculos`,
+      await this.authRequestConfig(),
+    );
     return this.decode(speculosInstanceCodec, data);
   }
 
@@ -246,7 +279,10 @@ export class MockClient {
   // --- Session --------------------------------------------------------------
 
   async getSession(): Promise<Session> {
-    const data = await this.client.get("sessions/current", await this.authRequestConfig());
+    const data = await this.client.get(
+      "sessions/current",
+      await this.authRequestConfig(),
+    );
     return this.decode(sessionCodec, data);
   }
 
@@ -263,7 +299,10 @@ export class MockClient {
   }
 
   async disposeSession(): Promise<boolean> {
-    await this.client.delete("sessions/current", await this.authRequestConfig());
+    await this.client.delete(
+      "sessions/current",
+      await this.authRequestConfig(),
+    );
     this.token = undefined;
     this.authPromise = undefined;
     return true;
@@ -273,7 +312,10 @@ export class MockClient {
 
   /** Export the session's devices and mocks as a portable snapshot. */
   async exportSession(): Promise<SessionExport> {
-    const data = await this.client.get("export", await this.authRequestConfig());
+    const data = await this.client.get(
+      "export",
+      await this.authRequestConfig(),
+    );
     return this.decode(sessionExportCodec, data);
   }
 
@@ -282,7 +324,11 @@ export class MockClient {
    * snapshot, returning the resulting (normalized) state.
    */
   async importSession(snapshot: SessionExport): Promise<SessionExport> {
-    const data = await this.client.post("import", snapshot, await this.authRequestConfig());
+    const data = await this.client.post(
+      "import",
+      snapshot,
+      await this.authRequestConfig(),
+    );
     return this.decode(sessionExportCodec, data);
   }
 
