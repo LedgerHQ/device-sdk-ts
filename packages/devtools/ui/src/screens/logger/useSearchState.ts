@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { matchesFilter, parseFilterQuery } from "./filterUtils";
 import { type LogData } from "./types";
@@ -32,9 +32,14 @@ export const useSearchState = (logs: LogData[]) => {
       .filter((i) => i !== -1);
   }, [logs, searchQuery]);
 
-  // Falls back to the first match when the current one is gone
+  // Falls back to the first match when the current one is gone, and keeps it, so
+  // matching logs that arrive later do not take its place
   const found = matchIndices.findIndex((index) => logs[index] === currentMatch);
   const currentMatchIndex = Math.max(0, found);
+  const fallback = found < 0 ? logs[matchIndices[0] ?? -1] : undefined;
+  useEffect(() => {
+    if (fallback) setCurrentMatch(fallback);
+  }, [fallback]);
 
   const goTo = useCallback(
     (position: number) => {
