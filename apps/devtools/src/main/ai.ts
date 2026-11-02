@@ -1,23 +1,21 @@
 import { ipcMain, type WebContents } from 'electron'
 import { existsSync } from 'fs'
-import { basename, join, relative, resolve } from 'path'
-import type { HookCallback, Options, SDKMessage } from '@anthropic-ai/claude-agent-sdk'
+import { join, resolve } from 'path'
+import type { SDKMessage } from '@anthropic-ai/claude-agent-sdk'
 import type { AiEvent, AiRequest, AiStatus } from '@ledgerhq/device-management-kit-devtools-ui'
 
-const MODEL = 'claude-opus-5-5'
-const MODEL_NAME = 'Claude Opus 5.5'
-const SKILLS = ['explain-device-exchange', 'apdu-commands', 'status-words', 'dmk-flows']
+import { type AiPaths, ANALYSIS_SKILLS, buildQuery, describeTool, MODEL_NAME } from './aiOptions'
 
 // The skills the DevTools gives Claude; a packaged app unpacks resources/ beside its archive
 const PLUGIN_DIR = join(__dirname, '../../resources/ai').replace('app.asar', 'app.asar.unpacked')
 
 // DMK's source is only there when the DevTools runs from the repository
 const REPO_ROOT = resolve(__dirname, '../../../..')
-const CAN_READ_CODE = existsSync(join(REPO_ROOT, 'packages/device-management-kit'))
-
-const SYSTEM_PROMPT = `You explain Ledger device exchanges to developers using the Ledger DMK DevTools.
-Always follow the explain-device-exchange skill, and use the other skills it names.
-Write the answer once, after any tool use, with nothing before its first section.`
+const PATHS: AiPaths = {
+  pluginDir: PLUGIN_DIR,
+  repoRoot: REPO_ROOT,
+  canReadCode: existsSync(join(REPO_ROOT, 'packages/device-management-kit'))
+}
 
 // The SDK only ships as an ES module, which this CommonJS bundle loads on demand
 const loadSdk = (): Promise<typeof import('@anthropic-ai/claude-agent-sdk')> =>
@@ -50,8 +48,8 @@ const getStatus = async (): Promise<AiStatus> => {
           ready: true,
           account: account.email,
           model: MODEL_NAME,
-          skills: SKILLS,
-          canReadCode: CAN_READ_CODE
+          skills: ANALYSIS_SKILLS,
+          canReadCode: PATHS.canReadCode
         }
       : { ready: false, error: 'Claude Code is not signed in.' }
   } catch (error) {
@@ -61,80 +59,15 @@ const getStatus = async (): Promise<AiStatus> => {
   }
 }
 
-const describeTool = (name: string, input: Record<string, unknown>): string => {
-  switch (name) {
-    case 'Skill':
-      return `Using the ${String(input['skill'] ?? input['name'] ?? '')} skill`
-    case 'Read':
-      return `Reading ${basename(String(input['file_path'] ?? ''))}`
-    case 'Grep':
-      return `Searching the code for "${String(input['pattern'] ?? '')}"`
-    case 'Glob':
-      return `Looking for ${String(input['pattern'] ?? '')}`
-    default:
-      return name
-  }
-}
-
-// The selection is the app's logs, which could tell Claude to read files elsewhere
-const stayInside =
-  (roots: string[]): HookCallback =>
-  async (input) => {
-    if (input.hook_event_name !== 'PreToolUse') return {}
-    const toolInput = input.tool_input as { file_path?: string; path?: string }
-    const path = resolve(input.cwd, toolInput.file_path ?? toolInput.path ?? '.')
-    const inside = roots.some((root) => !relative(root, path).startsWith('..'))
-    return inside
-      ? {}
-      : {
-          hookSpecificOutput: {
-            hookEventName: 'PreToolUse',
-            permissionDecision: 'deny',
-            permissionDecisionReason: `${path} is outside the files you may read.`
-          }
-        }
-  }
-
-const promptFor = (request: AiRequest): string => {
-  if (request.kind === 'followUp') return request.question
-  const scope = request.readCode
-    ? `You may read DMK's source code under ${REPO_ROOT} to confirm the cause; name the file and function when you do.`
-    : 'Answer from the skills and the selection only; do not read source code.'
-  return `Explain this selection from the DevTools (${request.summary}).\n${scope}\n\n<selection>\n${request.context}\n</selection>`
-}
-
 const analyze = async (
   request: AiRequest,
   abortController: AbortController,
   emit: (event: AiEvent) => void
 ): Promise<void> => {
   const { query } = await loadSdk()
-  const readCode = request.readCode && CAN_READ_CODE
-  const cwd = readCode ? REPO_ROOT : PLUGIN_DIR
-  const options: Options = {
-    abortController,
-    model: MODEL,
-    systemPrompt: SYSTEM_PROMPT,
-    cwd,
-    // Only the DevTools' own skills, not the user's or a project's Claude Code settings
-    settingSources: [],
-    plugins: [{ type: 'local', path: PLUGIN_DIR }],
-    skills: 'all',
-    tools: ['Read', 'Grep', 'Glob'],
-    allowedTools: ['Read', 'Grep', 'Glob'],
-    hooks: {
-      PreToolUse: [{ matcher: 'Read|Grep|Glob', hooks: [stayInside([cwd, PLUGIN_DIR])] }]
-    },
-    permissionMode: 'dontAsk',
-    maxTurns: readCode ? 20 : 8,
-    includePartialMessages: true,
-    resume: request.kind === 'followUp' ? request.sessionId : undefined
-  }
+  const { prompt, options } = buildQuery(request, PATHS, abortController)
 
-  for await (const message of query({
-    prompt: promptFor(request),
-    options
-  }) as AsyncIterable<SDKMessage>) {
+  for await (const message of query({ prompt, options }) as AsyncIterable<SDKMessage>) {
     if (message.type === 'stream_event') {
       const { event } = message
       if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
