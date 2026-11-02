@@ -1,5 +1,13 @@
 # @ledgerhq/dmk-ledger-wallet
 
+## 0.8.0
+
+### Minor Changes
+
+- [#2115](https://github.com/LedgerHQ/device-sdk-ts/pull/2115) [`b1be015`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1be01553270e217a913a2f6048d594059333a3f) Thanks [@benruseau](https://github.com/benruseau)! - Restore the Security Key app and its data in a first pass of the RestoreBackup DA, before the other apps
+
+- [#2112](https://github.com/LedgerHQ/device-sdk-ts/pull/2112) [`9c21922`](https://github.com/LedgerHQ/device-sdk-ts/commit/9c2192281b769893e354ed55c32d0e5dbd171363) Thanks [@benruseau](https://github.com/benruseau)! - Add `restoreStatus` (full, partial, out of memory) to the RestoreBackup DA output. Running out of memory while installing the language pack or the apps now stops the restore with this status instead of ending in error
+
 ## 0.7.1
 
 ### Patch Changes
