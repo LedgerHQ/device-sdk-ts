@@ -110,6 +110,63 @@ describe("MockClient", () => {
     });
   });
 
+  describe("health", () => {
+    it("checks the server health without creating a session", async () => {
+      const http = httpClientStubBuilder().mockResponse({
+        method: "get",
+        endpoint: "health",
+        response: { status: "ok", sessions: 3 },
+      });
+      const client = new MockClient("http://localhost:8080", {
+        httpClient: http,
+      });
+
+      const health = await client.getHealth();
+
+      expect(health).toEqual({ status: "ok", sessions: 3 });
+      expect(http.calls).toEqual([{ method: "get", endpoint: "health" }]);
+      expect(http.configs[0]?.config?.headers).toBeUndefined();
+    });
+  });
+
+  describe("timeout", () => {
+    it("applies the timeout to every request, the implicit /auth included", async () => {
+      const http = httpClientStubBuilder()
+        .mockResponse({
+          method: "post",
+          endpoint: "auth",
+          response: { token: "tok", expires_at: 1 },
+        })
+        .mockResponse({ method: "get", endpoint: "devices", response: [] });
+      const client = new MockClient("http://localhost:8080", {
+        httpClient: http,
+        timeoutMs: 4000,
+      });
+
+      await client.listDevices();
+
+      expect(http.configs.map(({ config }) => config?.timeoutMs)).toEqual([
+        4000, 4000,
+      ]);
+    });
+
+    it("sets no timeout by default", async () => {
+      const http = httpClientStubBuilder().mockResponse({
+        method: "get",
+        endpoint: "devices",
+        response: [],
+      });
+      const client = new MockClient("http://localhost:8080", {
+        token: "tok",
+        httpClient: http,
+      });
+
+      await client.listDevices();
+
+      expect(http.configs[0]?.config?.timeoutMs).toBeUndefined();
+    });
+  });
+
   describe("devices", () => {
     it("lists devices", async () => {
       const http = httpClientStubBuilder().mockResponse({
@@ -495,6 +552,27 @@ describe("MockClient", () => {
 
       expect(session.id).toBe("sess-1");
       expect(session.devices).toHaveLength(1);
+    });
+
+    it("sets the session seed with the bearer token", async () => {
+      const http = httpClientStubBuilder();
+      const client = new MockClient("http://localhost:8080", {
+        token: "tok",
+        httpClient: http,
+      });
+
+      await client.setSeed("abandon abandon about");
+
+      expect(http.calls).toEqual([
+        {
+          method: "put",
+          endpoint: "sessions/current/seed",
+          body: { seed: "abandon abandon about" },
+        },
+      ]);
+      expect(http.configs[0]?.config?.headers).toEqual({
+        Authorization: "Bearer tok",
+      });
     });
 
     it("disposes the session and clears the stored token", async () => {
