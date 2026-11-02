@@ -15,17 +15,27 @@ import {
   DevToolsLogger,
 } from "@ledgerhq/device-management-kit-devtools-core";
 import { RozeniteConnector } from "@ledgerhq/device-management-kit-devtools-rozenite";
+import { mockserverTransportFactory } from "@ledgerhq/device-transport-kit-mockserver";
 import { RNBleTransportFactory } from "@ledgerhq/device-transport-kit-react-native-ble";
 import { RNHidTransportFactory } from "@ledgerhq/device-transport-kit-react-native-hid";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 
-function buildDefaultDmk() {
+/** The mock server session whose devices the DMK lists next to real ones. */
+export type DmkMockServer = { url: string; token: string };
+
+function buildDefaultDmk(mockServer: DmkMockServer | undefined) {
   const connector = RozeniteConnector.getInstance();
 
-  const dmk = new DeviceManagementKitBuilder()
+  const builder = new DeviceManagementKitBuilder()
     .addTransport(RNBleTransportFactory)
-    .addTransport(RNHidTransportFactory)
+    .addTransport(RNHidTransportFactory);
+  if (mockServer) {
+    builder.addTransport(
+      mockserverTransportFactory(mockServer.url, mockServer.token),
+    );
+  }
+  const dmk = builder
     .addLogger(new ConsoleLogger())
     .addLogger(new DevToolsLogger(connector))
     .build();
@@ -36,11 +46,18 @@ function buildDefaultDmk() {
   return { dmk, inspector };
 }
 
-export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const state = useRef(buildDefaultDmk());
+/**
+ * Builds the DMK once: a provider for another mock server session is a new
+ * one, so the host keys it by that session.
+ */
+export const DmkProvider: React.FC<
+  PropsWithChildren<{ mockServer?: DmkMockServer }>
+> = ({ mockServer, children }) => {
+  const state = useRef<ReturnType<typeof buildDefaultDmk>>();
+  state.current ??= buildDefaultDmk(mockServer);
 
   useEffect(() => {
-    const { dmk, inspector } = state.current;
+    const { dmk, inspector } = state.current!;
     return () => {
       inspector.destroy();
       dmk.close();
