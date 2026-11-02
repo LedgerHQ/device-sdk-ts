@@ -6,14 +6,13 @@ import {
   useTheme,
 } from "@ledgerhq/lumen-ui-react";
 
-import { DashboardFooter } from "./components/DashboardFooter";
 import {
   DashboardNavigationBar,
   DashboardScreen,
 } from "./components/DashboardNavigationBar";
-import { DebugDrawer } from "./components/DebugDrawer";
 import { useConnectorMessages } from "./hooks/useConnectorMessages";
 import { AiPanel, type AiPanelRequest } from "./screens/ai/AiPanel";
+import { SelectionBarSlot } from "./screens/ai/SelectionBar";
 import { type AiClient, type AiSelection } from "./screens/ai/types";
 import { Inspector } from "./screens/inspector";
 import { Logger } from "./screens/logger";
@@ -53,8 +52,6 @@ const Dashboard: React.FC<{
   }, [colorScheme]);
 
   const {
-    receivedMessages,
-    sentMessages,
     logs,
     connectedDevices,
     sessionStates,
@@ -65,7 +62,6 @@ const Dashboard: React.FC<{
     isInspectorConnected,
     mockServer,
     apduResponses,
-    sendMessage,
     clearLogs,
     startListening,
     stopListening,
@@ -90,6 +86,9 @@ const Dashboard: React.FC<{
   const [showLiveScreen, setShowLiveScreen] = useState(true);
   const [showSessions, setShowSessions] = useState(true);
   const [aiRequest, setAiRequest] = useState<AiPanelRequest | null>(null);
+  const [selectionSlot, setSelectionSlot] = useState<HTMLDivElement | null>(
+    null,
+  );
   const explainWithAi = (request: AiSelection) => {
     const token = mockServer?.sessionToken;
     const context = token
@@ -98,7 +97,6 @@ const Dashboard: React.FC<{
     setAiOpen(true);
     setAiRequest({ ...request, context, id: (aiRequest?.id ?? 0) + 1 });
   };
-  const [isDebugOpen, setIsDebugOpen] = useState(false);
 
   const logger = (
     <Logger
@@ -134,52 +132,47 @@ const Dashboard: React.FC<{
   );
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-canvas text-base">
-      <DashboardNavigationBar
-        currentScreen={currentScreen}
-        onScreenChange={setCurrentScreen}
-        aiOpen={aiOpen}
-        onToggleAi={() => setAiOpen(!aiOpen)}
-        sessions={
-          currentScreen === DashboardScreen.inspector
-            ? {
-                shown: showSessions,
-                onToggle: () => setShowSessions(!showSessions),
-              }
-            : undefined
-        }
-        liveScreen={
-          currentScreen === DashboardScreen.inspector && mockServer
-            ? {
-                shown: showLiveScreen,
-                onToggle: () => setShowLiveScreen(!showLiveScreen),
-              }
-            : undefined
-        }
-        isLoggerConnected={isLoggerConnected}
-        isInspectorConnected={isInspectorConnected}
-        mockServerWebsiteUrl={mockServerWebsiteUrl}
-        colorScheme={colorScheme}
-        onColorSchemeChange={onColorSchemeChange}
-      />
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          {currentScreen === DashboardScreen.inspector ? inspector : logger}
+    <SelectionBarSlot.Provider value={selectionSlot}>
+      <div className="flex h-screen flex-col overflow-hidden bg-canvas text-base">
+        <DashboardNavigationBar
+          currentScreen={currentScreen}
+          onScreenChange={setCurrentScreen}
+          aiOpen={aiOpen}
+          onToggleAi={() => setAiOpen(!aiOpen)}
+          sessions={
+            currentScreen === DashboardScreen.inspector
+              ? {
+                  shown: showSessions,
+                  onToggle: () => setShowSessions(!showSessions),
+                }
+              : undefined
+          }
+          liveScreen={
+            currentScreen === DashboardScreen.inspector && mockServer
+              ? {
+                  shown: showLiveScreen,
+                  onToggle: () => setShowLiveScreen(!showLiveScreen),
+                }
+              : undefined
+          }
+          isLoggerConnected={isLoggerConnected}
+          isInspectorConnected={isInspectorConnected}
+          mockServerWebsiteUrl={mockServerWebsiteUrl}
+          colorScheme={colorScheme}
+          onColorSchemeChange={onColorSchemeChange}
+        />
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            {currentScreen === DashboardScreen.inspector ? inspector : logger}
+          </div>
+          {/* Hidden, not unmounted: reopening shows the last answer instead of running it again */}
+          <div className={aiOpen ? "contents" : "hidden"}>
+            <AiPanel ai={ai} request={aiRequest} />
+          </div>
         </div>
-        {aiOpen && <AiPanel ai={ai} request={aiRequest} />}
+        <div ref={setSelectionSlot} />
       </div>
-      <DashboardFooter
-        isDebugOpen={isDebugOpen}
-        onToggleDebug={() => setIsDebugOpen(!isDebugOpen)}
-      />
-      <DebugDrawer
-        isOpen={isDebugOpen}
-        onClose={() => setIsDebugOpen(false)}
-        sentMessages={sentMessages}
-        receivedMessages={receivedMessages}
-        sendMessage={sendMessage}
-      />
-    </div>
+    </SelectionBarSlot.Provider>
   );
 };
 

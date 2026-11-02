@@ -21,7 +21,6 @@ import {
   MODULE_CONNECTED_MESSAGE_TYPE,
 } from "@ledgerhq/device-management-kit-devtools-core";
 
-import { type Message } from "../PluginEvents";
 import { type LogData } from "../screens/logger/types";
 import {
   createApduCommands,
@@ -57,8 +56,6 @@ export type MockServerConfig = {
 };
 
 export type ConnectorMessagesState = {
-  receivedMessages: Message[];
-  sentMessages: Message[];
   logs: LogData[];
   connectedModules: Set<DevToolsModule>;
   connectedDevices: ConnectedDevice[];
@@ -113,8 +110,6 @@ export function useConnectorMessages(
   connector: Connector,
 ): ConnectorMessagesState {
   // === State ===
-  const [receivedMessages, setReceivedMessages] = useState<Message[]>([]);
-  const [sentMessages, setSentMessages] = useState<Message[]>([]);
   const [logs, setLogs] = useState<LogData[]>([]);
   const [connectedModules, setConnectedModules] = useState<Set<DevToolsModule>>(
     new Set(),
@@ -136,42 +131,24 @@ export function useConnectorMessages(
   );
   const [mockServer, setMockServer] = useState<MockServerConfig | null>(null);
 
-  // === Tracked Connector (keeps all sent messages in state) ===
-  const trackedConnector: Connector = useMemo(
-    () => ({
-      ...connector,
-      sendMessage: (type: string, payload: string) => {
-        connector.sendMessage(type, payload);
-        setSentMessages((prev) => [...prev, { type, payload }]);
-      },
-    }),
-    [connector],
-  );
-
   // Shared with clearLogs, so a clear also drops the logs waiting for the next flush
   const pendingLogsRef = useRef<LogData[]>([]);
 
   // === Message Listener ===
   useEffect(() => {
-    // Logs and the debug message list are added in batches, like Dozzle: a polling
-    // device sends several logs per second, and adding them one by one re-rendered
-    // the dashboard and copied both lists for every line.
-    let pendingMessages: Message[] = [];
+    // Logs are added in batches, like Dozzle: a polling device sends several logs
+    // per second, and adding them one by one re-rendered the dashboard for every line.
     let flushTimer: ReturnType<typeof setTimeout> | undefined;
     const flush = () => {
       flushTimer = undefined;
-      const messages = pendingMessages;
       const newLogs = pendingLogsRef.current;
-      pendingMessages = [];
       pendingLogsRef.current = [];
-      setReceivedMessages((prev) => [...prev, ...messages]);
       if (newLogs.length > 0) {
         setLogs((prev) => [...prev, ...newLogs].slice(-MAX_LOGS));
       }
     };
 
     const { unsubscribe } = connector.listenToMessages((type, payload) => {
-      pendingMessages.push({ type, payload });
       flushTimer ??= setTimeout(flush, FLUSH_INTERVAL_MS);
 
       switch (type) {
@@ -209,16 +186,16 @@ export function useConnectorMessages(
 
   // === Commands (using tracked connector to log all sent messages) ===
   const discoveryCommands = useMemo(
-    () => createDiscoveryCommands(trackedConnector),
-    [trackedConnector],
+    () => createDiscoveryCommands(connector),
+    [connector],
   );
   const providerCommands = useMemo(
-    () => createProviderCommands(trackedConnector),
-    [trackedConnector],
+    () => createProviderCommands(connector),
+    [connector],
   );
   const apduCommands = useMemo(
-    () => createApduCommands(trackedConnector),
-    [trackedConnector],
+    () => createApduCommands(connector),
+    [connector],
   );
 
   // === Wrapped Commands (with local state updates) ===
@@ -259,8 +236,6 @@ export function useConnectorMessages(
 
   return {
     // State
-    receivedMessages,
-    sentMessages,
     logs,
     connectedModules,
     connectedDevices,
@@ -274,7 +249,7 @@ export function useConnectorMessages(
     apduResponses,
     mockServer,
     // Actions
-    sendMessage: trackedConnector.sendMessage,
+    sendMessage: connector.sendMessage,
     clearLogs,
     startListening,
     stopListening,
