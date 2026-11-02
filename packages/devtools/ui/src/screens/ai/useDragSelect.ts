@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 type Drag<K> = {
   anchor: number;
+  last: number;
   /** Dragging from an unselected row selects, from a selected one deselects. */
   adding: boolean;
   base: Set<K>;
@@ -17,6 +18,8 @@ export const useDragSelect = <K>(
   keyAt: (index: number) => K | undefined,
   selected: Set<K>,
   setSelected: (next: Set<K>) => void,
+  /** The row a drag ended on, so a shift-click extends from it. */
+  onDragEnd: (key: K) => void,
 ) => {
   const dragRef = useRef<Drag<K> | null>(null);
   const justDraggedRef = useRef(false);
@@ -26,12 +29,17 @@ export const useDragSelect = <K>(
   selectedRef.current = selected;
   const setSelectedRef = useRef(setSelected);
   setSelectedRef.current = setSelected;
+  const onDragEndRef = useRef(onDragEnd);
+  onDragEndRef.current = onDragEnd;
 
   useEffect(() => {
     const end = () => {
-      if (dragRef.current?.moved) {
+      const drag = dragRef.current;
+      if (drag?.moved) {
         document.body.style.userSelect = "";
         justDraggedRef.current = true;
+        const key = keyAtRef.current(drag.last);
+        if (key !== undefined) onDragEndRef.current(key);
       }
       dragRef.current = null;
     };
@@ -57,6 +65,7 @@ export const useDragSelect = <K>(
       justDraggedRef.current = false;
       dragRef.current = {
         anchor: index,
+        last: index,
         adding: !selectedRef.current.has(key),
         base: new Set(selectedRef.current),
         moved: false,
@@ -68,6 +77,7 @@ export const useDragSelect = <K>(
   const onRowMouseEnter = useCallback((index: number) => {
     const drag = dragRef.current;
     if (!drag || (index === drag.anchor && !drag.moved)) return;
+    drag.last = index;
     if (!drag.moved) {
       drag.moved = true;
       window.getSelection()?.removeAllRanges();

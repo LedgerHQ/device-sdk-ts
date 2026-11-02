@@ -63,16 +63,19 @@ export const Logger: React.FC<Props> = ({
   // Read through refs so a new log does not re-render every row's select handler
   const dataRef = useRef(data);
   dataRef.current = data;
-  const lastSelectedRef = useRef<number | null>(null);
+  // The anchor is the log itself: filters, sorting and new logs move its index
+  const lastSelectedRef = useRef<LogData | null>(null);
   const selectLog = useCallback((index: number, extend: boolean) => {
     const rows = dataRef.current;
     const log = rows[index];
     if (!log) return;
-    const last = lastSelectedRef.current;
-    lastSelectedRef.current = index;
+    const last = lastSelectedRef.current
+      ? rows.indexOf(lastSelectedRef.current)
+      : -1;
+    lastSelectedRef.current = log;
     setSelected((previous) => {
       const next = new Set(previous);
-      if (extend && last !== null) {
+      if (extend && last >= 0) {
         for (let i = Math.min(last, index); i <= Math.max(last, index); i++) {
           next.add(rows[i]!);
         }
@@ -86,6 +89,9 @@ export const Logger: React.FC<Props> = ({
     (index) => dataRef.current[index],
     selected,
     setSelected,
+    (log) => {
+      lastSelectedRef.current = log;
+    },
   );
   const clearSelection = useCallback(() => {
     setSelected(new Set());

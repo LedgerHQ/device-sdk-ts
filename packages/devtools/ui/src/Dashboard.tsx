@@ -89,13 +89,22 @@ const Dashboard: React.FC<{
   const [selectionSlot, setSelectionSlot] = useState<HTMLDivElement | null>(
     null,
   );
+  // Every token the app shared, so logs from an earlier session are redacted too
+  const [secrets, setSecrets] = useState<string[]>([]);
+  const sessionToken = mockServer?.sessionToken;
+  useEffect(() => {
+    if (sessionToken) {
+      setSecrets((previous) =>
+        previous.includes(sessionToken)
+          ? previous
+          : [...previous, sessionToken],
+      );
+    }
+  }, [sessionToken]);
+
   const explainWithAi = (request: AiSelection) => {
-    const token = mockServer?.sessionToken;
-    const context = token
-      ? request.context.replaceAll(token, "<session-token>")
-      : request.context;
     setAiOpen(true);
-    setAiRequest({ ...request, context, id: (aiRequest?.id ?? 0) + 1 });
+    setAiRequest({ ...request, id: (aiRequest?.id ?? 0) + 1 });
   };
 
   const logger = (
@@ -161,13 +170,14 @@ const Dashboard: React.FC<{
           colorScheme={colorScheme}
           onColorSchemeChange={onColorSchemeChange}
         />
-        <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* Scrolls sideways rather than clipping a panel when the window is too narrow for all of them */}
+        <div className="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             {currentScreen === DashboardScreen.inspector ? inspector : logger}
           </div>
           {/* Hidden, not unmounted: reopening shows the last answer instead of running it again */}
           <div className={aiOpen ? "contents" : "hidden"}>
-            <AiPanel ai={ai} request={aiRequest} />
+            <AiPanel ai={ai} request={aiRequest} secrets={secrets} />
           </div>
         </div>
         <div ref={setSelectionSlot} />

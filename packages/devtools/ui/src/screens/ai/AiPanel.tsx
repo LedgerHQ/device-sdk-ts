@@ -32,14 +32,16 @@ const PRIMARY_BUTTON =
 
 const Chip: React.FC<{
   selected: boolean;
+  disabled: boolean;
   onClick: () => void;
   children: React.ReactNode;
-}> = ({ selected, onClick, children }) => (
+}> = ({ selected, disabled, onClick, children }) => (
   <button
     type="button"
     aria-pressed={selected}
+    disabled={disabled}
     onClick={onClick}
-    className={`cursor-pointer rounded-sm px-10 py-4 body-4 ${selected ? "bg-active-subtle body-4-semi-bold text-active" : "bg-muted-transparent text-muted hover:bg-muted-transparent-hover"}`}
+    className={`cursor-pointer rounded-sm px-10 py-4 body-4 disabled:cursor-default disabled:opacity-50 ${selected ? "bg-active-subtle body-4-semi-bold text-active" : "bg-muted-transparent text-muted hover:bg-muted-transparent-hover"}`}
   >
     {children}
   </button>
@@ -103,10 +105,30 @@ const TurnView: React.FC<{ turn: Turn; running: boolean }> = ({
   </div>
 );
 
+// Session tokens the app shared, and anything that looks like a credential
+const redact = (text: string, secrets: string[]) =>
+  secrets
+    .reduce(
+      (redacted, secret) => redacted.replaceAll(secret, "<redacted>"),
+      text,
+    )
+    .replace(/\b(bearer\s+)[^\s"',;]+/gi, "$1<redacted>")
+    .replace(
+      /\b((?:session[_-]?)?token|api[_-]?key|secret|password|authorization)(["']?\s*[:=]\s*["']?)(?!<redacted>)[^\s"',;&]+/gi,
+      "$1$2<redacted>",
+    );
+
+const redactRequest = (request: AiRequest, secrets: string[]): AiRequest =>
+  request.kind === "explain"
+    ? { ...request, context: redact(request.context, secrets) }
+    : { ...request, question: redact(request.question, secrets) };
+
 export const AiPanel: React.FC<{
   ai: AiClient | undefined;
   request: AiPanelRequest | null;
-}> = ({ ai, request }) => {
+  /** Never sent to Claude: every request is redacted here. */
+  secrets: string[];
+}> = ({ ai, request, secrets }) => {
   const [status, setStatus] = useState<AiStatus | null>(null);
   const [readCode, setReadCode] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -114,6 +136,11 @@ export const AiPanel: React.FC<{
   const [running, setRunning] = useState(false);
   const [question, setQuestion] = useState("");
   const stopRef = useRef<(() => void) | null>(null);
+  // What the last turn asked, so Retry repeats a failed follow-up, not the first question
+  const lastRunRef = useRef<{
+    aiRequest: AiRequest;
+    turnQuestion: string | null;
+  } | null>(null);
 
   const checkStatus = useCallback(
     (refresh = false) => {
@@ -151,29 +178,33 @@ export const AiPanel: React.FC<{
       setTurns((previous) => (reset ? [turn] : [...previous, turn]));
       if (reset) setSessionId(null);
       setRunning(true);
-      stopRef.current = ai.analyze(aiRequest, (event) => {
-        switch (event.type) {
-          case "step":
-            updateLast((t) => ({ ...t, steps: [...t.steps, event.text] }));
-            break;
-          case "text":
-            updateLast((t) => ({ ...t, text: t.text + event.text }));
-            break;
-          case "done":
-            updateLast((t) => ({ ...t, answer: event.answer }));
-            setSessionId(event.sessionId);
-            setRunning(false);
-            stopRef.current = null;
-            break;
-          case "error":
-            updateLast((t) => ({ ...t, error: event.message }));
-            setRunning(false);
-            stopRef.current = null;
-            break;
-        }
-      });
+      lastRunRef.current = { aiRequest, turnQuestion };
+      stopRef.current = ai.analyze(
+        redactRequest(aiRequest, secrets),
+        (event) => {
+          switch (event.type) {
+            case "step":
+              updateLast((t) => ({ ...t, steps: [...t.steps, event.text] }));
+              break;
+            case "text":
+              updateLast((t) => ({ ...t, text: t.text + event.text }));
+              break;
+            case "done":
+              updateLast((t) => ({ ...t, answer: event.answer }));
+              setSessionId(event.sessionId);
+              setRunning(false);
+              stopRef.current = null;
+              break;
+            case "error":
+              updateLast((t) => ({ ...t, error: event.message }));
+              setRunning(false);
+              stopRef.current = null;
+              break;
+          }
+        },
+      );
     },
-    [ai],
+    [ai, secrets],
   );
 
   const lastRequest = useRef<AiPanelRequest | null>(null);
@@ -201,6 +232,16 @@ export const AiPanel: React.FC<{
       explain(request);
     }
   }, [request, ready, explain]);
+
+  const retry = () => {
+    const last = lastRunRef.current;
+    if (!last || last.aiRequest.kind === "explain") {
+      explain(lastRequest.current!);
+      return;
+    }
+    setTurns((previous) => previous.slice(0, -1));
+    run(last.aiRequest, last.turnQuestion, false);
+  };
 
   const stop = () => {
     stopRef.current?.();
@@ -297,7 +338,7 @@ export const AiPanel: React.FC<{
           <button
             type="button"
             className={`self-start ${PRIMARY_BUTTON}`}
-            onClick={() => explain(lastRequest.current!)}
+            onClick={retry}
           >
             Retry
           </button>
@@ -333,12 +374,20 @@ export const AiPanel: React.FC<{
         </div>
         {ready && (
           <div className="flex items-center gap-6 px-16 pt-12">
-            <Chip selected={!readCode} onClick={() => setReadCode(false)}>
+            <Chip
+              selected={!readCode}
+              disabled={running}
+              onClick={() => setReadCode(false)}
+            >
               Quick
             </Chip>
             {status.canReadCode && (
               <WithTooltip label="Let Claude read DMK's source code to confirm the cause. Slower.">
-                <Chip selected={readCode} onClick={() => setReadCode(true)}>
+                <Chip
+                  selected={readCode}
+                  disabled={running}
+                  onClick={() => setReadCode(true)}
+                >
                   Read the code
                 </Chip>
               </WithTooltip>

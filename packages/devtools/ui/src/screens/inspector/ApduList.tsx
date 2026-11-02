@@ -202,16 +202,17 @@ export const ApduList: React.FC<{
   // Read through refs so a new APDU does not re-render every row's select handler
   const visibleRef = useRef(visibleExchanges);
   visibleRef.current = visibleExchanges;
-  const lastSelectedRef = useRef<number | null>(null);
+  // The anchor is an id: the filter moves its index
+  const lastSelectedRef = useRef<string | null>(null);
   const select = useCallback((index: number, extend: boolean) => {
     const rows = visibleRef.current;
     const exchange = rows[index];
     if (!exchange) return;
-    const last = lastSelectedRef.current;
-    lastSelectedRef.current = index;
+    const last = rows.findIndex(({ id }) => id === lastSelectedRef.current);
+    lastSelectedRef.current = exchange.id;
     setSelectedIds((previous) => {
       const next = new Set(previous);
-      if (extend && last !== null) {
+      if (extend && last >= 0) {
         for (let i = Math.min(last, index); i <= Math.max(last, index); i++) {
           next.add(rows[i]!.id);
         }
@@ -225,12 +226,17 @@ export const ApduList: React.FC<{
     (index) => visibleRef.current[index]?.id,
     selectedIds,
     setSelectedIds,
+    (id) => {
+      lastSelectedRef.current = id;
+    },
   );
   const clearSelection = () => {
     setSelectedIds(new Set());
     lastSelectedRef.current = null;
   };
-  const selectedExchanges = exchanges.filter(({ id }) => selectedIds.has(id));
+  const selectedExchanges = sourceExchanges.filter(({ id }) =>
+    selectedIds.has(id),
+  );
 
   const toggle = useCallback((id: string) => {
     setOpenIds((previous) => {

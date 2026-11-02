@@ -70,6 +70,19 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
     window.addEventListener("mouseup", onUp);
   };
 
+  const resizeWithKeys = (event: React.KeyboardEvent) => {
+    const step =
+      event.key === "ArrowRight" ? 16 : event.key === "ArrowLeft" ? -16 : 0;
+    if (step === 0) return;
+    event.preventDefault();
+    const next = Math.min(
+      maxWidth,
+      Math.max(minWidth, width + (edge === "right" ? step : -step)),
+    );
+    setWidth(next);
+    saveWidth(name, next);
+  };
+
   const reset = () => {
     setWidth(defaultWidth);
     saveWidth(name, null);
@@ -86,10 +99,15 @@ export const ResizablePanel: React.FC<ResizablePanelProps> = ({
         role="separator"
         aria-orientation="vertical"
         aria-label="Resize the panel"
-        title="Drag to resize, double-click to reset"
+        aria-valuenow={width}
+        aria-valuemin={minWidth}
+        aria-valuemax={maxWidth}
+        tabIndex={0}
+        title="Drag or use the arrow keys to resize, double-click to reset"
         onMouseDown={startResize}
+        onKeyDown={resizeWithKeys}
         onDoubleClick={reset}
-        className={`absolute inset-y-0 z-10 w-6 cursor-col-resize border-transparent hover:border-active ${edge === "right" ? "-right-3 border-r-2" : "-left-3 border-l-2"}`}
+        className={`absolute inset-y-0 z-10 w-6 cursor-col-resize border-transparent hover:border-active focus-visible:border-active focus-visible:outline-none ${edge === "right" ? "-right-3 border-r-2" : "-left-3 border-l-2"}`}
       />
     </div>
   );

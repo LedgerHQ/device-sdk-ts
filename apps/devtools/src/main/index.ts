@@ -66,8 +66,9 @@ async function forwardMockServerRequest(request: Request): Promise<Response> {
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    // Fits the sessions, a device, its live screen and the AI panel side by side
+    width: 1280,
+    height: 800,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
