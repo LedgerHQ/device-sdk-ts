@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { matchesFilter, parseFilterQuery } from "./filterUtils";
 import { type LogData } from "./types";
@@ -16,7 +16,8 @@ import { type LogData } from "./types";
  */
 export const useSearchState = (logs: LogData[]) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  // The log itself: new logs and the log cap move the indices under it
+  const [currentMatch, setCurrentMatch] = useState<LogData | null>(null);
 
   // Compute matching row indices using filterUtils
   const matchIndices = useMemo(() => {
@@ -31,42 +32,40 @@ export const useSearchState = (logs: LogData[]) => {
       .filter((i) => i !== -1);
   }, [logs, searchQuery]);
 
-  // Reset current match index when matches change
-  useEffect(() => {
-    if (matchIndices.length === 0) {
-      setCurrentMatchIndex(0);
-    } else if (currentMatchIndex >= matchIndices.length) {
-      setCurrentMatchIndex(matchIndices.length - 1);
-    }
-  }, [matchIndices.length, currentMatchIndex]);
+  // Falls back to the first match when the current one is gone
+  const found = matchIndices.findIndex((index) => logs[index] === currentMatch);
+  const currentMatchIndex = Math.max(0, found);
+
+  const goTo = useCallback(
+    (position: number) => {
+      const index = matchIndices[position];
+      if (index !== undefined) setCurrentMatch(logs[index] ?? null);
+    },
+    [logs, matchIndices],
+  );
 
   // Navigate to next match (wraps around)
   const goToNext = useCallback(() => {
-    if (matchIndices.length === 0) return;
-    setCurrentMatchIndex((prev) =>
-      prev >= matchIndices.length - 1 ? 0 : prev + 1,
+    goTo(
+      currentMatchIndex >= matchIndices.length - 1 ? 0 : currentMatchIndex + 1,
     );
-  }, [matchIndices.length]);
+  }, [goTo, currentMatchIndex, matchIndices.length]);
 
   // Navigate to previous match (wraps around)
   const goToPrevious = useCallback(() => {
-    if (matchIndices.length === 0) return;
-    setCurrentMatchIndex((prev) =>
-      prev <= 0 ? matchIndices.length - 1 : prev - 1,
+    goTo(
+      currentMatchIndex <= 0 ? matchIndices.length - 1 : currentMatchIndex - 1,
     );
-  }, [matchIndices.length]);
+  }, [goTo, currentMatchIndex, matchIndices.length]);
 
   // Navigate to first match
-  const goToFirst = useCallback(() => {
-    if (matchIndices.length === 0) return;
-    setCurrentMatchIndex(0);
-  }, [matchIndices.length]);
+  const goToFirst = useCallback(() => goTo(0), [goTo]);
 
   // Navigate to last match
-  const goToLast = useCallback(() => {
-    if (matchIndices.length === 0) return;
-    setCurrentMatchIndex(matchIndices.length - 1);
-  }, [matchIndices.length]);
+  const goToLast = useCallback(
+    () => goTo(matchIndices.length - 1),
+    [goTo, matchIndices.length],
+  );
 
   return {
     searchQuery,

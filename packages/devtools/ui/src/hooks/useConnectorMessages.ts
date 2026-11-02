@@ -134,7 +134,9 @@ export function useConnectorMessages(
       ...connector,
       sendMessage: (type: string, payload: string) => {
         connector.sendMessage(type, payload);
-        setSentMessages((prev) => [...prev, { type, payload }]);
+        setSentMessages((prev) =>
+          [...prev, { type, payload }].slice(-MAX_LOGS),
+        );
       },
     }),
     [connector],
@@ -156,7 +158,7 @@ export function useConnectorMessages(
       const newLogs = pendingLogsRef.current;
       pendingMessages = [];
       pendingLogsRef.current = [];
-      setReceivedMessages((prev) => [...prev, ...messages]);
+      setReceivedMessages((prev) => [...prev, ...messages].slice(-MAX_LOGS));
       if (newLogs.length > 0) {
         setLogs((prev) => [...prev, ...newLogs].slice(-MAX_LOGS));
       }
@@ -193,6 +195,8 @@ export function useConnectorMessages(
     return () => {
       unsubscribe();
       clearTimeout(flushTimer);
+      // Logs queued for this connector must not be flushed by the next one
+      pendingLogsRef.current = [];
     };
   }, [connector]);
 

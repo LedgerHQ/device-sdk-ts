@@ -184,7 +184,7 @@ export const LogPayload: React.FC<{ payload: LogData["payload"] }> = ({
   );
   return (
     <div className="group relative rounded-sm bg-muted px-12 py-8 pr-40 font-mono! body-3">
-      <div className="absolute top-4 right-4 opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="absolute top-4 right-4 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         <CopyButton text={json} label="Copy payload" />
       </div>
       {typeof payload === "string" ? (

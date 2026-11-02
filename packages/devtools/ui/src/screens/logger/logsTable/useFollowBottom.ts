@@ -48,7 +48,8 @@ export const useFollowBottom = (follow: boolean) => {
     const observer = new MutationObserver(() => {
       if (atBottomRef.current) scrollToBottom();
     });
-    observer.observe(content, { childList: true, subtree: true });
+    // New rows only: a row opening or a copy icon changing must not move the reader
+    observer.observe(content, { childList: true });
     return () => observer.disconnect();
   }, [follow, scrollToBottom]);
 

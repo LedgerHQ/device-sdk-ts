@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -15,6 +16,18 @@ import { useFollowBottom } from "./useFollowBottom";
 
 // Like Dozzle, only a window of the newest logs is rendered; older ones are a click away
 const WINDOW_STEP = 500;
+
+// A key per log rather than per position, so rows keep their DOM and state when logs shift
+const rowKeys = new WeakMap<LogData, number>();
+let nextRowKey = 0;
+const rowKey = (log: LogData) => {
+  let key = rowKeys.get(log);
+  if (key === undefined) {
+    key = nextRowKey++;
+    rowKeys.set(log, key);
+  }
+  return key;
+};
 
 type LogsTableProps = {
   data: Array<LogData>;
@@ -42,14 +55,6 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   onHorizontalScroll,
 }) => {
   const [expandedLogs, setExpandedLogs] = useState<Set<LogData>>(new Set());
-  const toggleLog = useCallback((log: LogData) => {
-    setExpandedLogs((previous) => {
-      const next = new Set(previous);
-      if (!next.delete(log)) next.add(log);
-      return next;
-    });
-  }, []);
-
   const {
     containerRef,
     contentRef,
@@ -59,17 +64,43 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     scrollToBottom,
   } = useFollowBottom(follow);
 
+  // Opening a row means reading it: stop following, or the next log would scroll it away
+  const toggleLog = useCallback(
+    (log: LogData) => {
+      setAtBottom(false);
+      setExpandedLogs((previous) => {
+        const next = new Set(previous);
+        if (!next.delete(log)) next.add(log);
+        return next;
+      });
+    },
+    [setAtBottom],
+  );
+
+  // A remount starts scrolled to the left: so must the header
+  useEffect(() => {
+    onHorizontalScroll(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [windowSize, setWindowSize] = useState(WINDOW_STEP);
   // While the reader is scrolled up the rows on screen stay put: new logs are counted, not rendered
-  const [pinned, setPinned] = useState<{
-    first: LogData;
-    last: LogData;
-  } | null>(null);
+  const [pinned, setPinned] = useState<Set<LogData> | null>(null);
 
-  const pinnedEnd = pinned ? data.indexOf(pinned.last) : -1;
-  // The log cap may have dropped the window's first rows: keep what is left of it
-  const pinnedStart = pinned ? Math.max(0, data.indexOf(pinned.first)) : -1;
-  const isPinned = pinnedEnd >= 0 && pinnedEnd >= pinnedStart;
+  // The log cap or a filter may remove some of the pinned rows: keep the span of those left
+  const [pinnedStart, pinnedEnd] = useMemo(() => {
+    let first = -1;
+    let last = -1;
+    if (pinned) {
+      data.forEach((log, index) => {
+        if (!pinned.has(log)) return;
+        if (first < 0) first = index;
+        last = index;
+      });
+    }
+    return [first, last];
+  }, [data, pinned]);
+  const isPinned = pinnedStart >= 0;
   const [start, end] = isPinned
     ? [pinnedStart, pinnedEnd + 1]
     : newestFirst
@@ -84,9 +115,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     if (atBottom) {
       setPinned(null);
     } else if (follow && !newestFirst && rows.length > 0) {
-      setPinned(
-        (previous) => previous ?? { first: rows[0]!, last: rows.at(-1)! },
-      );
+      setPinned((previous) => previous ?? new Set(rows));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [atBottom]);
@@ -99,10 +128,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
       : 0;
     flushSync(() => {
       if (isPinned) {
-        setPinned({
-          first: data[Math.max(0, start - WINDOW_STEP)]!,
-          last: data[end - 1]!,
-        });
+        setPinned(new Set(data.slice(Math.max(0, start - WINDOW_STEP), end)));
       } else {
         setWindowSize((size) => size + WINDOW_STEP);
       }
@@ -142,27 +168,32 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     if (newestFirst) {
       setWindowSize(scrollToIndex + 1);
     } else {
-      setPinned({
-        first: data[Math.max(0, scrollToIndex - WINDOW_STEP / 2)]!,
-        last: data[Math.min(data.length - 1, scrollToIndex + WINDOW_STEP / 2)]!,
-      });
+      setPinned(
+        new Set(
+          data.slice(
+            Math.max(0, scrollToIndex - WINDOW_STEP / 2),
+            scrollToIndex + WINDOW_STEP / 2 + 1,
+          ),
+        ),
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollToIndex]);
 
-  const scrolledToIndexRef = useRef<number | undefined>(undefined);
+  // The log, not its index: new logs shift indices without moving the match
+  const scrolledToLogRef = useRef<LogData | undefined>(undefined);
   useLayoutEffect(() => {
     if (scrollToIndex === undefined || scrollToIndex < 0) {
       // Forget the last match, so finding it again scrolls to it again
-      scrolledToIndexRef.current = undefined;
+      scrolledToLogRef.current = undefined;
       return;
     }
-    if (scrolledToIndexRef.current === scrollToIndex) return;
+    if (scrolledToLogRef.current === data[scrollToIndex]) return;
     const row = contentRef.current?.querySelector(
       `[data-index="${scrollToIndex}"]`,
     );
     if (!row) return;
-    scrolledToIndexRef.current = scrollToIndex;
+    scrolledToLogRef.current = data[scrollToIndex];
     setAtBottom(false);
     row.scrollIntoView({ block: "center" });
   });
@@ -192,7 +223,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               {!newestFirst && olderButton}
               {rows.map((log, offset) => (
                 <LogRow
-                  key={start + offset}
+                  key={rowKey(log)}
                   log={log}
                   index={start + offset}
                   highlighted={highlightedIndices?.has(start + offset) ?? false}
@@ -216,6 +247,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                 // Hidden rather than removed: a height change here would move the reader back to the bottom
                 <div
                   className={`flex h-24 items-center justify-center gap-4 ${atBottom ? "" : "invisible"}`}
+                  role="status"
                   aria-label={atBottom ? "Following new logs" : undefined}
                 >
                   {[

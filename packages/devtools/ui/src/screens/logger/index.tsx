@@ -76,9 +76,18 @@ export const Logger: React.FC<Props> = ({
   const filterInputRef = useRef<HTMLInputElement>(null);
   const headerScrollRef = useRef<HTMLDivElement>(null);
 
+  const rootRef = useRef<HTMLDivElement>(null);
+
   // Keyboard shortcuts (Ctrl/Cmd+F, Ctrl/Cmd+K, Ctrl/Cmd+G / Ctrl/Cmd+Shift+G)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const root = rootRef.current;
+      // Only while the Logger is on screen, and never over typing in another view's field
+      if (!root || root.offsetParent === null) return;
+      const field = (e.target as Element | null)?.closest?.(
+        "input, textarea, select, [contenteditable='true']",
+      );
+      if (field && !root.contains(field)) return;
       // Ctrl/Cmd+F to focus search
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
         e.preventDefault();
@@ -151,7 +160,7 @@ export const Logger: React.FC<Props> = ({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div ref={rootRef} className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <LoggerToolbar
         clearLogs={onClickClearLogs}
         downloadLogs={downloadLogs}

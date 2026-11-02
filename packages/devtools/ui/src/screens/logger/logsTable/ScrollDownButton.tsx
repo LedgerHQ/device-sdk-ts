@@ -19,7 +19,8 @@ export const ScrollDownButton: React.FC<ScrollDownButtonProps> = ({
   <WithTooltip
     label="Scroll to latest logs"
     side="left"
-    className={`absolute right-16 bottom-16 transition-opacity duration-300 ${enabled ? "pointer-events-none opacity-0" : "opacity-100"}`}
+    // Invisible once hidden, so it also leaves the tab order
+    className={`absolute right-16 bottom-16 transition-[opacity,visibility] duration-300 ${enabled ? "invisible opacity-0" : "visible opacity-100"}`}
   >
     <IconButton
       aria-label="Scroll to latest logs"

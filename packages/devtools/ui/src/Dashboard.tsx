@@ -118,7 +118,29 @@ const Dashboard: React.FC<{
           <SplitView direction="vertical" first={logger} second={inspector} />
         );
       default:
-        return currentScreen === DashboardScreen.inspector ? inspector : logger;
+        // Both stay mounted, so switching tabs keeps the Logger's pause, search and filters
+        return (
+          <>
+            <div
+              className={
+                currentScreen === DashboardScreen.inspector
+                  ? "hidden"
+                  : "contents"
+              }
+            >
+              {logger}
+            </div>
+            <div
+              className={
+                currentScreen === DashboardScreen.inspector
+                  ? "contents"
+                  : "hidden"
+              }
+            >
+              {inspector}
+            </div>
+          </>
+        );
     }
   })();
 
