@@ -82,7 +82,8 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    // Links can come from the connected app: never hand another scheme to the OS
+    if (/^https?:\/\//i.test(details.url)) shell.openExternal(details.url)
     return { action: 'deny' }
   })
 

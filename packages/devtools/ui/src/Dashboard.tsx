@@ -74,10 +74,13 @@ const Dashboard: React.FC<{
     sendApdu,
   } = useConnectorMessages(connector);
 
-  // The mock server website joins the session given in the URL fragment
-  const mockServerWebsiteUrl = mockServer
-    ? `${mockServer.url.replace(/\/$/, "")}/${mockServer.sessionToken ? `#token=${mockServer.sessionToken}` : ""}`
-    : null;
+  // The mock server website joins the session given in the URL fragment. Without
+  // the app's token it would open another session, and the URL comes from the
+  // app, so only a website is linked
+  const mockServerWebsiteUrl =
+    mockServer?.sessionToken && /^https?:\/\//i.test(mockServer.url)
+      ? `${mockServer.url.replace(/\/$/, "")}/#token=${mockServer.sessionToken}`
+      : null;
 
   const [currentScreen, setCurrentScreen] = useState<DashboardScreen>(
     DashboardScreen.logs,
