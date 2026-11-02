@@ -6,14 +6,17 @@ import {
   useTheme,
 } from "@ledgerhq/lumen-ui-react";
 
-import { DashboardFooter } from "./components/DashboardFooter";
 import {
   DashboardNavigationBar,
   DashboardScreen,
 } from "./components/DashboardNavigationBar";
-import { DebugDrawer } from "./components/DebugDrawer";
 import { useConnectorMessages } from "./hooks/useConnectorMessages";
 import { AiPanel, type AiPanelRequest } from "./screens/ai/AiPanel";
+import {
+  AiAvailable,
+  SelectionBarSlot,
+  SelectionBarVisible,
+} from "./screens/ai/SelectionBar";
 import { type AiClient, type AiSelection } from "./screens/ai/types";
 import { Inspector } from "./screens/inspector";
 import { Logger } from "./screens/logger";
@@ -53,8 +56,6 @@ const Dashboard: React.FC<{
   }, [colorScheme]);
 
   const {
-    receivedMessages,
-    sentMessages,
     logs,
     connectedDevices,
     sessionStates,
@@ -65,7 +66,6 @@ const Dashboard: React.FC<{
     isInspectorConnected,
     mockServer,
     apduResponses,
-    sendMessage,
     clearLogs,
     startListening,
     stopListening,
@@ -90,15 +90,26 @@ const Dashboard: React.FC<{
   const [showLiveScreen, setShowLiveScreen] = useState(true);
   const [showSessions, setShowSessions] = useState(true);
   const [aiRequest, setAiRequest] = useState<AiPanelRequest | null>(null);
+  const [selectionSlot, setSelectionSlot] = useState<HTMLDivElement | null>(
+    null,
+  );
+  // Every token the app shared, so logs from an earlier session are redacted too
+  const [secrets, setSecrets] = useState<string[]>([]);
+  const sessionToken = mockServer?.sessionToken;
+  useEffect(() => {
+    if (sessionToken) {
+      setSecrets((previous) =>
+        previous.includes(sessionToken)
+          ? previous
+          : [...previous, sessionToken],
+      );
+    }
+  }, [sessionToken]);
+
   const explainWithAi = (request: AiSelection) => {
-    const token = mockServer?.sessionToken;
-    const context = token
-      ? request.context.replaceAll(token, "<session-token>")
-      : request.context;
     setAiOpen(true);
-    setAiRequest({ ...request, context, id: (aiRequest?.id ?? 0) + 1 });
+    setAiRequest({ ...request, id: (aiRequest?.id ?? 0) + 1 });
   };
-  const [isDebugOpen, setIsDebugOpen] = useState(false);
 
   const logger = (
     <Logger
@@ -134,70 +145,77 @@ const Dashboard: React.FC<{
   );
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-canvas text-base">
-      <DashboardNavigationBar
-        currentScreen={currentScreen}
-        onScreenChange={setCurrentScreen}
-        aiOpen={aiOpen}
-        onToggleAi={() => setAiOpen(!aiOpen)}
-        sessions={
-          currentScreen === DashboardScreen.inspector
-            ? {
-                shown: showSessions,
-                onToggle: () => setShowSessions(!showSessions),
-              }
-            : undefined
-        }
-        liveScreen={
-          currentScreen === DashboardScreen.inspector && mockServer
-            ? {
-                shown: showLiveScreen,
-                onToggle: () => setShowLiveScreen(!showLiveScreen),
-              }
-            : undefined
-        }
-        isLoggerConnected={isLoggerConnected}
-        isInspectorConnected={isInspectorConnected}
-        mockServerWebsiteUrl={mockServerWebsiteUrl}
-        colorScheme={colorScheme}
-        onColorSchemeChange={onColorSchemeChange}
-      />
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          {/* Both stay mounted, so switching tabs keeps the Logger's pause, search and filters */}
-            <div
-              className={
-                currentScreen === DashboardScreen.inspector
-                  ? "hidden"
-                  : "contents"
-              }
-            >
-              {logger}
+    <AiAvailable.Provider value={ai !== undefined}>
+      <SelectionBarSlot.Provider value={selectionSlot}>
+        <div className="flex h-screen flex-col overflow-hidden bg-canvas text-base">
+          <DashboardNavigationBar
+            currentScreen={currentScreen}
+            onScreenChange={setCurrentScreen}
+            aiOpen={aiOpen}
+            onToggleAi={() => setAiOpen(!aiOpen)}
+            aiAvailable={ai !== undefined}
+            sessions={
+              currentScreen === DashboardScreen.inspector
+                ? {
+                    shown: showSessions,
+                    onToggle: () => setShowSessions(!showSessions),
+                  }
+                : undefined
+            }
+            liveScreen={
+              currentScreen === DashboardScreen.inspector && mockServer
+                ? {
+                    shown: showLiveScreen,
+                    onToggle: () => setShowLiveScreen(!showLiveScreen),
+                  }
+                : undefined
+            }
+            isLoggerConnected={isLoggerConnected}
+            isInspectorConnected={isInspectorConnected}
+            mockServerWebsiteUrl={mockServerWebsiteUrl}
+            colorScheme={colorScheme}
+            onColorSchemeChange={onColorSchemeChange}
+          />
+          {/* Scrolls sideways rather than clipping a panel when the window is too narrow for all of them */}
+          <div className="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              {/* Both stay mounted, so switching tabs keeps the Logger's pause, search and filters */}
+              <div
+                className={
+                  currentScreen === DashboardScreen.inspector
+                    ? "hidden"
+                    : "contents"
+                }
+              >
+                <SelectionBarVisible.Provider
+                  value={currentScreen !== DashboardScreen.inspector}
+                >
+                  {logger}
+                </SelectionBarVisible.Provider>
+              </div>
+              <div
+                className={
+                  currentScreen === DashboardScreen.inspector
+                    ? "contents"
+                    : "hidden"
+                }
+              >
+                <SelectionBarVisible.Provider
+                  value={currentScreen === DashboardScreen.inspector}
+                >
+                  {inspector}
+                </SelectionBarVisible.Provider>
+              </div>
             </div>
-            <div
-              className={
-                currentScreen === DashboardScreen.inspector
-                  ? "contents"
-                  : "hidden"
-              }
-            >
-              {inspector}
+            {/* Hidden, not unmounted: reopening shows the last answer instead of running it again */}
+            <div className={aiOpen ? "contents" : "hidden"}>
+              <AiPanel ai={ai} request={aiRequest} secrets={secrets} />
             </div>
+          </div>
+          <div ref={setSelectionSlot} />
         </div>
-        {aiOpen && <AiPanel ai={ai} request={aiRequest} />}
-      </div>
-      <DashboardFooter
-        isDebugOpen={isDebugOpen}
-        onToggleDebug={() => setIsDebugOpen(!isDebugOpen)}
-      />
-      <DebugDrawer
-        isOpen={isDebugOpen}
-        onClose={() => setIsDebugOpen(false)}
-        sentMessages={sentMessages}
-        receivedMessages={receivedMessages}
-        sendMessage={sendMessage}
-      />
-    </div>
+      </SelectionBarSlot.Provider>
+    </AiAvailable.Provider>
   );
 };
 
