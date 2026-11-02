@@ -22,41 +22,42 @@ All other scripts (`discover`, `set-private`, `pin-deps`, `bump`, `cleanup`, `sl
 
 Use these short names in the `--packages` flag. The user may use either aliases or full names.
 
-| Alias                   | Full package name                                              |
-| ----------------------- | -------------------------------------------------------------- |
-| `dmk`                   | `@ledgerhq/device-management-kit`                              |
-| `signer-eth`            | `@ledgerhq/device-signer-kit-ethereum`                         |
-| `signer-btc`            | `@ledgerhq/device-signer-kit-bitcoin`                          |
-| `signer-btc-legacy`     | `@ledgerhq/device-signer-kit-bitcoin-legacy`                   |
-| `signer-sol`            | `@ledgerhq/device-signer-kit-solana`                           |
-| `signer-aleo`           | `@ledgerhq/device-signer-kit-aleo`                             |
-| `signer-cosmos`         | `@ledgerhq/device-signer-kit-cosmos`                           |
-| `signer-hyperliquid`    | `@ledgerhq/device-signer-kit-hyperliquid`                      |
-| `signer-concordium`     | `@ledgerhq/device-signer-kit-concordium`                       |
-| `signer-polkadot`       | `@ledgerhq/device-signer-kit-polkadot`                         |
-| `signer-zcash`          | `@ledgerhq/device-signer-kit-zcash`                            |
-| `signer-utils`          | `@ledgerhq/signer-utils`                                       |
-| `signer-xrp`            | `@ledgerhq/device-signer-kit-xrp`                              |
-| `context-module`        | `@ledgerhq/context-module`                                     |
-| `transport-web-hid`     | `@ledgerhq/device-transport-kit-web-hid`                       |
-| `transport-web-ble`     | `@ledgerhq/device-transport-kit-web-ble`                       |
-| `transport-rn-ble`      | `@ledgerhq/device-transport-kit-react-native-ble`              |
-| `transport-rn-hid`      | `@ledgerhq/device-transport-kit-react-native-hid`              |
-| `transport-node-hid`    | `@ledgerhq/device-transport-kit-node-hid`                      |
-| `transport-mockserver`  | `@ledgerhq/device-transport-kit-mockserver`                    |
-| `transport-speculos`    | `@ledgerhq/device-transport-kit-speculos`                      |
-| `mockserver-client`     | `@ledgerhq/device-mockserver-client`                           |
-| `mockserver-react`      | `@ledgerhq/device-mockserver-react`                            |
-| `mockserver-react-core` | `@ledgerhq/device-mockserver-react-core`                       |
-| `speculos-controller`   | `@ledgerhq/speculos-device-controller`                         |
-| `keyring-protocol`      | `@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol`     |
-| `ledger-wallet`         | `@ledgerhq/dmk-ledger-wallet`                                  |
-| `devtools-core`         | `@ledgerhq/device-management-kit-devtools-core`                |
-| `devtools-rozenite`     | `@ledgerhq/device-management-kit-devtools-rozenite`            |
-| `devtools-ui`           | `@ledgerhq/device-management-kit-devtools-ui`                  |
-| `devtools-ws-common`    | `@ledgerhq/device-management-kit-devtools-websocket-common`    |
-| `devtools-ws-connector` | `@ledgerhq/device-management-kit-devtools-websocket-connector` |
-| `devtools-ws-server`    | `@ledgerhq/device-management-kit-devtools-websocket-server`    |
+| Alias                     | Full package name                                              |
+| ------------------------- | -------------------------------------------------------------- |
+| `dmk`                     | `@ledgerhq/device-management-kit`                              |
+| `signer-eth`              | `@ledgerhq/device-signer-kit-ethereum`                         |
+| `signer-btc`              | `@ledgerhq/device-signer-kit-bitcoin`                          |
+| `signer-btc-legacy`       | `@ledgerhq/device-signer-kit-bitcoin-legacy`                   |
+| `signer-sol`              | `@ledgerhq/device-signer-kit-solana`                           |
+| `signer-aleo`             | `@ledgerhq/device-signer-kit-aleo`                             |
+| `signer-cosmos`           | `@ledgerhq/device-signer-kit-cosmos`                           |
+| `signer-hyperliquid`      | `@ledgerhq/device-signer-kit-hyperliquid`                      |
+| `signer-concordium`       | `@ledgerhq/device-signer-kit-concordium`                       |
+| `signer-polkadot`         | `@ledgerhq/device-signer-kit-polkadot`                         |
+| `signer-zcash`            | `@ledgerhq/device-signer-kit-zcash`                            |
+| `signer-utils`            | `@ledgerhq/signer-utils`                                       |
+| `signer-xrp`              | `@ledgerhq/device-signer-kit-xrp`                              |
+| `context-module`          | `@ledgerhq/context-module`                                     |
+| `transport-web-hid`       | `@ledgerhq/device-transport-kit-web-hid`                       |
+| `transport-web-ble`       | `@ledgerhq/device-transport-kit-web-ble`                       |
+| `transport-rn-ble`        | `@ledgerhq/device-transport-kit-react-native-ble`              |
+| `transport-rn-hid`        | `@ledgerhq/device-transport-kit-react-native-hid`              |
+| `transport-node-hid`      | `@ledgerhq/device-transport-kit-node-hid`                      |
+| `transport-mockserver`    | `@ledgerhq/device-transport-kit-mockserver`                    |
+| `transport-speculos`      | `@ledgerhq/device-transport-kit-speculos`                      |
+| `mockserver-client`       | `@ledgerhq/device-mockserver-client`                           |
+| `mockserver-react`        | `@ledgerhq/device-mockserver-react`                            |
+| `mockserver-react-core`   | `@ledgerhq/device-mockserver-react-core`                       |
+| `mockserver-react-native` | `@ledgerhq/device-mockserver-react-native`                     |
+| `speculos-controller`     | `@ledgerhq/speculos-device-controller`                         |
+| `keyring-protocol`        | `@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol`     |
+| `ledger-wallet`           | `@ledgerhq/dmk-ledger-wallet`                                  |
+| `devtools-core`           | `@ledgerhq/device-management-kit-devtools-core`                |
+| `devtools-rozenite`       | `@ledgerhq/device-management-kit-devtools-rozenite`            |
+| `devtools-ui`             | `@ledgerhq/device-management-kit-devtools-ui`                  |
+| `devtools-ws-common`      | `@ledgerhq/device-management-kit-devtools-websocket-common`    |
+| `devtools-ws-connector`   | `@ledgerhq/device-management-kit-devtools-websocket-connector` |
+| `devtools-ws-server`      | `@ledgerhq/device-management-kit-devtools-websocket-server`    |
 
 ## Release flow (step by step)
 
