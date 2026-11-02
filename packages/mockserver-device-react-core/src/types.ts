@@ -44,5 +44,19 @@ export type DeviceScreenState =
   | { kind: "loading" }
   /** No app runs, so no Speculos instance: the device record stands in. */
   | { kind: "os-info"; device: Device }
+  /** `src` is whatever the platform's `toImageSource` made of the frame. */
   | { kind: "image"; src: string; input: DeviceScreenInput }
   | { kind: "error"; message: string };
+
+/**
+ * What a screen needs from the platform drawing it. Polling restarts whenever
+ * this object changes, so hosts pass a module-level constant.
+ */
+export interface ScreenPlatform {
+  /** Turns a screenshot into a source the platform's image element shows. */
+  toImageSource(screenshot: Blob): Promise<string>;
+  /** Frees a source once a newer frame or no frame replaces it. */
+  releaseImageSource?(source: string): void;
+  /** Polling skips its turn while the screen is out of sight. */
+  isHidden(): boolean;
+}

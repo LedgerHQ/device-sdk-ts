@@ -4,6 +4,7 @@ import {
   type DeviceScreenInput,
   type DeviceScreenState,
   type ScreenApi,
+  type ScreenPlatform,
 } from "./types";
 
 const SCREEN_POLL_MS = 500;
@@ -20,10 +21,11 @@ const describe = (error: unknown): string =>
 export function useScreenPolling(
   api: ScreenApi,
   polling: boolean,
+  platform: ScreenPlatform,
 ): DeviceScreenState {
   const [state, setState] = useState<DeviceScreenState>({ kind: "loading" });
 
-  const objectUrl = useRef<string | null>(null);
+  const imageSource = useRef<string | null>(null);
   const inFlight = useRef(false);
   const isLive = useRef(false);
   isLive.current = state.kind === "image";
@@ -38,12 +40,12 @@ export function useScreenPolling(
     setState({ kind: "error", message: describe(error) });
   }, []);
 
-  const releaseObjectUrl = useCallback(() => {
-    if (objectUrl.current) {
-      URL.revokeObjectURL(objectUrl.current);
-      objectUrl.current = null;
+  const releaseImageSource = useCallback(() => {
+    if (imageSource.current) {
+      platform.releaseImageSource?.(imageSource.current);
+      imageSource.current = null;
     }
-  }, []);
+  }, [platform]);
 
   /**
    * Input handlers refresh straight after acting. Going through a ref keeps
@@ -71,13 +73,28 @@ export function useScreenPolling(
       if (stale()) return;
       liveFailures.current = 0;
       if (blob) {
-        releaseObjectUrl();
-        objectUrl.current = URL.createObjectURL(blob);
-        setState({ kind: "image", src: objectUrl.current, input });
+        const source = await platform.toImageSource(blob);
+        if (stale()) {
+          platform.releaseImageSource?.(source);
+          return;
+        }
+        if (source !== imageSource.current) {
+          releaseImageSource();
+          imageSource.current = source;
+        }
+        // A source made from the bytes, like a data URI, repeats while the
+        // screen holds still; keeping the state then skips a re-render.
+        setState((current) =>
+          current.kind === "image" &&
+          current.src === source &&
+          current.input === input
+            ? current
+            : { kind: "image", src: source, input },
+        );
       } else {
         const idle = await api.idle?.();
         if (stale()) return;
-        releaseObjectUrl();
+        releaseImageSource();
         setState(idle ?? { kind: "error", message: "No screen to capture" });
       }
     } catch (error) {
@@ -85,14 +102,14 @@ export function useScreenPolling(
     } finally {
       inFlight.current = false;
     }
-  }, [api, input, fail, releaseObjectUrl]);
+  }, [api, platform, input, fail, releaseImageSource]);
   refreshRef.current = () => void refresh();
 
   useEffect(() => {
     if (!polling) {
-      // Drop the frame rather than keep a revoked object URL around, which
+      // Drop the frame rather than keep a released source around, which
       // would flash a broken image when the panel reopens.
-      releaseObjectUrl();
+      releaseImageSource();
       setState({ kind: "loading" });
       return;
     }
@@ -101,7 +118,7 @@ export function useScreenPolling(
     let cancelled = false;
 
     const tick = async () => {
-      if (!document.hidden) await refresh();
+      if (!platform.isHidden()) await refresh();
       if (cancelled) return;
       timer = setTimeout(
         () => void tick(),
@@ -115,9 +132,9 @@ export function useScreenPolling(
       clearTimeout(timer);
       generation.current++;
     };
-  }, [polling, refresh, releaseObjectUrl]);
+  }, [polling, platform, refresh, releaseImageSource]);
 
-  useEffect(() => releaseObjectUrl, [releaseObjectUrl]);
+  useEffect(() => releaseImageSource, [releaseImageSource]);
 
   return state;
 }
