@@ -37,6 +37,8 @@
     "mockserver-ui": "pnpm --filter @ledgerhq/device-mock-server-ui",
     "mockserver-client": "pnpm --filter @ledgerhq/device-mockserver-client",
     "mockserver-react": "pnpm --filter @ledgerhq/device-mockserver-react",
+    "mockserver-react-core": "pnpm --filter @ledgerhq/device-mockserver-react-core",
+    "mockserver-react-native": "pnpm --filter @ledgerhq/device-mockserver-react-native",
     "keyring-protocol": "pnpm --filter @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
     "transports": "pnpm --filter @ledgerhq/device-transport-*",

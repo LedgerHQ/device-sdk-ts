@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React from "react";
 import {
   type SpeculosAction,
   type SpeculosButton,
 } from "@ledgerhq/device-mockserver-client";
+import { useButtonHold } from "@ledgerhq/device-mockserver-react-core";
 
 const BUTTONS: { button: SpeculosButton; label: string }[] = [
   { button: "left", label: "Left" },
@@ -12,20 +13,6 @@ const BUTTONS: { button: SpeculosButton; label: string }[] = [
 
 const isActivationKey = (key: string) => key === " " || key === "Enter";
 
-/**
- * How long the pointer stays down before the interaction counts as a hold.
- * A click sent as a separate press and release is two requests the device can
- * receive in either order, and a chord of both buttons is only seen when they
- * are down together as its event loop samples them, so a click that beats the
- * loop is dropped. One press-and-release leaves the timing to the emulator.
- */
-const HOLD_THRESHOLD_MS = 150;
-
-interface Held {
-  button: SpeculosButton;
-  pressed: boolean;
-}
-
 type DeviceScreenButtonsProps = {
   onPress: (button: SpeculosButton, action: SpeculosAction) => void;
 };
@@ -33,47 +20,7 @@ type DeviceScreenButtonsProps = {
 export const DeviceScreenButtons: React.FC<DeviceScreenButtonsProps> = ({
   onPress,
 }) => {
-  const held = useRef<Held | null>(null);
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pressRef = useRef(onPress);
-  pressRef.current = onPress;
-
-  const clearHoldTimer = useCallback(() => {
-    if (!holdTimer.current) return;
-    clearTimeout(holdTimer.current);
-    holdTimer.current = null;
-  }, []);
-
-  const hold = useCallback((button: SpeculosButton) => {
-    if (held.current) return;
-    const entry: Held = { button, pressed: false };
-    held.current = entry;
-    holdTimer.current = setTimeout(() => {
-      entry.pressed = true;
-      pressRef.current(button, "press");
-    }, HOLD_THRESHOLD_MS);
-  }, []);
-
-  const release = useCallback(() => {
-    const entry = held.current;
-    if (!entry) return;
-    held.current = null;
-    clearHoldTimer();
-    pressRef.current(
-      entry.button,
-      entry.pressed ? "release" : "press-and-release",
-    );
-  }, [clearHoldTimer]);
-
-  useEffect(
-    () => () => {
-      const entry = held.current;
-      held.current = null;
-      clearHoldTimer();
-      if (entry?.pressed) pressRef.current(entry.button, "release");
-    },
-    [clearHoldTimer],
-  );
+  const { hold, release } = useButtonHold(onPress);
 
   // Plain buttons: Lumen's Button does not report press and release apart,
   // and a hold needs both.

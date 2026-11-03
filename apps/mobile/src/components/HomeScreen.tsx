@@ -1,5 +1,6 @@
 import React from "react";
-import { Image } from "react-native";
+import { Image, ScrollView } from "react-native";
+import { MockServerSessionPanel } from "_components/MockServerSessionPanel";
 import {
   RootScreens,
   type RootStackParamList,
@@ -22,39 +23,46 @@ const CtaButton = styled(Button)`
 export const HomeScreen = () => {
   const { navigate } = useNavigation<StackNavigationProp<RootStackParamList>>();
   return (
-    <Flex
-      flex={1}
-      backgroundColor="background.main"
-      alignItems="center"
-      justifyContent="center"
-      py={12}>
-      <Image
-        source={require("../assets/devices_crop.png")}
-        resizeMode="contain"
-        style={{ width: 250, height: 200 }}
-      />
-      <Title variant="h5">Ledger Device Management Kit</Title>
-      <Text variant="body" color="neutral.c70">
-        Use this application to test Ledger hardware device features.
-      </Text>
+    <ScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ flexGrow: 1 }}
+      keyboardShouldPersistTaps="handled">
       <Flex
         flex={1}
-        flexDirection="column"
+        backgroundColor="background.main"
+        alignItems="center"
         justifyContent="center"
-        alignItems="center">
-        <CtaButton
-          size="medium"
-          type="color"
-          onPress={() => navigate(RootScreens.ConnectDevice)}>
-          Connect to a device
-        </CtaButton>
-        <CtaButton
-          size="medium"
-          type="color"
-          onPress={() => navigate(RootScreens.DevToolsTest)}>
-          DevTools Test
-        </CtaButton>
+        px={6}
+        py={12}>
+        <Image
+          source={require("../assets/devices_crop.png")}
+          resizeMode="contain"
+          style={{ width: 250, height: 160 }}
+        />
+        <Title variant="h5">Ledger Device Management Kit</Title>
+        <Text variant="body" color="neutral.c70">
+          Use this application to test Ledger hardware device features.
+        </Text>
+        <Flex
+          flex={1}
+          flexDirection="column"
+          justifyContent="center"
+          alignItems="center">
+          <CtaButton
+            size="medium"
+            type="color"
+            onPress={() => navigate(RootScreens.ConnectDevice)}>
+            Connect to a device
+          </CtaButton>
+          <CtaButton
+            size="medium"
+            type="color"
+            onPress={() => navigate(RootScreens.DevToolsTest)}>
+            DevTools Test
+          </CtaButton>
+        </Flex>
+        <MockServerSessionPanel />
       </Flex>
-    </Flex>
+    </ScrollView>
   );
 };

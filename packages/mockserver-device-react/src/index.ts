@@ -4,6 +4,10 @@ export {
   MockServerDevice,
   type MockServerDeviceProps,
 } from "./MockServerDevice";
-export { mockServerScreenApi } from "./mockServerScreenApi";
-export type { DeviceScreenState, MockServerClient, ScreenApi } from "./types";
-export { useMockServerDevice } from "./useMockServerDevice";
+export {
+  type DeviceScreenState,
+  type MockServerClient,
+  mockServerScreenApi,
+  type ScreenApi,
+  useMockServerDevice,
+} from "@ledgerhq/device-mockserver-react-core";
