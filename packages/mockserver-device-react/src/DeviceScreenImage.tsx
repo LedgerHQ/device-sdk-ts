@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { type SpeculosAction } from "@ledgerhq/device-mockserver-client";
+import {
+  toScreenPoint,
+  useTouchHold,
+} from "@ledgerhq/device-mockserver-react-core";
 
 import { ScreenFrame } from "./ScreenFrame";
-
-interface Point {
-  readonly x: number;
-  readonly y: number;
-}
 
 type DeviceScreenImageProps = {
   src: string;
@@ -20,63 +19,32 @@ export const DeviceScreenImage: React.FC<DeviceScreenImageProps> = ({
 }) => {
   const imageRef = useRef<HTMLImageElement>(null);
   const [undecodable, setUndecodable] = useState(false);
-  /** Where the finger went down, so the release lands on the same spot. */
-  const held = useRef<Point | null>(null);
-  const touchRef = useRef(onTouch);
-  touchRef.current = onTouch;
+  const touch = useTouchHold(onTouch);
 
   useEffect(() => setUndecodable(false), [src]);
 
-  const toDevicePoint = (
-    event: React.PointerEvent<HTMLImageElement>,
-  ): Point | null => {
-    const image = imageRef.current;
-    if (!image?.naturalWidth || !image.naturalHeight) return null;
-    const rect = image.getBoundingClientRect();
-    if (!rect.width || !rect.height) return null;
-    // The far edge maps to the pixel count itself, one past the last pixel.
-    const clamp = (value: number, size: number) =>
-      Math.min(Math.max(Math.round(value), 0), size - 1);
-    return {
-      x: clamp(
-        ((event.clientX - rect.left) / rect.width) * image.naturalWidth,
-        image.naturalWidth,
-      ),
-      y: clamp(
-        ((event.clientY - rect.top) / rect.height) * image.naturalHeight,
-        image.naturalHeight,
-      ),
-    };
-  };
-
   const handlePointerDown = (event: React.PointerEvent<HTMLImageElement>) => {
-    if (!onTouch || held.current || event.button !== 0) return;
-    const point = toDevicePoint(event);
-    if (!point) return;
+    const image = imageRef.current;
+    if (!onTouch || !image || event.button !== 0) return;
+    const rect = image.getBoundingClientRect();
+    const point = toScreenPoint(
+      event.clientX - rect.left,
+      event.clientY - rect.top,
+      rect,
+      { width: image.naturalWidth, height: image.naturalHeight },
+    );
     // Capture so the release still arrives if the pointer wanders off the
     // image mid-hold; without it the device would stay pressed forever.
-    imageRef.current?.setPointerCapture(event.pointerId);
-    held.current = point;
-    onTouch(point.x, point.y, "press");
+    if (point && touch.hold(point)) {
+      image.setPointerCapture(event.pointerId);
+    }
   };
 
   const handlePointerUp = (event: React.PointerEvent<HTMLImageElement>) => {
-    const point = held.current;
-    if (!onTouch || !point) return;
-    held.current = null;
-    imageRef.current?.releasePointerCapture(event.pointerId);
-    onTouch(point.x, point.y, "release");
+    if (touch.release()) {
+      imageRef.current?.releasePointerCapture(event.pointerId);
+    }
   };
-
-  useEffect(
-    () => () => {
-      const point = held.current;
-      if (!point) return;
-      held.current = null;
-      touchRef.current?.(point.x, point.y, "release");
-    },
-    [],
-  );
 
   const handleError = useCallback(() => setUndecodable(true), []);
 

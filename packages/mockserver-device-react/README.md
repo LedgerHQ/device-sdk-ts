@@ -6,7 +6,8 @@ both buttons for the Nano. A device that runs no app has no Speculos instance,
 so its record from the mock server is shown instead.
 
 Built with [Lumen](https://www.npmjs.com/package/@ledgerhq/lumen-ui-react), so
-the host renders it inside a Lumen `ThemeProvider` and a Tailwind build.
+the host renders it inside a Lumen `ThemeProvider` and a Tailwind build. Its
+logic comes from [`@ledgerhq/device-mockserver-react-core`](../mockserver-device-react-core).
 
 ## Usage
 

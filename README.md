@@ -133,12 +133,13 @@ See [devtools-core README](packages/devtools-core/README.md) for architecture de
 
 ### Development & Testing
 
-| Name                                                  | Path                             | Description                                                                     |
-| ----------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------- |
-| @ledgerhq/device-management-kit-sample                | apps/sample                      | React Next web app used to test & demonstrate the Device Management Kit         |
-| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client   | [Flipper](https://github.com/facebook/flipper) logger for Device Management Kit |
-| @ledgerhq/device-mockserver-client                    | packages/mockserver-client       | Client to interact with the mock-server                                         |
-| @ledgerhq/device-mockserver-react                     | packages/mockserver-device-react | React screen of a mock-server device, with its controls                         |
+| Name                                                  | Path                                  | Description                                                                     |
+| ----------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------- |
+| @ledgerhq/device-management-kit-sample                | apps/sample                           | React Next web app used to test & demonstrate the Device Management Kit         |
+| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client        | [Flipper](https://github.com/facebook/flipper) logger for Device Management Kit |
+| @ledgerhq/device-mockserver-client                    | packages/mockserver-client            | Client to interact with the mock-server                                         |
+| @ledgerhq/device-mockserver-react                     | packages/mockserver-device-react      | React screen of a mock-server device, with its controls                         |
+| @ledgerhq/device-mockserver-react-core                | packages/mockserver-device-react-core | Platform-free hooks behind the mock-server device screens                       |
 
 ### Internal Configuration
 
