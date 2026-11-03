@@ -114,6 +114,23 @@ describe("DeviceScreen", () => {
     expect(api.pressButton).toHaveBeenCalledWith("left", "press-and-release");
   });
 
+  it("clicks a Nano button activated by a screen reader", async () => {
+    const api = live();
+    const { byTestId } = screen({ api, deviceType: "nanoX" });
+    await wait();
+
+    const both = byTestId("button_device-screen-both");
+    expect(both.props["accessibilityActions"]).toEqual([{ name: "activate" }]);
+    fire(both, "onAccessibilityAction", {
+      nativeEvent: { actionName: "activate" },
+    });
+
+    expect(api.pressButton).toHaveBeenCalledExactlyOnceWith(
+      "both",
+      "press-and-release",
+    );
+  });
+
   it("drives a touch device by its screen, without buttons", async () => {
     const api = live();
     const { byTestId, queryByTestId } = screen({ api });
