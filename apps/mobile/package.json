@@ -14,10 +14,12 @@
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
     "@ledgerhq/device-mockserver-client": "workspace:^",
+    "@ledgerhq/device-mockserver-react-native": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-rozenite": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-core": "workspace:^",
     "@ledgerhq/device-transport-kit-react-native-ble": "workspace:^",
     "@ledgerhq/device-transport-kit-react-native-hid": "workspace:^",
+    "@ledgerhq/device-transport-kit-mockserver": "workspace:^",
     "@ledgerhq/native-ui": "catalog:",
     "@react-navigation/bottom-tabs": "catalog:",
     "@react-navigation/material-top-tabs": "catalog:",

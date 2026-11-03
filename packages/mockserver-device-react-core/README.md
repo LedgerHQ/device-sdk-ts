@@ -2,11 +2,14 @@
 
 The platform-free part of the [device mock server](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/apps/device-mock-server)
 screens: React hooks and helpers with no DOM, React Native or design system
-import. [`@ledgerhq/device-mockserver-react`](../mockserver-device-react) draws
-it for the web.
+import. Two packages draw it:
 
-Use that package to show a device screen. Use this one directly only to build
-a screen for another platform.
+- [`@ledgerhq/device-mockserver-react`](../mockserver-device-react) for the web.
+- [`@ledgerhq/device-mockserver-react-native`](../mockserver-device-react-native)
+  for React Native.
+
+Use one of those to show a device screen. Use this package directly only to
+build a screen for another platform.
 
 ## Contents
 
