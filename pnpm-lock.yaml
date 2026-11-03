@@ -1708,8 +1708,8 @@ importers:
   packages/mockserver-device-react-core:
     dependencies:
       '@ledgerhq/device-mockserver-client':
-        specifier: workspace:^
-        version: link:../mockserver-client
+        specifier: ^1.4.0
+        version: 1.4.0(@ledgerhq/device-management-kit@packages+device-management-kit)
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
@@ -1745,8 +1745,8 @@ importers:
   packages/mockserver-device-react-native:
     dependencies:
       '@ledgerhq/device-mockserver-client':
-        specifier: workspace:^
-        version: link:../mockserver-client
+        specifier: ^1.4.0
+        version: 1.4.0(@ledgerhq/device-management-kit@packages+device-management-kit)
       '@ledgerhq/device-mockserver-react-core':
         specifier: workspace:^
         version: link:../mockserver-device-react-core
@@ -5120,6 +5120,11 @@ packages:
         optional: true
       styled-components:
         optional: true
+
+  '@ledgerhq/device-mockserver-client@1.4.0':
+    resolution: {integrity: sha512-nJ2D6qhpQ7biblQtumBsns287j9f1lfpVg04fCOwzuMRpS4tavHJaZJ7PsGQfzkCKiRS51LhKKDy8LCX00mhGQ==}
+    peerDependencies:
+      '@ledgerhq/device-management-kit': ^1.11.0
 
   '@ledgerhq/icons-ui@0.19.0':
     resolution: {integrity: sha512-eS7FVT11bOJpPJQZDz34t8lX1ijYmsZiANhCfz84UkyaCZGzyxPEwjkza/Q/4erOKuqU1wb4lPMSTHRseq7uCA==}
@@ -17172,6 +17177,11 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       react-native: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
       styled-components: 5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)
+
+  '@ledgerhq/device-mockserver-client@1.4.0(@ledgerhq/device-management-kit@packages+device-management-kit)':
+    dependencies:
+      '@ledgerhq/device-management-kit': link:packages/device-management-kit
+      purify-ts: 2.1.0
 
   '@ledgerhq/icons-ui@0.19.0(@types/react@18.3.12)(react-native-svg@15.11.1(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
