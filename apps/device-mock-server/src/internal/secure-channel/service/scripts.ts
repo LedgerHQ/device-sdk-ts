@@ -1,10 +1,10 @@
 import { type Device } from "@ledgerhq/device-mockserver-client";
 
 import {
+  buildSecureChannelPermissionApdu,
   INSTALL_BLOCK_APDUS,
   SECURE_CHANNEL_GENUINE_APDU,
   SECURE_CHANNEL_GET_CERTIFICATE_APDU,
-  SECURE_CHANNEL_PERMISSION_APDU,
 } from "@internal/secure-channel/service/secureChannelApdus";
 
 /**
@@ -45,15 +45,21 @@ export interface InstalledAppEntry {
  * Minimal secure-channel handshake replayed before every operation: a
  * permission request (`0xE0 0x51`) so the AllowSecureConnection interaction is
  * exercised, then a GetCertificate (`0xE0 0x52`) so a device id is emitted.
+ * The permission APDU carries the flow id: the device that receives it is the
+ * device the operation steps run on.
  *
  * Both APDUs are resolved by the device's APDU mock table; by default they
  * derive to success, and an explicit mock (e.g. `e051 -> 5501`) makes the
  * device reply with an error so the operation fails.
  */
-const HANDSHAKE: readonly SecureChannelStep[] = [
-  { type: "exchange", apdu: SECURE_CHANNEL_PERMISSION_APDU },
-  { type: "exchange", apdu: SECURE_CHANNEL_GET_CERTIFICATE_APDU },
-];
+export function buildSecureChannelHandshake(
+  flowId: string,
+): SecureChannelStep[] {
+  return [
+    { type: "exchange", apdu: buildSecureChannelPermissionApdu(flowId) },
+    { type: "exchange", apdu: SECURE_CHANNEL_GET_CERTIFICATE_APDU },
+  ];
+}
 
 /**
  * What a real device reports for an entry that carries no code data, and what
@@ -83,9 +89,10 @@ export function deriveInstalledApps(device: Device): InstalledAppEntry[] {
 }
 
 /**
- * Build the default scripted message sequence for an endpoint. Behaviour is
- * intentionally minimal (ADR Solution 1, "defaults + reuse mocks"): every
- * operation runs the handshake then a terminal message.
+ * Build the default scripted message sequence an endpoint runs after the
+ * handshake, on the device the handshake reached. Behaviour is intentionally
+ * minimal (ADR Solution 1, "defaults + reuse mocks"): every operation ends with
+ * a terminal message.
  */
 export function buildSecureChannelScript(
   endpoint: SecureChannelEndpoint,
@@ -94,18 +101,14 @@ export function buildSecureChannelScript(
   switch (endpoint) {
     case "genuine":
       return [
-        ...HANDSHAKE,
         { type: "exchange", apdu: SECURE_CHANNEL_GENUINE_APDU },
         { type: "success" },
       ];
     case "listApps":
-      return [
-        ...HANDSHAKE,
-        { type: "success", data: deriveInstalledApps(device) },
-      ];
+      return [{ type: "success", data: deriveInstalledApps(device) }];
     case "install":
-      return [...HANDSHAKE, { type: "bulk", data: [...INSTALL_BLOCK_APDUS] }];
+      return [{ type: "bulk", data: [...INSTALL_BLOCK_APDUS] }];
     case "mcu":
-      return [...HANDSHAKE, { type: "success" }];
+      return [{ type: "success" }];
   }
 }
