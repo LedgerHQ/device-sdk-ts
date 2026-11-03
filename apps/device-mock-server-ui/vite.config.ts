@@ -19,9 +19,14 @@ export default defineConfig({
   server: {
     port: 9753,
     // From the client's own list, so a new API call cannot be left behind.
-    proxy: Object.fromEntries(
-      API_ROUTE_PREFIXES.map((route) => [route, { target: API_TARGET }]),
-    ),
+    // The secure channel is not one of them: only Ledger Wallet opens it,
+    // when it is pointed at this dev server instead of the mock server.
+    proxy: {
+      ...Object.fromEntries(
+        API_ROUTE_PREFIXES.map((route) => [route, { target: API_TARGET }]),
+      ),
+      "/secure-channel": { target: API_TARGET, ws: true },
+    },
   },
   build: {
     outDir: "dist",
