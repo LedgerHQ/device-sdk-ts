@@ -1,4 +1,30 @@
-import { deriveSecureChannelResponse } from "./secureChannelApdus";
+import {
+  buildSecureChannelPermissionApdu,
+  createSecureChannelFlowId,
+  deriveSecureChannelResponse,
+  parseSecureChannelFlowId,
+} from "./secureChannelApdus";
+
+describe("secure-channel flow id", () => {
+  it("is read back from the permission APDU it is built into", () => {
+    const flowId = createSecureChannelFlowId();
+    const apdu = buildSecureChannelPermissionApdu(flowId);
+
+    expect(apdu).toBe(`e051000008${flowId}`);
+    expect(parseSecureChannelFlowId(apdu)).toBe(flowId);
+  });
+
+  it("is not found in a permission APDU without one", () => {
+    expect(parseSecureChannelFlowId("e051000000")).toBeUndefined();
+    expect(parseSecureChannelFlowId("e051000008aabb")).toBeUndefined();
+  });
+
+  it("is not found in another APDU", () => {
+    expect(
+      parseSecureChannelFlowId("e052000008aabbccddeeff0011"),
+    ).toBeUndefined();
+  });
+});
 
 describe("deriveSecureChannelResponse", () => {
   it("returns a bare success for the permission APDU (0xE0 0x51)", () => {

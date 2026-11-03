@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto";
 import { type Server } from "node:http";
 import { type Socket } from "node:net";
 
-import { type Device } from "@ledgerhq/device-mockserver-client";
+import {
+  type CatalogApp,
+  type Device,
+} from "@ledgerhq/device-mockserver-client";
 import { inject, injectable } from "inversify";
 import { type WebSocket, WebSocketServer } from "ws";
 
@@ -11,9 +14,12 @@ import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTyp
 import { type FirmwareUpdateResolver } from "@internal/secure-channel/service/FirmwareUpdateResolver";
 import { type InstallAppResolver } from "@internal/secure-channel/service/InstallAppResolver";
 import {
+  buildSecureChannelHandshake,
   buildSecureChannelScript,
   type SecureChannelEndpoint,
+  type SecureChannelStep,
 } from "@internal/secure-channel/service/scripts";
+import { createSecureChannelFlowId } from "@internal/secure-channel/service/secureChannelApdus";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
 import { type SessionRecord } from "@internal/session/model/SessionModels";
@@ -40,6 +46,11 @@ interface ClientMessage {
  * (`exchange` / `success` / `bulk`) on `/secure-channel/<token>/<endpoint>`,
  * where `<token>` is the mock-server session token (the secure-channel
  * WebSocket carries no bearer header, so the token is embedded in the path).
+ *
+ * A session can hold several devices, but the path has no device id. To find
+ * the device, each flow puts a random flow id in its permission APDU: the
+ * device the client sends that APDU to is the device the flow runs on (see
+ * {@link SecureChannelWebSocket.runHandshake}).
  */
 @injectable()
 export class SecureChannelWebSocket {
@@ -80,50 +91,85 @@ export class SecureChannelWebSocket {
       closeWithError(ws, "Invalid session token");
       return;
     }
-    const device = this.pickDevice(record);
-    if (!device) {
+    if (this.repository.listDevices(record).length === 0) {
       closeWithError(ws, "No device in session");
       return;
     }
 
-    // Faithful to a real device: the `install` endpoint (which backs both install
-    // and uninstall) arms the app identified by its hash (resolved from the
-    // Manager API, like the real ScriptRunner backend) before the bulk is
-    // streamed; the APDU layer then applies it once the final install block is
-    // acknowledged, so the follow-up `apps/list` reflects the change.
+    // The `install` endpoint (which backs both install and uninstall) targets
+    // the app identified by its hash, resolved from the Manager API like the
+    // real ScriptRunner backend. The hash needs no device, so it is resolved
+    // before the handshake: an unknown hash fails before the user is asked to
+    // allow the connection. A firmware install needs the device's current
+    // version, so it is resolved after the handshake.
+    let app: CatalogApp | undefined;
     if (endpoint === "install" && hash) {
-      const app = await this.installResolver.resolve(record, hash);
-      if (app.isNothing()) {
+      app = (await this.installResolver.resolve(record, hash)).extract();
+      if (!app) {
         // Without a resolved app the bulk would "succeed" while the device
         // context never changes, making the client's confirming re-list loop or
         // hang; fail fast with a terminal error instead.
         closeWithError(ws, `Unknown install hash: ${hash}`);
         return;
       }
-      this.repository.setPendingAppOperation(
-        record,
-        device.id,
-        app.unsafeCoerce(),
-      );
-    } else if (endpoint === "install" && firmware) {
-      // A firmware install hits the same `install` endpoint but carries
-      // `firmware`/`perso`/`firmwareKey` instead of an app `hash`. Arm the
-      // target `firmware_version`, applied once the final install block is
-      // acknowledged, so the device "reboots" onto the new firmware.
-      if (!(await this.armFirmwareOperation(ws, record, device, targetId))) {
-        return;
-      }
     }
 
-    logger.info(`Secure channel [${endpoint}] opened for device ${device.id}`);
+    const relay = new ScriptRelay(ws, record.id, endpoint);
     try {
-      await runScript(ws, endpoint, record, device);
+      const device = await this.runHandshake(ws, relay, record);
+      if (!device) {
+        return;
+      }
+
+      // Faithful to a real device: the app is armed before the bulk is
+      // streamed; the APDU layer then applies it once the final install block
+      // is acknowledged, so the follow-up `apps/list` reflects the change.
+      if (app) {
+        this.repository.setPendingAppOperation(record, device.id, app);
+      } else if (endpoint === "install" && firmware) {
+        // A firmware install hits the same `install` endpoint but carries
+        // `firmware`/`perso`/`firmwareKey` instead of an app `hash`. Arm the
+        // target `firmware_version`, applied once the final install block is
+        // acknowledged, so the device "reboots" onto the new firmware.
+        if (!(await this.armFirmwareOperation(ws, record, device, targetId))) {
+          return;
+        }
+      }
+
+      logger.info(`Secure channel [${endpoint}] runs on device ${device.id}`);
+      await relay.run(buildSecureChannelScript(endpoint, device));
     } catch (error) {
       logger.error(`Secure channel [${endpoint}] failed: ${String(error)}`);
       if (ws.readyState === ws.OPEN) {
         closeWithError(ws, "Secure channel error");
       }
     }
+  }
+
+  /**
+   * Relay the handshake and return the device the flow runs on: the device the
+   * client relayed the flow's permission APDU to. Returns `undefined` when the
+   * flow stops during the handshake.
+   */
+  private async runHandshake(
+    ws: WebSocket,
+    relay: ScriptRelay,
+    record: SessionRecord,
+  ): Promise<Device | undefined> {
+    const flowId = createSecureChannelFlowId();
+    const completed = await relay.run(buildSecureChannelHandshake(flowId));
+    // Take the binding even when the handshake stopped, so it never stays in
+    // the session.
+    const device = this.repository
+      .takeSecureChannelFlowDevice(record, flowId)
+      .extract();
+    if (!completed) {
+      return undefined;
+    }
+    if (!device) {
+      closeWithError(ws, "Permission APDU reached no device");
+    }
+    return device;
   }
 
   /**
@@ -159,12 +205,6 @@ export class SecureChannelWebSocket {
       next.unsafeCoerce(),
     );
     return true;
-  }
-
-  /** Prefer the connected device; fall back to the first one in the session. */
-  private pickDevice(record: SessionRecord): Device | undefined {
-    const devices = this.repository.listDevices(record);
-    return devices.find((device) => device.connected) ?? devices[0];
   }
 }
 
@@ -212,62 +252,85 @@ function parsePath(url: string): ParsedPath | null {
   };
 }
 
-/** Run the scripted message sequence, relaying `exchange` APDUs to the client. */
-async function runScript(
-  ws: WebSocket,
-  endpoint: SecureChannelEndpoint,
-  record: SessionRecord,
-  device: Device,
-): Promise<void> {
-  const readNext = createMessageReader(ws);
-  let nonce = 0;
-  let lastExchangeData = "";
+/**
+ * Relays scripted steps to the client, waiting for its reply to each
+ * `exchange`. A flow relays its handshake and its operation steps in two runs,
+ * so the nonce and the last exchange reply carry over between them.
+ */
+class ScriptRelay {
+  private readonly readNext: () => Promise<ClientMessage | null>;
+  private nonce = 0;
+  private lastExchangeData = "";
 
-  for (const step of buildSecureChannelScript(endpoint, device)) {
-    switch (step.type) {
-      case "exchange": {
-        nonce += 1;
-        send(ws, {
-          query: "exchange",
-          session: record.id,
-          nonce,
-          data: step.apdu,
-        });
-        const reply = await readNext();
-        if (reply === null) {
-          // The client disconnected before replying: nothing more to do.
-          logger.info(`Secure channel [${endpoint}] client disconnected`);
-          return;
+  constructor(
+    private readonly ws: WebSocket,
+    private readonly sessionId: string,
+    private readonly endpoint: SecureChannelEndpoint,
+  ) {
+    this.readNext = createMessageReader(ws);
+  }
+
+  /**
+   * Relay the steps in order. Resolves `false` when the client disconnects or
+   * reports a device error, so the flow stops there; `true` otherwise.
+   */
+  async run(steps: readonly SecureChannelStep[]): Promise<boolean> {
+    for (const step of steps) {
+      switch (step.type) {
+        case "exchange": {
+          this.nonce += 1;
+          send(this.ws, {
+            query: "exchange",
+            session: this.sessionId,
+            nonce: this.nonce,
+            data: step.apdu,
+          });
+          const reply = await this.readNext();
+          if (reply === null) {
+            // The client disconnected before replying: nothing more to do.
+            logger.info(
+              `Secure channel [${this.endpoint}] client disconnected`,
+            );
+            return false;
+          }
+          if (reply.response === "error") {
+            // The client already mapped a device error and completed; stop here.
+            logger.info(
+              `Secure channel [${this.endpoint}] stopped on device error`,
+            );
+            this.ws.close();
+            return false;
+          }
+          this.lastExchangeData = reply.data ?? "";
+          break;
         }
-        if (reply.response === "error") {
-          // The client already mapped a device error and completed; stop here.
-          logger.info(`Secure channel [${endpoint}] stopped on device error`);
-          ws.close();
-          return;
+        case "bulk": {
+          send(this.ws, {
+            query: "bulk",
+            session: this.sessionId,
+            nonce: this.nonce,
+            data: step.data,
+          });
+          return true;
         }
-        lastExchangeData = reply.data ?? "";
-        break;
-      }
-      case "bulk": {
-        send(ws, { query: "bulk", session: record.id, nonce, data: step.data });
-        return;
-      }
-      case "success": {
-        // Pure relay: a terminal success either carries an explicit structured
-        // payload (`listApps`) or forwards the last relayed APDU's reply as the
-        // result (the verdict is owned by the resolved APDU, not this relay).
-        // DMK reads `result ?? data`, so only one is ever sent.
-        send(ws, {
-          query: "success",
-          session: record.id,
-          nonce,
-          ...(step.data !== undefined
-            ? { data: step.data }
-            : { result: lastExchangeData }),
-        });
-        return;
+        case "success": {
+          // Pure relay: a terminal success either carries an explicit
+          // structured payload (`listApps`) or forwards the last relayed APDU's
+          // reply as the result (the verdict is owned by the resolved APDU, not
+          // this relay). DMK reads `result ?? data`, so only one is ever sent.
+          send(this.ws, {
+            query: "success",
+            session: this.sessionId,
+            nonce: this.nonce,
+            ...(step.data !== undefined
+              ? { data: step.data }
+              : { result: this.lastExchangeData }),
+          });
+          return true;
+        }
       }
     }
+    return true;
   }
 }
 
