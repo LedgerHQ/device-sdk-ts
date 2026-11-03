@@ -40,7 +40,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/device-mockserver-client": "^1.4.0",
+    "@ledgerhq/device-mockserver-client": "workspace:^",
     "@ledgerhq/device-mockserver-react-core": "workspace:^"
   },
   "devDependencies": {
@@ -57,7 +57,7 @@
     "react-test-renderer": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.11.0",
+    "@ledgerhq/device-management-kit": "workspace:^",
     "react": "^18.0.0 || ^19.0.0",
     "react-native": ">0.74.1"
   }
