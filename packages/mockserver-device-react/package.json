@@ -62,7 +62,7 @@
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
     "@ledgerhq/lumen-ui-react": "^0.1.66",
-    "react": "catalog:",
-    "react-dom": "catalog:"
+    "react": "^18.3.1 || ^19.0.0",
+    "react-dom": "^18.3.1 || ^19.0.0"
   }
 }
