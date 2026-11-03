@@ -40,7 +40,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/device-mockserver-client": "workspace:^"
+    "@ledgerhq/device-mockserver-client": "^1.4.0"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
@@ -55,7 +55,7 @@
     "react-dom": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-management-kit": "^1.11.0",
     "react": "^18.0.0 || ^19.0.0"
   }
 }
