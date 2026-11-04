@@ -59,6 +59,7 @@ const FormField: React.FC<FormFieldProps> = ({
           value={options.find((val) => val.value === value)}
           onChange={(newVal) => newVal && onChange(fieldKey, newVal.value)}
           options={options}
+          data-testid={`input-select_${fieldKey}`}
         />
       </div>
     );

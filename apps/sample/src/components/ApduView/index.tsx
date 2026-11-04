@@ -17,10 +17,12 @@ import { RawHexModeInput } from "./modeRawApdu";
 
 type InputMode = "builder" | "raw" | "bulk" | "parser";
 
-const ModeChip: React.FC<
-  React.ComponentProps<"button"> & { active: boolean }
-> = ({ active, className, ...props }) => (
+const ModeChip = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentPropsWithoutRef<"button"> & { active: boolean }
+>(({ active, className, ...props }, ref) => (
   <button
+    ref={ref}
     className={cn(
       "body-2-semi-bold cursor-pointer rounded-full border px-16 py-8 transition-all duration-200 hover:border-interactive disabled:cursor-not-allowed disabled:opacity-50",
       active
@@ -30,7 +32,8 @@ const ModeChip: React.FC<
     )}
     {...props}
   />
-);
+));
+ModeChip.displayName = "ModeChip";
 
 const MODES: { mode: InputMode; label: string; hint: string }[] = [
   {

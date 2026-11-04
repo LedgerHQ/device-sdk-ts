@@ -104,7 +104,7 @@ export class XrpSignerDriver {
    */
   private async selectCurve(curve: Curve): Promise<void> {
     const form = this.page.getByTestId("form_device-action");
-    await form.locator('[class*="control"]').first().click();
+    await form.locator('[data-testid^="input-select_"]').first().click();
     await this.page.getByRole("option", { name: curve, exact: true }).click();
     await expect(form.getByText(curve, { exact: true })).toBeVisible();
   }

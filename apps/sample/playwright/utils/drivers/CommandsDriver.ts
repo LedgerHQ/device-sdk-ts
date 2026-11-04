@@ -95,7 +95,7 @@ export class CommandsDriver {
 
   private async selectOption(optionLabel: string): Promise<void> {
     const form = this.page.getByTestId("form_device-command");
-    await form.locator('[class*="control"]').first().click();
+    await form.locator('[data-testid^="input-select_"]').first().click();
     await this.page.getByRole("option", { name: optionLabel }).click();
   }
 }

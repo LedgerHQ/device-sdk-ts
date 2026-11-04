@@ -56,9 +56,11 @@ export const DropZone: React.FC<
   />
 );
 
-export const HiddenInput: React.FC<React.ComponentProps<"input">> = (props) => (
-  <input className="hidden" {...props} />
-);
+export const HiddenInput = React.forwardRef<
+  HTMLInputElement,
+  React.ComponentPropsWithoutRef<"input">
+>((props, ref) => <input ref={ref} className="hidden" {...props} />);
+HiddenInput.displayName = "HiddenInput";
 
 export const DropZoneWithPreview: React.FC<
   React.ComponentProps<"div"> & {

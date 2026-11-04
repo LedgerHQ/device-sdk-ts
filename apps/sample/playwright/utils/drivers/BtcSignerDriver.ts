@@ -49,7 +49,7 @@ export class BtcSignerDriver {
   async getWalletAddress(walletType: string): Promise<void> {
     await this.page.getByTestId("CTA_command-Get wallet address").click();
     const form = this.page.getByTestId("form_device-action");
-    await form.locator('[class*="control"]').first().click();
+    await form.locator('[data-testid^="input-select_"]').first().click();
     await this.page.getByRole("option", { name: walletType }).click();
     await this.page.getByTestId("CTA_send-device-action").click();
   }

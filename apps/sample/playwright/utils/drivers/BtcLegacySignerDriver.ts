@@ -96,7 +96,7 @@ export class BtcLegacySignerDriver {
   /** Pick an option of the form's only select input. */
   private async selectOption(optionLabel: string): Promise<void> {
     const form = this.page.getByTestId("form_device-action");
-    await form.locator('[class*="control"]').first().click();
+    await form.locator('[data-testid^="input-select_"]').first().click();
     await this.page.getByRole("option", { name: optionLabel }).click();
   }
 

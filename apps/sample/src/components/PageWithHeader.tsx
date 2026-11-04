@@ -28,23 +28,26 @@ export const PageWithHeader: React.FC<Props> = (props) => {
             return (
               <React.Fragment key={segment.value}>
                 {index > 0 && <ChevronRight size={16} className="text-muted" />}
-                <span
-                  className={
-                    isLast
-                      ? "heading-5-semi-bold text-base"
-                      : "heading-5-semi-bold cursor-pointer text-muted hover:text-base"
-                  }
-                  onClick={
-                    isLast
-                      ? undefined
-                      : () =>
-                          onChange?.(
-                            segments.slice(0, index + 1).map((s) => s.value),
-                          )
-                  }
-                >
-                  {segment.label}
-                </span>
+                {isLast ? (
+                  <span
+                    aria-current="page"
+                    className="heading-5-semi-bold text-base"
+                  >
+                    {segment.label}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="heading-5-semi-bold cursor-pointer border-0 bg-transparent p-0 text-muted hover:text-base"
+                    onClick={() =>
+                      onChange?.(
+                        segments.slice(0, index + 1).map((s) => s.value),
+                      )
+                    }
+                  >
+                    {segment.label}
+                  </button>
+                )}
               </React.Fragment>
             );
           })}
