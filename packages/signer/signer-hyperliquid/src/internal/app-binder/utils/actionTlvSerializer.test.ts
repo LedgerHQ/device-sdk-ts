@@ -728,3 +728,47 @@ describe("buildActionStructure", () => {
     expect(result).toEqual(expected);
   });
 });
+
+describe("encodeDerLength bounds", () => {
+  const order = {
+    a: 0,
+    b: true,
+    p: "100",
+    s: "1",
+    r: false,
+    t: { limit: { tif: "Gtc" as const } },
+  };
+
+  it("accepts a price whose DER length is the last two-byte value", () => {
+    const encoded = serializeOrderToTlv({
+      ...order,
+      p: "A".repeat(0xffff),
+    });
+    // 0x82 then 0xffff, then the price bytes.
+    const marker = [0x82, 0xff, 0xff, 0x41];
+    expect(indexOfBytes(encoded, marker)).toBeGreaterThanOrEqual(0);
+  });
+
+  it("rejects a price whose DER length does not fit in two bytes", () => {
+    expect(() =>
+      serializeOrderToTlv({
+        ...order,
+        p: "A".repeat(0x10000),
+      }),
+    ).toThrow(/exceeds the two-byte DER form/);
+  });
+});
+
+function indexOfBytes(haystack: Uint8Array, needle: number[]): number {
+  for (let i = 0; i <= haystack.length - needle.length; i++) {
+    let match = true;
+    for (let j = 0; j < needle.length; j++) {
+      if (haystack[i + j] !== needle[j]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) return i;
+  }
+  return -1;
+}

@@ -167,8 +167,11 @@ function numberToVarBytes(value: number, maxBytes: number = 8): Uint8Array {
 }
 
 /**
- * DER-encode a length value: short form for < 0x80, long form otherwise.
- * Matches the Ledger SDK's lib_tlv expectations.
+ * DER-encode a length value. Short form below 0x80, one length byte up
+ * to 0xff, two length bytes up to 0xffff. A longer value is rejected.
+ * add16BitUIntToData records an overflow and skips the length bytes, so
+ * writing 0x82 and then continuing would make the field's own data look
+ * like the length.
  */
 function encodeDerLength(builder: ByteArrayBuilder, length: number): void {
   if (!Number.isInteger(length) || length < 0) {
@@ -185,9 +188,11 @@ function encodeDerLength(builder: ByteArrayBuilder, length: number): void {
   } else if (length <= 0xff) {
     builder.add8BitUIntToData(0x81);
     builder.add8BitUIntToData(length);
-  } else {
+  } else if (length <= 0xffff) {
     builder.add8BitUIntToData(0x82);
     builder.add16BitUIntToData(length);
+  } else {
+    throw new Error(`TLV length ${length} exceeds the two-byte DER form`);
   }
 }
 
