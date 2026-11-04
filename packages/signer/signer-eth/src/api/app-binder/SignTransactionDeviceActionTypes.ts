@@ -92,6 +92,7 @@ export type SignTransactionDAInternalState = {
   readonly isBlindSign: boolean | null;
   readonly blindSignReason: BlindSignReason | null;
   readonly usedFallback: boolean;
+  readonly contextsRejected: boolean;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

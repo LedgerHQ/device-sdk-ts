@@ -72,7 +72,8 @@ function computeIsBlindSign(input: BlindSigningDetectionInput): boolean {
 function computeBlindSignReason(
   input: BlindSigningDetectionInput,
 ): BlindSignReason {
-  if (input.usedFallback) {
+  // A fallback only means the device rejected a context if one was sent.
+  if (input.usedFallback && input.hasContext) {
     return BlindSignReason.DEVICE_REJECTED_CONTEXT;
   }
   return BlindSignReason.NO_CLEAR_SIGNING_CONTEXT;

@@ -17,7 +17,7 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers";
-import { Right } from "purify-ts";
+import { Left, Right } from "purify-ts";
 import { lastValueFrom, Observable } from "rxjs";
 
 import {
@@ -1460,6 +1460,64 @@ describe("SignTransactionDeviceAction", () => {
           clearSigningType: ClearSigningType.BASIC,
         },
       });
+    });
+
+    it("counts a context the device refused while providing it as blind signing", async () => {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock as unknown as ContextModule,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: defaultSubset,
+        type: TransactionType.EIP1559,
+      });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: { address: defaultAddress } }),
+      );
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.BASIC,
+      });
+      // The device refuses a context, but signing still goes ahead.
+      provideContextsMock.mockResolvedValueOnce(
+        Left(
+          CommandResultFactory({
+            error: new InvalidStatusWordError("6a80"),
+          }),
+        ),
+      );
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
+
+      await lastValueFrom(deviceAction._execute(apiMock).observable);
+
+      expect(signTransactionMock).toHaveBeenCalledTimes(1);
+      expect(detectBlindSigningMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          input: expect.objectContaining({
+            input: expect.objectContaining({ usedFallback: true }),
+          }),
+        }),
+      );
     });
 
     it("reports the signature as blind signed when detection fails", async () => {

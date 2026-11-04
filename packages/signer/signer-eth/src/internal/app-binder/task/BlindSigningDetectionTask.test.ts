@@ -137,6 +137,14 @@ describe("BlindSigningDetectionTask", () => {
         },
       },
       {
+        name: "no_clear_signing_context when the signer fell back without any context",
+        input: { hasContext: false, usedFallback: true },
+        expected: {
+          isBlindSign: true,
+          blindSignReason: "no_clear_signing_context",
+        },
+      },
+      {
         name: "device_rejected_context when the signer fell back",
         input: { hasContext: true, usedFallback: true },
         expected: {
@@ -176,7 +184,12 @@ describe("BlindSigningDetectionTask", () => {
         new Error("network down"),
       );
       const task = new BlindSigningDetectionTask({
-        input: { ...baseInput, type: "typedData", usedFallback: true },
+        input: {
+          ...baseInput,
+          type: "typedData",
+          hasContext: true,
+          usedFallback: true,
+        },
         contextModule: mockContextModule,
         loggerFactory: mockLoggerFactory,
       });
@@ -207,7 +220,7 @@ describe("BlindSigningDetectionTask", () => {
     expect(mockContextModule.report).toHaveBeenCalledWith(
       expect.objectContaining({
         signingMethod: "eth_signTypedData",
-        blindSignReason: "device_rejected_context",
+        blindSignReason: "no_clear_signing_context",
       }),
     );
   });

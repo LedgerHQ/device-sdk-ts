@@ -206,6 +206,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             isBlindSign: null,
             blindSignReason: null,
             usedFallback: false,
+            contextsRejected: false,
           },
         };
       },
@@ -501,6 +502,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "SignTransaction",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  // The device refused one of the contexts: signing goes ahead,
+                  // but it can no longer be counted as clear signed.
+                  contextsRejected: event.output.isLeft(),
+                }),
+              }),
             },
             onError: {
               target: "Error",
@@ -639,7 +648,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   type: "transaction" as const,
                   hasContext: !hasCalldata || contexts.length > 0,
                   contextTypes: contexts.map((c) => c.context.type),
-                  usedFallback,
+                  usedFallback:
+                    usedFallback || context._internalState.contextsRejected,
                   chainId: subset?.chainId ?? null,
                   targetAddress: subset?.to ?? null,
                   selectorId:
