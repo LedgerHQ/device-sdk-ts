@@ -1,0 +1,113 @@
+name: "Follow up on ready Dependabot PRs"
+
+on:
+  schedule:
+    # GitHub Actions schedules are UTC. These runs are 12:00 and 13:00 in
+    # Europe/Paris during CET, and 13:00 and 14:00 during CEST, so the local
+    # 12:00–14:00 weekday window remains covered across DST changes.
+    - cron: "0 11,12 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report what would be requested without changing PR review requests."
+        required: false
+        default: true
+        type: boolean
+
+# This workflow deliberately does not approve or merge pull requests. It uses
+# GITHUB_TOKEN only to request the repository's established Dependabot reviewer
+# team after required checks have passed. No Slack webhook or external token is
+# needed; configure SLACK_BOT_TOKEN separately only if an additional Slack
+# notification workflow is desired.
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: dependabot-ready-pr-follow-up-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  request-review:
+    name: Request review for ready Dependabot PRs
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      # Keep this aligned with .github/dependabot.yml's reviewers entry.
+      REVIEWER: LedgerHQ/live-devices
+      DRY_RUN: ${{ inputs.dry_run || 'false' }}
+    steps:
+      - name: Find ready PRs and request the configured reviewer
+        shell: bash
+        run: |
+          set -o pipefail
+
+          prs="$(gh pr list --repo "$GITHUB_REPOSITORY" --state open \
+            --author 'dependabot[bot]' --limit 100 \
+            --json number,url,title,isDraft)"
+
+          found=0
+          requested=0
+          while IFS= read -r pr; do
+            number="$(jq -r '.number' <<<"$pr")"
+            url="$(jq -r '.url' <<<"$pr")"
+            draft="$(jq -r '.isDraft' <<<"$pr")"
+
+            if [ "$draft" = "true" ]; then
+              echo "Skipping draft Dependabot PR #$number."
+              continue
+            fi
+
+            # `gh pr checks` exits non-zero while a check is pending or
+            # failing. Do not prompt reviewers until the PR's current CI/checks
+            # have succeeded (or been validly skipped).
+            if ! checks="$(gh pr checks "$number" --repo "$GITHUB_REPOSITORY")"; then
+              echo "PR #$number has pending or failing checks; waiting."
+              continue
+            fi
+            if [ -z "$checks" ]; then
+              echo "PR #$number has no checks to verify yet; waiting."
+              continue
+            fi
+
+            details="$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" \
+              --json mergeStateStatus,reviewDecision,reviewRequests)"
+            merge_state="$(jq -r '.mergeStateStatus' <<<"$details")"
+            review_decision="$(jq -r '.reviewDecision // ""' <<<"$details")"
+
+            # BLOCKED plus an unapproved review decision identifies a PR that
+            # is green but cannot merge because review follow-up is needed.
+            if [ "$merge_state" != "BLOCKED" ] || [ "$review_decision" = "APPROVED" ]; then
+              echo "PR #$number does not need a review reminder (merge state: $merge_state; review: ${review_decision:-none})."
+              continue
+            fi
+
+            found=$((found + 1))
+            if [ "$review_decision" = "CHANGES_REQUESTED" ]; then
+              echo "PR #$number already has requested changes; not replacing that follow-up. $url"
+              continue
+            fi
+
+            if jq -e --arg reviewer "${REVIEWER#*/}" \
+              '.reviewRequests[]? | select(.slug == $reviewer)' <<<"$details" >/dev/null; then
+              echo "PR #$number already requests $REVIEWER; no duplicate request. $url"
+              continue
+            fi
+
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "Would request review from $REVIEWER for PR #$number. $url"
+              continue
+            fi
+
+            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --add-reviewer "$REVIEWER"
+            requested=$((requested + 1))
+            echo "Requested review from $REVIEWER for PR #$number. $url"
+          done < <(jq -c '.[]' <<<"$prs")
+
+          {
+            echo "## Dependabot review follow-up"
+            echo
+            echo "- Green, review-blocked PRs found: $found"
+            echo "- New review requests: $requested"
+            echo "- Dry run: $DRY_RUN"
+          } >> "$GITHUB_STEP_SUMMARY"
