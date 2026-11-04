@@ -1,0 +1,62 @@
+{
+  "group": "core",
+  "name": "typed-data-v2",
+  "action": "signTypedData",
+  "devices": ["flex"],
+  "coinApp": "Ethereum",
+  "osVersion": "1.6.1",
+  "appVersion": "1.23.0",
+  "mode": "parallel",
+  "enabled": false,
+  "options": {
+    "blindSigningEnabled": true
+  },
+  "cases": [
+    {
+      "description": "EIP-712 V2 shows a nested struct, an array of structs and a jagged dynamic array",
+      "data": {
+        "domain": {
+          "name": "Ether Mail",
+          "version": "1",
+          "chainId": 1,
+          "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+        },
+        "primaryType": "Mail",
+        "types": {
+          "EIP712Domain": [
+            { "name": "name", "type": "string" },
+            { "name": "version", "type": "string" },
+            { "name": "chainId", "type": "uint256" },
+            { "name": "verifyingContract", "type": "address" }
+          ],
+          "Person": [
+            { "name": "name", "type": "string" },
+            { "name": "wallets", "type": "address[]" }
+          ],
+          "Mail": [
+            { "name": "from", "type": "Person" },
+            { "name": "to", "type": "Person[]" },
+            { "name": "contents", "type": "string" }
+          ]
+        },
+        "message": {
+          "from": {
+            "name": "Cow",
+            "wallets": [
+              "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826",
+              "0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF"
+            ]
+          },
+          "to": [
+            {
+              "name": "Bob",
+              "wallets": ["0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"]
+            }
+          ],
+          "contents": "Hello, Bob!"
+        }
+      },
+      "expectedTexts": ["Ether Mail", "Cow", "Bob", "Hello, Bob!"]
+    }
+  ]
+}
