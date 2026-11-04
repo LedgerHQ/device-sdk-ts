@@ -49,77 +49,81 @@ async function quitAppFromDeviceScreen(
   throw new Error("Never reached the app's Quit entry");
 }
 
-test.describe("device: quitting an app from the device screen", () => {
-  test("reverts the mock server to BOLOS mode", async ({
-    page,
-    device,
-    commands,
-    mockClient,
-    speculos,
-  }) => {
-    // Opening an installed app provisions a real Speculos instance, which can
-    // take a while to become ready.
-    test.setTimeout(180_000);
+test.describe(
+  "device: quitting an app from the device screen",
+  { tag: "@speculos" },
+  () => {
+    test("reverts the mock server to BOLOS mode", async ({
+      page,
+      device,
+      commands,
+      mockClient,
+      speculos,
+    }) => {
+      // Opening an installed app provisions a real Speculos instance, which can
+      // take a while to become ready.
+      test.setTimeout(180_000);
 
-    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
-    await test.step("Given a connected Nano X with the Bitcoin app", async () => {
-      dev = await device.addAndConnect(NANO_X_BTC);
-    });
-
-    let emulator!: SpeculosDriver;
-    await test.step("And the Bitcoin app is opened (Speculos proxy active)", async () => {
-      await commands.goto();
-      await commands.execute("Open app", {
-        inputField: "input-text_appName",
-        inputValue: "Bitcoin",
+      let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+      await test.step("Given a connected Nano X with the Bitcoin app", async () => {
+        dev = await device.addAndConnect(NANO_X_BTC);
       });
-      const response = await commands.lastResponse<CommandResponse>({
-        timeout: 90_000,
+
+      let emulator!: SpeculosDriver;
+      await test.step("And the Bitcoin app is opened (Speculos proxy active)", async () => {
+        await commands.goto();
+        await commands.execute("Open app", {
+          inputField: "input-text_appName",
+          inputValue: "Bitcoin",
+        });
+        const response = await commands.lastResponse<CommandResponse>({
+          timeout: 90_000,
+        });
+        expect(response.status).toBe("SUCCESS");
+
+        emulator = speculos(dev);
+        await emulator.waitReady();
+        await emulator.waitForAnyScreen();
+        // The drawer covers the sidebar the device screen is docked in.
+        await commands.closeDrawer();
+        await expect(page.getByTestId("image_device-screen")).toBeVisible();
       });
-      expect(response.status).toBe("SUCCESS");
 
-      emulator = speculos(dev);
-      await emulator.waitReady();
-      await emulator.waitForAnyScreen();
-      // The drawer covers the sidebar the device screen is docked in.
-      await commands.closeDrawer();
-      await expect(page.getByTestId("image_device-screen")).toBeVisible();
-    });
-
-    await test.step("When the app is quit from the device screen", async () => {
-      await quitAppFromDeviceScreen(page, emulator);
-    });
-
-    await test.step("Then the emulator is released and the device screen falls back to the device record", async () => {
-      // Speculos exits with the app, so the screen the panel polls is gone: it
-      // shows the mock server's own record of the device instead.
-      await expect(page.getByTestId("container_device-os-info")).toBeVisible({
-        timeout: 30_000,
+      await test.step("When the app is quit from the device screen", async () => {
+        await quitAppFromDeviceScreen(page, emulator);
       });
-      await expect
-        .poll(
-          async () => {
-            try {
-              await mockClient.getSpeculos(dev.id);
-              return "live";
-            } catch {
-              return "released";
-            }
-          },
-          { timeout: 30_000 },
-        )
-        .toBe("released");
-    });
 
-    await test.step("And the mock server answers Get app and version with BOLOS", async () => {
-      await commands.execute("Get app and version");
-      await commands.waitForResponseCount(1);
-      const response = await commands.lastResponse<CommandResponse>();
-      expect(response.status).toBe("SUCCESS");
-      expect(response.data).toMatchObject({
-        name: "BOLOS",
-        version: NANO_X_BTC.firmware_version!,
+      await test.step("Then the emulator is released and the device screen falls back to the device record", async () => {
+        // Speculos exits with the app, so the screen the panel polls is gone: it
+        // shows the mock server's own record of the device instead.
+        await expect(page.getByTestId("container_device-os-info")).toBeVisible({
+          timeout: 30_000,
+        });
+        await expect
+          .poll(
+            async () => {
+              try {
+                await mockClient.getSpeculos(dev.id);
+                return "live";
+              } catch {
+                return "released";
+              }
+            },
+            { timeout: 30_000 },
+          )
+          .toBe("released");
+      });
+
+      await test.step("And the mock server answers Get app and version with BOLOS", async () => {
+        await commands.execute("Get app and version");
+        await commands.waitForResponseCount(1);
+        const response = await commands.lastResponse<CommandResponse>();
+        expect(response.status).toBe("SUCCESS");
+        expect(response.data).toMatchObject({
+          name: "BOLOS",
+          version: NANO_X_BTC.firmware_version!,
+        });
       });
     });
-  });
-});
+  },
+);

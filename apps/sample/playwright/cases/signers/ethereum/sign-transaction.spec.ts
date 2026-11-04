@@ -33,7 +33,7 @@ interface SignTransactionOutput {
   v: number;
 }
 
-test.describe("signer ethereum: sign transaction", () => {
+test.describe("signer ethereum: sign transaction", { tag: "@speculos" }, () => {
   test("signs a native transfer approved on the device screen", async ({
     device,
     ethSigner,

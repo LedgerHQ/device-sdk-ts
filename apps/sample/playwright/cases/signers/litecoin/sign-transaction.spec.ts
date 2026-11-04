@@ -55,7 +55,7 @@ const TRANSACTIONS = [
 
 // Opening the Litecoin app provisions a real Speculos instance through the mock
 // server, which alone waits up to 120s for the pod, so the budget is larger.
-test.describe("signer litecoin: sign transaction", () => {
+test.describe("signer litecoin: sign transaction", { tag: "@speculos" }, () => {
   for (const { name, fields, signedTransaction } of TRANSACTIONS) {
     test(`signs a transaction with ${name}`, async ({
       device,

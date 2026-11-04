@@ -43,31 +43,37 @@ interface GetExtendedPublicKeyOutput {
 
 // Opening the Litecoin app provisions a real Speculos instance through the mock
 // server, which alone waits up to 120s for the pod, so the budget is larger.
-test.describe("signer litecoin: get extended public key", () => {
-  for (const { derivationPath, extendedPublicKey } of SPECULOS_XPUBS) {
-    test(`returns the xpub of ${derivationPath} from the Litecoin app`, async ({
-      device,
-      ltcSigner,
-    }) => {
-      test.setTimeout(180_000);
+test.describe(
+  "signer litecoin: get extended public key",
+  { tag: "@speculos" },
+  () => {
+    for (const { derivationPath, extendedPublicKey } of SPECULOS_XPUBS) {
+      test(`returns the xpub of ${derivationPath} from the Litecoin app`, async ({
+        device,
+        ltcSigner,
+      }) => {
+        test.setTimeout(180_000);
 
-      await test.step("Given a connected Flex with the Litecoin app", async () => {
-        await device.addAndConnect(FLEX_WITH_LITECOIN);
-      });
-
-      await test.step(`When Get extended public key is executed at ${derivationPath}`, async () => {
-        await ltcSigner.open();
-        await ltcSigner.getExtendedPublicKey({ derivationPath });
-      });
-
-      await test.step("Then the xpub of the Speculos seed is returned", async () => {
-        const result = await ltcSigner.lastResult<GetExtendedPublicKeyOutput>({
-          timeout: 150_000,
+        await test.step("Given a connected Flex with the Litecoin app", async () => {
+          await device.addAndConnect(FLEX_WITH_LITECOIN);
         });
 
-        expect(result.status).toBe("completed");
-        expect(result.output!.extendedPublicKey).toBe(extendedPublicKey);
+        await test.step(`When Get extended public key is executed at ${derivationPath}`, async () => {
+          await ltcSigner.open();
+          await ltcSigner.getExtendedPublicKey({ derivationPath });
+        });
+
+        await test.step("Then the xpub of the Speculos seed is returned", async () => {
+          const result = await ltcSigner.lastResult<GetExtendedPublicKeyOutput>(
+            {
+              timeout: 150_000,
+            },
+          );
+
+          expect(result.status).toBe("completed");
+          expect(result.output!.extendedPublicKey).toBe(extendedPublicKey);
+        });
       });
-    });
-  }
-});
+    }
+  },
+);

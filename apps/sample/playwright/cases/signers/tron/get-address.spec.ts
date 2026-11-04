@@ -27,7 +27,7 @@ interface GetAddressOutput {
 // emulator's seed configuration.
 const TRON_ADDRESS_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
 
-test.describe("signer tron: get address", () => {
+test.describe("signer tron: get address", { tag: "@speculos" }, () => {
   test("returns an address with default inputs (no options selected)", async ({
     device,
     trxSigner,

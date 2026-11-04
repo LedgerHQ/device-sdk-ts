@@ -108,52 +108,52 @@ test.describe("signer xrp: get app config", () => {
     });
   });
 
-  test("returns the app config from the real XRP app", async ({
-    device,
-    mockClient,
-    xrpSigner,
-  }) => {
-    // Opening the XRP app provisions a real Speculos instance. The mock server
-    // alone waits up to 120s for the pod to become ready, so the budget here is
-    // larger than that to keep a slow cold start diagnosable instead of an
-    // opaque Playwright timeout.
-    test.setTimeout(180_000);
+  test(
+    "returns the app config from the real XRP app",
+    { tag: "@speculos" },
+    async ({ device, mockClient, xrpSigner }) => {
+      // Opening the XRP app provisions a real Speculos instance. The mock server
+      // alone waits up to 120s for the pod to become ready, so the budget here is
+      // larger than that to keep a slow cold start diagnosable instead of an
+      // opaque Playwright timeout.
+      test.setTimeout(180_000);
 
-    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+      let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
 
-    await test.step("Given a connected Stax with the XRP app and no APDU mock", async () => {
-      // Registering no mock is the load-bearing difference with the tests
-      // above: the Open App APDU falls through to the Speculinho proxy, and
-      // every APDU after it — `e0060000` included — reaches the emulator.
-      dev = await device.addAndConnect(STAX_WITH_XRP);
-    });
-
-    await test.step("When Get App Config is executed without skipOpenApp", async () => {
-      await xrpSigner.open();
-      // skipOpenApp defaults to false, so the device action opens the XRP app
-      // before sending the command. Were it to regress to true, the command
-      // would reach the dashboard instead and fail rather than silently pass.
-      await xrpSigner.getAppConfig();
-    });
-
-    await test.step("Then the version reported by the app is returned", async () => {
-      const result = await xrpSigner.lastResult<AppConfigOutput>({
-        timeout: 150_000,
+      await test.step("Given a connected Stax with the XRP app and no APDU mock", async () => {
+        // Registering no mock is the load-bearing difference with the tests
+        // above: the Open App APDU falls through to the Speculinho proxy, and
+        // every APDU after it — `e0060000` included — reaches the emulator.
+        dev = await device.addAndConnect(STAX_WITH_XRP);
       });
 
-      expect(result.status).toBe("completed");
-      // The emulated app reports the version of the ELF that was booted, which
-      // is the one the device config asked for.
-      expect(result.output!.version).toBe(XRP_APP_VERSION);
-    });
+      await test.step("When Get App Config is executed without skipOpenApp", async () => {
+        await xrpSigner.open();
+        // skipOpenApp defaults to false, so the device action opens the XRP app
+        // before sending the command. Were it to regress to true, the command
+        // would reach the dashboard instead and fail rather than silently pass.
+        await xrpSigner.getAppConfig();
+      });
 
-    await test.step("And a live Speculos instance was backing the device", async () => {
-      // Proves the version above came from an emulator rather than a mock:
-      // this throws when the device has no active Speculos instance.
-      const instance = await mockClient.getSpeculos(dev.id);
+      await test.step("Then the version reported by the app is returned", async () => {
+        const result = await xrpSigner.lastResult<AppConfigOutput>({
+          timeout: 150_000,
+        });
 
-      expect(instance.speculos_url).toMatch(/^https?:\/\//);
-      expect(instance.model.toLowerCase()).toBe("stax");
-    });
-  });
+        expect(result.status).toBe("completed");
+        // The emulated app reports the version of the ELF that was booted, which
+        // is the one the device config asked for.
+        expect(result.output!.version).toBe(XRP_APP_VERSION);
+      });
+
+      await test.step("And a live Speculos instance was backing the device", async () => {
+        // Proves the version above came from an emulator rather than a mock:
+        // this throws when the device has no active Speculos instance.
+        const instance = await mockClient.getSpeculos(dev.id);
+
+        expect(instance.speculos_url).toMatch(/^https?:\/\//);
+        expect(instance.model.toLowerCase()).toBe("stax");
+      });
+    },
+  );
 });

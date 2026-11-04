@@ -28,7 +28,7 @@ const RAW_TRANSFER_TX =
 // sample app as a 0x-prefixed hex string.
 const SIGNATURE_RE = /^0x[0-9a-f]{130}$/i;
 
-test.describe("signer tron: sign transaction", () => {
+test.describe("signer tron: sign transaction", { tag: "@speculos" }, () => {
   test("signs a TRX transfer approved on the device screen", async ({
     device,
     trxSigner,

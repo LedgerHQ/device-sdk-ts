@@ -56,50 +56,54 @@ interface SignTypedDataOutput {
   v: number;
 }
 
-test.describe("signer ethereum: sign typed message", () => {
-  test("signs an EIP-712 message approved on the device screen", async ({
-    device,
-    ethSigner,
-    speculos,
-  }) => {
-    // Opening the Ethereum app provisions a real Speculos instance and the
-    // message must be reviewed/approved on screen, so this flow is slow.
-    test.setTimeout(120_000);
+test.describe(
+  "signer ethereum: sign typed message",
+  { tag: "@speculos" },
+  () => {
+    test("signs an EIP-712 message approved on the device screen", async ({
+      device,
+      ethSigner,
+      speculos,
+    }) => {
+      // Opening the Ethereum app provisions a real Speculos instance and the
+      // message must be reviewed/approved on screen, so this flow is slow.
+      test.setTimeout(120_000);
 
-    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
-    await test.step("Given the device with the Ethereum app is connected", async () => {
-      dev = await device.addAndConnect(STAX_WITH_ETH);
+      let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+      await test.step("Given the device with the Ethereum app is connected", async () => {
+        dev = await device.addAndConnect(STAX_WITH_ETH);
+      });
+
+      const emulator = speculos(dev);
+      await test.step("And blind signing is enabled on the device", async () => {
+        // Open the app first (via Get address) so its settings are reachable, then
+        // enable blind signing - the EIP-712 message has no clear-signing context.
+        await ethSigner.open();
+        await ethSigner.getAddress();
+        await ethSigner.lastResult();
+        await emulator.waitReady();
+        await emulator.enableBlindSigning();
+      });
+
+      await test.step("When Sign typed message is executed", async () => {
+        // Re-open the Ethereum signer to return from the Get address tester to the
+        // action list (selecting an action replaces the list).
+        await ethSigner.open();
+        await ethSigner.signTypedMessage(TYPED_MESSAGE);
+      });
+
+      await test.step("And the message is approved on the Speculos screen", async () => {
+        await emulator.approveSigning();
+      });
+
+      await test.step("Then a valid signature is returned", async () => {
+        const result = await ethSigner.lastResult<SignTypedDataOutput>();
+
+        expect(result.status).toBe("completed");
+        expect(result.output!.r).toMatch(/^0x[0-9a-f]{64}$/);
+        expect(result.output!.s).toMatch(/^0x[0-9a-f]{64}$/);
+        expect(typeof result.output!.v).toBe("number");
+      });
     });
-
-    const emulator = speculos(dev);
-    await test.step("And blind signing is enabled on the device", async () => {
-      // Open the app first (via Get address) so its settings are reachable, then
-      // enable blind signing - the EIP-712 message has no clear-signing context.
-      await ethSigner.open();
-      await ethSigner.getAddress();
-      await ethSigner.lastResult();
-      await emulator.waitReady();
-      await emulator.enableBlindSigning();
-    });
-
-    await test.step("When Sign typed message is executed", async () => {
-      // Re-open the Ethereum signer to return from the Get address tester to the
-      // action list (selecting an action replaces the list).
-      await ethSigner.open();
-      await ethSigner.signTypedMessage(TYPED_MESSAGE);
-    });
-
-    await test.step("And the message is approved on the Speculos screen", async () => {
-      await emulator.approveSigning();
-    });
-
-    await test.step("Then a valid signature is returned", async () => {
-      const result = await ethSigner.lastResult<SignTypedDataOutput>();
-
-      expect(result.status).toBe("completed");
-      expect(result.output!.r).toMatch(/^0x[0-9a-f]{64}$/);
-      expect(result.output!.s).toMatch(/^0x[0-9a-f]{64}$/);
-      expect(typeof result.output!.v).toBe("number");
-    });
-  });
-});
+  },
+);

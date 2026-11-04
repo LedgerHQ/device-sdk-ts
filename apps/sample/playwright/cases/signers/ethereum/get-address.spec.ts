@@ -25,7 +25,7 @@ interface GetAddressOutput {
 // path 44'/60'/0'/0/0.
 const EXPECTED_ADDRESS = "0x47609D32EdF0C2A046D8D1D22680A2F93c78661b";
 
-test.describe("signer ethereum: get address", () => {
+test.describe("signer ethereum: get address", { tag: "@speculos" }, () => {
   test("returns an address with default inputs (no options selected)", async ({
     device,
     ethSigner,
