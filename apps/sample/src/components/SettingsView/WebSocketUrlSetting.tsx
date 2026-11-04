@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectWebSocketUrl } from "@/state/settings/selectors";
 import { setWebSocketUrl } from "@/state/settings/slice";
 
@@ -29,14 +28,14 @@ export const WebSocketUrlSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>Secure channel WebSocket URL</InputLabel>}
+          label="Secure channel WebSocket URL"
           value={webSocketUrl}
           onChange={onValueChange}
           placeholder="wss://scriptrunner.api.live.ledger.com/update"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectWebSocketUrl}
         setStateAction={setWebSocketUrlFn}

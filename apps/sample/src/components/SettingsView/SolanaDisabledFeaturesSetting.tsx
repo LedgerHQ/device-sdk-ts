@@ -1,9 +1,8 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { type SolanaSignerFeaturesNames } from "@ledgerhq/device-signer-kit-solana";
-import { Flex, SelectInput } from "@ledgerhq/react-ui";
 
-import { SelectInputLabel } from "@/components/InputLabel";
+import { Switch } from "@/components/fields";
 import { selectSolanaDisabledFeatures } from "@/state/settings/selectors";
 import { setSolanaDisabledFeatures } from "@/state/settings/slice";
 
@@ -29,11 +28,6 @@ export const SolanaDisabledFeaturesSetting: React.FC = () => {
   const disabledFeatures = useSelector(selectSolanaDisabledFeatures);
   const dispatch = useDispatch();
 
-  const selectedOptions = useMemo(
-    () => featureOptions.filter((opt) => disabledFeatures.includes(opt.value)),
-    [disabledFeatures],
-  );
-
   const setDisabledFeaturesFn = useCallback(
     (value: SolanaSignerFeaturesNames[]) => {
       dispatch(setSolanaDisabledFeatures({ solanaDisabledFeatures: value }));
@@ -41,29 +35,31 @@ export const SolanaDisabledFeaturesSetting: React.FC = () => {
     [dispatch],
   );
 
-  const onValueChange = useCallback(
-    (options: readonly Option[] | null) => {
-      setDisabledFeaturesFn((options ?? []).map((opt) => opt.value));
+  const onToggle = useCallback(
+    (feature: SolanaSignerFeaturesNames) => {
+      setDisabledFeaturesFn(
+        disabledFeatures.includes(feature)
+          ? disabledFeatures.filter((f) => f !== feature)
+          : [...disabledFeatures, feature],
+      );
     },
-    [setDisabledFeaturesFn],
+    [disabledFeatures, setDisabledFeaturesFn],
   );
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
-        <SelectInput
-          renderLeft={() => (
-            <SelectInputLabel>Disabled features</SelectInputLabel>
-          )}
-          options={featureOptions}
-          value={selectedOptions}
-          onChange={onValueChange}
-          isMulti={true}
-          isSearchable={false}
-          closeMenuOnSelect={false}
-          placeholder="None"
-        />
-      </Flex>
+      <div className="flex flex-1 flex-col gap-12">
+        <span className="body-2 text-muted">Disabled features</span>
+        {featureOptions.map((option) => (
+          <Switch
+            key={option.value}
+            name={`switch-solana-${option.value}`}
+            label={option.label}
+            checked={disabledFeatures.includes(option.value)}
+            onChange={() => onToggle(option.value)}
+          />
+        ))}
+      </div>
       <ResetSettingCTA
         stateSelector={selectSolanaDisabledFeatures}
         setStateAction={setDisabledFeaturesFn}

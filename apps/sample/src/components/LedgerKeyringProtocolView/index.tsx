@@ -18,7 +18,6 @@ import {
   NobleCryptoService,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
 import { catchError, from, map, of, tap } from "rxjs";
-import styled from "styled-components";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -127,7 +126,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
             };
           }
         },
-        InputValuesComponent: RowCommandForm as typeof Form<AuthInput>,
+        InputValuesComponent: RowCommandForm,
         initialValues: {
           ...genIdentity(),
           trustchainId: "",
@@ -255,9 +254,9 @@ type AuthInput = {
   permissions: string;
 };
 
-const RowCommandForm = styled(Form)`
-  flex-direction: row;
-`;
+const RowCommandForm = (
+  props: React.ComponentProps<typeof Form<AuthInput>>,
+) => <Form<AuthInput> {...props} className="flex-row" />;
 
 function fnToDAReturn<Output, Error>(
   fn: () => Promise<Output>,

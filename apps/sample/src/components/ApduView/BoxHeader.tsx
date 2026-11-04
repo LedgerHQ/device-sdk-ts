@@ -1,28 +1,18 @@
 import React from "react";
-import { Flex, Icons, Text, Tooltip } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { Information } from "@ledgerhq/lumen-ui-react/symbols";
 
-const BoxTitle = styled(Text).attrs({
-  variant: "h5Inter",
-  color: "neutral.c70",
-})``;
+import { HintTooltip } from "@/components/HintTooltip";
 
 export const BoxHeader: React.FC<{ children: string; hint: string }> = ({
   children,
   hint,
 }) => {
   return (
-    <Tooltip content={<Text color="neutral.c00">{hint}</Text>}>
-      <Flex
-        alignSelf="flex-start"
-        flexDirection="row"
-        alignItems="center"
-        columnGap={2}
-        flexGrow={0}
-      >
-        <BoxTitle>{children}</BoxTitle>
-        <Icons.Information size="XS" color="neutral.c70" />
-      </Flex>
-    </Tooltip>
+    <HintTooltip hint={hint}>
+      <div className="flex grow-0 flex-row items-center gap-8 self-start">
+        <span className="heading-5-semi-bold text-muted">{children}</span>
+        <Information size={16} className="text-muted" />
+      </div>
+    </HintTooltip>
   );
 };

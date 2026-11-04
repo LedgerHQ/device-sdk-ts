@@ -3,7 +3,6 @@ import {
   decodeImageFromDevice,
   renderPixelDataToImage,
 } from "@ledgerhq/dmk-ledger-wallet";
-import { Text } from "@ledgerhq/react-ui";
 
 import {
   Container,
@@ -64,9 +63,9 @@ export const DownloadOutput: React.FC<DownloadOutputProps> = ({ output }) => {
   if ("alreadyBackedUp" in output && output.alreadyBackedUp) {
     return (
       <Container>
-        <Text color="success.c80">
+        <span className="body-2 text-success">
           Image already backed up (hash matches backupHash)
-        </Text>
+        </span>
         <MetadataText>No download was necessary</MetadataText>
       </Container>
     );
@@ -76,9 +75,7 @@ export const DownloadOutput: React.FC<DownloadOutputProps> = ({ output }) => {
   if ("imageData" in output && output.imageData) {
     return (
       <Container>
-        <Text variant="bodyLineHeight" fontWeight="medium">
-          Downloaded Custom Lock Screen
-        </Text>
+        <span className="body-2-semi-bold">Downloaded Custom Lock Screen</span>
 
         {reconstructedImage ? (
           <PreviewImage
@@ -86,7 +83,9 @@ export const DownloadOutput: React.FC<DownloadOutputProps> = ({ output }) => {
             alt="Downloaded lock screen"
           />
         ) : (
-          <Text color="warning.c80">Could not reconstruct image preview</Text>
+          <span className="body-2 text-warning">
+            Could not reconstruct image preview
+          </span>
         )}
 
         <MetadataContainer>
@@ -123,7 +122,7 @@ export const DownloadOutput: React.FC<DownloadOutputProps> = ({ output }) => {
   // Fallback for unexpected output format
   return (
     <Container>
-      <Text color="neutral.c70">No image data in output</Text>
+      <span className="body-2 text-muted">No image data in output</span>
     </Container>
   );
 };

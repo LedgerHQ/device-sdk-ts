@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectMockServerSessionToken } from "@/state/settings/selectors";
 import { setMockServerSessionToken } from "@/state/settings/slice";
 
@@ -22,15 +21,15 @@ export const MockServerSessionTokenSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>Mock Server Session Token</InputLabel>}
+          label="Mock Server Session Token"
           value={mockServerSessionToken}
           onChange={setMockServerSessionTokenFn}
           placeholder="Auto-provisioned when empty"
           data-testid="input_mock-server-session-token"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectMockServerSessionToken}
         setStateAction={setMockServerSessionTokenFn}

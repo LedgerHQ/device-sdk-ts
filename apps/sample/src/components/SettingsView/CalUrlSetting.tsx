@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectCalUrl } from "@/state/settings/selectors";
 import { setCalUrl } from "@/state/settings/slice";
 
@@ -29,14 +28,14 @@ export const CalUrlSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>CAL URL</InputLabel>}
+          label="CAL URL"
           value={calUrl}
           onChange={onValueChange}
           placeholder="https://global.api.prd.ledger.com/cal/v1"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectCalUrl}
         setStateAction={setCalUrlFn}

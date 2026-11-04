@@ -1,12 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import {
-  Button,
-  Divider,
-  Flex,
-  Icons,
-  InfiniteLoader,
-} from "@ledgerhq/react-ui";
+import { Button, Divider } from "@ledgerhq/lumen-ui-react";
+import { ArrowRight } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { Block } from "@/components/Block";
 import { Form, type ValueSelector } from "@/components/Form";
@@ -108,7 +103,10 @@ export function CalCheckDappDrawer<
   return (
     <>
       <Block>
-        <Flex flexDirection="column" opacity={loading ? 0.5 : 1} rowGap={3}>
+        <div
+          className="flex flex-col gap-y-8"
+          style={{ opacity: loading ? 0.5 : 1 }}
+        >
           <Form
             initialValues={values}
             onChange={setValues}
@@ -116,27 +114,23 @@ export function CalCheckDappDrawer<
             disabled={loading}
           />
           <Divider />
-        </Flex>
-        <Flex flexDirection="row" flex={1} columnGap={3}>
+        </div>
+        <div className="flex flex-row flex-1 gap-x-8">
           <Button
-            variant="main"
+            appearance="base"
             onClick={handleClickExecute}
             disabled={loading || valuesInvalid}
-            Icon={() =>
-              loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
-            }
+            icon={ArrowRight}
+            loading={loading}
           >
             Check Availability
           </Button>
-        </Flex>
+        </div>
       </Block>
-      <Block flex={1} overflowY="hidden">
-        <Flex
+      <Block className="flex-1 overflow-y-hidden">
+        <div
+          className="flex flex-col gap-y-12 flex-1 overflow-y-scroll"
           ref={responseBoxRef}
-          flexDirection="column"
-          rowGap={4}
-          flex={1}
-          overflowY="scroll"
         >
           {responses.slice().map((response, key) => (
             <CalAvailabilityResponseComponent
@@ -148,10 +142,9 @@ export function CalCheckDappDrawer<
               searchAddress={response.searchAddress}
             />
           ))}
-        </Flex>
+        </div>
         <Button
-          variant="main"
-          outline
+          appearance="gray"
           onClick={handleClickClear}
           disabled={responses.length === 0}
         >

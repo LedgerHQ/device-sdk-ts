@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectMetadataServiceUrl } from "@/state/settings/selectors";
 import { setMetadataServiceUrl } from "@/state/settings/slice";
 
@@ -29,14 +28,14 @@ export const MetadataServiceUrlSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>Metadata Service URL</InputLabel>}
+          label="Metadata Service URL"
           value={metadataServiceUrl}
           onChange={onValueChange}
           placeholder="https://nft.api.live.ledger.com"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectMetadataServiceUrl}
         setStateAction={setMetadataServiceUrlFn}

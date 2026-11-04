@@ -1,7 +1,5 @@
 import React from "react";
 import { useCallback, useMemo, useState } from "react";
-import { Flex, Text } from "@ledgerhq/react-ui";
-import styled from "styled-components";
 
 import { PageWithHeader } from "@/components/PageWithHeader";
 
@@ -53,8 +51,6 @@ export const DeviceActionsList: React.FC<Props> = ({
     }
   }, []);
 
-  const DescriptionText = styled(Text).attrs({ mb: 3, variant: "body" })``;
-
   return (
     <PageWithHeader
       segments={breadcrumbsSegments}
@@ -62,13 +58,15 @@ export const DeviceActionsList: React.FC<Props> = ({
     >
       {selectedDeviceAction ? (
         <>
-          <DescriptionText>{selectedDeviceAction.description}</DescriptionText>
+          <span className="body-2 mb-8">
+            {selectedDeviceAction.description}
+          </span>
           <DeviceActionTester {...selectedDeviceAction} />
         </>
       ) : deviceActions.length === 0 && noActionsMessage ? (
-        <Text variant="body">{noActionsMessage}</Text>
+        <span className="body-2">{noActionsMessage}</span>
       ) : (
-        <Flex flexDirection="column" overflow="scroll" pb={4} rowGap={4}>
+        <div className="flex flex-col overflow-scroll pb-12 gap-y-12">
           {deviceActions.map((deviceAction) => (
             <DeviceActionRow
               key={`${deviceAction.title}_${deviceAction.description}`}
@@ -76,7 +74,7 @@ export const DeviceActionsList: React.FC<Props> = ({
               {...deviceAction}
             />
           ))}
-        </Flex>
+        </div>
       )}
     </PageWithHeader>
   );

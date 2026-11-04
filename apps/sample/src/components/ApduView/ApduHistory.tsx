@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from "react";
-import { Button, Divider, Flex, Text } from "@ledgerhq/react-ui";
+import { Button, Divider } from "@ledgerhq/lumen-ui-react";
 
 import { Block } from "@/components/Block";
 
@@ -41,60 +41,47 @@ export const ApduHistory: React.FC<ApduHistoryProps> = ({
   const hintHistory = "History of APDUs sent through this page.";
 
   return (
-    <Block overflow="hidden" flex={1} minHeight={200}>
+    <Block className="min-h-[200px] flex-1 overflow-hidden">
       <BoxHeader hint={hintHistory}>APDU History</BoxHeader>
-      <Flex
+      <div
+        className="flex flex-col gap-y-12 overflow-y-scroll h-full flex-1"
         ref={historyBoxRef}
-        flexDirection="column"
-        rowGap={4}
-        overflowY="scroll"
-        height="100%"
-        flex={1}
         data-testid="box_apdu-history"
       >
         {history.length === 0 ? (
-          <Flex
-            flex={1}
-            justifyContent="center"
-            alignItems="center"
-            color="neutral.c60"
-          >
-            <Text variant="body" color="neutral.c60">
-              No APDUs sent yet
-            </Text>
-          </Flex>
+          <div className="flex flex-1 items-center justify-center">
+            <span className="body-2 text-muted">No APDUs sent yet</span>
+          </div>
         ) : (
           history.map((item, index, arr) => {
             const isLatest = index === arr.length - 1;
             return (
-              <Flex flexDirection="column" key={item.id}>
+              <div className="flex flex-col" key={item.id}>
                 <ApduResponseView item={item} isLatest={isLatest} />
                 <div hidden={isLatest}>
-                  <Divider my={2} />
+                  <Divider className="my-8" />
                 </div>
-              </Flex>
+              </div>
             );
           })
         )}
-      </Flex>
-      <Flex flexDirection="row" columnGap={3}>
+      </div>
+      <div className="flex flex-row gap-x-8">
         <Button
-          variant="main"
-          outline
+          appearance="gray"
           onClick={onClear}
           disabled={history.length === 0}
         >
           Clear history
         </Button>
         <Button
-          variant="main"
-          outline
+          appearance="gray"
           onClick={handleClickCopyApdus}
           disabled={history.length === 0}
         >
           Copy APDUs
         </Button>
-      </Flex>
+      </div>
     </Block>
   );
 };

@@ -1,29 +1,27 @@
+import React from "react";
 import { DeviceStatus } from "@ledgerhq/device-management-kit";
-import { Text } from "@ledgerhq/react-ui";
-import styled, { type DefaultTheme } from "styled-components";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
 
-const getColorFromState = ({
-  state,
-  theme,
-}: {
-  state: DeviceStatus;
-  theme: DefaultTheme;
-}) => {
+const getColorClass = (state: DeviceStatus) => {
   switch (state) {
     case DeviceStatus.CONNECTED:
-      return theme.colors.success.c50;
+      return "text-success";
     case DeviceStatus.BUSY:
     case DeviceStatus.LOCKED:
-      return theme.colors.warning.c60;
+      return "text-warning";
     case DeviceStatus.NOT_CONNECTED:
-      return theme.colors.error.c60;
+      return "text-error";
   }
 };
 
 type StatusTextProps = {
   readonly state: DeviceStatus;
-};
+} & React.ComponentProps<"span">;
 
-export const StatusText = styled(Text)<StatusTextProps>`
-  color: ${(props) => getColorFromState(props)};
-`;
+export const StatusText: React.FC<StatusTextProps> = ({
+  state,
+  className,
+  ...props
+}) => (
+  <span className={cn("body-3", getColorClass(state), className)} {...props} />
+);

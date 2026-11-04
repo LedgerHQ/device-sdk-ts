@@ -1,33 +1,23 @@
 import React, { useCallback, useMemo, useState } from "react";
-import {
-  Button,
-  Flex,
-  Icons,
-  InfiniteLoader,
-  Input,
-  Text,
-} from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { Button } from "@ledgerhq/lumen-ui-react";
+import { ArrowRight } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { CopyableApdu } from "@/components/ApduView/CopyableApdu";
 import { type ModeProps } from "@/components/ApduView/types";
-import { InputLabelWithTooltip } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 
 import { AddDataSegmentButton } from "./AddDataSegmentButton";
 import { DataSegmentInput } from "./DataSegmentInput";
 import { PresetSelector } from "./PresetSelector";
 import { useApduBuilder } from "./useApduBuilder";
 
-const Section = styled(Flex).attrs({
-  flexDirection: "column",
-  rowGap: 4,
-})``;
+const Section: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <div className="flex flex-col gap-16">{children}</div>
+);
 
-const SectionHeader = styled(Text).attrs({
-  variant: "small",
-  fontWeight: "medium",
-  color: "neutral.c80",
-})``;
+const SectionHeader: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <span className="body-3-semi-bold text-muted">{children}</span>
+);
 
 export const BuilderModeInput: React.FC<ModeProps> = ({
   sendApdu,
@@ -58,7 +48,7 @@ export const BuilderModeInput: React.FC<ModeProps> = ({
     disabled || loading || !apduBuilder.validation.isValid;
 
   return (
-    <Flex flexDirection="column" rowGap={8}>
+    <div className="flex flex-col gap-y-24">
       {/* Preset selector */}
       <PresetSelector
         selectedPresetId={apduBuilder.selectedPresetId}
@@ -68,76 +58,64 @@ export const BuilderModeInput: React.FC<ModeProps> = ({
       {/* Header section */}
       <Section>
         <SectionHeader>Header</SectionHeader>
-        <Flex flexDirection="row" columnGap={4}>
-          <Flex flexDirection="column" rowGap={2}>
+        <div className="flex flex-row gap-x-12">
+          <div className="flex flex-col gap-y-4">
             <Input
               name="cla"
-              renderLeft={() => (
-                <InputLabelWithTooltip hint="Instruction class">
-                  CLA
-                </InputLabelWithTooltip>
-              )}
+              label="CLA"
+              hint="Instruction class"
               value={apduBuilder.header.cla}
               onChange={(value) => apduBuilder.setHeaderField("cla", value)}
             />
             {!apduBuilder.validation.header.cla.isValid && (
-              <Text variant="extraSmall" color="error.c80">
+              <span className="body-4 text-error">
                 {apduBuilder.validation.header.cla.error}
-              </Text>
+              </span>
             )}
-          </Flex>
-          <Flex flexDirection="column" rowGap={2}>
+          </div>
+          <div className="flex flex-col gap-y-4">
             <Input
               name="ins"
-              renderLeft={() => (
-                <InputLabelWithTooltip hint="Instruction code">
-                  INS
-                </InputLabelWithTooltip>
-              )}
+              label="INS"
+              hint="Instruction code"
               value={apduBuilder.header.ins}
               onChange={(value) => apduBuilder.setHeaderField("ins", value)}
             />
             {!apduBuilder.validation.header.ins.isValid && (
-              <Text variant="extraSmall" color="error.c80">
+              <span className="body-4 text-error">
                 {apduBuilder.validation.header.ins.error}
-              </Text>
+              </span>
             )}
-          </Flex>
-          <Flex flexDirection="column" rowGap={2}>
+          </div>
+          <div className="flex flex-col gap-y-4">
             <Input
               name="p1"
-              renderLeft={() => (
-                <InputLabelWithTooltip hint="Instruction first parameter">
-                  P1
-                </InputLabelWithTooltip>
-              )}
+              label="P1"
+              hint="Instruction first parameter"
               value={apduBuilder.header.p1}
               onChange={(value) => apduBuilder.setHeaderField("p1", value)}
             />
             {!apduBuilder.validation.header.p1.isValid && (
-              <Text variant="extraSmall" color="error.c80">
+              <span className="body-4 text-error">
                 {apduBuilder.validation.header.p1.error}
-              </Text>
+              </span>
             )}
-          </Flex>
-          <Flex flexDirection="column" rowGap={2}>
+          </div>
+          <div className="flex flex-col gap-y-4">
             <Input
               name="p2"
-              renderLeft={() => (
-                <InputLabelWithTooltip hint="Instruction second parameter">
-                  P2
-                </InputLabelWithTooltip>
-              )}
+              label="P2"
+              hint="Instruction second parameter"
               value={apduBuilder.header.p2}
               onChange={(value) => apduBuilder.setHeaderField("p2", value)}
             />
             {!apduBuilder.validation.header.p2.isValid && (
-              <Text variant="extraSmall" color="error.c80">
+              <span className="body-4 text-error">
                 {apduBuilder.validation.header.p2.error}
-              </Text>
+              </span>
             )}
-          </Flex>
-        </Flex>
+          </div>
+        </div>
       </Section>
 
       {/* Data section */}
@@ -169,40 +147,36 @@ export const BuilderModeInput: React.FC<ModeProps> = ({
         {builderPreview.rawApdu ? (
           <CopyableApdu rawApdu={builderPreview.rawApdu} />
         ) : (
-          <Text variant="small" color="error.c80">
-            Invalid APDU configuration
-          </Text>
+          <span className="body-3 text-error">Invalid APDU configuration</span>
         )}
         {builderPreview.errors.length > 0 && (
-          <Flex flexDirection="column" rowGap={1}>
+          <div className="flex flex-col gap-y-2">
             {builderPreview.errors.map((error, index) => (
-              <Text
+              <span
+                className="body-4 text-error"
                 key={index}
-                variant="extraSmall"
-                color="error.c80"
                 style={{ wordBreak: "break-all" }}
               >
                 {error}
-              </Text>
+              </span>
             ))}
-          </Flex>
+          </div>
         )}
       </Section>
 
       {/* Submit button */}
-      <Flex flexDirection="row" justifyContent="flex-end">
+      <div className="flex flex-row justify-end">
         <Button
-          variant="main"
+          appearance="base"
           onClick={() => void handleSubmit()}
           disabled={isSubmitDisabled}
-          Icon={() =>
-            loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
-          }
+          icon={ArrowRight}
+          loading={loading}
           data-testid="CTA_send-apdu"
         >
           Send
         </Button>
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 };

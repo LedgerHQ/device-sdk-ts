@@ -4,13 +4,14 @@
  * The icon the device screen header shows for each model.
  */
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
-import { Icons } from "@ledgerhq/react-ui";
+import { Flex, Nano, Stax } from "@ledgerhq/lumen-ui-react/symbols";
 
-export const DEVICE_SCREEN_ICON: Record<DeviceModelId, typeof Icons.Nano> = {
-  [DeviceModelId.NANO_S]: Icons.Nano,
-  [DeviceModelId.NANO_SP]: Icons.Nano,
-  [DeviceModelId.NANO_X]: Icons.Nano,
-  [DeviceModelId.STAX]: Icons.Stax,
-  [DeviceModelId.FLEX]: Icons.Flex,
-  [DeviceModelId.APEX]: Icons.Apex,
+// Lumen has no Apex icon, so that model falls back to the Flex one.
+export const DEVICE_SCREEN_ICON: Record<DeviceModelId, typeof Nano> = {
+  [DeviceModelId.NANO_S]: Nano,
+  [DeviceModelId.NANO_SP]: Nano,
+  [DeviceModelId.NANO_X]: Nano,
+  [DeviceModelId.STAX]: Stax,
+  [DeviceModelId.FLEX]: Flex,
+  [DeviceModelId.APEX]: Flex,
 };

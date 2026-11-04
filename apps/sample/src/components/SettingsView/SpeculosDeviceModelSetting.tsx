@@ -1,9 +1,8 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
-import { Flex, SelectInput } from "@ledgerhq/react-ui";
 
-import { SelectInputLabel } from "@/components/InputLabel";
+import { SelectInput } from "@/components/fields";
 import { selectSpeculosDeviceModel } from "@/state/settings/selectors";
 import { setSpeculosDeviceModel } from "@/state/settings/slice";
 
@@ -47,17 +46,15 @@ export const SpeculosDeviceModelSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <SelectInput
-          renderLeft={() => <SelectInputLabel>Device Model</SelectInputLabel>}
+          label="Device Model"
           options={deviceModelOptions}
           value={selectedOption}
           onChange={onValueChange}
-          isMulti={false}
-          isSearchable={false}
           placeholder="Select device model"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectSpeculosDeviceModel}
         setStateAction={setDeviceModelFn}

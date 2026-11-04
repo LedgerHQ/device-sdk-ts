@@ -1,8 +1,7 @@
 import React from "react";
-import { Flex, Icons, Input, SelectInput, Text } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { Close } from "@ledgerhq/lumen-ui-react/symbols";
 
-import { InputLabel, SelectInputLabel } from "@/components/InputLabel";
+import { Input, SelectInput } from "@/components/fields";
 
 import { DATA_SEGMENT_METHODS } from "./dataSegmentMethods";
 import {
@@ -11,35 +10,22 @@ import {
   type DataSegmentValidation,
 } from "./types";
 
-const Container = styled(Flex)`
-  flex-direction: column;
-  align-items: flex-start;
-  border-radius: 8px;
-  background-color: ${({ theme }) => theme.colors.neutral.c20};
-`;
+const Container: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <div className="flex flex-col items-start gap-16 rounded-md bg-surface p-24">
+    {children}
+  </div>
+);
 
-const ValueInputContainer = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
+const ValueInputContainer: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => <div className="min-w-0 flex-1">{children}</div>;
 
-const DeleteButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.neutral.c70};
-  transition: all 0.15s ease;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.neutral.c30};
-    color: ${({ theme }) => theme.colors.error.c80};
-  }
-`;
+const DeleteButton: React.FC<React.ComponentProps<"button">> = (props) => (
+  <button
+    className="flex cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-8 text-muted transition-all duration-150 hover:bg-muted-transparent-hover hover:text-error"
+    {...props}
+  />
+);
 
 type DataSegmentInputProps = {
   segment: DataSegment;
@@ -81,28 +67,21 @@ export const DataSegmentInput: React.FC<DataSegmentInputProps> = ({
   };
 
   return (
-    <Container p={6} rowGap={4}>
-      <Text variant="extraSmall" color="neutral.c60">
+    <Container>
+      <span className="body-4 text-muted">
         {selectedMethodInfo.description}
-      </Text>
-      <Flex
-        flexDirection="row"
-        alignItems="flex-start"
-        width="100%"
-        columnGap={4}
-      >
+      </span>
+      <div className="flex flex-row items-start w-full gap-x-12">
         <SelectInput
-          renderLeft={() => <SelectInputLabel>Method</SelectInputLabel>}
+          label="Method"
           options={methodOptions}
           value={methodOptions.find((opt) => opt.value === segment.method)}
           onChange={handleMethodChange}
-          isMulti={false}
-          isSearchable={false}
           placeholder="Select method"
         />
         <ValueInputContainer>
           <Input
-            renderLeft={() => <InputLabel>Value</InputLabel>}
+            label="Value"
             type={getInputType()}
             placeholder={selectedMethodInfo.placeholder}
             value={segment.value}
@@ -110,13 +89,11 @@ export const DataSegmentInput: React.FC<DataSegmentInputProps> = ({
           />
         </ValueInputContainer>
         <DeleteButton onClick={onRemove} title="Remove segment">
-          <Icons.Close size="S" />
+          <Close size={16} />
         </DeleteButton>
-      </Flex>
+      </div>
       {!validation.isValid && validation.error && (
-        <Text variant="extraSmall" color="error.c80">
-          {validation.error}
-        </Text>
+        <span className="body-4 text-error">{validation.error}</span>
       )}
     </Container>
   );

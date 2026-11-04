@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Switch } from "@ledgerhq/react-ui";
 
+import { Switch } from "@/components/fields";
 import { type TransportType } from "@/state/settings/schema";
 import { selectTransportType } from "@/state/settings/selectors";
 import { setTransportType } from "@/state/settings/slice";
@@ -28,7 +28,7 @@ export const SpeculosToggleSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Switch
           onChange={onToggle}
           checked={speculosEnabled}
@@ -36,7 +36,7 @@ export const SpeculosToggleSetting: React.FC = () => {
           label="Enable Speculos"
           data-testid="switch_speculos"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectTransportType}
         setStateAction={setTransportTypeFn}

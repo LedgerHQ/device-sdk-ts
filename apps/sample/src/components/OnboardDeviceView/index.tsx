@@ -1,15 +1,9 @@
 import React, { useCallback, useState } from "react";
-import {
-  Button,
-  Flex,
-  Icons,
-  InfiniteLoader,
-  Input,
-  Text,
-} from "@ledgerhq/react-ui";
+import { Button } from "@ledgerhq/lumen-ui-react";
+import { ArrowRight } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { Block } from "@/components/Block";
-import { InputLabel, InputLabelWithTooltip } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { type LogEntry, LogPanel } from "@/components/LogPanel";
 import { ResizableTextArea } from "@/components/ResizableTextArea";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -87,25 +81,25 @@ export const OnboardDeviceView: React.FC<{ sessionId: string }> = ({
   }, [dmk, sessionId, pin, words, passphrase]);
 
   return (
-    <Flex flexDirection="column" rowGap={4} p={6} maxWidth={600}>
-      <Text variant="h4">Onboard Device</Text>
-      <Text variant="body" color="warning.c80">
+    <div className="flex flex-col gap-y-12 p-16" style={{ maxWidth: 600 }}>
+      <span className="heading-4-semi-bold">Onboard Device</span>
+      <span className="body-2 text-warning">
         This provisions the device directly from a PIN and seed phrase,
         bypassing the on-device onboarding UI — use test seeds only.
-      </Text>
-      <Text variant="body" fontWeight="semiBold" color="warning.c80">
+      </span>
+      <span className="body-2-semi-bold text-warning">
         The device must be in recovery mode before running this. It will fail
         (status word 0x6d07 or 0x660e) on a device that is booted normally,
         whether or not it&rsquo;s already onboarded.
-      </Text>
-      <Text variant="body" color="neutral.c70">
+      </span>
+      <span className="body-2 text-muted">
         Onboarding can take up to a minute — the device is deriving keys and
         writing to NVRAM. Keep it connected until it completes.
-      </Text>
+      </span>
       <Block>
         <Input
           id="onboard-pin"
-          renderLeft={() => <InputLabel>PIN</InputLabel>}
+          label="PIN"
           value={pin}
           onChange={(val) => setPin(String(val).replace(/[^0-9]/g, ""))}
           placeholder="4-8 digits"
@@ -122,11 +116,8 @@ export const OnboardDeviceView: React.FC<{ sessionId: string }> = ({
 
         <Input
           id="onboard-passphrase"
-          renderLeft={() => (
-            <InputLabelWithTooltip hint="Optional BIP39 passphrase (the '25th word'). Leave empty unless the seed was meant to be used with one.">
-              Derivation passphrase (optional)
-            </InputLabelWithTooltip>
-          )}
+          label="Derivation passphrase (optional)"
+          hint="Optional BIP39 passphrase (the '25th word'). Leave empty unless the seed was meant to be used with one."
           value={passphrase}
           onChange={(val) => setPassphrase(String(val))}
           placeholder="leave empty if none"
@@ -134,25 +125,27 @@ export const OnboardDeviceView: React.FC<{ sessionId: string }> = ({
         />
 
         <Button
-          variant="main"
+          appearance="base"
           disabled={loading}
           onClick={handleOnboard}
-          Icon={() =>
-            loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
-          }
+          icon={ArrowRight}
+          loading={loading}
           data-testid="CTA_onboard-device"
         >
           Onboard Device
         </Button>
 
         {formError && (
-          <Text color="error.c80" data-testid="text_onboard-form-error">
+          <span
+            className="body-2 text-error"
+            data-testid="text_onboard-form-error"
+          >
             {formError}
-          </Text>
+          </span>
         )}
 
         <LogPanel logs={logs} />
       </Block>
-    </Flex>
+    </div>
   );
 };

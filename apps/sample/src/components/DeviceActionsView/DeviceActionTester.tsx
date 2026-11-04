@@ -6,20 +6,13 @@ import type {
   ExecuteDeviceActionReturnType,
 } from "@ledgerhq/device-management-kit";
 import { type DeviceModelId } from "@ledgerhq/device-management-kit";
-import {
-  Button,
-  Divider,
-  Flex,
-  Icons,
-  InfiniteLoader,
-  Switch,
-  Text,
-  Tooltip,
-} from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { Button, Divider } from "@ledgerhq/lumen-ui-react";
+import { ArrowRight } from "@ledgerhq/lumen-ui-react/symbols";
 
+import { BoxHeader } from "@/components/ApduView/BoxHeader";
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
+import { Switch } from "@/components/fields";
 import { Form, type LinkedFields, type ValueSelector } from "@/components/Form";
 import { type FieldType } from "@/hooks/useForm";
 
@@ -58,31 +51,6 @@ export type DeviceActionProps<
   labelSelector?: Partial<Record<string, string>>;
   linkedFields?: LinkedFields<Input & Record<string, FieldType>>;
   deviceModelId: DeviceModelId;
-};
-
-const BoxTitle = styled(Text).attrs({
-  variant: "h5Inter",
-  color: "neutral.c70",
-  mr: 2,
-})``;
-
-const BoxHeader: React.FC<{ children: string; hint: string }> = ({
-  children,
-  hint,
-}) => {
-  return (
-    <Tooltip content={<Text color="neutral.c00">{hint}</Text>}>
-      <Flex
-        alignSelf="flex-start"
-        flexDirection="row"
-        alignItems="center"
-        flexGrow={0}
-      >
-        <BoxTitle>{children}</BoxTitle>
-        <Icons.Information size="XS" color="neutral.c70" />
-      </Flex>
-    </Tooltip>
-  );
 };
 
 /**
@@ -216,10 +184,13 @@ export function DeviceActionTester<
     "This is an example of what should be shown to the user while executing a device action.";
 
   return (
-    <Flex flexDirection="column" rowGap={3} overflow="scroll" flex={1}>
+    <div className="flex flex-col gap-y-8 overflow-scroll flex-1">
       <Block data-testid="form_device-action">
         <BoxHeader hint={hintInput}>Device Action input</BoxHeader>
-        <Flex flexDirection="column" opacity={loading ? 0.5 : 1} rowGap={3}>
+        <div
+          className="flex flex-col gap-y-8"
+          style={{ opacity: loading ? 0.5 : 1 }}
+        >
           {InputValuesComponent ? (
             <InputValuesComponent
               initialValues={values}
@@ -245,68 +216,55 @@ export function DeviceActionTester<
             label="Inspect (dev tools)"
             name="Inspect"
           />
-        </Flex>
+        </div>
       </Block>
-      <Flex
-        flexDirection="row"
-        columnGap={3}
-        overflow="hidden"
-        minHeight={250}
-        flex={1}
+      <div
+        className="flex flex-row gap-x-8 overflow-hidden flex-1"
+        style={{ minHeight: 250 }}
       >
-        <Block width={270} flexDirection="column" overflow="hidden">
+        <Block className="w-[270px] overflow-hidden">
           <BoxHeader hint={hintUIExample}>Device Action UI example</BoxHeader>
-          <Flex
-            flex={1}
-            flexDirection="column"
-            justifyContent="center"
-            alignItems="center"
-          >
+          <div className="flex flex-1 flex-col justify-center items-center">
             <DeviceActionUI
               deviceModelId={deviceModelId}
               lastResponse={lastResponse}
             />
-          </Flex>
-          <Flex flexDirection="row" columnGap={3}>
+          </div>
+          <div className="flex flex-row gap-x-8">
             <Button
               style={{ flex: 1 }}
-              variant="main"
+              appearance="base"
               onClick={handleClickExecute}
               disabled={loading || valuesInvalid}
-              Icon={() =>
-                loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
-              }
+              icon={ArrowRight}
+              loading={loading}
               data-testid="CTA_send-device-action"
             >
               Execute
             </Button>
             <Button
-              variant="neutral"
+              appearance="gray"
               onClick={handleClickCancel}
               disabled={!loading}
             >
               Cancel
             </Button>
-          </Flex>
+          </div>
         </Block>
-        <Block overflow="hidden" flex={1}>
+        <Block className="flex-1 overflow-hidden">
           <BoxHeader hint={hintLogs}>Device Action logs</BoxHeader>
-          <Flex
+          <div
+            className="flex flex-col gap-y-12 overflow-y-scroll flex-1 h-full"
             ref={responseBoxRef}
-            flexDirection="column"
-            rowGap={4}
-            overflowY="scroll"
-            flex={1}
-            height="100%"
             data-testid="box_device-commands-responses"
           >
             {/* only show the last MAX_DISPLAYED_RESPONSES responses unless "showAllResponses" is true */}
             {responses.length > MAX_DISPLAYED_RESPONSES && (
               <Button
-                variant="shade"
-                size="small"
-                flexShrink={0}
+                appearance="gray"
+                size="sm"
                 onClick={() => setShowAllResponses((prev) => !prev)}
+                className="shrink-0"
               >
                 {showAllResponses
                   ? `Show last ${MAX_DISPLAYED_RESPONSES}`
@@ -319,8 +277,8 @@ export function DeviceActionTester<
             ).map((response, index, arr) => {
               const isLatest = index === arr.length - 1;
               return (
-                <Flex
-                  flexDirection="column"
+                <div
+                  className="flex flex-col"
                   key={`${response.date.toISOString()}-index-${index}`}
                 >
                   <DeviceActionResponse
@@ -331,23 +289,23 @@ export function DeviceActionTester<
                   />
                   <div hidden={isLatest}>
                     {/** if I just unmount it, all dividers are glitching out */}
-                    <Divider my={2} />
+                    <Divider className="my-8" />
                   </div>
-                </Flex>
+                </div>
               );
             })}
-          </Flex>
+          </div>
           <Button
-            variant="main"
-            outline
+            appearance="gray"
+            isFull
             onClick={handleClickClear}
             disabled={responses.length === 0}
           >
             Clear responses
           </Button>
         </Block>
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 }
 

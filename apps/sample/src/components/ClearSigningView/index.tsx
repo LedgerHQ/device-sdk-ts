@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from "react";
-import { Grid } from "@ledgerhq/react-ui";
 
 import { ClickableListItem } from "@/components/ClickableListItem";
 import { PageWithHeader } from "@/components/PageWithHeader";
@@ -35,10 +34,7 @@ export const ClearSigningView = () => {
 
   return (
     <PageWithHeader title="Clear Signing">
-      <Grid
-        columns={1}
-        style={{ rowGap: 6, columnGap: 6, overflowY: "scroll" }}
-      >
+      <div className="grid grid-cols-1 gap-[6px] overflow-y-scroll">
         {entries.map(({ title, description, onClick }) => (
           <ClickableListItem
             key={`signer-${title}`}
@@ -47,7 +43,7 @@ export const ClearSigningView = () => {
             onClick={onClick}
           />
         ))}
-      </Grid>
+      </div>
       <StyledDrawer
         isOpen={isCheckDappOpen}
         onClose={closeDrawers}

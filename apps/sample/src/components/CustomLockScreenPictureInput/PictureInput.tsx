@@ -6,9 +6,8 @@ import {
   getScreenVisibleAreaDimensions,
   isCustomLockScreenSupported,
 } from "@ledgerhq/dmk-ledger-wallet";
-import { Flex, Input, Switch, Text } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input, Switch } from "@/components/fields";
 import { useDebounce } from "@/hooks/useDebounce";
 
 import { ImageDropZone } from "./ImageDropZone";
@@ -76,17 +75,17 @@ export const PictureInput: React.FC<PictureInputProps> = ({
 
   if (!isSupported) {
     return (
-      <Flex flexDirection="column" rowGap={3}>
-        <Text color="warning.c80">
+      <div className="flex flex-col gap-y-8">
+        <span className="body-2 text-warning">
           Custom lock screen is not supported on this device model (
           {deviceModelId}).
-        </Text>
-      </Flex>
+        </span>
+      </div>
     );
   }
 
   return (
-    <Flex flexDirection="column" rowGap={5}>
+    <div className="flex flex-col gap-y-12">
       <PreviewContainer>
         <ImageDropZone
           originalPreview={originalPreview}
@@ -123,12 +122,12 @@ export const PictureInput: React.FC<PictureInputProps> = ({
 
       <Input
         id="unlockTimeout"
-        renderLeft={() => <InputLabel>unlockTimeout</InputLabel>}
+        label="unlockTimeout"
         value={unlockTimeout}
         onChange={(val) => setUnlockTimeout(parseInt(String(val), 10) || 0)}
         type="number"
         disabled={disabled}
       />
-    </Flex>
+    </div>
   );
 };

@@ -1,6 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Flex, Icons, Text } from "@ledgerhq/react-ui";
+import { DeleteCircleFill } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
@@ -18,22 +18,16 @@ export const SessionIdWrapper: React.FC<{
 
   if (!sessionId) {
     return (
-      <Flex
-        p={6}
-        flex={1}
-        alignItems="center"
-        justifyContent="center"
-        flexDirection="column"
-        rowGap={6}
-        alignSelf="center"
-        width={400}
+      <div
+        className="flex p-16 flex-1 items-center justify-center flex-col gap-y-16 self-center"
+        style={{ width: 400 }}
       >
-        <Icons.DeleteCircleFill size="XL" color="error.c70" />
-        <Text textAlign="center">
+        <DeleteCircleFill size={32} className="text-error" />
+        <span className="body-2 text-center">
           No selected session id, first connect a device.
-        </Text>
+        </span>
         <ConnectDeviceButtons />
-      </Flex>
+      </div>
     );
   }
 

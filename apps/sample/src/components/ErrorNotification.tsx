@@ -1,16 +1,7 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { type DmkError } from "@ledgerhq/device-management-kit";
-import { Badge, Icon, Notification } from "@ledgerhq/react-ui";
-import styled from "styled-components";
-
-const PortalContainer = styled.div`
-  position: fixed;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-`;
+import { ThemeProvider, Toast } from "@ledgerhq/lumen-ui-react";
 
 type Props = {
   autoDismissTimeout?: number;
@@ -29,24 +20,19 @@ export const ErrorNotification: React.FC<Props> = ({
   }, [autoDismissTimeout, onDismiss, error]);
 
   return createPortal(
-    <PortalContainer>
-      <Notification
-        badge={
-          <Badge
-            backgroundColor="error.c10"
-            color="error.c50"
-            icon={<Icon name="Warning" size={24} />}
-          />
-        }
-        hasBackground
-        title="Error"
-        description={
-          error.message ??
-          (error.originalError as { message?: string })?.message ??
-          "Unknown error"
-        }
-      />
-    </PortalContainer>,
+    <ThemeProvider colorScheme="dark">
+      <div className="fixed bottom-10 left-1/2 z-[1000] -translate-x-1/2">
+        <Toast
+          appearance="error"
+          title={
+            error.message ??
+            (error.originalError as { message?: string })?.message ??
+            "Unknown error"
+          }
+          onClose={onDismiss}
+        />
+      </div>
+    </ThemeProvider>,
     document.body,
   );
 };

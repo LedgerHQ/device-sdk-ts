@@ -3,8 +3,10 @@ import {
   type CommandResult,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Flex, InfiniteLoader, Text, Tooltip } from "@ledgerhq/react-ui";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
+import { Spinner } from "@ledgerhq/lumen-ui-react";
 
+import { HintTooltip } from "@/components/HintTooltip";
 import { type FieldType } from "@/hooks/useForm";
 
 export type CommandResponseProps<Response, ErrorCodes> = {
@@ -21,46 +23,41 @@ export function CommandResponse<Response, ErrorCodes>(
   const responseString = JSON.stringify(response, null, 2);
   const isError = response !== null && !isSuccessCommandResult(response);
   return (
-    <Flex flexDirection="column" alignItems="flex-start">
-      <Tooltip
-        placement="top"
-        content={
-          <Text color="neutral.c00" whiteSpace="pre-wrap">
+    <div className="flex flex-col items-start">
+      <HintTooltip
+        hint={
+          <span className="whitespace-pre-wrap">
             Arguments:{"\n"}
             {JSON.stringify(args, null, 2)}
-          </Text>
+          </span>
         }
       >
-        <Text
-          variant="small"
-          color="neutral.c60"
-          fontWeight={isLatest ? "medium" : "regular"}
-          style={{ flexGrow: 0 }}
+        <span
+          className={cn(
+            "grow-0 text-muted",
+            isLatest ? "body-3-semi-bold" : "body-3",
+          )}
         >
           {date.toLocaleTimeString()}
-        </Text>
-      </Tooltip>
+        </span>
+      </HintTooltip>
       {loading ? (
-        <InfiniteLoader size={20} />
+        <Spinner size={20} />
       ) : (
-        <Text
-          variant="body"
-          fontWeight="regular"
-          color={
+        <span
+          className={cn(
+            "body-2 whitespace-pre-wrap",
             isError
-              ? "error.c80"
+              ? "text-error"
               : responseString
-                ? "neutral.c100"
-                : "neutral.c80"
-          }
-          style={{
-            fontStyle: responseString ? "normal" : "italic",
-            whiteSpace: "pre-wrap",
-          }}
+                ? "text-base"
+                : "text-muted",
+            !responseString && "italic",
+          )}
         >
           {responseString ?? "void"}
-        </Text>
+        </span>
       )}
-    </Flex>
+    </div>
   );
 }

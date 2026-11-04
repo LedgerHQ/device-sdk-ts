@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { Flex, IconsLegacy, Link } from "@ledgerhq/react-ui";
+import { Link } from "@ledgerhq/lumen-ui-react";
+import { Refresh } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { type RootState, storeInitialState } from "@/state/store";
 
@@ -31,15 +32,16 @@ export const ResetSettingCTA = <T,>({
   }
 
   return (
-    <Flex flexShrink={1} alignSelf="center" mr={3}>
+    <div className="flex shrink self-center mr-8">
       <Link
-        size="small"
+        appearance="base"
+        size="sm"
         disabled={!isDifferent}
-        Icon={IconsLegacy.ReverseMedium}
+        icon={Refresh}
         onClick={() => setStateAction(initialState)}
       >
         Reset
       </Link>
-    </Flex>
+    </div>
   );
 };

@@ -6,10 +6,10 @@ import {
   fetchAndStoreCertificates,
 } from "@ledgerhq/cal-interceptor";
 import { type ContextModuleCalConfig } from "@ledgerhq/context-module";
-import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
+import { Button, Divider } from "@ledgerhq/lumen-ui-react";
 
 import { Block } from "@/components/Block";
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { useCalInterceptor } from "@/providers/CalInterceptorProvider";
 import { selectCalConfig } from "@/state/settings/selectors";
 import { setCalConfig } from "@/state/settings/slice";
@@ -121,55 +121,51 @@ export function ERC7730TesterDrawer() {
 
   return (
     <Block>
-      <Flex flexDirection="column" rowGap={3} columnGap={3}>
-        <Text variant="paragraph" fontWeight="medium">
-          Request Interceptor
-        </Text>
-        <Flex flexDirection="row" flexWrap="wrap" rowGap={2} columnGap={2}>
+      <div className="flex flex-col gap-y-8 gap-x-8">
+        <span className="body-2-semi-bold">Request Interceptor</span>
+        <div className="flex flex-row flex-wrap gap-y-4 gap-x-4">
           <Button
-            variant={isActive ? "error" : "color"}
+            appearance={isActive ? "red" : "base"}
             onClick={toggleInterceptor}
           >
             {isActive ? "Disable CAL interceptor" : "Enable CAL interceptor"}
           </Button>
           <Button
-            variant="main"
+            appearance="base"
             onClick={handleClearDescriptors}
             disabled={descriptorCount === 0}
           >
             Clear {descriptorCount} Stored Descriptor
             {descriptorCount !== 1 ? "s" : ""}
           </Button>
-        </Flex>
+        </div>
 
         <Divider />
 
-        <Flex flexDirection="column" alignItems="stretch">
+        <div className="flex flex-col items-stretch">
           <Input
-            renderLeft={<InputLabel>ERC7730 Descriptor</InputLabel>}
+            label="ERC7730 Descriptor"
             placeholder="Paste your ERC7730 descriptor JSON here..."
             value={erc7730Input}
             onChange={setERC7730Input}
           />
-        </Flex>
-        <Flex flexDirection="row" flexWrap="wrap" rowGap={2} columnGap={2}>
+        </div>
+        <div className="flex flex-row flex-wrap gap-y-4 gap-x-4">
           <Button
-            variant="main"
+            appearance="base"
             onClick={addERC7730}
             disabled={isLoading || !erc7730Input.trim()}
           >
             {isLoading ? "Adding ERC7730..." : "Add ERC7730"}
           </Button>
-        </Flex>
+        </div>
 
         {error && (
-          <Flex flexDirection="row" flexWrap="wrap" rowGap={2} columnGap={2}>
-            <Text variant="body" color="error.c60">
-              {error}
-            </Text>
-          </Flex>
+          <div className="flex flex-row flex-wrap gap-y-4 gap-x-4">
+            <span className="body-2 text-error">{error}</span>
+          </div>
         )}
-      </Flex>
+      </div>
     </Block>
   );
 }

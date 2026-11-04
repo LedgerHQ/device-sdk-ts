@@ -1,5 +1,5 @@
 import React from "react";
-import { Grid, Icons } from "@ledgerhq/react-ui";
+import { CloudUpload, LedgerDevices } from "@ledgerhq/lumen-ui-react/symbols";
 import { useRouter } from "next/navigation";
 
 import { ClickableListItem } from "@/components/ClickableListItem";
@@ -10,14 +10,14 @@ const INTERNAL_TOOLS = [
     title: "Sideload App",
     description: "Replay a .apdu install script onto the connected device.",
     route: "sideload-app",
-    icon: <Icons.CloudUpload size="XL" />,
+    icon: <CloudUpload size={32} />,
   },
   {
     title: "Onboard Device",
     description:
       "Provision a device with a PIN and a BIP39 seed phrase for testing.",
     route: "onboard-device",
-    icon: <Icons.LedgerDevices size="XL" />,
+    icon: <LedgerDevices size={32} />,
   },
 ];
 
@@ -26,10 +26,7 @@ export const InternalToolsView: React.FC = () => {
 
   return (
     <PageWithHeader title="Ledger Internal Tools">
-      <Grid
-        columns={2}
-        style={{ rowGap: 6, columnGap: 6, overflowY: "scroll" }}
-      >
+      <div className="grid grid-cols-2 gap-[6px] overflow-y-scroll">
         {INTERNAL_TOOLS.map(({ title, description, route, icon }) => (
           <ClickableListItem
             key={`internal-tools-${route}`}
@@ -39,7 +36,7 @@ export const InternalToolsView: React.FC = () => {
             icon={icon}
           />
         ))}
-      </Grid>
+      </div>
     </PageWithHeader>
   );
 };

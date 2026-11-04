@@ -25,7 +25,7 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
 } from "@ledgerhq/device-signer-kit-solana";
-import { Flex, Icons, Text } from "@ledgerhq/react-ui";
+import { ChevronDown, ChevronRight } from "@ledgerhq/lumen-ui-react/symbols";
 import {
   type CraftTransactionDAError,
   type CraftTransactionDAIntermediateValue,
@@ -113,28 +113,22 @@ const SignTransactionForm: React.FC<{
   );
 
   return (
-    <Flex flexDirection="column" rowGap={5}>
+    <div className="flex flex-col gap-y-12">
       <Form
         initialValues={mainValues}
         onChange={handleMainChange}
         disabled={disabled}
       />
-      <Flex
-        flexDirection="row"
-        alignItems="center"
+      <div
+        className="flex flex-row items-center gap-x-4"
         style={{ cursor: "pointer", userSelect: "none" }}
         onClick={() => setExpanded((v) => !v)}
-        columnGap={2}
       >
-        {expanded ? (
-          <Icons.ChevronDown size="XS" />
-        ) : (
-          <Icons.ChevronRight size="XS" />
-        )}
-        <Text variant="small" color="neutral.c70">
+        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        <span className="body-3 text-muted">
           Transaction Resolution Context
-        </Text>
-      </Flex>
+        </span>
+      </div>
       {expanded && (
         <Form
           initialValues={contextValues}
@@ -142,7 +136,7 @@ const SignTransactionForm: React.FC<{
           disabled={disabled}
         />
       )}
-    </Flex>
+    </div>
   );
 };
 

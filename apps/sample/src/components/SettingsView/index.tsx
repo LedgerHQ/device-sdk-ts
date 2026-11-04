@@ -1,5 +1,4 @@
 import React from "react";
-import { Flex } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
 import { PageWithHeader } from "@/components/PageWithHeader";
@@ -31,7 +30,7 @@ const SectionContainer = Block;
 export const SettingsView: React.FC = () => {
   return (
     <PageWithHeader title="Settings">
-      <Flex flexDirection="column" flex={1} overflowY="auto" pb={8} rowGap={6}>
+      <div className="flex flex-col flex-1 overflow-y-auto pb-24 gap-y-16">
         <SectionContainer>
           <SectionTitle>Device Management Kit</SectionTitle>
           <AppProviderSetting />
@@ -87,7 +86,7 @@ export const SettingsView: React.FC = () => {
           <SectionTitle>Solana Signer</SectionTitle>
           <SolanaDisabledFeaturesSetting />
         </SectionContainer>
-      </Flex>
+      </div>
     </PageWithHeader>
   );
 };

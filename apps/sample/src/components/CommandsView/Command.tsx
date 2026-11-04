@@ -3,7 +3,8 @@ import {
   type CommandResult,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Button, Flex, Icons, InfiniteLoader } from "@ledgerhq/react-ui";
+import { Button } from "@ledgerhq/lumen-ui-react";
+import { ArrowRight } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
@@ -125,24 +126,21 @@ export function Command<
             valueSelector={valueSelector}
           />
           <Button
-            variant="main"
+            appearance="base"
+            isFull
             onClick={handleClickSend}
             disabled={loading}
-            Icon={() =>
-              loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
-            }
+            icon={ArrowRight}
+            loading={loading}
             data-testid="CTA_send-device-command"
           >
             Send
           </Button>
         </Block>
-        <Block flex={1} overflowY="hidden">
-          <Flex
+        <Block className="flex-1 overflow-y-hidden">
+          <div
+            className="flex flex-col gap-y-12 flex-1 overflow-y-scroll"
             ref={responseBoxRef}
-            flexDirection="column"
-            rowGap={4}
-            flex={1}
-            overflowY="scroll"
             data-testid="box_device-commands-responses"
           >
             {responses.map(({ args, date, response, loading: l }, index) => (
@@ -155,10 +153,9 @@ export function Command<
                 isLatest={index === responses.length - 1}
               />
             ))}
-          </Flex>
+          </div>
           <Button
-            variant="main"
-            outline
+            appearance="gray"
             onClick={handleClickClear}
             disabled={responses.length === 0}
           >

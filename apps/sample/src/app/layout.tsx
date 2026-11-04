@@ -3,12 +3,9 @@
  *
  * Main layout component for server-side rendering.
  *
- * Combines Styled Components Registry with the ClientRootLayout
- * for rendering the application.
+ * Renders the application inside the ClientRootLayout.
  */
 import React, { type PropsWithChildren } from "react";
-
-import { StyledComponentsRegistry } from "@/lib/registry";
 
 import ClientRootLayout from "./client-layout";
 
@@ -20,11 +17,7 @@ export const metadata = {
 };
 
 const RootLayout: React.FC<PropsWithChildren> = ({ children }) => {
-  return (
-    <StyledComponentsRegistry>
-      <ClientRootLayout>{children}</ClientRootLayout>
-    </StyledComponentsRegistry>
-  );
+  return <ClientRootLayout>{children}</ClientRootLayout>;
 };
 
 // eslint-disable-next-line no-restricted-syntax

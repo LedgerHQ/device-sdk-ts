@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, SelectInput } from "@ledgerhq/react-ui";
 
-import { SelectInputLabel } from "@/components/InputLabel";
+import { SelectInput } from "@/components/fields";
 import { type CalMode } from "@/state/settings/schema";
 import { selectCalMode } from "@/state/settings/selectors";
 import { setCalMode } from "@/state/settings/slice";
@@ -41,17 +40,15 @@ export const CalModeSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <SelectInput
-          renderLeft={() => <SelectInputLabel>CAL Mode</SelectInputLabel>}
+          label="CAL Mode"
           options={modeOptions}
           value={selectedOption}
           onChange={onValueChange}
-          isMulti={false}
-          isSearchable={false}
           placeholder="Select mode"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectCalMode}
         setStateAction={setCalModeFn}

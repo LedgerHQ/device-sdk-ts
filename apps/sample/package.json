@@ -48,7 +48,6 @@
     "@ledgerhq/lumen-design-core": "0.1.34",
     "@ledgerhq/lumen-ui-react": "0.1.66",
     "@ledgerhq/speculos-device-controller": "workspace:^",
-    "@ledgerhq/react-ui": "catalog:",
     "@ledgerhq/solana-tools": "workspace:^",
     "@noble/secp256k1": "^2.3.0",
     "@playwright/test": "catalog:",
@@ -61,8 +60,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-redux": "catalog:",
-    "rxjs": "catalog:",
-    "styled-components": "catalog:"
+    "rxjs": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-mock-server": "workspace:^",
@@ -72,8 +70,6 @@
     "@tailwindcss/postcss": "^4.1.17",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@types/styled-components": "catalog:",
-    "@types/styled-system": "^5.1.15",
     "autoprefixer": "catalog:",
     "globals": "catalog:",
     "postcss": "catalog:",

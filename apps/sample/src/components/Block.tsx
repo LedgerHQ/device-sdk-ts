@@ -1,10 +1,12 @@
-import { Flex } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import React from "react";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
 
-export const Block = styled(Flex).attrs({
-  flexDirection: "column",
-  backgroundColor: "background.card",
-  p: 5,
-  borderRadius: 2,
-  rowGap: 4,
-})``;
+export const Block: React.FC<React.ComponentProps<"div">> = ({
+  className,
+  ...props
+}) => (
+  <div
+    className={cn("flex flex-col gap-8 rounded-md bg-surface p-12", className)}
+    {...props}
+  />
+);

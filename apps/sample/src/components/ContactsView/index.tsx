@@ -13,7 +13,7 @@ import {
   type RenameContactOutput,
 } from "@ledgerhq/device-contacts-kit";
 import { bufferToHexaString } from "@ledgerhq/device-management-kit";
-import { Button, Flex, Tag, Text } from "@ledgerhq/react-ui";
+import { Button, Tag } from "@ledgerhq/lumen-ui-react";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -185,26 +185,20 @@ function useAddressBookState(): AddressBookStore {
 const SavedProofRows: React.FC<{ rows: Array<[string, string]> }> = ({
   rows,
 }) => (
-  <Flex flexDirection="column" rowGap={3}>
-    <Flex columnGap={2} alignItems="center">
-      <Tag active type="opacity">
-        Saved to address book
-      </Tag>
-      <Text variant="small" color="neutral.c70">
-        key: {ADDRESS_BOOK_STORAGE_KEY}
-      </Text>
-    </Flex>
+  <div className="flex flex-col gap-y-8">
+    <div className="flex gap-x-4 items-center">
+      <Tag appearance="gray" size="sm" label="Saved to address book" />
+      <span className="body-3 text-muted">key: {ADDRESS_BOOK_STORAGE_KEY}</span>
+    </div>
     {rows.map(([label, value]) => (
-      <Flex key={label} flexDirection="column">
-        <Text variant="tiny" color="neutral.c70">
-          {label}
-        </Text>
-        <Text variant="paragraph" style={{ wordBreak: "break-all" }}>
+      <div className="flex flex-col" key={label}>
+        <span className="body-3 text-muted">{label}</span>
+        <span className="body-2" style={{ wordBreak: "break-all" }}>
           {value}
-        </Text>
-      </Flex>
+        </span>
+      </div>
     ))}
-  </Flex>
+  </div>
 );
 
 const RegisterExternalAddressOutputView: React.FC<{
@@ -309,55 +303,49 @@ const EditExternalAddressScopeOutputView: React.FC<{
 // --- persisted address-book panel -------------------------------------------
 
 const AddressRow: React.FC<{ address: ExternalAddress }> = ({ address }) => (
-  <Flex
-    flexDirection="column"
-    rowGap={1}
-    pl={4}
+  <div
+    className="flex flex-col gap-y-2 pl-12"
     style={{ borderLeft: "1px solid rgba(128,128,128,0.3)" }}
   >
-    <Flex columnGap={2} alignItems="baseline" flexWrap="wrap">
-      <Tag active type="opacity">
-        {address.scope}
-      </Tag>
-      <Text variant="paragraph" style={{ wordBreak: "break-all" }}>
+    <div className="flex gap-x-4 items-baseline flex-wrap">
+      <Tag appearance="gray" size="sm" label={String(address.scope)} />
+      <span className="body-2" style={{ wordBreak: "break-all" }}>
         {displayAddress(address)}
-      </Text>
-    </Flex>
-    <Text variant="tiny" color="neutral.c70">
+      </span>
+    </div>
+    <span className="body-3 text-muted">
       {address.blockchainFamily}
       {address.chainId !== undefined ? ` · chainId ${address.chainId}` : ""} ·
       hmacRest {truncateHex(bufferToHexaString(address.hmacRest, false))}
-    </Text>
-  </Flex>
+    </span>
+  </div>
 );
 
 const GroupCard: React.FC<{
   group: ContactGroup;
   addresses: ExternalAddress[];
 }> = ({ group, addresses }) => (
-  <Flex
-    flexDirection="column"
-    rowGap={2}
-    p={3}
+  <div
+    className="flex flex-col gap-y-4 p-8"
     style={{ border: "1px solid rgba(128,128,128,0.3)", borderRadius: 8 }}
   >
-    <Text variant="large">{group.contactName}</Text>
-    <Text variant="tiny" color="neutral.c70">
+    <span className="body-1">{group.contactName}</span>
+    <span className="body-3 text-muted">
       groupHandle {truncateHex(bufferToHexaString(group.groupHandle, false))} ·
       hmacProof {truncateHex(bufferToHexaString(group.hmacProof, false))}
-    </Text>
-    <Flex flexDirection="column" rowGap={2}>
+    </span>
+    <div className="flex flex-col gap-y-4">
       {addresses.length === 0 ? (
-        <Text variant="small" color="neutral.c70">
+        <span className="body-3 text-muted">
           No external addresses in this group.
-        </Text>
+        </span>
       ) : (
         addresses.map((address) => (
           <AddressRow key={address.id} address={address} />
         ))
       )}
-    </Flex>
-  </Flex>
+    </div>
+  </div>
 );
 
 const AddressBookPanel: React.FC = () => {
@@ -369,11 +357,8 @@ const AddressBookPanel: React.FC = () => {
     book.contactGroups.length === 0 && book.externalAddresses.length === 0;
 
   return (
-    <Flex
-      flexDirection="column"
-      rowGap={3}
-      p={4}
-      mb={4}
+    <div
+      className="flex flex-col gap-y-8 p-12 mb-12"
       style={{
         border: "1px solid rgba(128,128,128,0.3)",
         borderRadius: 8,
@@ -381,52 +366,45 @@ const AddressBookPanel: React.FC = () => {
         overflowY: "auto",
       }}
     >
-      <Flex
-        justifyContent="space-between"
-        alignItems="center"
-        columnGap={3}
-        flexWrap="wrap"
-      >
-        <Flex columnGap={2} alignItems="center">
-          <Text variant="h5Inter">Address book</Text>
-          <Tag active type="opacity">
-            localStorage
-          </Tag>
-          <Text variant="small" color="neutral.c70">
+      <div className="flex justify-between items-center gap-x-8 flex-wrap">
+        <div className="flex gap-x-4 items-center">
+          <span className="heading-5-semi-bold">Address book</span>
+          <Tag appearance="gray" size="sm" label="localStorage" />
+          <span className="body-3 text-muted">
             key: {ADDRESS_BOOK_STORAGE_KEY}
-          </Text>
-        </Flex>
-        <Flex columnGap={2}>
-          <Button variant="shade" size="small" onClick={loadSamples}>
+          </span>
+        </div>
+        <div className="flex gap-x-4">
+          <Button appearance="gray" size="sm" onClick={loadSamples}>
             Load samples
           </Button>
-          <Button variant="shade" size="small" onClick={reload}>
+          <Button appearance="gray" size="sm" onClick={reload}>
             Reload
           </Button>
           <Button
-            variant="shade"
-            size="small"
+            appearance="gray"
+            size="sm"
             onClick={clear}
             disabled={isEmpty}
           >
             Clear
           </Button>
-        </Flex>
-      </Flex>
+        </div>
+      </div>
 
-      <Text variant="tiny" color="neutral.c70">
+      <span className="body-3 text-muted">
         “Load samples” seeds placeholder contacts for demoing the UI and
         persistence. Their proofs are fabricated — the device will reject them
         for real Rename / Edit / Provide operations.
-      </Text>
+      </span>
 
       {isEmpty ? (
-        <Text variant="body" color="neutral.c70">
+        <span className="body-2 text-muted">
           No contacts yet — register an external address, or load the samples,
           to populate the book.
-        </Text>
+        </span>
       ) : (
-        <Flex flexDirection="column" rowGap={3}>
+        <div className="flex flex-col gap-y-8">
           {book.contactGroups.map((group) => (
             <GroupCard
               key={group.id}
@@ -434,9 +412,9 @@ const AddressBookPanel: React.FC = () => {
               addresses={externalAddressesForGroup(book, group.id)}
             />
           ))}
-        </Flex>
+        </div>
       )}
-    </Flex>
+    </div>
   );
 };
 
@@ -787,12 +765,12 @@ const ContactsViewInner: React.FC<{ sessionId: string }> = ({ sessionId }) => {
   );
 
   return (
-    <Flex flexDirection="column" flex={1} overflow="hidden">
+    <div className="flex flex-col flex-1 overflow-hidden">
       <AddressBookPanel />
-      <Flex flex={1} overflow="hidden">
+      <div className="flex flex-1 overflow-hidden">
         <DeviceActionsList title="Contacts" deviceActions={deviceActions} />
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 };
 

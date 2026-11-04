@@ -1,6 +1,5 @@
 import React from "react";
 import { CryptoIcon } from "@ledgerhq/crypto-icons";
-import { Grid } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 
 import { PageWithHeader } from "@/components//PageWithHeader";
@@ -78,10 +77,7 @@ export const SignerView = () => {
 
   return (
     <PageWithHeader title="Signers">
-      <Grid
-        columns={2}
-        style={{ rowGap: 6, columnGap: 6, overflowY: "scroll" }}
-      >
+      <div className="grid grid-cols-2 gap-[6px] overflow-y-scroll">
         {SUPPORTED_SIGNERS.map(({ title, description, icon }) => (
           <ClickableListItem
             key={`signers-${title}`}
@@ -93,7 +89,7 @@ export const SignerView = () => {
             icon={icon}
           />
         ))}
-      </Grid>
+      </div>
     </PageWithHeader>
   );
 };

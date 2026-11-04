@@ -1,16 +1,10 @@
 import React, { useCallback, useMemo, useState } from "react";
-import {
-  Button,
-  Flex,
-  Icons,
-  InfiniteLoader,
-  Input,
-  Text,
-} from "@ledgerhq/react-ui";
+import { Button } from "@ledgerhq/lumen-ui-react";
+import { ArrowRight } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { hexStringToUint8Array } from "@/components/ApduView/hexUtils";
 import { type ModeProps } from "@/components/ApduView/types";
-import { InputLabelWithTooltip } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 
 import { validateRawHexInput } from "./inputValidation";
 
@@ -43,40 +37,34 @@ export const RawHexModeInput: React.FC<ModeProps> = ({
   const isSubmitDisabled = disabled || loading || !validation.isValid;
 
   return (
-    <Flex flexDirection="column" rowGap={3}>
+    <div className="flex flex-col gap-y-8">
       <Input
         tabIndex={0}
         name="rawHex"
-        renderLeft={() => (
-          <InputLabelWithTooltip hint="Enter a raw APDU as a hex string">
-            Raw APDU Hex
-          </InputLabelWithTooltip>
-        )}
+        label="Raw APDU Hex"
+        hint="Enter a raw APDU as a hex string"
         placeholder="E0010000"
         value={rawHexInput}
         onChange={setRawHexInput}
       />
 
       {validation.error && (
-        <Text variant="small" color="error.c80">
-          {validation.error}
-        </Text>
+        <span className="body-3 text-error">{validation.error}</span>
       )}
 
       {/* Submit button */}
-      <Flex flexDirection="row" justifyContent="flex-end">
+      <div className="flex flex-row justify-end">
         <Button
-          variant="main"
+          appearance="base"
           onClick={() => void handleSubmit()}
           disabled={isSubmitDisabled}
-          Icon={() =>
-            loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
-          }
+          icon={ArrowRight}
+          loading={loading}
           data-testid="CTA_send-apdu"
         >
           Send
         </Button>
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 };

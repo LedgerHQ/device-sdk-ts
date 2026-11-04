@@ -43,7 +43,6 @@ import {
   RestoreAppStorageCommand,
   type RestoreAppStorageCommandErrorCodes,
 } from "@ledgerhq/dmk-ledger-wallet";
-import { Grid } from "@ledgerhq/react-ui";
 
 import {
   hexStringToUint8Array,
@@ -308,14 +307,14 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
 
   return (
     <PageWithHeader title="Commands">
-      <Grid columns={1} style={{ rowGap: 6, overflowY: "scroll" }}>
+      <div className="grid grid-cols-1 gap-[6px] overflow-y-scroll">
         {commands.map((command) => (
           <Command
             key={`${command.title}_${command.description}`} // if this is not unique we have another problem
             {...command}
           />
         ))}
-      </Grid>
+      </div>
     </PageWithHeader>
   );
 };

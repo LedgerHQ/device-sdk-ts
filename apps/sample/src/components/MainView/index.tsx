@@ -1,37 +1,24 @@
 import React from "react";
-import { Flex, Text } from "@ledgerhq/react-ui";
 import Image from "next/image";
-import styled, { type DefaultTheme } from "styled-components";
 
 import { ConnectDeviceButtons } from "@/components/ConnectDevice/ConnectDeviceButtons";
 
-const Root = styled(Flex).attrs({ rowGap: 6 })`
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-`;
-
-const Description = styled(Text)`
-  color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c70};
-`;
-
 export const MainView: React.FC = () => {
   return (
-    <Root>
+    <div className="flex flex-1 flex-col items-center justify-center gap-24">
       <Image
         src={"/devices_crop.png"}
         alt={"ledger-devices-image"}
         width={400}
         height={330}
       />
-      <Text variant={"h2Inter"} fontWeight={"semiBold"} textTransform={"none"}>
+      <h2 className="heading-1-semi-bold text-base">
         Ledger Device Management Kit
-      </Text>
-      <Description variant={"body"}>
+      </h2>
+      <p className="body-2 text-muted">
         Use this application to test Ledger hardware device features.
-      </Description>
+      </p>
       <ConnectDeviceButtons />
-    </Root>
+    </div>
   );
 };

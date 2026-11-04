@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { Button, Flex, Icons, InfiniteLoader, Text } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { Button } from "@ledgerhq/lumen-ui-react";
+import { ArrowRight } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { InputHeader } from "@/components/InputHeader";
 import { ResizableTextArea } from "@/components/ResizableTextArea";
@@ -11,10 +11,6 @@ type ModeProps = {
   sendApdu: (apdu: Uint8Array) => Promise<unknown>;
   disabled?: boolean;
 };
-
-const PreWrapText = styled(Text)`
-  white-space: pre-wrap;
-`;
 
 export const BulkModeInput: React.FC<ModeProps> = ({
   sendApdu,
@@ -54,8 +50,8 @@ export const BulkModeInput: React.FC<ModeProps> = ({
   const isSubmitDisabled = disabled || loading || !validation.isValid;
 
   return (
-    <Flex flexDirection="column" rowGap={3}>
-      <Flex flexDirection="column" rowGap={2}>
+    <div className="flex flex-col gap-y-8">
+      <div className="flex flex-col gap-y-4">
         <InputHeader hint="Enter one APDU per line. Lines can optionally start with '=>'. Only valid hex strings with even length will be sent.">
           Bulk APDUs
         </InputHeader>
@@ -64,44 +60,41 @@ export const BulkModeInput: React.FC<ModeProps> = ({
           value={bulkInput}
           onChange={setBulkInput}
         />
-      </Flex>
+      </div>
 
       {/* Error/Warning/Info messages */}
       {validation.error && (
-        <Text variant="small" color="error.c80">
-          {validation.error}
-        </Text>
+        <span className="body-3 text-error">{validation.error}</span>
       )}
       {validation.warning && (
-        <PreWrapText variant="small" color="warning.c80">
+        <span className="body-3 text-warning whitespace-pre-wrap">
           {validation.warning}
-        </PreWrapText>
+        </span>
       )}
       {validation.info && (
-        <PreWrapText variant="small" color="neutral.c70">
+        <span className="body-3 text-muted whitespace-pre-wrap">
           {validation.info}
-        </PreWrapText>
+        </span>
       )}
 
       {/* Submit button */}
-      <Flex flexDirection="row" justifyContent="flex-end" columnGap={3}>
+      <div className="flex flex-row justify-end gap-x-8">
         {loading && (
-          <Button variant="error" outline onClick={handleStop}>
+          <Button appearance="red" onClick={handleStop}>
             Stop
           </Button>
         )}
         <Button
-          variant="main"
+          appearance="base"
           onClick={() => void handleSubmit()}
           disabled={isSubmitDisabled}
-          Icon={() =>
-            loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
-          }
+          icon={ArrowRight}
+          loading={loading}
           data-testid="CTA_send-apdu"
         >
           Send
         </Button>
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 };

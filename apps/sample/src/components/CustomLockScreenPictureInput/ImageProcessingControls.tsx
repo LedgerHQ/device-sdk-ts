@@ -1,8 +1,7 @@
 import React from "react";
 import { type DitheringAlgorithm } from "@ledgerhq/dmk-ledger-wallet";
-import { Flex, SelectInput } from "@ledgerhq/react-ui";
 
-import { InputLabel, SelectInputLabel } from "@/components/InputLabel";
+import { SelectInput } from "@/components/fields";
 
 import { DITHERING_OPTIONS } from "./constants";
 import { RangeInput } from "./styles";
@@ -29,27 +28,21 @@ export const ImageProcessingControls: React.FC<
   const isDisabled = disabled || processing;
 
   return (
-    <Flex flexDirection="column" rowGap={3}>
+    <div className="flex flex-col gap-y-8">
       <SelectInput
-        renderLeft={() => (
-          <SelectInputLabel>Dithering Algorithm</SelectInputLabel>
-        )}
+        label="Dithering Algorithm"
         isDisabled={isDisabled}
         value={DITHERING_OPTIONS.find((o) => o.value === ditheringAlgorithm)}
-        isMulti={false}
         onChange={(newVal) =>
           newVal && onDitheringChange(newVal.value as DitheringAlgorithm)
         }
         options={DITHERING_OPTIONS}
-        isSearchable={false}
       />
-      <Flex
-        flexDirection="row"
-        alignItems="center"
-        columnGap={3}
+      <div
+        className="flex flex-row items-center gap-x-8"
         style={{ marginTop: 8, marginBottom: 8 }}
       >
-        <InputLabel>Contrast</InputLabel>
+        <span className="body-3 text-muted">Contrast</span>
         <RangeInput
           type="range"
           min={0.5}
@@ -60,8 +53,8 @@ export const ImageProcessingControls: React.FC<
           disabled={isDisabled}
           style={{ width: 200 }}
         />
-        <InputLabel>{contrast.toFixed(1)}</InputLabel>
-      </Flex>
-    </Flex>
+        <span className="body-3 text-muted">{contrast.toFixed(1)}</span>
+      </div>
+    </div>
   );
 };

@@ -1,17 +1,8 @@
 import React from "react";
-import { Flex, IconsLegacy, Text } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { Plus } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { Dropdown, DropdownItem } from "@/components/Dropdown";
 import { useConnectDevice } from "@/hooks/useConnectDevice";
-
-const Title = styled(Text)`
-  &:hover {
-    user-select: none;
-    text-decoration: underline;
-    cursor: pointer;
-  }
-`;
 
 export const ConnectDeviceMenuDropdown: React.FC = () => {
   const { transportOptions, connectWithTransport } = useConnectDevice();
@@ -19,10 +10,12 @@ export const ConnectDeviceMenuDropdown: React.FC = () => {
   return (
     <Dropdown
       trigger={
-        <Flex flexDirection="row" alignItems="center" columnGap={2}>
-          <Title variant="tiny">Connect device</Title>
-          <IconsLegacy.PlusMedium size={12} />
-        </Flex>
+        <div className="group flex cursor-pointer flex-row items-center gap-8 select-none">
+          <span className="body-3 text-base group-hover:underline">
+            Connect device
+          </span>
+          <Plus size={12} className="text-base" />
+        </div>
       }
     >
       {transportOptions.map((option) => (
@@ -30,9 +23,7 @@ export const ConnectDeviceMenuDropdown: React.FC = () => {
           key={option.identifier}
           onClick={() => connectWithTransport(option.identifier)}
         >
-          <Text variant="paragraph" color="neutral.c80">
-            {option.label}
-          </Text>
+          <span className="body-2 text-muted">{option.label}</span>
         </DropdownItem>
       ))}
     </Dropdown>

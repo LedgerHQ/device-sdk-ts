@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectMockServerUrl } from "@/state/settings/selectors";
 import { setMockServerUrl } from "@/state/settings/slice";
 
@@ -22,14 +21,14 @@ export const MockServerUrlSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>Mock Server URL</InputLabel>}
+          label="Mock Server URL"
           value={mockServerUrl}
           onChange={setMockServerUrlFn}
           placeholder="http://127.0.0.1:4000"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectMockServerUrl}
         setStateAction={setMockServerUrlFn}

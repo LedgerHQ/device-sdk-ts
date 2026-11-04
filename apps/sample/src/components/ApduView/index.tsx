@@ -1,9 +1,9 @@
 import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { Flex, Text, Tooltip } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
 
 import { Block } from "@/components/Block";
+import { HintTooltip } from "@/components/HintTooltip";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
@@ -17,30 +17,43 @@ import { RawHexModeInput } from "./modeRawApdu";
 
 type InputMode = "builder" | "raw" | "bulk" | "parser";
 
-const ModeChip = styled.button<{ $active: boolean }>`
-  padding: 8px 16px;
-  border-radius: 20px;
-  border: 1px solid
-    ${({ theme, $active }) =>
-      $active ? theme.colors.primary.c80 : theme.colors.neutral.c40};
-  background-color: ${({ theme, $active }) =>
-    $active ? theme.colors.primary.c80 : "transparent"};
-  color: ${({ theme, $active }) =>
-    $active ? theme.colors.neutral.c00 : theme.colors.neutral.c80};
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s ease;
+const ModeChip: React.FC<
+  React.ComponentProps<"button"> & { active: boolean }
+> = ({ active, className, ...props }) => (
+  <button
+    className={cn(
+      "body-2-semi-bold cursor-pointer rounded-full border px-16 py-8 transition-all duration-200 hover:border-interactive disabled:cursor-not-allowed disabled:opacity-50",
+      active
+        ? "border-interactive bg-interactive text-on-interactive"
+        : "border-muted-subtle bg-transparent text-muted",
+      className,
+    )}
+    {...props}
+  />
+);
 
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.primary.c80};
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
+const MODES: { mode: InputMode; label: string; hint: string }[] = [
+  {
+    mode: "builder",
+    label: "APDU Builder",
+    hint: "Build APDU commands using form fields and presets",
+  },
+  {
+    mode: "raw",
+    label: "Raw APDU",
+    hint: "Send a raw hexadecimal APDU directly",
+  },
+  {
+    mode: "bulk",
+    label: "Bulk Exchange APDUs",
+    hint: "Send multiple APDUs in sequence",
+  },
+  {
+    mode: "parser",
+    label: "APDU Response Parser",
+    hint: "Parse and extract fields from APDU responses",
+  },
+];
 
 export const ApduView: React.FC = () => {
   const [history, setHistory] = useState<ApduHistoryItem[]>([]);
@@ -78,75 +91,21 @@ export const ApduView: React.FC = () => {
 
   return (
     <PageWithHeader title="APDU">
-      <Flex flexDirection="column" rowGap={3} overflow="auto" flex={1} pb={5}>
+      <div className="flex flex-1 flex-col gap-12 overflow-auto pb-20">
         <Block data-testid="form_apdu-input">
           {/* Mode selector */}
-          <Flex
-            flexDirection="row"
-            columnGap={2}
-            rowGap={2}
-            mb={4}
-            flexWrap="wrap"
-          >
-            <Tooltip
-              content={
-                <Text color="neutral.c00">
-                  Build APDU commands using form fields and presets
-                </Text>
-              }
-              placement="top"
-            >
-              <ModeChip
-                $active={inputMode === "builder"}
-                onClick={() => setInputMode("builder")}
-              >
-                APDU Builder
-              </ModeChip>
-            </Tooltip>
-            <Tooltip
-              content={
-                <Text color="neutral.c00">
-                  Send a raw hexadecimal APDU directly
-                </Text>
-              }
-              placement="top"
-            >
-              <ModeChip
-                $active={inputMode === "raw"}
-                onClick={() => setInputMode("raw")}
-              >
-                Raw APDU
-              </ModeChip>
-            </Tooltip>
-            <Tooltip
-              content={
-                <Text color="neutral.c00">Send multiple APDUs in sequence</Text>
-              }
-              placement="top"
-            >
-              <ModeChip
-                $active={inputMode === "bulk"}
-                onClick={() => setInputMode("bulk")}
-              >
-                Bulk Exchange APDUs
-              </ModeChip>
-            </Tooltip>
-            <Tooltip
-              content={
-                <Text color="neutral.c00">
-                  Parse and extract fields from APDU responses
-                </Text>
-              }
-              placement="top"
-            >
-              <ModeChip
-                $active={inputMode === "parser"}
-                onClick={() => setInputMode("parser")}
-              >
-                APDU Response Parser
-              </ModeChip>
-            </Tooltip>
-          </Flex>
+          <div className="mb-16 flex flex-row flex-wrap gap-8">
+            {MODES.map(({ mode, label, hint }) => (
+              <HintTooltip key={mode} hint={hint}>
+                <ModeChip
+                  active={inputMode === mode}
+                  onClick={() => setInputMode(mode)}
+                >
+                  {label}
+                </ModeChip>
+              </HintTooltip>
+            ))}
+          </div>
 
           {/* Mode components */}
           {inputMode === "builder" && (
@@ -165,7 +124,7 @@ export const ApduView: React.FC = () => {
         </Block>
 
         <ApduHistory history={history} onClear={handleClearHistory} />
-      </Flex>
+      </div>
     </PageWithHeader>
   );
 };

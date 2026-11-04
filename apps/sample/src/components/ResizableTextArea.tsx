@@ -1,69 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import styled from "styled-components";
-
-const TextAreaWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-`;
-
-const StyledTextArea = styled.textarea`
-  width: 100%;
-  min-height: 80px;
-  padding: 12px;
-  border-radius: 8px 8px 0 0;
-  border: 1px solid ${({ theme }) => theme.colors.neutral.c40};
-  border-bottom: none;
-  background-color: ${({ theme }) => theme.colors.neutral.c20};
-  color: ${({ theme }) => theme.colors.neutral.c100};
-  font-family: monospace;
-  font-size: 14px;
-  resize: none;
-  box-sizing: border-box;
-  outline: none;
-
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.primary.c80};
-  }
-
-  &:focus + div {
-    border-color: ${({ theme }) => theme.colors.primary.c80};
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const ResizeHandle = styled.div<{ $isDragging: boolean }>`
-  width: 100%;
-  height: 12px;
-  background-color: ${({ theme }) => theme.colors.neutral.c20};
-  border: 1px solid ${({ theme }) => theme.colors.neutral.c40};
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  cursor: ns-resize;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.15s ease;
-  box-sizing: border-box;
-
-  &:hover,
-  &:active {
-    background-color: ${({ theme }) => theme.colors.neutral.c30};
-  }
-
-  &::after {
-    content: "";
-    width: 40px;
-    height: 4px;
-    border-radius: 2px;
-    background-color: ${({ theme, $isDragging }) =>
-      $isDragging ? theme.colors.primary.c80 : theme.colors.neutral.c50};
-  }
-`;
+import { cn } from "@ledgerhq/lumen-design-core/cn";
 
 type ResizableTextAreaProps = {
   value: string;
@@ -134,8 +70,12 @@ export const ResizableTextArea: React.FC<ResizableTextAreaProps> = ({
   );
 
   return (
-    <TextAreaWrapper>
-      <StyledTextArea
+    <div className="flex w-full flex-col">
+      <textarea
+        className={cn(
+          "peer min-h-80 w-full resize-none rounded-t-md border border-b-0 border-muted-subtle bg-surface p-12 font-mono body-2 text-base outline-none focus:border-interactive disabled:cursor-not-allowed disabled:opacity-60",
+          disabled && "rounded-b-md border-b",
+        )}
         style={{ height }}
         placeholder={placeholder}
         value={value}
@@ -143,8 +83,18 @@ export const ResizableTextArea: React.FC<ResizableTextAreaProps> = ({
         disabled={disabled}
       />
       {!disabled && (
-        <ResizeHandle $isDragging={isDragging} onMouseDown={handleMouseDown} />
+        <div
+          className="flex h-12 w-full cursor-ns-resize items-center justify-center rounded-b-md border border-t-0 border-muted-subtle bg-surface transition-colors duration-150 peer-focus:border-interactive hover:bg-surface-hover active:bg-surface-pressed"
+          onMouseDown={handleMouseDown}
+        >
+          <div
+            className={cn(
+              "h-4 w-40 rounded-full",
+              isDragging ? "bg-interactive" : "bg-muted-strong",
+            )}
+          />
+        </div>
       )}
-    </TextAreaWrapper>
+    </div>
   );
 };

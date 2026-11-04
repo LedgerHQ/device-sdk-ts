@@ -7,8 +7,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { webBleIdentifier } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
-import { Flex, Icons, Text } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
+import { ChevronDown, ChevronUp } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { AvailableDevice } from "@/components/Device";
 import { useAvailableDevices } from "@/hooks/useAvailableDevices";
@@ -16,14 +16,6 @@ import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { selectPollingInterval } from "@/state/settings/selectors";
 import { setDisplayedError } from "@/state/ui/slice";
 import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
-
-const Title = styled(Text)<{ disabled: boolean }>`
-  :hover {
-    user-select: none;
-    text-decoration: ${(p) => (p.disabled ? "none" : "underline")};
-    cursor: ${(p) => (p.disabled ? "default" : "pointer")};
-  }
-`;
 
 export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
   const discoveredDevices = useAvailableDevices();
@@ -36,36 +28,39 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
   }, []);
 
   return (
-    <Flex flexDirection="column">
-      <Flex
-        flexDirection="row"
+    <div className="flex flex-col">
+      <div
+        className={cn("flex flex-row items-center", !noDevice && "group")}
         onClick={noDevice ? undefined : toggleUnfolded}
-        alignItems="center"
       >
-        <Title variant="tiny" disabled={noDevice}>
-          Available devices ({discoveredDevices.length})
-        </Title>
-        <Flex style={{ visibility: noDevice ? "hidden" : "visible" }}>
-          {unfolded ? (
-            <Icons.ChevronUp size={"XS"} />
-          ) : (
-            <Icons.ChevronDown size={"XS"} />
+        <span
+          className={cn(
+            "body-3 text-base select-none",
+            noDevice
+              ? "cursor-default"
+              : "cursor-pointer group-hover:underline",
           )}
-        </Flex>
-      </Flex>
-      <Flex
-        flexDirection="column"
-        rowGap={4}
-        alignSelf="stretch"
-        mt={unfolded ? 5 : 0}
+        >
+          Available devices ({discoveredDevices.length})
+        </span>
+        <span className={noDevice ? "invisible" : "visible"}>
+          {unfolded ? (
+            <ChevronUp size={12} className="text-base" />
+          ) : (
+            <ChevronDown size={12} className="text-base" />
+          )}
+        </span>
+      </div>
+      <div
+        className={cn("flex flex-col gap-16 self-stretch", unfolded && "mt-20")}
       >
         {unfolded
           ? discoveredDevices.map((device) => (
               <KnownDevice key={device.id} {...device} />
             ))
           : null}
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 };
 
@@ -100,7 +95,7 @@ const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
   }, [dmk, device, pollingInterval, dispatch]);
 
   return (
-    <Flex flexDirection="row" alignItems="center" minWidth={0} flex={1}>
+    <div className="flex flex-row items-center min-w-0 flex-1">
       <AvailableDevice
         name={name ?? deviceModel.name}
         model={deviceModel.model}
@@ -108,6 +103,6 @@ const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
         connected={connected}
         onConnect={connectToDevice}
       />
-    </Flex>
+    </div>
   );
 };

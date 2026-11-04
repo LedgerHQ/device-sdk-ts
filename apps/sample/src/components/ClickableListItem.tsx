@@ -1,47 +1,29 @@
 import React from "react";
-import { Flex, Icons, Text } from "@ledgerhq/react-ui";
-import { type BaseStyledProps } from "@ledgerhq/react-ui/components/styled";
-import styled, { type DefaultTheme } from "styled-components";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
+import { ChevronRight } from "@ledgerhq/lumen-ui-react/symbols";
 
-const ListItemWrapper = styled(Flex)`
-  &:hover {
-    background-color: ${({ theme }: { theme: DefaultTheme }) =>
-      theme.colors.neutral.c30};
-  }
-
-  cursor: pointer;
-`;
-
-export const ClickableListItem: React.FC<
-  {
-    title: string;
-    description: string;
-    onClick(): void;
-    icon?: React.ReactNode;
-  } & BaseStyledProps
-> = ({ title, description, onClick, icon, ...styleProps }) => {
+export const ClickableListItem: React.FC<{
+  title: string;
+  description: string;
+  onClick(): void;
+  icon?: React.ReactNode;
+  className?: string;
+}> = ({ title, description, onClick, icon, className }) => {
   return (
-    <ListItemWrapper
-      flexDirection="row"
-      alignItems="center"
-      p={6}
-      backgroundColor={"background.card"}
-      borderRadius={2}
-      columnGap={4}
+    <div
+      className={cn(
+        "flex cursor-pointer flex-row items-center gap-8 rounded-md bg-surface p-16 hover:bg-surface-hover",
+        className,
+      )}
       onClick={onClick}
       data-testid={`CTA_command-${title}`}
-      {...styleProps}
     >
       {icon}
-      <Flex flex={1} flexDirection="column" rowGap={4}>
-        <Text variant="large" fontWeight="semiBold">
-          {title}
-        </Text>
-        <Text variant="body" fontWeight="regular" color="opacityDefault.c60">
-          {description}
-        </Text>
-      </Flex>
-      <Icons.ChevronRight size="M" color="opacityDefault.c50" />
-    </ListItemWrapper>
+      <div className="flex flex-1 flex-col gap-8">
+        <span className="body-1-semi-bold text-base">{title}</span>
+        <span className="body-2 text-muted">{description}</span>
+      </div>
+      <ChevronRight size={20} className="text-muted" />
+    </div>
   );
 };

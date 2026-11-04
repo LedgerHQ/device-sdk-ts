@@ -7,11 +7,13 @@ import {
   type DeviceModelId,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-import { Flex, Icons, Tag, Text, Tooltip } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
+import { Tag } from "@ledgerhq/lumen-ui-react";
+import { Information } from "@ledgerhq/lumen-ui-react/symbols";
 // eslint-disable-next-line no-restricted-imports -- Next.js polyfills util.inspect in client bundles.
 import { inspect } from "util";
 
+import { HintTooltip } from "@/components/HintTooltip";
 import { type FieldType } from "@/hooks/useForm";
 
 export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
@@ -32,20 +34,12 @@ export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
 );
 
 export const deviceActionStatusToColor: Record<DeviceActionStatus, string> = {
-  [DeviceActionStatus.NotStarted]: "primary.c100",
-  [DeviceActionStatus.Pending]: "primary.c90",
-  [DeviceActionStatus.Stopped]: "warning.c80",
-  [DeviceActionStatus.Completed]: "success.c80",
-  [DeviceActionStatus.Error]: "error.c80",
+  [DeviceActionStatus.NotStarted]: "text-interactive",
+  [DeviceActionStatus.Pending]: "text-interactive",
+  [DeviceActionStatus.Stopped]: "text-warning",
+  [DeviceActionStatus.Completed]: "text-success",
+  [DeviceActionStatus.Error]: "text-error",
 };
-
-const TooltipTitle = styled(Text).attrs({
-  mb: 2,
-  variant: "small",
-  color: "neutral.c60",
-})`
-  flex-grow: 0;
-`;
 
 function bufferStringifyReplacer(_key: string, value: unknown): unknown {
   // Pretty-print buffers to make signatures or public keys readable
@@ -82,34 +76,33 @@ function DeviceActionResponseInternal<
     props.deviceActionState.output !== undefined;
 
   return (
-    <Flex
-      flexDirection="column"
-      alignItems="flex-start"
-      bg={isLatest ? "neutral.c40" : "transparent"}
-      p={3}
-      borderRadius={2}
-      flex={1}
-      overflow="scroll"
+    <div
+      className={cn(
+        "flex flex-1 flex-col items-start overflow-scroll rounded-md p-8",
+        isLatest ? "bg-muted-transparent" : "bg-transparent",
+      )}
     >
-      <Tooltip
-        placement="top"
-        content={
-          <Text color="neutral.c00" whiteSpace="pre-wrap">
+      <HintTooltip
+        hint={
+          <span className="whitespace-pre-wrap">
             Arguments:{"\n"}
             {JSON.stringify(args, bufferStringifyReplacer, 2)}
-          </Text>
+          </span>
         }
       >
-        <TooltipTitle fontWeight={isLatest ? "medium" : "regular"}>
+        <span
+          className={cn(
+            "mb-4 grow-0 text-muted",
+            isLatest ? "body-3-semi-bold" : "body-3",
+          )}
+        >
           (execution ID: {id}) {date.toLocaleTimeString()}{" "}
           {isError ? "Error" : ""}
-        </TooltipTitle>
-      </Tooltip>
+        </span>
+      </HintTooltip>
       {showCustomOutput ? (
-        <Flex flexDirection="column" mt={2} width="100%">
-          <Text variant="small" color="success.c80" mb={2}>
-            Status: Completed
-          </Text>
+        <div className="flex flex-col mt-4 w-full">
+          <span className="body-3 text-success mb-4">Status: Completed</span>
           <OutputComponent
             output={
               (props as { deviceActionState: { output: Output } })
@@ -117,23 +110,17 @@ function DeviceActionResponseInternal<
             }
             deviceModelId={deviceModelId!}
           />
-        </Flex>
+        </div>
       ) : (
-        <Text
-          variant="body"
-          fontWeight="regular"
-          color={
+        <span
+          className={cn(
+            "body-2 break-words whitespace-pre-wrap",
             deviceActionStatusToColor[
               isError
                 ? DeviceActionStatus.Error
                 : props.deviceActionState.status
-            ]
-          }
-          style={{
-            fontStyle: "normal",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
-          }}
+            ],
+          )}
         >
           {isError
             ? inspect(props.error, { depth: null })
@@ -144,25 +131,27 @@ function DeviceActionResponseInternal<
                   bufferStringifyReplacer,
                   2,
                 )}
-        </Text>
+        </span>
       )}
       {!isError &&
       props.deviceActionState.status === DeviceActionStatus.Pending ? (
         props.deviceActionState.intermediateValue?.requiredUserInteraction !==
         UserInteractionRequired.None ? (
-          <Flex flexDirection="row" alignItems="center" mt={4} columnGap={2}>
-            <Icons.Information color="neutral.c100" size="S" />
-            <Text>User action required: </Text>
-            <Tag active type="opacity">
-              {
+          <div className="flex flex-row items-center mt-12 gap-x-4">
+            <Information size={24} className="text-base" />
+            <span className="body-2">User action required: </span>
+            <Tag
+              appearance="gray"
+              size="sm"
+              label={String(
                 props.deviceActionState.intermediateValue
-                  .requiredUserInteraction
-              }
-            </Tag>
-          </Flex>
+                  .requiredUserInteraction,
+              )}
+            />
+          </div>
         ) : null
       ) : null}
-    </Flex>
+    </div>
   );
 }
 

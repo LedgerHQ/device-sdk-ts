@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectFirmwareDistributionSalt } from "@/state/settings/selectors";
 import { setFirmwareDistributionSalt } from "@/state/settings/slice";
 
@@ -31,14 +30,14 @@ export const FirmwareDistributionSaltSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>Firmware distribution salt</InputLabel>}
+          label="Firmware distribution salt"
           value={firmwareDistributionSalt}
           onChange={onValueChange}
           placeholder="0"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectFirmwareDistributionSalt}
         setStateAction={setFirmwareDistributionSaltFn}

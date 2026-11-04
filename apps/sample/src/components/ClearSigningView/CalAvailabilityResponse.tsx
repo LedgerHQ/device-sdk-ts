@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Flex, Icons, InfiniteLoader, Text } from "@ledgerhq/react-ui";
+import { Spinner } from "@ledgerhq/lumen-ui-react";
+import { CheckmarkCircle, Warning } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { type Descriptor } from "./CalNetworkDataSource";
 
@@ -22,26 +23,22 @@ export function CalAvailabilityResponseComponent(
   return (
     <>
       {loading ? (
-        <InfiniteLoader size={20} />
+        <Spinner size={20} />
       ) : (
         <>
           {(type === "ethereum_app_plugins" || type === "eip712") && (
             <>
-              <Flex flexDirection="column">
-                <Flex alignItems="center">
-                  <Icons.CheckmarkCircle style={{ color: "green" }} />
-                  <Text
-                    variant="large"
-                    fontWeight="regular"
-                    style={{ margin: "6px" }}
-                  >
+              <div className="flex flex-col">
+                <div className="flex items-center">
+                  <CheckmarkCircle size={24} className="text-success" />
+                  <span className="body-1" style={{ margin: "6px" }}>
                     Smart Contract of type{" "}
                     <span style={{ fontWeight: "bold" }}>`{type}`</span> is
                     deployed
-                  </Text>
-                </Flex>
-                <Box>
-                  <Text>
+                  </span>
+                </div>
+                <div>
+                  <span className="body-2">
                     <span style={{ fontSize: "14px" }}>
                       <a
                         href={`https://etherscan.io/address/${searchAddress}#code`}
@@ -53,19 +50,19 @@ export function CalAvailabilityResponseComponent(
                         {searchAddress}
                       </a>
                     </span>
-                  </Text>
-                </Box>
-                <Box>
-                  <Text>
+                  </span>
+                </div>
+                <div>
+                  <span className="body-2">
                     <span style={{ color: "lightgray", fontSize: "9px" }}>
                       {"Checked at : " + formattedDate}
                     </span>
-                  </Text>
-                </Box>
-              </Flex>
+                  </span>
+                </div>
+              </div>
               {type === "ethereum_app_plugins" && (
-                <Flex>
-                  <Text>
+                <div>
+                  <span className="body-2">
                     <ul>
                       {descriptors.map((descriptor: Descriptor) => {
                         return (
@@ -73,12 +70,12 @@ export function CalAvailabilityResponseComponent(
                         );
                       })}
                     </ul>
-                  </Text>
-                </Flex>
+                  </span>
+                </div>
               )}
               {type === "eip712" && (
-                <Flex>
-                  <Text>
+                <div>
+                  <span className="body-2">
                     <ul>
                       {descriptors.map((descriptor: Descriptor) => {
                         return (
@@ -89,37 +86,33 @@ export function CalAvailabilityResponseComponent(
                         );
                       })}
                     </ul>
-                  </Text>
-                </Flex>
+                  </span>
+                </div>
               )}
             </>
           )}
           {type !== "ethereum_app_plugins" && type !== "eip712" && (
             <>
-              <Flex alignItems="center">
-                <Icons.Warning style={{ color: "red" }} />
-                <Text
-                  variant="large"
-                  fontWeight="regular"
-                  style={{ marginLeft: "6px" }}
-                >
+              <div className="flex items-center">
+                <Warning size={24} className="text-error" />
+                <span className="body-1" style={{ marginLeft: "6px" }}>
                   Smart Contract is unknown
-                </Text>
-              </Flex>
-              <Box>
-                <Text>
+                </span>
+              </div>
+              <div>
+                <span className="body-2">
                   <span style={{ fontSize: "14px" }}>
                     Make sure the address : <b>{searchAddress}</b> is right.
                   </span>
-                </Text>
-              </Box>
-              <Box>
-                <Text>
+                </span>
+              </div>
+              <div>
+                <span className="body-2">
                   <span style={{ color: "lightgray", fontSize: "9px" }}>
                     {"Checked at : " + formattedDate}
                   </span>
-                </Text>
-              </Box>
+                </span>
+              </div>
             </>
           )}
         </>

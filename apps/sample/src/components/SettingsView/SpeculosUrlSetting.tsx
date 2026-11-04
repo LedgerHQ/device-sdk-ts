@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectSpeculosUrl } from "@/state/settings/selectors";
 import { setSpeculosUrl } from "@/state/settings/slice";
 
@@ -22,14 +21,14 @@ export const SpeculosUrlSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>Speculos URL</InputLabel>}
+          label="Speculos URL"
           value={speculosUrl}
           onChange={setSpeculosUrlFn}
           placeholder="http://127.0.0.1:5000"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectSpeculosUrl}
         setStateAction={setSpeculosUrlFn}

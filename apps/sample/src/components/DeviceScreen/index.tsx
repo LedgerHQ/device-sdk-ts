@@ -16,8 +16,7 @@ import {
   useMockServerDevice,
 } from "@ledgerhq/device-mockserver-react";
 import { ThemeProvider } from "@ledgerhq/lumen-ui-react";
-import { Flex, Icons, Text } from "@ledgerhq/react-ui";
-import styled, { type DefaultTheme } from "styled-components";
+import { ChevronDown, ChevronUp } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { DEVICE_SCREEN_ICON } from "@/components/DeviceScreen/deviceModel";
 import { useSpeculosScreenApi } from "@/components/DeviceScreen/useSpeculosScreenApi";
@@ -33,36 +32,6 @@ import {
   selectTransportType,
 } from "@/state/settings/selectors";
 import { setDeviceScreenCollapsed } from "@/state/settings/slice";
-
-const Root = styled(Flex).attrs({ borderRadius: 2 })`
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  flex-direction: column;
-  background-color: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.neutral.c30};
-`;
-
-const Header = styled(Flex).attrs({ px: 4, py: 3 })`
-  align-items: center;
-  column-gap: 8px;
-  cursor: pointer;
-  user-select: none;
-`;
-
-const Title = styled(Text).attrs({ variant: "tiny" })`
-  flex: 1;
-  color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c80};
-`;
-
-// Lumen expects Tailwind's preflight, which the sample does not load.
-const Body = styled.div`
-  margin: 0 12px 12px;
-
-  & * {
-    box-sizing: border-box;
-  }
-`;
 
 export const DeviceScreen: React.FC = () => {
   const dispatch = useDispatch();
@@ -99,22 +68,30 @@ export const DeviceScreen: React.FC = () => {
 
   const { label } = findDeviceScreenModel(device.modelId);
   const ModelIcon = DEVICE_SCREEN_ICON[device.modelId];
-  const Chevron = collapsed ? Icons.ChevronDown : Icons.ChevronUp;
+  const Chevron = collapsed ? ChevronDown : ChevronUp;
 
   return (
-    <Root data-testid="container_sidebar-device-screen">
-      <Header onClick={toggle} data-testid="button_toggle-device-screen">
-        <ModelIcon size="XS" color="neutral.c80" />
-        <Title>
+    <div
+      className="sticky top-0 z-[1] flex flex-col rounded-md bg-muted"
+      data-testid="container_sidebar-device-screen"
+    >
+      <div
+        className="flex cursor-pointer items-center gap-8 px-16 py-12 select-none"
+        onClick={toggle}
+        data-testid="button_toggle-device-screen"
+      >
+        <ModelIcon size={12} className="text-muted" />
+        <span className="body-3 flex-1 text-muted">
           {mockDevice?.firmware_version
             ? `${label} - ${mockDevice.firmware_version}`
             : label}
-        </Title>
-        <Chevron size="XS" color="neutral.c80" />
-      </Header>
+        </span>
+        <Chevron size={12} className="text-muted" />
+      </div>
 
       {!collapsed && (
-        <Body>
+        // Lumen expects Tailwind's preflight, which the sample does not load.
+        <div className="mx-12 mb-12 [&_*]:box-border">
           <ThemeProvider colorScheme="dark">
             <Screen
               key={transportType}
@@ -122,8 +99,8 @@ export const DeviceScreen: React.FC = () => {
               deviceType={device.modelId}
             />
           </ThemeProvider>
-        </Body>
+        </div>
       )}
-    </Root>
+    </div>
   );
 };

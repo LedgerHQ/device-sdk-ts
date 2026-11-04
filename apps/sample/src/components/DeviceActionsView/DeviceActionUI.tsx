@@ -1,20 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   type DeviceActionIntermediateValue,
   DeviceActionStatus,
   DeviceModelId,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-import {
-  Flex,
-  InfiniteLoader,
-  Link,
-  Tag,
-  Text,
-  Tooltip,
-} from "@ledgerhq/react-ui";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
+import { Spinner, Tag } from "@ledgerhq/lumen-ui-react";
 import dynamic from "next/dynamic";
-import styled from "styled-components";
 
 import PinFlexDark from "./lotties/flex/01_EUROPA_DARK_PIN.json";
 import PairingFlexDark from "./lotties/flex/02_EUROPA_DARK_PAIRING.json";
@@ -121,8 +114,6 @@ const UserInteractionToAnimationKeyMap: Record<
   [UserInteractionRequired.SignPersonalMessage]: "signTransaction",
 };
 
-const WarningText = styled(Text).attrs({ mb: 4 })``;
-
 const DeviceAnimation: React.FC<DeviceAnimationProps> = ({
   userInteractionRequired,
   deviceModelId,
@@ -142,14 +133,16 @@ const DeviceAnimation: React.FC<DeviceAnimationProps> = ({
           style={{ height: 200, width: 200 }}
         />
       ) : (
-        <InfiniteLoader size={20} />
+        <Spinner size={20} />
       )}
       {userInteractionRequired !== UserInteractionRequired.None ? (
         <>
-          <WarningText>User action required: </WarningText>
-          <Tag active type="opacity">
-            {userInteractionRequired}
-          </Tag>
+          <span className="body-2 mb-12">User action required: </span>
+          <Tag
+            appearance="gray"
+            size="sm"
+            label={String(userInteractionRequired)}
+          />
         </>
       ) : null}
     </>
@@ -170,27 +163,24 @@ const JSONTextPopin: React.FC<{
   obj: unknown;
   color: string;
 }> = ({ label, obj, color }) => {
+  const [revealed, setRevealed] = useState(false);
   return (
-    <Flex flexDirection="column" alignItems="center" rowGap={5}>
-      <Text color={color} textAlign="center">
-        {label}
-      </Text>
-      <Tooltip
-        placement="top"
-        interactive
-        maxWidth={"100%"}
-        trigger="click"
-        content={
-          <Flex overflow="scroll" maxHeight="400px">
-            <Text color="neutral.c00" whiteSpace="pre-wrap">
-              {JSON.stringify(obj, null, 2)}
-            </Text>
-          </Flex>
-        }
+    <div className="flex flex-col items-center gap-y-12">
+      <span className={cn("body-2 text-center", color)}>{label}</span>
+      <button
+        className="body-2 cursor-pointer border-0 bg-transparent p-0 text-muted underline"
+        onClick={() => setRevealed((prev) => !prev)}
       >
-        <Link type="shade">{"\nClick to reveal value"}</Link>
-      </Tooltip>
-    </Flex>
+        {revealed ? "Click to hide value" : "Click to reveal value"}
+      </button>
+      {revealed && (
+        <div className="flex max-h-[400px] max-w-full overflow-scroll">
+          <span className="body-2 whitespace-pre-wrap text-base">
+            {JSON.stringify(obj, null, 2)}
+          </span>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -203,7 +193,8 @@ export function DeviceActionUI<
   deviceModelId,
 }: DeviceActionUIProps<Output, Error, IntermediateValue>) {
   let deviceActionUi = null;
-  if (!lastResponse) deviceActionUi = <Text>No Device Action running</Text>;
+  if (!lastResponse)
+    deviceActionUi = <span className="body-2">No Device Action running</span>;
   else if ("error" in lastResponse)
     deviceActionUi = (
       <JSONTextPopin
@@ -218,7 +209,9 @@ export function DeviceActionUI<
     switch (deviceActionState.status) {
       case DeviceActionStatus.Stopped:
         deviceActionUi = (
-          <Text color={color}>Device Action execution stopped</Text>
+          <span className={cn("body-2", color)}>
+            Device Action execution stopped
+          </span>
         );
         break;
       case DeviceActionStatus.Completed: {

@@ -2,16 +2,15 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { type DeviceSessionId } from "@ledgerhq/device-management-kit";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
+import { Button, Link } from "@ledgerhq/lumen-ui-react";
 import {
-  Button,
-  Flex,
-  Icons,
-  IconsLegacy,
-  Link,
-  Text,
-} from "@ledgerhq/react-ui";
+  Check,
+  Copy,
+  ExternalLink,
+  LedgerDevices,
+} from "@ledgerhq/lumen-ui-react/symbols";
 import { useRouter } from "next/navigation";
-import styled, { type DefaultTheme } from "styled-components";
 
 import { AvailableDevices } from "@/components/AvailableDevices";
 import { ConnectDeviceMenuDropdown } from "@/components/ConnectDevice/ConnectDeviceMenuDropdown";
@@ -35,66 +34,6 @@ import {
   selectTransportType,
 } from "@/state/settings/selectors";
 import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
-
-const Root = styled(Flex).attrs({ py: 8, px: 6, rowGap: 6 })`
-  flex-direction: column;
-  width: 280px;
-  background-color: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.background.card};
-  overflow-y: auto;
-`;
-
-const MenuContainer = styled(Flex)`
-  flex: 1;
-  flex-direction: column;
-  opacity: ${({ active }: { active: boolean }) => (active ? 1 : 0.5)};
-`;
-
-const BottomContainer = styled(Flex)`
-  opacity: 0.5;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const VersionText = styled(Text)`
-  color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c50};
-`;
-
-const MockSessionCard = styled(Flex).attrs({
-  p: 5,
-  borderRadius: 2,
-  rowGap: 4,
-})`
-  flex-direction: column;
-  background: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.neutral.c30};
-`;
-
-const MockSessionIcon = styled(Flex).attrs({ p: 3, mr: 3, borderRadius: 100 })`
-  position: relative;
-  justify-content: center;
-  align-items: center;
-  background: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.neutral.c40};
-`;
-
-const StatusDot = styled.span<{ $active: boolean }>`
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid
-    ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c30};
-  background-color: ${({
-    theme,
-    $active,
-  }: {
-    theme: DefaultTheme;
-    $active: boolean;
-  }) => ($active ? theme.colors.success.c50 : theme.colors.error.c50)};
-`;
 
 const MockServerSessionCard: React.FC = () => {
   const { status, session } = useMockServerSession();
@@ -138,54 +77,50 @@ const MockServerSessionCard: React.FC = () => {
         : "Server unreachable";
 
   return (
-    <MockSessionCard data-testid="card_mock-session">
-      <Flex alignItems="center">
-        <MockSessionIcon>
-          <Icons.LedgerDevices size="S" />
-          <StatusDot $active={active} />
-        </MockSessionIcon>
-        <Flex flexDirection="column" flex={1} minWidth={0}>
-          <Text variant="body">Mock server</Text>
-          <Text
-            variant="small"
-            color="neutral.c70"
-            whiteSpace="nowrap"
-            overflow="hidden"
-            textOverflow="ellipsis"
-          >
-            {details}
-          </Text>
-        </Flex>
-      </Flex>
+    <div
+      className="flex flex-col gap-8 rounded-md bg-muted p-12"
+      data-testid="card_mock-session"
+    >
+      <div className="flex items-center">
+        <div className="relative mr-12 flex items-center justify-center rounded-full bg-muted-transparent p-12">
+          <LedgerDevices size={20} className="text-base" />
+          <span
+            className={cn(
+              "absolute right-0 bottom-0 size-10 rounded-full border-2 border-[#1f1f1f]",
+              active ? "bg-success" : "bg-error",
+            )}
+          />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="body-2 text-base">Mock server</span>
+          <span className="body-3 truncate text-muted">{details}</span>
+        </div>
+      </div>
       {active && (
-        <Flex columnGap={3}>
+        <div className="flex gap-8">
           <Button
             data-testid="CTA_open-mock-server-ui"
-            size="xs"
-            variant="shade"
-            outline
-            flex={1}
-            Icon={IconsLegacy.ExternalLinkMedium}
+            appearance="gray"
+            size="sm"
+            className="min-w-0 flex-1 bg-muted-transparent px-8"
+            icon={ExternalLink}
             onClick={openMockServerUi}
           >
             Open UI
           </Button>
           <Button
             data-testid="CTA_copy-mock-session-token"
-            size="xs"
-            variant="shade"
-            outline
-            flex={1}
-            Icon={
-              copied ? IconsLegacy.CheckAloneMedium : IconsLegacy.CopyMedium
-            }
+            appearance="gray"
+            size="sm"
+            className="min-w-0 flex-1 bg-muted-transparent px-8"
+            icon={copied ? Check : Copy}
             onClick={copyToken}
           >
-            {copied ? "Copied" : "Copy token"}
+            {copied ? "Copied" : "Copy"}
           </Button>
-        </Flex>
+        </div>
       )}
-    </MockSessionCard>
+    </div>
   );
 };
 
@@ -245,25 +180,21 @@ export const Sidebar: React.FC = () => {
 
   const router = useRouter();
   return (
-    <Root>
-      <Link
+    <div className="flex w-[312px] shrink-0 flex-col gap-16 overflow-y-auto bg-surface px-16 py-24">
+      <button
+        className="body-1-semi-bold mb-24 cursor-pointer border-0 bg-transparent p-0 text-left text-base hover:underline"
         onClick={() => router.push("/")}
-        mb={8}
-        textProps={{
-          textAlign: "left",
-          variant: "large",
-        }}
       >
         Ledger Device Management Kit
         {transportType === "mockserver" && <span> (MOCKED)</span>}
-      </Link>
+      </button>
 
       <MockServerSessionCard />
 
-      <Flex data-testid="container_devices" rowGap={4} flexDirection="column">
-        <Text variant={"tiny"}>
+      <div data-testid="container_devices" className="flex flex-col gap-16">
+        <span className="body-3 text-base">
           Device sessions ({orderedConnectedDevices.length})
-        </Text>
+        </span>
         {orderedConnectedDevices.map(({ sessionId, connectedDevice }) => (
           <Device
             key={sessionId}
@@ -276,28 +207,34 @@ export const Sidebar: React.FC = () => {
             onReconnect={onDeviceReconnect}
           />
         ))}
-      </Flex>
+      </div>
       <DeviceScreen />
       <AvailableDevices />
       <ConnectDeviceMenuDropdown />
-      <MenuContainer active={!!selectedSessionId}>
-        <Text variant={"tiny"}>Menu</Text>
+      <div
+        className={cn(
+          "flex flex-1 flex-col",
+          selectedSessionId ? "opacity-100" : "opacity-50",
+        )}
+      >
+        <span className="body-3 text-base">Menu</span>
         <Menu />
-      </MenuContainer>
+      </div>
 
-      <BottomContainer>
+      <div className="flex flex-col items-center opacity-50">
         <Link
-          mb={6}
+          appearance="base"
+          size="md"
+          className="mb-24"
+          icon={ExternalLink}
           onClick={exportLogs}
-          size="large"
-          Icon={IconsLegacy.ExternalLinkMedium}
         >
           Share logs
         </Link>
-        <VersionText variant={"body"} whiteSpace="pre" textAlign="center">
+        <span className="body-2 text-center whitespace-pre text-muted-subtle">
           Ledger Device Management Kit{"\n"}version {version}
-        </VersionText>
-      </BottomContainer>
-    </Root>
+        </span>
+      </div>
+    </div>
   );
 };

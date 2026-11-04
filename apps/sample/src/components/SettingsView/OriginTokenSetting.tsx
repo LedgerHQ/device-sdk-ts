@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectOriginToken } from "@/state/settings/selectors";
 import { setOriginToken } from "@/state/settings/slice";
 
@@ -22,14 +21,14 @@ export const OriginTokenSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>Origin Token</InputLabel>}
+          label="Origin Token"
           value={originToken}
           onChange={setOriginTokenFn}
           placeholder="origin-token"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectOriginToken}
         setStateAction={setOriginTokenFn}

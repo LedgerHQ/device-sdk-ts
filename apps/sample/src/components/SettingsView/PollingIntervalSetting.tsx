@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectPollingInterval } from "@/state/settings/selectors";
 import { setPollingInterval } from "@/state/settings/slice";
 
@@ -40,19 +39,15 @@ export const PollingIntervalSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={
-            <InputLabel>
-              Polling Interval in ms (0 to disable, 1000ms minimum)
-            </InputLabel>
-          }
+          label="Polling Interval in ms (0 to disable, 1000ms minimum)"
           value={localValue}
           onChange={onValueChange}
           type="number"
           placeholder="Polling interval"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectPollingInterval}
         setStateAction={setPollingIntervalFn}

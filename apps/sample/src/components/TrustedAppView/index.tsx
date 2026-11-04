@@ -1,5 +1,5 @@
 import React from "react";
-import { Grid, Icons } from "@ledgerhq/react-ui";
+import { LedgerDevices } from "@ledgerhq/lumen-ui-react/symbols";
 import { useRouter } from "next/navigation";
 
 import { PageWithHeader } from "@/components//PageWithHeader";
@@ -11,7 +11,7 @@ const SUPPORTED_TRUSTED_APPS = [
     title: "Ledger Sync",
     key: "ledger-sync",
     description: "Access Ledger Sync functionality",
-    icon: <Icons.LedgerDevices size="L" />,
+    icon: <LedgerDevices size={24} />,
   },
 ];
 
@@ -23,10 +23,7 @@ export const TrustedAppView = () => {
 
   return (
     <PageWithHeader title="TrustedApps">
-      <Grid
-        columns={2}
-        style={{ rowGap: 6, columnGap: 6, overflowY: "scroll" }}
-      >
+      <div className="grid grid-cols-2 gap-[6px] overflow-y-scroll">
         {SUPPORTED_TRUSTED_APPS.map(({ title, description, icon, key }) => (
           <ClickableListItem
             key={`trusted-apps-${key}`}
@@ -38,7 +35,7 @@ export const TrustedAppView = () => {
             icon={icon}
           />
         ))}
-      </Grid>
+      </div>
     </PageWithHeader>
   );
 };

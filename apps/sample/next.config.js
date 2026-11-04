@@ -20,9 +20,6 @@ const standalone =
 const nextConfig = {
   ...standalone,
   reactStrictMode: true,
-  compiler: {
-    styledComponents: true,
-  },
   env: {
     // Expose the transport selector to the browser bundle. Defaults to the mock
     // server transport when the app is started via `dev:default-mock`.

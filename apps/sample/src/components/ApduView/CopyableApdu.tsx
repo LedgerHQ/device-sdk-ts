@@ -1,6 +1,5 @@
 import React from "react";
 import { type ApduResponse } from "@ledgerhq/device-management-kit";
-import { Text } from "@ledgerhq/react-ui";
 
 import { Copyable } from "@/components/Copyable";
 
@@ -25,9 +24,9 @@ export const CopyableApduResponse: React.FC<{
   return (
     <Copyable copyValue={copyValue}>
       {formatDisplayableHexString(response.data)}{" "}
-      <Text as="span" fontWeight="bold">
+      <span className="body-2-semi-bold">
         {formatDisplayableHexString(response.statusCode)}
-      </Text>
+      </span>
     </Copyable>
   );
 };

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Flex, Input, SelectInput, Switch } from "@ledgerhq/react-ui";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
 
-import { InputLabel, SelectInputLabel } from "@/components/InputLabel";
+import { Input, SelectInput, Switch } from "@/components/fields";
 import { type FieldType, useForm } from "@/hooks/useForm";
 
 export type ValueSelector<T extends FieldType> = Record<
@@ -51,18 +51,16 @@ const FormField: React.FC<FormFieldProps> = ({
 }) => {
   if (options) {
     return (
-      <Flex flexDirection="column" alignItems="stretch">
+      <div className="flex flex-col items-stretch">
         <SelectInput
-          renderLeft={() => <SelectInputLabel>{label}</SelectInputLabel>}
+          label={label}
           isDisabled={disabled}
           placeholder={String(defaultValue)}
           value={options.find((val) => val.value === value)}
-          isMulti={false}
           onChange={(newVal) => newVal && onChange(fieldKey, newVal.value)}
           options={options}
-          isSearchable={false}
         />
-      </Flex>
+      </div>
     );
   }
 
@@ -84,7 +82,7 @@ const FormField: React.FC<FormFieldProps> = ({
     return (
       <Input
         id={fieldKey}
-        renderLeft={() => <InputLabel>{label}</InputLabel>}
+        label={label}
         value={value}
         placeholder={String(defaultValue)}
         onChange={(newVal) => onChange(fieldKey, newVal)}
@@ -97,7 +95,7 @@ const FormField: React.FC<FormFieldProps> = ({
   return (
     <Input
       id={fieldKey}
-      renderLeft={() => <InputLabel>{label}</InputLabel>}
+      label={label}
       value={value}
       placeholder={String(defaultValue)}
       onChange={(newVal) =>
@@ -153,13 +151,7 @@ export function Form<Args extends Record<string, FieldType>>({
   if (!formValues) return null;
 
   return (
-    <Flex
-      className={className}
-      flexDirection="column"
-      flexWrap="wrap"
-      rowGap={5}
-      columnGap={5}
-    >
+    <div className={cn("flex flex-col flex-wrap gap-12", className)}>
       {Object.entries(formValues).map(([key, value]) => (
         <FormField
           key={key}
@@ -172,6 +164,6 @@ export function Form<Args extends Record<string, FieldType>>({
           onChange={handleFieldChange}
         />
       ))}
-    </Flex>
+    </div>
   );
 }

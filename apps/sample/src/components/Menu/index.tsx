@@ -1,112 +1,97 @@
 import React from "react";
-import { Flex, Icons, Link } from "@ledgerhq/react-ui";
+import {
+  Apps,
+  CloudUpload,
+  Code,
+  LedgerDevices,
+  LedgerLogo,
+  ListEye,
+  SettingsAlt2,
+  Signature,
+  TransferHorizontal,
+  User,
+} from "@ledgerhq/lumen-ui-react/symbols";
 import { useRouter } from "next/navigation";
-import styled from "styled-components";
 
-const MenuItem = styled(Flex).attrs({ p: 3, pl: 5 })`
-  align-items: center;
-`;
-
-const MenuTitle = styled(Link).attrs({
-  variant: "paragraph",
-  fontWeight: "semiBold",
-  ml: 5,
-})``;
+const ITEMS = [
+  {
+    route: "/apdu",
+    icon: TransferHorizontal,
+    label: "APDU",
+    testId: "CTA_route-to-/apdu",
+  },
+  {
+    route: "/commands",
+    icon: Code,
+    label: "Commands",
+    testId: "CTA_route-to-/commands",
+  },
+  {
+    route: "/device-actions",
+    icon: LedgerDevices,
+    label: "Device Actions",
+    testId: "CTA_route-to-/device-actions",
+  },
+  {
+    route: "/ledger-wallet",
+    icon: LedgerLogo,
+    label: "Ledger Wallet",
+    testId: "CTA_route-to-/ledger-wallet",
+  },
+  {
+    route: "/signers",
+    icon: Signature,
+    label: "Signer Kits",
+    testId: "CTA_route-to-/signers",
+  },
+  {
+    route: "/contacts",
+    icon: User,
+    label: "Contacts",
+    testId: "CTA_route-to-/contacts",
+  },
+  {
+    route: "/trusted-apps",
+    icon: Apps,
+    label: "Trusted Apps",
+    testId: "CTA_route-to-/trusted-apps",
+  },
+  {
+    route: "/clear-signing-tools",
+    icon: ListEye,
+    label: "Clear Signing Tools",
+    testId: "CTA_route-to-/clear-signing-tools",
+  },
+  {
+    route: "/internal-tools",
+    icon: CloudUpload,
+    label: "Ledger Internal Tools",
+    testId: "CTA_route-to-/internal-tools",
+  },
+  {
+    route: "/settings",
+    icon: SettingsAlt2,
+    label: "Settings",
+    testId: undefined,
+  },
+];
 
 export const Menu: React.FC = () => {
   const router = useRouter();
 
   return (
     <>
-      <MenuItem>
-        <Icons.TransferHorizontal />
-        <MenuTitle
-          data-testid="CTA_route-to-/apdu"
-          onClick={() => router.push("/apdu")}
+      {ITEMS.map(({ route, icon: Icon, label, testId }) => (
+        <button
+          key={route}
+          data-testid={testId}
+          className="flex cursor-pointer flex-row border-0 bg-transparent items-center gap-12 rounded-sm py-8 pr-8 pl-12 text-left text-base hover:bg-surface-hover"
+          onClick={() => router.push(route)}
         >
-          APDU
-        </MenuTitle>
-      </MenuItem>
-      <MenuItem>
-        {/* sorry for that blasphemy but the original icon is upside down and does not make logical sense */}
-        <Flex style={{ transform: "scaleY(-1)" }}>
-          <Icons.Protocol />
-        </Flex>
-        <MenuTitle
-          data-testid="CTA_route-to-/commands"
-          onClick={() => router.push("/commands")}
-        >
-          Commands
-        </MenuTitle>
-      </MenuItem>
-      <MenuItem>
-        <Icons.LedgerDevices />
-        <MenuTitle
-          data-testid="CTA_route-to-/device-actions"
-          onClick={() => router.push("/device-actions")}
-        >
-          Device Actions
-        </MenuTitle>
-      </MenuItem>
-      <MenuItem>
-        <Icons.LedgerLogo />
-        <MenuTitle
-          data-testid="CTA_route-to-/ledger-wallet"
-          onClick={() => router.push("/ledger-wallet")}
-        >
-          Ledger Wallet
-        </MenuTitle>
-      </MenuItem>
-
-      <MenuItem>
-        <Icons.Signature />
-        <MenuTitle
-          data-testid="CTA_route-to-/signers"
-          onClick={() => router.push("/signers")}
-        >
-          Signer Kits
-        </MenuTitle>
-      </MenuItem>
-      <MenuItem>
-        <Icons.User />
-        <MenuTitle
-          data-testid="CTA_route-to-/contacts"
-          onClick={() => router.push("/contacts")}
-        >
-          Contacts
-        </MenuTitle>
-      </MenuItem>
-      <MenuItem>
-        <Icons.Apps />
-        <MenuTitle
-          data-testid="CTA_route-to-/trusted-apps"
-          onClick={() => router.push("/trusted-apps")}
-        >
-          Trusted Apps
-        </MenuTitle>
-      </MenuItem>
-      <MenuItem>
-        <Icons.ListEye />
-        <MenuTitle
-          data-testid="CTA_route-to-/clear-signing-tools"
-          onClick={() => router.push("/clear-signing-tools")}
-        >
-          Clear Signing Tools
-        </MenuTitle>
-      </MenuItem>
-      <MenuItem>
-        <Icons.CloudUpload />
-        <MenuTitle
-          data-testid="CTA_route-to-/internal-tools"
-          onClick={() => router.push("/internal-tools")}
-        >
-          Ledger Internal Tools
-        </MenuTitle>
-      </MenuItem>
-      <MenuItem>
-        <Icons.SettingsAlt2 />
-        <MenuTitle onClick={() => router.push("/settings")}>Settings</MenuTitle>
-      </MenuItem>
+          <Icon size={24} />
+          <span className="body-2-semi-bold">{label}</span>
+        </button>
+      ))}
     </>
   );
 };

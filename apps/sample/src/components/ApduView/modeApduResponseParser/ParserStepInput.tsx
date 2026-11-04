@@ -1,8 +1,7 @@
 import React from "react";
-import { Flex, Icons, Input, SelectInput, Text } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { Close } from "@ledgerhq/lumen-ui-react/symbols";
 
-import { InputLabel, SelectInputLabel } from "@/components/InputLabel";
+import { Input, SelectInput } from "@/components/fields";
 
 import { ENCODE_METHODS, EXTRACT_METHODS } from "./extractMethods";
 import {
@@ -12,38 +11,24 @@ import {
   type ParserStepResult,
 } from "./types";
 
-const Container = styled(Flex)`
-  flex-direction: column;
-  align-items: flex-start;
-  border-radius: 8px;
-  background-color: ${({ theme }) => theme.colors.neutral.c20};
-`;
+const Container: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <div className="flex flex-col items-start gap-12 rounded-md bg-surface p-16">
+    {children}
+  </div>
+);
 
-const RemoveButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  color: ${({ theme }) => theme.colors.neutral.c70};
+const RemoveButton: React.FC<React.ComponentProps<"button">> = (props) => (
+  <button
+    className="flex cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-4 text-muted hover:bg-muted-transparent-hover hover:text-error"
+    {...props}
+  />
+);
 
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.neutral.c30};
-    color: ${({ theme }) => theme.colors.error.c80};
-  }
-`;
-
-const ResultBox = styled(Flex)`
-  background-color: ${({ theme }) => theme.colors.neutral.c30};
-  border-radius: 4px;
-  padding: 8px 12px;
-  min-height: 36px;
-  word-break: break-all;
-  align-self: stretch;
-`;
+const ResultBox: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <div className="min-h-36 self-stretch rounded-sm bg-muted px-12 py-8 break-all">
+    {children}
+  </div>
+);
 
 const extractMethodOptions = Object.entries(EXTRACT_METHODS).map(
   ([key, info]) => ({
@@ -91,32 +76,24 @@ export const ParserStepInput: React.FC<ParserStepInputProps> = ({
   };
 
   return (
-    <Container p={4} rowGap={3}>
-      <Flex
-        flexDirection="row"
-        columnGap={3}
-        rowGap={3}
-        width="100%"
-        flexWrap="wrap"
-      >
+    <Container>
+      <div className="flex flex-row gap-x-8 gap-y-8 w-full flex-wrap">
         <Input
           tabIndex={0}
           name="label"
-          renderLeft={() => <InputLabel>Label</InputLabel>}
+          label="Label"
           placeholder="e.g. App Name"
           value={step.label}
           onChange={(value) => onUpdate({ label: value })}
         />
 
         <SelectInput
-          isMulti={false}
-          isSearchable={false}
           options={extractMethodOptions}
           value={extractMethodOptions.find(
             (opt) => opt.value === step.extractMethod,
           )}
           onChange={handleMethodChange}
-          renderLeft={() => <SelectInputLabel>Extract</SelectInputLabel>}
+          label="Extract"
         />
 
         {selectedMethodInfo.hasLengthParam && (
@@ -124,7 +101,7 @@ export const ParserStepInput: React.FC<ParserStepInputProps> = ({
             tabIndex={0}
             name="length"
             type="number"
-            renderLeft={() => <InputLabel>Len</InputLabel>}
+            label="Len"
             placeholder="0"
             value={step.length?.toString() ?? ""}
             onChange={(value) => onUpdate({ length: parseInt(value, 10) || 0 })}
@@ -132,40 +109,34 @@ export const ParserStepInput: React.FC<ParserStepInputProps> = ({
         )}
 
         <SelectInput
-          isMulti={false}
-          isSearchable={false}
           options={encodeMethodOptions}
           value={encodeMethodOptions.find(
             (opt) => opt.value === step.encodeMethod,
           )}
           onChange={handleEncodeChange}
-          renderLeft={() => <SelectInputLabel>Encode</SelectInputLabel>}
+          label="Encode"
         />
 
-        <Flex flex={1} />
+        <div className="flex flex-1" />
 
         <RemoveButton onClick={onRemove} title="Remove step">
-          <Icons.Close size="XS" />
+          <Close size={12} />
         </RemoveButton>
-      </Flex>
+      </div>
 
-      <Text variant="extraSmall" color="neutral.c60">
+      <span className="body-4 text-muted">
         {selectedMethodInfo.description}
-      </Text>
+      </span>
 
       <ResultBox>
         {result?.error ? (
-          <Text variant="small" color="warning.c80">
-            {result.error}
-          </Text>
+          <span className="body-3 text-warning">{result.error}</span>
         ) : result?.encodedValue !== undefined ? (
-          <Text variant="small" color="success.c80" fontFamily="monospace">
+          <span className="body-3 text-success font-mono">
             {result.encodedValue}
-          </Text>
+          </span>
         ) : (
-          <Text variant="small" color="neutral.c60">
-            —
-          </Text>
+          <span className="body-3 text-muted">—</span>
         )}
       </ResultBox>
     </Container>

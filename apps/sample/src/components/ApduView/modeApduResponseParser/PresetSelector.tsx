@@ -1,7 +1,6 @@
 import React from "react";
-import { SelectInput } from "@ledgerhq/react-ui";
 
-import { SelectInputLabel } from "@/components/InputLabel";
+import { SelectInput } from "@/components/fields";
 
 import { PARSER_PRESETS } from "./presets";
 
@@ -31,13 +30,11 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({
 
   return (
     <SelectInput
-      renderLeft={() => <SelectInputLabel>Preset</SelectInputLabel>}
+      label="Preset"
       options={options}
       value={selectedOption}
       onChange={handleChange}
-      isMulti={false}
       isDisabled={disabled}
-      isSearchable={false}
       placeholder="Select a preset..."
     />
   );

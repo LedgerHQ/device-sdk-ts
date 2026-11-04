@@ -3,7 +3,8 @@ import {
   GetOsVersionCommand,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Button, Flex, Icons, InfiniteLoader, Text } from "@ledgerhq/react-ui";
+import { Button } from "@ledgerhq/lumen-ui-react";
+import { ArrowRight, CloudUpload } from "@ledgerhq/lumen-ui-react/symbols";
 
 import { Block } from "@/components/Block";
 import { type LogEntry, LogPanel } from "@/components/LogPanel";
@@ -143,12 +144,12 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
   }, [selectedFile, dmk, sessionId]);
 
   return (
-    <Flex flexDirection="column" rowGap={4} p={6} maxWidth={600}>
-      <Text variant="h4">Sideload App</Text>
-      <Text variant="body" color="neutral.c70">
+    <div className="flex flex-col gap-y-12 p-16" style={{ maxWidth: 600 }}>
+      <span className="heading-4-semi-bold">Sideload App</span>
+      <span className="body-2 text-muted">
         Select a .apdu install script and replay it onto the connected device
         over the secure channel.
-      </Text>
+      </span>
       <Block>
         <DropZone
           isDragging={isDragging}
@@ -166,47 +167,49 @@ export const SideloadAppView: React.FC<{ sessionId: string }> = ({
             onChange={handleFileChange}
             disabled={loading}
           />
-          <Flex flexDirection="column" alignItems="center" rowGap={3}>
-            <Icons.CloudUpload size="L" />
-            <Text variant="body">
+          <div className="flex flex-col items-center gap-y-8">
+            <CloudUpload size={24} />
+            <span className="body-2">
               {selectedFile
                 ? selectedFile.name
                 : "Drop a .apdu file here or click to select"}
-            </Text>
-          </Flex>
+            </span>
+          </div>
         </DropZone>
 
         <Button
-          variant="main"
+          appearance="base"
           disabled={!selectedFile || loading}
           onClick={handleSideload}
-          Icon={() =>
-            loading ? <InfiniteLoader size={20} /> : <Icons.ArrowRight />
-          }
+          icon={ArrowRight}
+          loading={loading}
           data-testid="CTA_sideload-application"
         >
           Sideload Application
         </Button>
 
         {fileError && (
-          <Text color="error.c80" data-testid="text_sideload-file-error">
+          <span
+            className="body-2 text-error"
+            data-testid="text_sideload-file-error"
+          >
             {fileError}
-          </Text>
+          </span>
         )}
 
         {progress && (
-          <Flex flexDirection="column" rowGap={2}>
+          <div className="flex flex-col gap-y-4">
             <ProgressTrack>
               <ProgressFill pct={progress.pct} />
             </ProgressTrack>
-            <Text variant="small" color="neutral.c70">
+            <span className="body-3 text-muted">
               {progress.phase} ({Math.round(progress.pct)}%)
-            </Text>
-          </Flex>
+            </span>
+          </div>
         )}
 
         <LogPanel logs={logs} />
       </Block>
-    </Flex>
+    </div>
   );
 };

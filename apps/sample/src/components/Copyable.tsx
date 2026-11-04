@@ -1,48 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Icons, Text } from "@ledgerhq/react-ui";
-import styled from "styled-components";
-
-const CopyFeedback = styled(Text).attrs({
-  variant: "extraSmall",
-  color: "neutral.c70",
-})<{ $visible: boolean }>`
-  display: ${({ $visible }) => ($visible ? "inline" : "none")};
-  margin-left: 8px;
-  opacity: 0;
-  vertical-align: middle;
-`;
-
-const CopyIconWrapper = styled.span`
-  display: inline;
-  margin-left: 8px;
-  opacity: 0;
-  transition: opacity 0.15s ease-in-out;
-  vertical-align: middle;
-`;
-
-const CopyableContainer = styled.span`
-  cursor: pointer;
-  word-break: break-all;
-
-  &:hover ${CopyIconWrapper} {
-    opacity: 1;
-  }
-
-  &:hover ${CopyFeedback} {
-    opacity: 1;
-  }
-`;
-
-const CopyableText = styled(Text).attrs({
-  variant: "body",
-  color: "neutral.c100",
-})`
-  display: inline;
-
-  ${CopyableContainer}:hover & {
-    text-decoration: underline;
-  }
-`;
+import { Copy } from "@ledgerhq/lumen-ui-react/symbols";
 
 /**
  * A component that allows copying text to the clipboard when clicked.
@@ -63,12 +20,14 @@ export const Copyable: React.FC<{
   }, [copyValue]);
 
   return (
-    <CopyableContainer onClick={copyToClipboard}>
-      <CopyableText>{children}</CopyableText>
-      <CopyIconWrapper>
-        <Icons.Copy size="XS" color="neutral.c70" />
-      </CopyIconWrapper>
-      <CopyFeedback $visible={copied}>copied</CopyFeedback>
-    </CopyableContainer>
+    <span className="group cursor-pointer break-all" onClick={copyToClipboard}>
+      <span className="body-2 text-base group-hover:underline">{children}</span>
+      <span className="ml-8 inline align-middle opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+        <Copy size={16} className="inline text-muted" />
+      </span>
+      {copied && (
+        <span className="body-3 ml-8 align-middle text-muted">copied</span>
+      )}
+    </span>
   );
 };

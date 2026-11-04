@@ -46,8 +46,8 @@ export class CommandsDriver {
   /**
    * Dismiss the currently-open command drawer. Each command renders its own
    * drawer (a full-viewport modal that unmounts on close), so the drawer must be
-   * closed before another command's list item can be reached. The react-ui
-   * Drawer closes on a backdrop click; the panel is right-aligned, leaving the
+   * closed before another command's list item can be reached. The Lumen dialog
+   * closes on a backdrop click; the panel is right-aligned, leaving the
    * left of the viewport as backdrop.
    */
   async closeDrawer(): Promise<void> {

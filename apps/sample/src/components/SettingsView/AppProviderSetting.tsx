@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectAppProvider } from "@/state/settings/selectors";
 import { setAppProvider } from "@/state/settings/slice";
 
@@ -39,15 +38,15 @@ export const AppProviderSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>App Provider ID (must be ≥ 1)</InputLabel>}
+          label="App Provider ID (must be ≥ 1)"
           value={input}
           onChange={onValueChange}
           type="number"
           placeholder="Provider ID"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectAppProvider}
         setStateAction={setAppProviderFn}

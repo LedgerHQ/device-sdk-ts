@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Text } from "@ledgerhq/react-ui";
 
 import {
   DropZoneEmptyContent,
@@ -59,35 +58,31 @@ export const ImageDropZone: React.FC<ImageDropZoneProps> = ({
           <>
             <DropZoneImage src={originalPreview} alt="Selected" />
             <DropZoneOverlay visible={isHovered || isDragging}>
-              <Text variant="small" color="neutral.c100">
+              <span className="body-3 text-base">
                 {processing
                   ? "Processing..."
                   : "Click or drop another image to replace"}
-              </Text>
+              </span>
             </DropZoneOverlay>
           </>
         ) : (
           <DropZoneEmptyContent>
             {processing ? (
-              <Text>Processing image...</Text>
+              <span className="body-2">Processing image...</span>
             ) : (
-              <Text>
+              <span className="body-2">
                 Drop an image here or click to select
                 <br />
-                <Text variant="small" color="neutral.c70">
+                <span className="body-3 text-muted">
                   Supports JPG, PNG, GIF, WebP
-                </Text>
-              </Text>
+                </span>
+              </span>
             )}
           </DropZoneEmptyContent>
         )}
       </DropZoneWithPreview>
       {hasImage && <PreviewLabel>Original</PreviewLabel>}
-      {error && (
-        <Text color="error.c80" variant="small">
-          Error: {error}
-        </Text>
-      )}
+      {error && <span className="body-3 text-error">Error: {error}</span>}
     </PreviewBox>
   );
 };

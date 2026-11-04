@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Text } from "@ledgerhq/react-ui";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
 
 import { LogBox } from "./styles";
 
@@ -23,19 +23,19 @@ export const LogPanel: React.FC<{ logs: LogEntry[] }> = ({ logs }) => {
   return (
     <LogBox ref={logBoxRef} data-testid="box_logs">
       {logs.map((log, index) => (
-        <Text
+        <span
           key={`${log.date.toISOString()}-${index}`}
-          variant="small"
-          color={
+          className={cn(
+            "body-3",
             log.type === "error"
-              ? "error.c80"
+              ? "text-error"
               : log.type === "success"
-                ? "success.c80"
-                : "neutral.c80"
-          }
+                ? "text-success"
+                : "text-muted",
+          )}
         >
           [{log.date.toLocaleTimeString()}] {log.message}
-        </Text>
+        </span>
       ))}
     </LogBox>
   );

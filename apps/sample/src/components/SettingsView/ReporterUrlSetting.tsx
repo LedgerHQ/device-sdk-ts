@@ -1,8 +1,7 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Input } from "@ledgerhq/react-ui";
 
-import { InputLabel } from "@/components/InputLabel";
+import { Input } from "@/components/fields";
 import { selectReporterUrl } from "@/state/settings/selectors";
 import { setReporterUrl } from "@/state/settings/slice";
 
@@ -29,14 +28,14 @@ export const ReporterUrlSetting: React.FC = () => {
 
   return (
     <SettingBox>
-      <Flex flex={1} flexDirection="column" alignItems="stretch">
+      <div className="flex flex-1 flex-col items-stretch">
         <Input
-          renderLeft={<InputLabel>Blind Signing Reporter URL</InputLabel>}
+          label="Blind Signing Reporter URL"
           value={reporterUrl}
           onChange={onValueChange}
           placeholder="https://blind-signing.api.ledger.com/ingest"
         />
-      </Flex>
+      </div>
       <ResetSettingCTA
         stateSelector={selectReporterUrl}
         setStateAction={setReporterUrlFn}

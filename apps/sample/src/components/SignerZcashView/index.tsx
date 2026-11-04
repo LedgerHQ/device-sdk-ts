@@ -33,7 +33,6 @@ import {
   type SignTransactionDAOutput,
   type ZcashFullViewingKeyMode,
 } from "@ledgerhq/device-signer-kit-zcash";
-import { Flex } from "@ledgerhq/react-ui";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -306,7 +305,7 @@ const SignTransactionForm = ({
   );
 
   return (
-    <Flex flexDirection="column" rowGap={5}>
+    <div className="flex flex-col gap-y-12">
       <Form
         initialValues={formValues}
         onChange={handleFormChange}
@@ -314,7 +313,7 @@ const SignTransactionForm = ({
       />
 
       {initialValues.input1Enabled && (
-        <Flex flexDirection="column" rowGap={2}>
+        <div className="flex flex-col gap-y-4">
           <InputHeader hint='JSON of the source transaction. Required fields: "version", "inputs". Hex-encode all byte fields. You may add "serializedPreviousTransactionOverrideHex" instead of using the separate raw hex field below.'>
             Trusted input #1 previous transaction
           </InputHeader>
@@ -340,11 +339,11 @@ const SignTransactionForm = ({
             initialHeight={72}
             disabled={disabled}
           />
-        </Flex>
+        </div>
       )}
 
       {initialValues.input2Enabled && (
-        <Flex flexDirection="column" rowGap={2}>
+        <div className="flex flex-col gap-y-4">
           <InputHeader hint='JSON of the source transaction. Required fields: "version", "inputs". Hex-encode all byte fields. You may add "serializedPreviousTransactionOverrideHex" instead of using the separate raw hex field below.'>
             Trusted input #2 previous transaction
           </InputHeader>
@@ -370,11 +369,11 @@ const SignTransactionForm = ({
             initialHeight={120}
             disabled={disabled}
           />
-        </Flex>
+        </div>
       )}
 
       {initialValues.input3Enabled && (
-        <Flex flexDirection="column" rowGap={2}>
+        <div className="flex flex-col gap-y-4">
           <InputHeader hint='JSON of the source transaction. Required fields: "version", "inputs". Hex-encode all byte fields. You may add "serializedPreviousTransactionOverrideHex" instead of using the separate raw hex field below.'>
             Trusted input #3 previous transaction
           </InputHeader>
@@ -400,9 +399,9 @@ const SignTransactionForm = ({
             initialHeight={72}
             disabled={disabled}
           />
-        </Flex>
+        </div>
       )}
-    </Flex>
+    </div>
   );
 };
 
@@ -878,7 +877,7 @@ const SignPcztForm = ({
   ) as Pick<SignPcztInput, (typeof SIGN_PCZT_FORM_KEYS)[number]>;
 
   return (
-    <Flex flexDirection="column" rowGap={5}>
+    <div className="flex flex-col gap-y-12">
       <Form
         initialValues={formValues}
         onChange={(values) =>
@@ -886,7 +885,7 @@ const SignPcztForm = ({
         }
         disabled={disabled}
       />
-      <Flex flexDirection="column" rowGap={2}>
+      <div className="flex flex-col gap-y-4">
         <InputHeader hint="Structured PCZT as JSON. Byte fields are hex strings; value/spendValue/valueBalance are decimal strings (zatoshis). Set orchardBundle to null for transparent-only. Defaults to the app-zcash public→private test fixture.">
           PCZT (JSON)
         </InputHeader>
@@ -898,8 +897,8 @@ const SignPcztForm = ({
           initialHeight={260}
           disabled={disabled}
         />
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 };
 

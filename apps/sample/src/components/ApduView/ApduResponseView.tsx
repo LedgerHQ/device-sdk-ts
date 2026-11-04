@@ -1,7 +1,6 @@
 import React from "react";
 import { type ApduResponse } from "@ledgerhq/device-management-kit";
-import { Flex, Text } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { cn } from "@ledgerhq/lumen-design-core/cn";
 
 import { CopyableApdu, CopyableApduResponse } from "./CopyableApdu";
 
@@ -12,43 +11,31 @@ export type ApduHistoryItem = {
   response: ApduResponse;
 };
 
-const ApduRow = styled(Flex).attrs({
-  flexDirection: "row",
-  alignItems: "center",
-  columnGap: 2,
-})`
-  font-family: monospace;
-`;
+const ApduRow: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <div className="flex flex-row items-center gap-8 font-mono">{children}</div>
+);
 
-const ApduDirection = styled(Text).attrs({
-  variant: "body",
-  color: "neutral.c70",
-})`
-  min-width: 24px;
-`;
+const ApduDirection: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <span className="body-2 min-w-24 text-muted">{children}</span>
+);
 
 export const ApduResponseView: React.FC<{
   item: ApduHistoryItem;
   isLatest: boolean;
 }> = ({ item, isLatest }) => {
   return (
-    <Flex
-      flexDirection="column"
-      rowGap={2}
-      alignItems="flex-start"
-      bg={isLatest ? "neutral.c40" : "transparent"}
-      p={3}
-      borderRadius={2}
-      flex={1}
+    <div
+      className={cn(
+        "flex flex-1 flex-col items-start gap-8 rounded-md p-12",
+        isLatest ? "bg-muted-transparent" : "bg-transparent",
+      )}
     >
-      <Text
-        variant="small"
-        color="neutral.c60"
-        fontWeight={isLatest ? "medium" : "regular"}
+      <span
+        className={cn("text-muted", isLatest ? "body-3-semi-bold" : "body-3")}
       >
         #{item.id} - {item.date.toLocaleTimeString()}
-      </Text>
-      <Flex flexDirection="column" rowGap={2} width="100%">
+      </span>
+      <div className="flex w-full flex-col gap-8">
         <ApduRow>
           <ApduDirection>{"=>"}</ApduDirection>
           <CopyableApdu rawApdu={item.rawApduSent} />
@@ -57,7 +44,7 @@ export const ApduResponseView: React.FC<{
           <ApduDirection>{"<="}</ApduDirection>
           <CopyableApduResponse response={item.response} />
         </ApduRow>
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 };
