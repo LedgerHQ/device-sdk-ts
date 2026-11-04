@@ -943,6 +943,136 @@ describe("HttpCalldataDescriptorDataSource", () => {
     ]);
   });
 
+  it("Calldata with token ticker fields references as paths", async () => {
+    // GIVEN
+    const field = {
+      name: "Token (all allowed)",
+      param: {
+        type: "TOKEN",
+        value: {
+          type: "path",
+          version: 1,
+          abi_path: {
+            type: "data",
+            absolute: true,
+            elements: [
+              {
+                type: "field",
+                identifier: "token",
+              },
+            ],
+          },
+          type_size: 20,
+          binary_path: {
+            type: "DATA",
+            version: 1,
+            elements: [
+              {
+                type: "TUPLE",
+                offset: 1,
+              },
+              {
+                type: "LEAF",
+                leaf_type: "STATIC_LEAF",
+              },
+            ],
+          },
+          type_family: "ADDRESS",
+        },
+        version: 1,
+      },
+      version: 1,
+      visibility: "ALWAYS",
+      descriptor:
+        "0001010113546f6b656e2028616c6c20616c6c6f7765642902010a031a0001010115000101010105020114030a00010101020001040103",
+    };
+    const calldataDTO = createCalldata(transactionInfo, [], [field]);
+    httpMock.get.mockResolvedValue([calldataDTO]);
+    vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
+      undefined,
+    );
+
+    // WHEN
+    const result = await datasource.getCalldataDescriptors({
+      deviceModelId: DeviceModelId.FLEX,
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      {
+        payload:
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+        type: "ethereumTransactionInfo",
+      },
+      {
+        payload: field.descriptor,
+        type: "ethereumTransactionFieldDescription",
+        reference: {
+          type: "ethereumToken",
+          valuePath: [
+            { type: "TUPLE", offset: 1 },
+            { type: "LEAF", leafType: "STATIC_LEAF" },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("Calldata with token ticker fields references as constants", async () => {
+    // GIVEN
+    const field = {
+      name: "Token",
+      param: {
+        type: "TOKEN",
+        value: {
+          raw: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          type: "constant",
+          value: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          version: 1,
+          type_size: 20,
+          type_family: "ADDRESS",
+        },
+        version: 1,
+      },
+      version: 1,
+      descriptor:
+        "0001010105546f6b656e02010a031a0001010115000101010105020114030a00010101020001040103",
+    };
+    const calldataDTO = createCalldata(transactionInfo, [], [field]);
+    httpMock.get.mockResolvedValue([calldataDTO]);
+    vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
+      undefined,
+    );
+
+    // WHEN
+    const result = await datasource.getCalldataDescriptors({
+      deviceModelId: DeviceModelId.FLEX,
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      {
+        payload:
+          "0001000108000000000000000102147d2768de32b0b80b7a3454c06bdac94a69ddc7a9030469328dec04207d5e9ed0004b8035b164edd9d78c37415ad6b1d123be4943d0abd5a50035cae3050857697468647261770604416176650708416176652044414f081068747470733a2f2f616176652e636f6d0a045fc4ba9c81ff473045022100eb67599abfd9c7360b07599a2a2cb769c6e3f0f74e1e52444d788c8f577a16d20220402e92b0adbf97d890fa2f9654bc30c7bd70dacabe870f160e6842d9eb73d36f",
+        type: "ethereumTransactionInfo",
+      },
+      {
+        payload: field.descriptor,
+        type: "ethereumTransactionFieldDescription",
+        reference: {
+          type: "ethereumToken",
+          value: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        },
+      },
+    ]);
+  });
+
   it("Calldata with collection fields references as constants", async () => {
     // GIVEN
     const field = {
