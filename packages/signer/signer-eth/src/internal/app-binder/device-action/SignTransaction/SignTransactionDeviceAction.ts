@@ -204,6 +204,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             transactionType: null,
             signature: null,
             isBlindSign: null,
+            blindSignReason: null,
             usedFallback: false,
           },
         };
@@ -665,6 +666,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     isBlindSign: event.output.isBlindSign,
+                    blindSignReason: event.output.blindSignReason,
                   }),
                 }),
               },
@@ -674,6 +676,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     isBlindSign: event.output.isBlindSign,
+                    blindSignReason: event.output.blindSignReason,
                   }),
                 }),
               },
@@ -693,7 +696,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       output: ({ context }) =>
         context._internalState.signature
-          ? Right(context._internalState.signature)
+          ? Right({
+              ...context._internalState.signature,
+              // If blind signing detection could not run, assume the worst.
+              isBlindSign: context._internalState.isBlindSign ?? true,
+              blindSignReason: context._internalState.blindSignReason,
+              clearSigningType: context._internalState.usedFallback
+                ? ClearSigningType.BASIC
+                : context._internalState.clearSigningType,
+            })
           : Left(
               context._internalState.error ||
                 new UnknownDAError("No error in final state"),

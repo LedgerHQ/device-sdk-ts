@@ -1,4 +1,5 @@
 import {
+  type BlindSignReason,
   type ContextModule,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
@@ -15,6 +16,7 @@ import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { type ClearSigningType } from "@api/model/ClearSigningType";
 import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { type Signature } from "@api/model/Signature";
+import { type SigningResult } from "@api/model/SigningResult";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TransactionType } from "@api/model/TransactionType";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
@@ -36,7 +38,7 @@ export enum SignTransactionDAStep {
   DETECT_BLIND_SIGNING = "signer.eth.steps.detectBlindSigning",
 }
 
-export type SignTransactionDAOutput = Signature;
+export type SignTransactionDAOutput = Signature & SigningResult;
 
 export type SignTransactionDAInput = {
   readonly derivationPath: string;
@@ -88,6 +90,7 @@ export type SignTransactionDAInternalState = {
   readonly transactionType: TransactionType | null;
   readonly signature: Signature | null;
   readonly isBlindSign: boolean | null;
+  readonly blindSignReason: BlindSignReason | null;
   readonly usedFallback: boolean;
 };
 

@@ -23,10 +23,10 @@ import { lastValueFrom, Observable } from "rxjs";
 import {
   SignTransactionDAError,
   SignTransactionDAIntermediateValue,
+  SignTransactionDAOutput,
   type SignTransactionDAState,
   SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { Signature } from "@api/index";
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { TransactionType } from "@api/model/TransactionType";
@@ -53,7 +53,7 @@ vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
 describe("SignTransactionDeviceAction", () => {
   let observable: Observable<
     DeviceActionState<
-      Signature,
+      SignTransactionDAOutput,
       SignTransactionDAError,
       SignTransactionDAIntermediateValue
     >
@@ -79,7 +79,10 @@ describe("SignTransactionDeviceAction", () => {
   const getAddressMock = vi.fn();
   const detectBlindSigningMock = vi.fn();
   function extractDependenciesMock() {
-    detectBlindSigningMock.mockResolvedValue({ isBlindSign: false });
+    detectBlindSigningMock.mockResolvedValue({
+      isBlindSign: false,
+      blindSignReason: null,
+    });
     return {
       getAppConfig: getAppConfigMock,
       web3CheckOptIn: web3CheckOptInMock,
@@ -349,6 +352,9 @@ describe("SignTransactionDeviceAction", () => {
             v: 0x1c,
             r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
             s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            isBlindSign: false,
+            blindSignReason: null,
+            clearSigningType: ClearSigningType.EIP7730,
           },
         });
       });
@@ -653,6 +659,9 @@ describe("SignTransactionDeviceAction", () => {
           v: 0x1c,
           r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
           s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          isBlindSign: false,
+          blindSignReason: null,
+          clearSigningType: ClearSigningType.BASIC,
         },
       });
     });
@@ -745,6 +754,9 @@ describe("SignTransactionDeviceAction", () => {
           v: 0x1c,
           r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
           s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          isBlindSign: false,
+          blindSignReason: null,
+          clearSigningType: ClearSigningType.BASIC,
         },
       });
     });
@@ -804,6 +816,9 @@ describe("SignTransactionDeviceAction", () => {
           v: 0x1c,
           r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
           s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          isBlindSign: false,
+          blindSignReason: null,
+          clearSigningType: ClearSigningType.BASIC,
         },
       });
       expect(signTransactionMock).toHaveBeenCalledTimes(2);
@@ -1059,6 +1074,9 @@ describe("SignTransactionDeviceAction", () => {
           v: 0x1c,
           r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
           s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          isBlindSign: false,
+          blindSignReason: null,
+          clearSigningType: ClearSigningType.BASIC,
         },
       });
       // Verify that signTransaction was called twice (first attempt + blind sign fallback)
@@ -1362,6 +1380,106 @@ describe("SignTransactionDeviceAction", () => {
           input: expect.not.objectContaining({ addressBook }),
         }),
       );
+    });
+  });
+
+  describe("signing result in the output", () => {
+    beforeEach(() => {
+      vi.resetAllMocks();
+      setupDefaultDeviceMocks();
+    });
+
+    function setupFallbackSigning() {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+      const deviceAction = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          transaction: defaultTransaction,
+          options: defaultOptions,
+          contextModule: contextModuleMock as unknown as ContextModule,
+          mapper: mapperMock,
+          parser: parserMock,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      parseTransactionMock.mockResolvedValueOnce({
+        subset: defaultSubset,
+        type: TransactionType.EIP1559,
+      });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: { address: defaultAddress } }),
+      );
+      buildContextsMock.mockResolvedValueOnce({
+        clearSignContexts: [],
+        clearSignContextsOptional: [],
+        clearSigningType: ClearSigningType.EIP7730,
+      });
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
+      // The device rejects the clear signing context...
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("6a80"),
+        }),
+      );
+      // ...and the blind sign fallback succeeds.
+      signTransactionMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: {
+            v: 0x1c,
+            r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+            s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          },
+        }),
+      );
+      return deviceAction;
+    }
+
+    it("exposes isBlindSign and blindSignReason when the signer fell back to blind signing", async () => {
+      const deviceAction = setupFallbackSigning();
+      detectBlindSigningMock.mockResolvedValueOnce({
+        isBlindSign: true,
+        blindSignReason: "device_rejected_context",
+      });
+
+      const result = await lastValueFrom(
+        deviceAction._execute(apiMock).observable,
+      );
+
+      expect(result).toEqual({
+        status: DeviceActionStatus.Completed,
+        output: {
+          v: 0x1c,
+          r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+          s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+          isBlindSign: true,
+          blindSignReason: "device_rejected_context",
+          // The returned signature was produced in basic mode, not EIP-7730.
+          clearSigningType: ClearSigningType.BASIC,
+        },
+      });
+    });
+
+    it("reports the signature as blind signed when detection fails", async () => {
+      const deviceAction = setupFallbackSigning();
+      detectBlindSigningMock.mockRejectedValueOnce(
+        new Error("detection failed"),
+      );
+
+      const result = await lastValueFrom(
+        deviceAction._execute(apiMock).observable,
+      );
+
+      expect(result).toEqual({
+        status: DeviceActionStatus.Completed,
+        output: expect.objectContaining({
+          isBlindSign: true,
+          blindSignReason: null,
+          clearSigningType: ClearSigningType.BASIC,
+        }),
+      });
     });
   });
 });

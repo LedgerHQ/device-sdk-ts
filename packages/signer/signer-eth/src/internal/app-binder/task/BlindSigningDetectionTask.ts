@@ -51,6 +51,7 @@ export type BlindSigningDetectionTaskArgs = {
 
 export type BlindSigningDetectionTaskResult = {
   isBlindSign: boolean;
+  blindSignReason: BlindSignReason | null;
 };
 
 function computeIsBlindSign(input: BlindSigningDetectionInput): boolean {
@@ -169,6 +170,9 @@ export class BlindSigningDetectionTask {
       });
     }
 
-    return { isBlindSign };
+    return {
+      isBlindSign,
+      blindSignReason: isBlindSign ? computeBlindSignReason(input) : null,
+    };
   }
 }
