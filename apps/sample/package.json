@@ -15,7 +15,8 @@
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
     "test:playwright": "pnpm playwright test",
-    "test:playwright:ui": "pnpm playwright test --ui"
+    "test:playwright:ui": "pnpm playwright test --ui",
+    "test:playwright:devtools": "pnpm playwright test --config playwright.devtools.config.ts"
   },
   "dependencies": {
     "@ledgerhq/cal-interceptor": "workspace:*",
