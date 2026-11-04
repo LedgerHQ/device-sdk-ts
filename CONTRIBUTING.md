@@ -190,6 +190,10 @@ Dependency upgrades are automated; a maintainer only reviews and merges the resu
 Dependabot waits 7 days after a release before proposing it (`cooldown`), except for `@ledgerhq/*` packages and
 security updates. Reviewers are assigned from `CODEOWNERS`.
 
+Dependabot PRs, like PRs from forks, are untrusted: their CI runs on GitHub-hosted runners, never on our self-hosted
+ones. The clear-signing tester is skipped, and the sample Playwright tests run against a local mock server with no
+Speculos, skipping the tests tagged `@speculos`. Tag with `@speculos` any new Playwright test that opens a real app.
+
 Koda reviews the open Dependabot PRs: it analyzes red CI, pushes small mechanical fixes (lint, types, lockfile, renamed
 APIs) and posts a Slack report listing the PRs that are ready to merge. It never merges: a human approval is required on
 `develop`.
