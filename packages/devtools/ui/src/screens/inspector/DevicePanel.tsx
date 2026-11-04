@@ -92,7 +92,7 @@ export const DevicePanel: React.FC<DevicePanelProps> = ({
 
       {isConnected(state) && (
         <ApduSender
-          key={device.sessionId}
+          key={`sender-${device.sessionId}`}
           sessionId={device.sessionId}
           onSend={onSendApdu}
           responses={apduResponses}
@@ -100,7 +100,7 @@ export const DevicePanel: React.FC<DevicePanelProps> = ({
       )}
 
       <ApduList
-        key={device.sessionId}
+        key={`list-${device.sessionId}`}
         exchanges={exchanges}
         clearedUpTo={clearedUpTo}
         onClear={onClear}
