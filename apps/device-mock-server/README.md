@@ -304,7 +304,7 @@ Build and run the compiled server:
 
 ```bash
 pnpm build
-pnpm start        # node lib/cjs/main.js
+pnpm start        # node lib/cjs/src/main.js
 ```
 
 By default it listens on port `9752`. Verify it is up:
