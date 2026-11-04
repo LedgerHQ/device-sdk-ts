@@ -8,7 +8,9 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@root/*": ["./*"]
+      "@root/*": ["./*"],
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"]
     },
     "strictNullChecks": true,
     "module": "esnext"

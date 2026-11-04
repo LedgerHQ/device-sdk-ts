@@ -37,7 +37,7 @@ const CalInterceptorContext =
 export const CalInterceptorProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const interceptorRef = useRef<CalInterceptor>();
+  const interceptorRef = useRef<CalInterceptor | undefined>(undefined);
   const [isActive, setIsActive] = useState(false);
 
   // Initialize interceptor on mount with browser localStorage

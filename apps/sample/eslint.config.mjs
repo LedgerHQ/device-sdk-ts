@@ -5,7 +5,7 @@ export default [
   ...baseConfig,
   ...webRuntimeOverrides,
   {
-    ignores: [".next"],
+    ignores: [".next", "next-env.d.ts"],
   },
   {
     languageOptions: {

@@ -34,8 +34,8 @@ export const LedgerKeyringProtocolView: React.FC = () => {
 
   // NOTE: Use a ref for the sessionId because the reference a given DeviceActionProp will not get updated
   // once the browser navigated to the device action route (Including the reference to the executeDeviceAction function)
-  const sessionIdRef = useRef<string>();
-  const modelIdRef = useRef<DeviceModelId>();
+  const sessionIdRef = useRef<string | undefined>(undefined);
+  const modelIdRef = useRef<DeviceModelId | undefined>(undefined);
   {
     const sessionId = useSelector(selectSelectedSessionId);
     useEffect(() => {

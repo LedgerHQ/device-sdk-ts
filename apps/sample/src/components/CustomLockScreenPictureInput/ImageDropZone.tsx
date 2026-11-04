@@ -18,7 +18,7 @@ export type ImageDropZoneProps = {
   disabled: boolean;
   isDragging: boolean;
   error: string | null;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   handlers: FileDragDropHandlers;
 };
 

@@ -7,7 +7,11 @@
       }
     ],
     "forceConsistentCasingInFileNames": true,
-    "module": "esnext"
+    "module": "esnext",
+    "paths": {
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"]
+    }
   },
   "include": [
     "next-env.d.ts",

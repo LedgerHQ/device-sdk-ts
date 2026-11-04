@@ -16,7 +16,7 @@ export type UseFileDragDropOptions = {
 export type UseFileDragDropResult = {
   isDragging: boolean;
   selectedFile: File | null;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   handlers: FileDragDropHandlers;
 };
 

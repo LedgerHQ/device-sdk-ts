@@ -147,3 +147,13 @@ catalog:
 onlyBuiltDependencies:
   - esbuild
   - electron
+
+# React 19 stack for the Next.js web apps. The mobile and devtools apps stay on
+# the default catalog (React 18, required by react-native 0.76).
+catalogs:
+  web:
+    '@types/react': 19.2.18
+    '@types/react-dom': 19.2.7
+    next: 15.5.29
+    react: 19.2.9
+    react-dom: 19.2.9
