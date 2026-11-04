@@ -4,6 +4,8 @@ import type { SolanaTransactionContext } from "@/modules/solana/model/SolanaTran
 
 export type HttpOwnerInfoDataSourceResult = {
   tlvDescriptor: Uint8Array;
+  tokenAccount: string;
+  owner: string;
 };
 
 export interface OwnerInfoDataSource {

@@ -73,6 +73,32 @@ describe("HttpTokenAccountStateDataSource", () => {
     );
   });
 
+  it("returns the attested mint and owner", async () => {
+    httpMock.get.mockResolvedValue({
+      mint: "MintAddr",
+      owner: "OwnerAddr",
+      signedDescriptor: "deadbeef",
+      keyId: "k",
+      keyUsage: "u",
+    });
+
+    const result = await datasource.getTokenAccountState({
+      tokenAccount,
+      challenge,
+    });
+
+    expect(result).toEqual(
+      Right({
+        tokenAccount,
+        descriptor: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+        mint: "MintAddr",
+        owner: "OwnerAddr",
+        keyId: "k",
+        keyUsage: "u",
+      }),
+    );
+  });
+
   it("returns Left on malformed response (missing signedDescriptor)", async () => {
     httpMock.get.mockResolvedValue({ keyId: "k", keyUsage: "u" });
 

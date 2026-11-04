@@ -263,10 +263,12 @@ Points to know:
 - Only Solana entries belong here, each with its base58 wallet public key.
   Filter by blockchain family before you build the snapshot.
 - Only a transaction whose transfers all go to one recipient is matched: the
-  destination of a `SystemProgram` transfer, or the wallet owning the
-  associated token account a `TransferChecked` sends to. A plain SPL
-  `Transfer` (no mint) and a recipient behind an address lookup table are not
-  matched.
+  destination of a `SystemProgram` transfer, or the wallet behind the token
+  account an SPL transfer sends to. That token account matches when it is the
+  wallet's associated token account for the transfer's mint, or when a
+  clear-signing descriptor given to the device attests the wallet owns it; the
+  latter also covers a plain SPL `Transfer`, which carries no mint. A
+  recipient behind an address lookup table is not matched.
 - Nothing here can break a signature. An address book you do not supply, a
   recipient that does not match, an app too old to support contacts, or a
   contact the device rejects all leave the transaction signing as before,

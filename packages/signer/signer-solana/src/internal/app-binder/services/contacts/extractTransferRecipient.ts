@@ -12,14 +12,16 @@ import { TransactionParser } from "@internal/app-binder/services/utils/Transacti
  *
  * A native transfer names the recipient wallet directly. A token transfer
  * names the recipient's token account instead, so the mint and token program
- * travel with it: they are what links a wallet to that token account.
+ * travel with it: they are what links a wallet to that token account. A plain
+ * SPL `Transfer` carries no mint, so only the token account's owner can link
+ * it to a wallet.
  */
 export type TransferRecipient =
   | { readonly kind: "native"; readonly address: PublicKey }
   | {
       readonly kind: "token";
       readonly tokenAccount: PublicKey;
-      readonly mint: PublicKey;
+      readonly mint: PublicKey | undefined;
       readonly tokenProgram: PublicKey;
     };
 
@@ -46,8 +48,7 @@ type AccountReader = (localIndex: number) => PublicKey | typeof UNRESOLVED;
  * Returns `undefined` whenever naming one recipient would be a guess: the
  * message does not parse, it holds no transfer, its transfers go to more than
  * one account, or one of them reads an account the message alone cannot tell
- * (an unresolved address lookup table slot, or an SPL `Transfer` that carries
- * no mint). Instructions that move no value to a third party are ignored.
+ * (an unresolved address lookup table slot). Instructions that move no value to a third party are ignored.
  */
 export async function extractTransferRecipient(
   messageBytes: Uint8Array,
@@ -142,10 +143,9 @@ function readTokenTransfer(
   account: AccountReader,
 ): TransferRecipient | typeof UNRESOLVED | null {
   switch (data[0]) {
-    // Transfer: [source, destination, owner]. No mint, so the destination
-    // cannot be tied back to a wallet.
+    // Transfer: [source, destination, owner]. No mint in the accounts.
     case TOKEN_TRANSFER:
-      return UNRESOLVED;
+      return token(tokenProgram, account(1), undefined);
     // TransferChecked: [source, mint, destination, owner]
     case TOKEN_TRANSFER_CHECKED:
       return token(tokenProgram, account(2), account(1));
@@ -168,7 +168,7 @@ function native(
 function token(
   tokenProgram: PublicKey,
   tokenAccount: PublicKey | typeof UNRESOLVED,
-  mint: PublicKey | typeof UNRESOLVED,
+  mint: PublicKey | typeof UNRESOLVED | undefined,
 ): TransferRecipient | typeof UNRESOLVED {
   if (tokenAccount === UNRESOLVED || mint === UNRESOLVED) return UNRESOLVED;
   return { kind: "token", tokenAccount, mint, tokenProgram };
