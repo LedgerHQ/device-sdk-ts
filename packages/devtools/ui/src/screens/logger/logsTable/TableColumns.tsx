@@ -1,54 +1,65 @@
-// @ts-expect-error marked as unused but it must be in use for JSX
-import React from "react";
-import { createColumnHelper } from "@tanstack/react-table";
+import type React from "react";
 
 import { type LogData } from "../types";
+import { TABLE_CONFIG } from "./constants";
 import {
   MessageCell,
-  PayloadCell,
   TagCell,
   TimestampCell,
   VerbosityCell,
 } from "./LogTableCells";
 
-const columnHelper = createColumnHelper<LogData>();
+export type ColumnSizing = Record<string, number>;
 
-export const createColumns = () => [
-  columnHelper.accessor("timestamp", {
-    header: "Timestamp",
-    cell: (info) => <TimestampCell {...info.row.original} />,
-    enableSorting: true,
-    size: 85,
-    meta: { flexible: false },
-  }),
-  columnHelper.accessor("tag", {
-    header: "Tag",
-    cell: (info) => <TagCell {...info.row.original} />,
-    enableSorting: false,
-    size: 210,
-    meta: { flexible: false },
-  }),
-  columnHelper.accessor("verbosity", {
-    header: "Verbosity",
-    cell: (info) => <VerbosityCell {...info.row.original} />,
-    enableSorting: false,
-    size: 65,
-    meta: { flexible: false },
-  }),
-  columnHelper.accessor("message", {
+type LogColumn = {
+  id: "timestamp" | "tag" | "verbosity" | "message";
+  header: string;
+  Cell: React.FC<LogData>;
+  size: number;
+  minSize?: number;
+  flexible: boolean;
+};
+
+export const COLUMNS: LogColumn[] = [
+  {
+    id: "timestamp",
+    header: "Time",
+    Cell: TimestampCell,
+    size: 104,
+    flexible: false,
+  },
+  { id: "tag", header: "Tag", Cell: TagCell, size: 170, flexible: false },
+  {
+    id: "verbosity",
+    header: "Level",
+    Cell: VerbosityCell,
+    size: 64,
+    flexible: false,
+  },
+  {
+    id: "message",
     header: "Message",
-    cell: (info) => <MessageCell {...info.row.original} />,
-    enableSorting: false,
-    size: 300, // flex-grow weight (proportional)
-    minSize: 100,
-    meta: { flexible: true },
-  }),
-  columnHelper.accessor("payload", {
-    header: "Payload",
-    cell: (info) => <PayloadCell key={info.cell.id} {...info.row.original} />,
-    enableSorting: false,
-    size: 200, // flex-grow weight (proportional)
-    minSize: 100,
-    meta: { flexible: true },
-  }),
+    Cell: MessageCell,
+    size: 300,
+    minSize: 200,
+    flexible: true,
+  },
 ];
+
+export const columnSize = (column: LogColumn, columnSizing: ColumnSizing) =>
+  columnSizing[column.id] ?? column.size;
+
+export const columnMinSize = (column: LogColumn) =>
+  column.minSize ?? TABLE_CONFIG.MIN_COLUMN_SIZE;
+
+export const columnStyle = (
+  column: LogColumn,
+  columnSizing: ColumnSizing,
+): React.CSSProperties => {
+  const size = columnSize(column, columnSizing);
+  const minSize = columnMinSize(column);
+  return {
+    flex: column.flexible ? `${size} 1 ${minSize}px` : `0 0 ${size}px`,
+    minWidth: column.flexible ? minSize : size,
+  };
+};

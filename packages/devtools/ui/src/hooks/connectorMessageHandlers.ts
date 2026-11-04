@@ -8,34 +8,10 @@ import { type DevToolsModule } from "@ledgerhq/device-management-kit-devtools-co
 
 import { mapConnectorMessageToLogData } from "../screens/logger/mapConnectorMessageToLogData";
 import { type LogData } from "../screens/logger/types";
-import { type ApduExchange, type ApduResponse } from "./useConnectorMessages";
-
-const APDU_EXCHANGE_LOG = "apdu-exchange";
-
-/**
- * Extracts a structured APDU exchange from a log message, if the log carries
- * the `apdu-exchange` payload emitted by DMK. Returns null otherwise.
- */
-function tryExtractApduExchange(logData: LogData): ApduExchange | null {
-  const data = logData.payload;
-  if (
-    typeof data !== "object" ||
-    data === null ||
-    Array.isArray(data) ||
-    data["type"] !== APDU_EXCHANGE_LOG ||
-    typeof data["apdu"] !== "string" ||
-    typeof data["response"] !== "string"
-  ) {
-    return null;
-  }
-  return {
-    sessionId:
-      typeof data["sessionId"] === "string" ? data["sessionId"] : undefined,
-    apdu: data["apdu"],
-    response: data["response"],
-    timestamp: logData.timestamp,
-  };
-}
+import {
+  type ApduResponse,
+  type MockServerConfig,
+} from "./useConnectorMessages";
 
 /**
  * Handle module connected handshake message.
@@ -57,19 +33,11 @@ export function handleModuleConnected(
  */
 export function handleLogMessage(
   payload: string,
-  setLogs: Dispatch<SetStateAction<LogData[]>>,
-  setApduExchanges: Dispatch<SetStateAction<ApduExchange[]>>,
-  isRecordingExchanges: boolean,
+  addLog: (log: LogData) => void,
 ): boolean {
   const logData = mapConnectorMessageToLogData(payload);
   if (logData !== null) {
-    setLogs((prev) => [...prev, logData]);
-    if (isRecordingExchanges) {
-      const exchange = tryExtractApduExchange(logData);
-      if (exchange !== null) {
-        setApduExchanges((prev) => [...prev, exchange]);
-      }
-    }
+    addLog(logData);
     return true;
   }
   return false;
@@ -136,6 +104,54 @@ export function handleProviderValue(
   } catch (e) {
     console.error("Failed to parse providerValue payload", e);
   }
+}
+
+// Parseable, over HTTP(S) and with a host: anything else would break the screen or the proxy
+const isWebUrl = (url: string): boolean => {
+  try {
+    const { protocol, host } = new URL(url);
+    return (protocol === "http:" || protocol === "https:") && host !== "";
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * The mock server config the app sent, `null` when it has none, or `undefined`
+ * when the message is not one: it comes from the app, so its shape is checked.
+ */
+export function parseMockServerConfig(
+  payload: string,
+): MockServerConfig | null | undefined {
+  try {
+    const config: unknown = JSON.parse(payload);
+    if (config === null) return null;
+    if (typeof config !== "object") return undefined;
+    const { url, sessionToken } = config as Record<string, unknown>;
+    if (typeof url !== "string" || !isWebUrl(url)) return undefined;
+    if (sessionToken !== undefined && typeof sessionToken !== "string") {
+      return undefined;
+    }
+    return sessionToken === undefined ? { url } : { url, sessionToken };
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Handle mock server config message.
+ */
+export function handleMockServerConfig(
+  payload: string,
+  setMockServer: Dispatch<SetStateAction<MockServerConfig | null>>,
+): void {
+  const config = parseMockServerConfig(payload);
+  if (config === undefined) {
+    // Not the payload: a rejected config can still hold a valid session token
+    console.error("Ignored an invalid mockServerConfig payload");
+    return;
+  }
+  setMockServer(config);
 }
 
 /**

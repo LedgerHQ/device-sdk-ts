@@ -1,41 +1,34 @@
 import React from "react";
-import { Flex, Icons } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import { IconButton } from "@ledgerhq/lumen-ui-react";
+import { ArrowDown, ArrowUp } from "@ledgerhq/lumen-ui-react/symbols";
 
-import { SCROLL_BUTTON_CONFIG } from "./constants";
-
-const StyledButton = styled(Flex)`
-  position: absolute;
-  bottom: ${SCROLL_BUTTON_CONFIG.BOTTOM_OFFSET}px;
-  right: ${SCROLL_BUTTON_CONFIG.RIGHT_OFFSET}px;
-  height: ${SCROLL_BUTTON_CONFIG.SIZE}px;
-  width: ${SCROLL_BUTTON_CONFIG.SIZE}px;
-  padding-top: ${SCROLL_BUTTON_CONFIG.PADDING_TOP}px;
-  border-radius: ${SCROLL_BUTTON_CONFIG.BORDER_RADIUS}px;
-  cursor: pointer;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-  transition: opacity 0.3s;
-  opacity: ${({ enabled }: { enabled: boolean }) => (enabled ? 0 : 1)};
-  pointer-events: ${({ enabled }: { enabled: boolean }) =>
-    enabled ? "none" : "auto"};
-`;
+import { WithTooltip } from "../../../components/WithTooltip";
 
 type ScrollDownButtonProps = {
   onClick: () => void;
   enabled: boolean;
+  /** The latest rows are at the top. */
+  up?: boolean;
 };
 
 export const ScrollDownButton: React.FC<ScrollDownButtonProps> = ({
   onClick,
   enabled,
+  up = false,
 }) => (
-  <StyledButton
-    enabled={enabled}
-    onClick={onClick}
-    alignItems="center"
-    justifyContent="center"
-    bg="neutral.c100"
+  <WithTooltip
+    label="Scroll to latest logs"
+    side="left"
+    // Invisible once hidden, so it also leaves the tab order
+    className={`absolute right-16 bottom-16 transition-[opacity,visibility] duration-300 ${enabled ? "invisible opacity-0" : "visible opacity-100"}`}
   >
-    <Icons.ChevronDown size="XL" color="neutral.c00" />
-  </StyledButton>
+    <IconButton
+      aria-label="Scroll to latest logs"
+      icon={up ? ArrowUp : ArrowDown}
+      appearance="accent"
+      size="sm"
+      onClick={onClick}
+      className="shadow-md"
+    />
+  </WithTooltip>
 );

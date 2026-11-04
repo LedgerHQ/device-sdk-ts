@@ -73,6 +73,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@types/styled-components": "catalog:",
+    "@types/styled-system": "^5.1.15",
     "autoprefixer": "catalog:",
     "globals": "catalog:",
     "postcss": "catalog:",
