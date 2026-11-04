@@ -16,6 +16,11 @@ const GLOBAL_ERRORS_LIST: [Uint8Array, string, string][] = [
     "DeviceInternalError",
     "device internal error",
   ],
+  [
+    Uint8Array.from([0x69, 0x01]),
+    "DeviceNotReadyError",
+    "device not ready error",
+  ],
 ];
 
 describe("GlobalCommandError", () => {
