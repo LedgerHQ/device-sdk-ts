@@ -1,12 +1,12 @@
 import { ContainerModule } from "inversify";
 
-import { HttpGatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/data/HttpGatedDescriptorDataSource";
-import { GatedSigningContextLoader } from "@/modules/ethereum/gated-signing/domain/GatedSigningContextLoader";
-import { GatedSigningTypedDataContextLoader } from "@/modules/ethereum/gated-signing/domain/GatedSigningTypedDataContextLoader";
+import { HttpGatedDescriptorDataSource } from "@/modules/multichain/gated-signing/data/HttpGatedDescriptorDataSource";
+import { GatedSigningContextLoader } from "@/modules/multichain/gated-signing/loaders/GatedSigningContextLoader";
+import { GatedSigningTypedDataContextLoader } from "@/modules/multichain/gated-signing/loaders/GatedSigningTypedDataContextLoader";
 
 import { gatedSigningTypes } from "./gatedSigningTypes";
 
-export const gatedSigningModuleFactory = () =>
+export const ethereumGatedSigningModuleFactory = () =>
   new ContainerModule(({ bind }) => {
     bind(gatedSigningTypes.GatedDescriptorDataSource).to(
       HttpGatedDescriptorDataSource,
