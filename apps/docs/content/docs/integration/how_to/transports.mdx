@@ -41,7 +41,6 @@ const dmk = new DeviceManagementKitBuilder()
 const dmk = new DeviceManagementKitBuilder()
   .addTransport(({
     deviceModelDataSource: DeviceModelDataSource;
-    loggerServiceFactory: (tag: string) => LoggerPublisherService;
     config: DmkConfig;
     apduSenderServiceFactory: ApduSenderServiceFactory;
     apduReceiverServiceFactory: ApduReceiverServiceFactory;
@@ -50,8 +49,6 @@ const dmk = new DeviceManagementKitBuilder()
     // Then we return the transport instance
     return new WebHidTransport(
       deviceModelDataSource,
-      loggerServiceFactory,
-      config,
       apduSenderServiceFactory,
       apduReceiverServiceFactory,
     );

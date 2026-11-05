@@ -3,6 +3,7 @@ import type {
   InternalApi,
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
+import { getLogger } from "@ledgerhq/device-management-kit";
 import type { TypedDataField } from "ethers";
 import { TypedDataEncoder } from "ethers";
 import { Just } from "purify-ts";
@@ -19,9 +20,8 @@ export class SignTypedDataLegacyTask {
     private readonly api: InternalApi,
     private readonly data: TypedData,
     private readonly derivationPath: string,
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._logger = loggerFactory("SignTypedDataLegacyTask");
+    this._logger = getLogger("SignerEth", "SignTypedDataLegacyTask");
   }
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {

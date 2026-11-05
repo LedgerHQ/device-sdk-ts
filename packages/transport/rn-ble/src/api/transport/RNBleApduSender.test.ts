@@ -10,8 +10,6 @@ import {
   defaultApduSenderServiceStubBuilder,
   DeviceNotInitializedError,
   GeneralDmkError,
-  type LoggerPublisherService,
-  type LoggerSubscriberService,
   SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
 import { Left, Maybe, Right } from "purify-ts";
@@ -25,20 +23,6 @@ vi.mock("react-native-ble-plx", () => ({
 const FRAME_HEADER_SIZE = 3;
 const LEDGER_MTU = 156;
 
-class LoggerPublisherServiceStub implements LoggerPublisherService {
-  subscribers: LoggerSubscriberService[] = [];
-  tag: string;
-  constructor(subscribers: LoggerSubscriberService[], tag: string) {
-    this.subscribers = subscribers;
-    this.tag = tag;
-  }
-  error = vi.fn();
-  warn = vi.fn();
-  info = vi.fn();
-  debug = vi.fn();
-}
-
-let logger: (tag: string) => LoggerPublisherService;
 let apduSenderFactory: ApduSenderServiceFactory;
 let apduReceiverFactory: ApduReceiverServiceFactory;
 let apduSender: RNBleApduSender;
@@ -48,28 +32,20 @@ const cancelConnection = vi.fn();
 // TODO: fix these tests, sorry they are completely broken now
 describe.skip("RNBleApduSender", () => {
   beforeEach(() => {
-    logger = (tag: string) => new LoggerPublisherServiceStub([], tag);
-    apduSenderFactory = vi.fn(() =>
-      defaultApduSenderServiceStubBuilder(undefined, logger),
-    );
-    apduReceiverFactory = vi.fn(() =>
-      defaultApduReceiverServiceStubBuilder(undefined, logger),
-    );
-    apduSender = new RNBleApduSender(
-      {
-        dependencies: {
-          device: {
-            mtu: 156,
-            cancelConnection,
-          } as unknown as Device,
-          internalDevice: {} as RNBleInternalDevice,
-          manager: {} as BleManager,
-        },
-        apduReceiverFactory: apduReceiverFactory,
-        apduSenderFactory: apduSenderFactory,
+    apduSenderFactory = vi.fn(() => defaultApduSenderServiceStubBuilder());
+    apduReceiverFactory = vi.fn(() => defaultApduReceiverServiceStubBuilder());
+    apduSender = new RNBleApduSender({
+      dependencies: {
+        device: {
+          mtu: 156,
+          cancelConnection,
+        } as unknown as Device,
+        internalDevice: {} as RNBleInternalDevice,
+        manager: {} as BleManager,
       },
-      logger,
-    );
+      apduReceiverFactory: apduReceiverFactory,
+      apduSenderFactory: apduSenderFactory,
+    });
   });
 
   afterEach(() => {

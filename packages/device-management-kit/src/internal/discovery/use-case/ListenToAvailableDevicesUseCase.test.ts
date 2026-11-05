@@ -3,11 +3,9 @@ import { Subject } from "rxjs";
 
 import { type DeviceId, DeviceModel } from "@api/device/DeviceModel";
 import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { type Transport } from "@api/transport/model/Transport";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { DefaultTransportService } from "@internal/transport/service/DefaultTransportService";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
@@ -16,7 +14,6 @@ import { ListenToAvailableDevicesUseCase } from "./ListenToAvailableDevicesUseCa
 vi.mock("@internal/transport/service/DefaultTransportService");
 
 let transportService: TransportService;
-let logger: LoggerPublisherService;
 function makeMockTransport(props: Partial<Transport>): Transport {
   return {
     listenToAvailableDevices: vi.fn(),
@@ -79,10 +76,6 @@ describe("ListenToAvailableDevicesUseCase", () => {
     vi.clearAllMocks();
     // @ts-expect-error mock
     transportService = new DefaultTransportService();
-    logger = new DefaultLoggerPublisherService(
-      [],
-      "listen-to-available-devices-use-case-test",
-    );
   });
 
   describe("when no transports are available", () => {
@@ -90,10 +83,7 @@ describe("ListenToAvailableDevicesUseCase", () => {
       new Promise<void>((resolve, reject) => {
         vi.spyOn(transportService, "getAllTransports").mockReturnValue([]);
 
-        const useCase = new ListenToAvailableDevicesUseCase(
-          transportService,
-          () => logger,
-        );
+        const useCase = new ListenToAvailableDevicesUseCase(transportService);
 
         const observedDiscoveredDevices: DiscoveredDevice[][] = [];
         useCase.execute({}).subscribe({
@@ -125,7 +115,7 @@ describe("ListenToAvailableDevicesUseCase", () => {
       ]);
 
       const observedDiscoveredDevices: DiscoveredDevice[][] = [];
-      new ListenToAvailableDevicesUseCase(transportService, () => logger)
+      new ListenToAvailableDevicesUseCase(transportService)
         .execute({})
         .subscribe((devices) => {
           observedDiscoveredDevices.push(devices);
@@ -206,7 +196,7 @@ describe("ListenToAvailableDevicesUseCase", () => {
       const onError = vi.fn();
       const onComplete = vi.fn();
 
-      new ListenToAvailableDevicesUseCase(transportService, () => logger)
+      new ListenToAvailableDevicesUseCase(transportService)
         .execute({})
         .subscribe({
           next: (devices) => {
@@ -255,7 +245,7 @@ describe("ListenToAvailableDevicesUseCase", () => {
 
       const onError = vi.fn();
       const onComplete = vi.fn();
-      new ListenToAvailableDevicesUseCase(transportService, () => logger)
+      new ListenToAvailableDevicesUseCase(transportService)
         .execute({})
         .subscribe({
           next: (devices) => {
@@ -391,7 +381,7 @@ describe("ListenToAvailableDevicesUseCase", () => {
       const onError = vi.fn();
       const onComplete = vi.fn();
 
-      new ListenToAvailableDevicesUseCase(transportService, () => logger)
+      new ListenToAvailableDevicesUseCase(transportService)
         .execute({ transport: "mock-A" })
         .subscribe({
           next: (devices) => {

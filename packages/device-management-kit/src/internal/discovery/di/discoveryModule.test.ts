@@ -11,7 +11,6 @@ import { ListenToAvailableDevicesUseCase } from "@internal/discovery/use-case/Li
 import { ReconnectUseCase } from "@internal/discovery/use-case/ReconnectUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
-import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModule";
 import { secureChannelModuleFactory } from "@internal/secure-channel/di/secureChannelModule";
 import { transportModuleFactory } from "@internal/transport/di/transportModule";
@@ -31,7 +30,6 @@ describe("discoveryModuleFactory", () => {
     container.loadSync(
       mod,
       // The following modules are injected into discovery module
-      loggerModuleFactory(),
       deviceModelModuleFactory({ stub: false }),
       deviceSessionModuleFactory(),
       transportModuleFactory({

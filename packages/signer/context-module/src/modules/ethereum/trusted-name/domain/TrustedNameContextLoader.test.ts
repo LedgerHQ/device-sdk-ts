@@ -10,14 +10,6 @@ import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCe
 import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("TrustedNameContextLoader", () => {
   const mockTrustedNameDataSource: TrustedNameDataSource = {
     getDomainNamePayload: vi.fn(),
@@ -29,7 +21,6 @@ describe("TrustedNameContextLoader", () => {
   const loader = new TrustedNameContextLoader(
     mockTrustedNameDataSource,
     mockCertificateLoader,
-    mockLoggerFactory,
   );
 
   const mockCertificate: PkiCertificate = {

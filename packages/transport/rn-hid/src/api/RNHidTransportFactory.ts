@@ -9,7 +9,6 @@ import { NativeTransportModule } from "./bridge/NativeTransportModule";
 
 export const RNHidTransportFactory: TransportFactory = ({
   deviceModelDataSource,
-  loggerServiceFactory,
 }) => {
   const isSupported = Platform.OS === "android";
   const nativeModuleWrapper =
@@ -20,9 +19,5 @@ export const RNHidTransportFactory: TransportFactory = ({
         })
       : new StubNativeModuleWrapper();
 
-  return new RNHidTransport(
-    isSupported,
-    nativeModuleWrapper,
-    loggerServiceFactory,
-  );
+  return new RNHidTransport(isSupported, nativeModuleWrapper);
 };

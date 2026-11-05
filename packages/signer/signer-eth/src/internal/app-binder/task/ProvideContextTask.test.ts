@@ -40,16 +40,6 @@ import {
   type SendPayloadInChunksTaskArgs,
 } from "./SendPayloadInChunksTask";
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-
-const mockLoggerFactory = (_tag: string) => mockLogger;
-
 describe("ProvideContextTask", () => {
   const api = makeDeviceActionInternalApiMock();
   const successResult = CommandResultFactory<void, EthErrorCodes>({
@@ -97,7 +87,6 @@ describe("ProvideContextTask", () => {
               type: contextType,
               payload: "payload",
             },
-            loggerFactory: mockLoggerFactory,
           };
           api.sendCommand.mockResolvedValue(successResult);
 
@@ -145,7 +134,6 @@ describe("ProvideContextTask", () => {
               type: contextType,
               payload: "payload",
             } as ClearSignContextSuccess<typeof contextType>,
-            loggerFactory: mockLoggerFactory,
           };
           sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -187,7 +175,6 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -227,7 +214,6 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -273,7 +259,6 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.ETHEREUM_SAFE,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -313,7 +298,6 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.ETHEREUM_SIGNER,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -359,7 +343,6 @@ describe("ProvideContextTask", () => {
               payload: new Uint8Array([1, 2, 3]),
             },
           },
-          loggerFactory: mockLoggerFactory,
         };
         api.sendCommand.mockResolvedValue(successResult);
 
@@ -395,7 +378,6 @@ describe("ProvideContextTask", () => {
               payload: new Uint8Array([4, 5, 6]),
             },
           },
-          loggerFactory: mockLoggerFactory,
         };
         api.sendCommand.mockResolvedValue(successResult);
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
@@ -424,7 +406,6 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         };
         api.sendCommand.mockResolvedValue(successResult);
 
@@ -453,7 +434,6 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.ETHEREUM_NFT,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         };
         api.sendCommand.mockResolvedValue(errorResult);
 
@@ -476,7 +456,6 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(errorResult);
 
@@ -499,7 +478,6 @@ describe("ProvideContextTask", () => {
             type: "unsupported" as unknown as ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         };
 
         // WHEN
@@ -529,7 +507,6 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         };
 
         // WHEN

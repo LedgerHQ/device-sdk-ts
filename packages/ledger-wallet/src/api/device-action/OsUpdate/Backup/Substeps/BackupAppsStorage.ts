@@ -1,8 +1,8 @@
 import {
+  getLogger,
   type InstalledApp,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
 
@@ -25,15 +25,12 @@ type BackupAppsStorageHandler = (
 ) => BackupAppsStorageHandlerResponse;
 
 export const backupAppsStorage =
-  (
-    internalApi: InternalApi,
-    loggerFactory: (tag: string) => LoggerPublisherService,
-  ): BackupAppsStorageHandler =>
+  (internalApi: InternalApi): BackupAppsStorageHandler =>
   async ({
     input,
   }: BackupAppsStorageHandlerArgs): BackupAppsStorageHandlerResponse => {
     const { installedApps } = input;
-    const logger = loggerFactory("BackupAppStorageTask");
+    const logger = getLogger("BackupAppStorageTask");
     const backupApps: BackupApp[] = [];
     for (const installedApp of installedApps) {
       const backupAppStorageTaskResponse = await new BackupAppStorageTask(

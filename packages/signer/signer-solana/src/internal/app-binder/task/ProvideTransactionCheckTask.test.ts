@@ -69,8 +69,6 @@ function makeTask(
     contextModule,
     serializedTransactionForTransactionCheck,
     transactionSerializer,
-    loggerFactory: () =>
-      ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) as any,
   });
   return { task, api, getContexts, transactionSerializer };
 }

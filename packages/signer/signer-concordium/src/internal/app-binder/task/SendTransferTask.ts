@@ -2,6 +2,7 @@ import {
   APDU_MAX_PAYLOAD,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -30,10 +31,14 @@ type SendTransferTaskArgs = {
 };
 
 export class SendTransferTask {
+  private readonly logger: LoggerPublisherService = getLogger(
+    "SignerConcordium",
+    "SendTransferTask",
+  );
+
   constructor(
     private readonly api: InternalApi,
     private readonly args: SendTransferTaskArgs,
-    private readonly logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<

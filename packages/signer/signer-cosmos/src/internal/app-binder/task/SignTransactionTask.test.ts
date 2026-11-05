@@ -4,7 +4,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
@@ -17,16 +16,12 @@ import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTa
 describe("SignTransactionTask", () => {
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
-  let loggerMock: LoggerPublisherService;
 
   beforeEach(() => {
     sendCommandMock = vi.fn();
     apiMock = {
       sendCommand: sendCommandMock,
     } as unknown as InternalApi;
-    loggerMock = {
-      debug: vi.fn(),
-    } as unknown as LoggerPublisherService;
   });
 
   describe("run", () => {
@@ -41,15 +36,11 @@ describe("SignTransactionTask", () => {
         ) // ADD
         .mockResolvedValueOnce(CommandResultFactory({ data: signature })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        {
-          derivationPath: "44'/118'/0'/0/0",
-          hrp: "cosmos",
-          transaction,
-        },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: "44'/118'/0'/0/0",
+        hrp: "cosmos",
+        transaction,
+      });
 
       // ACT
       const result = await task.run();
@@ -75,15 +66,11 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(commandError); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        {
-          derivationPath: "44'/118'/0'/0/0",
-          hrp: "cosmos",
-          transaction,
-        },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: "44'/118'/0'/0/0",
+        hrp: "cosmos",
+        transaction,
+      });
 
       // ACT
       const result = await task.run();
@@ -103,15 +90,11 @@ describe("SignTransactionTask", () => {
       sendCommandMock.mockResolvedValue({
         status: CommandResultStatus.Error,
       });
-      const task = new SignTransactionTask(
-        apiMock,
-        {
-          derivationPath: "44'/118'/0'/0",
-          hrp: "cosmos",
-          transaction: new Uint8Array(0),
-        },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: "44'/118'/0'/0",
+        hrp: "cosmos",
+        transaction: new Uint8Array(0),
+      });
 
       // ACT
       const result = await task.run();
@@ -130,15 +113,11 @@ describe("SignTransactionTask", () => {
       sendCommandMock.mockResolvedValue({
         status: CommandResultStatus.Success,
       });
-      const task = new SignTransactionTask(
-        apiMock,
-        {
-          derivationPath: "44'/118'/0'/0/0",
-          hrp: "cosmos",
-          transaction: new Uint8Array(0),
-        },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: "44'/118'/0'/0/0",
+        hrp: "cosmos",
+        transaction: new Uint8Array(0),
+      });
 
       // ACT
       const result = await task.run();

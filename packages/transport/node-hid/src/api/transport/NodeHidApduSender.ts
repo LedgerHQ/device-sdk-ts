@@ -9,6 +9,7 @@ import {
   formatApduReceivedLog,
   formatApduSentLog,
   FramerUtils,
+  getLogger,
   type LoggerPublisherService,
   OpeningConnectionError,
   type SendApduResult,
@@ -28,7 +29,6 @@ export type NodeHidApduSenderConstructorArgs = {
   dependencies: NodeHidApduSenderDependencies;
   apduSenderFactory: ApduSenderServiceFactory;
   apduReceiverFactory: ApduReceiverServiceFactory;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export class NodeHidApduSender
@@ -39,7 +39,8 @@ export class NodeHidApduSender
   private apduSender: ApduSenderService;
   private readonly apduReceiverFactory: ApduReceiverServiceFactory;
   private apduReceiver: ApduReceiverService;
-  private readonly logger: LoggerPublisherService;
+  private readonly logger: LoggerPublisherService =
+    getLogger("NodeHidApduSender");
   private hidAsync: Maybe<HIDAsync>;
   private sendApduPromiseResolver: Maybe<
     (value: Either<DmkError, ApduResponse>) => void
@@ -50,7 +51,6 @@ export class NodeHidApduSender
     dependencies,
     apduSenderFactory,
     apduReceiverFactory,
-    loggerFactory,
   }: NodeHidApduSenderConstructorArgs) {
     const channel = Maybe.of(
       FramerUtils.numberToByteArray(Math.floor(Math.random() * 0xffff), 2),
@@ -64,7 +64,6 @@ export class NodeHidApduSender
     });
     this.apduReceiverFactory = apduReceiverFactory;
     this.apduReceiver = this.apduReceiverFactory({ channel });
-    this.logger = loggerFactory("NodeHidApduSender");
     this.hidAsync = Nothing;
     this.sendApduPromiseResolver = Nothing;
     this.abortTimeout = Nothing;

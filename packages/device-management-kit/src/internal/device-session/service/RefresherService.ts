@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { type LoggerPublisherService } from "@api/types";
 
 export interface RefresherController {
@@ -11,11 +12,8 @@ export class RefresherService {
   private readonly _refresherBlockers = new Set<string>();
   private readonly _logger: LoggerPublisherService;
 
-  constructor(
-    loggerModuleFactory: (tag: string) => LoggerPublisherService,
-    private readonly _refresher: RefresherController,
-  ) {
-    this._logger = loggerModuleFactory("refresher-service");
+  constructor(private readonly _refresher: RefresherController) {
+    this._logger = getLogger("refresher-service");
   }
 
   public disableRefresher(id: string): () => void {

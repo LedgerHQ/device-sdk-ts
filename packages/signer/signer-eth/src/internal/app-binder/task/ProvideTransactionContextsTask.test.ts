@@ -55,7 +55,10 @@ const mockLogger = {
   subscribers: [],
 };
 
-const mockLoggerFactory = (_tag: string) => mockLogger;
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: () => mockLogger,
+}));
 
 const minContactsAppVersion = (() => {
   const requirement = resolveContactsVersionRequirements(DeviceModelId.FLEX);
@@ -118,7 +121,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         sendCommandInChunksTaskRunMock.mockResolvedValue(successResult);
         provideContextTaskRunMock.mockResolvedValue(successResult);
@@ -164,7 +166,6 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
             payload: "0x00",
           },
-          loggerFactory: mockLoggerFactory,
         });
       });
 
@@ -181,7 +182,6 @@ describe("ProvideTransactionContextsTask", () => {
             },
           ],
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -220,7 +220,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -241,7 +240,6 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.ETHEREUM_PROXY_INFO,
             payload: "subcontext payload",
           },
-          loggerFactory: mockLoggerFactory,
         });
       });
 
@@ -265,7 +263,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -287,7 +284,6 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
             payload: "resolved trusted name payload",
           },
-          loggerFactory: mockLoggerFactory,
         });
       });
 
@@ -311,7 +307,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -333,7 +328,6 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload",
           },
-          loggerFactory: mockLoggerFactory,
         });
       });
 
@@ -358,7 +352,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array([1, 2, 3]),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         sendCommandInChunksTaskRunMock.mockResolvedValue(successResult);
         provideContextTaskRunMock.mockResolvedValue(successResult);
@@ -402,7 +395,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -424,7 +416,6 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "subcontext payload",
           },
-          loggerFactory: mockLoggerFactory,
         });
         // Then main context
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(2, api, {
@@ -432,7 +423,6 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "main payload",
           },
-          loggerFactory: mockLoggerFactory,
         });
       });
 
@@ -461,7 +451,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -482,21 +471,18 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.ETHEREUM_NFT,
             payload: "subcontext1",
           },
-          loggerFactory: mockLoggerFactory,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(2, api, {
           context: {
             type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "subcontext2",
           },
-          loggerFactory: mockLoggerFactory,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(3, api, {
           context: {
             type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "main payload",
           },
-          loggerFactory: mockLoggerFactory,
         });
       });
 
@@ -520,7 +506,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock
           .mockResolvedValueOnce(errorResult) // subcontext fails
@@ -570,7 +555,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -591,21 +575,18 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload1",
           },
-          loggerFactory: mockLoggerFactory,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(2, api, {
           context: {
             type: ClearSignContextType.ETHEREUM_NFT,
             payload: "payload2",
           },
-          loggerFactory: mockLoggerFactory,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(3, api, {
           context: {
             type: ClearSignContextType.ETHEREUM_PLUGIN,
             payload: "payload3",
           },
-          loggerFactory: mockLoggerFactory,
         });
       });
     });
@@ -625,7 +606,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock.mockResolvedValue(errorResult);
 
@@ -663,7 +643,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         provideContextTaskRunMock.mockResolvedValue(errorResult);
 
@@ -698,7 +677,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array([0xaa, 0xbb, 0xcc]),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         };
         sendCommandInChunksTaskRunMock.mockResolvedValue(successResult);
         provideContextTaskRunMock.mockResolvedValue(successResult);
@@ -762,7 +740,6 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
-          loggerFactory: mockLoggerFactory,
         });
 
         // THEN
@@ -841,7 +818,6 @@ describe("ProvideTransactionContextsTask", () => {
             },
             appConfig,
           },
-          loggerFactory: mockLoggerFactory,
           ...overrides,
         };
       }

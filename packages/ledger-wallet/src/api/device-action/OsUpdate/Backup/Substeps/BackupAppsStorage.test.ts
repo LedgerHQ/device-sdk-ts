@@ -35,10 +35,9 @@ describe("BackupAppStorage", () => {
         );
       MockTask.mockImplementation(() => ({ run: runMock }) as never);
 
-      const result = await backupAppsStorage(
-        apiMock,
-        apiMock.loggerFactory!,
-      )({ input: { installedApps } });
+      const result = await backupAppsStorage(apiMock)({
+        input: { installedApps },
+      });
 
       expect(result.isRight()).toBe(true);
       expect(result.extract()).toEqual([
@@ -58,10 +57,9 @@ describe("BackupAppStorage", () => {
         );
       MockTask.mockImplementation(() => ({ run: runMock }) as never);
 
-      const result = await backupAppsStorage(
-        apiMock,
-        apiMock.loggerFactory!,
-      )({ input: { installedApps } });
+      const result = await backupAppsStorage(apiMock)({
+        input: { installedApps },
+      });
 
       expect(result.isRight()).toBe(true);
       expect(result.extract()).toEqual([{ appName: "app1", data: undefined }]);
@@ -81,10 +79,9 @@ describe("BackupAppStorage", () => {
         .mockResolvedValueOnce(CommandResultFactory({ error }));
       MockTask.mockImplementation(() => ({ run: runMock }) as never);
 
-      const result = await backupAppsStorage(
-        apiMock,
-        apiMock.loggerFactory!,
-      )({ input: { installedApps } });
+      const result = await backupAppsStorage(apiMock)({
+        input: { installedApps },
+      });
 
       expect(result.isLeft()).toBe(true);
       result.mapLeft((e) => {

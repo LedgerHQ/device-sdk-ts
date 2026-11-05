@@ -12,11 +12,11 @@ import pkg from "@root/package.json";
 import { StubUseCase } from "@root/src/di.stub";
 
 import { commandTypes } from "./command/di/commandTypes";
-import { ConsoleLogger } from "./logger-subscriber/service/ConsoleLogger";
+import { ConsoleLogger } from "./global/services/logger/ConsoleLogger";
 import { DeviceManagementKit } from "./DeviceManagementKit";
 import { type DmkConfig } from "./DmkConfig";
 
-vi.mock("./logger-subscriber/service/ConsoleLogger");
+vi.mock("./global/services/logger/ConsoleLogger");
 
 let dmk: DeviceManagementKit;
 let logger: ConsoleLogger;

@@ -1,5 +1,4 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
@@ -49,17 +48,6 @@ const contextModuleStub = {
   getContexts: vi.fn(),
 } as unknown as ContextModule;
 
-const mockLoggerFactory = vi.fn(
-  (_tag: string) =>
-    ({
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      subscribers: [],
-    }) as unknown as LoggerPublisherService,
-);
-
 describe("SignTransactionDeviceActionFactory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -97,19 +85,6 @@ describe("SignTransactionDeviceActionFactory", () => {
     });
 
     expect(deviceAction.inspect).toBe(true);
-  });
-
-  it("should forward loggerFactory so it is used instead of internalApi.loggerFactory", () => {
-    SignTransactionDeviceActionFactory({
-      derivationPath: "44'/60'/0'/0/0",
-      transaction: new Uint8Array([0xde, 0xad]),
-      contextModule: contextModuleStub,
-      loggerFactory: mockLoggerFactory,
-    });
-
-    expect(vi.mocked(SignTransactionDeviceAction)).toHaveBeenCalledWith(
-      expect.objectContaining({ loggerFactory: mockLoggerFactory }),
-    );
   });
 
   it("should return a device action usable as an XState actor", () => {

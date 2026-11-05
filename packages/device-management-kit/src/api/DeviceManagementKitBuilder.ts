@@ -6,7 +6,7 @@ import {
 } from "@internal/manager-api/model/Const";
 import { DEFAULT_WEB_SOCKET_BASE_URL } from "@internal/secure-channel/model/Const";
 
-import { type LoggerSubscriberService } from "./logger-subscriber/service/LoggerSubscriberService";
+import { type LoggerSubscriberService } from "./global/services/logger/LoggerSubscriberService";
 import { type TransportFactory } from "./transport/model/Transport";
 import { DeviceManagementKit } from "./DeviceManagementKit";
 import { type DmkConfig } from "./DmkConfig";

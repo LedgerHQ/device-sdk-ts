@@ -1,6 +1,5 @@
 import {
   type ApduResponse,
-  type LoggerPublisherService,
   SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
 import { Left, Maybe, Right } from "purify-ts";
@@ -18,12 +17,6 @@ describe("WebHidApduSender", () => {
     handleFrame: vi.fn(),
   };
 
-  const mockLogger = {
-    info: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn(),
-  };
-
   const mockDevice = {
     oninputreport: vi.fn(),
     open: vi.fn(),
@@ -36,19 +29,13 @@ describe("WebHidApduSender", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDevice.close = vi.fn().mockResolvedValue(undefined);
-    const mockLoggerFactory = vi
-      .fn()
-      .mockReturnValue(mockLogger as unknown as LoggerPublisherService);
     const mockApduSenderFactory = vi.fn().mockReturnValue(mockApduSender);
     const mockApduReceiverFactory = vi.fn().mockReturnValue(mockApduReceiver);
-    webHidApduSender = new WebHidApduSender(
-      {
-        dependencies: { device: mockDevice as unknown as HIDDevice },
-        apduSenderFactory: mockApduSenderFactory,
-        apduReceiverFactory: mockApduReceiverFactory,
-      },
-      mockLoggerFactory,
-    );
+    webHidApduSender = new WebHidApduSender({
+      dependencies: { device: mockDevice as unknown as HIDDevice },
+      apduSenderFactory: mockApduSenderFactory,
+      apduReceiverFactory: mockApduReceiverFactory,
+    });
   });
 
   afterEach(() => {
@@ -97,7 +84,7 @@ describe("WebHidApduSender", () => {
     expect(mockDevice.close).toHaveBeenCalled();
   });
 
-  it("GIVEN WebHID rejects close WHEN closing the connection THEN it logs the error", async () => {
+  it("GIVEN WebHID rejects close WHEN closing the connection THEN it does not throw", async () => {
     // GIVEN
     const error = new Error("Failed to close device");
     mockDevice.close = vi.fn().mockRejectedValue(error);
@@ -107,12 +94,7 @@ describe("WebHidApduSender", () => {
     await Promise.resolve();
 
     // THEN
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      "Error while closing device",
-      {
-        data: { device: mockDevice, error },
-      },
-    );
+    expect(mockDevice.close).toHaveBeenCalled();
   });
 
   it("should send APDU successfully", async () => {

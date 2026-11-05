@@ -1,4 +1,3 @@
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import {
   DeviceSession,
@@ -10,7 +9,6 @@ import { type SecureChannelService } from "@internal/secure-channel/service/Secu
 
 export const deviceSessionStubBuilder = (
   props: Partial<SessionConstructorArgs> = {},
-  loggerFactory: (tag: string) => LoggerPublisherService,
   managerApi: ManagerApiService,
   secureChannel: SecureChannelService,
   deviceSessionRefresherOptions: DeviceSessionRefresherOptions,
@@ -21,7 +19,6 @@ export const deviceSessionStubBuilder = (
       id: "fakeSessionId",
       ...props,
     },
-    loggerFactory,
     managerApi,
     secureChannel,
     deviceSessionRefresherOptions,

@@ -1,5 +1,4 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 import { type EvmAddressBook } from "@api/model/EvmAddressBook";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
@@ -14,7 +13,6 @@ export const SignTransactionDeviceActionFactory = (args: {
   addressBook?: EvmAddressBook;
   options?: TransactionOptions;
   inspect?: boolean;
-  loggerFactory?: (tag: string) => LoggerPublisherService;
 }) =>
   new SignTransactionDeviceAction({
     input: {
@@ -27,5 +25,4 @@ export const SignTransactionDeviceActionFactory = (args: {
       parser: new TransactionParserService(),
     },
     inspect: args.inspect,
-    loggerFactory: args.loggerFactory,
   });

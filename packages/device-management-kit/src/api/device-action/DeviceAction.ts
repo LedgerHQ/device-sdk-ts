@@ -7,7 +7,6 @@ import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { type DmkError } from "@api/Error";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
@@ -29,7 +28,7 @@ export type InternalApi = {
   ) => DeviceSessionState;
   readonly getManagerApiService: () => ManagerApiService;
   readonly getSecureChannelService: () => SecureChannelService;
-  readonly loggerFactory?: (tag: string) => LoggerPublisherService;
+  /** @deprecated Use `getLogger(tag)`. */
 };
 
 export type DeviceActionIntermediateValue = {

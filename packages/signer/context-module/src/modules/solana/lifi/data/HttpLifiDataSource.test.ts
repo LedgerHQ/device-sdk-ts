@@ -12,14 +12,6 @@ import {
   type LifiDataSource,
 } from "./LifiDataSource";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("HttpLifiDataSource", () => {
   let datasource: LifiDataSource;
   let httpMock: { get: ReturnType<typeof vi.fn> };
@@ -37,7 +29,6 @@ describe("HttpLifiDataSource", () => {
     httpMock = { get: vi.fn() };
     datasource = new HttpLifiDataSource(
       config,
-      mockLoggerFactory,
       httpMock as unknown as DmkNetworkClient,
     );
   });

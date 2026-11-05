@@ -1,4 +1,5 @@
 import {
+  getLogger,
   hexaStringToBuffer,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
@@ -13,7 +14,6 @@ import {
   string,
 } from "purify-ts";
 
-import { configTypes } from "@/config/di/configTypes";
 import {
   type InstructionInfoDataSource,
   type InstructionInfoResult,
@@ -73,10 +73,11 @@ export class SolanaBasicFlowRuleContextLoader
   constructor(
     @inject(instructionInfoTypes.InstructionInfoDataSource)
     private readonly dataSource: InstructionInfoDataSource,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("SolanaBasicFlowRuleContextLoader");
+    this.logger = getLogger(
+      "ContextModule",
+      "SolanaBasicFlowRuleContextLoader",
+    );
   }
 
   public canHandle(

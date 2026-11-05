@@ -1,6 +1,5 @@
 import {
   CallTaskInAppDeviceAction,
-  type LoggerPublisherService,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
@@ -19,7 +18,6 @@ export const SignMessageDeviceActionFactory = (args: {
   version?: SignMessageVersion;
   appDomain?: string;
   signers?: Uint8Array[];
-  logger?: LoggerPublisherService;
 }): CallTaskInAppDeviceAction<
   SignMessageDAOutput,
   SignMessageTaskError,
@@ -43,5 +41,4 @@ export const SignMessageDeviceActionFactory = (args: {
       requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
       skipOpenApp: args.skipOpenApp,
     },
-    logger: args.logger,
   });
