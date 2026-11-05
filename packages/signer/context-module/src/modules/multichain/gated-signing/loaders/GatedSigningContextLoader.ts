@@ -7,10 +7,10 @@ import {
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type GatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/data/GatedDescriptorDataSource";
-import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
+import { type GatedDescriptorDataSource } from "@/modules/multichain/gated-signing/data/GatedDescriptorDataSource";
+import { gatedSigningTypes } from "@/modules/multichain/gated-signing/di/gatedSigningTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/modules/multichain/pki/model/KeyId";

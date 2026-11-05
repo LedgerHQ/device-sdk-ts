@@ -1,19 +1,19 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { type GatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/data/GatedDescriptorDataSource";
-import {
-  type GatedSigningContextInput,
-  GatedSigningContextLoader,
-} from "@/modules/ethereum/gated-signing/domain/GatedSigningContextLoader";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
+import { type GatedDescriptorDataSource } from "@/modules/multichain/gated-signing/data/GatedDescriptorDataSource";
+import {
+  type GatedSigningTypedDataContextInput,
+  GatedSigningTypedDataContextLoader,
+} from "@/modules/multichain/gated-signing/loaders/GatedSigningTypedDataContextLoader";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/modules/multichain/pki/model/KeyId";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-describe("GatedSigningContextLoader", () => {
+describe("GatedSigningTypedDataContextLoader", () => {
   const mockGatedDescriptorDataSource: GatedDescriptorDataSource = {
     getGatedDescriptor: vi.fn(),
     getGatedDescriptorForTypedData: vi.fn(),
@@ -35,7 +35,7 @@ describe("GatedSigningContextLoader", () => {
     subscribers: [],
   });
 
-  const loader = new GatedSigningContextLoader(
+  const loader = new GatedSigningTypedDataContextLoader(
     mockGatedDescriptorDataSource,
     mockCertificateLoader,
     mockProxyDataSource,
@@ -51,6 +51,24 @@ describe("GatedSigningContextLoader", () => {
     ClearSignContextType.ETHEREUM_GATED_SIGNING,
   ];
 
+  const validInput: GatedSigningTypedDataContextInput = {
+    data: {
+      types: {
+        EIP712Domain: [
+          { name: "name", type: "string" },
+          { name: "chainId", type: "uint256" },
+        ],
+        Mail: [{ name: "subject", type: "string" }],
+      },
+      domain: {
+        verifyingContract: "0x1111111254fb6c44bac0bed2854e76f90643097d",
+      },
+    },
+    chainId: 1,
+    deviceModelId: DeviceModelId.STAX,
+    challenge: "test-challenge",
+  };
+
   beforeEach(() => {
     vi.resetAllMocks();
     vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
@@ -58,19 +76,12 @@ describe("GatedSigningContextLoader", () => {
     );
   });
 
-  describe("canHandle function", () => {
-    const validInput: GatedSigningContextInput = {
-      to: "0x1111111254fb6c44bac0bed2854e76f90643097d",
-      selector: "0xa1251d75",
-      chainId: 1,
-      deviceModelId: DeviceModelId.STAX,
-    };
-
-    it("should return true for valid input", () => {
+  describe("canHandle", () => {
+    it("should return true for valid typed data input", () => {
       expect(loader.canHandle(validInput, SUPPORTED_TYPES)).toBe(true);
     });
 
-    it("should return false for invalid expected type", () => {
+    it("should return false when expected types do not include GATED_SIGNING", () => {
       expect(
         loader.canHandle(validInput, [ClearSignContextType.ETHEREUM_TOKEN]),
       ).toBe(false);
@@ -86,47 +97,100 @@ describe("GatedSigningContextLoader", () => {
       [undefined, "undefined input"],
       [{}, "empty object"],
       ["string", "string input"],
-      [123, "number input"],
     ])("should return false for %s", (input, _description) => {
       expect(loader.canHandle(input, SUPPORTED_TYPES)).toBe(false);
     });
 
-    it.each([
-      [{ ...validInput, to: undefined }, "missing to"],
-      [{ ...validInput, selector: undefined }, "missing selector"],
-      [{ ...validInput, chainId: undefined }, "missing chainId"],
-      [{ ...validInput, deviceModelId: undefined }, "missing deviceModelId"],
-    ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input, SUPPORTED_TYPES)).toBe(false);
+    it("should return false for transaction-style input (selector, to)", () => {
+      const transactionInput = {
+        to: "0x1111111254fb6c44bac0bed2854e76f90643097d",
+        selector: "0xa1251d75",
+        chainId: 1,
+        deviceModelId: DeviceModelId.STAX,
+      };
+      expect(loader.canHandle(transactionInput, SUPPORTED_TYPES)).toBe(false);
     });
 
-    it.each([
-      [{ ...validInput, to: "0x" }, "empty to (0x)"],
-      [{ ...validInput, to: "not-hex" }, "non-hex to"],
-      [{ ...validInput, selector: "not-hex" }, "non-hex selector"],
-      [{ ...validInput, chainId: "1" as unknown as number }, "string chainId"],
-      [{ ...validInput, chainId: null as unknown as number }, "null chainId"],
-    ])("should return false for %s", (input, _description) => {
-      expect(loader.canHandle(input, SUPPORTED_TYPES)).toBe(false);
+    it("should return false when data is missing", () => {
+      expect(
+        loader.canHandle(
+          { chainId: 1, deviceModelId: DeviceModelId.STAX },
+          SUPPORTED_TYPES,
+        ),
+      ).toBe(false);
+    });
+
+    it("should return false when data.types is not a valid schema", () => {
+      expect(
+        loader.canHandle(
+          {
+            data: { types: "not-an-object" },
+            chainId: 1,
+            deviceModelId: DeviceModelId.STAX,
+            challenge: validInput.challenge,
+          },
+          SUPPORTED_TYPES,
+        ),
+      ).toBe(false);
+      expect(
+        loader.canHandle(
+          {
+            data: { types: {} },
+            chainId: 1,
+            deviceModelId: DeviceModelId.STAX,
+            challenge: validInput.challenge,
+          },
+          SUPPORTED_TYPES,
+        ),
+      ).toBe(true);
+    });
+
+    it("should return false when chainId or deviceModelId is missing", () => {
+      expect(
+        loader.canHandle(
+          {
+            data: validInput.data,
+            deviceModelId: DeviceModelId.STAX,
+            challenge: validInput.challenge,
+          },
+          SUPPORTED_TYPES,
+        ),
+      ).toBe(false);
+      expect(
+        loader.canHandle(
+          {
+            data: validInput.data,
+            chainId: 1,
+            challenge: validInput.challenge,
+          },
+          SUPPORTED_TYPES,
+        ),
+      ).toBe(false);
+    });
+
+    it("should return false when challenge is missing", () => {
+      expect(
+        loader.canHandle(
+          {
+            data: validInput.data,
+            chainId: 1,
+            deviceModelId: DeviceModelId.STAX,
+          },
+          SUPPORTED_TYPES,
+        ),
+      ).toBe(false);
     });
   });
 
-  describe("load function", () => {
-    const validInput: GatedSigningContextInput = {
-      to: "0x1111111254fb6c44bac0bed2854e76f90643097d",
-      selector: "0xa1251d75",
-      chainId: 1,
-      deviceModelId: DeviceModelId.STAX,
-    };
-
+  describe("load", () => {
     const signedDescriptor =
       "010122020101222a30783131313131313235346662366334346261633062656432383534653736663930363433303937642308000000000000000140086131323531643735150100";
 
-    it("should return error context when getGatedDescriptor returns Left and proxy resolution fails", async () => {
-      const error = new Error("Failed to fetch gated descriptors");
+    it("should return error context when getGatedDescriptorForTypedData returns Left and proxy resolution fails", async () => {
+      const error = new Error("No gated descriptor for schema hash");
       vi.spyOn(
         mockGatedDescriptorDataSource,
-        "getGatedDescriptor",
+        "getGatedDescriptorForTypedData",
       ).mockResolvedValue(Left(error));
       vi.spyOn(
         mockProxyDataSource,
@@ -142,27 +206,29 @@ describe("GatedSigningContextLoader", () => {
         },
       ]);
       expect(
-        mockGatedDescriptorDataSource.getGatedDescriptor,
+        mockGatedDescriptorDataSource.getGatedDescriptorForTypedData,
       ).toHaveBeenCalledWith({
-        contractAddress: validInput.to,
-        selector: validInput.selector,
+        contractAddress:
+          validInput.data.domain!.verifyingContract!.toLowerCase(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        schemaHash: expect.any(String),
         chainId: validInput.chainId,
       });
       expect(
         mockProxyDataSource.getProxyImplementationAddress,
       ).toHaveBeenCalledWith({
-        proxyAddress: validInput.to,
+        proxyAddress: validInput.data.domain!.verifyingContract!.toLowerCase(),
         chainId: validInput.chainId,
-        challenge: "",
+        challenge: validInput.challenge,
         calldata: "0x",
       });
       expect(mockCertificateLoader.loadCertificate).not.toHaveBeenCalled();
     });
 
-    it("should return gated signing context when getGatedDescriptor succeeds", async () => {
+    it("should return gated signing context when getGatedDescriptorForTypedData succeeds", async () => {
       vi.spyOn(
         mockGatedDescriptorDataSource,
-        "getGatedDescriptor",
+        "getGatedDescriptorForTypedData",
       ).mockResolvedValue(Right({ signedDescriptor }));
 
       const result = await loader.load(validInput);
@@ -174,10 +240,12 @@ describe("GatedSigningContextLoader", () => {
         certificate: mockCertificate,
       });
       expect(
-        mockGatedDescriptorDataSource.getGatedDescriptor,
+        mockGatedDescriptorDataSource.getGatedDescriptorForTypedData,
       ).toHaveBeenCalledWith({
-        contractAddress: validInput.to,
-        selector: validInput.selector,
+        contractAddress:
+          validInput.data.domain!.verifyingContract!.toLowerCase(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        schemaHash: expect.any(String),
         chainId: validInput.chainId,
       });
       expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
@@ -187,23 +255,24 @@ describe("GatedSigningContextLoader", () => {
       });
     });
 
-    it("should pass to as contractAddress to getGatedDescriptor", async () => {
-      const customTo = "0xabcdef1234567890abcdef1234567890abcdef12";
+    it("should use zero address when domain.verifyingContract is missing", async () => {
       vi.spyOn(
         mockGatedDescriptorDataSource,
-        "getGatedDescriptor",
+        "getGatedDescriptorForTypedData",
       ).mockResolvedValue(Right({ signedDescriptor }));
 
       await loader.load({
-        ...validInput,
-        to: customTo,
+        data: { types: validInput.data.types },
+        chainId: validInput.chainId,
+        deviceModelId: validInput.deviceModelId,
+        challenge: validInput.challenge,
       });
 
       expect(
-        mockGatedDescriptorDataSource.getGatedDescriptor,
+        mockGatedDescriptorDataSource.getGatedDescriptorForTypedData,
       ).toHaveBeenCalledWith(
         expect.objectContaining({
-          contractAddress: customTo,
+          contractAddress: "0x0000000000000000000000000000000000000000",
         }),
       );
     });
@@ -211,7 +280,7 @@ describe("GatedSigningContextLoader", () => {
     it("should request certificate for correct device model", async () => {
       vi.spyOn(
         mockGatedDescriptorDataSource,
-        "getGatedDescriptor",
+        "getGatedDescriptorForTypedData",
       ).mockResolvedValue(Right({ signedDescriptor }));
 
       await loader.load({
@@ -230,7 +299,7 @@ describe("GatedSigningContextLoader", () => {
       const certificateError = new Error("Certificate loading failed");
       vi.spyOn(
         mockGatedDescriptorDataSource,
-        "getGatedDescriptor",
+        "getGatedDescriptorForTypedData",
       ).mockResolvedValue(Right({ signedDescriptor }));
       vi.spyOn(mockCertificateLoader, "loadCertificate").mockRejectedValue(
         certificateError,
@@ -239,11 +308,11 @@ describe("GatedSigningContextLoader", () => {
       await expect(loader.load(validInput)).rejects.toThrow(certificateError);
     });
 
-    it("should return PROXY_INFO and GATED_SIGNING when to is proxy and gated descriptor exists for implementation", async () => {
+    it("should return PROXY_INFO and GATED_SIGNING when verifying contract is proxy and gated descriptor exists for implementation", async () => {
       const implementationAddress =
         "0xabcdef1234567890abcdef1234567890abcdef12";
       const proxySignedDescriptor = "0xproxy-descriptor";
-      vi.spyOn(mockGatedDescriptorDataSource, "getGatedDescriptor")
+      vi.spyOn(mockGatedDescriptorDataSource, "getGatedDescriptorForTypedData")
         .mockResolvedValueOnce(Left(new Error("No gated descriptor")))
         .mockResolvedValueOnce(Right({ signedDescriptor }));
       vi.spyOn(
@@ -270,20 +339,23 @@ describe("GatedSigningContextLoader", () => {
         payload: signedDescriptor,
       });
       expect(
-        mockGatedDescriptorDataSource.getGatedDescriptor,
+        mockGatedDescriptorDataSource.getGatedDescriptorForTypedData,
       ).toHaveBeenCalledTimes(2);
       expect(
-        mockGatedDescriptorDataSource.getGatedDescriptor,
+        mockGatedDescriptorDataSource.getGatedDescriptorForTypedData,
       ).toHaveBeenNthCalledWith(1, {
-        contractAddress: validInput.to,
-        selector: validInput.selector,
+        contractAddress:
+          validInput.data.domain!.verifyingContract!.toLowerCase(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        schemaHash: expect.any(String),
         chainId: validInput.chainId,
       });
       expect(
-        mockGatedDescriptorDataSource.getGatedDescriptor,
+        mockGatedDescriptorDataSource.getGatedDescriptorForTypedData,
       ).toHaveBeenNthCalledWith(2, {
         contractAddress: implementationAddress.toLowerCase(),
-        selector: validInput.selector,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        schemaHash: expect.any(String),
         chainId: validInput.chainId,
       });
     });

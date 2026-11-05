@@ -11,7 +11,6 @@ import { accountOwnershipModuleFactory } from "@/modules/concordium/account-owne
 import { calldataModuleFactory } from "@/modules/ethereum/calldata/di/calldataModuleFactory";
 import { dynamicNetworkModuleFactory } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkModuleFactory";
 import { externalPluginModuleFactory } from "@/modules/ethereum/external-plugin/di/externalPluginModuleFactory";
-import { gatedSigningModuleFactory } from "@/modules/ethereum/gated-signing/di/gatedSigningModuleFactory";
 import { nftModuleFactory } from "@/modules/ethereum/nft/di/nftModuleFactory";
 import { proxyModuleFactory } from "@/modules/ethereum/proxy/di/proxyModuleFactory";
 import { safeModuleFactory } from "@/modules/ethereum/safe/di/safeModuleFactory";
@@ -19,6 +18,7 @@ import { tokenModuleFactory as ethereumTokenModuleFactory } from "@/modules/ethe
 import { trustedNameModuleFactory } from "@/modules/ethereum/trusted-name/di/trustedNameModuleFactory";
 import { typedDataModuleFactory } from "@/modules/ethereum/typed-data/di/typedDataModuleFactory";
 import { uniswapModuleFactory } from "@/modules/ethereum/uniswap/di/uniswapModuleFactory";
+import { ethereumGatedSigningModuleFactory } from "@/modules/multichain/gated-signing/di/ethereumGatedSigningModuleFactory";
 import { nanoPkiModuleFactory } from "@/modules/multichain/pki/di/pkiModuleFactory";
 import { reporterModuleFactory } from "@/modules/multichain/reporter/di/reporterModuleFactory";
 import { signReporterModuleFactory } from "@/modules/multichain/sign-reporter/di/signReporterModuleFactory";
@@ -67,7 +67,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
         nftModuleFactory(),
         proxyModuleFactory(config.datasource),
         safeModuleFactory(),
-        gatedSigningModuleFactory(),
+        ethereumGatedSigningModuleFactory(),
         ethereumTokenModuleFactory(),
         calldataModuleFactory(),
         typedDataModuleFactory(),
