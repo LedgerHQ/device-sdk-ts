@@ -8,6 +8,7 @@ import {
   type DmkError,
   formatApduReceivedLog,
   formatApduSentLog,
+  getLogger,
   hexaStringToBuffer,
   type LoggerPublisherService,
   NoAccessibleDeviceError,
@@ -56,7 +57,7 @@ const DISCOVERY_POLL_INTERVAL_MS = 1000;
 const DISCONNECT_POLL_INTERVAL_MS = 1000;
 
 export class MockTransport implements Transport {
-  private logger: LoggerPublisherService;
+  private logger: LoggerPublisherService = getLogger("MockserverTransport");
   private mockClient: MockClient;
   private readonly identifier: TransportIdentifier = mockserverIdentifier;
   private readonly disconnectPolls = new Map<
@@ -64,12 +65,7 @@ export class MockTransport implements Transport {
     { poll: ReturnType<typeof setInterval>; onDisconnect: DisconnectHandler }
   >();
 
-  constructor(
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    mockUrl: string,
-    sessionToken?: string,
-  ) {
-    this.logger = loggerServiceFactory("MockTransport");
+  constructor(mockUrl: string, sessionToken?: string) {
     this.mockClient = new MockClient(mockUrl, { token: sessionToken });
   }
 
@@ -299,9 +295,5 @@ export class MockTransport implements Transport {
  */
 export const mockserverTransportFactory =
   (mockUrl?: string, sessionToken?: string): TransportFactory =>
-  ({ config, loggerServiceFactory }) =>
-    new MockTransport(
-      loggerServiceFactory,
-      mockUrl ?? config.mockUrl,
-      sessionToken,
-    );
+  ({ config }) =>
+    new MockTransport(mockUrl ?? config.mockUrl, sessionToken);

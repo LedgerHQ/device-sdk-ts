@@ -5,7 +5,8 @@ import { type DeviceModelDataSource } from "@api/device-model/data/DeviceModelDa
 import { type ApduReceiverServiceFactory } from "@api/device-session/service/ApduReceiverService";
 import { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
 import { type DmkConfig } from "@api/DmkConfig";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import {
   NoTransportProvidedError,
   TransportAlreadyExistsError,
@@ -15,7 +16,6 @@ import { TransportConnectedDevice } from "@api/transport/model/TransportConnecte
 import { Transport } from "@api/types";
 import { deviceModelTypes } from "@internal/device-model/di/deviceModelTypes";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 
 import { TransportService } from "./TransportService";
@@ -30,10 +30,6 @@ export class DefaultTransportService implements TransportService {
     _transports: TransportFactory[],
     @inject(transportDiTypes.DmkConfig)
     private readonly _config: DmkConfig,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    private readonly _loggerModuleFactory: (
-      tag: string,
-    ) => LoggerPublisherService,
     @inject(deviceModelTypes.DeviceModelDataSource)
     private readonly _deviceModelDataSource: DeviceModelDataSource,
     @inject(deviceSessionTypes.ApduSenderServiceFactory)
@@ -41,7 +37,7 @@ export class DefaultTransportService implements TransportService {
     @inject(deviceSessionTypes.ApduReceiverServiceFactory)
     private readonly _apduReceiverServiceFactory: ApduReceiverServiceFactory,
   ) {
-    this._logger = _loggerModuleFactory("TransportService");
+    this._logger = getLogger("TransportService");
 
     if (_transports.length === 0) {
       this._logger.warn(
@@ -67,7 +63,6 @@ export class DefaultTransportService implements TransportService {
   ): Either<TransportAlreadyExistsError, void> {
     const transport = factory({
       deviceModelDataSource: this._deviceModelDataSource,
-      loggerServiceFactory: this._loggerModuleFactory,
       config: this._config,
       apduSenderServiceFactory: this._apduSenderServiceFactory,
       apduReceiverServiceFactory: this._apduReceiverServiceFactory,

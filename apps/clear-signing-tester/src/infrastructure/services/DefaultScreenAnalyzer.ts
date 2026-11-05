@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -17,10 +20,8 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
   constructor(
     @inject(TYPES.ScreenReader)
     private readonly screenReader: ScreenReader,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("screen-analyzer");
+    this.logger = getLogger("screen-analyzer");
   }
 
   async analyzeAccumulatedTexts(

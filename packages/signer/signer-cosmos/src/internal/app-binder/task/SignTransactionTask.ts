@@ -2,6 +2,7 @@ import {
   APDU_MAX_PAYLOAD,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -22,10 +23,14 @@ type SignTransactionTaskArgs = {
 };
 
 export class SignTransactionTask {
+  private readonly logger: LoggerPublisherService = getLogger(
+    "SignerCosmos",
+    "SignTransactionTask",
+  );
+
   constructor(
     private api: InternalApi,
     private args: SignTransactionTaskArgs,
-    private logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<

@@ -73,16 +73,14 @@ const dmk = new DeviceManagementKitBuilder()
 const dmk = new DeviceManagementKitBuilder()
   .addTransport(
     ({
-      loggerServiceFactory,
       config,
     }: {
-      loggerServiceFactory: (tag: string) => LoggerPublisherService;
       config: DmkConfig;
     }) => {
       // custom code
       const speculosUrl = "http://localhost:3333";
 
-      return new SpeculosTransport(loggerServiceFactory, config, speculosUrl);
+      return new SpeculosTransport(config, speculosUrl);
     },
   )
   .build();

@@ -6,10 +6,10 @@ import {
   ExecuteDeviceActionReturnType,
 } from "@api/device-action/DeviceAction";
 import { DmkError } from "@api/Error";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 
 export type ExecuteDeviceActionUseCaseArgs<
   Output,
@@ -37,11 +37,9 @@ export class ExecuteDeviceActionUseCase {
   constructor(
     @inject(deviceSessionTypes.DeviceSessionService)
     sessionService: DeviceSessionService,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._sessionService = sessionService;
-    this._logger = loggerFactory("ExecuteDeviceActionUseCase");
+    this._logger = getLogger("ExecuteDeviceActionUseCase");
   }
 
   /**

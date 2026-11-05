@@ -13,7 +13,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { EditExternalAddressScopeCommand } from "@internal/app-binder/command/EditExternalAddressScopeCommand";
@@ -47,7 +46,6 @@ export type SendEditExternalAddressScopeTaskArgs = {
   readonly groupHandle: Uint8Array;
   readonly hmacProof: Uint8Array;
   readonly hmacRest: Uint8Array;
-  readonly logger?: LoggerPublisherService;
 };
 
 export class SendEditExternalAddressScopeTask {
@@ -64,7 +62,6 @@ export class SendEditExternalAddressScopeTask {
       p1: SUB_CMD_EDIT_SCOPE,
       makeCommand: (chunk, p2) =>
         new EditExternalAddressScopeCommand({ data: chunk, p2 }),
-      logger: this.args.logger,
       commandTag: "SendEditExternalAddressScopeTask",
     })) as CommandResult<
       { readonly hmacRest?: Uint8Array },

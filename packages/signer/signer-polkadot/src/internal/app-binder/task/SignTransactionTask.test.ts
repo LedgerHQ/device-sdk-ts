@@ -4,7 +4,6 @@ import {
   type InternalApi,
   InvalidArgumentError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -19,16 +18,12 @@ const POLKADOT_PATH = "44'/354'/0'/0'/0'";
 describe("SignTransactionTask", () => {
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
-  let loggerMock: LoggerPublisherService;
 
   beforeEach(() => {
     sendCommandMock = vi.fn();
     apiMock = {
       sendCommand: sendCommandMock,
     } as unknown as InternalApi;
-    loggerMock = {
-      debug: vi.fn(),
-    } as unknown as LoggerPublisherService;
   });
 
   describe("run", () => {
@@ -42,11 +37,11 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(CommandResultFactory({ data: signature })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: POLKADOT_PATH, blob, metadata },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: POLKADOT_PATH,
+        blob,
+        metadata,
+      });
 
       // ACT
       const result = await task.run();
@@ -69,11 +64,11 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(CommandResultFactory({ data: signature })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: POLKADOT_PATH, blob, metadata },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: POLKADOT_PATH,
+        blob,
+        metadata,
+      });
 
       // ACT
       await task.run();
@@ -100,11 +95,11 @@ describe("SignTransactionTask", () => {
         ) // ADD
         .mockResolvedValueOnce(CommandResultFactory({ data: signature })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: POLKADOT_PATH, blob, metadata },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: POLKADOT_PATH,
+        blob,
+        metadata,
+      });
 
       // ACT
       const result = await task.run();
@@ -136,11 +131,11 @@ describe("SignTransactionTask", () => {
         ) // ADD 3
         .mockResolvedValueOnce(CommandResultFactory({ data: signature })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: POLKADOT_PATH, blob, metadata },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: POLKADOT_PATH,
+        blob,
+        metadata,
+      });
 
       // ACT
       const result = await task.run();
@@ -163,11 +158,11 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(CommandResultFactory({ data: signature })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: POLKADOT_PATH, blob, metadata },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: POLKADOT_PATH,
+        blob,
+        metadata,
+      });
 
       // ACT
       await task.run();
@@ -199,15 +194,11 @@ describe("SignTransactionTask", () => {
       });
       sendCommandMock.mockResolvedValueOnce(commandError);
 
-      const task = new SignTransactionTask(
-        apiMock,
-        {
-          derivationPath: POLKADOT_PATH,
-          blob: new Uint8Array(10),
-          metadata: new Uint8Array(5),
-        },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: POLKADOT_PATH,
+        blob: new Uint8Array(10),
+        metadata: new Uint8Array(5),
+      });
 
       // ACT
       const result = await task.run();
@@ -238,11 +229,11 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(commandError); // ADD fails
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: POLKADOT_PATH, blob, metadata },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: POLKADOT_PATH,
+        blob,
+        metadata,
+      });
 
       // ACT
       const result = await task.run();
@@ -259,15 +250,11 @@ describe("SignTransactionTask", () => {
 
     it("should reject an empty blob without sending any command", async () => {
       // ARRANGE
-      const task = new SignTransactionTask(
-        apiMock,
-        {
-          derivationPath: POLKADOT_PATH,
-          blob: new Uint8Array(0),
-          metadata: new Uint8Array(0),
-        },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: POLKADOT_PATH,
+        blob: new Uint8Array(0),
+        metadata: new Uint8Array(0),
+      });
 
       // ACT
       const result = await task.run();

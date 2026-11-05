@@ -13,14 +13,6 @@ import { type TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSou
 import { type UniswapContextLoader } from "@/modules/ethereum/uniswap/domain/UniswapContextLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const dappInfosBuilder = ({
   abi,
   selectorDetails,
@@ -71,7 +63,6 @@ describe("ExternalPluginContextLoader", () => {
     mockExternalPluginDataSource,
     mockTokenDataSource,
     mockUniswapLoader,
-    mockLoggerFactory,
   );
 
   beforeEach(() => {

@@ -68,9 +68,7 @@ export class RestoreAppsStorageDeviceAction extends XStateDeviceAction<
         ),
         goToDashboard: goToDashboard(internalAPI, this.input.unlockTimeout),
         initRestoreAppStorage: fromPromise(initRestoreAppStorage(internalAPI)),
-        restoreAppStorage: fromPromise(
-          restoreAppStorage(internalAPI, this.getLoggerFactory(internalAPI)),
-        ),
+        restoreAppStorage: fromPromise(restoreAppStorage(internalAPI)),
         commitRestoreAppStorage: fromPromise(
           commitRestoreAppStorage(internalAPI),
         ),

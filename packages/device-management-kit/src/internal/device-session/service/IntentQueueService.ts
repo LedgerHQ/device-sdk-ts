@@ -1,5 +1,6 @@
 import { finalize, type Observable, Subject, type Subscription } from "rxjs";
 
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import {
   type DeviceSessionEventDispatcher,
   SessionEvents,
@@ -91,12 +92,9 @@ export class IntentQueueService {
   private _currentSubscription: Subscription | null = null;
 
   constructor(
-    private readonly loggerModuleFactory: (
-      tag: string,
-    ) => LoggerPublisherService,
     private readonly sessionEventDispatcher: DeviceSessionEventDispatcher,
   ) {
-    this._logger = this.loggerModuleFactory("IntentQueueService");
+    this._logger = getLogger("IntentQueueService");
   }
 
   /**

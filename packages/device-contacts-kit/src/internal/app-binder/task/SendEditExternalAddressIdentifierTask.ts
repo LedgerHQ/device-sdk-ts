@@ -13,7 +13,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { EditExternalAddressIdentifierCommand } from "@internal/app-binder/command/EditExternalAddressIdentifierCommand";
@@ -47,7 +46,6 @@ export type SendEditExternalAddressIdentifierTaskArgs = {
   readonly groupHandle: Uint8Array;
   readonly hmacProof: Uint8Array;
   readonly hmacRest: Uint8Array;
-  readonly logger?: LoggerPublisherService;
 };
 
 export class SendEditExternalAddressIdentifierTask {
@@ -64,7 +62,6 @@ export class SendEditExternalAddressIdentifierTask {
       p1: SUB_CMD_EDIT_IDENTIFIER,
       makeCommand: (chunk, p2) =>
         new EditExternalAddressIdentifierCommand({ data: chunk, p2 }),
-      logger: this.args.logger,
       commandTag: "SendEditExternalAddressIdentifierTask",
     })) as CommandResult<
       { readonly hmacRest?: Uint8Array },

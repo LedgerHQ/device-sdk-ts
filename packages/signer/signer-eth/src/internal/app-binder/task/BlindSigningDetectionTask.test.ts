@@ -26,7 +26,10 @@ const mockLogger = {
   subscribers: [],
 };
 
-const mockLoggerFactory = (_tag: string) => mockLogger;
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: () => mockLogger,
+}));
 
 const baseInput: BlindSigningDetectionInput = {
   type: "transaction",
@@ -63,7 +66,6 @@ describe("BlindSigningDetectionTask", () => {
         usedFallback: false,
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -92,7 +94,6 @@ describe("BlindSigningDetectionTask", () => {
         usedFallback: false,
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -112,7 +113,6 @@ describe("BlindSigningDetectionTask", () => {
         usedFallback: true,
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -135,7 +135,6 @@ describe("BlindSigningDetectionTask", () => {
         usedFallback: true,
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -162,7 +161,6 @@ describe("BlindSigningDetectionTask", () => {
         usedFallback: false,
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -181,7 +179,6 @@ describe("BlindSigningDetectionTask", () => {
         contextTypes: [ClearSignContextType.ETHEREUM_TRANSACTION_CHECK],
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -202,7 +199,6 @@ describe("BlindSigningDetectionTask", () => {
         ],
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -223,7 +219,6 @@ describe("BlindSigningDetectionTask", () => {
         ],
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -241,7 +236,6 @@ describe("BlindSigningDetectionTask", () => {
         contextTypes: [],
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -259,7 +253,6 @@ describe("BlindSigningDetectionTask", () => {
         contextTypes: [],
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -277,7 +270,6 @@ describe("BlindSigningDetectionTask", () => {
         deviceModelId: DeviceModelId.NANO_X,
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -298,7 +290,6 @@ describe("BlindSigningDetectionTask", () => {
         partialContextErrors: 2,
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -324,7 +315,6 @@ describe("BlindSigningDetectionTask", () => {
         partialContextErrors: 0,
       },
       contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
     };
 
     const task = new BlindSigningDetectionTask(args);
@@ -342,7 +332,6 @@ describe("BlindSigningDetectionTask", () => {
       const args: BlindSigningDetectionTaskArgs = {
         input: { ...baseInput, hasContext: false, usedFallback: false },
         contextModule: mockContextModule,
-        loggerFactory: mockLoggerFactory,
       };
 
       await new BlindSigningDetectionTask(args).run();
@@ -376,7 +365,6 @@ describe("BlindSigningDetectionTask", () => {
           usedFallback: false,
         },
         contextModule: mockContextModule,
-        loggerFactory: mockLoggerFactory,
       };
 
       await new BlindSigningDetectionTask(args).run();
@@ -398,7 +386,6 @@ describe("BlindSigningDetectionTask", () => {
           partialContextErrors: 3,
         },
         contextModule: mockContextModule,
-        loggerFactory: mockLoggerFactory,
       };
 
       await new BlindSigningDetectionTask(args).run();
@@ -421,7 +408,6 @@ describe("BlindSigningDetectionTask", () => {
           partialContextErrors: 0,
         },
         contextModule: mockContextModule,
-        loggerFactory: mockLoggerFactory,
       };
 
       await new BlindSigningDetectionTask(args).run();
@@ -442,7 +428,6 @@ describe("BlindSigningDetectionTask", () => {
           selectorId: "0xa9059cbb",
         },
         contextModule: mockContextModule,
-        loggerFactory: mockLoggerFactory,
       };
 
       await new BlindSigningDetectionTask(args).run();
@@ -457,7 +442,6 @@ describe("BlindSigningDetectionTask", () => {
       const args: BlindSigningDetectionTaskArgs = {
         input: { ...baseInput, hasContext: true, usedFallback: false },
         contextModule: mockContextModule,
-        loggerFactory: mockLoggerFactory,
       };
 
       await new BlindSigningDetectionTask(args).run();
@@ -476,7 +460,6 @@ describe("BlindSigningDetectionTask", () => {
       const args: BlindSigningDetectionTaskArgs = {
         input: { ...baseInput, hasContext: false, usedFallback: false },
         contextModule: mockContextModule,
-        loggerFactory: mockLoggerFactory,
       };
 
       const result = await new BlindSigningDetectionTask(args).run();
@@ -497,7 +480,6 @@ describe("BlindSigningDetectionTask", () => {
       const args: BlindSigningDetectionTaskArgs = {
         input: { ...baseInput, hasContext: false, usedFallback: false },
         contextModule: moduleWithoutSignReport,
-        loggerFactory: mockLoggerFactory,
       };
 
       await expect(new BlindSigningDetectionTask(args).run()).resolves.toEqual({

@@ -11,6 +11,7 @@ import {
   type CommandResult,
   CommandResultFactory,
   type DeviceModelId,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -61,7 +62,6 @@ export type ProvideGenericClearSignContextTaskArgs = {
   /** Challenge-bound Phase A requirements, fetched (with a fresh challenge each) here. */
   readonly challengeBoundRequirements: ChallengeBoundRequirements;
   readonly contextModule: ContextModule;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
   readonly network?: string;
   readonly normaliser?: SolanaMessageNormaliser;
 };
@@ -85,7 +85,10 @@ export class ProvideGenericClearSignContextTask {
     private readonly api: InternalApi,
     private readonly args: ProvideGenericClearSignContextTaskArgs,
   ) {
-    this.logger = args.loggerFactory("ProvideGenericClearSignContextTask");
+    this.logger = getLogger(
+      "SignerSolana",
+      "ProvideGenericClearSignContextTask",
+    );
     this.network = args.network ?? DEFAULT_NETWORK;
     this.deps = {
       api,
@@ -635,7 +638,6 @@ export class ProvideGenericClearSignContextTask {
           isFirstChunk: !chunkArgs.extend,
           hasMore: chunkArgs.more,
         }),
-      loggerFactory: this.args.loggerFactory,
     }).run();
 
     if (!isSuccessCommandResult(result)) {

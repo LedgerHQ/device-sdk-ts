@@ -74,9 +74,7 @@ export class CreateBackupDeviceAction extends XStateDeviceAction<
           this.input.unlockTimeout,
           true,
         ),
-        backupAppsStorage: fromPromise(
-          backupAppsStorage(internalAPI, this.getLoggerFactory(internalAPI)),
-        ),
+        backupAppsStorage: fromPromise(backupAppsStorage(internalAPI)),
       },
       guards: {
         isDeviceOnDashboard: ({ context }) =>

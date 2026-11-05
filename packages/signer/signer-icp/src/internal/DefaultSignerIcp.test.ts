@@ -8,12 +8,10 @@ import { DefaultSignerIcp } from "./DefaultSignerIcp";
 
 describe("DefaultSignerIcp", () => {
   const sessionId = "test-session-id" as DeviceSessionId;
-  const mockLoggerFactory = () => ({});
 
   const makeSigner = (executeDeviceActionMock: ReturnType<typeof vi.fn>) => {
     const dmkMock = {
       executeDeviceAction: executeDeviceActionMock,
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     return new DefaultSignerIcp({ dmk: dmkMock, sessionId });
   };

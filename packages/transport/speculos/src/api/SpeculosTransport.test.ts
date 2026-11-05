@@ -1,7 +1,6 @@
 import {
   DeviceModelId,
   type DmkConfig,
-  type LoggerPublisherService,
   type TransportArgs,
   type TransportConnectedDevice,
 } from "@ledgerhq/device-management-kit";
@@ -27,14 +26,6 @@ vi.mock("@internal/datasource/HttpSpeculosDatasource", () => ({
   })),
 }));
 
-const loggerFactory = () =>
-  ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }) as unknown as LoggerPublisherService;
-
 describe("SpeculosTransport", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -50,7 +41,6 @@ describe("SpeculosTransport", () => {
 
   const connect = async () => {
     const transport = new SpeculosTransport(
-      loggerFactory,
       {} as DmkConfig,
       "http://localhost:5000",
     );
@@ -83,7 +73,6 @@ describe("SpeculosTransport", () => {
 
     it("should pass the bearer token to the datasource", () => {
       new SpeculosTransport(
-        loggerFactory,
         {} as DmkConfig,
         "http://localhost:5000",
         true,
@@ -101,7 +90,6 @@ describe("SpeculosTransport", () => {
     it("should default to the local Speculos without a bearer token", () => {
       speculosTransportFactory()({
         config: {} as DmkConfig,
-        loggerServiceFactory: loggerFactory,
       } as unknown as TransportArgs);
 
       expect(HttpSpeculosDatasource).toHaveBeenCalledWith(
@@ -119,7 +107,6 @@ describe("SpeculosTransport", () => {
         { bearerToken },
       )({
         config: {} as DmkConfig,
-        loggerServiceFactory: loggerFactory,
       } as unknown as TransportArgs);
 
       expect(HttpSpeculosDatasource).toHaveBeenCalledWith(

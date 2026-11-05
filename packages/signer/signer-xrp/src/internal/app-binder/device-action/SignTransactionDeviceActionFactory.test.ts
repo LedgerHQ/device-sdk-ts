@@ -1,7 +1,6 @@
 import {
   CommandResultFactory,
   type InternalApi,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Just } from "purify-ts";
 
@@ -11,21 +10,11 @@ import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/
 
 import { SignTransactionDeviceActionFactory } from "./SignTransactionDeviceActionFactory";
 
-const loggerFactory = () =>
-  ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    subscribers: [],
-  }) as unknown as LoggerPublisherService;
-
 describe("SignTransactionDeviceActionFactory", () => {
   const defaultArgs = {
     derivationPath: "44'/144'/0'/0/0",
     transaction: Uint8Array.from([0x12, 0x00, 0x00]),
     skipOpenApp: false,
-    loggerFactory,
   };
 
   /** Run the sign dependency the factory built and return the Sign APDUs it sent. */

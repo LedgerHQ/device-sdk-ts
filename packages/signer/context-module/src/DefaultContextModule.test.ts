@@ -18,14 +18,6 @@ import {
 } from "./shared/model/ClearSignContext";
 import { DefaultContextModule } from "./DefaultContextModule";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const contextLoaderStubBuilder = (canHandle: boolean): ContextLoader => {
   return {
     load: vi.fn(),
@@ -71,7 +63,6 @@ describe("DefaultContextModule", () => {
     appSource: "third-party",
     chain: ContextModuleChainID.Ethereum,
     originToken: "originToken",
-    loggerFactory: mockLoggerFactory,
   };
 
   beforeEach(() => {

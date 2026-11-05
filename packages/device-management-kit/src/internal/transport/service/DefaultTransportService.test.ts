@@ -8,7 +8,10 @@ import { type ApduSenderServiceFactory } from "@api/device-session/service/ApduS
 import { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
 import { defaultApduSenderServiceStubBuilder } from "@api/device-session/service/DefaultApduSenderService.stub";
 import { type DmkConfig } from "@api/DmkConfig";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { DefaultLoggerPublisherService } from "@api/global/services/logger/DefaultLoggerPublisherService";
+import { type LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { type LogPublisherOptions } from "@api/global/services/logger/model/LogPublisherOptions";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import {
   NoTransportProvidedError,
@@ -18,10 +21,10 @@ import {
   type Transport,
   type TransportFactory,
 } from "@api/transport/model/Transport";
-import { type LogPublisherOptions } from "@internal/logger-publisher/model/LogPublisherOptions";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DefaultTransportService } from "./DefaultTransportService";
+
+vi.mock("@api/global/services/logger/utils/getLogger");
 
 let apduSenderService: ApduSenderServiceFactory;
 let apduReceiverService: ApduReceiverServiceFactory;
@@ -33,16 +36,16 @@ let transportFactory2: TransportFactory;
 let transport2: Transport;
 let deviceModelDataSource: DeviceModelDataSource;
 let transportService: DefaultTransportService;
-let loggerFactory: () => LoggerPublisherService;
 
 describe("TransportService", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "transport-service");
+    vi.mocked(getLogger).mockReturnValue(logger);
     apduSenderService = vi.fn().mockImplementation(() => {
-      return defaultApduSenderServiceStubBuilder(undefined, () => logger);
+      return defaultApduSenderServiceStubBuilder(undefined);
     });
     apduReceiverService = vi.fn().mockImplementation(() => {
-      return defaultApduReceiverServiceStubBuilder(undefined, () => logger);
+      return defaultApduReceiverServiceStubBuilder(undefined);
     });
     deviceModelDataSource = new StaticDeviceModelDataSource();
     config = {} as DmkConfig;
@@ -52,7 +55,6 @@ describe("TransportService", () => {
     vi.spyOn(transport2, "getIdentifier").mockReturnValue("transport2");
     transportFactory = vi.fn().mockImplementation(() => transport);
     transportFactory2 = vi.fn().mockImplementation(() => transport2);
-    loggerFactory = vi.fn().mockImplementation(() => logger);
   });
 
   afterEach(() => {
@@ -73,7 +75,7 @@ describe("TransportService", () => {
           transportService = new DefaultTransportService(
             [],
             config,
-            loggerFactory,
+
             deviceModelDataSource,
             apduSenderService,
             apduReceiverService,
@@ -92,7 +94,7 @@ describe("TransportService", () => {
         transportService = new DefaultTransportService(
           [transportFactory],
           config,
-          loggerFactory,
+
           deviceModelDataSource,
           apduSenderService,
           apduReceiverService,
@@ -105,7 +107,7 @@ describe("TransportService", () => {
         transportService = new DefaultTransportService(
           [transportFactory, transportFactory2],
           config,
-          loggerFactory,
+
           deviceModelDataSource,
           apduSenderService,
           apduReceiverService,
@@ -120,7 +122,7 @@ describe("TransportService", () => {
           new DefaultTransportService(
             [transportFactory, transportFactory],
             config,
-            loggerFactory,
+
             deviceModelDataSource,
             apduSenderService,
             apduReceiverService,
@@ -137,7 +139,7 @@ describe("TransportService", () => {
       transportService = new DefaultTransportService(
         [transportFactory],
         config,
-        loggerFactory,
+
         deviceModelDataSource,
         apduSenderService,
         apduReceiverService,
@@ -155,7 +157,6 @@ describe("TransportService", () => {
       transportService.addTransport(transportFactory2);
 
       expect(transportFactory2).toHaveBeenCalledWith({
-        loggerServiceFactory: loggerFactory,
         config,
         apduSenderServiceFactory: apduSenderService,
         apduReceiverServiceFactory: apduReceiverService,
@@ -177,7 +178,7 @@ describe("TransportService", () => {
       transportService = new DefaultTransportService(
         [transportFactory],
         config,
-        loggerFactory,
+
         deviceModelDataSource,
         apduSenderService,
         apduReceiverService,
@@ -200,7 +201,7 @@ describe("TransportService", () => {
       transportService = new DefaultTransportService(
         [transportFactory],
         config,
-        loggerFactory,
+
         deviceModelDataSource,
         apduSenderService,
         apduReceiverService,
@@ -213,7 +214,7 @@ describe("TransportService", () => {
       transportService = new DefaultTransportService(
         [transportFactory, transportFactory2],
         config,
-        loggerFactory,
+
         deviceModelDataSource,
         apduSenderService,
         apduReceiverService,

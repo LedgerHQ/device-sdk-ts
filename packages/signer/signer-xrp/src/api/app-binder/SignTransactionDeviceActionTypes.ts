@@ -1,7 +1,6 @@
 import {
   type CommandErrorResult,
   type ExecuteDeviceActionReturnType,
-  type LoggerPublisherService,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
   type UserInteractionRequired,
@@ -31,7 +30,6 @@ export type SignTransactionDAInput = {
   readonly transaction: Uint8Array;
   readonly skipOpenApp: boolean;
   readonly curve: Curve;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type SignTransactionDAError =

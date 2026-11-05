@@ -6,7 +6,6 @@ import {
   GetAppAndVersionCommand,
   type TransportConnectedDevice,
 } from "@api/index";
-import type { LoggerPublisherService } from "@api/types";
 import { DEVICE_SESSION_REFRESHER_POLLING_INTERVAL } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import {
   type DeviceSessionEventDispatcher,
@@ -18,12 +17,6 @@ import { DevicePinger } from "./DevicePinger";
 
 describe("DevicePinger", () => {
   let dummySendCommandFunction: ReturnType<typeof vi.fn>;
-  let mockLogger: LoggerPublisherService & {
-    info: ReturnType<typeof vi.fn>;
-    warn: ReturnType<typeof vi.fn>;
-    error: ReturnType<typeof vi.fn>;
-  };
-  const mockedLoggerModuleFactory = vi.fn(() => mockLogger);
   let eventSubject: Subject<NewEvent>;
   let mockSessionEventDispatcher: DeviceSessionEventDispatcher;
   let dummyConnectedDevice: TransportConnectedDevice;
@@ -37,13 +30,6 @@ describe("DevicePinger", () => {
     } as unknown as DeviceSessionEventDispatcher;
 
     dummySendCommandFunction = vi.fn();
-    mockLogger = {
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      debug: vi.fn(),
-      subscribers: [],
-    };
 
     dummyConnectedDevice = {
       deviceModel: {
@@ -52,7 +38,6 @@ describe("DevicePinger", () => {
     } as unknown as TransportConnectedDevice;
 
     devicePinger = new DevicePinger(
-      mockedLoggerModuleFactory,
       dummyConnectedDevice,
       mockSessionEventDispatcher,
       dummySendCommandFunction,
@@ -102,7 +87,6 @@ describe("DevicePinger", () => {
     dummyConnectedDevice.deviceModel.id = DeviceModelId.NANO_S;
     devicePinger.unsubscribe();
     devicePinger = new DevicePinger(
-      mockedLoggerModuleFactory,
       dummyConnectedDevice,
       mockSessionEventDispatcher,
       dummySendCommandFunction,

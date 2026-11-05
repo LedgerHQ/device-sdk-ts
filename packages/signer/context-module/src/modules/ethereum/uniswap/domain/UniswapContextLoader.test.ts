@@ -16,14 +16,6 @@ import {
   UniswapContextLoader,
 } from "./UniswapContextLoader";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("UniswapContextLoader", () => {
   const commandDecoderMock: CommandDecoderDataSource = {
     decode: vi.fn(),
@@ -38,7 +30,6 @@ describe("UniswapContextLoader", () => {
       loader = new UniswapContextLoader(
         new DefaultCommandDecoderDataSource(new EthersAbiDecoderDataSource()),
         tokenDataSourceMock as unknown as HttpTokenDataSource,
-        mockLoggerFactory,
       );
     });
 
@@ -101,7 +92,6 @@ describe("UniswapContextLoader", () => {
         loader = new UniswapContextLoader(
           new DefaultCommandDecoderDataSource(new EthersAbiDecoderDataSource()),
           tokenDataSourceMock as unknown as HttpTokenDataSource,
-          mockLoggerFactory,
         );
       });
 
@@ -207,7 +197,6 @@ describe("UniswapContextLoader", () => {
         loader = new UniswapContextLoader(
           commandDecoderMock,
           tokenDataSourceMock as unknown as HttpTokenDataSource,
-          mockLoggerFactory,
         );
       });
 

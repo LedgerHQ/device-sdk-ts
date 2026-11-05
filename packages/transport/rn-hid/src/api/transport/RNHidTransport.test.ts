@@ -1,7 +1,6 @@
 import {
   DeviceModelId,
   DisconnectError,
-  type LoggerPublisherService,
   LogLevel,
   type LogParams,
   OpeningConnectionError,
@@ -18,6 +17,19 @@ import { HidTransportSendApduUnknownError } from "./Errors";
 import { type NativeModuleWrapper } from "./NativeModuleWrapper";
 import { RNHidTransport } from "./RNHidTransport";
 import { type InternalDeviceDisconnected } from "./types";
+
+const fakeLogger = vi.hoisted(() => ({
+  error: vi.fn(),
+  warn: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+  child: vi.fn(),
+}));
+
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  getLogger: () => fakeLogger,
+}));
 
 const deviceModelDataSource = new StaticDeviceModelDataSource();
 
@@ -51,14 +63,6 @@ describe("RNHidTransport", () => {
   let deviceDisconnectedSubject: Subject<InternalDeviceDisconnected>;
   let transportLogsSubject: Subject<LogParams>;
   let nativeModuleWrapper: NativeModuleWrapper;
-  const fakeLogger: LoggerPublisherService = {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-    subscribers: [],
-  };
-  const loggerServiceFactory = vi.fn(() => fakeLogger);
 
   const wrapperStartScan = vi.fn();
   const wrapperStopScan = vi.fn();
@@ -99,11 +103,7 @@ describe("RNHidTransport", () => {
 
   test("getIdentifier returns TRANSPORT_IDENTIFIER", () => {
     // given
-    const transport = new RNHidTransport(
-      true,
-      nativeModuleWrapper,
-      loggerServiceFactory,
-    );
+    const transport = new RNHidTransport(true, nativeModuleWrapper);
     // then
     expect(transport.getIdentifier()).toBe(TRANSPORT_IDENTIFIER);
   });
@@ -114,7 +114,6 @@ describe("RNHidTransport", () => {
       const transportTrue = new RNHidTransport(
         true, // when
         nativeModuleWrapper,
-        loggerServiceFactory,
       );
       // then
       expect(transportTrue.isSupported()).toBe(true);
@@ -125,7 +124,6 @@ describe("RNHidTransport", () => {
       const transportFalse = new RNHidTransport(
         false, // when
         nativeModuleWrapper,
-        loggerServiceFactory,
       );
       // then
       expect(transportFalse.isSupported()).toBe(false);
@@ -134,7 +132,7 @@ describe("RNHidTransport", () => {
 
   test("constructor subscribes to transport logs and calls logger methods", () => {
     // given
-    new RNHidTransport(true, nativeModuleWrapper, loggerServiceFactory);
+    new RNHidTransport(true, nativeModuleWrapper);
 
     // when
     const logEvent: LogParams = [
@@ -142,6 +140,7 @@ describe("RNHidTransport", () => {
       "Test message",
       {
         tag: "TestTag",
+        tags: ["TestTag"],
         data: { key: "value" },
         timestamp: 123456789,
       },
@@ -151,6 +150,7 @@ describe("RNHidTransport", () => {
     // then
     expect(fakeLogger.info).toHaveBeenCalledWith("Test message", {
       tag: "TestTag",
+      tags: ["TestTag"],
       data: { key: "value" },
       timestamp: 123456789,
     });
@@ -159,11 +159,7 @@ describe("RNHidTransport", () => {
   describe("startDiscovering", () => {
     it("calls startScan", () => {
       // given
-      const transport = new RNHidTransport(
-        true,
-        nativeModuleWrapper,
-        loggerServiceFactory,
-      );
+      const transport = new RNHidTransport(true, nativeModuleWrapper);
 
       // when
       transport.startDiscovering().subscribe();
@@ -175,11 +171,7 @@ describe("RNHidTransport", () => {
     it("emits new discovered devices", () => {
       return new Promise<void>((resolve, reject) => {
         // given
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
         const discoveredDevices: TransportDiscoveredDevice[] = [];
 
         // when
@@ -220,11 +212,7 @@ describe("RNHidTransport", () => {
     it("propagates startScan error", () => {
       return new Promise<void>((resolve, reject) => {
         // given
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
 
         // when
         const error = new Error("scan failed");
@@ -248,11 +236,7 @@ describe("RNHidTransport", () => {
   describe("stopDiscovering", () => {
     it("calls stopScan", async () => {
       // given
-      const transport = new RNHidTransport(
-        true,
-        nativeModuleWrapper,
-        loggerServiceFactory,
-      );
+      const transport = new RNHidTransport(true, nativeModuleWrapper);
 
       // when
       await transport.stopDiscovering();
@@ -263,11 +247,7 @@ describe("RNHidTransport", () => {
 
     it("logs error when stopScan fails", async () => {
       // given
-      const transport = new RNHidTransport(
-        true,
-        nativeModuleWrapper,
-        loggerServiceFactory,
-      );
+      const transport = new RNHidTransport(true, nativeModuleWrapper);
 
       // when
       const error = new Error("stop failed");
@@ -286,11 +266,7 @@ describe("RNHidTransport", () => {
     it("emits arrays of discovered devices", () => {
       return new Promise<void>((resolve, reject) => {
         // given
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
         const observedEvents: Array<Array<TransportDiscoveredDevice>> = [];
 
         // when
@@ -330,11 +306,7 @@ describe("RNHidTransport", () => {
     it("propagates startScan error", () => {
       return new Promise<void>((resolve, reject) => {
         // given
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
 
         // when
         const error = new Error("start scan failed");
@@ -355,11 +327,7 @@ describe("RNHidTransport", () => {
 
     it("calls stopScan on unsubscribe", () => {
       // given
-      const transport = new RNHidTransport(
-        true,
-        nativeModuleWrapper,
-        loggerServiceFactory,
-      );
+      const transport = new RNHidTransport(true, nativeModuleWrapper);
 
       // when
       const error = new Error("stop scan failed");
@@ -380,11 +348,7 @@ describe("RNHidTransport", () => {
         wrapperConnectDevice.mockResolvedValueOnce(
           Right({ sessionId, transportDeviceModel: fakeDeviceModel }),
         );
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
 
         // when
         const result = await transport.connect({
@@ -409,11 +373,7 @@ describe("RNHidTransport", () => {
         wrapperConnectDevice.mockResolvedValueOnce(
           Right({ sessionId, transportDeviceModel: fakeDeviceModel }),
         );
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
         const onDisconnect = vi.fn();
 
         // when
@@ -434,11 +394,7 @@ describe("RNHidTransport", () => {
         wrapperConnectDevice.mockResolvedValueOnce(
           Right({ sessionId, transportDeviceModel: fakeDeviceModel }),
         );
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
         const result = await transport.connect({
           deviceId: sessionId,
           onDisconnect: vi.fn(),
@@ -467,11 +423,7 @@ describe("RNHidTransport", () => {
         wrapperConnectDevice.mockResolvedValueOnce(
           Right({ sessionId, transportDeviceModel: fakeDeviceModel }),
         );
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
         const result = await transport.connect({
           deviceId: sessionId,
           onDisconnect: vi.fn(),
@@ -494,11 +446,7 @@ describe("RNHidTransport", () => {
         wrapperConnectDevice.mockResolvedValueOnce(
           Right({ sessionId, transportDeviceModel: fakeDeviceModel }),
         );
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
         const result = await transport.connect({
           deviceId: sessionId,
           onDisconnect: vi.fn(),
@@ -520,11 +468,7 @@ describe("RNHidTransport", () => {
     describe("connection failure", () => {
       test("should return a Left when nativeModuleWrapper.connectDevice resolves a Left", async () => {
         // given
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
 
         // when
         const errorResult = Left(
@@ -543,11 +487,7 @@ describe("RNHidTransport", () => {
       test("should return a Left when nativeModuleWrapper.connectDevice rejects", async () => {
         // given
         const error = new Error("connection failed");
-        const transport = new RNHidTransport(
-          true,
-          nativeModuleWrapper,
-          loggerServiceFactory,
-        );
+        const transport = new RNHidTransport(true, nativeModuleWrapper);
 
         // when
         wrapperConnectDevice.mockRejectedValueOnce(error);
@@ -565,11 +505,7 @@ describe("RNHidTransport", () => {
   describe("disconnect", () => {
     it("returns Right on successful disconnect", async () => {
       // given
-      const transport = new RNHidTransport(
-        true,
-        nativeModuleWrapper,
-        loggerServiceFactory,
-      );
+      const transport = new RNHidTransport(true, nativeModuleWrapper);
 
       // when
       const result = await transport.disconnect({
@@ -585,11 +521,7 @@ describe("RNHidTransport", () => {
 
     it("returns Left on disconnect failure", async () => {
       // given
-      const transport = new RNHidTransport(
-        true,
-        nativeModuleWrapper,
-        loggerServiceFactory,
-      );
+      const transport = new RNHidTransport(true, nativeModuleWrapper);
 
       // when
       const error = new Error("disconnect failed");

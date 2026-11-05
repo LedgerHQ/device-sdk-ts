@@ -4,6 +4,7 @@ import {
   DisconnectError,
   type DisconnectHandler,
   type DmkError,
+  getLogger,
   type LoggerPublisherService,
   LogLevel,
   OpeningConnectionError,
@@ -22,14 +23,12 @@ import { HidTransportSendApduUnknownError } from "./Errors";
 import { type NativeModuleWrapper } from "./NativeModuleWrapper";
 
 export class RNHidTransport implements Transport {
-  private _loggerService: LoggerPublisherService;
+  private _loggerService: LoggerPublisherService = getLogger("RNHidTransport");
 
   constructor(
     private readonly _isSupported: boolean,
     private readonly _nativeModuleWrapper: NativeModuleWrapper,
-    _loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._loggerService = _loggerServiceFactory("RNHidTransport");
     this._nativeModuleWrapper.subscribeToTransportLogs().subscribe((log) => {
       const [logLevel, message, options] = log;
       const logMethod = {

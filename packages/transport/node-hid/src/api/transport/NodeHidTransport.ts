@@ -10,6 +10,7 @@ import {
   DeviceNotRecognizedError,
   type DisconnectHandler,
   type DmkError,
+  getLogger,
   LEDGER_VENDOR_ID,
   type LoggerPublisherService,
   NoAccessibleDeviceError,
@@ -95,15 +96,12 @@ export class NodeHidTransport implements Transport {
   /** AbortController to stop listening to HID connection events */
   private _connectionListenersAbortController: AbortController =
     new AbortController();
-  private _logger: LoggerPublisherService;
+  private _logger: LoggerPublisherService = getLogger("NodeHidTransport");
   private readonly connectionType: ConnectionType = "USB";
   private readonly identifier: TransportIdentifier = nodeHidIdentifier;
 
   constructor(
     private readonly _deviceModelDataSource: DeviceModelDataSource,
-    private readonly _loggerServiceFactory: (
-      tag: string,
-    ) => LoggerPublisherService,
     private readonly _apduSenderFactory: ApduSenderServiceFactory,
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
     private readonly _deviceConnectionStateMachineFactory: (
@@ -114,8 +112,6 @@ export class NodeHidTransport implements Transport {
       args: NodeHidApduSenderConstructorArgs,
     ) => NodeHidApduSender = (args) => new NodeHidApduSender(args),
   ) {
-    this._logger = _loggerServiceFactory("NodeHidTransport");
-
     this.startListeningToConnectionEvents();
   }
 
@@ -395,7 +391,6 @@ export class NodeHidTransport implements Transport {
       dependencies: { device: matchingInternalDevice.hidDevice },
       apduSenderFactory: this._apduSenderFactory,
       apduReceiverFactory: this._apduReceiverFactory,
-      loggerFactory: this._loggerServiceFactory,
     });
 
     const deviceConnection = this._deviceConnectionStateMachineFactory({
@@ -661,13 +656,11 @@ export class NodeHidTransport implements Transport {
 
 export const nodeHidTransportFactory: TransportFactory = ({
   deviceModelDataSource,
-  loggerServiceFactory,
   apduSenderServiceFactory,
   apduReceiverServiceFactory,
 }) =>
   new NodeHidTransport(
     deviceModelDataSource,
-    loggerServiceFactory,
     apduSenderServiceFactory,
     apduReceiverServiceFactory,
   );

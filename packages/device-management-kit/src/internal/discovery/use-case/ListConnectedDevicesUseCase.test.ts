@@ -1,11 +1,9 @@
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
@@ -16,7 +14,6 @@ import { DefaultSecureChannelService } from "@internal/secure-channel/service/De
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 import { type DmkConfig } from "@root/src";
 
-let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
@@ -25,44 +22,34 @@ let secureChannel: SecureChannelService;
 
 describe("ListDeviceSessionsUseCase", () => {
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService(
-      [],
-      "list-device-sessions-use-case-test",
-    );
-    managerApiDataSource = new HttpManagerApiDataSource(
-      {} as DmkConfig,
-      () => logger,
-    );
+    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,
     );
     secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
-    sessionService = new DefaultDeviceSessionService(() => logger);
+    sessionService = new DefaultDeviceSessionService();
   });
 
   it("should list all device sessions", () => {
     // given
     const deviceSession1 = deviceSessionStubBuilder(
       { id: "1" },
-      () => logger,
+
       managerApi,
       secureChannel,
       DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     const deviceSession2 = deviceSessionStubBuilder(
       { id: "2" },
-      () => logger,
+
       managerApi,
       secureChannel,
       DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     sessionService.addDeviceSession(deviceSession1);
     sessionService.addDeviceSession(deviceSession2);
-    const useCase = new ListConnectedDevicesUseCase(
-      sessionService,
-      () => logger,
-    );
+    const useCase = new ListConnectedDevicesUseCase(sessionService);
 
     // when
     const response = useCase.execute();
@@ -85,10 +72,7 @@ describe("ListDeviceSessionsUseCase", () => {
 
   it("should return empty array if no device sessions", () => {
     // given
-    const useCase = new ListConnectedDevicesUseCase(
-      sessionService,
-      () => logger,
-    );
+    const useCase = new ListConnectedDevicesUseCase(sessionService);
 
     // when
     const response = useCase.execute();
