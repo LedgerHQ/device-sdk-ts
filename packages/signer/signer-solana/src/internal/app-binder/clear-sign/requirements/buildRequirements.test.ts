@@ -289,8 +289,8 @@ describe("buildRequirements", () => {
         descriptor: { mintAssociations: [mintAssociation(0, 1)] },
       }),
     ]);
-    // The mint stays out of altResolutions: the provide phase holds it and
-    // conditionally streams TOKEN_INFO after the 0x6d10 signal.
+    // The mint stays out of altResolutions: the provide phase streams its
+    // ALT_RESOLUTION, then the resolved mint's TOKEN_INFO.
     expect(result.altResolutions).toEqual([
       { altAddress: "ALT", entryIndex: 4 },
     ]);

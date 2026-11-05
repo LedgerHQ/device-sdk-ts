@@ -93,8 +93,9 @@ function entryFromJson(json: CalTypePoolEntry): Entry {
  * Build the decoder's `Entry[]` pool from CAL's decoded `type_pool` JSON.
  * Entries are ordered by their declared `index`.
  *
- * @throws never — call from inside the {@link decode} `runDecode` boundary, or
- * wrap with the public `Either` entry points; throws {@link TypePoolDecoderThrow}.
+ * @throws {@link TypePoolDecoderThrow} on a malformed entry. Its production
+ * caller (`fromCalInstructionInfo`) runs inside `buildRequirements`, whose
+ * catch-all turns any throw into a `RequirementsDecodeError`.
  */
 export function poolFromJson(entries: CalTypePoolEntry[]): Entry[] {
   const pool = new Array<Entry>(entries.length);
