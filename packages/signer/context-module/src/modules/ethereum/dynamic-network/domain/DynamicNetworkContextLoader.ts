@@ -1,6 +1,7 @@
 import {
   DeviceModelId,
-  LoggerPublisherService,
+  getLogger,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
@@ -48,13 +49,11 @@ export class DynamicNetworkContextLoader
     config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._networkDataSource = networkDataSource;
     this._config = config;
     this._certificateLoader = certificateLoader;
-    this.logger = loggerFactory("DynamicNetworkContextLoader");
+    this.logger = getLogger("ContextModule", "DynamicNetworkContextLoader");
   }
 
   canHandle(

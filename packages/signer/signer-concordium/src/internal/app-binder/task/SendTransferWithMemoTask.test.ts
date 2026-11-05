@@ -4,7 +4,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
@@ -84,7 +83,6 @@ describe("SendTransferWithMemoTask", () => {
   let sentCommands: SignTransferWithMemoCommand[];
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
-  let loggerMock: LoggerPublisherService;
 
   beforeEach(() => {
     sentCommands = [];
@@ -92,9 +90,6 @@ describe("SendTransferWithMemoTask", () => {
     apiMock = {
       sendCommand: sendCommandMock,
     } as unknown as InternalApi;
-    loggerMock = {
-      debug: vi.fn(),
-    } as unknown as LoggerPublisherService;
   });
 
   function captureCommands(
@@ -119,11 +114,11 @@ describe("SendTransferWithMemoTask", () => {
       CommandResultFactory({ data: signature }),
     );
 
-    const task = new SendTransferWithMemoTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferWithMemoTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     const result = await task.run();
 
@@ -169,11 +164,11 @@ describe("SendTransferWithMemoTask", () => {
     ];
     captureCommands(...results);
 
-    const task = new SendTransferWithMemoTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferWithMemoTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     const result = await task.run();
 
@@ -210,11 +205,11 @@ describe("SendTransferWithMemoTask", () => {
       CommandResultFactory({ data: signature }),
     );
 
-    const task = new SendTransferWithMemoTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferWithMemoTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     await task.run();
 
@@ -235,11 +230,11 @@ describe("SendTransferWithMemoTask", () => {
       }),
     );
 
-    const task = new SendTransferWithMemoTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferWithMemoTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     const result = await task.run();
 
@@ -263,11 +258,11 @@ describe("SendTransferWithMemoTask", () => {
       }),
     );
 
-    const task = new SendTransferWithMemoTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferWithMemoTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     const result = await task.run();
 
@@ -289,11 +284,11 @@ describe("SendTransferWithMemoTask", () => {
       }),
     );
 
-    const task = new SendTransferWithMemoTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferWithMemoTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     const result = await task.run();
 
@@ -310,11 +305,11 @@ describe("SendTransferWithMemoTask", () => {
     tx[memoLenOffset] = 0x03; // 0x0300 = 768, way larger than remaining bytes
     tx[memoLenOffset + 1] = 0x00;
 
-    const task = new SendTransferWithMemoTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction: tx, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferWithMemoTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction: tx,
+      ...NO_FEE,
+    });
 
     const result = await task.run();
 
@@ -328,11 +323,11 @@ describe("SendTransferWithMemoTask", () => {
   it("should return error for transaction that is too short", async () => {
     const shortTx = new Uint8Array(50);
 
-    const task = new SendTransferWithMemoTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction: shortTx, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferWithMemoTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction: shortTx,
+      ...NO_FEE,
+    });
 
     const result = await task.run();
 
@@ -356,16 +351,12 @@ describe("SendTransferWithMemoTask", () => {
         CommandResultFactory({ data: signature }),
       );
 
-      const task = new SendTransferWithMemoTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction,
-          maxFee,
-          supportsFeeDisplay: true,
-        },
-        loggerMock,
-      );
+      const task = new SendTransferWithMemoTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee,
+        supportsFeeDisplay: true,
+      });
 
       const result = await task.run();
 
@@ -401,16 +392,12 @@ describe("SendTransferWithMemoTask", () => {
         CommandResultFactory({ data: signature }),
       );
 
-      const task = new SendTransferWithMemoTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction,
-          maxFee: 99999n,
-          supportsFeeDisplay: false,
-        },
-        loggerMock,
-      );
+      const task = new SendTransferWithMemoTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: 99999n,
+        supportsFeeDisplay: false,
+      });
 
       await task.run();
 

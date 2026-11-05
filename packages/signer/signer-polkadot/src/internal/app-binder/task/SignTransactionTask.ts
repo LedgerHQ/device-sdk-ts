@@ -2,6 +2,7 @@ import {
   APDU_MAX_PAYLOAD,
   type CommandResult,
   DmkResultFactory,
+  getLogger,
   type InternalApi,
   InvalidArgumentError,
   InvalidStatusWordError,
@@ -23,10 +24,14 @@ type SignTransactionTaskArgs = {
 };
 
 export class SignTransactionTask {
+  private readonly logger: LoggerPublisherService = getLogger(
+    "SignerPolkadot",
+    "SignTransactionTask",
+  );
+
   constructor(
     private api: InternalApi,
     private args: SignTransactionTaskArgs,
-    private logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<

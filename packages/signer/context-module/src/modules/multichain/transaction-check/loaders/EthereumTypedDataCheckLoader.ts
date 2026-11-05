@@ -1,11 +1,11 @@
 import {
   DeviceModelId,
+  getLogger,
   isHexaString,
-  LoggerPublisherService,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
@@ -52,10 +52,8 @@ export class EthereumTypedDataCheckLoader
     private transactionCheckDataSource: TransactionCheckDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("EthereumTypedDataCheckLoader");
+    this.logger = getLogger("ContextModule", "EthereumTypedDataCheckLoader");
   }
 
   canHandle(

@@ -8,14 +8,17 @@ import {
   type FirmwareUpdateContext,
   type FirmwareVersion,
 } from "@api/device-session/DeviceSessionState";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { DefaultLoggerPublisherService } from "@api/global/services/logger/DefaultLoggerPublisherService";
+import { type LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { type Application } from "@internal/manager-api/model/Application";
 
 import { SetFirmwareDistributionSaltUseCase } from "./SetFirmwareDistributionSaltUseCase";
+
+vi.mock("@api/global/services/logger/utils/getLogger");
 
 const readyState = {
   sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -61,6 +64,7 @@ describe("SetFirmwareDistributionSaltUseCase", () => {
       [],
       "SetFirmwareDistributionSaltUseCaseTest",
     );
+    vi.mocked(getLogger).mockReturnValue(logger);
     vi.spyOn(logger, "info");
     vi.spyOn(logger, "warn");
     vi.spyOn(logger, "debug");
@@ -69,7 +73,6 @@ describe("SetFirmwareDistributionSaltUseCase", () => {
     useCase = new SetFirmwareDistributionSaltUseCase(
       sessionService,
       managerApiDataSource,
-      () => logger,
     );
   });
 

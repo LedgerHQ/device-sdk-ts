@@ -19,14 +19,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { TokenContextLoader } from "./TokenContextLoader";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("TokenContextLoader", () => {
   let mockDataSource: TokenDataSource;
   let mockMintToIdDataSource: MintToIdDataSource;
@@ -73,7 +65,6 @@ describe("TokenContextLoader", () => {
       mockMintToIdDataSource,
       config,
       mockCertLoader,
-      mockLoggerFactory,
     );
   };
 

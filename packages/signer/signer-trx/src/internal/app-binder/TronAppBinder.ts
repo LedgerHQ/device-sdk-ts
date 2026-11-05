@@ -3,7 +3,6 @@ import {
   CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
-  LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -33,8 +32,6 @@ export class TronAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
-    @inject(externalTypes.DmkLoggerFactory)
-    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
     @inject(externalTypes.ContextModule)
     private contextModule: ContextModule,
     @inject(externalTypes.AddressBook)
@@ -60,7 +57,6 @@ export class TronAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("GetAddressCommand"),
       }),
     });
   }
@@ -80,7 +76,6 @@ export class TronAppBinder {
           addressBook: this.addressBook,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("SignTransactionDeviceAction"),
       }),
     });
   }
@@ -102,7 +97,6 @@ export class TronAppBinder {
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("GetECDHSecretCommand"),
       }),
     });
   }
@@ -124,7 +118,6 @@ export class TronAppBinder {
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("SignTransactionHashCommand"),
       }),
     });
   }
@@ -147,7 +140,6 @@ export class TronAppBinder {
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("SignPersonalMessageTask"),
       }),
     });
   }
@@ -162,7 +154,6 @@ export class TronAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: false,
         },
-        logger: this.dmkLoggerFactory("GetAppConfigurationCommand"),
       }),
     });
   }

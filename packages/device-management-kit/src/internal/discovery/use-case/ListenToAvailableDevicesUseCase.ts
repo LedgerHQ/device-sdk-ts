@@ -2,12 +2,12 @@ import { inject, injectable } from "inversify";
 import { from, map, merge, Observable, of, scan } from "rxjs";
 
 import { DeviceModel } from "@api/device/DeviceModel";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { type Transport } from "@api/transport/model/Transport";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
@@ -30,12 +30,10 @@ export class ListenToAvailableDevicesUseCase {
   constructor(
     @inject(transportDiTypes.TransportService)
     transportService: TransportService,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._transports = transportService.getAllTransports();
     this._transportService = transportService;
-    this._logger = loggerFactory("ListenToAvailableDevicesUseCase");
+    this._logger = getLogger("ListenToAvailableDevicesUseCase");
   }
 
   private mapTransportDiscoveredDeviceToDiscoveredDevice(

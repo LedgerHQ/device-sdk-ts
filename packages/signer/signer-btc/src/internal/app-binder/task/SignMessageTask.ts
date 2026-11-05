@@ -1,5 +1,6 @@
 import {
   type CommandResult,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -17,7 +18,6 @@ import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 export type SendSignMessageTaskArgs = {
   derivationPath: string;
   message: string;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export class SendSignMessageTask {
@@ -32,7 +32,7 @@ export class SendSignMessageTask {
       dataStore: DataStore,
     ) => new ContinueTask(api, dataStore),
   ) {
-    this._logger = this._args.loggerFactory("SendSignMessageTask");
+    this._logger = getLogger("SignerBtc", "SendSignMessageTask");
   }
 
   async run(): Promise<CommandResult<Signature, BtcErrorCodes>> {

@@ -15,16 +15,6 @@ import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-act
 
 import { SendGetAddressTask } from "./SendGetAddressTask";
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-
-const mockLoggerFactory = (_tag: string) => mockLogger;
-
 const DEFAULT_DERIVATION_PATH = "44'/60'/0'/0/0";
 const EXPECTED_ADDRESS = "0xF7C69BedB292Dd3fC2cA4103989B5BD705164c43" as const;
 const EXPECTED_PUBLIC_KEY =
@@ -49,7 +39,6 @@ describe("SendGetAddressTask", () => {
     derivationPath: DEFAULT_DERIVATION_PATH,
     checkOnDevice: false,
     returnChainCode: false,
-    loggerFactory: mockLoggerFactory,
   };
 
   beforeEach(() => {

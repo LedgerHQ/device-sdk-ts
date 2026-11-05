@@ -14,10 +14,8 @@ import { type DeviceAction } from "@api/device-action/DeviceAction";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { type DmkError } from "@api/Error";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { type IntentQueueService } from "@internal/device-session/service/IntentQueueService";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
@@ -28,8 +26,6 @@ import {
 
 describe("DeviceSession", () => {
   let deviceSession: DeviceSession;
-  let mockLogger: LoggerPublisherService;
-  let mockLoggerFactory: ReturnType<typeof vi.fn>;
   let mockManagerApi: Mocked<ManagerApiService>;
   let mockSecureChannel: Mocked<SecureChannelService>;
   let mockIntentQueueService: Mocked<IntentQueueService>;
@@ -39,8 +35,6 @@ describe("DeviceSession", () => {
 
   beforeEach(() => {
     // Setup logger
-    mockLogger = new DefaultLoggerPublisherService([], "device-session-test");
-    mockLoggerFactory = vi.fn(() => mockLogger);
 
     // Setup mocks
     mockManagerApi = {
@@ -84,7 +78,7 @@ describe("DeviceSession", () => {
       // when
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice },
-        mockLoggerFactory,
+
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
@@ -104,7 +98,7 @@ describe("DeviceSession", () => {
       // when
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice, id: customId },
-        mockLoggerFactory,
+
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
@@ -121,7 +115,7 @@ describe("DeviceSession", () => {
       // given
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice },
-        mockLoggerFactory,
+
         mockManagerApi,
         mockSecureChannel,
         { isRefresherDisabled: false, pollingInterval: 1000 },
@@ -145,7 +139,7 @@ describe("DeviceSession", () => {
     beforeEach(() => {
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice, id: "test-id" },
-        mockLoggerFactory,
+
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
@@ -178,7 +172,7 @@ describe("DeviceSession", () => {
     beforeEach(() => {
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice },
-        mockLoggerFactory,
+
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
@@ -245,7 +239,7 @@ describe("DeviceSession", () => {
 
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice },
-        mockLoggerFactory,
+
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
@@ -353,7 +347,7 @@ describe("DeviceSession", () => {
 
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice },
-        mockLoggerFactory,
+
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
@@ -462,7 +456,7 @@ describe("DeviceSession", () => {
 
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice },
-        mockLoggerFactory,
+
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
@@ -546,7 +540,6 @@ describe("DeviceSession", () => {
         setDeviceSessionState: expect.any(Function),
         getManagerApiService: expect.any(Function),
         getSecureChannelService: expect.any(Function),
-        loggerFactory: expect.any(Function),
       });
     });
 
@@ -574,7 +567,7 @@ describe("DeviceSession", () => {
       // given
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice },
-        mockLoggerFactory,
+
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,

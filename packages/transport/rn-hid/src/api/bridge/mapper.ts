@@ -87,6 +87,7 @@ export function mapNativeTransportLogToLog(log: NativeLog): LogParams {
     log.message,
     {
       tag: log.tag,
+      tags: [log.tag],
       data: log.jsonPayload,
       timestamp: Number.parseInt(log.timestamp, 10),
     },

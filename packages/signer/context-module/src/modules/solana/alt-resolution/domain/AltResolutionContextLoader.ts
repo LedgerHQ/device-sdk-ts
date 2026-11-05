@@ -1,11 +1,11 @@
 import {
   type DeviceModelId,
+  getLogger,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { array, Codec, string } from "purify-ts";
 
-import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { type AltResolutionDataSource } from "@/modules/solana/alt-resolution/data/AltResolutionDataSource";
@@ -57,10 +57,8 @@ export class AltResolutionContextLoader
     private readonly dataSource: AltResolutionDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("AltResolutionContextLoader");
+    this.logger = getLogger("ContextModule", "AltResolutionContextLoader");
   }
 
   public canHandle(

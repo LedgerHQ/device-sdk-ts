@@ -3,7 +3,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
@@ -116,7 +115,6 @@ describe("SendCredentialDeploymentTransactionTask", () => {
   let sentCommands: SignCredentialDeploymentCommand[];
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
-  let loggerMock: LoggerPublisherService;
 
   beforeEach(() => {
     sentCommands = [];
@@ -124,9 +122,6 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     apiMock = {
       sendCommand: sendCommandMock,
     } as unknown as InternalApi;
-    loggerMock = {
-      debug: vi.fn(),
-    } as unknown as LoggerPublisherService;
   });
 
   function succeedAllWithFinalSignature(signature: Uint8Array) {
@@ -171,11 +166,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     const transaction = buildCredentialDeploymentBytes();
     succeedAllWithFinalSignature(signature);
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+    });
 
     const result = await task.run();
 
@@ -213,11 +207,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     const transaction = buildCredentialDeploymentBytes({ numKeys: 3 });
     succeedAllWithFinalSignature(new Uint8Array(64));
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+    });
 
     await task.run();
 
@@ -231,11 +224,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     const transaction = buildCredentialDeploymentBytes({ numArData: 2 });
     succeedAllWithFinalSignature(new Uint8Array(64));
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+    });
 
     await task.run();
 
@@ -249,11 +241,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     const transaction = buildCredentialDeploymentBytes({ numAttributes: 3 });
     succeedAllWithFinalSignature(new Uint8Array(64));
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+    });
 
     await task.run();
 
@@ -267,11 +258,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     const transaction = buildCredentialDeploymentBytes({ proofSize: 600 });
     succeedAllWithFinalSignature(new Uint8Array(64));
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+    });
 
     await task.run();
 
@@ -285,11 +275,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     const transaction = buildCredentialDeploymentBytes();
     failAtStep(0);
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+    });
 
     const result = await task.run();
 
@@ -304,11 +293,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     const transaction = buildCredentialDeploymentBytes();
     failAtStep(3); // SIGNATURE_THRESHOLD
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+    });
 
     const result = await task.run();
 
@@ -321,11 +309,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     // Minimal: 12 steps total, final is step 11
     failAtStep(11);
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+    });
 
     const result = await task.run();
 
@@ -342,11 +329,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     withTrailing.fill(0xff, valid.length);
     succeedAllWithFinalSignature(new Uint8Array(64));
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction: withTrailing },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction: withTrailing,
+    });
 
     const result = await task.run();
 
@@ -360,11 +346,10 @@ describe("SendCredentialDeploymentTransactionTask", () => {
     const transaction = new Uint8Array(5); // way too short
     succeedAllWithFinalSignature(new Uint8Array(64));
 
-    const task = new SendCredentialDeploymentTransactionTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
-      loggerMock,
-    );
+    const task = new SendCredentialDeploymentTransactionTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+    });
 
     const result = await task.run();
 

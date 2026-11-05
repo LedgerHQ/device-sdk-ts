@@ -78,8 +78,6 @@ export class SignerEthBuilder {
       this._customContextModule ??
       new ContextModuleBuilder({
         originToken: this._originToken,
-        loggerFactory: (tag: string) =>
-          this._dmk.getLoggerFactory()(["ContextModule", tag]),
       })
         .setChain(ContextModuleChainID.Ethereum)
         .build();

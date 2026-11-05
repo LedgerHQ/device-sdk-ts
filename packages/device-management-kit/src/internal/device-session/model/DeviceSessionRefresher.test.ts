@@ -2,6 +2,7 @@ import { Subject } from "rxjs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DeviceModelId } from "@api/device/DeviceModel";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import type { LoggerPublisherService } from "@api/types";
 import {
@@ -18,6 +19,8 @@ import {
   DeviceSessionRefresher,
   type DeviceSessionRefresherOptions,
 } from "./DeviceSessionRefresher";
+
+vi.mock("@api/global/services/logger/utils/getLogger");
 
 describe("DeviceSessionRefresher", () => {
   let subject: Subject<NewEvent>;
@@ -42,7 +45,6 @@ describe("DeviceSessionRefresher", () => {
     },
   } as TransportConnectedDevice;
 
-  const mockedLoggerModuleFactory = vi.fn(() => mockLogger);
   let refresher: DeviceSessionRefresher;
 
   beforeEach(() => {
@@ -57,8 +59,10 @@ describe("DeviceSessionRefresher", () => {
       warn: vi.fn(),
       error: vi.fn(),
       debug: vi.fn(),
-      subscribers: [],
     };
+    vi.mocked(getLogger).mockReturnValue(
+      mockLogger as unknown as LoggerPublisherService,
+    );
   });
 
   afterEach(() => {
@@ -74,7 +78,6 @@ describe("DeviceSessionRefresher", () => {
     };
 
     refresher = new DeviceSessionRefresher(
-      mockedLoggerModuleFactory,
       options,
       mockSessionEventDispatcher,
       stubDefaultDevice,
@@ -93,7 +96,6 @@ describe("DeviceSessionRefresher", () => {
     };
 
     refresher = new DeviceSessionRefresher(
-      mockedLoggerModuleFactory,
       options,
       mockSessionEventDispatcher,
       stubDefaultDevice,
@@ -114,7 +116,6 @@ describe("DeviceSessionRefresher", () => {
     };
 
     refresher = new DeviceSessionRefresher(
-      mockedLoggerModuleFactory,
       options,
       mockSessionEventDispatcher,
       stubNanoSDevice,
@@ -134,7 +135,6 @@ describe("DeviceSessionRefresher", () => {
     };
 
     refresher = new DeviceSessionRefresher(
-      mockedLoggerModuleFactory,
       options,
       mockSessionEventDispatcher,
       stubDefaultDevice,
@@ -153,7 +153,6 @@ describe("DeviceSessionRefresher", () => {
     };
 
     refresher = new DeviceSessionRefresher(
-      mockedLoggerModuleFactory,
       options,
       mockSessionEventDispatcher,
       stubDefaultDevice,
@@ -185,7 +184,6 @@ describe("DeviceSessionRefresher", () => {
       pollingInterval: 1000,
     };
     refresher = new DeviceSessionRefresher(
-      mockedLoggerModuleFactory,
       options,
       mockSessionEventDispatcher,
       stubDefaultDevice,
@@ -208,7 +206,6 @@ describe("DeviceSessionRefresher", () => {
       pollingInterval: 1000,
     };
     refresher = new DeviceSessionRefresher(
-      mockedLoggerModuleFactory,
       options,
       mockSessionEventDispatcher,
       stubDefaultDevice,

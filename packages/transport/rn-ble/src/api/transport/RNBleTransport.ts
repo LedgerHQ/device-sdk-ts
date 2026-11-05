@@ -18,6 +18,7 @@ import {
   type DeviceModelDataSource,
   type DisconnectHandler,
   type DmkError,
+  getLogger,
   type LoggerPublisherService,
   OpeningConnectionError,
   type Transport,
@@ -72,7 +73,7 @@ type InternalScannedDevice = {
 };
 
 export class RNBleTransport implements Transport {
-  private _logger: LoggerPublisherService;
+  private _logger: LoggerPublisherService = getLogger("RNBleTransport");
   private _deviceConnectionsById: Map<
     DeviceId,
     DeviceConnectionStateMachine<RNBleApduSenderDependencies>
@@ -85,9 +86,6 @@ export class RNBleTransport implements Transport {
 
   constructor(
     private readonly _deviceModelDataSource: DeviceModelDataSource,
-    private readonly _loggerServiceFactory: (
-      tag: string,
-    ) => LoggerPublisherService,
     private readonly _apduSenderFactory: ApduSenderServiceFactory,
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
     private readonly _manager: BleManager,
@@ -100,11 +98,8 @@ export class RNBleTransport implements Transport {
       new DeviceConnectionStateMachine(args),
     private readonly _deviceApduSenderFactory: (
       args: RNBleApduSenderConstructorArgs,
-      loggerFactory: (tag: string) => LoggerPublisherService,
-    ) => RNBleApduSender = (args, loggerFactory) =>
-      new RNBleApduSender(args, loggerFactory),
+    ) => RNBleApduSender = (args) => new RNBleApduSender(args),
   ) {
-    this._logger = _loggerServiceFactory("ReactNativeBleTransport");
     this._deviceConnectionsById = new Map();
     this._reconnectionSubscription = Maybe.zero();
     // FIXME: we should have a destroy method to unregister the onStateChange listener
@@ -543,14 +538,11 @@ export class RNBleTransport implements Transport {
           bleDeviceInfos,
         };
 
-        const deviceApduSender = this._deviceApduSenderFactory(
-          {
-            apduSenderFactory: this._apduSenderFactory,
-            apduReceiverFactory: this._apduReceiverFactory,
-            dependencies: { device, internalDevice, manager: this._manager },
-          },
-          this._loggerServiceFactory,
-        );
+        const deviceApduSender = this._deviceApduSenderFactory({
+          apduSenderFactory: this._apduSenderFactory,
+          apduReceiverFactory: this._apduReceiverFactory,
+          dependencies: { device, internalDevice, manager: this._manager },
+        });
 
         const reconnectionTimeout =
           Platform.OS === "ios"

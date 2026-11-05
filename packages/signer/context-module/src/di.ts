@@ -1,8 +1,6 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
 import { configModuleFactory } from "@/config/di/configModuleFactory";
-import { configTypes } from "@/config/di/configTypes";
 import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
@@ -43,12 +41,6 @@ type MakeContainerArgs = {
 
 export const makeContainer = ({ config }: MakeContainerArgs) => {
   const container = new Container();
-
-  container
-    .bind<
-      (tag: string) => LoggerPublisherService
-    >(configTypes.ContextModuleLoggerFactory)
-    .toConstantValue(config.loggerFactory);
 
   const { chain } = config;
 

@@ -2,6 +2,7 @@ import {
   APDU_MAX_PAYLOAD,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -47,10 +48,14 @@ type StepResult =
 export class SendCredentialDeploymentTransactionTask {
   private offset = 0;
 
+  private readonly logger: LoggerPublisherService = getLogger(
+    "SignerConcordium",
+    "SendCredentialDeploymentTransactionTask",
+  );
+
   constructor(
     private readonly api: InternalApi,
     private readonly args: TaskArgs,
-    private readonly logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<

@@ -5,6 +5,7 @@ import {
   SolanaTransactionScanChainId,
 } from "@ledgerhq/context-module";
 import {
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -22,7 +23,6 @@ export type ProvideTransactionCheckTaskArgs = {
   readonly derivationPath: string;
   readonly transactionBytes: Uint8Array;
   readonly contextModule: ContextModule;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
   readonly serializedTransactionForTransactionCheck?: Uint8Array;
   readonly transactionSerializer?: SolanaTransactionSerializer;
 };
@@ -40,7 +40,7 @@ export class ProvideTransactionCheckTask {
     private readonly api: InternalApi,
     private readonly args: ProvideTransactionCheckTaskArgs,
   ) {
-    this.logger = args.loggerFactory("ProvideTransactionCheckTask");
+    this.logger = getLogger("SignerSolana", "ProvideTransactionCheckTask");
     this.transactionSerializer =
       args.transactionSerializer ?? new DefaultSolanaTransactionSerializer();
   }

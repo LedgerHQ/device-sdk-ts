@@ -2,7 +2,6 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
@@ -45,14 +44,6 @@ export const makeContainer = ({
   container
     .bind<TronAddressBook>(externalTypes.AddressBook)
     .toConstantValue(addressBook ?? EMPTY_TRON_ADDRESS_BOOK);
-
-  container
-    .bind<
-      (tag: string) => LoggerPublisherService
-    >(externalTypes.DmkLoggerFactory)
-    .toConstantValue((tag: string) =>
-      dmk.getLoggerFactory()(["SignerTron", tag]),
-    );
 
   container.loadSync(
     appBindingModuleFactory(),

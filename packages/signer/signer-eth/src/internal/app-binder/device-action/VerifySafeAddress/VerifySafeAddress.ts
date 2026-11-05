@@ -174,7 +174,6 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
               safeContractAddress: context.input.safeContractAddress,
               options: context.input.options,
               deviceModelId: internalApi.getDeviceModel().id,
-              loggerFactory: this.getLoggerFactory(internalApi),
             }),
             onDone: {
               target: "ProvideContexts",
@@ -266,7 +265,6 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
       for (const context of arg0.input.contexts) {
         const res = await new ProvideContextTask(internalApi, {
           context,
-          loggerFactory: this.getLoggerFactory(internalApi),
         }).run();
 
         if (!isSuccessCommandResult(res)) {

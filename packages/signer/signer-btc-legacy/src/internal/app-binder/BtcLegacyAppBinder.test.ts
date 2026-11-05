@@ -18,6 +18,12 @@ import { type SignTransactionTask } from "@internal/app-binder/task/SignTransact
 
 import { BtcLegacyAppBinder } from "./BtcLegacyAppBinder";
 
+const { getLoggerMock } = vi.hoisted(() => ({ getLoggerMock: vi.fn() }));
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: getLoggerMock,
+}));
+
 describe("BtcLegacyAppBinder", () => {
   const sessionId = "session-id" as DeviceSessionId;
   const executeDeviceAction = vi.fn();
@@ -29,13 +35,12 @@ describe("BtcLegacyAppBinder", () => {
     validate,
   } as unknown as SignTransactionTask<BtcLegacyErrorCodes>;
   const logger = {} as LoggerPublisherService;
-  const loggerFactory = vi.fn().mockReturnValue(logger);
+  getLoggerMock.mockReturnValue(logger);
 
   beforeEach(() => {
     executeDeviceAction.mockReset();
     run.mockReset();
     validate.mockReset();
-    loggerFactory.mockClear();
   });
 
   describe("getAddress", () => {
@@ -45,7 +50,6 @@ describe("BtcLegacyAppBinder", () => {
         sessionId,
         LITECOIN_PROFILE,
         signTransactionTask,
-        loggerFactory,
       );
       const args = {
         derivationPath: "84'/2'/0'/0/0",
@@ -65,10 +69,8 @@ describe("BtcLegacyAppBinder", () => {
             requiredUserInteraction: UserInteractionRequired.None,
             skipOpenApp: false,
           },
-          logger,
         }),
       });
-      expect(loggerFactory).toHaveBeenCalledWith("LegacyGetAddressCommand");
     });
 
     it("should require the address verification when checking on device", () => {
@@ -77,7 +79,6 @@ describe("BtcLegacyAppBinder", () => {
         sessionId,
         LITECOIN_PROFILE,
         signTransactionTask,
-        loggerFactory,
       );
 
       binder.getAddress({
@@ -108,7 +109,6 @@ describe("BtcLegacyAppBinder", () => {
         sessionId,
         LITECOIN_PROFILE,
         signTransactionTask,
-        loggerFactory,
       );
 
       binder.getExtendedPublicKey({
@@ -129,7 +129,6 @@ describe("BtcLegacyAppBinder", () => {
         requiredUserInteraction: UserInteractionRequired.None,
         skipOpenApp: false,
       });
-      expect(loggerFactory).toHaveBeenCalledWith("GetExtendedPublicKeyTask");
     });
 
     it("should reject a path without a parent level before opening the app", async () => {
@@ -138,7 +137,6 @@ describe("BtcLegacyAppBinder", () => {
         sessionId,
         LITECOIN_PROFILE,
         signTransactionTask,
-        loggerFactory,
       );
 
       const { observable } = binder.getExtendedPublicKey({
@@ -163,7 +161,6 @@ describe("BtcLegacyAppBinder", () => {
         sessionId,
         LITECOIN_PROFILE,
         signTransactionTask,
-        loggerFactory,
       );
       const transaction = {
         inputs: [],
@@ -186,7 +183,6 @@ describe("BtcLegacyAppBinder", () => {
         requiredUserInteraction: UserInteractionRequired.SignTransaction,
         skipOpenApp: true,
       });
-      expect(loggerFactory).toHaveBeenCalledWith("SignTransactionTask");
 
       const internalApi = {} as InternalApi;
       await deviceAction.input.task(internalApi);
@@ -199,7 +195,6 @@ describe("BtcLegacyAppBinder", () => {
         sessionId,
         LITECOIN_PROFILE,
         signTransactionTask,
-        loggerFactory,
       );
       const transaction = {
         inputs: [],

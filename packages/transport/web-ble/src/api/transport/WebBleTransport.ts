@@ -7,6 +7,7 @@ import {
   type DeviceModelDataSource,
   type DmkError,
   GeneralDmkError,
+  getLogger,
   type LoggerPublisherService,
   OpeningConnectionError,
   type Transport,
@@ -50,7 +51,7 @@ type DeviceRegistryEntry = {
 };
 
 export class WebBleTransport implements Transport {
-  private _logger: LoggerPublisherService;
+  private _logger: LoggerPublisherService = getLogger("WebBleTransport");
 
   private _connectionStateMachinesByDeviceId = new Map<
     string,
@@ -63,12 +64,9 @@ export class WebBleTransport implements Transport {
 
   constructor(
     private readonly _deviceModelDataSource: DeviceModelDataSource,
-    private loggerFactory: (tag: string) => LoggerPublisherService,
     private readonly _apduSenderFactory: ApduSenderServiceFactory,
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
-  ) {
-    this._logger = loggerFactory("WebBleTransportRnStyle");
-  }
+  ) {}
 
   isSupported(): boolean {
     return typeof navigator !== "undefined" && !!navigator.bluetooth;
@@ -166,15 +164,12 @@ export class WebBleTransport implements Transport {
         ledgerServiceInfo,
       );
 
-      const apduSender = new WebBleApduSender(
-        {
-          writeCharacteristic: gattWriteCharacteristic,
-          notifyCharacteristic: gattNotifyCharacteristic,
-          apduSenderFactory: this._apduSenderFactory,
-          apduReceiverFactory: this._apduReceiverFactory,
-        },
-        this.loggerFactory,
-      );
+      const apduSender = new WebBleApduSender({
+        writeCharacteristic: gattWriteCharacteristic,
+        notifyCharacteristic: gattNotifyCharacteristic,
+        apduSenderFactory: this._apduSenderFactory,
+        apduReceiverFactory: this._apduReceiverFactory,
+      });
 
       const connectionStateMachine =
         new DeviceConnectionStateMachine<WebBleApduSenderDependencies>({
@@ -630,13 +625,11 @@ export class WebBleTransport implements Transport {
 
 export const webBleTransportFactory: TransportFactory = ({
   deviceModelDataSource,
-  loggerServiceFactory,
   apduSenderServiceFactory,
   apduReceiverServiceFactory,
 }) =>
   new WebBleTransport(
     deviceModelDataSource,
-    loggerServiceFactory,
     apduSenderServiceFactory,
     apduReceiverServiceFactory,
   );

@@ -1,6 +1,7 @@
 import {
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -19,7 +20,6 @@ import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 export type RegisterWalletTaskArgs = {
   walletPolicy: WalletPolicy;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type RegisterWalletTaskResult = CommandResult<
@@ -41,7 +41,7 @@ export class RegisterWalletTask {
       dataStore: DataStore,
     ) => new ContinueTask(api, dataStore),
   ) {
-    this._logger = this._args.loggerFactory("RegisterWalletTask");
+    this._logger = getLogger("SignerBtc", "RegisterWalletTask");
   }
 
   async run(): Promise<RegisterWalletTaskResult> {

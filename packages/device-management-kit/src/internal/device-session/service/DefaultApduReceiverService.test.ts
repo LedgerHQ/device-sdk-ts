@@ -5,11 +5,8 @@ import { Just, Left, type Maybe, Nothing, Right } from "purify-ts";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import { type ApduReceiverService } from "@api/device-session/service/ApduReceiverService";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DefaultApduReceiverService } from "./DefaultApduReceiverService";
-
-const loggerService = new DefaultLoggerPublisherService([], "frame");
 
 const RESPONSE_GET_VERSION = new Uint8Array([
   0xaa, 0xaa, 0x05, 0x00, 0x00, 0x00, 0x21, 0x33, 0x00, 0x00, 0x04, 0x05, 0x32,
@@ -65,10 +62,9 @@ describe("DefaultApduReceiverService", () => {
 
   describe("without dataSize", () => {
     beforeEach(() => {
-      service = new DefaultApduReceiverService(
-        { channel: Just(new Uint8Array([0xaa, 0xaa])) },
-        () => loggerService,
-      );
+      service = new DefaultApduReceiverService({
+        channel: Just(new Uint8Array([0xaa, 0xaa])),
+      });
     });
 
     it("should return a left error when the first frame has no dataSize", () => {
@@ -85,10 +81,9 @@ describe("DefaultApduReceiverService", () => {
 
   describe("[USB] With padding and channel", () => {
     beforeEach(() => {
-      service = new DefaultApduReceiverService(
-        { channel: Just(new Uint8Array([0xaa, 0xaa])) },
-        () => loggerService,
-      );
+      service = new DefaultApduReceiverService({
+        channel: Just(new Uint8Array([0xaa, 0xaa])),
+      });
     });
 
     it("should return a response directly when a frame is complete", () => {
@@ -208,7 +203,7 @@ describe("DefaultApduReceiverService", () => {
 
   describe("[BLE] Without padding nor channel", () => {
     beforeEach(() => {
-      service = new DefaultApduReceiverService({}, () => loggerService);
+      service = new DefaultApduReceiverService({});
     });
 
     it("should return a response directly when a frame is complete", () => {

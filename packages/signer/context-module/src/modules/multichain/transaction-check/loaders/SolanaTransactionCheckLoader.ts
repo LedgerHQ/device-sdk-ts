@@ -1,11 +1,11 @@
 import {
   type DeviceModelId,
-  LoggerPublisherService,
+  getLogger,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Codec, number, string } from "purify-ts";
 
-import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
@@ -59,11 +59,9 @@ export class SolanaTransactionCheckLoader
     private readonly transactionCheckDataSource: TransactionCheckDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
     private readonly bs58Encoder: Bs58Encoder = DefaultBs58Encoder,
   ) {
-    this.logger = loggerFactory("SolanaTransactionCheckLoader");
+    this.logger = getLogger("ContextModule", "SolanaTransactionCheckLoader");
   }
 
   canHandle(

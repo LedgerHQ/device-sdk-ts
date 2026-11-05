@@ -57,7 +57,6 @@ const dmk = new DeviceManagementKitBuilder()
 const dmk = new DeviceManagementKitBuilder()
   .addTransport(({
     deviceModelDataSource: DeviceModelDataSource;
-    loggerServiceFactory: (tag: string) => LoggerPublisherService;
     config: DmkConfig;
     apduSenderServiceFactory: ApduSenderServiceFactory;
     apduReceiverServiceFactory: ApduReceiverServiceFactory;
@@ -65,8 +64,6 @@ const dmk = new DeviceManagementKitBuilder()
     // custom code
     return new WebBleTransport(
       deviceModelDataSource,
-      loggerServiceFactory,
-      config,
       apduSenderServiceFactory,
       apduReceiverServiceFactory,
     );

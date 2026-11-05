@@ -1,7 +1,6 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CallTaskInAppDeviceAction,
-  type LoggerPublisherService,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
@@ -17,7 +16,6 @@ export const GetAddressDeviceActionFactory = (args: {
   skipOpenApp: boolean;
   chainId?: number;
   contextModule: ContextModule;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 }): CallTaskInAppDeviceAction<
   GetAddressCommandResponse,
   GetAddressTaskError,
@@ -36,7 +34,6 @@ export const GetAddressDeviceActionFactory = (args: {
           checkOnDevice: args.checkOnDevice,
           returnChainCode: args.returnChainCode,
           chainId: args.chainId,
-          loggerFactory: args.loggerFactory,
         }).run(),
       appName: APP_NAME,
       requiredUserInteraction: args.checkOnDevice

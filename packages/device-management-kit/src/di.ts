@@ -3,13 +3,13 @@ import { Container } from "inversify";
 import { commandModuleFactory } from "@api/command/di/commandModule";
 import { deviceActionModuleFactory } from "@api/device-action/di/deviceActionModule";
 import { type DmkConfig } from "@api/DmkConfig";
-import { type LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
+import { type LoggerSubscriberService } from "@api/global/services/logger/LoggerSubscriberService";
+import { setLoggerSubscribers } from "@api/global/services/logger/utils/getLogger";
 import { type TransportFactory } from "@api/transport/model/Transport";
 import { configModuleFactory } from "@internal/config/di/configModule";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
 import { discoveryModuleFactory } from "@internal/discovery/di/discoveryModule";
-import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { managerApiModuleFactory } from "@internal/manager-api/di/managerApiModule";
 import {
   DEFAULT_FIRMWARE_DISTRIBUTION_SALT,
@@ -41,6 +41,8 @@ export const makeContainer = ({
     firmwareDistributionSalt: DEFAULT_FIRMWARE_DISTRIBUTION_SALT,
   },
 }: Partial<MakeContainerProps>) => {
+  setLoggerSubscribers(loggers);
+
   const container = new Container();
 
   container.loadSync(
@@ -50,7 +52,6 @@ export const makeContainer = ({
     managerApiModuleFactory({ stub, config }),
     secureChannelModuleFactory({ stub, config }),
     discoveryModuleFactory({ stub }),
-    loggerModuleFactory({ subscribers: loggers }),
     deviceSessionModuleFactory({ stub }),
     sendModuleFactory({ stub }),
     commandModuleFactory({ stub }),

@@ -10,14 +10,6 @@ import { DefaultTypedDataContextLoader } from "@/modules/ethereum/typed-data/dom
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("TypedDataContextLoader", () => {
   const getProxyImplementationAddressMock = vi.fn();
   const loadCertificateMock = vi.fn();
@@ -39,7 +31,6 @@ describe("TypedDataContextLoader", () => {
     mockTokenDataSource,
     mockProxyDatasource,
     mockCertificateLoader,
-    mockLoggerFactory,
   );
 
   const TEST_TYPES = {

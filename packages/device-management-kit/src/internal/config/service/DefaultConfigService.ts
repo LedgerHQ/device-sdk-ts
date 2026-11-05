@@ -1,6 +1,7 @@
 import { inject, injectable } from "inversify";
 
-import type { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import type { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import type {
   LocalConfigDataSource,
   RemoteConfigDataSource,
@@ -11,7 +12,6 @@ import {
   LocalConfigFailure,
   RemoteConfigFailure,
 } from "@internal/config/model/Errors";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 
 import { ConfigService } from "./ConfigService";
 
@@ -23,12 +23,10 @@ export class DefaultConfigService implements ConfigService {
   constructor(
     @inject(configTypes.LocalConfigDataSource) local: LocalConfigDataSource,
     @inject(configTypes.RemoteConfigDataSource) remote: RemoteConfigDataSource,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._local = local;
     this._remote = remote;
-    this._logger = loggerServiceFactory("config");
+    this._logger = getLogger("config");
   }
 
   async getDmkConfig(): Promise<Config> {

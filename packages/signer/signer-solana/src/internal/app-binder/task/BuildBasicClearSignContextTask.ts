@@ -7,6 +7,7 @@ import {
 import {
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -22,7 +23,6 @@ export type BuildBasicClearSignContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly options: TransactionResolutionContext;
   readonly transactionBytes: Uint8Array;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export class BuildBasicClearSignContextTask {
@@ -31,7 +31,7 @@ export class BuildBasicClearSignContextTask {
     private readonly api: InternalApi,
     private readonly args: BuildBasicClearSignContextTaskArgs,
   ) {
-    this._logger = args.loggerFactory("BuildBasicClearSignContextTask");
+    this._logger = getLogger("SignerSolana", "BuildBasicClearSignContextTask");
   }
 
   async run(): Promise<CommandResult<SolanaTransactionContextResultSuccess>> {

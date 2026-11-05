@@ -11,6 +11,7 @@ import {
   formatApduReceivedLog,
   formatApduSentLog,
   GeneralDmkError,
+  getLogger,
   type LoggerPublisherService,
   OpeningConnectionError,
   type Transport,
@@ -33,7 +34,7 @@ export type SpeculosTransportOptions = {
 };
 
 export class SpeculosTransport implements Transport {
-  private logger: LoggerPublisherService;
+  private logger: LoggerPublisherService = getLogger("SpeculosTransport");
   private readonly identifier: TransportIdentifier = speculosIdentifier;
   private readonly _speculosDataSource: SpeculosDatasource;
   private connectedDevice: TransportConnectedDevice | null = null;
@@ -42,7 +43,6 @@ export class SpeculosTransport implements Transport {
   private readonly speculosDevice: TransportDiscoveredDevice;
 
   constructor(
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
     _config: DmkConfig,
     speculosUrl: string,
     isE2E?: boolean,
@@ -50,7 +50,6 @@ export class SpeculosTransport implements Transport {
     { bearerToken }: SpeculosTransportOptions = {},
   ) {
     this._isE2E = isE2E ?? false;
-    this.logger = loggerServiceFactory("SpeculosTransport");
     this._speculosDataSource = new HttpSpeculosDatasource(
       speculosUrl,
       undefined,
@@ -247,12 +246,5 @@ export const speculosTransportFactory: (
     deviceModelId?,
     options?,
   ) =>
-  ({ config, loggerServiceFactory }) =>
-    new SpeculosTransport(
-      loggerServiceFactory,
-      config,
-      speculosUrl,
-      isE2E,
-      deviceModelId,
-      options,
-    );
+  ({ config }) =>
+    new SpeculosTransport(config, speculosUrl, isE2E, deviceModelId, options);

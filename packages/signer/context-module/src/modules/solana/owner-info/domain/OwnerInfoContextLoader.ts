@@ -1,7 +1,9 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
@@ -29,10 +31,8 @@ export class OwnerInfoContextLoader
     private readonly _dataSource: OwnerInfoDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("OwnerInfoContextLoader");
+    this.logger = getLogger("ContextModule", "OwnerInfoContextLoader");
   }
 
   public canHandle(

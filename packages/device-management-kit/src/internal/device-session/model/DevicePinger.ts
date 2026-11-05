@@ -1,6 +1,7 @@
 import { type Subscription } from "rxjs";
 
 import { DeviceModelId } from "@api/device/DeviceModel";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import {
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
@@ -31,13 +32,12 @@ export class DevicePinger {
   private _logger: LoggerPublisherService;
 
   constructor(
-    loggerModuleFactory: (tag: string) => LoggerPublisherService,
     private connectedDevice: TransportConnectedDevice,
     private _sessionEventDispatcher: DeviceSessionEventDispatcher,
     sendCommandFunction: SendCommandFunction,
   ) {
     this._sendCommandFunction = sendCommandFunction;
-    this._logger = loggerModuleFactory("device-pinger");
+    this._logger = getLogger("device-pinger");
     this._subscription = this._sessionEventDispatcher
       .listen()
       .subscribe(async (event) => await this.mapEventAction(event));

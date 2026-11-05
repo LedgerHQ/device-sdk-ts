@@ -13,14 +13,6 @@ import { PolkadotAppBinder } from "./PolkadotAppBinder";
 const containing = (value: Record<string, unknown>): unknown =>
   expect.objectContaining(value);
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("PolkadotAppBinder", () => {
   const sessionId = "test-session-id" as DeviceSessionId;
   const mockedDmk = {
@@ -32,11 +24,7 @@ describe("PolkadotAppBinder", () => {
   });
 
   it("should be defined", () => {
-    const binder = new PolkadotAppBinder(
-      mockedDmk,
-      sessionId,
-      mockLoggerFactory,
-    );
+    const binder = new PolkadotAppBinder(mockedDmk, sessionId);
     expect(binder).toBeDefined();
   });
 
@@ -49,11 +37,7 @@ describe("PolkadotAppBinder", () => {
         checkOnDevice: true,
         skipOpenApp: false,
       };
-      const binder = new PolkadotAppBinder(
-        mockedDmk,
-        sessionId,
-        mockLoggerFactory,
-      );
+      const binder = new PolkadotAppBinder(mockedDmk, sessionId);
       // ACT
       binder.getAddress(args);
       // ASSERT
@@ -80,11 +64,7 @@ describe("PolkadotAppBinder", () => {
         checkOnDevice: false,
         skipOpenApp: true,
       };
-      const binder = new PolkadotAppBinder(
-        mockedDmk,
-        sessionId,
-        mockLoggerFactory,
-      );
+      const binder = new PolkadotAppBinder(mockedDmk, sessionId);
       // ACT
       binder.getAddress(args);
       // ASSERT
@@ -107,11 +87,7 @@ describe("PolkadotAppBinder", () => {
   describe("signTransaction", () => {
     it("should call executeDeviceAction with SignTransaction interaction", () => {
       // ARRANGE
-      const binder = new PolkadotAppBinder(
-        mockedDmk,
-        sessionId,
-        mockLoggerFactory,
-      );
+      const binder = new PolkadotAppBinder(mockedDmk, sessionId);
       // ACT
       binder.signTransaction({
         derivationPath: "44'/354'/0'/0'/0'",
@@ -136,11 +112,7 @@ describe("PolkadotAppBinder", () => {
 
     it("should default skipOpenApp to false when not provided", () => {
       // ARRANGE
-      const binder = new PolkadotAppBinder(
-        mockedDmk,
-        sessionId,
-        mockLoggerFactory,
-      );
+      const binder = new PolkadotAppBinder(mockedDmk, sessionId);
       // ACT
       binder.signTransaction({
         derivationPath: "44'/354'/0'/0'/0'",

@@ -614,7 +614,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                       ?.contextErrorCount ?? 0,
                 },
                 contextModule: context.input.contextModule,
-                loggerFactory: this.getLoggerFactory(internalApi),
               };
             },
             onDone: [
@@ -690,7 +689,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         arg0.input.derivationPath,
         arg0.input.appConfig,
         arg0.input.from,
-        this.getLoggerFactory(internalApi),
       ).run();
 
     const provideContext = async (arg0: {
@@ -727,7 +725,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         internalApi,
         arg0.input.data,
         arg0.input.derivationPath,
-        this.getLoggerFactory(internalApi),
       ).run();
 
     const detectBlindSigning = async (arg0: {

@@ -10,13 +10,11 @@ import { RNBleTransport } from "./RNBleTransport";
 
 export const RNBleTransportFactory: TransportFactory = ({
   deviceModelDataSource,
-  loggerServiceFactory,
   apduSenderServiceFactory,
   apduReceiverServiceFactory,
 }) =>
   new RNBleTransport(
     deviceModelDataSource,
-    loggerServiceFactory,
     apduSenderServiceFactory,
     apduReceiverServiceFactory,
     new BleManager(),

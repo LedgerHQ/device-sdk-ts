@@ -4,7 +4,6 @@ import {
   CommandResultFactory,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
@@ -66,10 +65,6 @@ function makeApiMock(responses?: ReturnType<typeof CommandResultFactory>[]) {
   };
 }
 
-function makeLogger(): LoggerPublisherService {
-  return { debug: vi.fn() } as unknown as LoggerPublisherService;
-}
-
 function apduOf(cmd: Command<unknown, unknown>) {
   const raw = cmd.getApdu().getRawApdu();
   return {
@@ -86,11 +81,11 @@ describe("SendPltTask", () => {
     const { api, sentCommands } = makeApiMock();
     const transaction = buildTransaction();
 
-    const result = await new SendPltTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
-      makeLogger(),
-    ).run();
+    const result = await new SendPltTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: MAX_FEE,
+    }).run();
 
     expect(sentCommands).toHaveLength(2);
     expect(isSuccessCommandResult(result)).toBe(true);
@@ -105,11 +100,11 @@ describe("SendPltTask", () => {
     const cbor = new Uint8Array(9).fill(0x01);
     const transaction = buildTransaction({ tokenId, cbor });
 
-    await new SendPltTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
-      makeLogger(),
-    ).run();
+    await new SendPltTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: MAX_FEE,
+    }).run();
 
     const init = apduOf(sentCommands[0]!);
     const pathBytes = encodeDerivationPath(DERIVATION_PATH);
@@ -136,11 +131,11 @@ describe("SendPltTask", () => {
     const { api, sentCommands } = makeApiMock();
     const transaction = buildTransaction();
 
-    await new SendPltTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
-      makeLogger(),
-    ).run();
+    await new SendPltTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: MAX_FEE,
+    }).run();
 
     const init = apduOf(sentCommands[0]!);
     const pathBytes = encodeDerivationPath(DERIVATION_PATH);
@@ -158,11 +153,11 @@ describe("SendPltTask", () => {
     const { api, sentCommands } = makeApiMock();
     const transaction = buildTransaction({ cbor: new Uint8Array(300) });
 
-    await new SendPltTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
-      makeLogger(),
-    ).run();
+    await new SendPltTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: MAX_FEE,
+    }).run();
 
     const contP2 = sentCommands.slice(1).map((cmd) => apduOf(cmd).p2);
 
@@ -173,15 +168,11 @@ describe("SendPltTask", () => {
   it("should not change the signed bytes when the fee changes", async () => {
     const run = async (maxFee: bigint) => {
       const { api, sentCommands } = makeApiMock();
-      await new SendPltTask(
-        api,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction: buildTransaction(),
-          maxFee,
-        },
-        makeLogger(),
-      ).run();
+      await new SendPltTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction: buildTransaction(),
+        maxFee,
+      }).run();
       const init = apduOf(sentCommands[0]!);
       // Everything before the fee suffix is what the device hashes.
       return Buffer.from(init.data.slice(0, -8)).toString("hex");
@@ -196,11 +187,11 @@ describe("SendPltTask", () => {
     cbor.forEach((_, i) => (cbor[i] = i & 0xff));
     const transaction = buildTransaction({ cbor });
 
-    await new SendPltTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
-      makeLogger(),
-    ).run();
+    await new SendPltTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: MAX_FEE,
+    }).run();
 
     expect(sentCommands).toHaveLength(3);
     const first = apduOf(sentCommands[1]!);
@@ -221,11 +212,11 @@ describe("SendPltTask", () => {
     cbor[APDU_MAX_PAYLOAD] = 0xf1;
     const transaction = buildTransaction({ cbor });
 
-    await new SendPltTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
-      makeLogger(),
-    ).run();
+    await new SendPltTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: MAX_FEE,
+    }).run();
 
     const first = apduOf(sentCommands[1]!);
     const second = apduOf(sentCommands[2]!);
@@ -239,15 +230,11 @@ describe("SendPltTask", () => {
     const tokenId = new Uint8Array(128).fill(0x41);
     const transaction = buildTransaction({ tokenId });
 
-    const result = await new SendPltTask(
-      api,
-      {
-        derivationPath: "44'/919'/0'/0'/0'",
-        transaction,
-        maxFee: MAX_FEE,
-      },
-      makeLogger(),
-    ).run();
+    const result = await new SendPltTask(api, {
+      derivationPath: "44'/919'/0'/0'/0'",
+      transaction,
+      maxFee: MAX_FEE,
+    }).run();
 
     expect(isSuccessCommandResult(result)).toBe(true);
     const init = apduOf(sentCommands[0]!);
@@ -262,15 +249,11 @@ describe("SendPltTask", () => {
     } as never);
     const { api, sentCommands } = makeApiMock([failure]);
 
-    const result = await new SendPltTask(
-      api,
-      {
-        derivationPath: DERIVATION_PATH,
-        transaction: buildTransaction(),
-        maxFee: MAX_FEE,
-      },
-      makeLogger(),
-    ).run();
+    const result = await new SendPltTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction: buildTransaction(),
+      maxFee: MAX_FEE,
+    }).run();
 
     expect(sentCommands).toHaveLength(1);
     expect(isSuccessCommandResult(result)).toBe(false);
@@ -284,15 +267,11 @@ describe("SendPltTask", () => {
     const { api, sentCommands } = makeApiMock([success, failure]);
     const cbor = new Uint8Array(300).fill(0x00);
 
-    const result = await new SendPltTask(
-      api,
-      {
-        derivationPath: DERIVATION_PATH,
-        transaction: buildTransaction({ cbor }),
-        maxFee: MAX_FEE,
-      },
-      makeLogger(),
-    ).run();
+    const result = await new SendPltTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction: buildTransaction({ cbor }),
+      maxFee: MAX_FEE,
+    }).run();
 
     expect(sentCommands).toHaveLength(2);
     expect(isSuccessCommandResult(result)).toBe(false);
@@ -353,15 +332,11 @@ describe("SendPltTask", () => {
     it("should match the INIT frame bytes the firmware fixture sends", async () => {
       const { api, sentCommands } = makeApiMock();
 
-      await new SendPltTask(
-        api,
-        {
-          derivationPath: FIXTURE_PATH,
-          transaction: fixtureTransaction(FIXTURE_CBOR),
-          maxFee: MAX_FEE,
-        },
-        makeLogger(),
-      ).run();
+      await new SendPltTask(api, {
+        derivationPath: FIXTURE_PATH,
+        transaction: fixtureTransaction(FIXTURE_CBOR),
+        maxFee: MAX_FEE,
+      }).run();
 
       const init = apduOf(sentCommands[0]!);
       // cborLength is 4 bytes big-endian, then the 8-byte fee suffix.
@@ -392,15 +367,11 @@ describe("SendPltTask", () => {
       const { api, sentCommands } = makeApiMock();
       const cbor = new Uint8Array(512);
 
-      await new SendPltTask(
-        api,
-        {
-          derivationPath: FIXTURE_PATH,
-          transaction: fixtureTransaction(cbor),
-          maxFee: MAX_FEE,
-        },
-        makeLogger(),
-      ).run();
+      await new SendPltTask(api, {
+        derivationPath: FIXTURE_PATH,
+        transaction: fixtureTransaction(cbor),
+        maxFee: MAX_FEE,
+      }).run();
 
       const contLengths = sentCommands
         .slice(1)
@@ -413,15 +384,11 @@ describe("SendPltTask", () => {
       const { api, sentCommands } = makeApiMock();
       const cbor = new Uint8Array(300);
 
-      await new SendPltTask(
-        api,
-        {
-          derivationPath: FIXTURE_PATH,
-          transaction: fixtureTransaction(cbor),
-          maxFee: MAX_FEE,
-        },
-        makeLogger(),
-      ).run();
+      await new SendPltTask(api, {
+        derivationPath: FIXTURE_PATH,
+        transaction: fixtureTransaction(cbor),
+        maxFee: MAX_FEE,
+      }).run();
 
       const contLengths = sentCommands
         .slice(1)
@@ -435,11 +402,11 @@ describe("SendPltTask", () => {
     async function expectRejection(transaction: Uint8Array) {
       const { api, sentCommands } = makeApiMock();
 
-      const result = await new SendPltTask(
-        api,
-        { derivationPath: DERIVATION_PATH, transaction, maxFee: MAX_FEE },
-        makeLogger(),
-      ).run();
+      const result = await new SendPltTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: MAX_FEE,
+      }).run();
 
       expect(sentCommands).toHaveLength(0);
       expect(isSuccessCommandResult(result)).toBe(false);

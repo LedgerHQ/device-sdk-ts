@@ -1,11 +1,11 @@
 import type { HexaString } from "@ledgerhq/device-management-kit";
 import {
   bufferToHexaString,
-  LoggerPublisherService,
+  getLogger,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { configTypes } from "@/config/di/configTypes";
 import type {
   TypedDataCalldataIndex,
   TypedDataCalldataInfo,
@@ -56,10 +56,8 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
     private proxyDataSource: ProxyDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private _certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("DefaultTypedDataContextLoader");
+    this.logger = getLogger("ContextModule", "DefaultTypedDataContextLoader");
   }
 
   async load(typedData: TypedDataContext): Promise<TypedDataClearSignContext> {

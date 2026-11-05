@@ -18,6 +18,12 @@ import { SignMessageGenericPreviewCommand } from "@internal/app-binder/command/S
 import { type ChallengeBoundRequirements } from "./BuildGenericClearSignContextTask";
 import { ProvideGenericClearSignContextTask } from "./ProvideGenericClearSignContextTask";
 
+const { getLoggerMock } = vi.hoisted(() => ({ getLoggerMock: vi.fn() }));
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: getLoggerMock,
+}));
+
 const cert = { payload: new Uint8Array([0xf0]), keyUsageNumber: 11 } as const;
 const success = CommandResultFactory({ data: undefined });
 const challenge = CommandResultFactory({ data: { challenge: "deadbeef" } });
@@ -66,6 +72,7 @@ function makeTask(
     warn: vi.fn(),
     error: vi.fn(),
   };
+  getLoggerMock.mockReturnValue(logger);
   const api = {
     sendCommand: vi.fn(async (cmd: unknown) =>
       cmd instanceof GetChallengeCommand ? challenge : success,
@@ -80,7 +87,6 @@ function makeTask(
     instructionInfoContexts,
     challengeBoundRequirements,
     contextModule,
-    loggerFactory: () => logger as any,
     normaliser: {} as any,
   });
   return { task, api, getContexts, logger };

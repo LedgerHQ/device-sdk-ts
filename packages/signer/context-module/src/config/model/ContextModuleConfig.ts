@@ -1,5 +1,3 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
-
 import { type TrustedNameDataSource } from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
@@ -44,7 +42,6 @@ export type ContextModuleConfig = {
 export type ContextModuleServiceConfig = ContextModuleConfig & {
   chain: ContextModuleChainID;
   originToken: string;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type ContextModuleLoaderConfig = {

@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
 
 import { DeviceSessionId } from "@api/device-session/types";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { ConnectedDevice } from "@api/index";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DeviceSessionRefresherOptions } from "@internal/device-session/model/DeviceSession";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 
 import { ConnectUseCase } from "./ConnectUseCase";
 import { DisconnectUseCase } from "./DisconnectUseCase";
@@ -39,10 +39,8 @@ export class ReconnectUseCase {
     private readonly connectUseCase: ConnectUseCase,
     @inject(discoveryTypes.DisconnectUseCase)
     private readonly disconnectUseCase: DisconnectUseCase,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._logger = loggerFactory("ReconnectUseCase");
+    this._logger = getLogger("ReconnectUseCase");
   }
 
   async execute({

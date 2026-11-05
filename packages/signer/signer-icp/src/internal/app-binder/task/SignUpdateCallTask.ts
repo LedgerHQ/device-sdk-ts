@@ -2,6 +2,7 @@ import {
   APDU_MAX_PAYLOAD,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -30,10 +31,14 @@ type SignUpdateCallTaskArgs = {
 };
 
 export class SignUpdateCallTask {
+  private readonly logger: LoggerPublisherService = getLogger(
+    "SignerIcp",
+    "SignUpdateCallTask",
+  );
+
   constructor(
     private api: InternalApi,
     private args: SignUpdateCallTaskArgs,
-    private logger: LoggerPublisherService,
   ) {}
 
   // Combined-sign message: [u32LE readStateLen][readState][u32LE callLen][call].

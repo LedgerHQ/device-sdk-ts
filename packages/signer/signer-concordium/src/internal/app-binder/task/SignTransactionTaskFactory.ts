@@ -3,7 +3,6 @@ import {
   type CommandResult,
   CommandResultFactory,
   type InternalApi,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
@@ -35,7 +34,6 @@ type TaskArgs = {
 export function createSignTransactionTask(
   internalApi: InternalApi,
   args: TaskArgs,
-  loggerFactory: (tag: string) => LoggerPublisherService,
 ): () => Promise<CommandResult<Signature, ConcordiumErrorCodes>> {
   if (!isValidMaxFee(args.maxFee)) {
     return () =>
@@ -74,17 +72,12 @@ export function createSignTransactionTask(
         );
     }
 
-    const logger = loggerFactory("SendPltTask");
     return () =>
-      new SendPltTask(
-        internalApi,
-        {
-          derivationPath: args.derivationPath,
-          transaction: args.transaction,
-          maxFee: args.maxFee,
-        },
-        logger,
-      ).run();
+      new SendPltTask(internalApi, {
+        derivationPath: args.derivationPath,
+        transaction: args.transaction,
+        maxFee: args.maxFee,
+      }).run();
   }
 
   const supportsFeeDisplay = checkMinVersion(
@@ -94,13 +87,10 @@ export function createSignTransactionTask(
   const taskArgs = { ...args, supportsFeeDisplay };
 
   if (txType === TRANSACTION_TYPE_TRANSFER_WITH_MEMO) {
-    const logger = loggerFactory("SendTransferWithMemoTask");
-    return () =>
-      new SendTransferWithMemoTask(internalApi, taskArgs, logger).run();
+    return () => new SendTransferWithMemoTask(internalApi, taskArgs).run();
   }
 
-  const logger = loggerFactory("SendTransferTask");
-  return () => new SendTransferTask(internalApi, taskArgs, logger).run();
+  return () => new SendTransferTask(internalApi, taskArgs).run();
 }
 
 function isValidMaxFee(value: unknown): value is bigint {

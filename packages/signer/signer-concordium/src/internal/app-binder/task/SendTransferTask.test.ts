@@ -4,7 +4,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
@@ -41,7 +40,6 @@ describe("SendTransferTask", () => {
   let sentCommands: SignTransferCommand[];
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
-  let loggerMock: LoggerPublisherService;
 
   beforeEach(() => {
     sentCommands = [];
@@ -49,9 +47,6 @@ describe("SendTransferTask", () => {
     apiMock = {
       sendCommand: sendCommandMock,
     } as unknown as InternalApi;
-    loggerMock = {
-      debug: vi.fn(),
-    } as unknown as LoggerPublisherService;
   });
 
   function captureCommands(
@@ -70,11 +65,11 @@ describe("SendTransferTask", () => {
 
     captureCommands(CommandResultFactory({ data: signature }));
 
-    const task = new SendTransferTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     const result = await task.run();
 
@@ -97,11 +92,11 @@ describe("SendTransferTask", () => {
 
     captureCommands(CommandResultFactory({ data: new Uint8Array(64) }));
 
-    const task = new SendTransferTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     await task.run();
 
@@ -127,11 +122,11 @@ describe("SendTransferTask", () => {
       }),
     );
 
-    const task = new SendTransferTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     const result = await task.run();
 
@@ -146,11 +141,11 @@ describe("SendTransferTask", () => {
 
     captureCommands(CommandResultFactory({ data: new Uint8Array(64) }));
 
-    const task = new SendTransferTask(
-      apiMock,
-      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-      loggerMock,
-    );
+    const task = new SendTransferTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      ...NO_FEE,
+    });
 
     await task.run();
 
@@ -164,15 +159,11 @@ describe("SendTransferTask", () => {
         APDU_MAX_PAYLOAD - PATH_BYTES_LENGTH + 1,
       ).fill(0x05);
 
-      const task = new SendTransferTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction: oversizedTransaction,
-          ...NO_FEE,
-        },
-        loggerMock,
-      );
+      const task = new SendTransferTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction: oversizedTransaction,
+        ...NO_FEE,
+      });
 
       const result = await task.run();
 
@@ -192,16 +183,12 @@ describe("SendTransferTask", () => {
         APDU_MAX_PAYLOAD - PATH_BYTES_LENGTH,
       ).fill(0x06);
 
-      const task = new SendTransferTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction,
-          maxFee: 1n,
-          supportsFeeDisplay: true,
-        },
-        loggerMock,
-      );
+      const task = new SendTransferTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: 1n,
+        supportsFeeDisplay: true,
+      });
 
       const result = await task.run();
 
@@ -220,11 +207,11 @@ describe("SendTransferTask", () => {
 
       captureCommands(CommandResultFactory({ data: signature }));
 
-      const task = new SendTransferTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
-        loggerMock,
-      );
+      const task = new SendTransferTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        ...NO_FEE,
+      });
 
       const result = await task.run();
 
@@ -242,16 +229,12 @@ describe("SendTransferTask", () => {
 
       captureCommands(CommandResultFactory({ data: signature }));
 
-      const task = new SendTransferTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction,
-          maxFee,
-          supportsFeeDisplay: true,
-        },
-        loggerMock,
-      );
+      const task = new SendTransferTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee,
+        supportsFeeDisplay: true,
+      });
 
       const result = await task.run();
 
@@ -277,16 +260,12 @@ describe("SendTransferTask", () => {
 
       captureCommands(CommandResultFactory({ data: signature }));
 
-      const task = new SendTransferTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction,
-          maxFee: 12345n,
-          supportsFeeDisplay: false,
-        },
-        loggerMock,
-      );
+      const task = new SendTransferTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: 12345n,
+        supportsFeeDisplay: false,
+      });
 
       await task.run();
 

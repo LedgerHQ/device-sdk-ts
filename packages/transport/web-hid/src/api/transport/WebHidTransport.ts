@@ -10,6 +10,7 @@ import {
   DeviceNotRecognizedError,
   type DisconnectHandler,
   type DmkError,
+  getLogger,
   LEDGER_VENDOR_ID,
   type LoggerPublisherService,
   NoAccessibleDeviceError,
@@ -69,15 +70,12 @@ export class WebHidTransport implements Transport {
   /** AbortController to stop listening to HID connection events */
   private _connectionListenersAbortController: AbortController =
     new AbortController();
-  private _logger: LoggerPublisherService;
+  private _logger: LoggerPublisherService = getLogger("WebHidTransport");
   private readonly connectionType: ConnectionType = "USB";
   private readonly identifier: TransportIdentifier = webHidIdentifier;
 
   constructor(
     private readonly _deviceModelDataSource: DeviceModelDataSource,
-    private readonly _loggerServiceFactory: (
-      tag: string,
-    ) => LoggerPublisherService,
     private readonly _apduSenderFactory: ApduSenderServiceFactory,
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
     private readonly _deviceConnectionStateMachineFactory: (
@@ -86,12 +84,8 @@ export class WebHidTransport implements Transport {
       new DeviceConnectionStateMachine(args),
     private readonly _deviceApduSenderFactory: (
       args: WebHidApduSenderConstructorArgs,
-      loggerFactory: (tag: string) => LoggerPublisherService,
-    ) => WebHidApduSender = (args, loggerFactory) =>
-      new WebHidApduSender(args, loggerFactory),
+    ) => WebHidApduSender = (args) => new WebHidApduSender(args),
   ) {
-    this._logger = _loggerServiceFactory("WebWebHidTransport");
-
     this.startListeningToConnectionEvents();
   }
 
@@ -368,14 +362,11 @@ export class WebHidTransport implements Transport {
       );
     }
 
-    const deviceApduSender = this._deviceApduSenderFactory(
-      {
-        apduSenderFactory: this._apduSenderFactory,
-        apduReceiverFactory: this._apduReceiverFactory,
-        dependencies: { device: matchingInternalDevice.hidDevice },
-      },
-      this._loggerServiceFactory,
-    );
+    const deviceApduSender = this._deviceApduSenderFactory({
+      apduSenderFactory: this._apduSenderFactory,
+      apduReceiverFactory: this._apduReceiverFactory,
+      dependencies: { device: matchingInternalDevice.hidDevice },
+    });
     const deviceConnectionStateMachine =
       this._deviceConnectionStateMachineFactory({
         deviceId,
@@ -606,13 +597,11 @@ export class WebHidTransport implements Transport {
 
 export const webHidTransportFactory: TransportFactory = ({
   deviceModelDataSource,
-  loggerServiceFactory,
   apduSenderServiceFactory,
   apduReceiverServiceFactory,
 }) =>
   new WebHidTransport(
     deviceModelDataSource,
-    loggerServiceFactory,
     apduSenderServiceFactory,
     apduReceiverServiceFactory,
   );

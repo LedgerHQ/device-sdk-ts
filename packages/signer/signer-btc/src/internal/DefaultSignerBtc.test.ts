@@ -14,14 +14,6 @@ import { SignTransactionUseCase } from "@internal/use-cases/sign-transaction/Sig
 
 import { SignMessageUseCase } from "./use-cases/sign-message/SignMessageUseCase";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("DefaultSignerBtc", () => {
   it("should be defined", () => {
     const signer = new DefaultSignerBtc({
@@ -36,7 +28,6 @@ describe("DefaultSignerBtc", () => {
     const sessionId = "session-id";
     const dmk = {
       executeDeviceAction: vi.fn(),
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const signer = new DefaultSignerBtc({ dmk, sessionId });
     signer.getExtendedPublicKey("44'/0'/0'/0/0", {
@@ -50,7 +41,6 @@ describe("DefaultSignerBtc", () => {
     const sessionId = "session-id";
     const dmk = {
       executeDeviceAction: vi.fn(),
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const signer = new DefaultSignerBtc({ dmk, sessionId });
     signer.getMasterFingerprint({ skipOpenApp: false });
@@ -62,7 +52,6 @@ describe("DefaultSignerBtc", () => {
     const sessionId = "session-id";
     const dmk = {
       executeDeviceAction: vi.fn(),
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const signer = new DefaultSignerBtc({ dmk, sessionId });
     const walletPolicy = new WalletPolicy(
@@ -79,7 +68,6 @@ describe("DefaultSignerBtc", () => {
     const sessionId = "session-id";
     const dmk = {
       executeDeviceAction: vi.fn(),
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const derivationPath = "44'/0'/0'/0/0";
     const message = "message";
@@ -92,7 +80,6 @@ describe("DefaultSignerBtc", () => {
     const sessionId = "session-id";
     const dmk = {
       executeDeviceAction: vi.fn(),
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const signer = new DefaultSignerBtc({ dmk, sessionId });
     signer.signPsbt(
@@ -107,7 +94,6 @@ describe("DefaultSignerBtc", () => {
     const sessionId = "session-id";
     const dmk = {
       executeDeviceAction: vi.fn(),
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const signer = new DefaultSignerBtc({ dmk, sessionId });
     signer.signTransaction(

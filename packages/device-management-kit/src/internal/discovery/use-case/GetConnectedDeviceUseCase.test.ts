@@ -1,11 +1,9 @@
 import { type DmkConfig } from "@api/DmkConfig";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
@@ -19,7 +17,6 @@ import { GetConnectedDeviceUseCase } from "./GetConnectedDeviceUseCase";
 
 vi.mock("@internal/manager-api/data/HttpManagerApiDataSource");
 
-let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
@@ -30,33 +27,26 @@ const fakeSessionId = "fakeSessionId";
 
 describe("GetConnectedDevice", () => {
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService(
-      [],
-      "get-connected-device-use-case",
-    );
-    managerApiDataSource = new HttpManagerApiDataSource(
-      {} as DmkConfig,
-      () => logger,
-    );
+    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,
     );
     secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
-    sessionService = new DefaultDeviceSessionService(() => logger);
+    sessionService = new DefaultDeviceSessionService();
   });
 
   it("should retrieve an instance of ConnectedDevice", () => {
     // given
     const deviceSession = deviceSessionStubBuilder(
       { id: fakeSessionId },
-      () => logger,
+
       managerApi,
       secureChannel,
       DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     sessionService.addDeviceSession(deviceSession);
-    const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);
+    const useCase = new GetConnectedDeviceUseCase(sessionService);
 
     // when
     const response = useCase.execute({
@@ -73,13 +63,13 @@ describe("GetConnectedDevice", () => {
     // given
     const deviceSession = deviceSessionStubBuilder(
       { id: fakeSessionId },
-      () => logger,
+
       managerApi,
       secureChannel,
       DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     sessionService.addDeviceSession(deviceSession);
-    const useCase = new GetConnectedDeviceUseCase(sessionService, () => logger);
+    const useCase = new GetConnectedDeviceUseCase(sessionService);
 
     // when
     const response = useCase.execute({

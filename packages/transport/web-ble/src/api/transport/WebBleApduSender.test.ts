@@ -5,7 +5,6 @@ import {
   type ApduReceiverServiceFactory,
   type ApduResponse,
   type ApduSenderServiceFactory,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Maybe, Right } from "purify-ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -13,18 +12,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MTU_OP, WebBleApduSender } from "./WebBleApduSender";
 
 type EventListener = (event: Event) => void;
-class LoggerStub implements LoggerPublisherService {
-  subscribers: any[] = [];
-  tag: string;
-  constructor(subs: any[], tag: string) {
-    this.subscribers = subs;
-    this.tag = tag;
-  }
-  debug = vi.fn();
-  info = vi.fn();
-  warn = vi.fn();
-  error = vi.fn();
-}
 
 function makeCharacteristic() {
   const disconnect = vi.fn();
@@ -62,7 +49,6 @@ let writeChar: any;
 let notifyChar: any;
 let apduSenderFactory: ApduSenderServiceFactory;
 let apduReceiverFactory: ApduReceiverServiceFactory;
-let loggerFactory: (tag: string) => LoggerPublisherService;
 let sender: WebBleApduSender;
 
 const flushPromises = () =>
@@ -92,17 +78,12 @@ beforeEach(() => {
     ),
   });
 
-  loggerFactory = (tag: string) => new LoggerStub([], tag);
-
-  sender = new WebBleApduSender(
-    {
-      writeCharacteristic: writeChar,
-      notifyCharacteristic: notifyChar,
-      apduSenderFactory,
-      apduReceiverFactory,
-    },
-    loggerFactory,
-  );
+  sender = new WebBleApduSender({
+    writeCharacteristic: writeChar,
+    notifyCharacteristic: notifyChar,
+    apduSenderFactory,
+    apduReceiverFactory,
+  });
 });
 
 afterEach(() => {

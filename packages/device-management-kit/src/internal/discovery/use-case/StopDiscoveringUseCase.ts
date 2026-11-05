@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { LoggerPublisherService } from "@api/types";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
@@ -14,10 +14,8 @@ export class StopDiscoveringUseCase {
   constructor(
     @inject(transportDiTypes.TransportService)
     private transportService: TransportService,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._logger = loggerFactory("StopDiscoveringUseCase");
+    this._logger = getLogger("StopDiscoveringUseCase");
   }
 
   async execute(): Promise<void> {

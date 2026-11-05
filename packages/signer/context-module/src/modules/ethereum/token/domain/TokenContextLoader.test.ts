@@ -11,14 +11,6 @@ import { KeyId } from "@/modules/multichain/pki/model/KeyId";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("TokenContextLoader", () => {
   const mockTokenDataSource: TokenDataSource = {
     getTokenInfosPayload: vi.fn(),
@@ -29,7 +21,6 @@ describe("TokenContextLoader", () => {
   const loader = new TokenContextLoader(
     mockTokenDataSource,
     mockCertificateLoader,
-    mockLoggerFactory,
   );
   const certificate = {
     keyUsageNumber: 8,

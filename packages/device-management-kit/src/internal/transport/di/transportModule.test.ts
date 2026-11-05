@@ -4,7 +4,6 @@ import { type DmkConfig } from "@api/DmkConfig";
 import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
 import { deviceModelModuleFactory } from "@internal/device-model/di/deviceModelModule";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
-import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 
 import { transportDiTypes } from "./transportDiTypes";
 import { transportModuleFactory } from "./transportModule";
@@ -39,7 +38,6 @@ describe("transportModuleFactory", () => {
     beforeEach(() => {
       transport = new TransportMock();
       vi.spyOn(transport, "getIdentifier").mockReturnValue("MOCK");
-      const logger = loggerModuleFactory();
       const deviceModel = deviceModelModuleFactory({ stub: true });
       const deviceSession = deviceSessionModuleFactory({ stub: true });
       mod = transportModuleFactory({
@@ -52,7 +50,7 @@ describe("transportModuleFactory", () => {
         } as DmkConfig,
       });
       container = new Container();
-      container.loadSync(logger, deviceModel, deviceSession, mod);
+      container.loadSync(deviceModel, deviceSession, mod);
     });
 
     it("should bind the TransportService", () => {

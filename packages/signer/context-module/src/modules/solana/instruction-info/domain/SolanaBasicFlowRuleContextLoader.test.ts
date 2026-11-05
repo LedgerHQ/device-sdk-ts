@@ -20,9 +20,11 @@ const mockLogger = {
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
-  subscribers: [],
 };
-const mockLoggerFactory = () => mockLogger;
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: () => mockLogger,
+}));
 
 const STAKE_PROGRAM = "Stake11111111111111111111111111111111111111";
 const SYSTEM_PROGRAM = "11111111111111111111111111111111";
@@ -75,8 +77,7 @@ describe("SolanaBasicFlowRuleContextLoader", () => {
     };
   });
 
-  const makeLoader = () =>
-    new SolanaBasicFlowRuleContextLoader(dataSource, mockLoggerFactory);
+  const makeLoader = () => new SolanaBasicFlowRuleContextLoader(dataSource);
 
   describe("canHandle", () => {
     const expectedTypes = [ClearSignContextType.SOLANA_BASIC_FLOW_RULE];

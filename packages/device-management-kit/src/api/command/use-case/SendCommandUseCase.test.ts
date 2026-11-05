@@ -3,12 +3,10 @@ import { Left } from "purify-ts";
 import { type Command } from "@api/command/Command";
 import { CommandResultStatus } from "@api/command/model/CommandResult";
 import { type DmkConfig } from "@api/DmkConfig";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
@@ -20,7 +18,6 @@ import { type SecureChannelService } from "@internal/secure-channel/service/Secu
 
 import { SendCommandUseCase } from "./SendCommandUseCase";
 
-let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
@@ -35,12 +32,8 @@ let command: Command<{ status: string }, void, void> = {
 
 describe("SendCommandUseCase", () => {
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService([], "send-command-use-case");
-    sessionService = new DefaultDeviceSessionService(() => logger);
-    managerApiDataSource = new HttpManagerApiDataSource(
-      {} as DmkConfig,
-      () => logger,
-    );
+    sessionService = new DefaultDeviceSessionService();
+    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,
@@ -60,13 +53,13 @@ describe("SendCommandUseCase", () => {
   it("should send a command to a connected device", async () => {
     const deviceSession = deviceSessionStubBuilder(
       {},
-      () => logger,
+
       managerApi,
       secureChannel,
       DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     sessionService.addDeviceSession(deviceSession);
-    const useCase = new SendCommandUseCase(sessionService, () => logger);
+    const useCase = new SendCommandUseCase(sessionService);
 
     vi.spyOn(deviceSession, "sendCommand").mockResolvedValue({
       status: CommandResultStatus.Success,
@@ -87,7 +80,7 @@ describe("SendCommandUseCase", () => {
   });
 
   it("should throw an error if the session is not found", async () => {
-    const useCase = new SendCommandUseCase(sessionService, () => logger);
+    const useCase = new SendCommandUseCase(sessionService);
     vi.spyOn(sessionService, "getDeviceSessionById").mockReturnValue(
       Left({ _tag: "DeviceSessionNotFound" }),
     );

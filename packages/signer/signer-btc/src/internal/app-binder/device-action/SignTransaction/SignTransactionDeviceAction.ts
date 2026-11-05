@@ -84,7 +84,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       actors: {
         signPsbtStateMachine: new SignPsbtDeviceAction({
           input: this.input,
-          loggerFactory: this.getLoggerFactory(internalApi),
         }).makeStateMachine(internalApi),
         updatePsbt: fromPromise(updatePsbt),
         extractTransaction: fromPromise(extractTransaction),

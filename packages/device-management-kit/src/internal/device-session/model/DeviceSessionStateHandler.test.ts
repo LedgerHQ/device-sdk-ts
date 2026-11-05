@@ -2,6 +2,8 @@ import { BehaviorSubject, Subject } from "rxjs";
 import { expect, type Mock } from "vitest";
 
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { type LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import {
   CommandResultStatus,
   DeviceModelId,
@@ -20,6 +22,8 @@ import {
   type SetDeviceSessionStateFn,
 } from "./DeviceSessionStateHandler";
 
+vi.mock("@api/global/services/logger/utils/getLogger");
+
 describe("DeviceSessionStateHandler", () => {
   let fakeEventSubject: Subject<NewEvent>;
   let fakeSessionEventDispatcher: DeviceSessionEventDispatcher;
@@ -27,7 +31,6 @@ describe("DeviceSessionStateHandler", () => {
     error: (message: string, meta?: Record<string, unknown>) => void;
     debug: (message: string, meta?: Record<string, unknown>) => void;
   };
-  const mockLoggerModuleFactory = vi.fn(() => mockLogger);
   let fakeConnectedDevice: { deviceModel: { id: string } };
   let deviceState: BehaviorSubject<DeviceSessionState>;
   let setDeviceSessionState: Mock<SetDeviceSessionStateFn>;
@@ -46,6 +49,10 @@ describe("DeviceSessionStateHandler", () => {
       debug: vi.fn(),
     };
 
+    vi.mocked(getLogger).mockReturnValue(
+      mockLogger as unknown as LoggerPublisherService,
+    );
+
     fakeConnectedDevice = {
       deviceModel: {
         id: "device-model-1",
@@ -61,9 +68,8 @@ describe("DeviceSessionStateHandler", () => {
     setDeviceSessionState = vi.fn();
 
     handler = new DeviceSessionStateHandler(
-      //@ts-expect-error mock
-      mockLoggerModuleFactory,
       fakeSessionEventDispatcher,
+      //@ts-expect-error mock
       fakeConnectedDevice,
       deviceState,
       setDeviceSessionState,

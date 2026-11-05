@@ -1,4 +1,4 @@
-import { type Container, type Factory } from "inversify";
+import { type Container } from "inversify";
 import { type Observable } from "rxjs";
 
 import { commandTypes } from "@api/command/di/commandTypes";
@@ -20,7 +20,6 @@ import {
   type DisconnectUseCaseArgs,
   type DiscoveredDevice,
   type GetConnectedDeviceUseCaseArgs,
-  type LoggerPublisherService,
   type SendApduUseCaseArgs,
   type StartDiscoveringUseCaseArgs,
 } from "@api/types";
@@ -49,7 +48,6 @@ import {
 } from "@internal/discovery/use-case/ReconnectUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import { type SetFirmwareDistributionSaltUseCase } from "@internal/manager-api/use-case/SetFirmwareDistributionSaltUseCase";
@@ -411,12 +409,5 @@ export class DeviceManagementKit {
       .get<TransportService>(transportDiTypes.TransportService)
       .getAllTransports()
       .some((transport) => transport.isSupported());
-  }
-
-  /**
-   * Returns the DMK logger factory with configured logger subscribers.
-   */
-  getLoggerFactory(): Factory<LoggerPublisherService> {
-    return this.container.get(loggerTypes.LoggerPublisherServiceFactory);
   }
 }

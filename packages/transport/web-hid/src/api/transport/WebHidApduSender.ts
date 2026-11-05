@@ -9,6 +9,7 @@ import {
   formatApduReceivedLog,
   formatApduSentLog,
   FramerUtils,
+  getLogger,
   type LoggerPublisherService,
   OpeningConnectionError,
   SendApduTimeoutError,
@@ -38,20 +39,17 @@ export class WebHidApduSender
   private sendApduPromiseResolver: Maybe<
     (value: Either<DmkError, ApduResponse>) => void
   >;
-  private readonly logger: LoggerPublisherService;
+  private readonly logger: LoggerPublisherService =
+    getLogger("WebHidApduSender");
 
-  constructor(
-    {
-      dependencies,
-      apduSenderFactory,
-      apduReceiverFactory,
-    }: WebHidApduSenderConstructorArgs,
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-  ) {
+  constructor({
+    dependencies,
+    apduSenderFactory,
+    apduReceiverFactory,
+  }: WebHidApduSenderConstructorArgs) {
     const channel = Maybe.of(
       FramerUtils.numberToByteArray(Math.floor(Math.random() * 0xffff), 2),
     );
-    this.logger = loggerServiceFactory("WebHidApduSender");
     this.apduSender = apduSenderFactory({
       frameSize: FRAME_SIZE,
       channel,

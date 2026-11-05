@@ -11,9 +11,7 @@ import { DefaultSignerTrx } from "@internal/DefaultSignerTrx";
 import { externalTypes } from "@internal/externalTypes";
 
 describe("SignerTrxBuilder", () => {
-  const dmk = {
-    getLoggerFactory: vi.fn().mockReturnValue(vi.fn()),
-  } as unknown as DeviceManagementKit;
+  const dmk = {} as unknown as DeviceManagementKit;
   const defaultConstructorArgs = { dmk, sessionId: "" };
 
   test("should be an instance of SignerTrxBuilder", () => {

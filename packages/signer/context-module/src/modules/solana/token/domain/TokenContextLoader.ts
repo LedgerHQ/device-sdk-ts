@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
@@ -45,10 +48,8 @@ export class TokenContextLoader
     private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("TokenContextLoader");
+    this.logger = getLogger("ContextModule", "TokenContextLoader");
   }
 
   public canHandle(

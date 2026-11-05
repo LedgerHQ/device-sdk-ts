@@ -10,6 +10,7 @@ import {
 } from "rxjs";
 
 import { DeviceModelId } from "@api/device/DeviceModel";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { type LoggerPublisherService } from "@api/types";
 import {
@@ -33,13 +34,12 @@ export class DeviceSessionRefresher {
   private _connectedDeviceID: DeviceModelId;
 
   constructor(
-    loggerModuleFactory: (tag: string) => LoggerPublisherService,
     refresherOptions: DeviceSessionRefresherOptions,
     private _sessionEventDispatcher: DeviceSessionEventDispatcher,
     connectedDevice: TransportConnectedDevice,
   ) {
     this._refresherOptions = refresherOptions;
-    this._logger = loggerModuleFactory("device-session-refresher");
+    this._logger = getLogger("device-session-refresher");
     this._connectedDeviceID = connectedDevice.deviceModel.id;
   }
 

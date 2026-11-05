@@ -2,7 +2,6 @@ import { Maybe } from "purify-ts";
 
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { DefaultApduSenderService } from "./DefaultApduSenderService";
 
@@ -10,21 +9,16 @@ vi.mock("uuid", () => ({
   v4: vi.fn().mockReturnValue("42"),
 }));
 
-const loggerService = new DefaultLoggerPublisherService([], "frame");
-
 describe("DefaultApduSenderService", () => {
   describe("[USB] With padding and channel", () => {
     it("should return 1 frame", () => {
       // given
       const channel = Maybe.of(new Uint8Array([0x12, 0x34]));
-      const apduSenderService = new DefaultApduSenderService(
-        {
-          frameSize: 64,
-          padding: true,
-          channel,
-        },
-        () => loggerService,
-      );
+      const apduSenderService = new DefaultApduSenderService({
+        frameSize: 64,
+        padding: true,
+        channel,
+      });
       // getVersion APDU
       const apdu = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
@@ -67,14 +61,11 @@ describe("DefaultApduSenderService", () => {
     it("should return 2 frames", () => {
       // given
       const channel = Maybe.of(new Uint8Array([0x12, 0x34]));
-      const apduSenderService = new DefaultApduSenderService(
-        {
-          frameSize: 64,
-          padding: true,
-          channel,
-        },
-        () => loggerService,
-      );
+      const apduSenderService = new DefaultApduSenderService({
+        frameSize: 64,
+        padding: true,
+        channel,
+      });
       const apdu = new Uint8Array([
         // editDeviceName APDU
         0xe0, 0xd4, 0x00, 0x00, 0x40,
@@ -153,14 +144,11 @@ describe("DefaultApduSenderService", () => {
     it("should return exactly 0 frame", () => {
       // given
       const channel = Maybe.of(new Uint8Array([0x12, 0x34]));
-      const apduSenderService = new DefaultApduSenderService(
-        {
-          frameSize: 64,
-          padding: true,
-          channel,
-        },
-        () => loggerService,
-      );
+      const apduSenderService = new DefaultApduSenderService({
+        frameSize: 64,
+        padding: true,
+        channel,
+      });
       const apdu = new Uint8Array([]);
 
       // when
@@ -171,14 +159,11 @@ describe("DefaultApduSenderService", () => {
     it("should return exactly 1 frame", () => {
       // given
       const channel = Maybe.of(new Uint8Array([0x12, 0x34]));
-      const apduSenderService = new DefaultApduSenderService(
-        {
-          frameSize: 64,
-          padding: true,
-          channel,
-        },
-        () => loggerService,
-      );
+      const apduSenderService = new DefaultApduSenderService({
+        frameSize: 64,
+        padding: true,
+        channel,
+      });
       const apdu = new Uint8Array([
         0xe0, 0x06, 0x00, 0x13, 0x34, 0x47, 0x32, 0x49, 0x67, 0x73, 0x51, 0x68,
         0x68, 0x58, 0x53, 0x69, 0x4d, 0x71, 0x38, 0x6b, 0x55, 0x50, 0x79, 0x4e,
@@ -227,12 +212,9 @@ describe("DefaultApduSenderService", () => {
   describe("[BLE] Without padding nor channel", () => {
     it("should return 1 frame", () => {
       // given
-      const apduSenderService = new DefaultApduSenderService(
-        {
-          frameSize: 123,
-        },
-        () => loggerService,
-      );
+      const apduSenderService = new DefaultApduSenderService({
+        frameSize: 123,
+      });
       const command = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
       // when
@@ -261,12 +243,9 @@ describe("DefaultApduSenderService", () => {
 
     it("should return 3 frames", () => {
       // given
-      const apduSenderService = new DefaultApduSenderService(
-        {
-          frameSize: 10,
-        },
-        () => loggerService,
-      );
+      const apduSenderService = new DefaultApduSenderService({
+        frameSize: 10,
+      });
       const command = new Uint8Array([
         0x01, 0x05, 0x4f, 0x4c, 0x4f, 0x53, 0x00, 0x07, 0x2e, 0x32, 0x2e, 0x34,
         0x2d, 0x32, 0x00, 0x90, 0x00,
@@ -326,15 +305,12 @@ describe("DefaultApduSenderService", () => {
   describe("Errors", () => {
     it("should return a well formatted header with very big channel", () => {
       // given
-      const apduSenderService = new DefaultApduSenderService(
-        {
-          frameSize: 64,
-          channel: Maybe.of(
-            new Uint8Array([0x123434, 0x34444, 0x56454, 0x7844, 0x90444]),
-          ),
-        },
-        () => loggerService,
-      );
+      const apduSenderService = new DefaultApduSenderService({
+        frameSize: 64,
+        channel: Maybe.of(
+          new Uint8Array([0x123434, 0x34444, 0x56454, 0x7844, 0x90444]),
+        ),
+      });
       const command = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
       // when
@@ -363,13 +339,10 @@ describe("DefaultApduSenderService", () => {
     });
     it("should return empty if packet size smaller than header size", () => {
       // given
-      const apduSenderService = new DefaultApduSenderService(
-        {
-          frameSize: Math.random() & 4,
-          channel: Maybe.of(new Uint8Array([0x12, 0x34])),
-        },
-        () => loggerService,
-      );
+      const apduSenderService = new DefaultApduSenderService({
+        frameSize: Math.random() & 4,
+        channel: Maybe.of(new Uint8Array([0x12, 0x34])),
+      });
       const command = new Uint8Array([0xe0, 0x01, 0x00, 0x00, 0x00]);
 
       // when
@@ -381,16 +354,13 @@ describe("DefaultApduSenderService", () => {
 
     it("should return empty if no apdu length", () => {
       // given
-      const apduSenderService = new DefaultApduSenderService(
-        {
-          // random frameSize < 0xff
-          frameSize: Math.random() & 0xff,
-          // random padding boolean
-          padding: Math.random() > 0.5,
-          channel: Maybe.of(new Uint8Array([0x12, 0x34])),
-        },
-        () => loggerService,
-      );
+      const apduSenderService = new DefaultApduSenderService({
+        // random frameSize < 0xff
+        frameSize: Math.random() & 0xff,
+        // random padding boolean
+        padding: Math.random() > 0.5,
+        channel: Maybe.of(new Uint8Array([0x12, 0x34])),
+      });
       const command = new Uint8Array([]);
 
       // when

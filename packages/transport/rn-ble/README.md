@@ -62,13 +62,11 @@ const dmk = new DeviceManagementKitBuilder()
   .addTransport(
     ({
       deviceModelDataSource,
-      loggerServiceFactory,
       config,
       apduSenderServiceFactory,
       apduReceiverServiceFactory,
     }: {
       deviceModelDataSource: DeviceModelDataSource;
-      loggerServiceFactory: (tag: string) => LoggerPublisherService;
       config: DmkConfig;
       apduSenderServiceFactory: ApduSenderServiceFactory;
       apduReceiverServiceFactory: ApduReceiverServiceFactory;
@@ -76,8 +74,6 @@ const dmk = new DeviceManagementKitBuilder()
       // custom code
       return new RNBleTransport(
         deviceModelDataSource,
-        loggerServiceFactory,
-        config,
         apduSenderServiceFactory,
         apduReceiverServiceFactory,
       );

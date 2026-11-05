@@ -7,6 +7,7 @@ import {
 } from "@ledgerhq/context-module";
 import {
   type DeviceModelId,
+  getLogger,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { generateSignatureId } from "@ledgerhq/signer-utils";
@@ -27,14 +28,13 @@ export type SolanaSigningReportTaskArgs = {
   signerAppVersion: string;
   deviceModelId: DeviceModelId;
   deviceVersion: string | null;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export class SolanaSigningReportTask {
   private readonly logger: LoggerPublisherService;
 
   constructor(private readonly args: SolanaSigningReportTaskArgs) {
-    this.logger = args.loggerFactory("SolanaSigningReportTask");
+    this.logger = getLogger("SignerSolana", "SolanaSigningReportTask");
   }
 
   async run(): Promise<void> {

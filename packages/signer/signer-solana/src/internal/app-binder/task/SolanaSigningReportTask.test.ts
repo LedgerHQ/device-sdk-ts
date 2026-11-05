@@ -4,10 +4,7 @@ import {
   SigningMethod,
   type SolSignReportParams,
 } from "@ledgerhq/context-module";
-import {
-  DeviceModelId,
-  type LoggerPublisherService,
-} from "@ledgerhq/device-management-kit";
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import {
   Keypair,
   PublicKey,
@@ -59,14 +56,6 @@ function makeTx(...programs: PublicKey[]): Uint8Array {
   return tx.serialize();
 }
 
-const loggerFactory = (): LoggerPublisherService =>
-  ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }) as unknown as LoggerPublisherService;
-
 function makeContextModule(signReport?: ContextModule["signReport"]) {
   return { signReport } as unknown as ContextModule;
 }
@@ -79,7 +68,6 @@ const baseArgs = {
   signerAppVersion: "1.4.0",
   deviceModelId: DeviceModelId.STAX,
   deviceVersion: "2.1.0",
-  loggerFactory,
 };
 
 describe("SolanaSigningReportTask", () => {

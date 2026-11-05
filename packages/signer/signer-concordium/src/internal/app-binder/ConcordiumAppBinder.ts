@@ -6,7 +6,6 @@ import {
   CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
-  LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -33,8 +32,6 @@ export class ConcordiumAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
-    @inject(externalTypes.DmkLoggerFactory)
-    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
     @inject(externalTypes.ContextModule)
     private readonly contextModule: ContextModule,
   ) {}
@@ -51,7 +48,6 @@ export class ConcordiumAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("GetAppConfigCommand"),
       }),
     });
   }
@@ -68,7 +64,6 @@ export class ConcordiumAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("GetPublicKeyCommand"),
       }),
     });
   }
@@ -84,16 +79,11 @@ export class ConcordiumAppBinder {
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            createSignTransactionTask(
-              internalApi,
-              args,
-              this.dmkLoggerFactory,
-            )(),
+            createSignTransactionTask(internalApi, args)(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("SignTransaction"),
       }),
     });
   }
@@ -108,19 +98,14 @@ export class ConcordiumAppBinder {
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            new SendCredentialDeploymentTransactionTask(
-              internalApi,
-              {
-                derivationPath: args.derivationPath,
-                transaction: args.transaction,
-              },
-              this.dmkLoggerFactory("SendCredentialDeploymentTransactionTask"),
-            ).run(),
+            new SendCredentialDeploymentTransactionTask(internalApi, {
+              derivationPath: args.derivationPath,
+              transaction: args.transaction,
+            }).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("SignCredentialDeploymentTransaction"),
       }),
     });
   }
@@ -136,21 +121,16 @@ export class ConcordiumAppBinder {
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            new VerifyAddressTask(
-              internalApi,
-              {
-                derivationPath: args.derivationPath,
-                address: args.address,
-                network: args.network,
-                contextModule: this.contextModule,
-              },
-              this.dmkLoggerFactory("VerifyAddressTask"),
-            ).run(),
+            new VerifyAddressTask(internalApi, {
+              derivationPath: args.derivationPath,
+              address: args.address,
+              network: args.network,
+              contextModule: this.contextModule,
+            }).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.VerifyAddress,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("VerifyAddress"),
       }),
     });
   }

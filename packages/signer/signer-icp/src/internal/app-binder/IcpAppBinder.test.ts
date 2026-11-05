@@ -1,7 +1,6 @@
 import {
   CallTaskInAppDeviceAction,
   type DeviceManagementKit,
-  type LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -15,15 +14,13 @@ import { IcpAppBinder } from "@internal/app-binder/IcpAppBinder";
 const DERIVATION_PATH = "44'/223'/0'/0/0";
 
 describe("IcpAppBinder", () => {
-  const loggerMock = { debug: vi.fn() } as unknown as LoggerPublisherService;
-  const loggerFactoryMock = vi.fn().mockReturnValue(loggerMock);
   const sessionId = "test-session-id";
 
   const makeBinder = (executeDeviceActionMock: ReturnType<typeof vi.fn>) => {
     const dmkMock = {
       executeDeviceAction: executeDeviceActionMock,
     } as unknown as DeviceManagementKit;
-    return new IcpAppBinder(dmkMock, sessionId, loggerFactoryMock);
+    return new IcpAppBinder(dmkMock, sessionId);
   };
 
   it("getVersion should run a SendCommandInAppDeviceAction with GetVersionCommand", () => {

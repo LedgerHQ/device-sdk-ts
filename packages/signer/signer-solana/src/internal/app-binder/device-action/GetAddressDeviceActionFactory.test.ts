@@ -14,6 +14,7 @@ vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   return {
     ...original,
     SendCommandInAppDeviceAction: vi.fn(),
+    getLogger: () => mockLogger,
   };
 });
 
@@ -60,16 +61,14 @@ describe("GetAddressDeviceActionFactory", () => {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           command: expect.any(GetPubKeyCommand),
         }),
-        logger: undefined,
       });
     },
   );
 
-  it("should forward skipOpenApp and logger to the device action", () => {
+  it("should forward skipOpenApp", () => {
     GetAddressDeviceActionFactory({
       ...defaultArgs,
       skipOpenApp: true,
-      logger: mockLogger,
     });
 
     expect(SendCommandInAppDeviceAction).toHaveBeenCalledWith({
@@ -77,7 +76,6 @@ describe("GetAddressDeviceActionFactory", () => {
       input: expect.objectContaining({
         skipOpenApp: true,
       }),
-      logger: mockLogger,
     });
   });
 });

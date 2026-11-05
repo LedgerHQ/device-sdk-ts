@@ -1,6 +1,7 @@
 import {
   DmkNetworkClient,
-  LoggerPublisherService,
+  getLogger,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
@@ -22,12 +23,10 @@ export class HttpLifiDataSource implements LifiDataSource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(networkTypes.NetworkClient)
     private readonly http: DmkNetworkClient,
   ) {
-    this.logger = loggerFactory("HttpLifiDataSource");
+    this.logger = getLogger("ContextModule", "HttpLifiDataSource");
   }
 
   public async getTransactionDescriptorsPayload({

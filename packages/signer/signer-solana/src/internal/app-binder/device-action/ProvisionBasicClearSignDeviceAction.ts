@@ -1,6 +1,7 @@
 import {
   type CommandResult,
   type DeviceActionStateMachine,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type StateMachineTypes,
@@ -87,7 +88,8 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
       provideBasicClearSignContext,
     } = this.extractDependencies(internalApi);
 
-    const logger = this.getLoggerFactory(internalApi)(
+    const logger = getLogger(
+      "SignerSolana",
       "ProvisionBasicClearSignDeviceAction",
     );
 
@@ -202,7 +204,6 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
                 context._internalState.inspectorResult?.data;
               return {
                 contextModule: context.input.contextModule,
-                loggerFactory: this.getLoggerFactory(internalApi),
                 transactionBytes: context.input.transaction,
                 options: {
                   tokenAddress: inspectorData?.tokenAddress,
@@ -269,7 +270,6 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
               return {
                 ...context._internalState.solanaTransactionContext,
                 transactionBytes: context.input.transaction,
-                loggerFactory: this.getLoggerFactory(internalApi),
               };
             },
             onDone: { target: "Done" },

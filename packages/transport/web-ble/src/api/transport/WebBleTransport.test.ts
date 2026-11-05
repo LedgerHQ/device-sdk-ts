@@ -6,7 +6,7 @@
 
 vi.mock("./WebBleApduSender", async () => ({
   WebBleApduSender: class {
-    constructor(_deps: any, _loggerFactory: any) {}
+    constructor(_deps: any) {}
     setupConnection = vi.fn().mockResolvedValue(undefined);
   },
 }));
@@ -35,8 +35,6 @@ import {
   type ApduReceiverServiceFactory,
   type ApduSenderServiceFactory,
   DeviceAlreadyConnectedError,
-  type LoggerPublisherService,
-  type LoggerSubscriberService,
   OpeningConnectionError,
   StaticDeviceModelDataSource,
   type TransportConnectedDevice,
@@ -49,21 +47,7 @@ import { bleDeviceStubBuilder } from "@api/model/BleDevice.stub";
 
 import { WebBleTransport } from "./WebBleTransport";
 
-class LoggerPublisherServiceStub implements LoggerPublisherService {
-  subscribers: LoggerSubscriberService[] = [];
-  tag: string;
-  constructor(subscribers: LoggerSubscriberService[], tag: string) {
-    this.subscribers = subscribers;
-    this.tag = tag;
-  }
-  error = vi.fn();
-  warn = vi.fn();
-  info = vi.fn();
-  debug = vi.fn();
-}
-
 const bleDeviceModelDataSource = new StaticDeviceModelDataSource();
-const logger = new LoggerPublisherServiceStub([], "WebBleTransport");
 
 let transport: WebBleTransport;
 let apduReceiverFactory: ApduReceiverServiceFactory;
@@ -75,7 +59,6 @@ beforeEach(() => {
   apduSenderFactory = vi.fn();
   transport = new WebBleTransport(
     bleDeviceModelDataSource,
-    () => logger,
     apduSenderFactory,
     apduReceiverFactory,
   );

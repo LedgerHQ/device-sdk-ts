@@ -7,7 +7,6 @@ import { type ApduReceiverServiceFactory } from "@api/device-session/service/Apd
 import { type ApduSenderServiceFactory } from "@api/device-session/service/ApduSenderService";
 import { type DmkConfig } from "@api/DmkConfig";
 import { type DmkError } from "@api/Error";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type ConnectError } from "@api/transport/model/Errors";
 import { type TransportDiscoveredDevice } from "@api/transport/model/TransportDiscoveredDevice";
 import { type TransportIdentifier } from "@api/transport/model/TransportIdentifier";
@@ -51,7 +50,6 @@ export interface Transport {
 
 export type TransportArgs = {
   deviceModelDataSource: DeviceModelDataSource;
-  loggerServiceFactory: (tag: string) => LoggerPublisherService;
   config: DmkConfig;
   apduSenderServiceFactory: ApduSenderServiceFactory;
   apduReceiverServiceFactory: ApduReceiverServiceFactory;

@@ -168,8 +168,6 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   const signer = useMemo(() => {
     const contextModule = new ContextModuleBuilder({
       originToken,
-      loggerFactory: (tag: string) =>
-        dmk.getLoggerFactory()(["ContextModule", tag]),
     })
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)

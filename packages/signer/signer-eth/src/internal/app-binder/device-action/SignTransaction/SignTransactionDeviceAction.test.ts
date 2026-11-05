@@ -1166,7 +1166,6 @@ describe("SignTransactionDeviceAction", () => {
             input: {
               contexts: [transactionCheck],
               derivationPath: "44'/60'/0'/0/0",
-              loggerFactory: expect.any(Function),
             },
           }),
         );

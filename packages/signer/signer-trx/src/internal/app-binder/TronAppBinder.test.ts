@@ -52,6 +52,12 @@ import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/
 
 import { TronAppBinder } from "./TronAppBinder";
 
+const { getLoggerMock } = vi.hoisted(() => ({ getLoggerMock: vi.fn() }));
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: getLoggerMock,
+}));
+
 describe("TronAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
     sendCommand: vi.fn(),
@@ -61,7 +67,7 @@ describe("TronAppBinder", () => {
   const loggerMock = {
     debug: vi.fn(),
   } as unknown as LoggerPublisherService;
-  const loggerFactoryMock = vi.fn().mockReturnValue(loggerMock);
+  getLoggerMock.mockReturnValue(loggerMock);
   const contextModuleMock = {
     getContexts: vi.fn().mockResolvedValue([]),
   } as unknown as ContextModule;
@@ -74,7 +80,6 @@ describe("TronAppBinder", () => {
     const binder = new TronAppBinder(
       {} as DeviceManagementKit,
       {} as DeviceSessionId,
-      loggerFactoryMock,
       contextModuleMock,
     );
     expect(binder).toBeDefined();
@@ -107,7 +112,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         const { observable } = binder.getAddress({
@@ -146,7 +150,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         binder.getAddress({
@@ -169,7 +172,6 @@ describe("TronAppBinder", () => {
                 requiredUserInteraction: UserInteractionRequired.None,
                 skipOpenApp: false,
               },
-              logger: loggerMock,
             }),
           }),
         );
@@ -180,7 +182,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         binder.getAddress({
@@ -203,7 +204,6 @@ describe("TronAppBinder", () => {
                 requiredUserInteraction: UserInteractionRequired.VerifyAddress,
                 skipOpenApp: true,
               },
-              logger: loggerMock,
             }),
           }),
         );
@@ -239,7 +239,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
           addressBook,
         );
@@ -286,7 +285,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
           addressBook,
         );
@@ -310,7 +308,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         binder.signTransaction({ derivationPath, transaction });
@@ -350,7 +347,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         const { observable } = binder.signTransactionHash({
@@ -386,7 +382,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         binder.signTransactionHash({
@@ -410,7 +405,6 @@ describe("TronAppBinder", () => {
                   UserInteractionRequired.SignTransaction,
                 skipOpenApp: true,
               },
-              logger: loggerMock,
             }),
           }),
         );
@@ -421,7 +415,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         binder.signTransactionHash({ derivationPath, transactionHash });
@@ -440,7 +433,6 @@ describe("TronAppBinder", () => {
                   UserInteractionRequired.SignTransaction,
                 skipOpenApp: false,
               },
-              logger: loggerMock,
             }),
           }),
         );
@@ -477,7 +469,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         const { observable } = binder.signPersonalMessage({
@@ -527,7 +518,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         binder.signPersonalMessage({
@@ -550,7 +540,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         binder.signPersonalMessage({ derivationPath, message });
@@ -592,7 +581,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         const { observable } = binder.getAppConfiguration();
@@ -624,7 +612,6 @@ describe("TronAppBinder", () => {
       const binder = new TronAppBinder(
         mockedDmk,
         "sessionId",
-        loggerFactoryMock,
         contextModuleMock,
       );
       binder.getAppConfiguration();
@@ -640,7 +627,6 @@ describe("TronAppBinder", () => {
               requiredUserInteraction: UserInteractionRequired.None,
               skipOpenApp: false,
             },
-            logger: loggerMock,
           }),
         }),
       );
@@ -674,7 +660,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         const { observable } = binder.getECDHSecret({
@@ -710,7 +695,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         binder.getECDHSecret({ derivationPath, publicKey, skipOpenApp: true });
@@ -730,7 +714,6 @@ describe("TronAppBinder", () => {
                   UserInteractionRequired.SignTransaction,
                 skipOpenApp: true,
               },
-              logger: loggerMock,
             }),
           }),
         );
@@ -741,7 +724,6 @@ describe("TronAppBinder", () => {
         const binder = new TronAppBinder(
           mockedDmk,
           "sessionId",
-          loggerFactoryMock,
           contextModuleMock,
         );
         binder.getECDHSecret({ derivationPath, publicKey });
@@ -760,7 +742,6 @@ describe("TronAppBinder", () => {
                   UserInteractionRequired.SignTransaction,
                 skipOpenApp: false,
               },
-              logger: loggerMock,
             }),
           }),
         );

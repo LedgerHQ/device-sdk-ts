@@ -2,7 +2,6 @@ import {
   CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
-  LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -27,8 +26,6 @@ export class IcpAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
-    @inject(externalTypes.DmkLoggerFactory)
-    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getVersion(args: { skipOpenApp: boolean }): GetVersionDAReturnType {
@@ -41,7 +38,6 @@ export class IcpAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("GetVersionCommand"),
       }),
     });
   }
@@ -58,7 +54,6 @@ export class IcpAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("GetAddressCommand"),
       }),
     });
   }
@@ -74,16 +69,11 @@ export class IcpAppBinder {
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            new SignTransactionTask(
-              internalApi,
-              args,
-              this.dmkLoggerFactory("SignTransactionTask"),
-            ).run(),
+            new SignTransactionTask(internalApi, args).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("SignTransactionCommand"),
       }),
     });
   }
@@ -99,16 +89,11 @@ export class IcpAppBinder {
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            new SignUpdateCallTask(
-              internalApi,
-              args,
-              this.dmkLoggerFactory("SignUpdateCallTask"),
-            ).run(),
+            new SignUpdateCallTask(internalApi, args).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("SignUpdateCallTask"),
       }),
     });
   }

@@ -7,7 +7,6 @@ import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-sessi
 import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
@@ -19,11 +18,10 @@ import { type SecureChannelService } from "@internal/secure-channel/service/Secu
 
 import { DefaultDeviceSessionService } from "./DefaultDeviceSessionService";
 
-vi.mock("@internal/logger-publisher/service/DefaultLoggerPublisherService");
+vi.mock("@api/global/services/logger/DefaultLoggerPublisherService");
 vi.mock("@internal/manager-api/data/HttpManagerApiDataSource");
 
 let sessionService: DefaultDeviceSessionService;
-let loggerService: DefaultLoggerPublisherService;
 let deviceSession: DeviceSession;
 let deviceSession1: DeviceSession;
 let deviceSession2: DeviceSession;
@@ -34,11 +32,7 @@ let secureChannel: SecureChannelService;
 
 describe("DefaultDeviceSessionService", () => {
   // Initialize shared resources
-  loggerService = new DefaultLoggerPublisherService([], "deviceSession");
-  managerApiDataSource = new HttpManagerApiDataSource(
-    {} as DmkConfig,
-    () => loggerService,
-  );
+  managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
   managerApi = new DefaultManagerApiService(managerApiDataSource);
   secureChannelDataSource = new DefaultSecureChannelDataSource({} as DmkConfig);
   secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
@@ -46,11 +40,11 @@ describe("DefaultDeviceSessionService", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     // Create a new instance before each test
-    sessionService = new DefaultDeviceSessionService(() => loggerService);
+    sessionService = new DefaultDeviceSessionService();
     // Create a device session stub with default properties
     deviceSession = deviceSessionStubBuilder(
       {},
-      () => loggerService,
+
       managerApi,
       secureChannel,
       DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
@@ -127,7 +121,7 @@ describe("DefaultDeviceSessionService", () => {
           connectedDevice: connectedDeviceStubBuilder({ id: "device-1" }),
           id: "session-1",
         },
-        () => loggerService,
+
         managerApi,
         secureChannel,
         DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
@@ -138,7 +132,7 @@ describe("DefaultDeviceSessionService", () => {
           connectedDevice: connectedDeviceStubBuilder({ id: "device-1" }),
           id: "session-2",
         },
-        () => loggerService,
+
         managerApi,
         secureChannel,
         DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
@@ -183,7 +177,7 @@ describe("DefaultDeviceSessionService", () => {
   it("should emit previous added session", () => {
     const lastDeviceSession = deviceSessionStubBuilder(
       { id: "last-session" },
-      () => loggerService,
+
       managerApi,
       secureChannel,
       DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
