@@ -188,12 +188,10 @@ export function fromCalValueFlowPort(
  * the device for *every* rule it receives, so the entry must survive to keep
  * that target's `ALT_RESOLUTION` in the requirement set. Only the `IS_SIGNER`
  * owner attestation keys off the condition, and an unknown name is not
- * `IS_SIGNER`. `RULE_SET_INDEX` defaults to 0 (a single AND-set), matching the
- * spec's OR-of-ANDs default.
+ * `IS_SIGNER`. `RULE_SET_INDEX` is not kept: nothing host-side reads it.
  */
 export function fromCalHideRule(rule: CalHideRule): ParsedHideRule {
   return {
-    ruleSetIndex: rule.rule_set_index ?? 0,
     condition:
       rule.condition === undefined
         ? undefined

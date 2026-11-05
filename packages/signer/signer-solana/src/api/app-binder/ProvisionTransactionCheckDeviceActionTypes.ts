@@ -39,5 +39,6 @@ export type ProvisionTransactionCheckDAInternalState = {
   readonly appConfig: AppConfiguration | null;
 };
 
+/** @deprecated Unused; will be removed in the next major version. */
 export type ProvisionTransactionCheckDASimpleIntermediateValue =
   SignTransactionDASimpleIntermediateValue;

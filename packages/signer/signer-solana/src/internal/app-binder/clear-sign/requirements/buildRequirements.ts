@@ -23,7 +23,6 @@ import {
 import {
   applyAltResolutionRule,
   applyEnumVariantRule,
-  applyInstructionInfoRule,
   applyTokenRule,
   applyTrustedNameRule,
   type EnumVariantSelector,
@@ -124,8 +123,6 @@ export function buildRequirements(
     );
 
     for (const { match, records } of instructions) {
-      applyInstructionInfoRule(match, accumulator);
-
       const decodeFailure = applyEnumVariantRule(
         match,
         accumulator,
