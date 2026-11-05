@@ -4,6 +4,7 @@ import {
 } from "@ledgerhq/device-contacts-kit";
 import {
   DeviceActionStatus,
+  getLogger,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
@@ -58,10 +59,8 @@ export class SpeculosContactsRepository implements ContactsRepository {
     private readonly screenshotSaver: ScreenshotSaver,
     @inject(TYPES.ContactsChain)
     private readonly chain: ContactsChain,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("contacts-repository");
+    this.logger = getLogger("contacts-repository");
   }
 
   /** Hand over the manager that drives REGISTER IDENTITY for this session. */

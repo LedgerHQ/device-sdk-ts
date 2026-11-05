@@ -1,5 +1,6 @@
 import {
   DmkNetworkClient,
+  getLogger,
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
@@ -35,10 +36,8 @@ export class HttpCalAdapter implements CalAdapter {
   constructor(
     @inject(TYPES.SignerConfig)
     private readonly signerConfig: SignerConfig,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    private readonly loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = this.loggerFactory("cal-service");
+    this.logger = getLogger("cal-service");
     this.http = new DmkNetworkClient({
       headers: {
         "X-Ledger-Client-Origin": this.signerConfig.originToken,

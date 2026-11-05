@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import {
   type DeviceControllerClient,
   deviceControllerClientFactory,
@@ -35,13 +38,9 @@ export class SpeculosNanoController implements DeviceController {
     return this._buttons;
   }
 
-  constructor(
-    @inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
-  ) {
+  constructor(@inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig) {
     this.config = config;
-    this.logger = loggerFactory("nano-controller");
+    this.logger = getLogger("nano-controller");
     this.logger.info("Initialized nano button controller");
   }
 

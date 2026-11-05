@@ -79,7 +79,7 @@ export const TYPES = {
   BtcLegacyProfile: Symbol.for("BtcLegacyProfile"),
 
   // Logger
-  LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),
+  Dmk: Symbol.for("Dmk"),
   LoggerSubscribers: Symbol.for("LoggerSubscribers"),
   LogLevel: Symbol.for("LogLevel"),
 };
