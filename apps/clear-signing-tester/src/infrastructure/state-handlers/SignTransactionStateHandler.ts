@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -22,8 +25,6 @@ export class SignTransactionStateHandler implements StateHandler {
   private readonly logger: LoggerPublisherService;
 
   constructor(
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(TYPES.DeviceController)
     private readonly deviceController: DeviceController,
     @inject(TYPES.ScreenAnalyzerService)
@@ -33,7 +34,7 @@ export class SignTransactionStateHandler implements StateHandler {
     @inject(TYPES.ScreenshotSaver)
     private readonly screenshotSaver: ScreenshotSaver,
   ) {
-    this.logger = this.loggerFactory("sign-transaction-state-handler");
+    this.logger = getLogger("sign-transaction-state-handler");
   }
 
   async handle(ctx: { input: SignableInput }): Promise<StateHandlerResult> {

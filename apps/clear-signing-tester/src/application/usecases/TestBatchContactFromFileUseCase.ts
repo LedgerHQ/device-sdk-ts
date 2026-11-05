@@ -1,4 +1,7 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -32,10 +35,8 @@ export class TestBatchContactFromFileUseCase {
     private readonly fileRepository: ContactFileRepository,
     @inject(TYPES.TestContactUseCase)
     private readonly testContact: TestContactUseCase,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("test-batch-contact");
+    this.logger = getLogger("test-batch-contact");
   }
 
   async execute(filePath: string): Promise<BatchTestResult> {

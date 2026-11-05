@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -15,10 +18,8 @@ export class DefaultSolanaTransactionProgramRepository
   constructor(
     @inject(TYPES.SolanaRpcAdapter)
     private readonly rpcAdapter: SolanaRpcAdapter,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("solana-program-tx-repository");
+    this.logger = getLogger("solana-program-tx-repository");
   }
 
   async getTransactions(

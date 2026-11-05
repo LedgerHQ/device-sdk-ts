@@ -1,5 +1,6 @@
 import {
   DeviceActionStatus,
+  getLogger,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { type SignerEth } from "@ledgerhq/device-signer-kit-ethereum";
@@ -45,10 +46,8 @@ export class SpeculosSafeAddressRepository implements SafeAddressRepository {
     private readonly retryService: RetryService,
     @inject(TYPES.ScreenshotSaver)
     private readonly screenshotSaver: ScreenshotSaver,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("safe-address-repository");
+    this.logger = getLogger("safe-address-repository");
   }
 
   setSigner(signer: SignerEth): void {

@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -31,10 +34,8 @@ export class TestSolanaProgramUseCase {
     private readonly txRepository: SolanaTransactionProgramRepository,
     @inject(TYPES.DeviceRepository)
     private readonly deviceRepository: DeviceRepository,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("test-solana-program");
+    this.logger = getLogger("test-solana-program");
   }
 
   async execute(config: TestSolanaProgramConfig): Promise<BatchTestResult> {
