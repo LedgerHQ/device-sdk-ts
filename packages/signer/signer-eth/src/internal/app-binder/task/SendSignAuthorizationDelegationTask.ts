@@ -2,6 +2,7 @@ import {
   ByteArrayBuilder,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -28,7 +29,6 @@ type SendSignAuthorizationDelegationTaskArgs = {
   chainId: number;
   address: string;
   nonce: number;
-  logger: LoggerPublisherService;
 };
 
 export class SendSignAuthorizationDelegationTask {
@@ -38,7 +38,10 @@ export class SendSignAuthorizationDelegationTask {
     private api: InternalApi,
     private args: SendSignAuthorizationDelegationTaskArgs,
   ) {
-    this._logger = args.logger;
+    this._logger = getLogger(
+      "SignerEth",
+      "SendSignAuthorizationDelegationTask",
+    );
   }
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {

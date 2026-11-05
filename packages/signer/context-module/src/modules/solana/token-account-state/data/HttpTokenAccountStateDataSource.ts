@@ -1,6 +1,7 @@
 import {
   DmkNetworkClient,
-  LoggerPublisherService,
+  getLogger,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
@@ -39,12 +40,10 @@ export class HttpTokenAccountStateDataSource
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(networkTypes.NetworkClient)
     private readonly http: DmkNetworkClient,
   ) {
-    this.logger = loggerFactory("HttpTokenAccountStateDataSource");
+    this.logger = getLogger("ContextModule", "HttpTokenAccountStateDataSource");
   }
 
   public async getTokenAccountState({

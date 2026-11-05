@@ -10,6 +10,7 @@ import {
 } from "@ledgerhq/context-module";
 import {
   type DeviceModelId,
+  getLogger,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { generateSignatureId } from "@ledgerhq/signer-utils";
@@ -46,7 +47,6 @@ export type BlindSigningDetectionInput =
 export type BlindSigningDetectionTaskArgs = {
   input: BlindSigningDetectionInput;
   contextModule: ContextModule;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type BlindSigningDetectionTaskResult = {
@@ -139,7 +139,7 @@ export class BlindSigningDetectionTask {
   private readonly _logger: LoggerPublisherService;
 
   constructor(private readonly _args: BlindSigningDetectionTaskArgs) {
-    this._logger = _args.loggerFactory("BlindSigningDetectionTask");
+    this._logger = getLogger("SignerEth", "BlindSigningDetectionTask");
   }
 
   async run(): Promise<BlindSigningDetectionTaskResult> {

@@ -33,7 +33,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { RenameContactCommand } from "@internal/app-binder/command/RenameContactCommand";
@@ -67,7 +66,6 @@ export type SendRenameContactTaskArgs = {
    * `RenameContactInput` — the host never chooses this.
    */
   readonly includeDerivationPath?: boolean;
-  readonly logger?: LoggerPublisherService;
 };
 
 export class SendRenameContactTask {
@@ -83,7 +81,6 @@ export class SendRenameContactTask {
       payload,
       p1: RENAME_CONTACT_P1,
       makeCommand: (chunk, p2) => new RenameContactCommand({ data: chunk, p2 }),
-      logger: this.args.logger,
       commandTag: "SendRenameContactTask",
     })) as CommandResult<
       { readonly hmacProof?: Uint8Array },

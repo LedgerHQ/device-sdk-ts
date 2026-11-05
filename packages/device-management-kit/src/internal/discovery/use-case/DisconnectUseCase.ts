@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 import { EitherAsync } from "purify-ts";
 
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { TransportNotSupportedError } from "@api/transport/model/Errors";
 import type { DeviceSessionId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { transportDiTypes } from "@internal/transport/di/transportDiTypes";
 import { type TransportService } from "@internal/transport/service/TransportService";
 
@@ -34,12 +34,10 @@ export class DisconnectUseCase {
     transportService: TransportService,
     @inject(deviceSessionTypes.DeviceSessionService)
     sessionService: DeviceSessionService,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._sessionService = sessionService;
     this._transportService = transportService;
-    this._logger = loggerFactory("DisconnectUseCase");
+    this._logger = getLogger("DisconnectUseCase");
   }
 
   async execute({ sessionId }: DisconnectUseCaseArgs): Promise<void> {

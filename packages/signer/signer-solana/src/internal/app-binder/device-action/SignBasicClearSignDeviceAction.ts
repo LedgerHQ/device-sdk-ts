@@ -1,6 +1,7 @@
 import {
   type CommandResult,
   type DeviceActionStateMachine,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type StateMachineTypes,
@@ -121,9 +122,7 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
       signTransaction,
     } = this.extractDependencies(internalApi);
 
-    const logger = this.getLoggerFactory(internalApi)(
-      "SignBasicClearSignDeviceAction",
-    );
+    const logger = getLogger("SignerSolana", "SignBasicClearSignDeviceAction");
 
     return setup({
       types: {
@@ -393,8 +392,6 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
     const blockhashService =
       this.input.blockhashService ?? new BlockhashService();
 
-    const loggerFactory = this.getLoggerFactory(internalApi);
-
     const previewTransaction = async (arg0: {
       input: {
         derivationPath: string;
@@ -412,7 +409,6 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,
-        loggerFactory,
       }).run();
 
     const delayedSignTransaction = async (arg0: {
@@ -432,7 +428,6 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,
-        loggerFactory,
       }).run();
 
     const signTransaction = async (arg0: {
@@ -452,7 +447,6 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,
-        loggerFactory,
       }).run();
 
     const refreshBlockhash = async (arg0: {
@@ -467,7 +461,6 @@ export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
         rpcUrl: arg0.input.rpcUrl,
         fetchBlockhash: arg0.input.fetchBlockhash,
         blockhashService,
-        loggerFactory,
       }).run();
 
     return {

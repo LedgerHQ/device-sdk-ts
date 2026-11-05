@@ -1,8 +1,3 @@
-import {
-  type LoggerPublisherService,
-  noopLoggerFactory,
-} from "@ledgerhq/device-management-kit";
-
 import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
   type ContextModuleCalConfig,
@@ -76,14 +71,13 @@ type BuilderConfig = Omit<ContextModuleServiceConfig, "chain"> &
 export class ContextModuleBuilder {
   private config: BuilderConfig;
 
-  constructor({ originToken, loggerFactory }: ContextModuleConstructorArgs) {
+  constructor({ originToken }: ContextModuleConstructorArgs) {
     this.config = {
       ...DEFAULT_CONFIG,
       ...DEFAULT_LOADER_CONFIG,
       customLoaders: [],
       customFieldLoaders: [],
       originToken: originToken ?? "",
-      loggerFactory: loggerFactory ?? noopLoggerFactory,
     };
   }
 
@@ -206,17 +200,6 @@ export class ContextModuleBuilder {
    */
   setTrustedNameDataSource(dataSource: TrustedNameDataSource) {
     this.config.customTrustedNameDataSource = dataSource;
-    return this;
-  }
-
-  /**
-   * Set a custom logger factory
-   *
-   * @param loggerFactory
-   * @returns this
-   */
-  setLoggerFactory(loggerFactory: (tag: string) => LoggerPublisherService) {
-    this.config.loggerFactory = loggerFactory;
     return this;
   }
 

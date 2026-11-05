@@ -39,10 +39,7 @@ export class SignerConcordiumBuilder {
   public build() {
     const contextModule =
       this._customContextModule ??
-      new ContextModuleBuilder({
-        loggerFactory: (tag: string) =>
-          this._dmk.getLoggerFactory()(["ContextModule", tag]),
-      })
+      new ContextModuleBuilder({})
         .setChain(ContextModuleChainID.Concordium)
         .build();
 

@@ -40,14 +40,6 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 import { APP_NAME } from "./constants";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("BtcAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
     sendCommand: vi.fn(),
@@ -67,7 +59,6 @@ describe("BtcAppBinder", () => {
       {} as DataStoreService,
       {} as PsbtMapper,
       {} as ValueParser,
-      mockLoggerFactory,
     );
     expect(binder).toBeDefined();
   });
@@ -108,7 +99,6 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
-          mockLoggerFactory,
         );
         const { observable } = appBinder.getExtendedPublicKey({
           derivationPath: "44'/501'",
@@ -169,7 +159,6 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
-          mockLoggerFactory,
         );
         appBinder.getExtendedPublicKey(params);
 
@@ -204,7 +193,6 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
-          mockLoggerFactory,
         );
         appBinder.getExtendedPublicKey(params);
 
@@ -260,7 +248,6 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
-          mockLoggerFactory,
         );
         const { observable } = appBinder.getMasterFingerprint({
           skipOpenApp: false,
@@ -310,7 +297,6 @@ describe("BtcAppBinder", () => {
         {} as DataStoreService,
         {} as PsbtMapper,
         {} as ValueParser,
-        mockLoggerFactory,
       );
       appBinder.getMasterFingerprint(params);
 
@@ -343,7 +329,6 @@ describe("BtcAppBinder", () => {
         {} as DataStoreService,
         {} as PsbtMapper,
         {} as ValueParser,
-        mockLoggerFactory,
       );
       appBinder.getMasterFingerprint(params);
 
@@ -396,7 +381,6 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
-          mockLoggerFactory,
         );
         const { observable } = appBinder.signMessage({
           derivationPath: "44'/60'/3'/2/1",
@@ -480,7 +464,6 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
-          mockLoggerFactory,
         );
         const { observable } = appBinder.registerWallet({
           wallet: walletPolicy,
@@ -533,7 +516,6 @@ describe("BtcAppBinder", () => {
         {} as DataStoreService,
         {} as PsbtMapper,
         {} as ValueParser,
-        mockLoggerFactory,
       );
       appBinder.registerWallet({
         wallet: walletPolicy,

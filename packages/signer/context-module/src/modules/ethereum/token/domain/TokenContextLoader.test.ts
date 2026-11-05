@@ -7,19 +7,11 @@ import {
 } from "@/modules/ethereum/token/domain/TokenContextLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("TokenContextLoader", () => {
   const mockTokenDataSource: TokenDataSource = {
     getTokenInfosPayload: vi.fn(),
   };
-  const loader = new TokenContextLoader(mockTokenDataSource, mockLoggerFactory);
+  const loader = new TokenContextLoader(mockTokenDataSource);
 
   beforeEach(() => {
     vi.restoreAllMocks();

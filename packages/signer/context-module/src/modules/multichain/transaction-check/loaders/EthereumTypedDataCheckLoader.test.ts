@@ -12,14 +12,6 @@ import {
 import { TransactionCheckPaths } from "@/modules/multichain/transaction-check/utils/constants";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("EthereumTypedDataCheckLoader", () => {
   const mockTransactionCheckDataSource: TransactionCheckDataSource = {
     check: vi.fn(),
@@ -30,7 +22,6 @@ describe("EthereumTypedDataCheckLoader", () => {
   const loader = new EthereumTypedDataCheckLoader(
     mockTransactionCheckDataSource,
     mockCertificateLoader,
-    mockLoggerFactory,
   );
 
   const SUPPORTED_TYPES: ClearSignContextType[] = [

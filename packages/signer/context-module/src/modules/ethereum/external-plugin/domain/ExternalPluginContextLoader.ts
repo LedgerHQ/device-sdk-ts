@@ -1,13 +1,13 @@
 import {
+  getLogger,
   HexaString,
   isHexaString,
-  LoggerPublisherService,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { ethers, Interface } from "ethers";
 import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Right } from "purify-ts";
 
-import { configTypes } from "@/config/di/configTypes";
 import type { ExternalPluginDataSource } from "@/modules/ethereum/external-plugin/data/ExternalPluginDataSource";
 import { externalPluginTypes } from "@/modules/ethereum/external-plugin/di/externalPluginTypes";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
@@ -55,13 +55,11 @@ export class ExternalPluginContextLoader
     private _tokenDataSource: TokenDataSource,
     @inject(uniswapTypes.UniswapContextLoader)
     private _uniswapLoader: UniswapContextLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._customPluginLoaders = {
       Uniswap: this._uniswapLoader,
     };
-    this.logger = loggerFactory("ExternalPluginContextLoader");
+    this.logger = getLogger("ContextModule", "ExternalPluginContextLoader");
   }
 
   canHandle(

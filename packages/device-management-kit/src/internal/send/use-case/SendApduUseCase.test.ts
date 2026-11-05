@@ -1,25 +1,20 @@
 import { Left, Right } from "purify-ts";
 
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import {
   DeviceSessionNotFound,
   ReceiverApduError,
 } from "@internal/device-session/model/Errors";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
 
-let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let mockDeviceSession: DeviceSession;
 const fakeSessionId = "fakeSessionId";
 
 describe("SendApduUseCase", () => {
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService([], "send-apdu-use-case");
-
     // Mock DeviceSession with sendApdu method
     mockDeviceSession = {
       sendApdu: vi.fn(),
@@ -46,7 +41,7 @@ describe("SendApduUseCase", () => {
       Right(expectedResponse),
     );
 
-    const useCase = new SendApduUseCase(sessionService, () => logger);
+    const useCase = new SendApduUseCase(sessionService);
 
     // when
     const response = await useCase.execute({
@@ -72,7 +67,7 @@ describe("SendApduUseCase", () => {
       Left(notFoundError),
     );
 
-    const useCase = new SendApduUseCase(sessionService, () => logger);
+    const useCase = new SendApduUseCase(sessionService);
 
     // when
     const response = useCase.execute({
@@ -99,7 +94,7 @@ describe("SendApduUseCase", () => {
       Left(receiverError),
     );
 
-    const useCase = new SendApduUseCase(sessionService, () => logger);
+    const useCase = new SendApduUseCase(sessionService);
 
     // when
     const response = useCase.execute({

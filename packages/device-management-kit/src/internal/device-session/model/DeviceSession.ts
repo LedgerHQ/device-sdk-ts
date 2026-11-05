@@ -24,7 +24,8 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { type DeviceSessionId } from "@api/device-session/types";
 import { type DmkError } from "@api/Error";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { type LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import {
   SendApduTimeoutError,
   SendCommandTimeoutError,
@@ -74,9 +75,6 @@ export class DeviceSession {
   private readonly _managerApiService: ManagerApiService;
   private readonly _secureChannelService: SecureChannelService;
   private readonly _logger: LoggerPublisherService;
-  private readonly _loggerModuleFactory: (
-    tag: string,
-  ) => LoggerPublisherService;
   private readonly _refresherOptions: DeviceSessionRefresherOptions;
   private _pinger: DevicePinger;
   private _deviceSessionRefresher: DeviceSessionRefresher;
@@ -87,19 +85,17 @@ export class DeviceSession {
 
   constructor(
     { connectedDevice, id = uuidv4() }: SessionConstructorArgs,
-    loggerModuleFactory: (tag: string) => LoggerPublisherService,
     managerApiService: ManagerApiService,
     secureChannelService: SecureChannelService,
     deviceSessionRefresherOptions: DeviceSessionRefresherOptions | undefined,
     intentQueueServiceFactory: (
       sessionEventDispatcher: DeviceSessionEventDispatcher,
     ) => IntentQueueService = (sessionEventDispatcher) =>
-      new IntentQueueService(loggerModuleFactory, sessionEventDispatcher),
+      new IntentQueueService(sessionEventDispatcher),
   ) {
     this._id = id;
     this._connectedDevice = connectedDevice;
-    this._loggerModuleFactory = loggerModuleFactory;
-    this._logger = loggerModuleFactory("device-session");
+    this._logger = getLogger("DeviceSession");
     this._managerApiService = managerApiService;
     this._intentQueueService = intentQueueServiceFactory(
       this._sessionEventDispatcher,
@@ -116,26 +112,23 @@ export class DeviceSession {
     });
 
     this._pinger = new DevicePinger(
-      loggerModuleFactory,
       connectedDevice,
       this._sessionEventDispatcher,
       (command, abortTimeout) => this.sendCommand(command, abortTimeout),
     );
     this._deviceSessionRefresher = new DeviceSessionRefresher(
-      loggerModuleFactory,
       this._refresherOptions,
       this._sessionEventDispatcher,
       this._connectedDevice,
     );
     new DeviceSessionStateHandler(
-      loggerModuleFactory,
       this._sessionEventDispatcher,
       this._connectedDevice,
       this._deviceState,
       (state) => this.setDeviceSessionState(state),
     );
 
-    this._refresherService = new RefresherService(loggerModuleFactory, {
+    this._refresherService = new RefresherService({
       start: () => this._deviceSessionRefresher.restartRefresher(),
       stop: () => this._deviceSessionRefresher.stopRefresher(),
     });
@@ -414,7 +407,6 @@ export class DeviceSession {
       },
       getManagerApiService: () => this._managerApiService,
       getSecureChannelService: () => this._secureChannelService,
-      loggerFactory: this._loggerModuleFactory,
     });
 
     return {

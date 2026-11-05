@@ -103,13 +103,6 @@ function makeTask(transaction: Uint8Array, infoContexts: ClearSignContext[]) {
     contextModule,
     transaction,
     deviceModelId: DeviceModelId.STAX,
-    loggerFactory: () =>
-      ({
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-      }) as any,
     // Stub the enum decoder (the minimal fixture pool isn't real-decodable).
     selectEnumVariants: () => Right([]),
   });

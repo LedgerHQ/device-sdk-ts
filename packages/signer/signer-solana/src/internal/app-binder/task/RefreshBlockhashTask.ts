@@ -1,4 +1,7 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 
 import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
 
@@ -7,7 +10,6 @@ export type RefreshBlockhashTaskArgs = {
   readonly rpcUrl?: string;
   readonly fetchBlockhash?: () => Promise<Uint8Array>;
   readonly blockhashService?: BlockhashService;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 /**
@@ -23,7 +25,7 @@ export class RefreshBlockhashTask {
   private readonly blockhashService: BlockhashService;
 
   constructor(private readonly args: RefreshBlockhashTaskArgs) {
-    this.logger = args.loggerFactory("RefreshBlockhashTask");
+    this.logger = getLogger("SignerSolana", "RefreshBlockhashTask");
     this.blockhashService = args.blockhashService ?? new BlockhashService();
   }
 

@@ -3,6 +3,7 @@ import {
   ByteArrayBuilder,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   hexaStringToBuffer,
   type InternalApi,
   InvalidStatusWordError,
@@ -31,7 +32,6 @@ type SendSignTransactionTaskArgs = {
   chainId: number;
   transactionType: TransactionType;
   clearSigningType: ClearSigningType;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export class SendSignTransactionTask {
@@ -41,7 +41,7 @@ export class SendSignTransactionTask {
     private api: InternalApi,
     private args: SendSignTransactionTaskArgs,
   ) {
-    this._logger = args.loggerFactory("SendSignTransactionTask");
+    this._logger = getLogger("SignerEth", "SendSignTransactionTask");
   }
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {

@@ -1,13 +1,13 @@
 import {
+  getLogger,
   HexaString,
   isHexaString,
-  LoggerPublisherService,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Interface } from "ethers";
 import { inject, injectable } from "inversify";
 import { Maybe, Nothing } from "purify-ts";
 
-import { configTypes } from "@/config/di/configTypes";
 import { type TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
 import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
 import {
@@ -46,10 +46,8 @@ export class UniswapContextLoader
     private commandDecoderDataSource: CommandDecoderDataSource,
     @inject(tokenTypes.TokenDataSource)
     private tokenDataSource: TokenDataSource,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("UniswapContextLoader");
+    this.logger = getLogger("ContextModule", "UniswapContextLoader");
   }
 
   canHandle(

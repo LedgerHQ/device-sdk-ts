@@ -217,9 +217,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const loggerFactory =
-      this.input.loggerFactory ?? this.getLoggerFactory(internalApi);
-
     return {
       signTransaction: ({
         input,
@@ -244,7 +241,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           derivationPath: input.derivationPath,
           serializedTransaction: input.transaction,
           curve: input.curve,
-          loggerFactory,
         }).run();
       },
     };

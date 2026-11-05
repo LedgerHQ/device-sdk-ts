@@ -10,14 +10,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { TokenInfoContextLoader } from "./TokenInfoContextLoader";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const mockCertificate = {
   keyUsageNumber: 13,
   payload: new Uint8Array([0x10]),
@@ -49,12 +41,7 @@ describe("TokenInfoContextLoader", () => {
   });
 
   const makeLoader = (config = mockConfig) =>
-    new TokenInfoContextLoader(
-      dataSource,
-      config,
-      certificateLoader,
-      mockLoggerFactory,
-    );
+    new TokenInfoContextLoader(dataSource, config, certificateLoader);
 
   describe("canHandle", () => {
     it("returns true when SOLANA_TOKEN_INFO is requested and mints are non-empty", () => {

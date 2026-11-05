@@ -16,6 +16,7 @@ vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   return {
     ...original,
     CallTaskInAppDeviceAction: vi.fn(),
+    getLogger: () => mockLogger,
   };
 });
 
@@ -61,15 +62,13 @@ describe("SignMessageDeviceActionFactory", () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         task: expect.any(Function),
       }),
-      logger: undefined,
     });
   });
 
-  it("should forward skipOpenApp and logger to the device action", () => {
+  it("should forward skipOpenApp", () => {
     SignMessageDeviceActionFactory({
       ...defaultArgs,
       skipOpenApp: true,
-      logger: mockLogger,
     });
 
     expect(CallTaskInAppDeviceAction).toHaveBeenCalledWith({
@@ -77,7 +76,6 @@ describe("SignMessageDeviceActionFactory", () => {
       input: expect.objectContaining({
         skipOpenApp: true,
       }),
-      logger: mockLogger,
     });
   });
 

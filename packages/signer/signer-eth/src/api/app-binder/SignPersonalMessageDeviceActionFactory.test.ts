@@ -16,20 +16,11 @@ vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   };
 });
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("SignPersonalMessageDeviceActionFactory", () => {
   const defaultArgs = {
     derivationPath: "44'/60'/0'/0/0",
     message: "Hello, world!" as string | Uint8Array,
     skipOpenApp: false,
-    loggerFactory: mockLoggerFactory,
   };
 
   beforeEach(() => {

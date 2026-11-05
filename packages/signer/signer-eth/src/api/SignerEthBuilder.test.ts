@@ -6,18 +6,8 @@ import { SignerEthBuilder } from "@api/SignerEthBuilder";
 import { DefaultSignerEth } from "@internal/DefaultSignerEth";
 import { externalTypes } from "@internal/externalTypes";
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-
 describe("SignerEthBuilder", () => {
-  const dmk: DeviceManagementKit = {
-    getLoggerFactory: () => () => mockLogger,
-  } as unknown as DeviceManagementKit;
+  const dmk: DeviceManagementKit = {} as unknown as DeviceManagementKit;
   const defaultConstructorArgs = { dmk, sessionId: "", originToken: "test" };
 
   test("should be an instance of SignerEth", () => {

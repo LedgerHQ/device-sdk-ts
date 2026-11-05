@@ -3,7 +3,7 @@ export type { CommandErrors } from "./command/utils/CommandErrors";
 export type { DeviceId } from "./device/DeviceModel";
 export type { ConnectionType } from "./discovery/ConnectionType";
 export type { CommandErrorArgs } from "./Error";
-export type { LogSubscriberOptions } from "./logger-subscriber/model/LogSubscriberOptions";
+export type { LogSubscriberOptions } from "./global/services/logger/model/LogSubscriberOptions";
 export type { DiscoveredDevice } from "./transport/model/DiscoveredDevice";
 export type {
   Transport,
@@ -127,11 +127,11 @@ export { type ApduSenderService } from "@api/device-session/service/ApduSenderSe
 export type { DeviceSessionId } from "@api/device-session/types";
 export type { DmkConfig } from "@api/DmkConfig";
 export type { DmkError } from "@api/Error";
-export type { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+export type { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
 export type {
   LoggerSubscriberService,
   LogParams,
-} from "@api/logger-subscriber/service/LoggerSubscriberService";
+} from "@api/global/services/logger/LoggerSubscriberService";
 export type {
   DmkErrorResult,
   DmkResult,

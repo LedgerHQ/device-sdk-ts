@@ -2,7 +2,6 @@
 import {
   CommandResultFactory,
   DeviceActionStatus,
-  type LoggerPublisherService,
   OpenAppDeviceAction,
   UnknownDAError,
   UserInteractionRequired,
@@ -33,15 +32,6 @@ vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
 const DERIVATION_PATH = "44'/144'/0'/0/0";
 const TRANSACTION = new Uint8Array([0x12, 0x00, 0x00]);
 const SIGNATURE = new Uint8Array([0x30, 0x44]);
-
-const loggerFactory = (_tag: string): LoggerPublisherService =>
-  ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    subscribers: [],
-  }) as unknown as LoggerPublisherService;
 
 const setupOpenAppDAMock = (error?: unknown) => {
   (OpenAppDeviceAction as Mock).mockImplementation(() => ({
@@ -80,7 +70,6 @@ describe("SignTransactionDeviceAction", () => {
         transaction: TRANSACTION,
         skipOpenApp,
         curve: Curve.Secp256k1,
-        loggerFactory,
       },
     });
     vi.spyOn(deviceAction, "extractDependencies").mockReturnValue({
@@ -271,7 +260,6 @@ describe("SignTransactionDeviceAction", () => {
           transaction: new Uint8Array(),
           skipOpenApp: true,
           curve: Curve.Secp256k1,
-          loggerFactory,
         },
       });
       const { signTransaction } = deviceAction.extractDependencies(apiMock);

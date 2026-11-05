@@ -455,7 +455,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               subset: context._internalState.subset!,
               transaction: context.input.transaction,
               deviceModelId: internalApi.getDeviceModel().id,
-              loggerFactory: this.getLoggerFactory(internalApi),
             }),
             onDone: {
               target: "ProvideContexts",
@@ -496,7 +495,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 subset: context._internalState.subset!,
                 appConfig: context._internalState.appConfig!,
               },
-              loggerFactory: this.getLoggerFactory(internalApi),
             }),
             onDone: {
               target: "SignTransaction",
@@ -654,7 +652,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   partialContextErrors: contextErrorCount,
                 },
                 contextModule: context.input.contextModule,
-                loggerFactory: this.getLoggerFactory(internalApi),
               };
             },
             onDone: [
@@ -737,7 +734,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     }) =>
       new SendSignTransactionTask(internalApi, {
         ...arg0.input,
-        loggerFactory: this.getLoggerFactory(internalApi),
       }).run();
 
     const detectBlindSigning = async (arg0: {

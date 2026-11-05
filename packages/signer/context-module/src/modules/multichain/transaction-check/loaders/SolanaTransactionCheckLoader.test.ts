@@ -13,15 +13,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { SolanaTransactionCheckLoader } from "./SolanaTransactionCheckLoader";
 
-const loggerMock = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-const loggerFactory = () => loggerMock;
-
 const certificateLoaderMock: PkiCertificateLoader = {
   loadCertificate: vi.fn(),
 };
@@ -35,7 +26,6 @@ beforeEach(() => {
   loader = new SolanaTransactionCheckLoader(
     dataSourceMock as unknown as TransactionCheckDataSource,
     certificateLoaderMock,
-    loggerFactory,
   );
 });
 

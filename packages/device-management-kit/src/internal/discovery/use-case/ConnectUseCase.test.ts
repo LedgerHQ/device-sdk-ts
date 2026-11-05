@@ -2,7 +2,6 @@ import { Left, Maybe, Right } from "purify-ts";
 
 import { type DeviceModel, type DeviceModelId } from "@api/device/DeviceModel";
 import { type ConnectionType } from "@api/discovery/ConnectionType";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { type DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import {
@@ -12,7 +11,6 @@ import {
 import { type Transport } from "@api/transport/model/Transport";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 import { type TransportService } from "@internal/transport/service/TransportService";
@@ -25,7 +23,6 @@ vi.mock("uuid", () => ({
 
 let transport: Transport;
 let transportService: TransportService;
-let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApi: ManagerApiService;
 let secureChannel: SecureChannelService;
@@ -47,11 +44,8 @@ describe("ConnectUseCase", () => {
     name: "device-name",
     type: "MOCK" as ConnectionType,
   };
-  const tag = "logger-tag";
 
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService([], tag);
-
     // Mock Transport
     transport = {
       connect: vi.fn(),
@@ -91,7 +85,7 @@ describe("ConnectUseCase", () => {
     const usecase = new ConnectUseCase(
       transportService,
       sessionService,
-      () => logger,
+
       managerApi,
       secureChannel,
     );
@@ -131,7 +125,7 @@ describe("ConnectUseCase", () => {
     const usecase = new ConnectUseCase(
       transportService,
       sessionService,
-      () => logger,
+
       managerApi,
       secureChannel,
     );
@@ -178,7 +172,7 @@ describe("ConnectUseCase", () => {
     const usecase = new ConnectUseCase(
       transportService,
       sessionService,
-      () => logger,
+
       managerApi,
       secureChannel,
     );
@@ -209,7 +203,7 @@ describe("ConnectUseCase", () => {
     const usecase = new ConnectUseCase(
       transportService,
       sessionService,
-      () => logger,
+
       managerApi,
       secureChannel,
     );

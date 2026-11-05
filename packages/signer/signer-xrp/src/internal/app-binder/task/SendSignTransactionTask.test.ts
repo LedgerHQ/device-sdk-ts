@@ -3,7 +3,6 @@ import {
   CommandResultFactory,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 import { vi } from "vitest";
@@ -23,15 +22,6 @@ const PREFIX = prefixLength(5);
 
 // How many transaction bytes the first APDU can still hold.
 const FIRST_CHUNK_BUDGET = APDU_MAX_PAYLOAD - PREFIX;
-
-const loggerFactory = () =>
-  ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    subscribers: [],
-  }) as unknown as LoggerPublisherService;
 
 /** A transaction of `length` bytes, each byte distinct enough to spot a slice. */
 const transactionOfLength = (length: number) =>
@@ -80,7 +70,6 @@ const runTask = async (
     derivationPath,
     serializedTransaction,
     curve,
-    loggerFactory,
   }).run();
 
   const apdus = commands.map((c) => c.getApdu().getRawApdu());

@@ -48,14 +48,6 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 import { APP_NAME } from "./constants";
 import { EthAppBinder } from "./EthAppBinder";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("EthAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
     sendCommand: vi.fn(),
@@ -107,7 +99,6 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          mockLoggerFactory,
           EMPTY_EVM_ADDRESS_BOOK,
         );
         const { observable } = appBinder.getAddress({
@@ -169,7 +160,6 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          mockLoggerFactory,
           EMPTY_EVM_ADDRESS_BOOK,
         );
         appBinder.getAddress(params);
@@ -205,7 +195,6 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          mockLoggerFactory,
           EMPTY_EVM_ADDRESS_BOOK,
         );
         appBinder.getAddress(params);
@@ -266,7 +255,6 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          mockLoggerFactory,
           EMPTY_EVM_ADDRESS_BOOK,
         );
         const { observable } = appBinder.signTransaction({
@@ -340,7 +328,6 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          mockLoggerFactory,
           EMPTY_EVM_ADDRESS_BOOK,
         );
         const { observable } = appBinder.signTransaction({
@@ -409,7 +396,6 @@ describe("EthAppBinder", () => {
         mockedMapper,
         mockedParser,
         "sessionId",
-        mockLoggerFactory,
         addressBook,
       ).signTransaction({
         derivationPath: "44'/60'/3'/2/1",
@@ -456,7 +442,6 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          mockLoggerFactory,
           EMPTY_EVM_ADDRESS_BOOK,
         );
         const { observable } = appBinder.signPersonalMessage({
@@ -529,7 +514,6 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          mockLoggerFactory,
           EMPTY_EVM_ADDRESS_BOOK,
         );
         const { observable } = appBinder.signDelegationAuthorization({
@@ -609,7 +593,6 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          mockLoggerFactory,
           EMPTY_EVM_ADDRESS_BOOK,
         );
         const { observable } = appBinder.signTypedData({

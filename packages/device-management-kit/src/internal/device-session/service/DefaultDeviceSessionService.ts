@@ -1,13 +1,13 @@
-import { inject, injectable } from "inversify";
+import { injectable } from "inversify";
 import { Either, Maybe } from "purify-ts";
 import { Observable, ReplaySubject } from "rxjs";
 
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { DeviceId } from "@api/types";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 
 @injectable()
 export class DefaultDeviceSessionService implements DeviceSessionService {
@@ -15,13 +15,10 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
   private readonly _sessionsSubject: ReplaySubject<DeviceSession>;
   private readonly _logger: LoggerPublisherService;
 
-  constructor(
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerModuleFactory: (tag: string) => LoggerPublisherService,
-  ) {
+  constructor() {
     this._sessions = [];
     this._sessionsSubject = new ReplaySubject();
-    this._logger = loggerModuleFactory("DeviceSessionService");
+    this._logger = getLogger("DeviceSessionService");
   }
 
   public get sessionsObs(): Observable<DeviceSession> {

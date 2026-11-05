@@ -17,14 +17,6 @@ const defaultInput: SignTransactionDAInput = {
   contextModule: contextModuleStub,
 };
 
-const mockLoggerFactory = vi.fn((_tag: string) => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-}));
-
 describe("SignTransactionDeviceActionFactory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,20 +38,6 @@ describe("SignTransactionDeviceActionFactory", () => {
 
     expect(deviceAction.input).toBe(defaultInput);
     expect(deviceAction.inspect).toBe(true);
-  });
-
-  it("should forward the loggerFactory so it is used instead of internalApi.loggerFactory", () => {
-    const internalApi = makeDeviceActionInternalApiMock();
-    const deviceAction = SignTransactionDeviceActionFactory({
-      input: defaultInput,
-      loggerFactory: mockLoggerFactory,
-    });
-
-    deviceAction.makeStateMachine(internalApi);
-
-    expect(mockLoggerFactory).toHaveBeenCalledWith(
-      "SignTransactionDeviceAction",
-    );
   });
 
   it("should return a device action usable as an XState actor", () => {

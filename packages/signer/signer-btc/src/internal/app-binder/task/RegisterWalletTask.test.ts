@@ -42,15 +42,6 @@ const APDU_RESPONSE_DATA = new Uint8Array([...WALLET_ID, ...WALLET_HMAC]);
 
 const SERIALIZED_WALLET = Uint8Array.from([0x01, 0x02, 0x03, 0x04]);
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-const mockLoggerFactory = (_tag: string) => mockLogger;
-
 describe("RegisterWalletTask", () => {
   const apiMock = {
     sendCommand: vi.fn(),
@@ -86,7 +77,6 @@ describe("RegisterWalletTask", () => {
       // GIVEN
       const args = {
         walletPolicy: WALLET_POLICY,
-        loggerFactory: mockLoggerFactory,
       };
 
       const successResult = CommandResultFactory<ApduResponse, void>({
@@ -140,7 +130,6 @@ describe("RegisterWalletTask", () => {
       // GIVEN
       const args = {
         walletPolicy: WALLET_POLICY,
-        loggerFactory: mockLoggerFactory,
       };
 
       const resultError = CommandResultFactory<ApduResponse, void>({
@@ -174,7 +163,6 @@ describe("RegisterWalletTask", () => {
       // GIVEN
       const args = {
         walletPolicy: WALLET_POLICY,
-        loggerFactory: mockLoggerFactory,
       };
 
       const successResult = CommandResultFactory<ApduResponse, void>({

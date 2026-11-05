@@ -2,6 +2,7 @@ import {
   ByteArrayBuilder,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -23,7 +24,6 @@ const PATH_SIZE = 4;
 type SendSignPersonalMessageTaskArgs = {
   derivationPath: string;
   message: string | Uint8Array;
-  logger: LoggerPublisherService;
 };
 
 export class SendSignPersonalMessageTask {
@@ -33,7 +33,7 @@ export class SendSignPersonalMessageTask {
     private api: InternalApi,
     private args: SendSignPersonalMessageTaskArgs,
   ) {
-    this._logger = args.logger;
+    this._logger = getLogger("SignerEth", "SendSignPersonalMessageTask");
   }
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {

@@ -9,8 +9,6 @@ import {
   type DeviceModel,
   DeviceModelId,
   DeviceNotRecognizedError,
-  type LoggerPublisherService,
-  type LoggerSubscriberService,
   NoAccessibleDeviceError,
   OpeningConnectionError,
   StaticDeviceModelDataSource,
@@ -28,22 +26,8 @@ import { hidDeviceStubBuilder } from "@api/model/HIDDevice.stub";
 import { WebHidApduSender } from "./WebHidApduSender";
 import { WebHidTransport } from "./WebHidTransport";
 
-class LoggerPublisherServiceStub implements LoggerPublisherService {
-  constructor(subscribers: LoggerSubscriberService[], tag: string) {
-    this.subscribers = subscribers;
-    this.tag = tag;
-  }
-  subscribers: LoggerSubscriberService[] = [];
-  tag: string = "";
-  error = vi.fn();
-  warn = vi.fn();
-  info = vi.fn();
-  debug = vi.fn();
-}
-
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();
-const logger = new LoggerPublisherServiceStub([], "web-usb-hid");
 
 const stubDevice: HIDDevice = hidDeviceStubBuilder();
 
@@ -116,7 +100,6 @@ describe("WebHidTransport", () => {
     });
     transport = new WebHidTransport(
       usbDeviceModelDataSource,
-      () => logger,
       apduSenderServiceFactoryStub,
       apduReceiverServiceFactoryStub,
       mockDeviceConnectionStateMachineFactory,
