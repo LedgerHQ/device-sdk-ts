@@ -37,8 +37,9 @@ const MAX_HEAP_SIZE = 256 * 1024;
 const HEAP_SIZE_STEP = 1024;
 const MAX_TRANSACTION_SIZE = 4096;
 
-export const compiledTransactionMessageDecoder =
-  getCompiledTransactionMessageDecoder();
+export const compiledTransactionMessageDecoder: ReturnType<
+  typeof getCompiledTransactionMessageDecoder
+> = getCompiledTransactionMessageDecoder();
 
 const failure = (rule: SolanaV1TransactionRule, detail: string) =>
   new InvalidSolanaTransactionError(rule, detail);
