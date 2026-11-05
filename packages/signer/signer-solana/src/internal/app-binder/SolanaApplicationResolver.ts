@@ -20,8 +20,21 @@ export const SOLANA_MIN_DELAYED_SIGNING_VERSION = "1.14.0";
 export const SOLANA_MIN_TRANSACTION_CHECKS_VERSION = "1.16.0";
 export const SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION = "1.17.0";
 export const SOLANA_MIN_V1_TRANSACTIONS_VERSION = "1.18.0";
+export const SOLANA_MIN_V1_GATING_VERSION = "1.18.0";
 
-export const SOLANA_SIGNER_FEATURES = {
+/**
+ * Always on
+ */
+export const SOLANA_DEFAULT_FEATURES = {
+  gatedSigning: {
+    minVersion: SOLANA_MIN_V1_GATING_VERSION,
+    excludedModels: [DeviceModelId.NANO_S],
+    excludedApps: ["Exchange"],
+  },
+} as const;
+
+/** Features callers can turn off with `disabledFeatures`. */
+export const SOLANA_FEATURES = {
   spl: {
     minVersion: SOLANA_MIN_SPL_VERSION,
     excludedModels: [DeviceModelId.NANO_S],
@@ -53,7 +66,11 @@ export const SOLANA_SIGNER_FEATURES = {
   },
 } as const;
 
-export type SolanaSignerFeaturesNames = keyof typeof SOLANA_SIGNER_FEATURES;
+export type SolanaSignerFeaturesNames = keyof typeof SOLANA_FEATURES;
+
+const ALL_SOLANA_FEATURES = { ...SOLANA_DEFAULT_FEATURES, ...SOLANA_FEATURES };
+
+export type SolanaFeatureName = keyof typeof ALL_SOLANA_FEATURES;
 
 /**
  * Whether the connected Solana app supports a given feature, applying its
@@ -64,15 +81,19 @@ export type SolanaSignerFeaturesNames = keyof typeof SOLANA_SIGNER_FEATURES;
  */
 export function isSolanaSignerFeatureSupported(
   internalApi: InternalApi,
-  feature: SolanaSignerFeaturesNames,
+  feature: SolanaFeatureName,
   appConfig: AppConfiguration,
   disabledFeatures?: ReadonlySet<SolanaSignerFeaturesNames>,
 ): boolean {
-  if (disabledFeatures?.has(feature)) {
+  // Only SOLANA_FEATURES can be disabled
+  if (
+    feature in SOLANA_FEATURES &&
+    disabledFeatures?.has(feature as SolanaSignerFeaturesNames)
+  ) {
     return false;
   }
   const { minVersion, excludedModels, excludedApps } =
-    SOLANA_SIGNER_FEATURES[feature];
+    ALL_SOLANA_FEATURES[feature];
   return new ApplicationChecker(
     internalApi.getDeviceSessionState(),
     appConfig,
