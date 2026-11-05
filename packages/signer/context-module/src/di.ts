@@ -19,6 +19,7 @@ import { trustedNameModuleFactory } from "@/modules/ethereum/trusted-name/di/tru
 import { typedDataModuleFactory } from "@/modules/ethereum/typed-data/di/typedDataModuleFactory";
 import { uniswapModuleFactory } from "@/modules/ethereum/uniswap/di/uniswapModuleFactory";
 import { ethereumGatedSigningModuleFactory } from "@/modules/multichain/gated-signing/di/ethereumGatedSigningModuleFactory";
+import { solanaGatedSigningModuleFactory } from "@/modules/multichain/gated-signing/di/solanaGatedSigningModuleFactory";
 import { nanoPkiModuleFactory } from "@/modules/multichain/pki/di/pkiModuleFactory";
 import { reporterModuleFactory } from "@/modules/multichain/reporter/di/reporterModuleFactory";
 import { signReporterModuleFactory } from "@/modules/multichain/sign-reporter/di/signReporterModuleFactory";
@@ -89,6 +90,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
         tokenAccountStateModuleFactory(),
         altResolutionModuleFactory(),
         solanaTrustedNameModuleFactory(),
+        solanaGatedSigningModuleFactory(),
       );
       break;
     case ContextModuleChainID.Concordium:
