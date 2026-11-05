@@ -110,22 +110,16 @@ export class XrpSignerDriver {
   }
 
   /**
-   * Set a boolean form field to `checked`.
-   *
-   * The `input-switch_*` test id sits on a wrapper around the switch, and
-   * clicking that wrapper does not toggle it — the click has to land on the
-   * inner `role="button"` element. The state is read back from the underlying
-   * checkbox so the toggle is idempotent and a silently ignored click fails
-   * here rather than further down the test.
+   * Set a boolean form field to `checked`. The `input-switch_*` test id sits on
+   * a wrapper around the Lumen switch, which is an `input[role="switch"]`;
+   * `setChecked` is idempotent and fails if the state does not change.
    */
   private async setSwitch(fieldKey: string, checked: boolean): Promise<void> {
-    const field = this.page.getByTestId(`input-switch_${fieldKey}`);
-    const checkbox = field.locator('input[type="checkbox"]');
-    await checkbox.waitFor({ state: "attached" });
-    if ((await checkbox.isChecked()) !== checked) {
-      await field.locator('[role="button"]').click();
-    }
-    await expect(checkbox).toBeChecked({ checked });
+    const toggle = this.page
+      .getByTestId(`input-switch_${fieldKey}`)
+      .getByRole("switch");
+    await toggle.waitFor({ state: "attached" });
+    await toggle.setChecked(checked);
   }
 
   /**

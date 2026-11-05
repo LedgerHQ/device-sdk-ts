@@ -37,7 +37,10 @@ export class TrxSignerDriver {
   }: { checkOnDevice?: boolean } = {}): Promise<void> {
     await this.page.getByTestId("CTA_command-Get address").click();
     if (checkOnDevice) {
-      await this.page.getByTestId("input-switch_checkOnDevice").click();
+      await this.page
+        .getByTestId("input-switch_checkOnDevice")
+        .getByRole("switch")
+        .setChecked(true);
     }
     await this.page.getByTestId("CTA_send-device-action").click();
   }
@@ -62,7 +65,10 @@ export class TrxSignerDriver {
     await input.waitFor({ state: "visible" });
     await input.fill(transaction);
     if (skipOpenApp) {
-      await this.page.getByTestId("input-switch_skipOpenApp").click();
+      await this.page
+        .getByTestId("input-switch_skipOpenApp")
+        .getByRole("switch")
+        .setChecked(true);
     }
     await this.page.getByTestId("CTA_send-device-action").click();
   }
@@ -81,7 +87,10 @@ export class TrxSignerDriver {
     await input.waitFor({ state: "visible" });
     await input.fill(publicKey);
     if (skipOpenApp) {
-      await this.page.getByTestId("input-switch_skipOpenApp").click();
+      await this.page
+        .getByTestId("input-switch_skipOpenApp")
+        .getByRole("switch")
+        .setChecked(true);
     }
     await this.page.getByTestId("CTA_send-device-action").click();
   }
@@ -100,7 +109,10 @@ export class TrxSignerDriver {
     await input.waitFor({ state: "visible" });
     await input.fill(transactionHash);
     if (skipOpenApp) {
-      await this.page.getByTestId("input-switch_skipOpenApp").click();
+      await this.page
+        .getByTestId("input-switch_skipOpenApp")
+        .getByRole("switch")
+        .setChecked(true);
     }
     await this.page.getByTestId("CTA_send-device-action").click();
   }
@@ -119,7 +131,10 @@ export class TrxSignerDriver {
     await input.waitFor({ state: "visible" });
     await input.fill(message);
     if (skipOpenApp) {
-      await this.page.getByTestId("input-switch_skipOpenApp").click();
+      await this.page
+        .getByTestId("input-switch_skipOpenApp")
+        .getByRole("switch")
+        .setChecked(true);
     }
     await this.page.getByTestId("CTA_send-device-action").click();
   }

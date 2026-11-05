@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
 import { ResponsesDriver } from "./ResponsesDriver";
 
@@ -64,18 +64,16 @@ export class SolSignerDriver {
   }
 
   /**
-   * Set a boolean form field to `checked`. The click has to land on the inner
-   * `role="button"` of the `input-switch_*` wrapper, and the state is read back
-   * from the checkbox so the toggle is idempotent.
+   * Set a boolean form field to `checked`. The `input-switch_*` test id sits on
+   * a wrapper around the Lumen switch, which is an `input[role="switch"]`;
+   * `setChecked` is idempotent and fails if the state does not change.
    */
   private async setSwitch(fieldKey: string, checked: boolean): Promise<void> {
-    const field = this.page.getByTestId(`input-switch_${fieldKey}`);
-    const checkbox = field.locator('input[type="checkbox"]');
-    await checkbox.waitFor({ state: "attached" });
-    if ((await checkbox.isChecked()) !== checked) {
-      await field.locator('[role="button"]').click();
-    }
-    await expect(checkbox).toBeChecked({ checked });
+    const toggle = this.page
+      .getByTestId(`input-switch_${fieldKey}`)
+      .getByRole("switch");
+    await toggle.waitFor({ state: "attached" });
+    await toggle.setChecked(checked);
   }
 
   /**

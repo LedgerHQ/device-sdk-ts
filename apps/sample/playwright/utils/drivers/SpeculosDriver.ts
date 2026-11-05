@@ -228,9 +228,29 @@ export class SpeculosDriver {
     await this.waitForAnyScreen();
     await this.attachScreenshot("approve");
     if (this.isTouch()) {
-      await this.touch().sign();
+      await this.pageToLastScreen();
+      // A multi-page review ends on a "Confirm" button to tap, while a single
+      // confirmation screen is approved by holding to sign.
+      if (/\bconfirm\b/i.test(await this.currentScreen())) {
+        await this.touch().mainButton();
+      } else {
+        await this.touch().sign();
+      }
     } else {
       await this.buttons().both();
+    }
+  }
+
+  /**
+   * Swipe through a multi-page review (shown as "1 of 2") until its last page.
+   * A single-page screen has no page indicator and is left untouched.
+   */
+  private async pageToLastScreen(): Promise<void> {
+    for (let step = 0; step < REVIEW_MAX_STEPS; step += 1) {
+      const page = /(\d+) of (\d+)/.exec(await this.currentScreen());
+      if (!page || Number(page[1]) >= Number(page[2])) return;
+      await this.touch().navigateNext();
+      await sleep(REVIEW_STEP_DELAY_MS);
     }
   }
 
