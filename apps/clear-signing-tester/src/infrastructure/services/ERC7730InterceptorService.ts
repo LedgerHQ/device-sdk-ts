@@ -3,7 +3,7 @@ import {
   CalInterceptor,
   ERC7730Client,
 } from "@ledgerhq/cal-interceptor";
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { getLogger } from "@ledgerhq/device-management-kit";
 import { readFileSync } from "fs";
 
 /**
@@ -12,9 +12,9 @@ import { readFileSync } from "fs";
 export class ERC7730InterceptorService {
   private interceptor: CalInterceptor | null = null;
   private readonly apiUrl: string;
+  private readonly logger = getLogger("erc7730-interceptor");
 
   constructor(
-    private readonly logger: LoggerPublisherService,
     apiUrl: string = process.env["ERC7730_API_URL"] ||
       "https://app.devicesdk.ledger-test.com",
   ) {

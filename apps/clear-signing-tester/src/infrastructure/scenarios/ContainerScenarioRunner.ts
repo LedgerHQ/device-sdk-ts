@@ -44,6 +44,7 @@ import {
   readAddressBookFile,
   readTronAddressBookFile,
 } from "@root/src/infrastructure/repositories/readAddressBookFile";
+import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
 
 /** Settings that belong to the run as a whole, not to any one scenario. */
 export type ScenarioRuntime = {
@@ -74,6 +75,8 @@ export type ScenarioRuntime = {
   readonly ethAppVersion?: string;
   readonly solanaAppVersion?: string;
   readonly tronAppVersion?: string;
+  /** ERC7730 descriptors to serve instead of the CAL ones. */
+  readonly erc7730Files?: readonly string[];
 };
 
 const NO_COUNTS = {
@@ -223,8 +226,13 @@ export class ContainerScenarioRunner implements ScenarioRunner {
       TYPES.MainServiceController,
     );
     this.active.add(services);
+    // It patches this thread's fetch, so each run sets up its own.
+    const files = this.runtime.erc7730Files ?? [];
+    const interceptor =
+      files.length > 0 ? new ERC7730InterceptorService() : undefined;
 
     try {
+      if (interceptor) await interceptor.setupFromFiles([...files]);
       await services.start();
       const result = await this.dispatch(container, run);
       return {
@@ -248,6 +256,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
     } finally {
       this.active.delete(services);
       await services.stop().catch(() => undefined);
+      interceptor?.stop();
     }
   }
 

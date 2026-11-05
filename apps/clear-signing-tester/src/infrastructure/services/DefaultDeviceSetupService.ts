@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -15,10 +18,8 @@ export class DefaultDeviceSetupService implements DeviceSetupService {
     private readonly signerConfig: SignerConfig,
     @inject(TYPES.DeviceController)
     private readonly deviceController: DeviceController,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("device-setup-service");
+    this.logger = getLogger("device-setup-service");
   }
 
   async setup(): Promise<void> {

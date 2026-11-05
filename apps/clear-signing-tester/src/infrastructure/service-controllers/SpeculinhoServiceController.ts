@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { randomUUID } from "crypto";
 import { inject, injectable } from "inversify";
 
@@ -83,10 +86,8 @@ export class SpeculinhoServiceController implements ServiceController {
     private readonly config: SpeculinhoConfig,
     @inject(TYPES.CalConfig)
     private readonly calConfig: CalConfig,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("speculinho-service-controller");
+    this.logger = getLogger("speculinho-service-controller");
     const url =
       config.speculinhoUrl ??
       process.env["SPECULINHO_URL"] ??

@@ -1,18 +1,17 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { inject, injectable } from "inversify";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
+import { injectable } from "inversify";
 
-import { TYPES } from "@root/src/di/types";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 
 @injectable()
 export class DefaultRetryService implements RetryService {
   private readonly logger: LoggerPublisherService;
 
-  constructor(
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
-  ) {
-    this.logger = loggerFactory("retry-service");
+  constructor() {
+    this.logger = getLogger("retry-service");
   }
 
   async retryUntil<T>(

@@ -1,5 +1,6 @@
 import {
   DmkNetworkClient,
+  getLogger,
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import * as fs from "fs";
@@ -19,14 +20,10 @@ export class SpeculosScreenshotSaver implements ScreenshotSaver {
   private readonly http: DmkNetworkClient;
   private counter = 0;
 
-  constructor(
-    @inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
-  ) {
+  constructor(@inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig) {
     this.config = config;
     this.screenshotPath = config.screenshotPath ?? null;
-    this.logger = loggerFactory("screenshot-saver");
+    this.logger = getLogger("screenshot-saver");
     this.http = new DmkNetworkClient();
 
     if (config.screenshotPath && !fs.existsSync(config.screenshotPath)) {

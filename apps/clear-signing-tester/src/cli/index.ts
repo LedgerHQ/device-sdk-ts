@@ -2,14 +2,12 @@
 
 import "@root/src/setup/installUndici";
 
-import { ConsoleLogger } from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 
 import { RunScenariosUseCase } from "@root/src/application/scenarios/RunScenariosUseCase";
 import {
   CLI_LOG_LEVELS,
   type CliLogLevel,
-  parseLogLevel,
 } from "@root/src/domain/models/config/LoggerConfig";
 import {
   type Scenario,
@@ -19,17 +17,13 @@ import {
 } from "@root/src/domain/models/Scenario";
 import { expandToCases } from "@root/src/domain/scenarios/expandToCases";
 import { planRuns, selectScenarios } from "@root/src/domain/scenarios/planRuns";
-import {
-  ContainerScenarioRunner,
-  type ScenarioRuntime,
-} from "@root/src/infrastructure/scenarios/ContainerScenarioRunner";
+import { type ScenarioRuntime } from "@root/src/infrastructure/scenarios/ContainerScenarioRunner";
 import { countCases } from "@root/src/infrastructure/scenarios/countFixtureCases";
 import {
   isEnabled,
   loadScenarioCatalog,
 } from "@root/src/infrastructure/scenarios/loadScenarioCatalog";
-import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
-import { LoggerPublisherService } from "@root/src/services/LoggerPublisherService";
+import { WorkerScenarioRunner } from "@root/src/infrastructure/scenarios/WorkerScenarioRunner";
 
 import { reportScenarios } from "./reportScenarios";
 
@@ -74,7 +68,7 @@ const INTERRUPTED_EXIT_CODE = 130;
  * SIGINT handler tears the process down without unwinding, so Ctrl+C or a
  * cancelled CI job would otherwise strand one pod per worker.
  */
-function releaseOnSignal(runner: ContainerScenarioRunner): () => void {
+function releaseOnSignal(runner: WorkerScenarioRunner): () => void {
   let releasing = false;
 
   const handler = (signal: NodeJS.Signals) => {
@@ -200,10 +194,8 @@ function reportOwnPins(
   }
 }
 
-function buildRuntime(
-  options: TestOptions,
-  calMode: ScenarioRuntime["calMode"],
-): ScenarioRuntime {
+function buildRuntime(options: TestOptions): ScenarioRuntime {
+  const erc7730Files = options.erc7730Files ?? [];
   return {
     ethDerivationPath: options.derivationPath,
     solanaDerivationPath: options.solanaDerivationPath,
@@ -218,7 +210,8 @@ function buildRuntime(
     scanLimit: options.scanLimit,
     samplesPerInstruction: options.samplesPerInstruction,
     originToken: process.env["GATING_TOKEN"] || "test-origin-token",
-    calMode,
+    calMode: erc7730Files.length > 0 ? "test" : "prod",
+    erc7730Files,
     osVersion: options.osVersion,
     ethAppVersion: options.appEthVersion,
     solanaAppVersion: options.appSolVersion,
@@ -271,27 +264,14 @@ async function runTest(
     return 0;
   }
 
-  // Injected descriptors are served over HTTP for the whole process, so the
-  // interceptor is set up once rather than per scenario.
-  const files = options.erc7730Files ?? [];
-  const cliLogger = new LoggerPublisherService(
-    ((level) => (level === null ? [] : [new ConsoleLogger(level)]))(
-      parseLogLevel(options.logLevel),
-    ),
-    "cli",
-  );
-  const interceptor =
-    files.length > 0 ? new ERC7730InterceptorService(cliLogger) : undefined;
-  if (interceptor) await interceptor.setupFromFiles(files);
-
-  const runtime = buildRuntime(options, interceptor ? "test" : "prod");
+  const runtime = buildRuntime(options);
 
   console.log(
     `Running ${runs.length} case(s) from ${scenarioRuns.length} scenario run(s) on ` +
       `${options.device ?? "every supported device"}, ${options.concurrency} at a time.`,
   );
 
-  const runner = new ContainerScenarioRunner(runtime);
+  const runner = new WorkerScenarioRunner(runtime);
   const stopListening = releaseOnSignal(runner);
 
   try {
@@ -319,7 +299,6 @@ async function runTest(
     return asExitCode(report.failures);
   } finally {
     stopListening();
-    interceptor?.stop();
   }
 }
 

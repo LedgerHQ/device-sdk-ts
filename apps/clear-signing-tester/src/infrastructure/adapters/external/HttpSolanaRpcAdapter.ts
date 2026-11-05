@@ -1,5 +1,6 @@
 import {
   DmkNetworkClient,
+  getLogger,
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
@@ -249,10 +250,8 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
   constructor(
     @inject(TYPES.SolanaRpcConfig)
     private readonly rpcConfig: SolanaRpcConfig,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("solana-rpc-adapter");
+    this.logger = getLogger("solana-rpc-adapter");
     this.http = new DmkNetworkClient();
   }
 

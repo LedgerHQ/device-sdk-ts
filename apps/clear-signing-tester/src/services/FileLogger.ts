@@ -24,7 +24,7 @@ export class FileLogger implements LoggerSubscriberService {
     message: string,
     options: LogSubscriberOptions,
   ): void {
-    const tag = `[${options.tag}]`;
+    const tag = options.tag;
     const timestamp = new Date(options.timestamp).toISOString();
     const levelName = this.getLevelName(level);
 
