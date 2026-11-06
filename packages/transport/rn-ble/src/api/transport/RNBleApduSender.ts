@@ -281,6 +281,10 @@ export class RNBleApduSender
   }
 
   public closeConnection() {
-    this._dependencies.device.cancelConnection();
+    // cancelConnection rejects (e.g. OperationCancelled on iOS) when the device
+    // already disconnected; nothing is left to clean up, so don't let it go unhandled
+    this._dependencies.device.cancelConnection().catch((error: unknown) => {
+      this._logger.info("Error cancelling connection", { data: { error } });
+    });
   }
 }
