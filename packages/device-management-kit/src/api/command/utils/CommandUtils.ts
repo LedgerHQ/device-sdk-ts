@@ -58,7 +58,8 @@ export class CommandUtils {
       (statusCode[0] === 0x6a && statusCode[1] === 0x84) ||
       (statusCode[0] === 0x6a && statusCode[1] === 0x85) ||
       (statusCode[0] === 0x51 && statusCode[1] === 0x02) ||
-      (statusCode[0] === 0x51 && statusCode[1] === 0x03)
+      (statusCode[0] === 0x51 && statusCode[1] === 0x03) ||
+      (statusCode[0] === 0x67 && statusCode[1] === 0x33)
     );
   }
 

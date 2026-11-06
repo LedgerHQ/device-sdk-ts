@@ -1,5 +1,6 @@
 import {
   type DmkError,
+  OutOfMemoryDAError,
   RefusedByUserDAError,
   UnknownDAError,
 } from "@ledgerhq/device-management-kit";
@@ -13,6 +14,7 @@ import {
   CLS_ERROR_INVALID_METADATA,
   CLS_ERROR_INVALID_SIZE,
   CLS_ERROR_NO_BACKGROUND_IMAGE,
+  CLS_ERROR_OUT_OF_MEMORY,
   CLS_ERROR_RECOVERY_MODE,
   CLS_ERROR_REGISTRY_ERROR,
   CLS_ERROR_USER_REFUSED,
@@ -144,12 +146,13 @@ export function mapRemoveCommandError(error: unknown): RemoveCommandDAError {
 
 /**
  * Errors possible from Upload DA (uses Create, Load, Commit commands).
- * Create errors: 662f, 5501
+ * Create errors: 662f, 5501, 5102
  * Load errors: 5106, 551e, 662f, 6703, 680b
  * Commit errors: 5501, 551e, 662f, 681f, 6820
  */
 export type UploadCommandsDAError =
   | RefusedByUserDAError
+  | OutOfMemoryDAError
   | DeviceInRecoveryModeDAError
   | InvalidCustomLockScreenStateDAError
   | InvalidCustomLockScreenImageDataDAError
@@ -171,6 +174,9 @@ export function mapUploadCommandError(error: unknown): UploadCommandsDAError {
     // User refused (Create, Commit)
     case CLS_ERROR_USER_REFUSED:
       return new RefusedByUserDAError("User refused on device");
+    // Out of memory (Create)
+    case CLS_ERROR_OUT_OF_MEMORY:
+      return new OutOfMemoryDAError("Not enough memory on device");
     // Recovery mode (Create, Load, Commit)
     case CLS_ERROR_RECOVERY_MODE:
       return new DeviceInRecoveryModeDAError(error);

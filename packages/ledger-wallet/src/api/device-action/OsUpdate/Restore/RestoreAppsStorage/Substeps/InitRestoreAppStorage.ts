@@ -9,7 +9,8 @@ import {
   InitRestoreAppStorageCommandError,
 } from "@api/command/OsUpdate/Restore/InitRestoreAppStorageCommand";
 import { InitRestoreAppStorageError } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/RestoreAppsStorageDeviceActionErrors";
-import { InitRestoreAppStorageConsentResult } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/types";
+import { InitRestoreAppStorageResult } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/types";
+import { isOutOfMemoryCommandError } from "@api/device-action/utils/outOfMemoryUtils";
 
 // "5501" = rejected by user, "5502" = pin is not set
 const INVALID_CONSENT_ERROR_CODES: string[] = ["5501", "5502"];
@@ -19,7 +20,7 @@ type InitRestoreAppStorageHandlerArgs = {
 };
 
 type InitRestoreAppStorageHandlerResponse = Promise<
-  Either<InitRestoreAppStorageError, InitRestoreAppStorageConsentResult>
+  Either<InitRestoreAppStorageError, InitRestoreAppStorageResult>
 >;
 
 type InitRestoreAppStorageHandler = (
@@ -41,10 +42,13 @@ export const initRestoreAppStorage =
         result.error instanceof InitRestoreAppStorageCommandError &&
         INVALID_CONSENT_ERROR_CODES.includes(result.error.errorCode)
       ) {
-        return Right(InitRestoreAppStorageConsentResult.REJECTED);
+        return Right(InitRestoreAppStorageResult.REJECTED);
+      }
+      if (isOutOfMemoryCommandError(result.error)) {
+        return Right(InitRestoreAppStorageResult.OUT_OF_MEMORY);
       }
       return Left(new InitRestoreAppStorageError(result.error.originalError));
     }
 
-    return Right(InitRestoreAppStorageConsentResult.GRANTED);
+    return Right(InitRestoreAppStorageResult.GRANTED);
   };

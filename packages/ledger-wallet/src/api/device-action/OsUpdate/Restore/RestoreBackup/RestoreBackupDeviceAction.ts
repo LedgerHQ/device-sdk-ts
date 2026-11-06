@@ -698,8 +698,9 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
                       ..._.context._internalState,
                       error,
                     }),
-                    Right: (appsStorageResults) => ({
+                    Right: ({ appsStorageResults, isOutOfMemory }) => ({
                       ..._.context._internalState,
+                      isOutOfMemory,
                       restoredApps: mergeAppsStorageResults(
                         _.context._internalState.restoredApps,
                         appsStorageResults,
@@ -721,6 +722,10 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
             {
               guard: "hasError",
               target: "Error",
+            },
+            {
+              guard: "isOutOfMemory",
+              target: "Success",
             },
             {
               target: "CheckOtherAppsToReinstall",
@@ -845,8 +850,9 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
                       ..._.context._internalState,
                       error,
                     }),
-                    Right: (appsStorageResults) => ({
+                    Right: ({ appsStorageResults, isOutOfMemory }) => ({
                       ..._.context._internalState,
+                      isOutOfMemory,
                       restoredApps: mergeAppsStorageResults(
                         _.context._internalState.restoredApps,
                         appsStorageResults,
@@ -868,6 +874,10 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
             {
               guard: "hasError",
               target: "Error",
+            },
+            {
+              guard: "isOutOfMemory",
+              target: "Success",
             },
             {
               target: "CheckIfDeviceSupportCustomLockScreenFeature",
@@ -938,10 +948,18 @@ export class RestoreBackupDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: (_) => {
                   return _.event.output.caseOf<RestoreBackupDAInternalState>({
-                    Left: (error) =>
-                      isRefusedByUser(error)
-                        ? _.context._internalState
-                        : { ..._.context._internalState, error },
+                    Left: (error) => {
+                      if (isRefusedByUser(error)) {
+                        return _.context._internalState;
+                      }
+                      if (isOutOfMemory(error)) {
+                        return {
+                          ..._.context._internalState,
+                          isOutOfMemory: true,
+                        };
+                      }
+                      return { ..._.context._internalState, error };
+                    },
                     Right: () => ({
                       ..._.context._internalState,
                       restoredCLS: true,
