@@ -72,6 +72,7 @@ requested `--device` is skipped rather than failed.
 | `core`                      | stax, nanox       | Ethereum transaction and typed-data fixtures      |
 | `contacts`                  | flex              | Ethereum Address Book registration and signing    |
 | `gating`                    | stax, flex        | Unauthenticated callers fall back to gating       |
+| `safe`                      | stax, flex        | Safe account address verification                 |
 | `erc7730`                   | stax, nanox, flex | Per-dapp calldata descriptors                     |
 | `erc7730-typed-data`        | stax, nanox, flex | Per-dapp typed-data descriptors                   |
 | `solana`                    | stax, nanox, flex | Solana transaction fixtures                       |

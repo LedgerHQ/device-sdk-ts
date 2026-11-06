@@ -11,6 +11,7 @@ import {
 import { type Container } from "inversify";
 
 import { type TestBatchContactFromFileUseCase } from "@root/src/application/usecases/TestBatchContactFromFileUseCase";
+import { type TestBatchSafeAddressFromFileUseCase } from "@root/src/application/usecases/TestBatchSafeAddressFromFileUseCase";
 import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
 import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
 import { type TestSolanaProgramUseCase } from "@root/src/application/usecases/TestSolanaProgramUseCase";
@@ -344,6 +345,12 @@ export class ContainerScenarioRunner implements ScenarioRunner {
             TYPES.TestBatchContactFromFileUseCase,
           )
           .execute(fixture!);
+      case "verifySafeAddress":
+        return container
+          .get<TestBatchSafeAddressFromFileUseCase>(
+            TYPES.TestBatchSafeAddressFromFileUseCase,
+          )
+          .execute(fixture!, slice);
       case "solanaProgram":
         return container
           .get<TestSolanaProgramUseCase>(TYPES.TestSolanaProgramUseCase)
