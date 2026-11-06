@@ -9,8 +9,9 @@ import {
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
+  UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-import { Just, Nothing } from "purify-ts";
+import { Just, Left, Nothing, Right } from "purify-ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { signClearSignDAStateSteps } from "@api/app-binder/SignClearSignDeviceActionTypes";
@@ -22,6 +23,7 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
+import { ProvideGatedSigningCommand } from "@internal/app-binder/command/ProvideGatedSigningCommand";
 import { SolanaAppCommandError } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import {
   SEND_WITH_MEMO_MESSAGE,
@@ -90,6 +92,8 @@ let provideTxCheckMock: ReturnType<typeof vi.fn>;
 let reportSignMock: ReturnType<typeof vi.fn>;
 // Basic-flow routing
 let resolveSigningRouteMock: ReturnType<typeof vi.fn>;
+// Gating descriptor
+let provideGatedSigningMock: ReturnType<typeof vi.fn>;
 // Terminal sign-op deps (generic + basic) and the shared refresh task
 let promptUiDisplayMock: ReturnType<typeof vi.fn>;
 let previewMock: ReturnType<typeof vi.fn>;
@@ -195,6 +199,7 @@ function run(
     getAppConfig: getAppConfigMock,
     reportSign: reportSignMock,
     resolveSigningRoute: resolveSigningRouteMock,
+    provideGatedSigning: provideGatedSigningMock,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any) as unknown as ReturnType<typeof vi.spyOn>;
   const { observable } = action._execute(apiMock);
@@ -308,6 +313,9 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
 
     // No basic-flow rule matches by default.
     resolveSigningRouteMock = vi.fn().mockResolvedValue(null);
+
+    // No gating descriptor applies by default.
+    provideGatedSigningMock = vi.fn().mockResolvedValue(Right(null));
 
     spyChildren();
   });
@@ -941,6 +949,276 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       }));
   });
 
+  describe("gating descriptor", () => {
+    // Gating ships with v1 transactions; this app also has tx checks and
+    // generic clear signing.
+    const gatingVersion = SOLANA_MIN_V1_TRANSACTIONS_VERSION;
+
+    function withTxcAndGeneric() {
+      apiMock.getDeviceSessionState.mockReturnValue(
+        session(gatingVersion, DeviceModelId.FLEX),
+      );
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            ...appConfig(gatingVersion),
+            transactionChecksEnabled: true,
+            transactionChecksOptIn: true,
+          },
+        }),
+      );
+    }
+
+    const armedGeneric = {
+      mode: "full",
+      poolContexts: [],
+      instructionInfoContexts: [],
+      unrecognizedProgramIds: [],
+    };
+
+    it("is sent first, before the transaction check and clear signing", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric();
+        buildGenericMock.mockResolvedValue(armedGeneric);
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(provideGatedSigningMock).toHaveBeenCalledOnce();
+              expect(provideGatedSigningMock).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  input: { messageBytes: exampleTx, context: null },
+                }),
+              );
+              // The UI shows the gating step, with nothing to do on device.
+              expect(states).toContainEqual({
+                status: DeviceActionStatus.Pending,
+                intermediateValue: {
+                  requiredUserInteraction: UserInteractionRequired.None,
+                  step: signTransactionDAStateSteps.PROVIDE_GATED_SIGNING,
+                },
+              });
+              const gatingOrder =
+                provideGatedSigningMock.mock.invocationCallOrder[0]!;
+              expect(gatingOrder).toBeGreaterThan(
+                getAppConfigMock.mock.invocationCallOrder[0]!,
+              );
+              expect(gatingOrder).toBeLessThan(
+                provideTxCheckMock.mock.invocationCallOrder[0]!,
+              );
+              expect(gatingOrder).toBeLessThan(
+                buildGenericMock.mock.invocationCallOrder[0]!,
+              );
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    const gatedContext = {
+      type: ClearSignContextType.SOLANA_GATED_SIGNING,
+      payload: "aabb",
+    };
+
+    it("generic fallback → the accepted descriptor is sent again as is, before the transaction check, before basic", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric();
+        provideGatedSigningMock.mockResolvedValue(Right(gatedContext));
+        // buildGenericMock default → mode "none" → degraded.
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(provideGatedSigningMock).toHaveBeenCalledTimes(2);
+              expect(provideGatedSigningMock).toHaveBeenLastCalledWith(
+                expect.objectContaining({
+                  input: { messageBytes: exampleTx, context: gatedContext },
+                }),
+              );
+              const resendOrder =
+                provideGatedSigningMock.mock.invocationCallOrder[1]!;
+              expect(resendOrder).toBeGreaterThan(
+                buildGenericMock.mock.invocationCallOrder[0]!,
+              );
+              expect(resendOrder).toBeLessThan(
+                provideTxCheckMock.mock.invocationCallOrder[1]!,
+              );
+              expect(resendOrder).toBeLessThan(
+                inspectMock.mock.invocationCallOrder[0]!,
+              );
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it.each([
+      ["no descriptor applied", Right(null)],
+      ["the first send failed", Left(new Error("rejected"))],
+    ])(
+      "generic fallback, %s → nothing to send again",
+      (_, firstPass) =>
+        new Promise<void>((resolve, reject) => {
+          withTxcAndGeneric();
+          provideGatedSigningMock.mockResolvedValue(firstPass);
+          run(
+            baseInput,
+            (states) => {
+              try {
+                expect(provideGatedSigningMock).toHaveBeenCalledOnce();
+                expect(provideTxCheckMock).toHaveBeenCalledTimes(2);
+                expect(states[states.length - 1]!.status).toBe(
+                  DeviceActionStatus.Completed,
+                );
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }),
+    );
+
+    it("app older than the v1 release → never sent", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION, DeviceModelId.FLEX),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+          }),
+        );
+        // generic degrades by default, so the fallback is exercised too
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(provideGatedSigningMock).not.toHaveBeenCalled();
+              expect(inspectMock).toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("Nano S → never sent", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric();
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(gatingVersion, DeviceModelId.NANO_S),
+        );
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(provideGatedSigningMock).not.toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("a gating failure does not stop the signing", () =>
+      new Promise<void>((resolve, reject) => {
+        withTxcAndGeneric();
+        buildGenericMock.mockResolvedValue(armedGeneric);
+        provideGatedSigningMock.mockRejectedValue(new Error("boom"));
+        run(
+          baseInput,
+          (states) => {
+            try {
+              expect(provideTxCheckMock).toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    describe("provideGatedSigning dependency", () => {
+      const provideGatedSigning = (contextModule: ContextModule) =>
+        new SignTransactionDeviceAction({
+          input: { ...baseInput, contextModule },
+        })
+          .extractDependencies(apiMock)
+          .provideGatedSigning({
+            input: { messageBytes: exampleTx, context: null },
+          });
+
+      it("sends the matching descriptor CAL returns", async () => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(legacyVersion, DeviceModelId.FLEX),
+        );
+        apiMock.sendCommand.mockResolvedValue(
+          CommandResultFactory({ data: undefined }),
+        );
+        const getContexts = vi.fn().mockResolvedValue([
+          {
+            type: ClearSignContextType.SOLANA_GATED_SIGNING,
+            payload: "aabb",
+          },
+        ]);
+
+        const result = await provideGatedSigning({
+          getContexts,
+        } as unknown as ContextModule);
+
+        expect(result.isRight()).toBe(true);
+        expect(getContexts).toHaveBeenCalledWith(
+          expect.objectContaining({
+            deviceModelId: DeviceModelId.FLEX,
+            gatedSigning: { instructions: expect.any(Array) },
+          }),
+          [ClearSignContextType.SOLANA_GATED_SIGNING],
+        );
+        expect(apiMock.sendCommand).toHaveBeenCalledWith(
+          expect.any(ProvideGatedSigningCommand),
+        );
+      });
+
+      it("returns Left instead of rejecting when the lookup fails", async () => {
+        const getContexts = vi.fn().mockRejectedValue(new Error("CAL down"));
+
+        const result = await provideGatedSigning({
+          getContexts,
+        } as unknown as ContextModule);
+
+        expect(result.isLeft()).toBe(true);
+      });
+    });
+  });
+
   // End-to-end emitted-step-sequence contracts (the progression a consumer sees).
   it("e2e sequence: legacy SPL path with RPC then basic provisioning then delayed terminal", () =>
     new Promise<void>((resolve, reject) => {
@@ -1519,14 +1797,22 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       signTransactionDAStateSteps.SIGN_TRANSACTION,
     ];
 
+    // Apps that support v1 (1.18.0+) send the gating descriptor first.
+    const fullPathStepsWithGating = [
+      signTransactionDAStateSteps.GET_APP_CONFIG,
+      signTransactionDAStateSteps.PROVIDE_GATED_SIGNING,
+      ...fullPathSteps.slice(1),
+    ];
+
     const expectFullPath = (
       states: DeviceActionState<
         Uint8Array,
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
       >[],
+      steps: string[] = fullPathSteps,
     ) => {
-      expect(stepSequence(states)).toEqual(fullPathSteps);
+      expect(stepSequence(states)).toEqual(steps);
       expect(provideTxCheckMock).toHaveBeenCalledTimes(2);
       expect(buildGenericMock).toHaveBeenCalledOnce();
       expect(inspectMock).toHaveBeenCalledOnce();
@@ -1666,7 +1952,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
             { ...baseInput, transaction: SPEC_V1_MESSAGE },
             (states) => {
               try {
-                expectFullPath(states);
+                expectFullPath(states, fullPathStepsWithGating);
                 resolve();
               } catch (e) {
                 reject(e);

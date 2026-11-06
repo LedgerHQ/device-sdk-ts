@@ -1,3 +1,4 @@
+import { type SolanaGatedSigningContextSuccess } from "@ledgerhq/context-module";
 import {
   type CommandResult,
   type DeviceActionStateMachine,
@@ -35,11 +36,17 @@ import {
   TransactionInputNormaliser,
 } from "@internal/app-binder/services/TransactionInputNormaliser";
 import { checkMessageVersion } from "@internal/app-binder/services/utils/messageVersion";
+import { topLevelInstructions } from "@internal/app-binder/services/utils/topLevelInstructions";
 import { TransactionParser } from "@internal/app-binder/services/utils/TransactionParser";
 import {
   isSolanaSignerFeatureSupported,
+  type SolanaFeatureName,
   type SolanaSignerFeaturesNames,
 } from "@internal/app-binder/SolanaApplicationResolver";
+import {
+  ProvideGatedSigningTask,
+  type ProvideGatedSigningTaskResult,
+} from "@internal/app-binder/task/ProvideGatedSigningTask";
 import {
   SolanaSigningReportTask,
   type SolanaSigningReportTaskArgs,
@@ -72,6 +79,12 @@ export type MachineDependencies = {
   readonly resolveSigningRoute: (arg0: {
     input: { messageBytes: Uint8Array };
   }) => Promise<string | null>;
+  readonly provideGatedSigning: (arg0: {
+    input: {
+      messageBytes: Uint8Array;
+      context: SolanaGatedSigningContextSuccess | null;
+    };
+  }) => Promise<ProvideGatedSigningTaskResult>;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -103,6 +116,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       getAppConfig,
       reportSign,
       resolveSigningRoute,
+      provideGatedSigning,
     } = this.extractDependencies(internalApi);
 
     const loggerFactory = this.getLoggerFactory(internalApi);
@@ -115,7 +129,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       : undefined;
 
     const isSupported = (
-      feature: SolanaSignerFeaturesNames,
+      feature: SolanaFeatureName,
       appConfig: AppConfiguration,
     ): boolean =>
       isSolanaSignerFeatureSupported(
@@ -166,6 +180,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         normalizeTransaction: fromPromise(normalizeTransaction),
         reportSign: fromPromise(reportSign),
         resolveSigningRoute: fromPromise(resolveSigningRoute),
+        provideGatedSigning: fromPromise(provideGatedSigning),
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
@@ -221,6 +236,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           context.input.transactionOptions?.skipOpenApp || false,
         isTransactionChecksSupported: ({ context }) =>
           isSupported("transactionChecks", context._internalState.appConfig!),
+        isGatedSigningSupported: ({ context }) =>
+          isSupported("gatedSigning", context._internalState.appConfig!),
+        hasGatedSigningContext: ({ context }) =>
+          context._internalState.gatedSigningContext !== null,
         // Generic clear-signing terminates via SIGN MESSAGE DELAYED (0x09) on
         // the original message, so it only needs the capability bit — no RPC /
         // blockhash prerequisite.
@@ -268,6 +287,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           unrecognizedProgramIds: [],
           staleDescriptor: false,
           basicFlowRuleId: null,
+          gatedSigningContext: null,
         },
       }),
       states: {
@@ -404,7 +424,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           }),
           always: [
             {
-              target: "CheckTransactionCheckSupported",
+              target: "CheckGatedSigningSupported",
               guard: "noInternalError",
             },
             {
@@ -416,6 +436,48 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 ),
             },
           ],
+        },
+        // The gating descriptor goes first, before the transaction check and
+        // any clear-sign descriptor. The app keeps it until the transaction
+        // arrives, refuses to sign when no instruction matches it, and shows
+        // the gating screen only when it can't clear sign. Best-effort: the
+        // DMK only sends a descriptor that matches, and any failure (no CAL
+        // entry, app without the instruction) leaves signing unchanged.
+        CheckGatedSigningSupported: {
+          always: [
+            {
+              target: "ProvideGatedSigning",
+              guard: "isGatedSigningSupported",
+            },
+            { target: "CheckTransactionCheckSupported" },
+          ],
+        },
+        ProvideGatedSigning: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.PROVIDE_GATED_SIGNING,
+            },
+          }),
+          invoke: {
+            id: "provideGatedSigning",
+            src: "provideGatedSigning",
+            input: ({ context }) => ({
+              messageBytes: context._internalState.messageBytes,
+              context: null,
+            }),
+            // Keep what the device accepted, to send it again on the fallback.
+            onDone: {
+              target: "CheckTransactionCheckSupported",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  gatedSigningContext: event.output.orDefault(null),
+                }),
+              }),
+            },
+            onError: { target: "CheckTransactionCheckSupported" },
+          },
         },
         CheckTransactionCheckSupported: {
           always: [
@@ -558,7 +620,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               }),
             },
             onError: {
-              target: "CheckTxCheckReprovision",
+              target: "CheckGatedSigningReprovision",
               actions: ({ event }) =>
                 logger.info(
                   "[ClearSign] generic clear-sign threw; falling back to legacy",
@@ -575,7 +637,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               guard: and(["noInternalError", "isClearSignPrepared"]),
             },
             // Degraded (Right("degraded")): fall back to the legacy path.
-            { target: "CheckTxCheckReprovision", guard: "noInternalError" },
+            {
+              target: "CheckGatedSigningReprovision",
+              guard: "noInternalError",
+            },
             // Defensive: surface an unexpected Left.
             { target: "Error" },
           ],
@@ -634,10 +699,46 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             // Signed: report (isBlindSign: false) then surface result.
             { target: "Report", guard: "hasSignature" },
             // Degraded (no signature, no error): fall back to the legacy path.
-            { target: "CheckTxCheckReprovision", guard: "noInternalError" },
+            {
+              target: "CheckGatedSigningReprovision",
+              guard: "noInternalError",
+            },
             // User cancel / signing failure: report (isBlindSign: false) then surface error.
             { target: "Report" },
           ],
+        },
+        // A failed generic clear-sign attempt wipes the device's provisioned
+        // context, including the gating descriptor. The basic path it falls
+        // back to is where gating matters most (the app can't clear sign), so
+        // send the descriptor again first, in the same order as the first pass.
+        // Only a descriptor the device accepted is sent again, as is: no new
+        // CAL lookup.
+        CheckGatedSigningReprovision: {
+          always: [
+            {
+              target: "GatedSigningReprovision",
+              guard: "hasGatedSigningContext",
+            },
+            { target: "CheckTxCheckReprovision" },
+          ],
+        },
+        GatedSigningReprovision: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.PROVIDE_GATED_SIGNING,
+            },
+          }),
+          invoke: {
+            id: "provideGatedSigningReprovision",
+            src: "provideGatedSigning",
+            input: ({ context }) => ({
+              messageBytes: context._internalState.messageBytes,
+              context: context._internalState.gatedSigningContext,
+            }),
+            onDone: { target: "CheckTxCheckReprovision" },
+            onError: { target: "CheckTxCheckReprovision" },
+          },
         },
         // A failed generic clear-sign attempt wipes the device's provisioned
         // context, including the tx-check descriptor sent in TxCheck. Provide
@@ -854,14 +955,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         // ComputeBudget isn't in CAL: don't look it up.
         const programIds = [
           ...new Set(
-            message.compiledInstructions.map((ix) =>
-              message.allKeys[ix.programIdIndex]?.toBase58(),
-            ),
+            topLevelInstructions(message).map(({ programId }) => programId),
           ),
-        ].filter(
-          (id): id is string =>
-            id !== undefined && id !== COMPUTE_BUDGET_PROGRAM_ID,
-        );
+        ];
         const rules = await resolveBasicFlowRules(
           this.input.contextModule,
           programIds,
@@ -878,11 +974,26 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       }
     };
 
+    // The task never throws: a failure is a Left, and signing goes on.
+    const provideGatedSigning = (arg0: {
+      input: {
+        messageBytes: Uint8Array;
+        context: SolanaGatedSigningContextSuccess | null;
+      };
+    }): Promise<ProvideGatedSigningTaskResult> =>
+      new ProvideGatedSigningTask(internalApi, {
+        transactionBytes: arg0.input.messageBytes,
+        contextModule: this.input.contextModule,
+        loggerFactory: this.getLoggerFactory(internalApi),
+        context: arg0.input.context ?? undefined,
+      }).run();
+
     return {
       normalizeTransaction,
       getAppConfig,
       reportSign,
       resolveSigningRoute,
+      provideGatedSigning,
     };
   }
 }
