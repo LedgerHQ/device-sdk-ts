@@ -7,6 +7,9 @@ export const TYPES = {
   SpeculosContactsRepository: Symbol.for("SpeculosContactsRepository"),
   ContactFileRepository: Symbol.for("ContactFileRepository"),
   ContactsChain: Symbol.for("ContactsChain"),
+  SafeAddressRepository: Symbol.for("SafeAddressRepository"),
+  SpeculosSafeAddressRepository: Symbol.for("SpeculosSafeAddressRepository"),
+  SafeAddressFileRepository: Symbol.for("SafeAddressFileRepository"),
 
   // Services
   TransactionCrafter: Symbol.for("TransactionCrafter"),
@@ -53,6 +56,10 @@ export const TYPES = {
   TestContactUseCase: Symbol.for("TestContactUseCase"),
   TestBatchContactFromFileUseCase: Symbol.for(
     "TestBatchContactFromFileUseCase",
+  ),
+  TestSafeAddressUseCase: Symbol.for("TestSafeAddressUseCase"),
+  TestBatchSafeAddressFromFileUseCase: Symbol.for(
+    "TestBatchSafeAddressFromFileUseCase",
   ),
   TestBatchSolanaTransactionFromFileUseCase: Symbol.for(
     "TestBatchSolanaTransactionFromFileUseCase",

@@ -13,12 +13,15 @@ import { type TransactionInput } from "@root/src/domain/models/TransactionInput"
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type ContactsRepository } from "@root/src/domain/repositories/ContactsRepository";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
+import { type SafeAddressRepository } from "@root/src/domain/repositories/SafeAddressRepository";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { type SigningService } from "@root/src/domain/services/SigningService";
 import { EthersTransactionCrafter } from "@root/src/infrastructure/adapters/evm/EthersTransactionCrafter";
 import { HttpCalAdapter } from "@root/src/infrastructure/adapters/external/HttpCalAdapter";
 import { ContactFileRepository } from "@root/src/infrastructure/repositories/ContactFileRepository";
+import { SafeAddressFileRepository } from "@root/src/infrastructure/repositories/SafeAddressFileRepository";
 import { SpeculosContactsRepository } from "@root/src/infrastructure/repositories/SpeculosContactsRepository";
+import { SpeculosSafeAddressRepository } from "@root/src/infrastructure/repositories/SpeculosSafeAddressRepository";
 import { TransactionFileRepository } from "@root/src/infrastructure/repositories/TransactionFileRepository";
 import { TypedDataFileRepository } from "@root/src/infrastructure/repositories/TypedDataFileRepository";
 import { DMKServiceController } from "@root/src/infrastructure/service-controllers/DMKServiceController";
@@ -52,6 +55,18 @@ export const ethereumInfrastructureModuleFactory = (
       (context) =>
         context.get<SpeculosContactsRepository>(
           TYPES.SpeculosContactsRepository,
+        ),
+    );
+    bind<SafeAddressFileRepository>(TYPES.SafeAddressFileRepository)
+      .to(SafeAddressFileRepository)
+      .inSingletonScope();
+    bind<SpeculosSafeAddressRepository>(TYPES.SpeculosSafeAddressRepository)
+      .to(SpeculosSafeAddressRepository)
+      .inSingletonScope();
+    bind<SafeAddressRepository>(TYPES.SafeAddressRepository).toDynamicValue(
+      (context) =>
+        context.get<SpeculosSafeAddressRepository>(
+          TYPES.SpeculosSafeAddressRepository,
         ),
     );
     bind<ContactsChain>(TYPES.ContactsChain).toConstantValue({
