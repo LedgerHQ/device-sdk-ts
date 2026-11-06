@@ -896,6 +896,191 @@ describe("RNBleTransport", () => {
         },
       ]);
     });
+
+    it("should emit first scanned device immediately without waiting for throttle delay", async () => {
+      vi.useFakeTimers();
+
+      const startScan = vi
+        .fn()
+        .mockImplementation(async (_uuids, _options, listener) => {
+          // Device is found immediately when scan starts
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+          listener(null, {
+            id: "aScannedDeviceId",
+            localName: "aScannedDeviceName",
+            serviceUUIDs: ["ledgerId"],
+            rssi: 1,
+          });
+        });
+
+      const bleManager = createMockBleManager({
+        connectedDevices: vi.fn().mockResolvedValue([]),
+        startDeviceScan: startScan,
+        stopDeviceScan: vi.fn(),
+        onDeviceDisconnected: vi.fn(),
+        isDeviceConnected: vi.fn(),
+        onStateChange: (listener: (state: State) => void) => {
+          listener(State.PoweredOn);
+          return { remove: vi.fn() };
+        },
+      });
+
+      const transport = new TestTransportBuilder()
+        .withBleManager(bleManager)
+        .withPlatform(IOS_PLATFORM)
+        .withDeviceModelDataSource(
+          createFakeDataSource() as unknown as DeviceModelDataSource,
+        )
+        // Using the default 1000ms throttle delay (NOT using withScanThrottleDelayMs(1))
+        .build();
+
+      const emissions: TransportDiscoveredDevice[][] = [];
+
+      subscription = transport.listenToAvailableDevices().subscribe({
+        next: (devices) => {
+          emissions.push(devices);
+        },
+      });
+
+      // Advance by only 100ms — well below the 1000ms throttle delay.
+      // The first scan result should pass through throttleTime immediately
+      // as the leading edge, without waiting for the throttle window to expire.
+      await vi.advanceTimersByTimeAsync(100);
+
+      const emissionsWithScannedDevice = emissions.filter((devices) =>
+        devices.some((d) => d.id === "aScannedDeviceId"),
+      );
+      expect(emissionsWithScannedDevice.length).toBeGreaterThanOrEqual(1);
+      expect(emissionsWithScannedDevice[0]).toContainEqual(
+        expect.objectContaining({
+          id: "aScannedDeviceId",
+          name: "aScannedDeviceName",
+          deviceModel: FAKE_DEVICE_MODEL,
+          transport: "RN_BLE",
+          rssi: 1,
+        }),
+      );
+    });
+
+    it("should emit connected devices immediately even when no devices are scanned", async () => {
+      vi.useFakeTimers();
+
+      const connectedDevice = createMockDevice({
+        id: "aConnectedDeviceId",
+        localName: "aConnectedDeviceName",
+      });
+
+      const startScan = vi
+        .fn()
+        .mockImplementation(async () => {
+          // No devices emitted from scan
+        });
+
+      const bleManager = createMockBleManager({
+        connectedDevices: vi.fn().mockResolvedValue([connectedDevice]),
+        startDeviceScan: startScan,
+        stopDeviceScan: vi.fn(),
+        onDeviceDisconnected: vi.fn(),
+        isDeviceConnected: vi.fn(),
+        onStateChange: (listener: (state: State) => void) => {
+          listener(State.PoweredOn);
+          return { remove: vi.fn() };
+        },
+      });
+
+      const transport = new TestTransportBuilder()
+        .withBleManager(bleManager)
+        .withPlatform(IOS_PLATFORM)
+        .withDeviceModelDataSource(
+          createFakeDataSource() as unknown as DeviceModelDataSource,
+        )
+        .build();
+
+      const emissions: TransportDiscoveredDevice[][] = [];
+
+      subscription = transport.listenToAvailableDevices().subscribe({
+        next: (devices) => {
+          emissions.push(devices);
+        },
+      });
+
+      // Advance by only 100ms — enough for async prerequisites to resolve
+      // but not enough to trigger the 1000ms interval or throttle window expiry.
+      // Connected devices should be returned from the outer BehaviorSubject's
+      // initial emission, regardless of whether any devices have been scanned.
+      await vi.advanceTimersByTimeAsync(100);
+
+      expect(emissions.length).toBeGreaterThanOrEqual(1);
+      const emissionsWithConnectedDevice = emissions.filter((devices) =>
+        devices.some((d) => d.id === "aConnectedDeviceId"),
+      );
+      expect(emissionsWithConnectedDevice.length).toBeGreaterThanOrEqual(1);
+      expect(emissionsWithConnectedDevice[0]).toContainEqual(
+        expect.objectContaining({
+          id: "aConnectedDeviceId",
+          name: "aConnectedDeviceName",
+          deviceModel: FAKE_DEVICE_MODEL,
+          transport: "RN_BLE",
+        }),
+      );
+    });
+
+    it("should continue polling connected devices via the interval when no devices are scanned", async () => {
+      vi.useFakeTimers();
+
+      const connectedDevicesMock = vi.fn().mockResolvedValue([
+        createMockDevice({
+          id: "aConnectedDeviceId",
+          localName: "aConnectedDeviceName",
+        }),
+      ]);
+
+      const startScan = vi
+        .fn()
+        .mockImplementation(async () => {
+          // No devices emitted from scan
+        });
+
+      const bleManager = createMockBleManager({
+        connectedDevices: connectedDevicesMock,
+        startDeviceScan: startScan,
+        stopDeviceScan: vi.fn(),
+        onDeviceDisconnected: vi.fn(),
+        isDeviceConnected: vi.fn(),
+        onStateChange: (listener: (state: State) => void) => {
+          listener(State.PoweredOn);
+          return { remove: vi.fn() };
+        },
+      });
+
+      const transport = new TestTransportBuilder()
+        .withBleManager(bleManager)
+        .withPlatform(IOS_PLATFORM)
+        .withDeviceModelDataSource(
+          createFakeDataSource() as unknown as DeviceModelDataSource,
+        )
+        .build();
+
+      const emissions: TransportDiscoveredDevice[][] = [];
+
+      subscription = transport.listenToAvailableDevices().subscribe({
+        next: (devices) => {
+          emissions.push(devices);
+        },
+      });
+
+      // Let prerequisites resolve and first emission occur
+      await vi.advanceTimersByTimeAsync(100);
+      const emissionsAfterInit = emissions.length;
+
+      // Advance past the 1s interval to trigger the periodic connected device poll
+      await vi.advanceTimersByTimeAsync(1100);
+
+      // Should have received additional emissions from the interval-based polling
+      expect(emissions.length).toBeGreaterThan(emissionsAfterInit);
+      // connectedDevices should have been called multiple times
+      expect(connectedDevicesMock.mock.calls.length).toBeGreaterThan(1);
+    });
   });
 
   describe("connect", () => {

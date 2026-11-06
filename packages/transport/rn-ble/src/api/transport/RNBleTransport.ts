@@ -35,6 +35,7 @@ import {
   first,
   from,
   type Observable,
+  ReplaySubject,
   retry,
   type Subscription,
   switchMap,
@@ -221,7 +222,7 @@ export class RNBleTransport implements Transport {
     this._startedScanningSubscriber = from([true])
       .pipe(
         switchMap(() => {
-          const subject = new BehaviorSubject<InternalScannedDevice[]>([]);
+          const subject = new ReplaySubject<InternalScannedDevice[]>(1);
           const devicesById = new Map<string, InternalScannedDevice>();
 
           this._logger.info("[startScanning] startDeviceScan");
