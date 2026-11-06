@@ -151,24 +151,26 @@ You can add a custom list of loader to the context module.
 import {
   ContextModuleBuilder,
   ContextModuleChainID,
+  DefaultPkiCertificateLoader,
+  TokenContextLoader,
 } from "@ledgerhq/context-module";
-
-// Default Token Loader
-const tokenLoader = new TokenContextLoader(new TokenDataSource());
 
 // Custom Loader
 const myCustomLoader = new MyCustomLoader();
 
-// Custom datasource for a default Token Loader
-const myCustomTokenDataSource = new MyCustomTokenDataSource();
-const myTokenLoader = new TokenContextLoader();
+// Default Token Loader with a custom datasource. The certificate loader
+// fetches the PKI certificate the device checks the token descriptor with.
+const myTokenLoader = new TokenContextLoader(
+  new MyCustomTokenDataSource(),
+  new DefaultPkiCertificateLoader(new MyCustomPkiCertificateDataSource()),
+  myLoggerFactory,
+);
 
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
 })
   .setChain(ContextModuleChainID.Ethereum)
   .removeDefaultLoaders()
-  .addLoader(tokenLoader)
   .addLoader(myTokenLoader)
   .addLoader(myCustomLoader)
   .build();

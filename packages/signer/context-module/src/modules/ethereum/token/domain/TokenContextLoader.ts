@@ -1,4 +1,5 @@
 import {
+  DeviceModelId,
   HexaString,
   isHexaString,
   LoggerPublisherService,
@@ -8,6 +9,10 @@ import { inject, injectable } from "inversify";
 import { configTypes } from "@/config/di/configTypes";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
 import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -31,20 +36,25 @@ export type TokenContextInput = {
   to: HexaString;
   selector: HexaString;
   chainId: number;
+  deviceModelId: DeviceModelId;
 };
 
 @injectable()
 export class TokenContextLoader implements ContextLoader<TokenContextInput> {
   private _dataSource: TokenDataSource;
+  private _certificateLoader: PkiCertificateLoader;
   private logger: LoggerPublisherService;
 
   constructor(
     @inject(tokenTypes.TokenDataSource)
     dataSource: TokenDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._dataSource = dataSource;
+    this._certificateLoader = certificateLoader;
     this.logger = loggerFactory("TokenContextLoader");
   }
 
@@ -63,16 +73,24 @@ export class TokenContextLoader implements ContextLoader<TokenContextInput> {
       input.to !== "0x" &&
       isHexaString(input.selector) &&
       this.isSelectorSupported(input.selector) &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
       SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 
   async load(input: TokenContextInput): Promise<ClearSignContext[]> {
-    const { to, chainId } = input;
+    const { to, chainId, deviceModelId } = input;
 
     const payload = await this._dataSource.getTokenInfosPayload({
       address: to,
       chainId,
+    });
+
+    const certificate = await this._certificateLoader.loadCertificate({
+      keyId: KeyId.Erc20MetadataKey,
+      keyUsage: KeyUsage.CoinMeta,
+      targetDevice: deviceModelId,
     });
 
     const result = [
@@ -84,6 +102,7 @@ export class TokenContextLoader implements ContextLoader<TokenContextInput> {
         Right: (value): ClearSignContext => ({
           type: ClearSignContextType.ETHEREUM_TOKEN,
           payload: value,
+          certificate,
         }),
       }),
     ];

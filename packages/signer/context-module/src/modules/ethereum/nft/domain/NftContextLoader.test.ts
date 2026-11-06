@@ -1,3 +1,4 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type NftDataSource } from "@/modules/ethereum/nft/data/NftDataSource";
@@ -5,6 +6,9 @@ import {
   type NftContextInput,
   NftContextLoader,
 } from "@/modules/ethereum/nft/domain/NftContextLoader";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 const mockLoggerFactory = () => ({
@@ -18,16 +22,38 @@ const mockLoggerFactory = () => ({
 describe("NftContextLoader", () => {
   const spyGetNftInfosPayload = vi.fn();
   const spyGetPluginPayload = vi.fn();
+  const spyLoadCertificate = vi.fn();
+  const mockCertificateLoader: PkiCertificateLoader = {
+    loadCertificate: spyLoadCertificate,
+  };
+  const pluginCertificate = {
+    keyUsageNumber: 7,
+    payload: new Uint8Array([0x07]),
+  };
+  const nftCertificate = {
+    keyUsageNumber: 3,
+    payload: new Uint8Array([0x03]),
+  };
   let mockDataSource: NftDataSource;
   let loader: NftContextLoader;
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    spyLoadCertificate.mockClear();
     mockDataSource = {
       getNftInfosPayload: spyGetNftInfosPayload,
       getSetPluginPayload: spyGetPluginPayload,
     };
-    loader = new NftContextLoader(mockDataSource, mockLoggerFactory);
+    spyLoadCertificate.mockImplementation(({ keyUsage }) =>
+      Promise.resolve(
+        keyUsage === KeyUsage.PluginMeta ? pluginCertificate : nftCertificate,
+      ),
+    );
+    loader = new NftContextLoader(
+      mockDataSource,
+      mockCertificateLoader,
+      mockLoggerFactory,
+    );
   });
 
   describe("canHandle function", () => {
@@ -35,6 +61,7 @@ describe("NftContextLoader", () => {
       to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
       selector: "0x095ea7b3",
       chainId: 1,
+      deviceModelId: DeviceModelId.STAX,
     };
 
     it("should return true for valid input", () => {
@@ -67,6 +94,7 @@ describe("NftContextLoader", () => {
       [{ ...validInput, to: undefined }, "missing to"],
       [{ ...validInput, selector: undefined }, "missing selector"],
       [{ ...validInput, chainId: undefined }, "missing chainId"],
+      [{ ...validInput, deviceModelId: undefined }, "missing deviceModelId"],
       [{ ...validInput, to: "invalid-hex" }, "invalid to hex"],
       [{ ...validInput, to: "0x" }, "empty to hex"],
       [{ ...validInput, selector: "invalid-hex" }, "invalid selector hex"],
@@ -90,6 +118,7 @@ describe("NftContextLoader", () => {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         selector: "0x095ea7b3",
         chainId: 1,
+        deviceModelId: DeviceModelId.STAX,
       };
       spyGetPluginPayload.mockResolvedValueOnce(Left(new Error("error")));
 
@@ -101,6 +130,7 @@ describe("NftContextLoader", () => {
           error: new Error("error"),
         },
       ]);
+      expect(spyLoadCertificate).not.toHaveBeenCalled();
     });
 
     it("should return an error when datasource get nft infos payload return a Left", async () => {
@@ -108,6 +138,7 @@ describe("NftContextLoader", () => {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         selector: "0x095ea7b3",
         chainId: 1,
+        deviceModelId: DeviceModelId.STAX,
       };
       spyGetPluginPayload.mockResolvedValueOnce(Right("payload1"));
       spyGetNftInfosPayload.mockResolvedValueOnce(Left(new Error("error")));
@@ -122,11 +153,12 @@ describe("NftContextLoader", () => {
       ]);
     });
 
-    it("should return a response", async () => {
+    it("should return the plugin and the nft with their certificates", async () => {
       const input: NftContextInput = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         selector: "0x095ea7b3",
         chainId: 1,
+        deviceModelId: DeviceModelId.STAX,
       };
       spyGetPluginPayload.mockResolvedValueOnce(Right("payload1"));
       spyGetNftInfosPayload.mockResolvedValueOnce(Right("payload2"));
@@ -137,12 +169,24 @@ describe("NftContextLoader", () => {
         {
           type: ClearSignContextType.ETHEREUM_PLUGIN,
           payload: "payload1",
+          certificate: pluginCertificate,
         },
         {
           type: ClearSignContextType.ETHEREUM_NFT,
           payload: "payload2",
+          certificate: nftCertificate,
         },
       ]);
+      expect(spyLoadCertificate).toHaveBeenCalledWith({
+        keyId: KeyId.PluginSelectorKey,
+        keyUsage: KeyUsage.PluginMeta,
+        targetDevice: DeviceModelId.STAX,
+      });
+      expect(spyLoadCertificate).toHaveBeenCalledWith({
+        keyId: KeyId.NftMetadataKey,
+        keyUsage: KeyUsage.NftMeta,
+        targetDevice: DeviceModelId.STAX,
+      });
     });
   });
 });
