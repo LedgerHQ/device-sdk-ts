@@ -23,7 +23,9 @@ This README is for people who **use** the server. To work on the server itself, 
 7. [Run real apps on Speculos](#-run-real-apps-on-speculos)
 8. [Automated tests](#-automated-tests)
 9. [Manual tests](#-manual-tests)
-10. [HTTP API](#-http-api)
+10. [Troubleshooting](#-troubleshooting)
+11. [Limits](#-limits)
+12. [HTTP API](#-http-api)
 
 ## 🔹 How it works
 
@@ -395,6 +397,38 @@ it("reports a locked device", async () => {
 5. Connect from your app.
 6. While you test, change the device or its mocks in the UI. The **ready-made scenarios** add the common mocks (device locked, app not installed, user refusal) in one click. **Interact** opens the device screen when an app runs on Speculos.
 7. **Export** the session to JSON to share it or to start from it again later. **Import** loads it back. You can also paste the token of a session already in use, for example your app's, to join it.
+
+### With an AI agent
+
+This repo has a [`mock-server` agent skill](../../agent-files/skills/mock-server/SKILL.md) for Claude Code and Cursor. When you mention the mock server in a chat opened in this repo, the agent loads it and drives the server with `curl`: it adds devices, changes their firmware or apps, adds mocks, sends APDUs and taps the Speculos screen.
+
+The skill uses a local server (`http://127.0.0.1:9752`) by default. For the hosted instance or your app's session, give the agent the URL and the **full** token. Your app's logs show only the first characters of the token.
+
+## 🔹 Troubleshooting
+
+| Problem                                                              | Cause and fix                                                                                                                                                                                                                                |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The hosted instance does not answer.                                 | You are not on the Ledger VPN.                                                                                                                                                                                                               |
+| The device does not appear in your app.                              | Your app and your test use different sessions. Give the same token to the transport and to `MockClient`. A transport with no token creates its own session.                                                                                  |
+| Genuine check, list apps or install fails.                           | `webSocketUrl` is not set, so DMK connects to the real secure-channel backend. Set it to `ws(s)://<host>/secure-channel/<token>` (see [Connect a DMK app](#-connect-a-dmk-app)).                                                             |
+| Calls fail with `401 Invalid or expired session`.                    | The session expired (30 minutes with no request, or 4 hours in all), or the server restarted. Create a new session.                                                                                                                          |
+| Your app disconnects from the device.                                | A client of the session deleted or disconnected the device, or an APDU request to the server failed (server down, session expired).                                                                                                          |
+| A mock has no effect.                                                | The mock is on another device, the APDU does not start with the prefix, or a mock with a longer prefix matches too. `listMocks()` shows the mocks of the device.                                                                             |
+| `OpenApp` returns `6807`.                                            | The app is not in the device's `apps`. Add it with `editDevice()`.                                                                                                                                                                           |
+| `OpenApp` returns `6d00`.                                            | The server has no Speculos, or the emulator did not start: the app name is not exact (`Ethereum`, not `eth`), the app version was not built for the firmware, or it took longer than `SPECULOS_READY_TIMEOUT_MS`. The server logs the cause. |
+| Speculos calls (`getSpeculos()`, `getScreenshot()`, …) return `409`. | No app runs on Speculos: the app is not open yet, the emulator is still starting, or the app was closed or quit from the device screen.                                                                                                      |
+
+## 🔹 Limits
+
+- **The OS is fully mocked.** Speculos cannot emulate the device OS: it runs one app at a time. The server simulates everything the OS does from the device metadata: the handshake, the dashboard, onboarding, the secure channel, the device name and the language packs. So:
+  - There is no OS screen. `getScreenshot()`, the buttons and the touch screen work only while an app runs on Speculos.
+  - OS prompts that need the user, such as the permission prompt that opens the secure channel, are accepted at once. To test a refusal, add a mock (see [Common error cases](#common-error-cases)).
+- **No real secure channel.** No HSM takes part. The genuine check always says "genuine", and install and uninstall only change the device's `apps`. Use mocks to test failures.
+- **No real transport.** The transport sends each APDU as an HTTP request. There is no USB or BLE framing, BLE pairing or MTU, and no realistic timing. `connectivity_type` only changes what DMK reports.
+- **Polling delay.** The transport asks the server for its devices every second, so a change made through the API (device added, removed or disconnected) reaches DMK up to one second later.
+- **Speculos start-up is slow.** Opening an app on Speculos can take a minute or more.
+- **Nothing is kept.** The server keeps sessions in memory. They expire, and a restart deletes them all. Export a session to keep it.
+- **Not for secrets.** The Speculos seed is kept and sent in plain text, and other people use the hosted instance. Use test mnemonics only.
 
 ## 🔹 HTTP API
 
