@@ -388,6 +388,7 @@ export class ProvideEIP712ContextTask {
       case ClearSignContextType.ETHEREUM_PLUGIN:
       case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
       case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
       case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
       case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.ETHEREUM_SAFE:

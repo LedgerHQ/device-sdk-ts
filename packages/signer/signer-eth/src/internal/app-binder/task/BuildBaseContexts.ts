@@ -23,6 +23,7 @@ import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplic
 import {
   MIN_ETH_APP_VERSION_FOR_GATED_SIGNING,
   MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER,
+  MIN_ETH_APP_VERSION_FOR_MAPS,
 } from "@internal/shared/EthAppVersions";
 
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
@@ -30,6 +31,7 @@ export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
   ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
   ClearSignContextType.ETHEREUM_ENUM,
+  ClearSignContextType.ETHEREUM_MAP_ENTRY,
   ClearSignContextType.ETHEREUM_PROXY_INFO,
 ];
 
@@ -41,6 +43,7 @@ export const BASE_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
   ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
   ClearSignContextType.ETHEREUM_ENUM,
+  ClearSignContextType.ETHEREUM_MAP_ENTRY,
   ClearSignContextType.ETHEREUM_TRUSTED_NAME,
   ClearSignContextType.ETHEREUM_TOKEN,
   ClearSignContextType.ETHEREUM_NFT,
@@ -139,7 +142,9 @@ export class BuildBaseContexts {
 
     if (
       this._supportsGenericParser(deviceState, appConfig) &&
-      this._hasValidTransactionInfo(contextsForSigning)
+      this._hasValidTransactionInfo(contextsForSigning) &&
+      (this._supportsMaps(deviceState, appConfig) ||
+        !this._hasMapReferences(contextsForSigning))
     ) {
       return this._getERC7730Contexts(contextsForSigning, contextErrorCount);
     } else {
@@ -159,7 +164,9 @@ export class BuildBaseContexts {
 
     const clearSignContextsOptional: EthereumClearSignContextSuccess[] =
       contexts.filter(
-        (context) => context.type === ClearSignContextType.ETHEREUM_ENUM,
+        (context) =>
+          context.type === ClearSignContextType.ETHEREUM_ENUM ||
+          context.type === ClearSignContextType.ETHEREUM_MAP_ENTRY,
       );
 
     return {
@@ -206,6 +213,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
       case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
         return false;
@@ -229,6 +237,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_GATED_SIGNING:
         return true;
       case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
       case ClearSignContextType.ETHEREUM_TRUSTED_NAME:
       case ClearSignContextType.ETHEREUM_TOKEN:
       case ClearSignContextType.ETHEREUM_NFT:
@@ -270,6 +279,44 @@ export class BuildBaseContexts {
   }
 
   /**
+   * Whether the app can look up the maps referenced by field descriptors (MAP_REF values).
+   */
+  private _supportsMaps(
+    deviceState: DeviceSessionState,
+    appConfig: GetConfigCommandResponse,
+  ): boolean {
+    return (
+      new ApplicationChecker(
+        deviceState,
+        appConfig,
+        new EthereumApplicationResolver(),
+      )
+        // 1.23.0 release candidates and dev builds already carry maps
+        .withMinVersionInclusiveAcceptingPrerelease(
+          MIN_ETH_APP_VERSION_FOR_MAPS,
+        )
+        .excludeDeviceModel(DeviceModelId.NANO_S)
+        .check()
+    );
+  }
+
+  /**
+   * Whether some field descriptors need the device to look up a map.
+   * Older apps reject those descriptors, so they cannot be clear signed with them.
+   */
+  private _hasMapReferences(
+    contexts: EthereumClearSignContextSuccess[],
+  ): boolean {
+    return contexts.some(
+      (context) =>
+        context.type ===
+          ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION &&
+        context.mapReferences !== undefined &&
+        context.mapReferences.length > 0,
+    );
+  }
+
+  /**
    * Determines the processing priority of a clear sign context.
    * Lower numbers indicate higher priority (processed first).
    *
@@ -297,6 +344,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_TRUSTED_NAME:
       case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
         return 70;
 
       /* not used here */

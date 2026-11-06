@@ -910,4 +910,108 @@ describe("BuildBaseContexts", () => {
     expect(result.clearSignContexts).toContainEqual(tokenContext);
     expect(result.clearSigningType).toBe(ClearSigningType.BASIC);
   });
+  describe("maps", () => {
+    const transactionInfoContext = {
+      type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+      payload: "transaction-info",
+      certificate: defaultCertificate,
+    } as ClearSignContext;
+    const mapEntryContext = {
+      type: ClearSignContextType.ETHEREUM_MAP_ENTRY,
+      id: 0,
+      key: "0x02",
+      value: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      payload: "map-entry",
+      certificate: defaultCertificate,
+    } as ClearSignContext;
+    const fieldWithMapContext = {
+      type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+      payload: "field",
+      mapReferences: [{ id: 0, keyPath: "TO" }],
+    } as ClearSignContext;
+
+    function mockAppVersion(version: string) {
+      apiMock.getDeviceSessionState.mockReturnValueOnce({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Ethereum", version },
+        deviceModelId: DeviceModelId.FLEX,
+        isSecureConnectionAllowed: false,
+      });
+    }
+
+    it("should request map entries", () => {
+      // THEN
+      expect(BASE_CONTEXT_TYPES_FILTER).toContain(
+        ClearSignContextType.ETHEREUM_MAP_ENTRY,
+      );
+    });
+
+    it.each(["1.23.0", "1.23.0-dev", "1.24.0"])(
+      "should return map entries as optional contexts when the app supports maps (%s)",
+      async (version) => {
+        // GIVEN
+        contextModuleMock.getContexts.mockResolvedValueOnce([
+          transactionInfoContext,
+          mapEntryContext,
+          fieldWithMapContext,
+        ]);
+        mockAppVersion(version);
+
+        // WHEN
+        const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
+
+        // THEN
+        expect(result.clearSigningType).toBe(ClearSigningType.EIP7730);
+        expect(result.clearSignContexts).toEqual([
+          transactionInfoContext,
+          fieldWithMapContext,
+        ]);
+        expect(result.clearSignContextsOptional).toEqual([mapEntryContext]);
+      },
+    );
+
+    it("should not use generic-parser contexts looking up maps when the app does not support maps", async () => {
+      // GIVEN
+      contextModuleMock.getContexts.mockResolvedValueOnce([
+        transactionInfoContext,
+        mapEntryContext,
+        fieldWithMapContext,
+      ]);
+      mockAppVersion("1.22.5");
+
+      // WHEN
+      const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
+
+      // THEN
+      expect(result.clearSigningType).toBe(ClearSigningType.BASIC);
+      expect(result.clearSignContexts).toEqual([]);
+      expect(result.clearSignContextsOptional).toEqual([]);
+    });
+
+    it("should keep generic-parser contexts without map lookups when the app does not support maps", async () => {
+      // GIVEN
+      const fieldContext = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+      } as ClearSignContext;
+      contextModuleMock.getContexts.mockResolvedValueOnce([
+        transactionInfoContext,
+        mapEntryContext,
+        fieldContext,
+      ]);
+      mockAppVersion("1.22.5");
+
+      // WHEN
+      const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
+
+      // THEN
+      expect(result.clearSigningType).toBe(ClearSigningType.EIP7730);
+      expect(result.clearSignContexts).toEqual([
+        transactionInfoContext,
+        fieldContext,
+      ]);
+    });
+  });
 });

@@ -15,7 +15,7 @@ import { Left, Right } from "purify-ts";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
-import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
+import { TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 import {
   BuildSubcontextsTask,
@@ -65,6 +65,7 @@ describe("BuildSubcontextsTask", () => {
       ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
       ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
       ClearSignContextType.ETHEREUM_ENUM,
+      ClearSignContextType.ETHEREUM_MAP_ENTRY,
       ClearSignContextType.ETHEREUM_TOKEN,
       ClearSignContextType.ETHEREUM_NFT,
     ];
@@ -1115,6 +1116,216 @@ describe("BuildSubcontextsTask", () => {
         },
         ClearSignContextType.ETHEREUM_TOKEN,
       );
+    });
+  });
+  describe("map references", () => {
+    // OpenCover submitQuote: the cover and payment tokens are looked up in maps keyed by asset ids
+    const word = (value: number) => value.toString(16).padStart(64, "0");
+    const calldata = `0xf7a7ae09${[
+      0xff, // providerId
+      0x81, // productId
+      2, // coverAssetId: USDC
+      0x77359400, // coverAmount
+      0, // paymentAssetId: native currency
+      0x2a1, // premiumAmount
+      0, // feeAmount
+      0x1e, // coverExpiry
+      0x6ac3c4b3, // validUntil
+    ]
+      .map(word)
+      .join("")}` as const;
+    const coverAssetIdPath: GenericPath = [
+      { type: "TUPLE", offset: 0 },
+      { type: "TUPLE", offset: 2 },
+      { type: "LEAF", leafType: "STATIC_LEAF" },
+    ];
+    const paymentAssetIdPath: GenericPath = [
+      { type: "TUPLE", offset: 0 },
+      { type: "TUPLE", offset: 4 },
+      { type: "LEAF", leafType: "STATIC_LEAF" },
+    ];
+    const mapEntry = (id: number, key: number, value: string) => ({
+      type: ClearSignContextType.ETHEREUM_MAP_ENTRY as const,
+      id,
+      key: `0x${word(key)}`,
+      value,
+      payload: `map entry ${id}/${key}`,
+    });
+    const USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
+    const NATIVE = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+    const mapEntries = [
+      mapEntry(0, 0, NATIVE),
+      mapEntry(0, 2, USDC),
+      mapEntry(1, 0, NATIVE),
+      mapEntry(1, 2, USDC),
+    ];
+
+    let mapArgs: BuildSubcontextsTaskArgs;
+
+    beforeEach(() => {
+      mapArgs = {
+        ...defaultArgs,
+        contextOptional: mapEntries,
+        transactionParser: new TransactionParserService(),
+        subset: { ...defaultArgs.subset, chainId: 8453, data: calldata },
+      };
+      contextModuleMock.getFieldContext.mockResolvedValue({
+        type: ClearSignContextType.ETHEREUM_TOKEN,
+        payload: "token",
+      });
+    });
+
+    it("should provide the map entry matching the key, then the token it resolves to", async () => {
+      // GIVEN
+      const map = { id: 0, keyPath: coverAssetIdPath };
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+        reference: { type: ClearSignContextReferenceType.TOKEN, map },
+        mapReferences: [map],
+      };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, {
+        ...mapArgs,
+        context,
+      }).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(2);
+      expect(await result.subcontextCallbacks[0]!()).toEqual(mapEntries[1]);
+      expect(await result.subcontextCallbacks[1]!()).toEqual({
+        type: ClearSignContextType.ETHEREUM_TOKEN,
+        payload: "token",
+      });
+      expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
+        { chainId: 8453, address: USDC, deviceModelId: DeviceModelId.STAX },
+        ClearSignContextType.ETHEREUM_TOKEN,
+      );
+    });
+
+    it("should look up the map matching the map id", async () => {
+      // GIVEN
+      const map = { id: 1, keyPath: paymentAssetIdPath };
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+        reference: { type: ClearSignContextReferenceType.TOKEN, map },
+        mapReferences: [map],
+      };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, {
+        ...mapArgs,
+        context,
+      }).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(2);
+      expect(await result.subcontextCallbacks[0]!()).toEqual(mapEntries[2]);
+      await result.subcontextCallbacks[1]!();
+      expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
+        { chainId: 8453, address: NATIVE, deviceModelId: DeviceModelId.STAX },
+        ClearSignContextType.ETHEREUM_TOKEN,
+      );
+    });
+
+    it("should resolve an NFT collection from a map entry", async () => {
+      // GIVEN
+      const map = { id: 0, keyPath: coverAssetIdPath };
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+        reference: { type: ClearSignContextReferenceType.NFT, map },
+        mapReferences: [map],
+      };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, {
+        ...mapArgs,
+        context,
+      }).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(2);
+      await result.subcontextCallbacks[1]!();
+      expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
+        { chainId: 8453, address: USDC, deviceModelId: DeviceModelId.STAX },
+        ClearSignContextType.ETHEREUM_NFT,
+      );
+    });
+
+    it("should provide map entries before the other subcontexts of the field", async () => {
+      // GIVEN
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+        reference: {
+          type: ClearSignContextReferenceType.TOKEN,
+          value: USDC,
+        },
+        mapReferences: [
+          { id: 0, keyPath: coverAssetIdPath },
+          { id: 1, keyPath: paymentAssetIdPath },
+        ],
+      };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, {
+        ...mapArgs,
+        context,
+      }).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(3);
+      expect(await result.subcontextCallbacks[0]!()).toEqual(mapEntries[1]);
+      expect(await result.subcontextCallbacks[1]!()).toEqual(mapEntries[2]);
+      expect(await result.subcontextCallbacks[2]!()).toEqual({
+        type: ClearSignContextType.ETHEREUM_TOKEN,
+        payload: "token",
+      });
+    });
+
+    it("should not provide anything when no map entry matches the key", () => {
+      // GIVEN
+      const map = { id: 0, keyPath: coverAssetIdPath };
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+        reference: { type: ClearSignContextReferenceType.TOKEN, map },
+        mapReferences: [map],
+      };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, {
+        ...mapArgs,
+        context,
+        contextOptional: [mapEntry(0, 5, USDC), mapEntry(1, 2, USDC)],
+      }).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(0);
+    });
+
+    it("should not provide anything when the key cannot be read from the transaction", () => {
+      // GIVEN
+      const map = { id: 0, keyPath: coverAssetIdPath };
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+        payload: "field",
+        reference: { type: ClearSignContextReferenceType.TOKEN, map },
+        mapReferences: [map],
+      };
+
+      // WHEN
+      const result = new BuildSubcontextsTask(apiMock, {
+        ...mapArgs,
+        context,
+        subset: { ...mapArgs.subset, data: "0xf7a7ae09" },
+      }).run();
+
+      // THEN
+      expect(result.subcontextCallbacks).toHaveLength(0);
     });
   });
 });

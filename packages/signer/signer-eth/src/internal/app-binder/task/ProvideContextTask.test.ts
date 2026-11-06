@@ -11,6 +11,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
+import { ProvideMapEntryCommand } from "@internal/app-binder/command/ProvideMapEntryCommand";
 import {
   NetworkConfigurationType,
   ProvideNetworkConfigurationCommand,
@@ -127,6 +128,7 @@ describe("ProvideContextTask", () => {
         ],
         [ClearSignContextType.ETHEREUM_TRUSTED_NAME, ProvideTrustedNameCommand],
         [ClearSignContextType.ETHEREUM_ENUM, ProvideEnumCommand],
+        [ClearSignContextType.ETHEREUM_MAP_ENTRY, ProvideMapEntryCommand],
         [
           ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
           ProvideTransactionFieldDescriptionCommand,
