@@ -1,4 +1,5 @@
 import {
+  DeviceModelId,
   HexaString,
   isHexaString,
   LoggerPublisherService,
@@ -19,6 +20,10 @@ import {
 } from "@/modules/ethereum/uniswap/constants/uniswap";
 import { type CommandDecoderDataSource } from "@/modules/ethereum/uniswap/data/CommandDecoderDataSource";
 import { uniswapTypes } from "@/modules/ethereum/uniswap/di/uniswapTypes";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -29,6 +34,7 @@ export type UniswapContextInput = {
   data: HexaString;
   selector: HexaString;
   chainId: number;
+  deviceModelId: DeviceModelId;
 };
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
@@ -46,6 +52,8 @@ export class UniswapContextLoader
     private commandDecoderDataSource: CommandDecoderDataSource,
     @inject(tokenTypes.TokenDataSource)
     private tokenDataSource: TokenDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -63,6 +71,8 @@ export class UniswapContextLoader
       "selector" in input &&
       "chainId" in input &&
       typeof input.chainId === "number" &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
       isHexaString(input.data) &&
       input.data !== "0x" &&
       isHexaString(input.selector) &&
@@ -72,8 +82,12 @@ export class UniswapContextLoader
   }
 
   async load(input: UniswapContextInput): Promise<ClearSignContext[]> {
-    const { data, chainId } = input;
-    const result = await this._extractClearSignContexts(data, chainId);
+    const { data, chainId, deviceModelId } = input;
+    const result = await this._extractClearSignContexts(
+      data,
+      chainId,
+      deviceModelId,
+    );
     this.logger.debug("load result", { data: { result } });
     return result;
   }
@@ -92,11 +106,13 @@ export class UniswapContextLoader
    * @private
    * @param {HexaString} calldata - The raw calldata of the Uniswap transaction.
    * @param {number} chainId - The blockchain chain ID where the transaction is being executed.
+   * @param {DeviceModelId} deviceModelId - The device the token certificate is fetched for.
    * @returns {Promise<ClearSignContext[]>} - A promise resolving to an array of clear sign contexts.
    */
   private async _extractClearSignContexts(
     calldata: HexaString,
     chainId: number,
+    deviceModelId: DeviceModelId,
   ): Promise<ClearSignContext[]> {
     try {
       const iface = new Interface(UNISWAP_EXECUTE_ABI);
@@ -145,12 +161,19 @@ export class UniswapContextLoader
         ),
       );
 
+      const certificate = await this.certificateLoader.loadCertificate({
+        keyId: KeyId.Erc20MetadataKey,
+        keyUsage: KeyUsage.CoinMeta,
+        targetDevice: deviceModelId,
+      });
+
       const contexts = tokensPayload.map((either) =>
         either.caseOf<ClearSignContext>({
           Left: (error) => ({ type: ClearSignContextType.ERROR, error }),
           Right: (payload) => ({
             type: ClearSignContextType.ETHEREUM_TOKEN,
             payload,
+            certificate,
           }),
         }),
       );

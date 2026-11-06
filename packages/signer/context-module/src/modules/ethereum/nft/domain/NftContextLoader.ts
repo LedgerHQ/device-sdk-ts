@@ -1,4 +1,5 @@
 import {
+  DeviceModelId,
   HexaString,
   isHexaString,
   LoggerPublisherService,
@@ -8,6 +9,10 @@ import { inject, injectable } from "inversify";
 import { configTypes } from "@/config/di/configTypes";
 import type { NftDataSource } from "@/modules/ethereum/nft/data/NftDataSource";
 import { nftTypes } from "@/modules/ethereum/nft/di/nftTypes";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -18,6 +23,7 @@ export type NftContextInput = {
   to: HexaString;
   selector: HexaString;
   chainId: number;
+  deviceModelId: DeviceModelId;
 };
 
 enum ERC721_SUPPORTED_SELECTOR {
@@ -47,14 +53,18 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 @injectable()
 export class NftContextLoader implements ContextLoader<NftContextInput> {
   private _dataSource: NftDataSource;
+  private _certificateLoader: PkiCertificateLoader;
   private logger: LoggerPublisherService;
 
   constructor(
     @inject(nftTypes.NftDataSource) dataSource: NftDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._dataSource = dataSource;
+    this._certificateLoader = certificateLoader;
     this.logger = loggerFactory("NftContextLoader");
   }
 
@@ -69,6 +79,8 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
       "selector" in input &&
       "chainId" in input &&
       typeof input.chainId === "number" &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
       isHexaString(input.to) &&
       input.to !== "0x" &&
       isHexaString(input.selector) &&
@@ -79,7 +91,7 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
 
   async load(input: NftContextInput): Promise<ClearSignContext[]> {
     const responses: ClearSignContext[] = [];
-    const { to, selector, chainId } = input;
+    const { to, selector, chainId, deviceModelId } = input;
 
     // EXAMPLE:
     // https://nft.api.live.ledger.com/v1/ethereum/1/contracts/0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D/plugin-selector/0x095ea7b3
@@ -91,6 +103,14 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
       },
     );
 
+    const pluginCertificate = getPluginPayloadResponse.isRight()
+      ? await this._certificateLoader.loadCertificate({
+          keyId: KeyId.PluginSelectorKey,
+          keyUsage: KeyUsage.PluginMeta,
+          targetDevice: deviceModelId,
+        })
+      : undefined;
+
     const pluginPayload = getPluginPayloadResponse.caseOf({
       Left: (error): ClearSignContext => ({
         type: ClearSignContextType.ERROR,
@@ -99,6 +119,7 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
       Right: (value): ClearSignContext => ({
         type: ClearSignContextType.ETHEREUM_PLUGIN,
         payload: value,
+        certificate: pluginCertificate,
       }),
     });
 
@@ -115,6 +136,14 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
         address: to,
       });
 
+    const nftCertificate = getNftInfosPayloadResponse.isRight()
+      ? await this._certificateLoader.loadCertificate({
+          keyId: KeyId.NftMetadataKey,
+          keyUsage: KeyUsage.NftMeta,
+          targetDevice: deviceModelId,
+        })
+      : undefined;
+
     const nftInfosPayload = getNftInfosPayloadResponse.caseOf({
       Left: (error): ClearSignContext => ({
         type: ClearSignContextType.ERROR,
@@ -123,6 +152,7 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
       Right: (value): ClearSignContext => ({
         type: ClearSignContextType.ETHEREUM_NFT,
         payload: value,
+        certificate: nftCertificate,
       }),
     });
 

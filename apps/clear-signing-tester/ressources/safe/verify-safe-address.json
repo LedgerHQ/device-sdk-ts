@@ -1,0 +1,16 @@
+{
+  "group": "safe",
+  "name": "verify-address",
+  "action": "verifySafeAddress",
+  "devices": ["stax", "flex"],
+  "coinApp": "Ethereum",
+  "mode": "parallel",
+  "cases": [
+    {
+      "description": "Safe 2-of-2 on Ethereum mainnet",
+      "safeContractAddress": "0x23f8abfc2824c397ccb3da89ae772984107ddb99",
+      "chainId": 1,
+      "expectedTexts": ["Verify Safe address", "2 out of 2"]
+    }
+  ]
+}

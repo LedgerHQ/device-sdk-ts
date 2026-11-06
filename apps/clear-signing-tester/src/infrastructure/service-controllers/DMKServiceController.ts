@@ -32,6 +32,7 @@ import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { getEmulatorBaseUrl } from "@root/src/domain/utils/getEmulatorBaseUrl";
 import { SpeculosContactsRepository } from "@root/src/infrastructure/repositories/SpeculosContactsRepository";
+import { SpeculosSafeAddressRepository } from "@root/src/infrastructure/repositories/SpeculosSafeAddressRepository";
 import { DefaultSigningService } from "@root/src/infrastructure/services/DefaultSigningService";
 
 export class DMKServiceController implements ServiceController {
@@ -47,6 +48,8 @@ export class DMKServiceController implements ServiceController {
     private readonly signingService: DefaultSigningService,
     @inject(TYPES.SpeculosContactsRepository)
     private readonly contactsRepository: SpeculosContactsRepository,
+    @inject(TYPES.SpeculosSafeAddressRepository)
+    private readonly safeAddressRepository: SpeculosSafeAddressRepository,
     @inject(TYPES.RetryService)
     private readonly retryService: RetryService,
     @inject(TYPES.SpeculinhoConfig)
@@ -169,6 +172,7 @@ export class DMKServiceController implements ServiceController {
 
     this.signer = builder.build();
     this.signingService.setSigner(this.signer);
+    this.safeAddressRepository.setSigner(this.signer);
 
     this.logger.debug("Signer built", {
       data: {

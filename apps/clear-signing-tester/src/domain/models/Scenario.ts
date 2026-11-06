@@ -43,6 +43,7 @@ export type ScenarioAction =
   | "signTransaction"
   | "signTypedData"
   | "registerContact"
+  | "verifySafeAddress"
   | "solanaProgram";
 
 /** Per-scenario switches that used to be CLI flags on a bespoke script. */
