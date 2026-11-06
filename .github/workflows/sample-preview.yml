@@ -37,14 +37,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
       - name: Get token from JFrog (OIDC)
         id: jfrog-login
         uses: LedgerHQ/actions-security/actions/jfrog-login@5e1e158bc84b65cd0cb3b5b28733c3066ea93ed8 # actions/jfrog-login-1.4.1
 
       - name: Login to JFrog OCI registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ steps.jfrog-login.outputs.oidc-user }}
