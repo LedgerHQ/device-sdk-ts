@@ -11,9 +11,11 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
+import { lastValueFrom } from "rxjs";
 
 import { type SignTypedDataDAState } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { SignTypedDataDAStateStep } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { EthAppCommandErrorFactory } from "@internal/app-binder/command/utils/ethAppErrors";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
@@ -136,7 +138,10 @@ describe("SignTypedDataDeviceAction", () => {
   const getAddressMock = vi.fn();
   const detectBlindSigningMock = vi.fn();
   function extractDependenciesMock() {
-    detectBlindSigningMock.mockResolvedValue({ isBlindSign: false });
+    detectBlindSigningMock.mockResolvedValue({
+      isBlindSign: false,
+      blindSignReason: null,
+    });
     return {
       getAddress: getAddressMock,
       getAppConfig: getAppConfigMock,
@@ -305,6 +310,9 @@ describe("SignTypedDataDeviceAction", () => {
               v: 0x1c,
               r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
               s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+              isBlindSign: false,
+              blindSignReason: null,
+              clearSigningType: null,
             },
             status: DeviceActionStatus.Completed,
           },
@@ -441,6 +449,9 @@ describe("SignTypedDataDeviceAction", () => {
               v: 0x1c,
               r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
               s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+              isBlindSign: false,
+              blindSignReason: null,
+              clearSigningType: null,
             },
             status: DeviceActionStatus.Completed,
           },
@@ -559,6 +570,9 @@ describe("SignTypedDataDeviceAction", () => {
               v: 0x1c,
               r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
               s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+              isBlindSign: false,
+              blindSignReason: null,
+              clearSigningType: ClearSigningType.BASIC,
             },
             status: DeviceActionStatus.Completed,
           },
@@ -662,6 +676,9 @@ describe("SignTypedDataDeviceAction", () => {
               v: 0x1c,
               r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
               s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+              isBlindSign: false,
+              blindSignReason: null,
+              clearSigningType: ClearSigningType.BASIC,
             },
             status: DeviceActionStatus.Completed,
           },
@@ -1133,6 +1150,9 @@ describe("SignTypedDataDeviceAction", () => {
               v: 0x1c,
               r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
               s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+              isBlindSign: false,
+              blindSignReason: null,
+              clearSigningType: ClearSigningType.BASIC,
             },
             status: DeviceActionStatus.Completed,
           },
@@ -1347,6 +1367,105 @@ describe("SignTypedDataDeviceAction", () => {
             input: expect.objectContaining({
               chainId: null,
             }),
+          }),
+        }),
+      );
+    });
+  });
+
+  describe("signing result in the output", () => {
+    const SIGNATURE = {
+      v: 0x1c,
+      r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+      s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+    };
+
+    function makeDeviceAction() {
+      setupOpenAppDAMock();
+      setupAppConfig("1.15.0", false, false);
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: { address: FROM } }),
+      );
+      const deviceAction = new SignTypedDataDeviceAction({
+        input: {
+          derivationPath: "44'/60'/0'/0/0",
+          data: TEST_MESSAGE,
+          contextModule: mockContextModule as unknown as ContextModule,
+          parser: mockParser,
+          transactionParser: mockTransactionParser,
+          transactionMapper: mockTransactionMapper,
+          skipOpenApp: false,
+        },
+      });
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock(),
+      );
+      buildContextMock.mockResolvedValueOnce({
+        ...TEST_BUILT_CONTEXT,
+        clearSigningType: ClearSigningType.EIP7730,
+      });
+      provideContextMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: undefined }),
+      );
+      return deviceAction;
+    }
+
+    it("returns the clear signing type of a clear-signed message", async () => {
+      const deviceAction = makeDeviceAction();
+      signTypedDataMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: SIGNATURE }),
+      );
+
+      const result = await lastValueFrom(
+        deviceAction._execute(apiMock).observable,
+      );
+
+      expect(result).toEqual({
+        status: DeviceActionStatus.Completed,
+        output: {
+          ...SIGNATURE,
+          isBlindSign: false,
+          blindSignReason: null,
+          clearSigningType: ClearSigningType.EIP7730,
+        },
+      });
+    });
+
+    it("flags a legacy (blind) signature after the device rejected the context", async () => {
+      const deviceAction = makeDeviceAction();
+      signTypedDataMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: EthAppCommandErrorFactory({
+            errorCode: "6a80",
+            message: "Invalid data",
+          }),
+        }),
+      );
+      signTypedDataLegacyMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: SIGNATURE }),
+      );
+      detectBlindSigningMock.mockResolvedValueOnce({
+        isBlindSign: true,
+        blindSignReason: "device_rejected_context",
+      });
+
+      const result = await lastValueFrom(
+        deviceAction._execute(apiMock).observable,
+      );
+
+      expect(result).toEqual({
+        status: DeviceActionStatus.Completed,
+        output: {
+          ...SIGNATURE,
+          isBlindSign: true,
+          blindSignReason: "device_rejected_context",
+          clearSigningType: ClearSigningType.BASIC,
+        },
+      });
+      expect(detectBlindSigningMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          input: expect.objectContaining({
+            input: expect.objectContaining({ usedFallback: true }),
           }),
         }),
       );

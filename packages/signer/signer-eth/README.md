@@ -194,12 +194,17 @@ const { observable, cancel } = signerEth.signTransaction(
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type Signature = {
+type SignTransactionDAOutput = {
   r: `0x${string}`; // R component of the signature
   s: `0x${string}`; // S component of the signature
   v: number; // Recovery parameter
+  isBlindSign: boolean; // true if the device signed without clear signing context
+  blindSignReason: BlindSignReason | null; // why it was blind signed, null if clear signed
+  clearSigningType: ClearSigningType | null; // clear signing mode actually used
 };
 ```
+
+`isBlindSign` lets you tell a blind signature apart from a clear-signed one in code, for example to warn the user or reject the signature, instead of relying on the user to read the device screen.
 
 - `cancel` A function to cancel the action on the Ledger device.
 
@@ -296,12 +301,17 @@ const { observable, cancel } = signerEth.signTypedData(
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type Signature = {
+type SignTypedDataDAOutput = {
   r: `0x${string}`; // R component of the signature
   s: `0x${string}`; // S component of the signature
   v: number; // Recovery parameter
+  isBlindSign: boolean; // true if the device signed without clear signing context
+  blindSignReason: BlindSignReason | null; // why it was blind signed, null if clear signed
+  clearSigningType: ClearSigningType | null; // clear signing mode actually used
 };
 ```
+
+`isBlindSign` lets you tell a blind signature apart from a clear-signed one in code, for example to warn the user or reject the signature, instead of relying on the user to read the device screen.
 
 - `cancel` A function to cancel the action on the Ledger device.
 
