@@ -17,6 +17,7 @@ const SIGNER_APPS = [
   { name: "Cosmos", version: "2.38.19" },
   { name: "Ethereum", version: "1.22.3" },
   { name: "Hyperliquid", version: "1.0.1" },
+  { name: "InternetComputer", version: "4.2.17" },
   { name: "Polkadot", version: "100.0.27" },
   { name: "Solana", version: "1.16.0" },
   { name: "Tron", version: "0.7.6" },
