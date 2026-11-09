@@ -247,6 +247,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -368,6 +369,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -406,6 +408,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -446,6 +449,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -482,10 +486,62 @@ describe("ProvideEIP712ContextTask", () => {
     );
   });
 
+  it("Send the descriptor join IDs instead of the device token indexes", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: true,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
+      additionalContexts: [],
+      loggerFactory: mockLoggerFactory,
+    };
+    apiMock.sendCommand.mockImplementation(async (command) =>
+      command instanceof ProvideTokenInformationCommand
+        ? CommandResultFactory({ data: { tokenIndex: 4 } })
+        : CommandResultFactory({ data: undefined }),
+    );
+
+    // WHEN
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Token,
+        discarded: false,
+        tokenIndex: 0,
+        signature:
+          "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+      }),
+    );
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Amount,
+        discarded: false,
+        displayName: "Amount allowance",
+        tokenIndex: 255,
+        signature:
+          "304402201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
+      }),
+    );
+  });
+
   it("Send context with clear signing", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -693,6 +749,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -759,6 +816,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -979,6 +1037,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1035,6 +1094,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1100,6 +1160,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1149,6 +1210,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1200,6 +1262,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1249,6 +1312,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1284,6 +1348,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1319,6 +1384,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1356,6 +1422,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1406,6 +1473,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: {},
       domain: [],
@@ -1537,6 +1605,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1685,6 +1754,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1787,6 +1857,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
