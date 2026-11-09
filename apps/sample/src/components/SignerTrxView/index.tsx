@@ -30,6 +30,13 @@ import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 const DEFAULT_DERIVATION_PATH = "44'/195'/0'/0/0";
 
+// The tester calls executeDeviceAction outside any error handler, so a throw
+// there is unhandled: validateValues keeps Execute disabled on invalid hex.
+const isNonEmptyHex = (value: string): boolean => {
+  const buffer = hexaStringToBuffer(value);
+  return buffer !== null && buffer.length > 0;
+};
+
 export const SignerTrxView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
@@ -95,6 +102,7 @@ export const SignerTrxView: React.FC<{ sessionId: string }> = ({
           transaction: "",
           skipOpenApp: false,
         },
+        validateValues: ({ transaction }) => isNonEmptyHex(transaction),
         deviceModelId,
       } satisfies DeviceActionProps<
         SignTransactionDAOutput,
@@ -128,6 +136,7 @@ export const SignerTrxView: React.FC<{ sessionId: string }> = ({
           transactionHash: "",
           skipOpenApp: false,
         },
+        validateValues: ({ transactionHash }) => isNonEmptyHex(transactionHash),
         deviceModelId,
       } satisfies DeviceActionProps<
         SignTransactionHashDAOutput,
@@ -196,6 +205,7 @@ export const SignerTrxView: React.FC<{ sessionId: string }> = ({
             "04ff21f8e64d3a3c0198edfbb7afdc79be959432e92e2f8a1984bb436a414b8edcec0345aad0c1bf7da04fd036dd7f9f617e30669224283d950fab9dd84831dc83",
           skipOpenApp: false,
         },
+        validateValues: ({ publicKey }) => isNonEmptyHex(publicKey),
         deviceModelId,
       } satisfies DeviceActionProps<
         GetECDHSecretDAOutput,
