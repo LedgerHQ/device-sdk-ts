@@ -1,5 +1,15 @@
 # @ledgerhq/device-management-kit
 
+## 1.11.1
+
+### Patch Changes
+
+- [#2066](https://github.com/LedgerHQ/device-sdk-ts/pull/2066) [`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Exclude test files from the published package
+
+- [#2166](https://github.com/LedgerHQ/device-sdk-ts/pull/2166) [`3e1c7dc`](https://github.com/LedgerHQ/device-sdk-ts/commit/3e1c7dc7a6956cdce301602d074b4b9f8e130151) Thanks [@benruseau](https://github.com/benruseau)! - Treat status word 0x6733 as out of memory in CommandUtils.isOutOfMemory
+
+- [#2062](https://github.com/LedgerHQ/device-sdk-ts/pull/2062) [`194dfcc`](https://github.com/LedgerHQ/device-sdk-ts/commit/194dfcc3e3eed4866831ec2132d87f3625b79bca) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Remove unused @sentry/minimal dependency
+
 ## 1.11.0
 
 ### Minor Changes
