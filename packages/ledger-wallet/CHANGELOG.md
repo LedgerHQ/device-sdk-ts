@@ -1,5 +1,18 @@
 # @ledgerhq/dmk-ledger-wallet
 
+## 0.9.0
+
+### Minor Changes
+
+- [#2166](https://github.com/LedgerHQ/device-sdk-ts/pull/2166) [`3e1c7dc`](https://github.com/LedgerHQ/device-sdk-ts/commit/3e1c7dc7a6956cdce301602d074b4b9f8e130151) Thanks [@benruseau](https://github.com/benruseau)! - Restore backup DA completes with an out of memory status when the app storage restore (0x6733) or the custom lock screen upload (0x5102) runs out of memory. The restore apps storage DA output is now `{ appsStorageResults, isOutOfMemory }` and lists every app with storage, apps not restored being reported with `restoredAppStorage: false`
+
+### Patch Changes
+
+- [#2066](https://github.com/LedgerHQ/device-sdk-ts/pull/2066) [`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Exclude test files from the published package
+
+- Updated dependencies [[`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0), [`3e1c7dc`](https://github.com/LedgerHQ/device-sdk-ts/commit/3e1c7dc7a6956cdce301602d074b4b9f8e130151), [`194dfcc`](https://github.com/LedgerHQ/device-sdk-ts/commit/194dfcc3e3eed4866831ec2132d87f3625b79bca)]:
+  - @ledgerhq/device-management-kit@1.11.1
+
 ## 0.8.0
 
 ### Minor Changes

@@ -19,7 +19,7 @@ import { commitRestoreAppStorage } from "@api/device-action/OsUpdate/Restore/Res
 import { initRestoreAppStorage } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/InitRestoreAppStorage";
 import { restoreAppStorage } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/RestoreAppStorage";
 import {
-  InitRestoreAppStorageConsentResult,
+  InitRestoreAppStorageResult,
   type RestoreAppsStorageDAError,
   type RestoreAppsStorageDAOutput,
   type RestoreAppsStorageDARequiredInteraction,
@@ -55,10 +55,11 @@ const pendingState = (
 });
 
 const completedState = (
-  output: RestoreAppsStorageDAOutput,
+  appsStorageResults: RestoreAppsStorageDAOutput["appsStorageResults"],
+  isOutOfMemory = false,
 ): RestoreAppsStorageDAState => ({
   status: DeviceActionStatus.Completed,
-  output,
+  output: { appsStorageResults, isOutOfMemory },
 });
 
 const errorState = (
@@ -140,13 +141,13 @@ describe("RestoreAppsStorageDeviceAction", () => {
   const setupInitRestoreAppStorage = (
     results: Either<
       InitRestoreAppStorageError,
-      InitRestoreAppStorageConsentResult
-    >[] = [Right(InitRestoreAppStorageConsentResult.GRANTED)],
+      InitRestoreAppStorageResult
+    >[] = [Right(InitRestoreAppStorageResult.GRANTED)],
   ) => {
     const queue = [...results];
     vi.mocked(initRestoreAppStorage).mockReturnValue(() =>
       Promise.resolve(
-        queue.shift() ?? Right(InitRestoreAppStorageConsentResult.GRANTED),
+        queue.shift() ?? Right(InitRestoreAppStorageResult.GRANTED),
       ),
     );
   };
@@ -183,8 +184,8 @@ describe("RestoreAppsStorageDeviceAction", () => {
         setupWaitForAppAndVersion();
         setupGoToDashboard();
         setupInitRestoreAppStorage([
-          Right(InitRestoreAppStorageConsentResult.GRANTED),
-          Right(InitRestoreAppStorageConsentResult.GRANTED),
+          Right(InitRestoreAppStorageResult.GRANTED),
+          Right(InitRestoreAppStorageResult.GRANTED),
         ]);
         setupRestoreAppStorage();
         setupCommitRestoreAppStorage();
@@ -229,7 +230,7 @@ describe("RestoreAppsStorageDeviceAction", () => {
         setupWaitForAppAndVersion();
         setupGoToDashboard();
         setupInitRestoreAppStorage([
-          Right(InitRestoreAppStorageConsentResult.GRANTED),
+          Right(InitRestoreAppStorageResult.GRANTED),
         ]);
         setupRestoreAppStorage();
         setupCommitRestoreAppStorage();
@@ -304,7 +305,7 @@ describe("RestoreAppsStorageDeviceAction", () => {
         setupWaitForAppAndVersion();
         setupGoToDashboard();
         setupInitRestoreAppStorage([
-          Right(InitRestoreAppStorageConsentResult.REJECTED),
+          Right(InitRestoreAppStorageResult.REJECTED),
         ]);
         setupRestoreAppStorage(); // registered in actors but never invoked (consent rejected)
         setupCommitRestoreAppStorage(); // registered in actors but never invoked (consent rejected)
@@ -327,6 +328,50 @@ describe("RestoreAppsStorageDeviceAction", () => {
 
         testDeviceActionStates(
           makeDeviceAction(backupApp),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          { onDone: resolve, onError: reject },
+        );
+      }));
+
+    it("should stop and report the current and remaining apps as not restored when the device is out of memory", () =>
+      new Promise<void>((resolve, reject) => {
+        setupWaitForAppAndVersion();
+        setupGoToDashboard();
+        setupInitRestoreAppStorage([
+          Right(InitRestoreAppStorageResult.GRANTED),
+          Right(InitRestoreAppStorageResult.OUT_OF_MEMORY),
+        ]);
+        setupRestoreAppStorage();
+        setupCommitRestoreAppStorage();
+
+        const backupApp: BackupApp[] = [
+          { appName: "AppWithStorage1", data: "0xaa" },
+          { appName: "AppWithStorage2", data: "0xbb" },
+          { appName: "AppNoStorage", data: undefined },
+          { appName: "AppWithStorage3", data: "0xcc" },
+        ];
+
+        const expectedStates: RestoreAppsStorageDAState[] = [
+          pendingState(RestoreAppsStorageSteps.WaitForAppAndVersion),
+          pendingState(RestoreAppsStorageSteps.WaitForAppAndVersion),
+          pendingState(RestoreAppsStorageSteps.InitRestoreAppStorage),
+          pendingState(RestoreAppsStorageSteps.RestoreAppStorage),
+          pendingState(RestoreAppsStorageSteps.CommitRestoreAppStorage),
+          pendingState(RestoreAppsStorageSteps.InitRestoreAppStorage),
+          // AppWithStorage3 is never initialized
+          completedState(
+            [
+              { appName: "AppWithStorage1", restoredAppStorage: true },
+              { appName: "AppWithStorage2", restoredAppStorage: false },
+              { appName: "AppWithStorage3", restoredAppStorage: false },
+            ],
+            true,
+          ),
+        ];
+
+        testDeviceActionStates(
+          makeDeviceAction(backupApp, true),
           expectedStates,
           makeDeviceActionInternalApiMock(),
           { onDone: resolve, onError: reject },
@@ -420,7 +465,7 @@ describe("RestoreAppsStorageDeviceAction", () => {
         setupWaitForAppAndVersion();
         setupGoToDashboard();
         setupInitRestoreAppStorage([
-          Right(InitRestoreAppStorageConsentResult.GRANTED),
+          Right(InitRestoreAppStorageResult.GRANTED),
         ]);
         const error = new RestoreAppStorageError(new Error("chunk failed"));
         setupRestoreAppStorage(Left(error));
@@ -454,7 +499,7 @@ describe("RestoreAppsStorageDeviceAction", () => {
         setupWaitForAppAndVersion();
         setupGoToDashboard();
         setupInitRestoreAppStorage([
-          Right(InitRestoreAppStorageConsentResult.GRANTED),
+          Right(InitRestoreAppStorageResult.GRANTED),
         ]);
         setupRestoreAppStorage();
         const error = new CommitRestoreAppStorageError(

@@ -71,6 +71,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Xrp signer functionality",
     icon: <CryptoIcon ledgerId="ripple" ticker="XRP" size={size} />,
   },
+  {
+    title: "ICP",
+    description: "Access ICP signer functionality",
+    icon: <CryptoIcon ledgerId="internet_computer" ticker="ICP" size={size} />,
+  },
 ];
 
 export const SignerView = () => {

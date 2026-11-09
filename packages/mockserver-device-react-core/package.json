@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-mockserver-react-core",
-  "private": false,
+  "private": true,
   "version": "0.1.0",
   "license": "Apache-2.0",
   "repository": {
@@ -40,7 +40,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/device-mockserver-client": "^1.4.0"
+    "@ledgerhq/device-mockserver-client": "workspace:^"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
@@ -55,7 +55,7 @@
     "react-dom": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.11.0",
+    "@ledgerhq/device-management-kit": "workspace:^",
     "react": "^18.0.0 || ^19.0.0"
   }
 }

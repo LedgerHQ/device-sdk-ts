@@ -1,126 +1,35 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Icons } from "@ledgerhq/react-ui";
-import styled from "styled-components";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
+import { ChevronDown, Close } from "@ledgerhq/lumen-ui-react/symbols";
 
-import { InputContainer, InputWrapper, StyledInput } from "./inputStyles";
+import { WithTooltip } from "../../components/WithTooltip";
+import {
+  INPUT,
+  INPUT_CONTAINER,
+  INPUT_ICON_BUTTON,
+  INPUT_WRAPPER,
+  SHORTCUT_HINT,
+  SHORTCUT_MODIFIER,
+} from "./inputStyles";
 import { useRecentFilters } from "./useRecentFilters";
-
-const Dropdown = styled.div`
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 4px;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-`;
-
-const DropdownHeader = styled.div`
-  padding: 6px 10px;
-  font-size: 10px;
-  color: #666;
-  text-transform: uppercase;
-  border-bottom: 1px solid #eee;
-`;
-
-const DropdownItem = styled.div<{ $highlighted?: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  font-size: 12px;
-  font-family: monospace;
-  color: #333;
-  cursor: pointer;
-  background-color: ${({ $highlighted }) =>
-    $highlighted ? "#e8f0fe" : "transparent"};
-
-  &:hover {
-    background-color: ${({ $highlighted }) =>
-      $highlighted ? "#e8f0fe" : "#f5f5f5"};
-  }
-`;
-
-const FilterText = styled.span`
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const RemoveButton = styled.button`
-  background: none;
-  border: none;
-  padding: 2px;
-  margin-left: 8px;
-  cursor: pointer;
-  opacity: 0.5;
-  color: #666;
-  display: flex;
-  align-items: center;
-
-  &:hover {
-    opacity: 1;
-  }
-`;
-
-const EmptyMessage = styled.div`
-  padding: 12px 10px;
-  font-size: 12px;
-  color: #999;
-  text-align: center;
-`;
-
-const HistoryButton = styled.button<{ $active?: boolean }>`
-  background: none;
-  border: none;
-  padding: 4px 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  color: ${({ $active }) => ($active ? "#333" : "#999")};
-
-  &:hover {
-    color: #333;
-  }
-`;
-
-const ClearButton = styled.button`
-  background: none;
-  border: none;
-  padding: 4px;
-  cursor: pointer;
-  opacity: 0.5;
-  color: #666;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    opacity: 1;
-  }
-`;
 
 type FilterInputProps = {
   value: string;
   onChange: (value: string) => void;
+  inputRef?: React.RefObject<HTMLInputElement>;
 };
 
 export const FilterInput: React.FC<FilterInputProps> = ({
   value,
   onChange,
+  inputRef: externalInputRef,
 }) => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
+  const listId = useId();
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const { recentFilters, removeFilter } = useRecentFilters(value);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const localInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = externalInputRef ?? localInputRef;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -139,10 +48,6 @@ export const FilterInput: React.FC<FilterInputProps> = ({
     };
   }, []);
 
-  const handleFocus = useCallback(() => {
-    setIsFocused(true);
-  }, []);
-
   const toggleDropdown = useCallback(() => {
     setShowDropdown((prev) => {
       if (!prev) {
@@ -150,11 +55,9 @@ export const FilterInput: React.FC<FilterInputProps> = ({
       }
       return !prev;
     });
-  }, []);
-
-  const handleBlur = useCallback(() => {
-    setIsFocused(false);
-  }, []);
+    // The arrow keys and Enter drive the list from the input
+    inputRef.current?.focus();
+  }, [inputRef]);
 
   const handleSelectFilter = useCallback(
     (filter: string) => {
@@ -163,7 +66,7 @@ export const FilterInput: React.FC<FilterInputProps> = ({
       setHighlightedIndex(-1);
       inputRef.current?.focus();
     },
-    [onChange],
+    [onChange, inputRef],
   );
 
   const handleKeyDown = useCallback(
@@ -177,7 +80,10 @@ export const FilterInput: React.FC<FilterInputProps> = ({
         }
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        if (showDropdown && recentFilters.length > 0) {
+        if (!showDropdown) {
+          setShowDropdown(true);
+          setHighlightedIndex(recentFilters.length > 0 ? 0 : -1);
+        } else if (recentFilters.length > 0) {
           setHighlightedIndex((prev) =>
             prev < recentFilters.length - 1 ? prev + 1 : prev,
           );
@@ -198,7 +104,13 @@ export const FilterInput: React.FC<FilterInputProps> = ({
         }
       }
     },
-    [showDropdown, recentFilters, highlightedIndex, handleSelectFilter],
+    [
+      showDropdown,
+      recentFilters,
+      highlightedIndex,
+      handleSelectFilter,
+      inputRef,
+    ],
   );
 
   const handleRemoveFilter = useCallback(
@@ -212,59 +124,108 @@ export const FilterInput: React.FC<FilterInputProps> = ({
   const handleClear = useCallback(() => {
     onChange("");
     inputRef.current?.focus();
-  }, [onChange]);
+  }, [onChange, inputRef]);
 
   return (
-    <InputContainer ref={containerRef}>
-      <InputWrapper $focused={isFocused}>
-        <StyledInput
+    <div className={INPUT_CONTAINER} ref={containerRef}>
+      <div className={INPUT_WRAPPER}>
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          className="shrink-0 text-muted"
+          aria-hidden="true"
+        >
+          <path d="M3 5h18l-7 8v6l-4-2v-4z" />
+        </svg>
+        <input
           ref={inputRef}
+          className={INPUT}
           type="text"
-          placeholder="Filter (e.g. error, -debug, /regex/)"
+          placeholder="Filter"
+          aria-label="Filter logs"
+          role="combobox"
+          aria-expanded={showDropdown}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={
+            showDropdown && highlightedIndex >= 0
+              ? `${listId}-${highlightedIndex}`
+              : undefined
+          }
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
           onKeyDown={handleKeyDown}
         />
-        {value && (
-          <ClearButton onClick={handleClear} title="Clear filter">
-            <Icons.Close size="XS" />
-          </ClearButton>
+        {value ? (
+          <WithTooltip label="Clear filter" side="bottom">
+            <button
+              aria-label="Clear filter"
+              className={INPUT_ICON_BUTTON}
+              onClick={handleClear}
+            >
+              <Close size={12} />
+            </button>
+          </WithTooltip>
+        ) : (
+          <kbd className={SHORTCUT_HINT}>{SHORTCUT_MODIFIER}K</kbd>
         )}
-        <HistoryButton
-          type="button"
-          onClick={toggleDropdown}
-          $active={showDropdown}
-          title="Recent filters"
-        >
-          <Icons.ChevronBigBottom size="XS" />
-        </HistoryButton>
-      </InputWrapper>
+        <WithTooltip label="Recent filters" side="bottom">
+          <button
+            aria-label="Recent filters"
+            aria-haspopup="listbox"
+            aria-expanded={showDropdown}
+            type="button"
+            className={`${INPUT_ICON_BUTTON} ${showDropdown ? "text-base" : ""}`}
+            onClick={toggleDropdown}
+          >
+            <ChevronDown size={16} />
+          </button>
+        </WithTooltip>
+      </div>
       {showDropdown && (
-        <Dropdown>
-          <DropdownHeader>Recent filters</DropdownHeader>
+        <div
+          id={listId}
+          role="listbox"
+          aria-label="Recent filters"
+          className="absolute inset-x-0 top-full z-1000 mt-4 max-h-320 overflow-y-auto rounded-sm border border-muted-subtle bg-canvas-sheet py-4 shadow-xl"
+        >
+          <div className="border-b border-muted-subtle px-10 py-6 body-4-semi-bold text-muted uppercase">
+            Recent filters
+          </div>
           {recentFilters.length === 0 ? (
-            <EmptyMessage>No recent filters</EmptyMessage>
+            <div className="px-10 py-12 text-center body-3 text-muted">
+              No recent filters
+            </div>
           ) : (
             recentFilters.map((filter, index) => (
-              <DropdownItem
+              <div
                 key={filter}
-                $highlighted={index === highlightedIndex}
+                id={`${listId}-${index}`}
+                role="option"
+                aria-selected={index === highlightedIndex}
+                className={`group flex cursor-pointer items-center justify-between px-10 py-8 font-mono! body-3 hover:bg-base-transparent-hover ${index === highlightedIndex ? "bg-active-subtle" : ""}`}
                 onClick={() => handleSelectFilter(filter)}
               >
-                <FilterText>{filter}</FilterText>
-                <RemoveButton
-                  onClick={(e) => handleRemoveFilter(e, filter)}
-                  title="Remove from recent"
-                >
-                  <Icons.Close size="XS" />
-                </RemoveButton>
-              </DropdownItem>
+                <span className="flex-1 truncate">{filter}</span>
+                <WithTooltip label="Remove from recent" side="bottom">
+                  <button
+                    aria-label="Remove from recent"
+                    className="ml-8 flex cursor-pointer items-center text-muted opacity-50 group-hover:opacity-100 hover:text-base focus-visible:opacity-100"
+                    onClick={(e) => handleRemoveFilter(e, filter)}
+                  >
+                    <Close size={12} />
+                  </button>
+                </WithTooltip>
+              </div>
             ))
           )}
-        </Dropdown>
+        </div>
       )}
-    </InputContainer>
+    </div>
   );
 };

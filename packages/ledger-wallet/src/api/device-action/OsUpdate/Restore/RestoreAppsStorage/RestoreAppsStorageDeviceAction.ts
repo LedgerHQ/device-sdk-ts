@@ -17,7 +17,7 @@ import { initRestoreAppStorage } from "@api/device-action/OsUpdate/Restore/Resto
 import { restoreAppStorage } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/RestoreAppStorage";
 import {
   type BackupAppWithStorage,
-  InitRestoreAppStorageConsentResult,
+  InitRestoreAppStorageResult,
   type RestoreAppsStorageDAError,
   type RestoreAppsStorageDAInput,
   type RestoreAppsStorageDAIntermediateValue,
@@ -114,6 +114,7 @@ export class RestoreAppsStorageDeviceAction extends XStateDeviceAction<
           currentAppStorageDataBytes: null,
           currentAppStorageDataLength: null,
           restoreAppsStorageResult: [],
+          isOutOfMemory: false,
         },
       }),
       states: {
@@ -308,6 +309,33 @@ export class RestoreAppsStorageDeviceAction extends XStateDeviceAction<
             }),
             onDone: [
               {
+                guard: ({ event }) =>
+                  event.output.extract() ===
+                  InitRestoreAppStorageResult.OUT_OF_MEMORY,
+                actions: assign({
+                  _internalState: ({ context }) => ({
+                    ...context._internalState,
+                    isOutOfMemory: true,
+                    // Report the current app and all the remaining ones as not restored
+                    restoreAppsStorageResult: [
+                      ...context._internalState.restoreAppsStorageResult,
+                      ...context._internalState.appsWithStorage
+                        .slice(context._internalState.currentAppStorageIndex)
+                        .map((app) => ({
+                          appName: app.appName,
+                          restoredAppStorage: false,
+                        })),
+                    ],
+                    currentAppStorageIndex:
+                      context._internalState.appsWithStorage.length,
+                    currentAppStorageName: null,
+                    currentAppStorageDataBytes: null,
+                    currentAppStorageDataLength: null,
+                  }),
+                }),
+                target: "Success",
+              },
+              {
                 guard: ({ event }) => event.output.isLeft(),
                 actions: assign({
                   _internalState: ({ event, context }) => ({
@@ -320,7 +348,7 @@ export class RestoreAppsStorageDeviceAction extends XStateDeviceAction<
               {
                 guard: ({ event }) =>
                   event.output.extract() ===
-                  InitRestoreAppStorageConsentResult.REJECTED,
+                  InitRestoreAppStorageResult.REJECTED,
                 actions: assign({
                   _internalState: ({ context }) => ({
                     ...context._internalState,
@@ -465,7 +493,10 @@ export class RestoreAppsStorageDeviceAction extends XStateDeviceAction<
         if (context._internalState.error !== null) {
           return Left(context._internalState.error);
         }
-        return Right(context._internalState.restoreAppsStorageResult);
+        return Right({
+          appsStorageResults: context._internalState.restoreAppsStorageResult,
+          isOutOfMemory: context._internalState.isOutOfMemory,
+        });
       },
     });
   }

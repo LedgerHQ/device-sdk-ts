@@ -21,7 +21,6 @@ import {
   MODULE_CONNECTED_MESSAGE_TYPE,
 } from "@ledgerhq/device-management-kit-devtools-core";
 
-import { type Message } from "../PluginEvents";
 import { type LogData } from "../screens/logger/types";
 import {
   createApduCommands,
@@ -34,6 +33,7 @@ import {
   handleDeviceSessionStateUpdate,
   handleDiscoveredDevicesUpdate,
   handleLogMessage,
+  handleMockServerConfig,
   handleModuleConnected,
   handleProviderValue,
 } from "./connectorMessageHandlers";
@@ -50,20 +50,12 @@ export type ApduResponse = {
   error?: string;
 };
 
-/**
- * A single APDU exchange (request + response) captured passively from the DMK
- * logs of the host app. Used to derive mock-server mocks.
- */
-export type ApduExchange = {
-  sessionId?: string;
-  apdu: string;
-  response: string;
-  timestamp: string;
+export type MockServerConfig = {
+  url: string;
+  sessionToken?: string;
 };
 
 export type ConnectorMessagesState = {
-  receivedMessages: Message[];
-  sentMessages: Message[];
   logs: LogData[];
   connectedModules: Set<DevToolsModule>;
   connectedDevices: ConnectedDevice[];
@@ -75,13 +67,9 @@ export type ConnectorMessagesState = {
   isInspectorConnected: boolean;
   providerValue: number | null;
   apduResponses: Map<string, ApduResponse>;
-  apduExchanges: ApduExchange[];
-  isRecordingExchanges: boolean;
+  mockServer: MockServerConfig | null;
   sendMessage: (type: string, payload: string) => void;
   clearLogs: () => void;
-  startRecordingExchanges: () => void;
-  stopRecordingExchanges: () => void;
-  clearRecordedExchanges: () => void;
   startListening: () => void;
   stopListening: () => void;
   startDiscovering: () => void;
@@ -102,6 +90,10 @@ export type ConnectorMessagesState = {
 // Hook
 // ============================================================================
 
+const FLUSH_INTERVAL_MS = 250;
+// Every view rescans the logs on each flush, so a long session must not grow them forever
+const MAX_LOGS = 20_000;
+
 /**
  * Central hook for managing DevTools connector state and communication.
  *
@@ -118,8 +110,6 @@ export function useConnectorMessages(
   connector: Connector,
 ): ConnectorMessagesState {
   // === State ===
-  const [receivedMessages, setReceivedMessages] = useState<Message[]>([]);
-  const [sentMessages, setSentMessages] = useState<Message[]>([]);
   const [logs, setLogs] = useState<LogData[]>([]);
   const [connectedModules, setConnectedModules] = useState<Set<DevToolsModule>>(
     new Set(),
@@ -139,26 +129,27 @@ export function useConnectorMessages(
   const [apduResponses, setApduResponses] = useState<Map<string, ApduResponse>>(
     new Map(),
   );
-  const [apduExchanges, setApduExchanges] = useState<ApduExchange[]>([]);
-  const [isRecordingExchanges, setIsRecordingExchanges] = useState(false);
-  const isRecordingExchangesRef = useRef(false);
+  const [mockServer, setMockServer] = useState<MockServerConfig | null>(null);
 
-  // === Tracked Connector (keeps all sent messages in state) ===
-  const trackedConnector: Connector = useMemo(
-    () => ({
-      ...connector,
-      sendMessage: (type: string, payload: string) => {
-        connector.sendMessage(type, payload);
-        setSentMessages((prev) => [...prev, { type, payload }]);
-      },
-    }),
-    [connector],
-  );
+  // Shared with clearLogs, so a clear also drops the logs waiting for the next flush
+  const pendingLogsRef = useRef<LogData[]>([]);
 
   // === Message Listener ===
   useEffect(() => {
+    // Logs are added in batches, like Dozzle: a polling device sends several logs
+    // per second, and adding them one by one re-rendered the dashboard for every line.
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+    const flush = () => {
+      flushTimer = undefined;
+      const newLogs = pendingLogsRef.current;
+      pendingLogsRef.current = [];
+      if (newLogs.length > 0) {
+        setLogs((prev) => [...prev, ...newLogs].slice(-MAX_LOGS));
+      }
+    };
+
     const { unsubscribe } = connector.listenToMessages((type, payload) => {
-      setReceivedMessages((prev) => [...prev, { type, payload }]);
+      flushTimer ??= setTimeout(flush, FLUSH_INTERVAL_MS);
 
       switch (type) {
         case MODULE_CONNECTED_MESSAGE_TYPE:
@@ -179,31 +170,34 @@ export function useConnectorMessages(
         case INSPECTOR_MESSAGE_TYPES.APDU_RESPONSE:
           handleApduResponse(payload, setApduResponses);
           break;
+        case INSPECTOR_MESSAGE_TYPES.MOCK_SERVER_CONFIG:
+          handleMockServerConfig(payload, setMockServer);
+          break;
         case LOGGER_MESSAGE_TYPES.ADD_LOG:
-          handleLogMessage(
-            payload,
-            setLogs,
-            setApduExchanges,
-            isRecordingExchangesRef.current,
-          );
+          handleLogMessage(payload, (log) => pendingLogsRef.current.push(log));
           break;
       }
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      clearTimeout(flushTimer);
+      // Logs queued for this connector must not be flushed by the next one
+      pendingLogsRef.current = [];
+    };
   }, [connector]);
 
   // === Commands (using tracked connector to log all sent messages) ===
   const discoveryCommands = useMemo(
-    () => createDiscoveryCommands(trackedConnector),
-    [trackedConnector],
+    () => createDiscoveryCommands(connector),
+    [connector],
   );
   const providerCommands = useMemo(
-    () => createProviderCommands(trackedConnector),
-    [trackedConnector],
+    () => createProviderCommands(connector),
+    [connector],
   );
   const apduCommands = useMemo(
-    () => createApduCommands(trackedConnector),
-    [trackedConnector],
+    () => createApduCommands(connector),
+    [connector],
   );
 
   // === Wrapped Commands (with local state updates) ===
@@ -232,21 +226,8 @@ export function useConnectorMessages(
   }, [discoveryCommands]);
 
   const clearLogs = useCallback(() => {
+    pendingLogsRef.current = [];
     setLogs([]);
-  }, []);
-
-  const startRecordingExchanges = useCallback(() => {
-    isRecordingExchangesRef.current = true;
-    setIsRecordingExchanges(true);
-  }, []);
-
-  const stopRecordingExchanges = useCallback(() => {
-    isRecordingExchangesRef.current = false;
-    setIsRecordingExchanges(false);
-  }, []);
-
-  const clearRecordedExchanges = useCallback(() => {
-    setApduExchanges([]);
   }, []);
 
   // === Derived State ===
@@ -257,8 +238,6 @@ export function useConnectorMessages(
 
   return {
     // State
-    receivedMessages,
-    sentMessages,
     logs,
     connectedModules,
     connectedDevices,
@@ -270,14 +249,10 @@ export function useConnectorMessages(
     isInspectorConnected,
     providerValue,
     apduResponses,
-    apduExchanges,
-    isRecordingExchanges,
+    mockServer,
     // Actions
-    sendMessage: trackedConnector.sendMessage,
+    sendMessage: connector.sendMessage,
     clearLogs,
-    startRecordingExchanges,
-    stopRecordingExchanges,
-    clearRecordedExchanges,
     startListening,
     stopListening,
     startDiscovering,

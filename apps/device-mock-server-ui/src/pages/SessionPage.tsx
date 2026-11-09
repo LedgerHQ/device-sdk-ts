@@ -15,6 +15,7 @@ import {
 import {
   ExitLogout,
   Plus,
+  QrCode,
   Refresh,
   Trash,
 } from "@ledgerhq/lumen-ui-react/symbols";
@@ -24,6 +25,7 @@ import { CopyButton } from "@/components/CopyButton";
 import { DeviceCard } from "@/components/DeviceCard";
 import { DeviceDialog } from "@/components/DeviceDialog";
 import { LabeledRow } from "@/components/LabeledRow";
+import { LedgerWalletDialog } from "@/components/LedgerWalletDialog";
 import { MockServerLogo } from "@/components/MockServerLogo";
 import { Panel } from "@/components/Panel";
 import { SeedPanel } from "@/components/SeedPanel";
@@ -48,6 +50,7 @@ interface SessionPageProps {
 export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [dialog, setDialog] = useState<DialogTarget>(null);
+  const [ledgerWalletOpen, setLedgerWalletOpen] = useState(false);
   const [interactingId, setInteractingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [seed, setSeed] = useState("");
@@ -150,6 +153,15 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
         <Panel
           title="Point your app at this session"
           description="Ledger Live and DMK apps reach the mocked devices through this URL and token."
+          action={
+            <Button
+              size="sm"
+              icon={QrCode}
+              onClick={() => setLedgerWalletOpen(true)}
+            >
+              Use in Ledger Wallet
+            </Button>
+          }
         >
           <div className="flex flex-col gap-12">
             <LabeledRow label="Server URL">
@@ -263,6 +275,14 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
           token={token}
           deviceId={interacting.id}
           floating
+        />
+      ) : null}
+
+      {ledgerWalletOpen ? (
+        <LedgerWalletDialog
+          url={window.location.origin}
+          token={token}
+          onClose={() => setLedgerWalletOpen(false)}
         />
       ) : null}
 

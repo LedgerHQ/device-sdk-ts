@@ -1,48 +1,25 @@
-import styled from "styled-components";
-
-/**
- * Shared container for filter and search inputs.
- * Uses flex: 1 to share available width.
- */
-export const InputContainer = styled.div`
-  position: relative;
-  flex: 1;
-  min-width: 150px;
-`;
+export const INPUT_CONTAINER = "relative w-320 min-w-160 shrink";
 
 /**
  * Shared wrapper that provides the bordered box appearance.
  * Can contain the input and additional controls (like search nav buttons).
  */
-export const InputWrapper = styled.div<{ $focused?: boolean }>`
-  display: flex;
-  align-items: center;
-  height: 28px;
-  border: 1px solid ${({ $focused }) => ($focused ? "#999" : "#ccc")};
-  border-radius: 4px;
-  background-color: #fff;
-  overflow: hidden;
-`;
+export const INPUT_WRAPPER =
+  "flex h-32 items-center gap-6 overflow-hidden rounded-sm border border-muted-subtle bg-surface px-8 transition-colors hover:border-muted focus-within:border-active";
 
 /**
- * Shared styled input used in both FilterInput and SearchInput.
- * Border and background are handled by InputWrapper.
+ * Shared input used in both FilterInput and SearchInput.
  */
-export const StyledInput = styled.input`
-  flex: 1;
-  padding: 6px 10px;
-  border: none;
-  font-size: 12px;
-  font-family: monospace;
-  background-color: transparent;
-  color: #333;
-  min-width: 0;
+export const INPUT =
+  "min-w-0 flex-1 bg-transparent font-mono! body-3 text-base outline-none placeholder:text-muted";
 
-  &:focus {
-    outline: none;
-  }
+/** Small icon button that sits inside an input wrapper. */
+export const INPUT_ICON_BUTTON =
+  "flex size-24 shrink-0 cursor-pointer items-center justify-center rounded-xs text-muted transition-colors hover:bg-base-transparent-hover hover:text-base disabled:cursor-default disabled:text-disabled disabled:hover:bg-transparent";
 
-  &::placeholder {
-    color: #999;
-  }
-`;
+export const SHORTCUT_MODIFIER = /Mac|iPhone|iPad/.test(navigator.userAgent)
+  ? "⌘"
+  : "Ctrl+";
+
+export const SHORTCUT_HINT =
+  "rounded-xs border border-muted px-4 font-mono! body-4 text-muted";
