@@ -33,6 +33,7 @@
     "@ledgerhq/device-signer-kit-cosmos": "workspace:^",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
     "@ledgerhq/device-signer-kit-hyperliquid": "workspace:^",
+    "@ledgerhq/device-signer-kit-icp": "workspace:^",
     "@ledgerhq/device-signer-kit-polkadot": "workspace:^",
     "@ledgerhq/device-signer-kit-solana": "workspace:^",
     "@ledgerhq/device-signer-kit-tron": "workspace:^",

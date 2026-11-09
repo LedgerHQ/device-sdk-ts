@@ -1086,6 +1086,9 @@ importers:
       '@ledgerhq/device-signer-kit-hyperliquid':
         specifier: workspace:^
         version: link:../../packages/signer/signer-hyperliquid
+      '@ledgerhq/device-signer-kit-icp':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-icp
       '@ledgerhq/device-signer-kit-polkadot':
         specifier: workspace:^
         version: link:../../packages/signer/signer-polkadot
