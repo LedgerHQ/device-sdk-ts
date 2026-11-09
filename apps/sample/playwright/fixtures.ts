@@ -12,6 +12,7 @@ import { CosmosSignerDriver } from "./utils/drivers/CosmosSignerDriver";
 import { DeviceActionsDriver } from "./utils/drivers/DeviceActionsDriver";
 import { EthSignerDriver } from "./utils/drivers/EthSignerDriver";
 import { HyperliquidSignerDriver } from "./utils/drivers/HyperliquidSignerDriver";
+import { IcpSignerDriver } from "./utils/drivers/IcpSignerDriver";
 import { MockDeviceDriver } from "./utils/drivers/MockDeviceDriver";
 import { PolkadotSignerDriver } from "./utils/drivers/PolkadotSignerDriver";
 import { SettingsDriver } from "./utils/drivers/SettingsDriver";
@@ -48,6 +49,7 @@ type Fixtures = {
   hyperliquidSigner: HyperliquidSignerDriver;
   trxSigner: TrxSignerDriver;
   xrpSigner: XrpSignerDriver;
+  icpSigner: IcpSignerDriver;
   /** Build a Speculos driver for a connected device (its app must be opened). */
   speculos: (device: Device) => SpeculosDriver;
 };
@@ -117,6 +119,9 @@ export const test = base.extend<Fixtures>({
   },
   xrpSigner: async ({ page }, use) => {
     await use(new XrpSignerDriver(page));
+  },
+  icpSigner: async ({ page }, use) => {
+    await use(new IcpSignerDriver(page));
   },
   speculos: async ({ mockClient }, use, testInfo) => {
     const drivers: SpeculosDriver[] = [];
