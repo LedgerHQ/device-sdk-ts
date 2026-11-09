@@ -28,6 +28,9 @@ export const CLS_ERROR_INVALID_CHUNK_SIZE = "6832" as const;
 export const CLS_ERROR_APDU_TOO_SMALL = "6703" as const;
 export const CLS_ERROR_INVALID_CHUNK_OFFSET = "680b" as const;
 
+// Memory errors
+export const CLS_ERROR_OUT_OF_MEMORY = "5102" as const;
+
 // Internal errors
 export const CLS_ERROR_REGISTRY_ERROR = "6621" as const;
 export const CLS_ERROR_DEVICE_INTERNAL = "5223" as const;
@@ -39,11 +42,12 @@ export const CLS_ERROR_INS_NOT_SUPPORTED = "6d00" as const;
 // ============================================================================
 
 /**
- * Create Background Image (0x60) errors: 662f, 5501
+ * Create Background Image (0x60) errors: 662f, 5501, 5102
  */
 export const CREATE_BACKGROUND_IMAGE_ERRORS = {
   [CLS_ERROR_RECOVERY_MODE]: { message: "Device is in recovery mode" },
   [CLS_ERROR_USER_REFUSED]: { message: "User refused on device" },
+  [CLS_ERROR_OUT_OF_MEMORY]: { message: "Not enough memory on device" },
 } as const satisfies CommandErrors<string>;
 export type CreateBackgroundImageErrorCodes =
   keyof typeof CREATE_BACKGROUND_IMAGE_ERRORS;

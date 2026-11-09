@@ -251,8 +251,13 @@ describe("RestoreBackupDeviceAction", () => {
         >,
       );
 
+  const appsStorageOutput = (
+    appsStorageResults: { appName: string; restoredAppStorage: boolean }[],
+    isOutOfMemory = false,
+  ) => Right({ appsStorageResults, isOutOfMemory });
+
   const setupRestoreAppsStorage = (
-    output: Either<unknown, unknown> = Right([]),
+    output: Either<unknown, unknown> = appsStorageOutput([]),
   ) =>
     vi
       .mocked(restoreAppsStorage)
@@ -311,7 +316,7 @@ describe("RestoreBackupDeviceAction", () => {
           }),
         );
         setupRestoreAppsStorage(
-          Right([{ appName: "App1", restoredAppStorage: true }]),
+          appsStorageOutput([{ appName: "App1", restoredAppStorage: true }]),
         );
         setupUploadCustomLockScreen();
 
@@ -651,7 +656,7 @@ describe("RestoreBackupDeviceAction", () => {
         setupRequestMasterConsent();
         setupInstallLanguagePackage(Left(new RefusedByUserDAError()));
         setupInstallOrUpdateApps(Left(new RefusedByUserDAError()));
-        setupRestoreAppsStorage(Right([]));
+        setupRestoreAppsStorage(appsStorageOutput([]));
         setupUploadCustomLockScreen(Left(new RefusedByUserDAError()));
 
         const backup = makeBackup({
@@ -712,7 +717,7 @@ describe("RestoreBackupDeviceAction", () => {
           }),
         );
         setupRestoreAppsStorage(
-          Right([{ appName: "App1", restoredAppStorage: false }]),
+          appsStorageOutput([{ appName: "App1", restoredAppStorage: false }]),
         );
 
         const backup = makeBackup({
@@ -853,6 +858,118 @@ describe("RestoreBackupDeviceAction", () => {
         );
       }));
 
+    it("should stop and report out of memory but keep the restored apps storage when the apps storage restore runs out of memory", () =>
+      new Promise<void>((resolve, reject) => {
+        setupWaitForAppAndVersion();
+        setupGetIsOnboarded();
+        setupDeviceModel(DeviceModelId.STAX);
+        setupRequestMasterConsent();
+        setupInstallOrUpdateApps(
+          Right({
+            successfullyInstalled: [
+              { versionName: "App1" },
+              { versionName: "App2" },
+            ],
+            alreadyInstalled: [],
+            missingApplications: [],
+          }),
+        );
+        setupRestoreAppsStorage(
+          appsStorageOutput(
+            [
+              { appName: "App1", restoredAppStorage: true },
+              { appName: "App2", restoredAppStorage: false },
+            ],
+            true,
+          ),
+        );
+        setupUploadCustomLockScreen(); // registered but never invoked
+
+        const backup = makeBackup({
+          installedApps: [
+            { appName: "App1", data: "0xaa" },
+            { appName: "App2", data: "0xbb" },
+          ],
+          clsHexImage: "0x0102",
+        });
+
+        const expectedStates: RestoreBackupDAState[] = [
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.GetIsOnboarded),
+          pendingState(
+            RestoreBackupSteps.RequestMasterConsent,
+            UserInteractionRequired.GrantConsent,
+          ),
+          pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+          pendingState(RestoreBackupSteps.InstallOrUpdateApps),
+          pendingState(RestoreBackupSteps.RestoreAppsStorage),
+          pendingState(RestoreBackupSteps.RestoreAppsStorage),
+          completedState({
+            restoreStatus: RestoreBackupStatus.OUT_OF_MEMORY,
+            restoredLanguage: undefined,
+            restoredCLS: false,
+            restoredApps: [
+              {
+                appName: "App1",
+                restoredApp: true,
+                restoredAppStorage: true,
+              },
+              {
+                appName: "App2",
+                restoredApp: true,
+                restoredAppStorage: false,
+              },
+            ],
+          }),
+        ];
+
+        testDeviceActionStates(
+          makeDeviceAction(backup),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          { onDone: resolve, onError: reject },
+        );
+      }));
+
+    it("should complete and report out of memory when the CLS upload runs out of memory", () =>
+      new Promise<void>((resolve, reject) => {
+        setupWaitForAppAndVersion();
+        setupGetIsOnboarded();
+        setupDeviceModel(DeviceModelId.STAX);
+        setupRequestMasterConsent();
+        setupUploadCustomLockScreen(Left(new OutOfMemoryDAError()));
+
+        const backup = makeBackup({
+          clsHexImage: "0x0102",
+        });
+
+        const expectedStates: RestoreBackupDAState[] = [
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.WaitForAppAndVersion),
+          pendingState(RestoreBackupSteps.GetIsOnboarded),
+          pendingState(
+            RestoreBackupSteps.RequestMasterConsent,
+            UserInteractionRequired.GrantConsent,
+          ),
+          pendingState(RestoreBackupSteps.UploadCustomLockScreen),
+          pendingState(RestoreBackupSteps.UploadCustomLockScreen),
+          completedState({
+            restoreStatus: RestoreBackupStatus.OUT_OF_MEMORY,
+            restoredLanguage: undefined,
+            restoredCLS: false,
+            restoredApps: undefined,
+          }),
+        ];
+
+        testDeviceActionStates(
+          makeDeviceAction(backup),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          { onDone: resolve, onError: reject },
+        );
+      }));
+
     describe("Security Key app", () => {
       const SECURITY_KEY = "Security Key";
 
@@ -887,7 +1004,7 @@ describe("RestoreBackupDeviceAction", () => {
               done: { type: "final" },
             },
             output: ({ context }: { context: { appNames: string[] } }) =>
-              Right(
+              appsStorageOutput(
                 context.appNames.map((appName) => ({
                   appName,
                   restoredAppStorage: true,
@@ -1064,6 +1181,47 @@ describe("RestoreBackupDeviceAction", () => {
                   {
                     appName: SECURITY_KEY,
                     restoredApp: false,
+                    restoredAppStorage: false,
+                  },
+                ],
+              }),
+            ],
+            makeDeviceActionInternalApiMock(),
+            { onDone: resolve, onError: reject },
+          );
+        }));
+
+      it("should stop when the Security Key app storage restore runs out of memory", () =>
+        new Promise<void>((resolve, reject) => {
+          setupUntilInstallOrUpdateApps();
+          setupInstallPasses(installed(SECURITY_KEY));
+          setupRestoreAppsStorage(
+            appsStorageOutput(
+              [{ appName: SECURITY_KEY, restoredAppStorage: false }],
+              true,
+            ),
+          );
+          setupUploadCustomLockScreen(); // registered but never invoked
+
+          testDeviceActionStates(
+            makeDeviceAction(backupWithSecurityKey()),
+            [
+              ...statesUntilInstallOrUpdateApps(),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              pendingState(RestoreBackupSteps.RestoreAppsStorage),
+              completedState({
+                restoreStatus: RestoreBackupStatus.OUT_OF_MEMORY,
+                restoredLanguage: undefined,
+                restoredCLS: false,
+                restoredApps: [
+                  {
+                    appName: "App1",
+                    restoredApp: false,
+                    restoredAppStorage: false,
+                  },
+                  {
+                    appName: SECURITY_KEY,
+                    restoredApp: true,
                     restoredAppStorage: false,
                   },
                 ],
