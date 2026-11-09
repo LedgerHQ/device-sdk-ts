@@ -235,17 +235,17 @@ asks for, keyed **device > OS > coin app > app version**:
 {
   "stax": {
     "1.10.1": { "Solana": "1.17.1" },
-    "1.11.0": { "Ethereum": "1.23.0" }
+    "1.11.0": { "Ethereum": "1.24.0" }
   },
   "flex": {
     "1.6.1": { "Solana": "1.17.1" },
-    "1.7.0": { "Ethereum": "1.23.0" }
+    "1.7.0": { "Ethereum": "1.24.0" }
   }
 }
 ```
 
 The OS is not chosen separately: an app is pinned under exactly one OS per
-device, so `--device flex` plus an Ethereum run resolves `1.7.0` and `1.23.0`.
+device, so `--device flex` plus an Ethereum run resolves `1.7.0` and `1.24.0`.
 Pin an app under two OS versions for one device and the lookup fails as ambiguous
 rather than guessing.
 
