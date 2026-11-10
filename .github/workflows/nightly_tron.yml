@@ -42,7 +42,8 @@ jobs:
   notify:
     name: Notify Slack
     needs: [cs-tester]
-    if: always()
+    # Bump PRs report on the PR instead.
+    if: always() && !startsWith(github.ref_name, 'chore/no-issue-bump-')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
