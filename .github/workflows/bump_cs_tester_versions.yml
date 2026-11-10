@@ -1,0 +1,115 @@
+name: "[Automation] Bump cs-tester app versions"
+
+# Opens one draft PR per nightly family when Speculinho has a newer stable app
+# version, runs that family's nightly on it, and marks the PR ready when green.
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    name: Bump ${{ matrix.family }}
+    # Speculinho is only reachable from the self-hosted runners.
+    runs-on: ledgerhq-device-sdk
+    strategy:
+      fail-fast: false
+      matrix:
+        family: [ethereum, solana, tron, btc-legacy]
+    env:
+      BRANCH: chore/no-issue-bump-${{ matrix.family }}-cs-tester-versions
+      VERSIONS_FILE: apps/clear-signing-tester/default_versions.json
+      GH_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: develop
+          token: ${{ secrets.DEVICE_SDK_TS_CI }}
+
+      - uses: ./.github/actions/setup-with-cache-composite
+
+      - name: Bump versions
+        id: bump
+        run: |
+          pnpm -s --filter @ledgerhq/clear-signing-tester bump-versions ${{ matrix.family }} > "$RUNNER_TEMP/bumps.md"
+          if git diff --quiet; then
+            echo "No new ${{ matrix.family }} version."
+            exit 0
+          fi
+          # Already proposed: do not rerun the nightly every day.
+          git fetch --depth 1 origin "$BRANCH" 2>/dev/null || true
+          if git show "origin/$BRANCH:$VERSIONS_FILE" 2>/dev/null | cmp -s - "$VERSIONS_FILE"; then
+            echo "$BRANCH already has these versions."
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Reset branch on develop
+        if: steps.bump.outputs.changed
+        run: git push --force origin "HEAD:refs/heads/$BRANCH"
+
+      - name: Commit and sign
+        if: steps.bump.outputs.changed
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
+        with:
+          commit_message: "🔧 (clear-signing-tester): Bump ${{ matrix.family }} app versions"
+          repo: ${{ github.repository }}
+          branch: ${{ env.BRANCH }}
+          file_pattern: ${{ env.VERSIONS_FILE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+
+      - name: Open the PR
+        if: steps.bump.outputs.changed
+        run: |
+          {
+            echo "Speculinho has newer stable ${{ matrix.family }} app versions. The ${{ matrix.family }} nightly runs on this branch and reports here."
+            echo
+            cat "$RUNNER_TEMP/bumps.md"
+          } > "$RUNNER_TEMP/body.md"
+          if gh pr view "$BRANCH" --json state --jq .state | grep -q OPEN; then
+            gh pr edit "$BRANCH" --body-file "$RUNNER_TEMP/body.md"
+            gh pr ready "$BRANCH" --undo || true
+          else
+            gh pr create --draft --base develop --head "$BRANCH" \
+              --title "🔧 (clear-signing-tester) [NO-ISSUE]: Bump ${{ matrix.family }} app versions" \
+              --body-file "$RUNNER_TEMP/body.md"
+          fi
+
+      - name: Run the nightly
+        id: nightly
+        if: steps.bump.outputs.changed
+        run: |
+          WORKFLOW="nightly_$(echo ${{ matrix.family }} | tr - _).yml"
+          SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          gh workflow run "$WORKFLOW" --ref "$BRANCH"
+          for _ in $(seq 30); do
+            sleep 10
+            RUN_ID=$(gh run list --workflow "$WORKFLOW" --branch "$BRANCH" --event workflow_dispatch --limit 1 \
+              --json databaseId,createdAt --jq ".[] | select(.createdAt >= \"$SINCE\") | .databaseId")
+            [ -n "$RUN_ID" ] && break
+          done
+          [ -n "$RUN_ID" ] || { echo "::error::The $WORKFLOW run did not start."; exit 1; }
+          echo "run-id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          gh run watch "$RUN_ID" --interval 60 --exit-status > /dev/null \
+            && echo "conclusion=success" >> "$GITHUB_OUTPUT" \
+            || echo "conclusion=failure" >> "$GITHUB_OUTPUT"
+
+      - name: Report on the PR
+        if: steps.nightly.outputs.run-id
+        env:
+          RUN_ID: ${{ steps.nightly.outputs.run-id }}
+          CONCLUSION: ${{ steps.nightly.outputs.conclusion }}
+        run: |
+          {
+            echo "Nightly [${CONCLUSION}](${{ github.server_url }}/${{ github.repository }}/actions/runs/$RUN_ID) on these versions:"
+            echo
+            gh run view "$RUN_ID" --json jobs --jq '.jobs[] | "- \(.name): \(.conclusion)"'
+          } > "$RUNNER_TEMP/comment.md"
+          gh pr comment "$BRANCH" --body-file "$RUNNER_TEMP/comment.md"
+          if [ "$CONCLUSION" = "success" ]; then
+            gh pr ready "$BRANCH"
+          fi
