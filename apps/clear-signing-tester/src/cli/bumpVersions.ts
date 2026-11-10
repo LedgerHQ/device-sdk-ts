@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 
 import {
   bumpAppVersions,
   type CatalogueDevices,
+  summarizeBumps,
   type VersionTree,
 } from "./bumpAppVersions";
 
@@ -27,7 +28,8 @@ const VERSIONS_FILE = "default_versions.json";
 
 /**
  * Bumps one family's apps in `default_versions.json` to the newest stable
- * versions on Speculinho, and prints the changes as a Markdown table.
+ * versions on Speculinho, and prints the changes as a Markdown table. On
+ * GitHub Actions, also sets a one-line `summary` step output.
  *
  * Usage: `pnpm bump-versions <family>`
  */
@@ -62,6 +64,11 @@ async function main() {
     console.log(
       `| ${bump.device} | ${bump.app} | ${bump.fromVersion} → ${bump.toVersion} | ${os} |`,
     );
+  }
+
+  const output = process.env["GITHUB_OUTPUT"];
+  if (output) {
+    appendFileSync(output, `summary=${summarizeBumps(bumps)}\n`);
   }
 }
 

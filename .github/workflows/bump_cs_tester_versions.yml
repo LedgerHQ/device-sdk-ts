@@ -63,6 +63,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
 
       - name: Open the PR
+        id: pr
         if: steps.bump.outputs.changed
         run: |
           {
@@ -78,14 +79,17 @@ jobs:
               --title "🔧 (clear-signing-tester) [NO-ISSUE]: Bump ${{ matrix.family }} app versions" \
               --body-file "$RUNNER_TEMP/body.md"
           fi
+          gh pr view "$BRANCH" --json number,url --jq '"number=\(.number)\nurl=\(.url)"' >> "$GITHUB_OUTPUT"
 
       - name: Run the nightly
         id: nightly
         if: steps.bump.outputs.changed
+        env:
+          DETAILS: "*Bump:* ${{ steps.bump.outputs.summary }} · <${{ steps.pr.outputs.url }}|PR #${{ steps.pr.outputs.number }}>"
         run: |
           WORKFLOW="nightly_$(echo ${{ matrix.family }} | tr - _).yml"
           SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          gh workflow run "$WORKFLOW" --ref "$BRANCH"
+          gh workflow run "$WORKFLOW" --ref "$BRANCH" -f details="$DETAILS"
           for _ in $(seq 30); do
             sleep 10
             RUN_ID=$(gh run list --workflow "$WORKFLOW" --branch "$BRANCH" --event workflow_dispatch --limit 1 \

@@ -80,3 +80,20 @@ export function bumpAppVersions(
 
   return { pins: next, bumps };
 }
+
+/**
+ * One line naming each version change once, whatever the devices: apps that
+ * moved between the same versions are listed together.
+ *
+ * @example "Litecoin, Komodo 2.4.13 → 2.4.14 · Tron 0.7.8 → 0.8.2"
+ */
+export function summarizeBumps(bumps: readonly AppBump[]): string {
+  const appsByChange = new Map<string, Set<string>>();
+  for (const { app, fromVersion, toVersion } of bumps) {
+    const change = `${fromVersion} → ${toVersion}`;
+    appsByChange.set(change, (appsByChange.get(change) ?? new Set()).add(app));
+  }
+  return [...appsByChange]
+    .map(([change, apps]) => `${[...apps].join(", ")} ${change}`)
+    .join(" · ");
+}

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { bumpAppVersions, type CatalogueDevices } from "./bumpAppVersions";
+import {
+  type AppBump,
+  bumpAppVersions,
+  type CatalogueDevices,
+  summarizeBumps,
+} from "./bumpAppVersions";
 
 describe("bumpAppVersions", () => {
   const pins = {
@@ -96,5 +101,41 @@ describe("bumpAppVersions", () => {
     expect(result.pins).toEqual({
       stax: { "1.10.1": { Ethereum: "1.22.3", "Bitcoin Cash": "2.4.14" } },
     });
+  });
+});
+
+describe("summarizeBumps", () => {
+  const bump = (
+    device: string,
+    app: string,
+    fromVersion: string,
+    toVersion: string,
+  ): AppBump => ({
+    device,
+    app,
+    fromOs: "1.10.1",
+    toOs: "1.11.0",
+    fromVersion,
+    toVersion,
+  });
+
+  it("names each app once across devices", () => {
+    expect(
+      summarizeBumps([
+        bump("stax", "Litecoin", "2.4.13", "2.4.14"),
+        bump("stax", "Komodo", "2.4.13", "2.4.14"),
+        bump("flex", "Litecoin", "2.4.13", "2.4.14"),
+        bump("flex", "Komodo", "2.4.13", "2.4.14"),
+      ]),
+    ).toBe("Litecoin, Komodo 2.4.13 → 2.4.14");
+  });
+
+  it("lists different changes apart", () => {
+    expect(
+      summarizeBumps([
+        bump("stax", "Litecoin", "2.4.13", "2.4.15"),
+        bump("stax", "Komodo", "2.4.13", "2.4.14"),
+      ]),
+    ).toBe("Litecoin 2.4.13 → 2.4.15 · Komodo 2.4.13 → 2.4.14");
   });
 });

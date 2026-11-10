@@ -5,6 +5,11 @@ on:
     # nightlies at 2:00, 3:00 and 4:00 AM, so they do not compete for emulators
     - cron: "0 5 * * *"
   workflow_dispatch:
+    inputs:
+      details:
+        description: "Extra line for the Slack notification"
+        required: false
+        default: ""
 
 env:
   FORCE_COLOR: "1"
@@ -51,3 +56,4 @@ jobs:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}
           results: ${{ join(needs.*.result, ',') }}
+          details: ${{ inputs.details }}
