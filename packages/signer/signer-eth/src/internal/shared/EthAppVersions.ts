@@ -15,3 +15,9 @@ export const MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER = "1.14.0";
  * newer than this version (withMinVersionExclusive), i.e. 1.16.0 or above.
  */
 export const MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS = "1.15.0";
+
+/**
+ * Minimum Ethereum app version where the EIP-712 amount-join filters carry the descriptor's
+ * join identifier instead of the device asset slot returned by PROVIDE_ERC20_TOKEN_INFORMATION.
+ */
+export const MIN_ETH_APP_VERSION_FOR_EIP712_JOIN_ID = "1.23.0";

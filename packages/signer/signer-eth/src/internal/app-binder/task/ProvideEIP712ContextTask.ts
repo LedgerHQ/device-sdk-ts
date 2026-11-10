@@ -72,6 +72,7 @@ export type ProvideEIP712ContextTaskReturnType = Promise<
 
 export type ProvideEIP712ContextTaskArgs = {
   deviceModelId: DeviceModelId;
+  useDescriptorJoinId: boolean;
   derivationPath: string;
   types: Record<StructName, Record<FieldName, FieldType>>;
   domain: Array<TypedDataValue>;
@@ -581,7 +582,9 @@ export class ProvideEIP712ContextTask {
           new SendEIP712FilteringCommand({
             type: Eip712FilterType.Token,
             discarded,
-            tokenIndex: deviceIndexes.indexes[filter.tokenIndex]!,
+            tokenIndex: this.args.useDescriptorJoinId
+              ? filter.tokenIndex
+              : deviceIndexes.indexes[filter.tokenIndex]!,
             signature: filter.signature,
           }),
         );
@@ -592,7 +595,9 @@ export class ProvideEIP712ContextTask {
             type: Eip712FilterType.Amount,
             discarded,
             displayName: filter.displayName,
-            tokenIndex: deviceIndexes.indexes[filter.tokenIndex]!,
+            tokenIndex: this.args.useDescriptorJoinId
+              ? filter.tokenIndex
+              : deviceIndexes.indexes[filter.tokenIndex]!,
             signature: filter.signature,
           }),
         );
