@@ -2,7 +2,7 @@
  * Builders for the decoded CAL JSON the requirement builder consumes.
  */
 
-import { type CalTypePoolEntry } from "@internal/app-binder/clear-sign/idl-type-pool";
+import { type CalTypePoolEntry } from "@internal/app-binder/clear-sign/idl-type-pool/poolFromJson";
 import {
   type CalAccountReset,
   type CalActiveWhenPredicate,
@@ -77,10 +77,8 @@ export function valueFlowPort(opts: {
 export function hideRule(opts: {
   condition: string;
   target?: CalValue;
-  ruleSetIndex?: number;
 }): CalHideRule {
   return {
-    rule_set_index: opts.ruleSetIndex,
     target: opts.target,
     condition: opts.condition,
   };

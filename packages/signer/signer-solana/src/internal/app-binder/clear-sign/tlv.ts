@@ -1,5 +1,5 @@
-// DER Tag-Length-Value reader shared by the clear-sign sub-modules. Throws a
-// neutral TlvParseError that each caller maps to its own typed error.
+// DER Tag-Length-Value reader. Its only caller is `buildEnumCache`, which maps
+// the neutral TlvParseError to its own typed error.
 
 export type TlvEntry = { tag: number; value: Uint8Array };
 
@@ -67,7 +67,11 @@ export function readTlvEntries(buffer: Uint8Array): TlvEntry[] {
   return entries;
 }
 
-/** First value tagged `tag`, or `undefined`. */
+/**
+ * First value tagged `tag`, or `undefined`.
+ *
+ * @deprecated Unused; will be removed in the next major version.
+ */
 export function firstTag(
   entries: TlvEntry[],
   tag: number,
@@ -75,7 +79,11 @@ export function firstTag(
   return entries.find((entry) => entry.tag === tag)?.value;
 }
 
-/** First byte of the first value tagged `tag`, or `undefined` (for `uint8` fields). */
+/**
+ * First byte of the first value tagged `tag`, or `undefined` (for `uint8` fields).
+ *
+ * @deprecated Unused; will be removed in the next major version.
+ */
 export function firstU8(entries: TlvEntry[], tag: number): number | undefined {
   const value = firstTag(entries, tag);
   return value !== undefined && value.length > 0 ? value[0]! : undefined;
