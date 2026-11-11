@@ -40,7 +40,7 @@ export type ChallengeBoundRequirements = Pick<
   tokenAmountAltRefs: AltEntryKey[];
   /** ALT-backed accounts needing TOKEN_ACCOUNT_STATE-first resolution (owner / mint attestation). */
   tokenAccountStateAltRefs: AltEntryKey[];
-  /** ALT-backed MINT entries from MINT_ASSOCIATIONS; require TOKEN_INFO via hold-and-conditionally-stream. */
+  /** ALT-backed MINT entries from MINT_ASSOCIATIONS; the provide phase streams their ALT_RESOLUTION, then the resolved mint's TOKEN_INFO. */
   mintAltRefs: AltEntryKey[];
   /** ALT-supplied slots targeted by a trusted-name display field; see {@link DescriptorRequirements.trustedNameAltRefs}. */
   trustedNameAltRefs: AltEntryKey[];
@@ -52,7 +52,7 @@ export type ChallengeBoundRequirements = Pick<
  * ones are carried as requirements and fetched+streamed by the provide phase.
  */
 export type GenericClearSignContext = {
-  /** `full` (merge) / `srfc39-only` (partial) / `none` (legacy fallback). */
+  /** `full` (merge) / `none` (legacy fallback). `srfc39-only` is never produced. */
   readonly mode: ClearSignMode;
   /** Phase A pool descriptors that need no challenge (token-info, enum-variant). */
   readonly poolContexts: ClearSignContext[];
