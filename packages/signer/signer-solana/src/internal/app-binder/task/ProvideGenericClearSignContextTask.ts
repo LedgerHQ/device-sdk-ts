@@ -3,9 +3,7 @@ import {
   ClearSignContextType,
   type ContextModule,
   isSolanaContextSuccess,
-  type SolanaAltResolutionContextSuccess,
   type SolanaTokenAccountStateContextSuccess,
-  type SolanaTokenInfoContextSuccess,
 } from "@ledgerhq/context-module";
 import {
   type CommandResult,
@@ -212,11 +210,8 @@ export class ProvideGenericClearSignContextTask {
     // Track mints already streamed (from pre-fetched pool contexts) to avoid duplicates.
     const streamedMints = new Set<string>();
     for (const ctx of this.args.poolContexts) {
-      if (
-        ctx.type === ClearSignContextType.SOLANA_TOKEN_INFO &&
-        isSolanaContextSuccess(ctx)
-      ) {
-        streamedMints.add((ctx as SolanaTokenInfoContextSuccess).payload.mint);
+      if (ctx.type === ClearSignContextType.SOLANA_TOKEN_INFO) {
+        streamedMints.add(ctx.payload.mint);
       }
     }
 
@@ -249,13 +244,9 @@ export class ProvideGenericClearSignContextTask {
         );
       }
       for (const ctx of contexts) {
-        if (
-          ctx.type === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE &&
-          isSolanaContextSuccess(ctx)
-        ) {
+        if (ctx.type === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE) {
           streamedTokenAccounts.add(tokenAccount);
-          const mint = (ctx as SolanaTokenAccountStateContextSuccess).payload
-            .mint;
+          const mint = ctx.payload.mint;
           if (mint && !streamedMints.has(mint)) {
             streamedMints.add(mint);
             await this.fetchAndStreamTokenInfo(mint, deviceModelId);
@@ -272,18 +263,14 @@ export class ProvideGenericClearSignContextTask {
         }),
         ClearSignContextType.SOLANA_ALT_RESOLUTION,
       );
-      if (!trustedNameAltKeys.has(`${altAddress}:${entryIndex}`)) continue;
       for (const altCtx of altContexts) {
-        if (
-          altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
-          !isSolanaContextSuccess(altCtx)
-        ) {
+        if (altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION) {
           continue;
         }
         collectAltTrustedName(
           altAddress,
           entryIndex,
-          (altCtx as SolanaAltResolutionContextSuccess).payload.resolvedAddress,
+          altCtx.payload.resolvedAddress,
         );
       }
     }
@@ -563,14 +550,8 @@ export class ProvideGenericClearSignContextTask {
       return undefined;
     }
     for (const altCtx of altContexts) {
-      if (
-        altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
-        !isSolanaContextSuccess(altCtx)
-      ) {
-        continue;
-      }
-      const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
-        .payload.resolvedAddress;
+      if (altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION) continue;
+      const resolvedAddress = altCtx.payload.resolvedAddress;
       collectAltTrustedName(altAddress, entryIndex, resolvedAddress);
       if (!resolvedAddress) {
         this.logger.warn(warnings.unresolved, {
