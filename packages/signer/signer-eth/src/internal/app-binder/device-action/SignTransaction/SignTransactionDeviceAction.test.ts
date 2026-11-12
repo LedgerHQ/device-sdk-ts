@@ -1089,6 +1089,113 @@ describe("SignTransactionDeviceAction", () => {
       );
     });
 
+    describe("blind sign fallback with a transaction check", () => {
+      const transactionCheck: ContextWithSubContexts = {
+        context: {
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
+          payload: "check-payload",
+        },
+        subcontextCallbacks: [],
+      };
+      const transactionInfo: ContextWithSubContexts = {
+        context: {
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+          payload: "info-payload",
+        },
+        subcontextCallbacks: [],
+      };
+
+      function setupFallbackWithTransactionCheck() {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", true, true);
+        const deviceAction = new SignTransactionDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            transaction: defaultTransaction,
+            options: defaultOptions,
+            contextModule: contextModuleMock as unknown as ContextModule,
+            mapper: mapperMock,
+            parser: parserMock,
+          },
+        });
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        parseTransactionMock.mockResolvedValueOnce({
+          subset: defaultSubset,
+          type: TransactionType.EIP1559,
+        });
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: { address: defaultAddress } }),
+        );
+        buildContextsMock.mockResolvedValueOnce({
+          clearSignContexts: [transactionInfo, transactionCheck],
+          clearSigningType: ClearSigningType.EIP7730,
+          contextErrorCount: 0,
+        });
+        signTransactionMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new InvalidStatusWordError("Sign transaction failed"),
+          }),
+        );
+        signTransactionMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad789",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
+        return deviceAction;
+      }
+
+      it("should provide the transaction check again before the blind sign", async () => {
+        const deviceAction = setupFallbackWithTransactionCheck();
+        provideContextsMock.mockResolvedValue(Right(void 0));
+
+        const result = await lastValueFrom(
+          deviceAction._execute(apiMock).observable,
+        );
+
+        expect(result.status).toBe(DeviceActionStatus.Completed);
+        expect(provideContextsMock).toHaveBeenCalledTimes(2);
+        expect(provideContextsMock).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({
+            input: {
+              contexts: [transactionCheck],
+              derivationPath: "44'/60'/0'/0/0",
+              loggerFactory: expect.any(Function),
+            },
+          }),
+        );
+        expect(provideContextsMock.mock.invocationCallOrder[1]).toBeLessThan(
+          signTransactionMock.mock.invocationCallOrder[1]!,
+        );
+      });
+
+      it("should still blind sign when providing the transaction check again throws", async () => {
+        const deviceAction = setupFallbackWithTransactionCheck();
+        provideContextsMock.mockResolvedValueOnce(Right(void 0));
+        provideContextsMock.mockRejectedValueOnce(new Error("provide failed"));
+
+        const result = await lastValueFrom(
+          deviceAction._execute(apiMock).observable,
+        );
+
+        expect(result.status).toBe(DeviceActionStatus.Completed);
+        expect(signTransactionMock).toHaveBeenNthCalledWith(
+          2,
+          expect.objectContaining({
+            input: expect.objectContaining({
+              clearSigningType: ClearSigningType.BASIC,
+            }),
+          }),
+        );
+      });
+    });
+
     it("should pass contextTypes to blind signing detection when metadata-only contexts are present", async () => {
       setupOpenAppDAMock();
       setupAppConfig("1.15.0", false, false);
