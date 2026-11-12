@@ -1,3 +1,4 @@
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   ApplicationChecker,
   type CommandResult,
@@ -174,6 +175,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         skipOpenApp: ({ context }) => !!context.input.options.skipOpenApp,
         hasSignature: ({ context }) =>
           context._internalState.signature !== null,
+        hasTransactionCheck: ({ context }) =>
+          context._internalState.contexts.some(
+            ({ context: c }) =>
+              c.type === ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
+          ),
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -553,11 +559,39 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           always: [
             { guard: "noInternalError", target: "DetectBlindSigning" },
             {
+              guard: and(["notRefusedByUser", "hasTransactionCheck"]),
+              target: "ProvideFallbackTransactionCheck",
+            },
+            {
               guard: "notRefusedByUser",
               target: "BlindSignTransactionFallback",
             },
             { target: "DetectBlindSigning" },
           ],
+        },
+        // The failed sign cleared the contexts stored on the device, so the
+        // transaction check has to be sent again for the blind signature.
+        ProvideFallbackTransactionCheck: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTEXTS,
+            },
+          }),
+          invoke: {
+            id: "provideFallbackTransactionCheck",
+            src: "provideContexts",
+            input: ({ context }) => ({
+              contexts: context._internalState.contexts.filter(
+                ({ context: c }) =>
+                  c.type === ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
+              ),
+              derivationPath: context.input.derivationPath,
+              loggerFactory: this.getLoggerFactory(internalApi),
+            }),
+            onDone: { target: "BlindSignTransactionFallback" },
+            onError: { target: "BlindSignTransactionFallback" },
+          },
         },
         BlindSignTransactionFallback: {
           entry: assign({

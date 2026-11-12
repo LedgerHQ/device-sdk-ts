@@ -197,6 +197,10 @@ jobs:
         # Tests connect to the hosted mock server; no local mock server is needed.
         if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' }}
         continue-on-error: true
+        env:
+          # Injected into the sample settings at runtime by the Playwright setup,
+          # so the token is never built into the sample bundle.
+          GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
         run: pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
 
       # Playwright exits 0 once a retry passes, so uploading only on failure
