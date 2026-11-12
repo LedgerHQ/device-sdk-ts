@@ -20,6 +20,7 @@ jobs:
     name: Bump ${{ matrix.family }}
     # Speculinho is only reachable from the self-hosted runners.
     runs-on: ledgerhq-device-sdk
+    timeout-minutes: 120
     concurrency:
       group: ${{ github.workflow }}-${{ matrix.family }}
       cancel-in-progress: false
@@ -30,12 +31,11 @@ jobs:
     env:
       BRANCH: chore/no-issue-bump-${{ matrix.family }}-cs-tester-versions
       VERSIONS_FILE: apps/clear-signing-tester/default_versions.json
-      GH_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: develop
-          token: ${{ secrets.DEVICE_SDK_TS_CI }}
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-with-cache-composite
 
@@ -43,6 +43,7 @@ jobs:
         id: bump
         env:
           FORCE: ${{ inputs.force }}
+          GH_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
         run: |
           pnpm -s --filter @ledgerhq/clear-signing-tester bump-versions ${{ matrix.family }} > "$RUNNER_TEMP/bumps.md"
           if git diff --quiet; then
@@ -62,7 +63,9 @@ jobs:
 
       - name: Reset branch on develop
         if: steps.bump.outputs.changed
-        run: git push --force origin "HEAD:refs/heads/$BRANCH"
+        env:
+          TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+        run: git push --force "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" "HEAD:refs/heads/$BRANCH"
 
       - name: Commit and sign
         if: steps.bump.outputs.changed
@@ -78,6 +81,8 @@ jobs:
       - name: Open the PR
         id: pr
         if: steps.bump.outputs.changed
+        env:
+          GH_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
         run: |
           {
             echo "Speculinho has newer stable ${{ matrix.family }} app versions. The ${{ matrix.family }} nightly runs on this branch and reports here."
@@ -98,6 +103,7 @@ jobs:
         id: nightly
         if: steps.bump.outputs.changed
         env:
+          GH_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
           DETAILS: "*Bump:* ${{ steps.bump.outputs.summary }} · <${{ steps.pr.outputs.url }}|PR #${{ steps.pr.outputs.number }}>"
         run: |
           WORKFLOW="nightly_$(echo ${{ matrix.family }} | tr - _).yml"
@@ -118,6 +124,7 @@ jobs:
       - name: Report on the PR
         if: steps.nightly.outputs.run-id
         env:
+          GH_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
           RUN_ID: ${{ steps.nightly.outputs.run-id }}
           CONCLUSION: ${{ steps.nightly.outputs.conclusion }}
         run: |

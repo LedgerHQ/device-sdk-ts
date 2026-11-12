@@ -43,7 +43,7 @@ async function main() {
   }
 
   const url = `${process.env["SPECULINHO_URL"] ?? "https://speculinho.ledgerlabs.net"}/catalogue`;
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
   if (!response.ok) {
     throw new Error(`GET ${url} failed with ${response.status}.`);
   }
