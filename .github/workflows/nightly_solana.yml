@@ -4,6 +4,11 @@ on:
     # Run every day at 3:00 AM UTC (offset from Ethereum/ERC7730 nightly at 2:00 AM)
     - cron: "0 3 * * *"
   workflow_dispatch:
+    inputs:
+      details:
+        description: "Extra line for the Slack notification"
+        required: false
+        default: ""
 
 env:
   FORCE_COLOR: "1"
@@ -51,3 +56,4 @@ jobs:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}
           results: ${{ join(needs.*.result, ',') }}
+          details: ${{ inputs.details }}

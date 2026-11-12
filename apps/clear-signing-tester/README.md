@@ -276,10 +276,14 @@ to the very APDU it tests — the run prints which scenarios it left on their ow
 pin. Both CI and a local run read the same defaults file, so they cannot
 disagree.
 
-Bump a pin deliberately: the version has to exist **on Speculinho**, which trails
-coin-apps by up to about an hour after a release. Speculinho exposes no endpoint
-listing what it holds, so the only way to check a candidate is to acquire a pod
-with it — an unavailable version fails with `FileNotFoundError` from the pod.
+Pins are bumped automatically. Every day at 02:00 UTC, the
+[`bump_cs_tester_versions`](../../.github/workflows/bump_cs_tester_versions.yml)
+workflow reads Speculinho's `/catalogue` and, for each nightly family (ethereum,
+solana, tron, btc-legacy) with a newer stable app version, opens a draft PR,
+runs that family's nightly on it and comments the result. A green PR is marked
+ready; merging stays manual. Dev and RC builds are ignored, and the OS only moves
+when the current one does not carry the new version. The same bump runs locally
+with `pnpm bump-versions <family>`.
 
 ## ERC7730 Clear Signing Support
 

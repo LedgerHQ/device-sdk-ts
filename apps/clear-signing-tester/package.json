@@ -12,6 +12,7 @@
   },
   "scripts": {
     "cli": "tsx src/cli/index.ts",
+    "bump-versions": "tsx src/cli/bumpVersions.ts",
     "build": "tsc",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",

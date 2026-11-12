@@ -17,6 +17,10 @@ inputs:
   results:
     description: "Comma-separated job results (typically join(needs.*.result, ',')). Used to derive the overall status."
     required: true
+  details:
+    description: "Optional extra line under the branch, in Slack mrkdwn."
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -70,6 +74,18 @@ runs:
           echo "value=$WORKFLOW" >> "$GITHUB_OUTPUT"
         fi
 
+    # The payload below is YAML built by pasting values in, so a quote, a
+    # backslash or a line break in the details would break the message.
+    - name: Resolve details
+      if: steps.guard.outputs.enabled == 'true'
+      id: details
+      shell: bash
+      env:
+        INPUT_DETAILS: ${{ inputs.details }}
+      run: |
+        DETAILS=$(printf '%s' "$INPUT_DETAILS" | tr -d '"\\\n')
+        echo "value=${DETAILS:+\\n$DETAILS}" >> "$GITHUB_OUTPUT"
+
     - name: Post to Slack
       if: steps.guard.outputs.enabled == 'true'
       uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
@@ -83,7 +99,7 @@ runs:
             - type: section
               text:
                 type: mrkdwn
-                text: "${{ steps.status.outputs.emoji }} *${{ steps.title.outputs.value }}* — *${{ steps.status.outputs.label }}*\n*Repo:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`"
+                text: "${{ steps.status.outputs.emoji }} *${{ steps.title.outputs.value }}* — *${{ steps.status.outputs.label }}*\n*Repo:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`${{ steps.details.outputs.value }}"
             - type: actions
               elements:
                 - type: button
