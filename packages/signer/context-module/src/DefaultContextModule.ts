@@ -10,7 +10,6 @@ import { accountOwnershipTypes } from "@/modules/concordium/account-ownership/di
 import { calldataTypes } from "@/modules/ethereum/calldata/di/calldataTypes";
 import { dynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkTypes";
 import { externalPluginTypes } from "@/modules/ethereum/external-plugin/di/externalPluginTypes";
-import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
 import type { TypedDataClearSignContext } from "@/modules/ethereum/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/modules/ethereum/model/TypedDataContext";
 import { nftTypes } from "@/modules/ethereum/nft/di/nftTypes";
@@ -20,6 +19,7 @@ import { tokenTypes as ethereumTokenTypes } from "@/modules/ethereum/token/di/to
 import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
 import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
+import { gatedSigningTypes } from "@/modules/multichain/gated-signing/di/gatedSigningTypes";
 import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
 import { reporterTypes } from "@/modules/multichain/reporter/di/reporterTypes";
 import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
