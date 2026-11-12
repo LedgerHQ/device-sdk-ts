@@ -1,4 +1,5 @@
 import {
+  DeviceModelId,
   HexaString,
   isHexaString,
   LoggerPublisherService,
@@ -14,6 +15,10 @@ import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSou
 import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
 import { uniswapTypes } from "@/modules/ethereum/uniswap/di/uniswapTypes";
 import type { UniswapContextLoader } from "@/modules/ethereum/uniswap/domain/UniswapContextLoader";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -25,12 +30,14 @@ export type ExternalPluginContextInput = {
   data: HexaString;
   selector: HexaString;
   chainId: number;
+  deviceModelId: DeviceModelId;
 };
 
 export type ExternalPluginTokensInput = {
   data: HexaString;
   selector: HexaString;
   chainId: number;
+  deviceModelId: DeviceModelId;
 };
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
@@ -55,6 +62,8 @@ export class ExternalPluginContextLoader
     private _tokenDataSource: TokenDataSource,
     @inject(uniswapTypes.UniswapContextLoader)
     private _uniswapLoader: UniswapContextLoader,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private _certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -82,12 +91,14 @@ export class ExternalPluginContextLoader
       input.data !== "0x" && // non empty data
       isHexaString(input.selector) &&
       input.selector !== "0x" &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
       SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 
   async load(input: ExternalPluginContextInput): Promise<ClearSignContext[]> {
-    const { to, data, selector, chainId } = input;
+    const { to, data, selector, chainId, deviceModelId } = input;
 
     const eitherDappInfos = await this._externalPluginDataSource.getDappInfos({
       address: to,
@@ -105,11 +116,18 @@ export class ExternalPluginContextLoader
           return [];
         }
 
+        const certificate = await this._certificateLoader.loadCertificate({
+          keyId: KeyId.Erc20MetadataKey,
+          keyUsage: KeyUsage.CoinMeta,
+          targetDevice: deviceModelId,
+        });
+
         const externalPluginContext: ClearSignContext = {
           type: ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN,
           payload: dappInfos.selectorDetails.serializedData.concat(
             dappInfos.selectorDetails.signature,
           ),
+          certificate,
         };
 
         const customLoader =
@@ -160,6 +178,7 @@ export class ExternalPluginContextLoader
             Right: (payload) => ({
               type: ClearSignContextType.ETHEREUM_TOKEN,
               payload,
+              certificate,
             }),
           }),
         );

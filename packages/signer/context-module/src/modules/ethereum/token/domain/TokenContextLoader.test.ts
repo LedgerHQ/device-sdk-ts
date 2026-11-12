@@ -1,3 +1,4 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
@@ -5,6 +6,9 @@ import {
   type TokenContextInput,
   TokenContextLoader,
 } from "@/modules/ethereum/token/domain/TokenContextLoader";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 const mockLoggerFactory = () => ({
@@ -19,12 +23,26 @@ describe("TokenContextLoader", () => {
   const mockTokenDataSource: TokenDataSource = {
     getTokenInfosPayload: vi.fn(),
   };
-  const loader = new TokenContextLoader(mockTokenDataSource, mockLoggerFactory);
+  const mockCertificateLoader: PkiCertificateLoader = {
+    loadCertificate: vi.fn(),
+  };
+  const loader = new TokenContextLoader(
+    mockTokenDataSource,
+    mockCertificateLoader,
+    mockLoggerFactory,
+  );
+  const certificate = {
+    keyUsageNumber: 8,
+    payload: new Uint8Array([0x01, 0x02]),
+  };
 
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockImplementation(
       ({ address }) => Promise.resolve(Right(`payload-${address}`)),
+    );
+    vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
+      certificate,
     );
   });
 
@@ -33,6 +51,7 @@ describe("TokenContextLoader", () => {
       to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
       selector: "0x095ea7b3",
       chainId: 1,
+      deviceModelId: DeviceModelId.STAX,
     };
 
     it("should return true for valid input", () => {
@@ -63,6 +82,7 @@ describe("TokenContextLoader", () => {
       [{ ...validInput, to: undefined }, "missing to"],
       [{ ...validInput, selector: undefined }, "missing selector"],
       [{ ...validInput, chainId: undefined }, "missing chainId"],
+      [{ ...validInput, deviceModelId: undefined }, "missing deviceModelId"],
     ])("should return false for %s", (input, _description) => {
       expect(
         loader.canHandle(input, [ClearSignContextType.ETHEREUM_TOKEN]),
@@ -100,6 +120,7 @@ describe("TokenContextLoader", () => {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         chainId: 1,
         selector: "0x095ea7b3",
+        deviceModelId: DeviceModelId.STAX,
       };
       vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
         Left(new Error("error")),
@@ -114,12 +135,13 @@ describe("TokenContextLoader", () => {
       ]);
     });
 
-    it("should return a correct response", async () => {
+    it("should return the token with its certificate", async () => {
       // GIVEN
       const input: TokenContextInput = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
         chainId: 1,
         selector: "0x095ea7b3",
+        deviceModelId: DeviceModelId.STAX,
       };
 
       // WHEN
@@ -130,8 +152,14 @@ describe("TokenContextLoader", () => {
         {
           type: ClearSignContextType.ETHEREUM_TOKEN,
           payload: "payload-0xdAC17F958D2ee523a2206206994597C13D831ec7",
+          certificate,
         },
       ]);
+      expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
+        keyId: KeyId.Erc20MetadataKey,
+        keyUsage: KeyUsage.CoinMeta,
+        targetDevice: DeviceModelId.STAX,
+      });
     });
   });
 });

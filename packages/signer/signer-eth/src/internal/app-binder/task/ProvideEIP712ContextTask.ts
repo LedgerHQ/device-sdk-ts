@@ -104,6 +104,7 @@ type CalldataFiltersMetadata = {
 
 export class ProvideEIP712ContextTask {
   private chainId: Maybe<number> = Nothing;
+  private filteringCertificateLoaded = false;
   private calldataMetadatas: Record<
     TypedDataCalldataIndex,
     CalldataFiltersMetadata
@@ -149,17 +150,7 @@ export class ProvideEIP712ContextTask {
       await this.provideContext(proxyContext);
     }
 
-    // Send certificate if required
-    const certificate: PkiCertificate | undefined =
-      this.args.clearSignContext.extract()?.certificate;
-    if (certificate !== undefined) {
-      await this.api.sendCommand(
-        new LoadCertificateCommand({
-          keyUsage: certificate.keyUsageNumber,
-          certificate: certificate.payload,
-        }),
-      );
-    }
+    await this.loadFilteringCertificate();
 
     const result: CommandResult<AllSuccessTypes, EthErrorCodes> =
       CommandResultFactory<AllSuccessTypes, EthErrorCodes>({ data: undefined });
@@ -223,6 +214,7 @@ export class ProvideEIP712ContextTask {
     // https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#message-info
     if (this.args.clearSignContext.isJust()) {
       const clearSignContext = this.args.clearSignContext.extract();
+      await this.loadFilteringCertificate();
       const messageInfoFilterResult = await this.api.sendCommand(
         new SendEIP712FilteringCommand({
           type: Eip712FilterType.MessageInfo,
@@ -327,6 +319,7 @@ export class ProvideEIP712ContextTask {
           certificate: certificate.payload,
         }),
       );
+      this.filteringCertificateLoaded = false;
     }
 
     switch (type) {
@@ -442,6 +435,7 @@ export class ProvideEIP712ContextTask {
           return Nothing;
         }
 
+        await this.loadFilteringCertificate();
         const provideTokenInfoResult = await this.api.sendCommand(
           new ProvideTokenInformationCommand({ payload: token }),
         );
@@ -501,6 +495,7 @@ export class ProvideEIP712ContextTask {
                 certificate: context.certificate.payload,
               }),
             );
+            this.filteringCertificateLoaded = false;
           }
           const provideNameResult = await new SendPayloadInChunksTask(
             this.api,
@@ -547,6 +542,7 @@ export class ProvideEIP712ContextTask {
     deviceIndexes: DeviceAssetIndexes,
     discarded: boolean,
   ): Promise<CommandResult<AllSuccessTypes, EthErrorCodes>> {
+    await this.loadFilteringCertificate();
     switch (filter.type) {
       case "trusted-name":
         return await this.api.sendCommand(
@@ -709,6 +705,7 @@ export class ProvideEIP712ContextTask {
           derivationPath: this.args.derivationPath,
           loggerFactory: this.args.loggerFactory,
         }).run();
+        this.filteringCertificateLoaded = false;
       }
 
       this.calldataMetadatas[calldataIndex] = {
@@ -717,6 +714,7 @@ export class ProvideEIP712ContextTask {
       };
 
       // provide the transaction infos filter
+      await this.loadFilteringCertificate();
       return Maybe.of(
         await this.api.sendCommand(
           new SendEIP712FilteringCommand({
@@ -751,10 +749,31 @@ export class ProvideEIP712ContextTask {
             derivationPath: this.args.derivationPath,
             loggerFactory: this.args.loggerFactory,
           }).run();
+          this.filteringCertificateLoaded = false;
         }
         delete this.calldataMetadatas[calldataIndex];
       }
     }
+  }
+
+  /**
+   * Filters and token descriptors are signed with the COIN_META key, and the
+   * device only checks against the last loaded certificate, so it is loaded
+   * again whenever another certificate replaced it.
+   */
+  private async loadFilteringCertificate() {
+    const certificate: PkiCertificate | undefined =
+      this.args.clearSignContext.extract()?.certificate;
+    if (certificate === undefined || this.filteringCertificateLoaded) {
+      return;
+    }
+    await this.api.sendCommand(
+      new LoadCertificateCommand({
+        keyUsage: certificate.keyUsageNumber,
+        certificate: certificate.payload,
+      }),
+    );
+    this.filteringCertificateLoaded = true;
   }
 
   private mapCalldataPresence(
