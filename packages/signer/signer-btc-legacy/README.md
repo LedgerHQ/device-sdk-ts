@@ -74,7 +74,7 @@ The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, 
 
 Each profile picks a transaction format (the profile's `transactionFormat`):
 
-- `legacy`: Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`) and Horizen (`HORIZEN_PROFILE`). Only SegWit inputs are hashed with BIP143.
+- `legacy`: Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`), Dash (`DASH_PROFILE`) and Horizen (`HORIZEN_PROFILE`). Only SegWit inputs are hashed with BIP143.
 - `bip143`: Bitcoin Cash (`BITCOIN_CASH_PROFILE`) and Bitcoin Gold (`BITCOIN_GOLD_PROFILE`). Every transaction is hashed with BIP143.
 - `sapling`: Komodo (`KOMODO_PROFILE`). Its v4 transactions are hashed with BIP143 with no expiry height, as Ledger Wallet sends them, and the app commits the outputs before signing the inputs.
 
