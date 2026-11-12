@@ -6,6 +6,11 @@ on:
   schedule:
     - cron: "0 2 * * *"
   workflow_dispatch:
+    inputs:
+      force:
+        description: Rerun even if the branch already has these versions
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -15,6 +20,9 @@ jobs:
     name: Bump ${{ matrix.family }}
     # Speculinho is only reachable from the self-hosted runners.
     runs-on: ledgerhq-device-sdk
+    concurrency:
+      group: ${{ github.workflow }}-${{ matrix.family }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
@@ -33,16 +41,21 @@ jobs:
 
       - name: Bump versions
         id: bump
+        env:
+          FORCE: ${{ inputs.force }}
         run: |
           pnpm -s --filter @ledgerhq/clear-signing-tester bump-versions ${{ matrix.family }} > "$RUNNER_TEMP/bumps.md"
           if git diff --quiet; then
             echo "No new ${{ matrix.family }} version."
             exit 0
           fi
-          # Already proposed: do not rerun the nightly every day.
+          # Already proposed: do not rerun the nightly every day. Without an
+          # open PR, an earlier run died before opening one, or it was closed.
           git fetch --depth 1 origin "$BRANCH" 2>/dev/null || true
-          if git show "origin/$BRANCH:$VERSIONS_FILE" 2>/dev/null | cmp -s - "$VERSIONS_FILE"; then
-            echo "$BRANCH already has these versions."
+          if [ "$FORCE" != "true" ] \
+            && git show "origin/$BRANCH:$VERSIONS_FILE" 2>/dev/null | cmp -s - "$VERSIONS_FILE" \
+            && gh pr view "$BRANCH" --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            echo "$BRANCH already has these versions and an open PR."
             exit 0
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
