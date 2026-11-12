@@ -5,7 +5,7 @@ const MOCK_SERVER_URL =
   process.env["MOCK_SERVER_URL"] ??
   "https://device-mock-server.aws.ldg-ps-default.ldg-tech.com";
 const SETTINGS_STORAGE_KEY = "dmk-sample-settings";
-const GATING_TOKEN = process.env["NEXT_PUBLIC_GATING_TOKEN"];
+const GATING_TOKEN = process.env["GATING_TOKEN"];
 
 export const setupMockServerSession = async (
   page: Page,
