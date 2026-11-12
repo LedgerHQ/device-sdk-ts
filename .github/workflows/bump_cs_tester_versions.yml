@@ -51,12 +51,15 @@ jobs:
             exit 0
           fi
           # Already proposed: do not rerun the nightly every day. Without an
-          # open PR, an earlier run died before opening one, or it was closed.
+          # open PR reporting on the branch head, an earlier run died before
+          # finishing, or the PR was closed.
           git fetch --depth 1 origin "$BRANCH" 2>/dev/null || true
           if [ "$FORCE" != "true" ] \
             && git show "origin/$BRANCH:$VERSIONS_FILE" 2>/dev/null | cmp -s - "$VERSIONS_FILE" \
-            && gh pr view "$BRANCH" --json state --jq .state 2>/dev/null | grep -q OPEN; then
-            echo "$BRANCH already has these versions and an open PR."
+            && HEAD_SHA=$(git rev-parse -q --verify "origin/$BRANCH") \
+            && gh pr view "$BRANCH" --json state,comments \
+              --jq 'select(.state == "OPEN") | .comments[].body' 2>/dev/null | grep -qF "$HEAD_SHA"; then
+            echo "$BRANCH already has these versions and a nightly report."
             exit 0
           fi
           echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -129,7 +132,7 @@ jobs:
           CONCLUSION: ${{ steps.nightly.outputs.conclusion }}
         run: |
           {
-            echo "Nightly [${CONCLUSION}](${{ github.server_url }}/${{ github.repository }}/actions/runs/$RUN_ID) on these versions:"
+            echo "Nightly [${CONCLUSION}](${{ github.server_url }}/${{ github.repository }}/actions/runs/$RUN_ID) on $(gh run view "$RUN_ID" --json headSha --jq .headSha):"
             echo
             gh run view "$RUN_ID" --json jobs --jq '.jobs[] | "- \(.name): \(.conclusion)"'
           } > "$RUNNER_TEMP/comment.md"
