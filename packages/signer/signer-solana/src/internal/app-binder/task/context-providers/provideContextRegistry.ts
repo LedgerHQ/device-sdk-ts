@@ -13,6 +13,7 @@ import {
   type ProvideContextHandler,
 } from "./provideContextTypes";
 import { provideEnumVariantContext } from "./provideEnumVariantContext";
+import { provideGatedSigningContext } from "./provideGatedSigningContext";
 import { provideInstructionInfoContext } from "./provideInstructionInfoContext";
 import { provideLifiContext } from "./provideLifiContext";
 import { provideTokenAccountStateContext } from "./provideTokenAccountStateContext";
@@ -42,6 +43,7 @@ const PROVIDE_CONTEXT_REGISTRY: {
   [ClearSignContextType.SOLANA_TRUSTED_NAME]: provideTrustedNameContext,
   [ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME]:
     provideBasicTrustedNameContext,
+  [ClearSignContextType.SOLANA_GATED_SIGNING]: provideGatedSigningContext,
 };
 
 type DiscriminatedSolanaContextSuccess = {

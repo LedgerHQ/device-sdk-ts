@@ -1,4 +1,7 @@
-import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  type ContextModule,
+  type SolanaGatedSigningContextSuccess,
+} from "@ledgerhq/context-module";
 import {
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
@@ -24,6 +27,7 @@ import { type SignClearSignDAStateStep } from "./SignClearSignDeviceActionTypes"
 export const signTransactionDAStateSteps = Object.freeze({
   OPEN_APP: "signer.sol.steps.openApp",
   GET_APP_CONFIG: "signer.sol.steps.getAppConfig",
+  PROVIDE_GATED_SIGNING: "signer.sol.steps.provideGatedSigning",
   TRANSACTION_CHECKS_OPT_IN: "signer.sol.steps.transactionChecksOptIn",
   TRANSACTION_CHECKS_OPT_IN_RESULT:
     "signer.sol.steps.transactionChecksOptInResult",
@@ -120,6 +124,10 @@ export type SignTransactionDAInternalState = {
   // Id of the basic-flow rule that routed the transaction straight to the
   // basic flow (skipping generic clear-sign), or null when none matched.
   readonly basicFlowRuleId: string | null;
+  // The gating descriptor the device accepted, kept to send it again after a
+  // failed generic clear-sign attempt without a new CAL lookup; null when
+  // none was sent.
+  readonly gatedSigningContext: SolanaGatedSigningContextSuccess | null;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<
