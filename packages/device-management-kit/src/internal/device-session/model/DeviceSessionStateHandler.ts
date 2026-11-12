@@ -1,6 +1,7 @@
 import { type BehaviorSubject, type Subscription } from "rxjs";
 
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import {
   DeviceSessionStateType,
   DeviceStatus,
@@ -35,7 +36,6 @@ export class DeviceSessionStateHandler {
   private _pendingDeviceStatus: DeviceStatus = DeviceStatus.BUSY;
 
   constructor(
-    loggerModuleFactory: (tag: string) => LoggerPublisherService,
     private _sessionEventDispatcher: DeviceSessionEventDispatcher,
     private _connectedDevice: TransportConnectedDevice,
     private _deviceState: BehaviorSubject<DeviceSessionState>,
@@ -44,7 +44,7 @@ export class DeviceSessionStateHandler {
     this._subscription = this._sessionEventDispatcher
       .listen()
       .subscribe((event) => this.mapEventAction(event));
-    this._logger = loggerModuleFactory("device-session-state-handler");
+    this._logger = getLogger("device-session-state-handler");
   }
 
   private _updateDeviceState(

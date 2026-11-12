@@ -1,5 +1,4 @@
 import {
-  type LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -16,7 +15,6 @@ export const GetAddressDeviceActionFactory = (args: {
   derivationPath: string;
   checkOnDevice: boolean;
   skipOpenApp: boolean;
-  logger?: LoggerPublisherService;
 }): SendCommandInAppDeviceAction<
   PublicKey,
   GetPubKeyCommandArgs,
@@ -40,5 +38,4 @@ export const GetAddressDeviceActionFactory = (args: {
         : UserInteractionRequired.None,
       skipOpenApp: args.skipOpenApp,
     },
-    logger: args.logger,
   });

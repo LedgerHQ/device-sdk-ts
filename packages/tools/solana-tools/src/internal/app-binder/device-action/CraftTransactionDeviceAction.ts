@@ -2,6 +2,7 @@ import {
   base64StringToBuffer,
   type CommandResult,
   type DeviceActionStateMachine,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -384,11 +385,9 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
         const bytes = base64StringToBuffer(serialisedTransaction);
         const numRequiredSignatures = bytes?.[1] ?? 0;
         if (numRequiredSignatures > 1) {
-          internalApi
-            .loggerFactory?.("CraftTransactionDeviceAction")
-            .warn(
-              "Transaction requires multiple signatures. A single device can sign for only one of them, so the crafted transaction cannot be fully co-signed.",
-            );
+          getLogger("CraftTransactionDeviceAction").warn(
+            "Transaction requires multiple signatures. A single device can sign for only one of them, so the crafted transaction cannot be fully co-signed.",
+          );
         }
 
         const v1Crafter = new V1TransactionCrafterService();
@@ -410,11 +409,9 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
       // signatures, so it cannot be fully co-signed here. The message stays
       // usable for display and clear-sign testing.
       if (message.header.numRequiredSignatures > 1) {
-        internalApi
-          .loggerFactory?.("CraftTransactionDeviceAction")
-          .warn(
-            "Transaction requires multiple signatures. A single device can sign for only one of them, so the crafted transaction cannot be fully co-signed.",
-          );
+        getLogger("CraftTransactionDeviceAction").warn(
+          "Transaction requires multiple signatures. A single device can sign for only one of them, so the crafted transaction cannot be fully co-signed.",
+        );
       }
 
       const crafter = new TransactionCrafterService();

@@ -1,6 +1,7 @@
 import {
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidArgumentError,
   InvalidStatusWordError,
@@ -69,7 +70,7 @@ export class SendSignMessageTask {
     private readonly bs58Encoder: Bs58Encoder = DefaultBs58Encoder,
   ) {
     this._builder = new OffchainMessageBuilder(args.appDomain);
-    this._logger = api.loggerFactory?.("SendSignMessageTask");
+    this._logger = getLogger("SignerSolana", "SendSignMessageTask");
   }
 
   async run(): SendSignMessageTaskRunFunctionReturn {

@@ -1,5 +1,4 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 import { type TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
@@ -13,7 +12,6 @@ export const SignTypedDataDeviceActionFactory = (args: {
   contextModule: ContextModule;
   skipOpenApp: boolean;
   inspect?: boolean;
-  loggerFactory?: (tag: string) => LoggerPublisherService;
 }) =>
   new SignTypedDataDeviceAction({
     input: {
@@ -26,5 +24,4 @@ export const SignTypedDataDeviceActionFactory = (args: {
       transactionParser: new TransactionParserService(),
     },
     inspect: args.inspect,
-    loggerFactory: args.loggerFactory,
   });

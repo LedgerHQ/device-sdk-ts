@@ -1,4 +1,3 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type BlockhashService } from "@internal/app-binder/services/BlockhashService";
@@ -9,9 +8,6 @@ const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
 const exampleBlockhash = new Uint8Array(32).fill(0xab);
 const patchedTx = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
 const rpcUrl = "https://api.devnet.solana.com";
-
-const loggerFactory = () =>
-  ({ info: vi.fn(), error: vi.fn() }) as unknown as LoggerPublisherService;
 
 let blockhashService: {
   fetchLatestBlockhash: ReturnType<typeof vi.fn>;
@@ -29,7 +25,6 @@ function task(args: {
     rpcUrl: args.rpcUrl,
     fetchBlockhash: args.fetchBlockhash,
     blockhashService: blockhashService as unknown as BlockhashService,
-    loggerFactory,
   });
 }
 

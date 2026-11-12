@@ -6,6 +6,7 @@ import {
 } from "@ledgerhq/context-module";
 import {
   type DeviceModelId,
+  getLogger,
   hexaStringToBuffer,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
@@ -76,7 +77,6 @@ export type BuildGenericClearSignContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly transaction: Uint8Array;
   readonly deviceModelId: DeviceModelId;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
   readonly network?: string;
   /** Enum-variant decoder override; defaults to the real type-pool decoder. */
   readonly selectEnumVariants?: BuildRequirementsOptions["selectEnumVariants"];
@@ -96,7 +96,7 @@ export class BuildGenericClearSignContextTask {
   private readonly network: string;
 
   constructor(private readonly args: BuildGenericClearSignContextTaskArgs) {
-    this.logger = args.loggerFactory("BuildGenericClearSignContextTask");
+    this.logger = getLogger("SignerSolana", "BuildGenericClearSignContextTask");
     this.network = args.network ?? DEFAULT_NETWORK;
   }
 

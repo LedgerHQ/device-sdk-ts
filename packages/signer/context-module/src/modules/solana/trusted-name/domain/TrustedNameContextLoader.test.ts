@@ -10,14 +10,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { SolanaTrustedNameContextLoader } from "./TrustedNameContextLoader";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const mockCertificate = { keyUsageNumber: 4, payload: new Uint8Array([7]) };
 const ADDR_A = "Addr11111111111111111111111111111111111111";
 const ADDR_B = "Addr22222222222222222222222222222222222222";
@@ -37,11 +29,7 @@ describe("SolanaTrustedNameContextLoader", () => {
   });
 
   const makeLoader = () =>
-    new SolanaTrustedNameContextLoader(
-      dataSource,
-      certificateLoader,
-      mockLoggerFactory,
-    );
+    new SolanaTrustedNameContextLoader(dataSource, certificateLoader);
 
   describe("canHandle", () => {
     it("returns true when SOLANA_TRUSTED_NAME is requested with valid requests", () => {

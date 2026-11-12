@@ -5,7 +5,6 @@ import {
   DeviceSessionStateType,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
@@ -14,6 +13,12 @@ import { UnsupportedAppVersionError } from "@internal/app-binder/command/utils/U
 import { UnsupportedTransactionTypeError } from "@internal/app-binder/command/utils/UnsupportedTransactionTypeError";
 import { createSignTransactionTask } from "@internal/app-binder/task/SignTransactionTaskFactory";
 import { MIN_APP_VERSION_FOR_PLT } from "@internal/shared/ConcordiumAppVersions";
+
+const { getLoggerMock } = vi.hoisted(() => ({ getLoggerMock: vi.fn() }));
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: getLoggerMock,
+}));
 
 const DERIVATION_PATH = "44'/919'/0'/0'/0'";
 const TYPE_OFFSET = 60;
@@ -62,41 +67,40 @@ function getApduData(cmd: Command<unknown, unknown>): Uint8Array {
 }
 
 describe("createSignTransactionTask", () => {
-  let loggerFactory: (tag: string) => LoggerPublisherService;
-  let loggerTags: string[];
-
   beforeEach(() => {
-    loggerTags = [];
-    loggerFactory = (tag: string) => {
-      loggerTags.push(tag);
-      return { debug: vi.fn() } as unknown as LoggerPublisherService;
-    };
+    getLoggerMock.mockReturnValue({ debug: vi.fn() });
   });
 
-  it("should create SendTransferTask for Transfer type (3)", () => {
+  it("should create SendTransferTask for Transfer type (3)", async () => {
     const { api } = makeApiMock(makeReadyDeviceState("5.6.0"));
     const transaction = buildTransaction(3);
 
-    createSignTransactionTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: 0n },
-      loggerFactory,
-    );
+    await createSignTransactionTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: 0n,
+    })().catch(() => undefined);
 
-    expect(loggerTags).toContain("SendTransferTask");
+    expect(getLoggerMock).toHaveBeenCalledWith(
+      "SignerConcordium",
+      "SendTransferTask",
+    );
   });
 
-  it("should create SendTransferWithMemoTask for TransferWithMemo type (22)", () => {
+  it("should create SendTransferWithMemoTask for TransferWithMemo type (22)", async () => {
     const { api } = makeApiMock(makeReadyDeviceState("5.6.0"));
     const transaction = buildTransaction(22);
 
-    createSignTransactionTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: 0n },
-      loggerFactory,
-    );
+    await createSignTransactionTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: 0n,
+    })().catch(() => undefined);
 
-    expect(loggerTags).toContain("SendTransferWithMemoTask");
+    expect(getLoggerMock).toHaveBeenCalledWith(
+      "SignerConcordium",
+      "SendTransferWithMemoTask",
+    );
   });
 
   describe("PLT dispatch", () => {
@@ -119,22 +123,21 @@ describe("createSignTransactionTask", () => {
       return tx;
     }
 
-    it("should create SendPltTask for TokenUpdate type (0x1B)", () => {
+    it("should create SendPltTask for TokenUpdate type (0x1B)", async () => {
       const { api } = makeApiMock(
         makeReadyDeviceState(MIN_APP_VERSION_FOR_PLT),
       );
 
-      createSignTransactionTask(
-        api,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction: buildPltTransaction(),
-          maxFee: 0n,
-        },
-        loggerFactory,
-      );
+      await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction: buildPltTransaction(),
+        maxFee: 0n,
+      })().catch(() => undefined);
 
-      expect(loggerTags).toContain("SendPltTask");
+      expect(getLoggerMock).toHaveBeenCalledWith(
+        "SignerConcordium",
+        "SendPltTask",
+      );
     });
 
     // Fee display needs no separate version gate: the app release that ships
@@ -144,15 +147,11 @@ describe("createSignTransactionTask", () => {
         makeReadyDeviceState(MIN_APP_VERSION_FOR_PLT),
       );
 
-      await createSignTransactionTask(
-        api,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction: buildPltTransaction(),
-          maxFee: 1000n,
-        },
-        loggerFactory,
-      )();
+      await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction: buildPltTransaction(),
+        maxFee: 1000n,
+      })();
 
       expect(sentCommands.length).toBeGreaterThanOrEqual(1);
       expect(getApduP2(sentCommands[0]!)).toBe(0x01);
@@ -163,15 +162,11 @@ describe("createSignTransactionTask", () => {
         makeReadyDeviceState(MIN_APP_VERSION_FOR_PLT),
       );
 
-      await createSignTransactionTask(
-        api,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction: buildPltTransaction(),
-          maxFee: 726_675n,
-        },
-        loggerFactory,
-      )();
+      await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction: buildPltTransaction(),
+        maxFee: 726_675n,
+      })();
 
       const init = getApduData(sentCommands[0]!);
 
@@ -183,15 +178,11 @@ describe("createSignTransactionTask", () => {
     it("should reject PLT with UnsupportedAppVersionError on an older app", async () => {
       const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.6.0"));
 
-      const result = await createSignTransactionTask(
-        api,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction: buildPltTransaction(),
-          maxFee: 0n,
-        },
-        loggerFactory,
-      )();
+      const result = await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction: buildPltTransaction(),
+        maxFee: 0n,
+      })();
 
       expect(sentCommands).toHaveLength(0);
       expect(isSuccessCommandResult(result)).toBe(false);
@@ -212,15 +203,11 @@ describe("createSignTransactionTask", () => {
         deviceModelId: DeviceModelId.NANO_X,
       });
 
-      const result = await createSignTransactionTask(
-        api,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction: buildPltTransaction(),
-          maxFee: 0n,
-        },
-        loggerFactory,
-      )();
+      const result = await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction: buildPltTransaction(),
+        maxFee: 0n,
+      })();
 
       expect(sentCommands).toHaveLength(0);
       expect(isSuccessCommandResult(result)).toBe(false);
@@ -234,11 +221,11 @@ describe("createSignTransactionTask", () => {
     const { api } = makeApiMock(makeReadyDeviceState("5.6.0"));
     const transaction = buildTransaction(99);
 
-    const task = createSignTransactionTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: 0n },
-      loggerFactory,
-    );
+    const task = createSignTransactionTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: 0n,
+    });
 
     const result = await task();
 
@@ -254,11 +241,11 @@ describe("createSignTransactionTask", () => {
     const { api } = makeApiMock(makeReadyDeviceState("5.6.0"));
     const transaction = new Uint8Array(10);
 
-    const task = createSignTransactionTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: 0n },
-      loggerFactory,
-    );
+    const task = createSignTransactionTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: 0n,
+    });
 
     const result = await task();
 
@@ -274,11 +261,11 @@ describe("createSignTransactionTask", () => {
     const { api } = makeApiMock(makeReadyDeviceState("5.6.0"));
     const transaction = new Uint8Array(TYPE_OFFSET);
 
-    const task = createSignTransactionTask(
-      api,
-      { derivationPath: DERIVATION_PATH, transaction, maxFee: 0n },
-      loggerFactory,
-    );
+    const task = createSignTransactionTask(api, {
+      derivationPath: DERIVATION_PATH,
+      transaction,
+      maxFee: 0n,
+    });
 
     const result = await task();
 
@@ -293,11 +280,11 @@ describe("createSignTransactionTask", () => {
       const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.6.0"));
       const transaction = buildTransaction(3);
 
-      await createSignTransactionTask(
-        api,
-        { derivationPath: DERIVATION_PATH, transaction, maxFee: 1000n },
-        loggerFactory,
-      )();
+      await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: 1000n,
+      })();
 
       // Simple transfer sends a single APDU; P2=0x01 means fee display was enabled.
       expect(sentCommands).toHaveLength(1);
@@ -308,11 +295,11 @@ describe("createSignTransactionTask", () => {
       const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.5.9"));
       const transaction = buildTransaction(3);
 
-      await createSignTransactionTask(
-        api,
-        { derivationPath: DERIVATION_PATH, transaction, maxFee: 1000n },
-        loggerFactory,
-      )();
+      await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: 1000n,
+      })();
 
       expect(sentCommands).toHaveLength(1);
       expect(getApduP2(sentCommands[0]!)).toBe(0x00);
@@ -325,11 +312,11 @@ describe("createSignTransactionTask", () => {
       });
       const transaction = buildTransaction(3);
 
-      await createSignTransactionTask(
-        api,
-        { derivationPath: DERIVATION_PATH, transaction, maxFee: 1000n },
-        loggerFactory,
-      )();
+      await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: 1000n,
+      })();
 
       expect(sentCommands).toHaveLength(1);
       expect(getApduP2(sentCommands[0]!)).toBe(0x00);
@@ -341,11 +328,11 @@ describe("createSignTransactionTask", () => {
       const transaction = new Uint8Array(61 + 32 + 2 + 8);
       transaction[TYPE_OFFSET] = 22;
 
-      await createSignTransactionTask(
-        api,
-        { derivationPath: DERIVATION_PATH, transaction, maxFee: 1000n },
-        loggerFactory,
-      )();
+      await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: 1000n,
+      })();
 
       // First sent APDU is the initial step
       expect(sentCommands.length).toBeGreaterThanOrEqual(1);
@@ -360,11 +347,11 @@ describe("createSignTransactionTask", () => {
       const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.6.0"));
       const transaction = buildTransaction(3);
 
-      const result = await createSignTransactionTask(
-        api,
-        { derivationPath: DERIVATION_PATH, transaction, maxFee: -1n },
-        loggerFactory,
-      )();
+      const result = await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: -1n,
+      })();
 
       expect(sentCommands).toHaveLength(0);
       expect(isSuccessCommandResult(result)).toBe(false);
@@ -377,11 +364,11 @@ describe("createSignTransactionTask", () => {
       const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.5.9"));
       const transaction = buildTransaction(3);
 
-      const result = await createSignTransactionTask(
-        api,
-        { derivationPath: DERIVATION_PATH, transaction, maxFee: -1n },
-        loggerFactory,
-      )();
+      const result = await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: -1n,
+      })();
 
       expect(sentCommands).toHaveLength(0);
       expect(isSuccessCommandResult(result)).toBe(false);
@@ -394,15 +381,11 @@ describe("createSignTransactionTask", () => {
       const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.6.0"));
       const transaction = buildTransaction(3);
 
-      const result = await createSignTransactionTask(
-        api,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction,
-          maxFee: UINT64_MAX + 1n,
-        },
-        loggerFactory,
-      )();
+      const result = await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: UINT64_MAX + 1n,
+      })();
 
       expect(sentCommands).toHaveLength(0);
       expect(isSuccessCommandResult(result)).toBe(false);
@@ -415,16 +398,12 @@ describe("createSignTransactionTask", () => {
       const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.6.0"));
       const transaction = buildTransaction(3);
 
-      const result = await createSignTransactionTask(
-        api,
-        {
-          derivationPath: DERIVATION_PATH,
-          transaction,
-          // Simulates a JS caller passing an options object as the 3rd arg.
-          maxFee: { skipOpenApp: true } as unknown as bigint,
-        },
-        loggerFactory,
-      )();
+      const result = await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        // Simulates a JS caller passing an options object as the 3rd arg.
+        maxFee: { skipOpenApp: true } as unknown as bigint,
+      })();
 
       expect(sentCommands).toHaveLength(0);
       expect(isSuccessCommandResult(result)).toBe(false);
@@ -437,11 +416,11 @@ describe("createSignTransactionTask", () => {
       const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.6.0"));
       const transaction = buildTransaction(3);
 
-      const result = await createSignTransactionTask(
-        api,
-        { derivationPath: DERIVATION_PATH, transaction, maxFee: 0n },
-        loggerFactory,
-      )();
+      const result = await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: 0n,
+      })();
 
       expect(sentCommands).toHaveLength(1);
       expect(isSuccessCommandResult(result)).toBe(true);
@@ -451,11 +430,11 @@ describe("createSignTransactionTask", () => {
       const { api, sentCommands } = makeApiMock(makeReadyDeviceState("5.6.0"));
       const transaction = buildTransaction(3);
 
-      const result = await createSignTransactionTask(
-        api,
-        { derivationPath: DERIVATION_PATH, transaction, maxFee: UINT64_MAX },
-        loggerFactory,
-      )();
+      const result = await createSignTransactionTask(api, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        maxFee: UINT64_MAX,
+      })();
 
       expect(sentCommands).toHaveLength(1);
       expect(isSuccessCommandResult(result)).toBe(true);

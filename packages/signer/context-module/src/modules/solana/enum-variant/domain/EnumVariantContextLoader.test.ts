@@ -13,14 +13,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { EnumVariantContextLoader } from "./EnumVariantContextLoader";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const mockCertificate = {
   keyUsageNumber: 8,
   payload: new Uint8Array([0x42]),
@@ -74,12 +66,7 @@ describe("EnumVariantContextLoader", () => {
   });
 
   const makeLoader = (config = mockConfig) =>
-    new EnumVariantContextLoader(
-      dataSource,
-      config,
-      certificateLoader,
-      mockLoggerFactory,
-    );
+    new EnumVariantContextLoader(dataSource, config, certificateLoader);
 
   describe("canHandle", () => {
     it("returns true when SOLANA_ENUM_VARIANT is requested and selections are valid", () => {

@@ -1,12 +1,12 @@
 import {
   DeviceModelId,
+  getLogger,
   HexaString,
   isHexaString,
-  LoggerPublisherService,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { configTypes } from "@/config/di/configTypes";
 import type { NftDataSource } from "@/modules/ethereum/nft/data/NftDataSource";
 import { nftTypes } from "@/modules/ethereum/nft/di/nftTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
@@ -60,12 +60,10 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
     @inject(nftTypes.NftDataSource) dataSource: NftDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._dataSource = dataSource;
     this._certificateLoader = certificateLoader;
-    this.logger = loggerFactory("NftContextLoader");
+    this.logger = getLogger("ContextModule", "NftContextLoader");
   }
 
   canHandle(

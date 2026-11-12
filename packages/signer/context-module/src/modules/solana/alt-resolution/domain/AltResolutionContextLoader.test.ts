@@ -8,14 +8,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { AltResolutionContextLoader } from "./AltResolutionContextLoader";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const mockCertificate = { keyUsageNumber: 8, payload: new Uint8Array([1]) };
 const ALT_A = "AltA1111111111111111111111111111111111111111";
 const ALT_B = "AltB2222222222222222222222222222222222222222";
@@ -35,11 +27,7 @@ describe("AltResolutionContextLoader", () => {
   });
 
   const makeLoader = () =>
-    new AltResolutionContextLoader(
-      dataSource,
-      certificateLoader,
-      mockLoggerFactory,
-    );
+    new AltResolutionContextLoader(dataSource, certificateLoader);
 
   describe("canHandle", () => {
     it("returns true when SOLANA_ALT_RESOLUTION is requested with valid requests", () => {

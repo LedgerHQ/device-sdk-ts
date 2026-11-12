@@ -1,6 +1,7 @@
 import {
   type CommandResult,
   type DeviceActionStateMachine,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type StateMachineTypes,
@@ -113,7 +114,8 @@ export class SignGenericClearSignDeviceAction extends XStateDeviceAction<
     const { promptUiDisplay, refreshBlockhash, delayedSignTransaction } =
       this.extractDependencies(internalApi);
 
-    const logger = this.getLoggerFactory(internalApi)(
+    const logger = getLogger(
+      "SignerSolana",
       "SignGenericClearSignDeviceAction",
     );
 
@@ -316,8 +318,6 @@ export class SignGenericClearSignDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const loggerFactory = this.getLoggerFactory(internalApi);
-
     const promptUiDisplay = async () =>
       internalApi.sendCommand(new PromptUiDisplayCommand());
 
@@ -333,7 +333,6 @@ export class SignGenericClearSignDeviceAction extends XStateDeviceAction<
         rpcUrl: arg0.input.rpcUrl,
         fetchBlockhash: arg0.input.fetchBlockhash,
         blockhashService: this.input.blockhashService,
-        loggerFactory,
       }).run();
 
     const delayedSignTransaction = async (arg0: {
@@ -353,7 +352,6 @@ export class SignGenericClearSignDeviceAction extends XStateDeviceAction<
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,
-        loggerFactory,
       }).run();
 
     return {

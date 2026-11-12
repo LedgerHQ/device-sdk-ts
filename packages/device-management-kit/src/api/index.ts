@@ -173,15 +173,12 @@ export { FramerUtils } from "@api/device-session/utils/FramerUtils";
 export { DeviceManagementKit } from "@api/DeviceManagementKit";
 export { DeviceManagementKitBuilder } from "@api/DeviceManagementKitBuilder";
 export * from "@api/Error";
-export {
-  noopLogger,
-  noopLoggerFactory,
-} from "@api/logger-publisher/utils/noopLoggerFactory";
-export { LogLevel } from "@api/logger-subscriber/model/LogLevel";
-export { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
-export { DefaultLogTagFormatter } from "@api/logger-subscriber/service/DefaultLogTagFormatter";
-export { type LogTagFormatter } from "@api/logger-subscriber/service/LogTagFormatter";
-export { WebLogsExporterLogger } from "@api/logger-subscriber/service/WebLogsExporterLogger";
+export { ConsoleLogger } from "@api/global/services/logger/ConsoleLogger";
+export { DefaultLogTagFormatter } from "@api/global/services/logger/DefaultLogTagFormatter";
+export { type LogTagFormatter } from "@api/global/services/logger/LogTagFormatter";
+export { LogLevel } from "@api/global/services/logger/model/LogLevel";
+export { getLogger } from "@api/global/services/logger/utils/getLogger";
+export { WebLogsExporterLogger } from "@api/global/services/logger/WebLogsExporterLogger";
 export {
   DmkNetworkClient,
   type DmkNetworkClientOptions,

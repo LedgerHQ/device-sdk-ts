@@ -24,13 +24,11 @@ describe("DefaultSignerPolkadot", () => {
   const sessionId = "test-session-id" as DeviceSessionId;
   const derivationPath = "44'/354'/0'/0'/0'";
   const ss58Prefix = 42;
-  const mockLoggerFactory = () => ({});
 
   const makeDmkMock = (expectedResult: unknown) => {
     const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
     const dmkMock = {
       executeDeviceAction: executeDeviceActionMock,
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     return { executeDeviceActionMock, dmkMock };
   };

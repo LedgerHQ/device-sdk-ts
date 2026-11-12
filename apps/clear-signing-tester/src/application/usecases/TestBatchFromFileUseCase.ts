@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -54,11 +57,9 @@ export class TestBatchFromFileUseCase<T extends SignableInput> {
       derivationPath: string,
     ) => Promise<TestResult>,
     private readonly formattingConfig: TestFormattingConfig,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
     loggerTag: string,
   ) {
-    this.logger = loggerFactory(loggerTag);
+    this.logger = getLogger(loggerTag);
   }
 
   /**

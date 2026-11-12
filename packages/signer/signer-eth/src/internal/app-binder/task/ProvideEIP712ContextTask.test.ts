@@ -47,16 +47,6 @@ import {
   type ProvideEIP712ContextTaskArgs,
 } from "./ProvideEIP712ContextTask";
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-
-const mockLoggerFactory = (_tag: string) => mockLogger;
-
 describe("ProvideEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const provideContextFactoryMock = vi.fn();
@@ -256,7 +246,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
@@ -387,7 +376,6 @@ describe("ProvideEIP712ContextTask", () => {
           },
         },
       ],
-      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
@@ -422,7 +410,6 @@ describe("ProvideEIP712ContextTask", () => {
           payload: "0x010203",
         },
       ],
-      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
@@ -463,7 +450,6 @@ describe("ProvideEIP712ContextTask", () => {
           payload: "0x010203",
         },
       ],
-      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
@@ -499,7 +485,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand.mockImplementation(async (command) =>
       command instanceof ProvideTokenInformationCommand
@@ -550,7 +535,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand
       .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
@@ -766,7 +750,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -931,7 +914,6 @@ describe("ProvideEIP712ContextTask", () => {
         0: [],
       },
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1054,7 +1036,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1111,7 +1092,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1169,7 +1149,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1219,7 +1198,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [additionalProxy],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1271,7 +1249,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1321,7 +1298,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1382,7 +1358,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: { challenge: "0x01020304" } }),
@@ -1509,7 +1484,6 @@ describe("ProvideEIP712ContextTask", () => {
       },
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({ data: undefined }),
@@ -1570,7 +1544,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand.mockResolvedValueOnce(
       CommandResultFactory({
@@ -1606,7 +1579,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand
       .mockResolvedValueOnce(CommandResultFactory({ data: { tokenIndex: 4 } }))
@@ -1644,7 +1616,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand
@@ -1740,7 +1711,6 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
@@ -1876,7 +1846,6 @@ describe("ProvideEIP712ContextTask", () => {
         0: [],
       },
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1899,7 +1868,6 @@ describe("ProvideEIP712ContextTask", () => {
     expect(provideContextFactoryMock).toHaveBeenCalledWith({
       contexts: [trustedNameContext],
       derivationPath: "44'/60'/0'/0/0",
-      loggerFactory: mockLoggerFactory,
     });
 
     // Verify CalldataInfo was sent
@@ -2025,7 +1993,6 @@ describe("ProvideEIP712ContextTask", () => {
         0: [txInfoContext, txFieldContext],
       },
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -2048,7 +2015,6 @@ describe("ProvideEIP712ContextTask", () => {
     expect(provideContextFactoryMock).toHaveBeenCalledWith({
       contexts: [txInfoContext, txFieldContext],
       derivationPath: "44'/60'/0'/0/0",
-      loggerFactory: mockLoggerFactory,
     });
   });
 
@@ -2121,7 +2087,6 @@ describe("ProvideEIP712ContextTask", () => {
         0: [txInfoContext],
       },
       additionalContexts: [],
-      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -2144,12 +2109,10 @@ describe("ProvideEIP712ContextTask", () => {
     expect(provideContextFactoryMock).toHaveBeenNthCalledWith(1, {
       contexts: [trustedNameContext],
       derivationPath: "44'/60'/0'/0/0",
-      loggerFactory: mockLoggerFactory,
     });
     expect(provideContextFactoryMock).toHaveBeenNthCalledWith(2, {
       contexts: [txInfoContext],
       derivationPath: "44'/60'/0'/0/0",
-      loggerFactory: mockLoggerFactory,
     });
   });
 });

@@ -1,11 +1,9 @@
 import { type DmkConfig } from "@api/DmkConfig";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
@@ -19,7 +17,6 @@ import { GetDeviceSessionStateUseCase } from "./GetDeviceSessionStateUseCase";
 
 vi.mock("@internal/manager-api/data/HttpManagerApiDataSource");
 
-let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
@@ -30,20 +27,13 @@ const fakeSessionId = "fakeSessionId";
 
 describe("GetDeviceSessionStateUseCase", () => {
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService(
-      [],
-      "get-connected-device-use-case-test",
-    );
-    managerApiDataSource = new HttpManagerApiDataSource(
-      {} as DmkConfig,
-      () => logger,
-    );
+    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,
     );
     secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
-    sessionService = new DefaultDeviceSessionService(() => logger);
+    sessionService = new DefaultDeviceSessionService();
   });
 
   // TODO: This test does not close a subscription
@@ -52,16 +42,13 @@ describe("GetDeviceSessionStateUseCase", () => {
     // given
     const deviceSession = deviceSessionStubBuilder(
       { id: fakeSessionId },
-      () => logger,
+
       managerApi,
       secureChannel,
       DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
     );
     sessionService.addDeviceSession(deviceSession);
-    const useCase = new GetDeviceSessionStateUseCase(
-      sessionService,
-      () => logger,
-    );
+    const useCase = new GetDeviceSessionStateUseCase(sessionService);
 
     const res = useCase.execute({ sessionId: fakeSessionId });
     const expected = deviceSession.state;
@@ -75,10 +62,7 @@ describe("GetDeviceSessionStateUseCase", () => {
   it("should throw error when deviceSession is not found", () =>
     new Promise<void>((resolve) => {
       // given
-      const useCase = new GetDeviceSessionStateUseCase(
-        sessionService,
-        () => logger,
-      );
+      const useCase = new GetDeviceSessionStateUseCase(sessionService);
 
       // when
       try {

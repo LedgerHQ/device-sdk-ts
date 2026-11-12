@@ -27,7 +27,6 @@ import { DefaultSignerCosmos } from "./DefaultSignerCosmos";
 
 describe("DefaultSignerCosmos", () => {
   const sessionId = "test-session-id" as DeviceSessionId;
-  const mockLoggerFactory = () => ({});
 
   it("getAppConfig should return the result from getAppConfigUseCase", () => {
     // ARRANGE
@@ -51,7 +50,6 @@ describe("DefaultSignerCosmos", () => {
     const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
     const dmkMock = {
       executeDeviceAction: executeDeviceActionMock,
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const signer = new DefaultSignerCosmos({ dmk: dmkMock, sessionId });
 
@@ -86,7 +84,6 @@ describe("DefaultSignerCosmos", () => {
     const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
     const dmkMock = {
       executeDeviceAction: executeDeviceActionMock,
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const signer = new DefaultSignerCosmos({ dmk: dmkMock, sessionId });
 
@@ -119,7 +116,6 @@ describe("DefaultSignerCosmos", () => {
     const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
     const dmkMock = {
       executeDeviceAction: executeDeviceActionMock,
-      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const signer = new DefaultSignerCosmos({ dmk: dmkMock, sessionId });
 

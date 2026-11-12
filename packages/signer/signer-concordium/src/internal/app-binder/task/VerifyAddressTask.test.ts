@@ -10,7 +10,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
@@ -55,7 +54,6 @@ function makeErrorContext(error: Error): ClearSignContext[] {
 describe("VerifyAddressTask", () => {
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
-  let loggerMock: LoggerPublisherService;
   let contextModuleMock: ContextModule;
 
   beforeEach(() => {
@@ -64,26 +62,18 @@ describe("VerifyAddressTask", () => {
       sendCommand: sendCommandMock,
       getDeviceModel: () => ({ id: DeviceModelId.NANO_SP }),
     } as unknown as InternalApi;
-    loggerMock = {
-      debug: vi.fn(),
-      error: vi.fn(),
-    } as unknown as LoggerPublisherService;
     contextModuleMock = {
       getContexts: vi.fn(),
     } as unknown as ContextModule;
   });
 
   function createTask() {
-    return new VerifyAddressTask(
-      apiMock,
-      {
-        derivationPath: DERIVATION_PATH,
-        address: ADDRESS,
-        network: NETWORK,
-        contextModule: contextModuleMock,
-      },
-      loggerMock,
-    );
+    return new VerifyAddressTask(apiMock, {
+      derivationPath: DERIVATION_PATH,
+      address: ADDRESS,
+      network: NETWORK,
+      contextModule: contextModuleMock,
+    });
   }
 
   function mockSendCommandSequence(

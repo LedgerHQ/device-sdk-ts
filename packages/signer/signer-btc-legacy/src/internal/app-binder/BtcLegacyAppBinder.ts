@@ -6,7 +6,6 @@ import {
   type DeviceSessionId,
   type ExecuteDeviceActionReturnType,
   type InternalApi,
-  type LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -37,8 +36,6 @@ export class BtcLegacyAppBinder<ErrorCodes extends string> {
     private readonly profile: LegacyCoinProfile<ErrorCodes>,
     @inject(btcLegacyTypes.SignTransactionTask)
     private readonly signTransactionTask: SignTransactionTask<ErrorCodes>,
-    @inject(btcLegacyTypes.DmkLoggerFactory)
-    private readonly dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getAddress(args: {
@@ -58,7 +55,6 @@ export class BtcLegacyAppBinder<ErrorCodes extends string> {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("LegacyGetAddressCommand"),
       }),
     });
   }
@@ -85,7 +81,6 @@ export class BtcLegacyAppBinder<ErrorCodes extends string> {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("GetExtendedPublicKeyTask"),
       }),
     });
   }
@@ -109,7 +104,6 @@ export class BtcLegacyAppBinder<ErrorCodes extends string> {
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("SignTransactionTask"),
       }),
     });
   }

@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
 
 import { ApduResponse } from "@api/device-session/ApduResponse";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { type LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { DeviceSessionId } from "@api/types";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 
 /**
  * The arguments for the SendApduUseCase.
@@ -40,11 +40,9 @@ export class SendApduUseCase {
   constructor(
     @inject(deviceSessionTypes.DeviceSessionService)
     sessionService: DeviceSessionService,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._sessionService = sessionService;
-    this._logger = loggerFactory("SendApduUseCase");
+    this._logger = getLogger("SendApduUseCase");
   }
 
   async execute({

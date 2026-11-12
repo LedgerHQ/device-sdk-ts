@@ -1,8 +1,6 @@
 import { type DeviceModelId } from "@api/device/DeviceModel";
 import { type ConnectionType } from "@api/discovery/ConnectionType";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type ConnectedDevice } from "@api/transport/model/ConnectedDevice";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { type ConnectUseCase } from "./ConnectUseCase";
 import { type DisconnectUseCase } from "./DisconnectUseCase";
@@ -12,7 +10,6 @@ vi.mock("uuid", () => ({
   v4: vi.fn().mockReturnValue("newSessionId"),
 }));
 
-let logger: LoggerPublisherService;
 let connectUseCase: ConnectUseCase;
 let disconnectUseCase: DisconnectUseCase;
 
@@ -27,10 +24,8 @@ describe("ReconnectUseCase", () => {
     modelId: "model-id" as unknown as DeviceModelId,
     name: "device-name",
   };
-  const tag = "logger-tag";
 
   beforeAll(() => {
-    logger = new DefaultLoggerPublisherService([], tag);
     connectUseCase = {} as ConnectUseCase;
     disconnectUseCase = {} as DisconnectUseCase;
   });
@@ -44,11 +39,7 @@ describe("ReconnectUseCase", () => {
     connectUseCase.execute = vi.fn().mockResolvedValue(newSessionId);
     disconnectUseCase.execute = vi.fn().mockResolvedValue(undefined);
 
-    const usecase = new ReconnectUseCase(
-      connectUseCase,
-      disconnectUseCase,
-      () => logger,
-    );
+    const usecase = new ReconnectUseCase(connectUseCase, disconnectUseCase);
 
     // When
     const sessionId = await usecase.execute({
@@ -72,11 +63,7 @@ describe("ReconnectUseCase", () => {
     disconnectUseCase.execute = vi.fn().mockRejectedValue(disconnectError);
     connectUseCase.execute = vi.fn();
 
-    const usecase = new ReconnectUseCase(
-      connectUseCase,
-      disconnectUseCase,
-      () => logger,
-    );
+    const usecase = new ReconnectUseCase(connectUseCase, disconnectUseCase);
 
     // When / Then
     await expect(
@@ -94,11 +81,7 @@ describe("ReconnectUseCase", () => {
     disconnectUseCase.execute = vi.fn().mockResolvedValue(undefined);
     connectUseCase.execute = vi.fn().mockRejectedValue(connectError);
 
-    const usecase = new ReconnectUseCase(
-      connectUseCase,
-      disconnectUseCase,
-      () => logger,
-    );
+    const usecase = new ReconnectUseCase(connectUseCase, disconnectUseCase);
 
     // When / Then
     await expect(

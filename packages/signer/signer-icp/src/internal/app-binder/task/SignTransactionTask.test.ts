@@ -5,7 +5,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 import { vi } from "vitest";
@@ -42,12 +41,10 @@ const inspect = (command: SignTransactionCommand) => {
 describe("SignTransactionTask", () => {
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
-  let loggerMock: LoggerPublisherService;
 
   beforeEach(() => {
     sendCommandMock = vi.fn();
     apiMock = { sendCommand: sendCommandMock } as unknown as InternalApi;
-    loggerMock = { debug: vi.fn() } as unknown as LoggerPublisherService;
   });
 
   describe("run", () => {
@@ -60,11 +57,10 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce(CommandResultFactory({ data: Nothing })) // ADD
         .mockResolvedValueOnce(CommandResultFactory({ data: Just(signature) })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, transaction },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+      });
 
       // ACT
       const result = await task.run();
@@ -109,11 +105,11 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce(CommandResultFactory({ data: Nothing })) // ADD
         .mockResolvedValueOnce(CommandResultFactory({ data: Just(signature) })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, transaction, stake: true },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+        stake: true,
+      });
 
       // ACT
       await task.run();
@@ -135,11 +131,10 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(CommandResultFactory({ data: Just(signature) })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, transaction },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction,
+      });
 
       // ACT
       const result = await task.run();
@@ -156,11 +151,10 @@ describe("SignTransactionTask", () => {
 
     it("should refuse an empty transaction without touching the device", async () => {
       // ARRANGE
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, transaction: new Uint8Array(0) },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction: new Uint8Array(0),
+      });
 
       // ACT
       const result = await task.run();
@@ -185,11 +179,10 @@ describe("SignTransactionTask", () => {
       });
       sendCommandMock.mockResolvedValueOnce(commandError);
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, transaction: new Uint8Array(10) },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction: new Uint8Array(10),
+      });
 
       // ACT
       const result = await task.run();
@@ -215,11 +208,10 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(commandError); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, transaction: new Uint8Array(50) },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction: new Uint8Array(50),
+      });
 
       // ACT
       const result = await task.run();
@@ -239,11 +231,10 @@ describe("SignTransactionTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(CommandResultFactory({ data: Nothing })); // LAST
 
-      const task = new SignTransactionTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, transaction: new Uint8Array(50) },
-        loggerMock,
-      );
+      const task = new SignTransactionTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        transaction: new Uint8Array(50),
+      });
 
       // ACT
       const result = await task.run();

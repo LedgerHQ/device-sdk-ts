@@ -1,10 +1,10 @@
 import { inject, injectable } from "inversify";
 
 import { type DeviceSessionId } from "@api/device-session/types";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 
 export type DisableDeviceSessionRefresherUseCaseArgs = {
   sessionId: DeviceSessionId;
@@ -20,10 +20,8 @@ export class DisableDeviceSessionRefresherUseCase {
   constructor(
     @inject(deviceSessionTypes.DeviceSessionService)
     private readonly _sessionService: DeviceSessionService,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._logger = loggerFactory("DisableDeviceSessionRefresherUseCase");
+    this._logger = getLogger("DisableDeviceSessionRefresherUseCase");
   }
 
   execute({ sessionId, blockerId }: DisableDeviceSessionRefresherUseCaseArgs) {

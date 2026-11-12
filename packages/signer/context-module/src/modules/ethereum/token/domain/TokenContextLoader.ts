@@ -1,12 +1,12 @@
 import {
   DeviceModelId,
+  getLogger,
   HexaString,
   isHexaString,
-  LoggerPublisherService,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { configTypes } from "@/config/di/configTypes";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
 import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
@@ -50,12 +50,10 @@ export class TokenContextLoader implements ContextLoader<TokenContextInput> {
     dataSource: TokenDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._dataSource = dataSource;
     this._certificateLoader = certificateLoader;
-    this.logger = loggerFactory("TokenContextLoader");
+    this.logger = getLogger("ContextModule", "TokenContextLoader");
   }
 
   canHandle(

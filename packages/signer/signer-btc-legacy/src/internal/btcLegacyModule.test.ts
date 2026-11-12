@@ -29,7 +29,6 @@ describe("btcLegacyModuleFactory", () => {
       .bind(btcLegacyTypes.SessionId)
       .toConstantValue("session-id" as DeviceSessionId);
     container.bind(btcLegacyTypes.Profile).toConstantValue(LITECOIN_PROFILE);
-    container.bind(btcLegacyTypes.DmkLoggerFactory).toConstantValue(vi.fn());
     container.loadSync(btcLegacyModuleFactory());
   });
 

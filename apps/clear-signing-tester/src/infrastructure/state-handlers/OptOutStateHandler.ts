@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -20,8 +23,6 @@ export class OptOutStateHandler implements StateHandler {
   private readonly logger: LoggerPublisherService;
 
   constructor(
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(TYPES.DeviceController)
     private readonly deviceController: DeviceController,
     @inject(TYPES.ScreenshotSaver)
@@ -33,7 +34,7 @@ export class OptOutStateHandler implements StateHandler {
     @inject(TYPES.LogLevel)
     private readonly logLevel: CliLogLevel,
   ) {
-    this.logger = this.loggerFactory("opt-out-state-handler");
+    this.logger = getLogger("opt-out-state-handler");
   }
 
   async handle(ctx: { input: SignableInput }): Promise<StateHandlerResult> {

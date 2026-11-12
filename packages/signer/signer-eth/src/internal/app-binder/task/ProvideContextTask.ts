@@ -5,6 +5,7 @@ import {
 import {
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidStatusWordError,
   LoadCertificateCommand,
@@ -45,7 +46,6 @@ export type ProvideContextTaskArgs = {
   /**
    * Logger factory for creating loggers with custom tags.
    */
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type ProvideContextTaskResult = CommandResult<unknown, EthErrorCodes>;
@@ -64,7 +64,7 @@ export class ProvideContextTask {
       args: SendPayloadInChunksTaskArgs<unknown>,
     ) => new SendPayloadInChunksTask(api, args),
   ) {
-    this._logger = _args.loggerFactory("ProvideContextTask");
+    this._logger = getLogger("SignerEth", "ProvideContextTask");
   }
 
   async run(): Promise<ProvideContextTaskResult> {

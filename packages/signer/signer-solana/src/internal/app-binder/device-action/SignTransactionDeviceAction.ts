@@ -2,6 +2,7 @@ import {
   type CommandResult,
   type DeviceActionStateMachine,
   DeviceSessionStateType,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -105,8 +106,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       resolveSigningRoute,
     } = this.extractDependencies(internalApi);
 
-    const loggerFactory = this.getLoggerFactory(internalApi);
-    const logger = loggerFactory("SignTransactionDeviceAction");
+    const logger = getLogger("SignerSolana", "SignTransactionDeviceAction");
 
     const disabledFeaturesSet:
       | ReadonlySet<SolanaSignerFeaturesNames>
@@ -177,7 +177,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               transaction: this.input.transaction,
               contextModule: this.input.contextModule,
             },
-            loggerFactory: this.getLoggerFactory(internalApi),
           },
         ).makeStateMachine(internalApi),
         provisionGenericClearSignStateMachine:
@@ -187,7 +186,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               transaction: this.input.transaction,
               contextModule: this.input.contextModule,
             },
-            loggerFactory: this.getLoggerFactory(internalApi),
           }).makeStateMachine(internalApi),
         provisionBasicClearSignStateMachine:
           new ProvisionBasicClearSignDeviceAction({
@@ -198,21 +196,18 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               transaction: this.input.transaction,
               contextModule: this.input.contextModule,
             },
-            loggerFactory: this.getLoggerFactory(internalApi),
           }).makeStateMachine(internalApi),
         signGenericClearSignStateMachine: new SignGenericClearSignDeviceAction({
           input: {
             derivationPath: this.input.derivationPath,
             transaction: this.input.transaction,
           },
-          loggerFactory: this.getLoggerFactory(internalApi),
         }).makeStateMachine(internalApi),
         signBasicClearSignStateMachine: new SignBasicClearSignDeviceAction({
           input: {
             derivationPath: this.input.derivationPath,
             transaction: this.input.transaction,
           },
-          loggerFactory: this.getLoggerFactory(internalApi),
         }).makeStateMachine(internalApi),
       },
       guards: {
@@ -729,7 +724,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 signerAppVersion: context._internalState.appConfig!.version,
                 deviceModelId: sessionState.deviceModelId,
                 deviceVersion,
-                loggerFactory,
               } satisfies SolanaSigningReportTaskArgs;
             },
             onDone: [
@@ -822,7 +816,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           this.input.transaction,
         );
       } catch (error) {
-        this.getLoggerFactory(internalApi)("NormalizeTransaction").warn(
+        getLogger("SignerSolana", "NormalizeTransaction").warn(
           "[normalizeTransaction] format detection failed; treating input as message bytes",
           { data: { error: String(error) } },
         );
@@ -870,7 +864,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           leadingAllowed: [COMPUTE_BUDGET_PROGRAM_ID],
         }).match(parsed.unsafeCoerce());
       } catch (error) {
-        this.getLoggerFactory(internalApi)("ResolveSigningRoute").warn(
+        getLogger("SignerSolana", "ResolveSigningRoute").warn(
           "[resolveSigningRoute] failed; keeping the generic clear-sign path",
           { data: { error: String(error) } },
         );

@@ -1,4 +1,4 @@
-import { inject, injectable } from "inversify";
+import { injectable } from "inversify";
 import { Either, Left, Maybe, Right } from "purify-ts";
 import { v4 } from "uuid";
 
@@ -14,14 +14,14 @@ import type {
   ApduSenderServiceConstructorArgs,
 } from "@api/device-session/service/ApduSenderService";
 import { FramerUtils } from "@api/device-session/utils/FramerUtils";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import {
   FramerApduError,
   FramerOverflowError,
 } from "@internal/device-session/model/Errors";
 import { Frame } from "@internal/device-session/model/Frame";
 import { FrameHeader } from "@internal/device-session/model/FrameHeader";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { DmkError } from "@root/src/api/Error";
 /**
  * Default implementation of ApduSenderService
@@ -41,21 +41,16 @@ export class DefaultApduSenderService implements ApduSenderService {
    * @param frameSize
    * @param channel
    * @param padding
-   * @param loggerServiceFactory
    */
-  constructor(
-    {
-      frameSize,
-      channel = Maybe.zero(),
-      padding = false,
-    }: ApduSenderServiceConstructorArgs,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-  ) {
+  constructor({
+    frameSize,
+    channel = Maybe.zero(),
+    padding = false,
+  }: ApduSenderServiceConstructorArgs) {
     this._frameSize = frameSize;
     this._channel = channel;
     this._padding = padding;
-    this._logger = loggerServiceFactory("DefaultApduSenderService");
+    this._logger = getLogger("DefaultApduSenderService");
   }
 
   /**

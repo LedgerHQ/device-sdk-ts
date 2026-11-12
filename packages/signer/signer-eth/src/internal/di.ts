@@ -2,7 +2,6 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
@@ -46,14 +45,6 @@ export const makeContainer = ({
   container
     .bind<EvmAddressBook>(externalTypes.AddressBook)
     .toConstantValue(addressBook ?? EMPTY_EVM_ADDRESS_BOOK);
-
-  container
-    .bind<
-      (tag: string) => LoggerPublisherService
-    >(externalTypes.DmkLoggerFactory)
-    .toConstantValue((tag: string) =>
-      dmk.getLoggerFactory()(["SignerEth", tag]),
-    );
 
   container.loadSync(
     addressModuleFactory(),

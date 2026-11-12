@@ -1,4 +1,7 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -17,10 +20,8 @@ export class TestSafeAddressUseCase {
     private readonly safeAddressRepository: SafeAddressRepository,
     @inject(TYPES.ScreenAnalyzerService)
     private readonly screenAnalyzer: ScreenAnalyzerService,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("test-safe-address");
+    this.logger = getLogger("test-safe-address");
   }
 
   async execute(input: SafeAddressInput): Promise<TestResult> {

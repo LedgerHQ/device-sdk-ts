@@ -12,9 +12,11 @@ const mockLogger = {
   info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
-  subscribers: [],
 };
-const mockLoggerFactory = () => mockLogger;
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: () => mockLogger,
+}));
 
 describe("HttpTokenAccountStateDataSource", () => {
   let datasource: TokenAccountStateDataSource;
@@ -30,7 +32,6 @@ describe("HttpTokenAccountStateDataSource", () => {
     httpMock = { get: vi.fn() };
     datasource = new HttpTokenAccountStateDataSource(
       config,
-      mockLoggerFactory,
       httpMock as unknown as DmkNetworkClient,
     );
   });

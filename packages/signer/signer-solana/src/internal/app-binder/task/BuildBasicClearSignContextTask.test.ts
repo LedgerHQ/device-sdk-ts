@@ -19,14 +19,6 @@ import {
   BuildBasicClearSignContextTask,
 } from "./BuildBasicClearSignContextTask";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const contextModuleMock: ContextModule = {
   getContexts: vi.fn(),
 } as unknown as ContextModule;
@@ -39,7 +31,6 @@ const trustedNameCert = {
 
 const defaultArgs = {
   contextModule: contextModuleMock,
-  loggerFactory: mockLoggerFactory,
   transactionBytes: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
   options: {
     tokenAddress: "someAddress",

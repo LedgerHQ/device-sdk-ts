@@ -1,5 +1,3 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
-
 import { configTypes } from "./config/di/configTypes";
 import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
@@ -28,17 +26,8 @@ describe("ContextModuleBuilder", () => {
   const defaultWeb3ChecksConfig = {
     url: "https://web3checks/v1",
   };
-  const mockLoggerFactory = () => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    subscribers: [],
-  });
-
   const defaultBuilderArgs: ContextModuleConstructorArgs = {
     originToken: "test",
-    loggerFactory: mockLoggerFactory,
   };
 
   beforeEach(() => {
@@ -296,101 +285,6 @@ describe("ContextModuleBuilder", () => {
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
-    });
-  });
-
-  describe("loggerFactory", () => {
-    it("should use the default empty logger when loggerFactory is not provided", () => {
-      const contextModuleBuilder = new ContextModuleBuilder({
-        originToken: "test",
-      });
-
-      const res = contextModuleBuilder
-        .setChain(ContextModuleChainID.Ethereum)
-        .build();
-      const loggerFactory = (res as DefaultContextModule)["_container"].get<
-        (tag: string) => LoggerPublisherService
-      >(configTypes.ContextModuleLoggerFactory);
-
-      expect(res).toBeInstanceOf(DefaultContextModule);
-      expect(loggerFactory).toBeDefined();
-
-      const logger = loggerFactory("test");
-      expect(logger.debug).toBeDefined();
-      expect(logger.info).toBeDefined();
-      expect(logger.warn).toBeDefined();
-      expect(logger.error).toBeDefined();
-      expect(logger.subscribers).toEqual([]);
-
-      expect(() => logger.debug("test")).not.toThrow();
-      expect(() => logger.info("test")).not.toThrow();
-      expect(() => logger.warn("test")).not.toThrow();
-      expect(() => logger.error("test")).not.toThrow();
-    });
-
-    it("should set the loggerFactory when provided in the constructor", () => {
-      const loggerFactory: (tag: string) => LoggerPublisherService = vi.fn();
-
-      const contextModuleBuilder = new ContextModuleBuilder({
-        ...defaultBuilderArgs,
-        loggerFactory,
-      });
-
-      const res = contextModuleBuilder
-        .setChain(ContextModuleChainID.Ethereum)
-        .build();
-      const boundLoggerFactory = (res as DefaultContextModule)[
-        "_container"
-      ].get<(tag: string) => LoggerPublisherService>(
-        configTypes.ContextModuleLoggerFactory,
-      );
-
-      expect(res).toBeInstanceOf(DefaultContextModule);
-      expect(boundLoggerFactory).toBe(loggerFactory);
-    });
-
-    it("should set the loggerFactory via setLoggerFactory", () => {
-      const loggerFactory: (tag: string) => LoggerPublisherService = vi.fn();
-
-      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
-
-      const res = contextModuleBuilder
-        .setLoggerFactory(loggerFactory)
-        .setChain(ContextModuleChainID.Ethereum)
-        .build();
-      const boundLoggerFactory = (res as DefaultContextModule)[
-        "_container"
-      ].get<(tag: string) => LoggerPublisherService>(
-        configTypes.ContextModuleLoggerFactory,
-      );
-
-      expect(res).toBeInstanceOf(DefaultContextModule);
-      expect(boundLoggerFactory).toBe(loggerFactory);
-    });
-
-    it("should override constructor loggerFactory with setLoggerFactory", () => {
-      const constructorLoggerFactory: (tag: string) => LoggerPublisherService =
-        vi.fn();
-      const overrideLoggerFactory: (tag: string) => LoggerPublisherService =
-        vi.fn();
-
-      const contextModuleBuilder = new ContextModuleBuilder({
-        ...defaultBuilderArgs,
-        loggerFactory: constructorLoggerFactory,
-      });
-
-      const res = contextModuleBuilder
-        .setLoggerFactory(overrideLoggerFactory)
-        .setChain(ContextModuleChainID.Ethereum)
-        .build();
-      const boundLoggerFactory = (res as DefaultContextModule)[
-        "_container"
-      ].get<(tag: string) => LoggerPublisherService>(
-        configTypes.ContextModuleLoggerFactory,
-      );
-
-      expect(boundLoggerFactory).toBe(overrideLoggerFactory);
-      expect(boundLoggerFactory).not.toBe(constructorLoggerFactory);
     });
   });
 

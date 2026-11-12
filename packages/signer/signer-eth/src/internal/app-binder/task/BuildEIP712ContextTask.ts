@@ -12,7 +12,6 @@ import {
   type DeviceSessionState,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
@@ -54,7 +53,6 @@ export class BuildEIP712ContextTask {
     private readonly derivationPath: string,
     private readonly appConfig: GetConfigCommandResponse,
     private readonly from: string,
-    private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     private readonly buildFullContextFactory = (
       internalApi: InternalApi,
       args: BuildFullContextsTaskArgs,
@@ -139,7 +137,6 @@ export class BuildEIP712ContextTask {
       )
         .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_EIP712_JOIN_ID)
         .check(),
-      loggerFactory: this.loggerFactory,
     };
     return {
       ...provideTaskArgs,
@@ -273,7 +270,6 @@ export class BuildEIP712ContextTask {
         derivationPath: this.derivationPath,
         subset,
         deviceModelId: deviceState.deviceModelId,
-        loggerFactory: this.loggerFactory,
       }).run();
       if (
         calldataContext.clearSigningType === ClearSigningType.EIP7730 ||

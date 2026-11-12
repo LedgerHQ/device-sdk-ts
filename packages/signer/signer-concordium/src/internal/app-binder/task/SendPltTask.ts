@@ -2,6 +2,7 @@ import {
   APDU_MAX_PAYLOAD,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -70,10 +71,14 @@ type SendPltTaskArgs = {
  * whether or not it is sent.
  */
 export class SendPltTask {
+  private readonly logger: LoggerPublisherService = getLogger(
+    "SignerConcordium",
+    "SendPltTask",
+  );
+
   constructor(
     private readonly api: InternalApi,
     private readonly args: SendPltTaskArgs,
-    private readonly logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<

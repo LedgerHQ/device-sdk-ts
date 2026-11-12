@@ -17,6 +17,7 @@ import {
   type DmkError,
   formatApduReceivedLog,
   formatApduSentLog,
+  getLogger,
   type LoggerPublisherService,
   SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
@@ -50,7 +51,7 @@ export class RNBleApduSender
 {
   private _dependencies: RNBleApduSenderDependencies;
   private _isDeviceReady: BehaviorSubject<boolean>;
-  private _logger: LoggerPublisherService;
+  private _logger: LoggerPublisherService = getLogger("RNBleApduSender");
   private _apduSender: Maybe<ApduSenderService>;
   private readonly _apduSenderFactory: ApduSenderServiceFactory;
   private readonly _apduReceiver: ApduReceiverService;
@@ -63,17 +64,13 @@ export class RNBleApduSender
     | BleCharacteristicSubscription
     | undefined = undefined;
 
-  constructor(
-    {
-      apduSenderFactory,
-      apduReceiverFactory,
-      dependencies,
-    }: RNBleApduSenderConstructorArgs,
-    loggerServiceFactory: (tag: string) => LoggerPublisherService,
-  ) {
+  constructor({
+    apduSenderFactory,
+    apduReceiverFactory,
+    dependencies,
+  }: RNBleApduSenderConstructorArgs) {
     this._dependencies = dependencies;
     this._isDeviceReady = new BehaviorSubject<boolean>(false);
-    this._logger = loggerServiceFactory("RNBleApduSender");
     this._apduSenderFactory = apduSenderFactory;
     this._apduSender = Nothing;
     this._apduReceiver = apduReceiverFactory();

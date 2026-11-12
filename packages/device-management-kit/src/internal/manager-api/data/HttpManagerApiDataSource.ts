@@ -2,10 +2,10 @@ import { inject, injectable } from "inversify";
 import { EitherAsync, Just, Maybe, Nothing } from "purify-ts";
 
 import { type DmkConfig } from "@api/DmkConfig";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { DmkNetworkClient } from "@api/network/DmkNetworkClient";
 import { DmkNetworkClientError } from "@api/network/DmkNetworkClientError";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import {
   type Application,
@@ -64,13 +64,11 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
   constructor(
     @inject(managerApiTypes.DmkConfig)
     { managerApiUrl, provider, firmwareDistributionSalt }: DmkConfig,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.http = new DmkNetworkClient({ baseUrl: managerApiUrl });
     this._provider = provider;
     this._firmwareDistributionSalt = firmwareDistributionSalt;
-    this._logger = loggerFactory("HttpManagerApiDataSource");
+    this._logger = getLogger("HttpManagerApiDataSource");
   }
 
   setProvider(provider: number): void {

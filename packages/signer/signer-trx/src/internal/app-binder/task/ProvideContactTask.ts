@@ -3,6 +3,7 @@ import {
   type SendProvideContactPayloadArgs,
 } from "@ledgerhq/device-contacts-kit";
 import {
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -36,7 +37,7 @@ export class ProvideContactTask {
     });
     if (payload === undefined) return;
 
-    const logger = this.api.loggerFactory?.("ProvideContactTask");
+    const logger = getLogger("SignerTron", "ProvideContactTask");
     const result = await sendProvideContactPayload(this.api, {
       payload,
       logger,
