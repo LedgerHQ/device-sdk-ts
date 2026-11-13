@@ -51,4 +51,18 @@ export class ResponsesDriver {
     await expect(last).toContainText(until, { timeout });
     return last.innerText();
   }
+
+  /**
+   * Text of every response, oldest first. The box renders only the last ten
+   * until its "Show all" button is clicked, so this clicks it first.
+   */
+  async allTexts(): Promise<string[]> {
+    const showAll = this.page
+      .getByTestId("box_device-commands-responses")
+      .getByRole("button", { name: /^Show all/ });
+    if ((await showAll.count()) > 0) {
+      await showAll.click();
+    }
+    return this.page.locator(RESPONSE_ITEMS).allInnerTexts();
+  }
 }
