@@ -8,7 +8,9 @@ import {
   type ScenarioAction,
   type ScenarioCoinApp,
   type ScenarioDevice,
+  type ScenarioOptions,
 } from "@root/src/domain/models/Scenario";
+import { TRANSACTION_CHECK_DEVICES } from "@root/src/domain/models/TransactionCheck";
 
 /** Directory holding the scenario files, relative to the app root. */
 export const SCENARIOS_DIR = "ressources";
@@ -159,6 +161,22 @@ function toScenario(raw: Json, path: string): Scenario {
     fail(`needs a non-empty "cases" list.`);
   }
 
+  const options = raw["options"] as ScenarioOptions | undefined;
+  if (options?.transactionCheckEnabled === true) {
+    // The verdict lines a run checks for are the Solana app's.
+    if (coinApp !== "Solana") {
+      fail(`sets "transactionCheckEnabled", which only Solana supports.`);
+    }
+    const withoutCheck = (devices as ScenarioDevice[]).find(
+      (device) => !TRANSACTION_CHECK_DEVICES.includes(device),
+    );
+    if (withoutCheck !== undefined) {
+      fail(
+        `sets "transactionCheckEnabled" but lists ${JSON.stringify(withoutCheck)}, which has no Transaction Check.`,
+      );
+    }
+  }
+
   return {
     name: `${group}:${name}`,
     group,
@@ -169,9 +187,7 @@ function toScenario(raw: Json, path: string): Scenario {
     ...(scenarioAction === "solanaProgram"
       ? { program: name }
       : { fixture: path }),
-    ...(raw["options"]
-      ? { options: raw["options"] as Scenario["options"] }
-      : {}),
+    ...(options ? { options } : {}),
     ...(typeof raw["osVersion"] === "string"
       ? { osVersion: raw["osVersion"] }
       : {}),

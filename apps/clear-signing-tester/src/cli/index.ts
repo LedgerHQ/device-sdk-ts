@@ -218,6 +218,7 @@ function buildRuntime(
     scanLimit: options.scanLimit,
     samplesPerInstruction: options.samplesPerInstruction,
     originToken: process.env["GATING_TOKEN"] || "test-origin-token",
+    customSpeculosSeed: !!process.env["SPECULOS_SEED"],
     calMode,
     osVersion: options.osVersion,
     ethAppVersion: options.appEthVersion,

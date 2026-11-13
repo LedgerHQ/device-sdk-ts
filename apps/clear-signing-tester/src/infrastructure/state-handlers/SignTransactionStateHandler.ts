@@ -125,6 +125,11 @@ export class SignTransactionStateHandler implements StateHandler {
               "Detected 'blind signing ahead' screen, tapping 'Accept risk and continue'",
             );
             await this.deviceController.acceptBlindSigning();
+          } else if (await this.screenAnalyzer.isTransactionCheckWarning()) {
+            this.logger.debug(
+              "Detected a Transaction Check risk or threat warning, continuing to the review",
+            );
+            await this.deviceController.acceptTransactionCheckWarning();
           } else if (await this.screenAnalyzer.isStepAcceptPage()) {
             this.logger.debug("Accepting a review step");
             await this.deviceController.signTransaction();

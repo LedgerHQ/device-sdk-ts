@@ -44,9 +44,36 @@ jobs:
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
+  # The seed is a secret of the develop-only solana-tx-check environment, which
+  # would fail the job on any other branch (e.g. a version bump's).
+  cs-tester-transaction-check:
+    name: Solana Transaction Check Test (${{ matrix.device }})
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ledgerhq-device-sdk
+    environment: solana-tx-check
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, flex]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          scenarios: solana-transaction-check
+          device: ${{ matrix.device }}
+          concurrency: "10"
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: solana-transaction-check-nightly-logs
+          summary-prefix: "Solana Transaction Check Test"
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          speculos-seed: ${{ secrets.SPECULOS_SEED }}
+
   notify:
     name: Notify Slack
-    needs: [cs-tester]
+    needs: [cs-tester, cs-tester-transaction-check]
     if: always()
     runs-on: ubuntu-latest
     steps:

@@ -9,6 +9,11 @@ import {
   type ScreenTextAnalysis,
 } from "@root/src/domain/services/ScreenAnalyzer";
 
+// Strip all whitespace for comparison to ignore formatting differences, such
+// as a label the device wraps over two lines
+const stripWhitespace = (text: string) =>
+  text.toLowerCase().replace(/\s+/g, "");
+
 @injectable()
 export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
   private readonly logger: LoggerPublisherService;
@@ -26,9 +31,10 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
   async analyzeAccumulatedTexts(
     expectedTexts: string[],
     unexpectedTexts: string[] = [],
+    oneOfTexts: readonly string[] = [],
   ): Promise<ScreenTextAnalysis> {
     this.logger.debug("Analyzing accumulated screen texts", {
-      data: { expectedTexts, unexpectedTexts },
+      data: { expectedTexts, unexpectedTexts, oneOfTexts },
     });
     const accumulatedTexts = await this.getAndClearAccumulatedTexts();
 
@@ -39,10 +45,6 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
 
     const found: string[] = [];
     const missing: string[] = [];
-
-    // Strip all whitespace for comparison to ignore formatting differences
-    const stripWhitespace = (text: string) =>
-      text.toLowerCase().replace(/\s+/g, "");
 
     const isOnScreen = (needle: string) => {
       const stripped = stripWhitespace(needle);
@@ -60,8 +62,11 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     }
 
     const forbidden = unexpectedTexts.filter(isOnScreen);
+    const foundOneOf = oneOfTexts.filter(isOnScreen);
+    const oneOfSatisfied = oneOfTexts.length === 0 || foundOneOf.length > 0;
 
-    const containsAll = missing.length === 0 && forbidden.length === 0;
+    const containsAll =
+      missing.length === 0 && forbidden.length === 0 && oneOfSatisfied;
 
     this.logger.info(
       `Summary: ${found.length}/${expectedTexts.length} expected texts found`,
@@ -76,6 +81,11 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
         `Texts that should not have appeared: ${forbidden.map((t) => `"${t}"`).join(", ")}`,
       );
     }
+    if (!oneOfSatisfied) {
+      this.logger.info(
+        `None of these texts appeared: ${oneOfTexts.map((t) => `"${t}"`).join(", ")}`,
+      );
+    }
     this.logger.info(
       `Result: ${containsAll ? "All expected texts found (clear signed)" : "Assertion not satisfied (partially clear signed)"}`,
     );
@@ -87,12 +97,13 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
         found,
         missing,
         forbidden,
+        foundOneOf,
         containsAll,
         totalAccumulatedTexts: accumulatedTexts.length,
       },
     });
 
-    return { containsAll, found, missing, forbidden };
+    return { containsAll, found, missing, forbidden, foundOneOf };
   }
 
   /** {@inheritDoc ScreenAnalyzerService.screenContains} */
@@ -237,6 +248,34 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     }
 
     return isScreen;
+  }
+
+  async isTransactionCheckOptInShown(): Promise<boolean> {
+    const text = stripWhitespace((await this.readScreenContent()).text);
+    // Not "transaction check" alone: the review's verdict line has it too.
+    const isShown =
+      text.includes("maybelater") || text.includes("transactioncheckenabled");
+
+    if (isShown) {
+      this.logger.debug("Transaction Check opt-in is still on screen");
+    }
+
+    return isShown;
+  }
+
+  async isTransactionCheckWarning(): Promise<boolean> {
+    const text = stripWhitespace((await this.readScreenContent()).text);
+    // The review's first page repeats "Potential risk" / "Critical threat" as
+    // its verdict line, but only the warning offers "Back to safety".
+    const isWarning =
+      text.includes("backtosafety") &&
+      (text.includes("potentialrisk") || text.includes("criticalthreat"));
+
+    if (isWarning) {
+      this.logger.debug("Current screen is a Transaction Check warning");
+    }
+
+    return isWarning;
   }
 
   async isHomePage(): Promise<boolean> {

@@ -53,6 +53,23 @@ describe("ContainerScenarioRunner", () => {
     expect(outcome.failures).toBe(1);
   });
 
+  it("acquires no emulator for a Transaction Check scenario without SPECULOS_SEED", async () => {
+    const run: ScenarioRun = {
+      scenario: {
+        ...RUN.scenario,
+        coinApp: "Solana",
+        options: { transactionCheckEnabled: true },
+      },
+      device: "stax",
+    };
+
+    const outcome = await new ContainerScenarioRunner(RUNTIME).run(run);
+
+    expect(outcome.errorMessage).toBe("needs GH SPECULOS_SEED");
+    expect(outcome.durationMs).toBe(0);
+    expect(outcome.failures).toBe(1);
+  });
+
   // Naming one elsewhere would run the scenario as if it had none.
   it("refuses an address book on a coin app whose signer takes none", async () => {
     const run: ScenarioRun = {
