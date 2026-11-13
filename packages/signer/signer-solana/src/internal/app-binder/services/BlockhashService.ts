@@ -34,7 +34,8 @@ const SHORTVEC_MAX_SHIFT = 35;
  */
 export type BlockhashRefreshBlocker =
   | "durableNonce"
-  | "multipleSigners"
+  | "existingSignatures"
+  | "blockhashUnknownToCaller"
   | "undecodable";
 
 @injectable()
@@ -124,15 +125,32 @@ export class BlockhashService {
    * invalidate it, and why:
    *   - `durableNonce`: the first instruction is `AdvanceNonceAccount`, so the
    *     blockhash field holds the nonce value, which must not change.
-   *   - `multipleSigners`: other signers either already signed the original
-   *     message or will sign it after us, so they would not match.
+   *   - `existingSignatures`: the message has several signers and the
+   *     transaction already holds signatures (or it is unknown whether it
+   *     does), which a new blockhash would invalidate. When no one has signed
+   *     yet, the co-signers sign after us, so they can sign the refreshed
+   *     message too.
+   *   - `blockhashUnknownToCaller`: the message has several signers, no one
+   *     has signed yet, but the caller does not supply the new blockhash
+   *     itself. Only the signature is returned, so the caller could not give
+   *     the co-signers the refreshed message our signature covers.
    *   - `undecodable`: the message cannot be parsed, so neither can be ruled out.
    *
+   * @param options.hasSignatures - Whether the transaction the message comes
+   *   from already holds real (non-placeholder) signatures. Only an explicit
+   *   `false` allows refreshing a multi-signer message.
+   * @param options.callerSuppliesBlockhash - Whether the new blockhash comes
+   *   from the caller (`fetchBlockhash`), so the caller knows which blockhash
+   *   was signed. Required to refresh a multi-signer message.
    * @returns The reason the blockhash must be kept, or `null` if it can be
    *   refreshed safely.
    */
   getRefreshBlocker(
     serializedMessage: Uint8Array,
+    options: {
+      hasSignatures?: boolean;
+      callerSuppliesBlockhash?: boolean;
+    } = {},
   ): BlockhashRefreshBlocker | null {
     const message = this.decodeMessage(serializedMessage);
     if (!message) {
@@ -163,7 +181,12 @@ export class BlockhashService {
     }
 
     if (message.header.numSignerAccounts > 1) {
-      return "multipleSigners";
+      if (options.hasSignatures !== false) {
+        return "existingSignatures";
+      }
+      if (options.callerSuppliesBlockhash !== true) {
+        return "blockhashUnknownToCaller";
+      }
     }
 
     return null;

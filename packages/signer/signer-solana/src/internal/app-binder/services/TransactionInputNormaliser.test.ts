@@ -203,6 +203,24 @@ function withSignatures(count: number, message: Uint8Array): Uint8Array {
   return wire;
 }
 
+/**
+ * Returns a copy of a full-wire transaction with every signature slot zeroed,
+ * as serialized for a transaction no one has signed yet.
+ */
+function withZeroedSignatures(
+  wireBytes: Uint8Array,
+  messageBytes: Uint8Array,
+): Uint8Array {
+  const unsigned = new Uint8Array(wireBytes);
+  if (messageBytes[0] === 0x81) {
+    unsigned.fill(0, messageBytes.length);
+  } else {
+    // Fewer than 128 signatures: the count is a single compact-u16 byte.
+    unsigned.fill(0, 1, wireBytes.length - messageBytes.length);
+  }
+  return unsigned;
+}
+
 describe("TransactionInputNormaliser", () => {
   let normaliser: TransactionInputNormaliser;
 
@@ -256,6 +274,28 @@ describe("TransactionInputNormaliser", () => {
         expect(wireBytes.length - result.messageBytes.length).toBe(1 + 2 * 64);
       });
 
+      it("reports hasSignatures only when a signature slot holds a real signature", async () => {
+        const { messageBytes, wireBytes } =
+          await buildTwoSignerTransaction(version);
+        const unsigned = withZeroedSignatures(wireBytes, messageBytes);
+        const partiallySigned = new Uint8Array(unsigned);
+        partiallySigned.set(wireBytes.subarray(1 + 64, 1 + 2 * 64), 1 + 64);
+
+        expect(normaliser.normalize(messageBytes).hasSignatures).toBe(false);
+        expect(normaliser.normalize(unsigned).hasSignatures).toBe(false);
+        expect(normaliser.normalize(partiallySigned).hasSignatures).toBe(true);
+        expect(normaliser.normalize(wireBytes).hasSignatures).toBe(true);
+      });
+
+      it("treats signer-filled 0x01 placeholders as no signature", async () => {
+        const { messageBytes, wireBytes } =
+          await buildTwoSignerTransaction(version);
+        const placeholders = new Uint8Array(wireBytes);
+        placeholders.fill(0x01, 1, wireBytes.length - messageBytes.length);
+
+        expect(normaliser.normalize(placeholders).hasSignatures).toBe(false);
+      });
+
       it("handles multiple random instructions with varying account/data sizes", async () => {
         for (let i = 0; i < 5; i++) {
           const { messageBytes, wireBytes } =
@@ -280,6 +320,8 @@ describe("TransactionInputNormaliser", () => {
 
         expect(result.messageBytes).toBe(truncated);
         expect(result.serializedForTxCheck).toBeUndefined();
+        // Unrecognised format: signatures can't be ruled out.
+        expect(result.hasSignatures).toBeUndefined();
       });
 
       it("falls back to raw bytes for input whose length matches neither a bare message nor a full transaction", async () => {
@@ -398,6 +440,7 @@ describe("TransactionInputNormaliser", () => {
     it("recognises a well-formed bare message and nothing else", () => {
       expect(normaliser.detect(assembleMessage())).toEqual({
         messageBytes: assembleMessage(),
+        hasSignatures: false,
       });
       expect(
         normaliser.detect(assembleMessage({ instructions: [[3, [0, 1]]] })),
@@ -476,6 +519,21 @@ describe("TransactionInputNormaliser", () => {
       // the tail is exactly 2 signatures, not 1 — proves the
       // numRequiredSignatures * 64 boundary is computed from the real count.
       expect(wireBytes.length - result.messageBytes.length).toBe(2 * 64);
+    });
+
+    it("reports hasSignatures only when a v1 signature slot holds a real signature", async () => {
+      const { messageBytes, wireBytes } = await buildTwoSignerTransaction(1);
+      const unsigned = withZeroedSignatures(wireBytes, messageBytes);
+      const partiallySigned = new Uint8Array(unsigned);
+      partiallySigned.set(
+        wireBytes.subarray(messageBytes.length + 64),
+        messageBytes.length + 64,
+      );
+
+      expect(normaliser.normalize(messageBytes).hasSignatures).toBe(false);
+      expect(normaliser.normalize(unsigned).hasSignatures).toBe(false);
+      expect(normaliser.normalize(partiallySigned).hasSignatures).toBe(true);
+      expect(normaliser.normalize(wireBytes).hasSignatures).toBe(true);
     });
 
     it("handles multiple random instructions with varying account/data sizes", async () => {

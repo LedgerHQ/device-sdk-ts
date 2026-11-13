@@ -1,6 +1,7 @@
 import { type CompiledTransactionMessage } from "@solana/transaction-messages";
 
 import { VERSIONED_MESSAGE_FLAG } from "./utils/messageVersion";
+import { containsSignature } from "./utils/signatures";
 import {
   compiledTransactionMessageDecoder,
   SIGNATURE_LENGTH,
@@ -18,6 +19,14 @@ import {
 export type NormalizedTransactionInput = {
   messageBytes: Uint8Array;
   serializedForTxCheck?: Uint8Array;
+  /**
+   * `true` when the input is a full wire-format transaction holding at least
+   * one real (non-placeholder) signature, `false` when it is a bare message or
+   * an unsigned transaction. Changing the message, e.g. by refreshing its
+   * blockhash, would invalidate those signatures. Left unset when the input
+   * format could not be recognised, so callers can't rule signatures out.
+   */
+  hasSignatures?: boolean;
 };
 
 /**
@@ -62,7 +71,7 @@ export class TransactionInputNormaliser {
     bytes: Uint8Array,
   ): NormalizedTransactionInput | null {
     if (this.isWellFormedMessage(bytes)) {
-      return { messageBytes: bytes };
+      return { messageBytes: bytes, hasSignatures: false };
     }
 
     // Extract message bytes directly from the raw bytes so the slice is
@@ -72,7 +81,11 @@ export class TransactionInputNormaliser {
       byteLength + sigCount * SIGNATURE_LENGTH,
     );
     if (this.isWellFormedMessage(messageBytes, sigCount)) {
-      return { messageBytes, serializedForTxCheck: bytes };
+      return {
+        messageBytes,
+        serializedForTxCheck: bytes,
+        hasSignatures: containsSignature(bytes, byteLength, sigCount),
+      };
     }
 
     return null;
@@ -168,7 +181,10 @@ export class TransactionInputNormaliser {
     ) {
       return null;
     }
-    return { messageBytes };
+    return {
+      messageBytes,
+      hasSignatures: containsSignature(bytes, 1, sigCount),
+    };
   }
 
   private decodeCompactU16(bytes: Uint8Array): {
@@ -193,7 +209,7 @@ export class TransactionInputNormaliser {
     }
 
     if (bytes.length === messageEnd) {
-      return { messageBytes: bytes };
+      return { messageBytes: bytes, hasSignatures: false };
     }
 
     const numRequiredSignatures = bytes[1]!;
@@ -202,6 +218,11 @@ export class TransactionInputNormaliser {
       return {
         messageBytes: bytes.subarray(0, messageEnd),
         serializedForTxCheck: bytes,
+        hasSignatures: containsSignature(
+          bytes,
+          messageEnd,
+          numRequiredSignatures,
+        ),
       };
     }
 

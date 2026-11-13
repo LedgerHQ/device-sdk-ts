@@ -129,7 +129,8 @@ const { observable, cancel } = signerSolana.signTransaction(
     Overrides the RPC URL from `SignerSolanaBuilder` for this call. Used only for fetching a fresh blockhash during delayed signing.
 
   - **delayed** `boolean` _(optional)_  
-    When `true`, uses the two-step delayed signing flow so the user's review time does not race the blockhash expiry. Requires the Solana app version to support delayed signing and either `solanaRPCURL` (builder or per-call) or `fetchBlockhash` to be provided. If the conditions are not met (missing RPC config or unsupported app version), the signer falls back to standard signing and logs a warning.
+    When `true`, uses the two-step delayed signing flow so the user's review time does not race the blockhash expiry. Requires the Solana app version to support delayed signing and either `solanaRPCURL` (builder or per-call) or `fetchBlockhash` to be provided. If the conditions are not met (missing RPC config or unsupported app version), the signer falls back to standard signing and logs a warning.  
+    The blockhash is kept as-is for durable-nonce transactions. For transactions with several signers, it is refreshed only when no signature is present yet **and** the blockhash comes from `fetchBlockhash`. Only the signature is returned, so you need to know the new blockhash to give your co-signers the message that was signed.
 
   - **fetchBlockhash** `() => Promise<Uint8Array>` _(optional)_  
     Custom callback to supply the fresh 32-byte blockhash for delayed signing instead of fetching via `solanaRPCURL`. When provided, `solanaRPCURL` is not required for the delayed path.

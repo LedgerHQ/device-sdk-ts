@@ -88,6 +88,9 @@ export class DefaultSignerSolana implements SignerSolana {
    *     Solana app version that supports delayed signing, and either a
    *     resolved RPC URL (builder and/or **solanaRPCURL** above) or
    *     **fetchBlockhash**. Otherwise the signer falls back to legacy signing.
+   *     For multi-signer transactions, the blockhash is refreshed only when no
+   *     signature is present yet and **fetchBlockhash** is provided, so the
+   *     caller knows which blockhash its co-signers must sign.
    *
    *   - **fetchBlockhash** `() => Promise<Uint8Array>`
    *     Optional. When `delayed: true`, use this instead of the default RPC
