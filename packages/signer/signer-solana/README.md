@@ -229,6 +229,49 @@ const subscription = observable.subscribe({
 
 - Clear signing only supports simple instructions like a single `transfer` or combos like `createAccount + fundAccount` or `createAccount + transfer`. If you are receiving `6808` error from device, most likely the instructions are not supported and blind signing is required.
 
+#### **Address book**
+
+Give the signer the user's address book to have the device show a saved contact
+name in place of the raw recipient address when it reviews a transaction:
+
+```ts
+const signer = new SignerSolanaBuilder({ dmk, sessionId })
+  .withAddressBook({
+    contactGroups: [
+      {
+        contactName: "Alice",
+        groupHandle, // returned when the contact was registered on the device
+        hmacProof,
+        externalAddresses: [
+          {
+            scope: "Solana",
+            address: "D2PPQSYFe83nDzk96FqGumVU8JA7J8vj2Rhjc2oXzEi5",
+            hmacRest,
+          },
+        ],
+      },
+    ],
+    ledgerAccounts: [],
+  })
+  .build();
+```
+
+Points to know:
+
+- The snapshot must be complete, and it is read as-is: the signer neither
+  mutates nor persists it. Build a new signer to pick up later changes.
+- Only Solana entries belong here, each with its base58 wallet public key.
+  Filter by blockchain family before you build the snapshot.
+- Only a transaction whose transfers all go to one recipient is matched: the
+  destination of a `SystemProgram` transfer, or the wallet owning the
+  associated token account a `TransferChecked` sends to. A plain SPL
+  `Transfer` (no mint) and a recipient behind an address lookup table are not
+  matched.
+- Nothing here can break a signature. An address book you do not supply, a
+  recipient that does not match, an app too old to support contacts, or a
+  contact the device rejects all leave the transaction signing as before,
+  against the raw address.
+
 ---
 
 ### Use Case 3: Sign Message

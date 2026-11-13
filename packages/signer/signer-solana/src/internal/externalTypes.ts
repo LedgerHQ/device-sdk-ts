@@ -4,4 +4,5 @@ export const externalTypes = {
   ContextModule: Symbol.for("ContextModule"),
   DmkLoggerFactory: Symbol.for("DmkLoggerFactory"),
   SolanaRPCURL: Symbol.for("SolanaRPCURL"),
+  AddressBook: Symbol.for("AddressBook"),
 };
