@@ -34,7 +34,7 @@ const SHORTVEC_MAX_SHIFT = 35;
  */
 export type BlockhashRefreshBlocker =
   | "durableNonce"
-  | "multipleSigners"
+  | "existingSignatures"
   | "undecodable";
 
 @injectable()
@@ -124,15 +124,22 @@ export class BlockhashService {
    * invalidate it, and why:
    *   - `durableNonce`: the first instruction is `AdvanceNonceAccount`, so the
    *     blockhash field holds the nonce value, which must not change.
-   *   - `multipleSigners`: other signers either already signed the original
-   *     message or will sign it after us, so they would not match.
+   *   - `existingSignatures`: the message has several signers and the
+   *     transaction already holds signatures (or it is unknown whether it
+   *     does), which a new blockhash would invalidate. When no one has signed
+   *     yet, the co-signers sign after us, so they can sign the refreshed
+   *     message too.
    *   - `undecodable`: the message cannot be parsed, so neither can be ruled out.
    *
+   * @param options.hasSignatures - Whether the transaction the message comes
+   *   from already holds real (non-placeholder) signatures. Only an explicit
+   *   `false` allows refreshing a multi-signer message.
    * @returns The reason the blockhash must be kept, or `null` if it can be
    *   refreshed safely.
    */
   getRefreshBlocker(
     serializedMessage: Uint8Array,
+    options: { hasSignatures?: boolean } = {},
   ): BlockhashRefreshBlocker | null {
     const message = this.decodeMessage(serializedMessage);
     if (!message) {
@@ -162,8 +169,11 @@ export class BlockhashService {
       return "durableNonce";
     }
 
-    if (message.header.numSignerAccounts > 1) {
-      return "multipleSigners";
+    if (
+      message.header.numSignerAccounts > 1 &&
+      options.hasSignatures !== false
+    ) {
+      return "existingSignatures";
     }
 
     return null;
