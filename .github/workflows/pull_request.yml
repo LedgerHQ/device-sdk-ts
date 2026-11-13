@@ -73,14 +73,14 @@ jobs:
           BTC_LEGACY_SIDE: ${{ steps.filter.outputs.signer-btc-legacy == 'true' }}
         run: |
           if [ "$ALL" = "true" ]; then
-            scenarios="core contacts safe solana solana-general-clear-sign tron btc-legacy"
+            scenarios="core contacts safe solana solana-general-clear-sign solana-transaction-check tron btc-legacy"
           else
             scenarios=""
             if [ "$ETH_SIDE" = "true" ]; then
               scenarios="$scenarios core contacts safe"
             fi
             if [ "$SOLANA_SIDE" = "true" ]; then
-              scenarios="$scenarios solana solana-general-clear-sign"
+              scenarios="$scenarios solana solana-general-clear-sign solana-transaction-check"
             fi
             if [ "$TRON_SIDE" = "true" ]; then
               scenarios="$scenarios tron"

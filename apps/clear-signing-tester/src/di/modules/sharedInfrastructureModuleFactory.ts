@@ -28,6 +28,7 @@ import { DefaultRetryService } from "@root/src/infrastructure/services/DefaultRe
 import { DefaultScreenAnalyzer } from "@root/src/infrastructure/services/DefaultScreenAnalyzer";
 import { CompleteStateHandler } from "@root/src/infrastructure/state-handlers/CompleteStateHandler";
 import { ErrorStateHandler } from "@root/src/infrastructure/state-handlers/ErrorStateHandler";
+import { OptInStateHandler } from "@root/src/infrastructure/state-handlers/OptInStateHandler";
 import { OptOutStateHandler } from "@root/src/infrastructure/state-handlers/OptOutStateHandler";
 import { SignTransactionStateHandler } from "@root/src/infrastructure/state-handlers/SignTransactionStateHandler";
 import { type StateHandler } from "@root/src/infrastructure/state-handlers/StateHandler";
@@ -68,6 +69,9 @@ export const sharedInfrastructureModuleFactory = (
       .inSingletonScope();
     bind<StateHandler>(TYPES.OptOutStateHandler)
       .to(OptOutStateHandler)
+      .inSingletonScope();
+    bind<StateHandler>(TYPES.OptInStateHandler)
+      .to(OptInStateHandler)
       .inSingletonScope();
     bind<StateHandler>(TYPES.SignTransactionStateHandler)
       .to(SignTransactionStateHandler)

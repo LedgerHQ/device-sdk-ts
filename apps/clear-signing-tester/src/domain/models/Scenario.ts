@@ -56,6 +56,12 @@ export type ScenarioOptions = {
   readonly addressBook?: string;
   /** Distil program transactions to a single clear-signable instruction. */
   readonly distill?: boolean;
+  /**
+   * Accept the Transaction Check opt-in instead of declining it, so the live
+   * Web3 Checks backend scans each transaction. A case then fails unless its
+   * review shows a verdict. Solana on touchscreen devices only.
+   */
+  readonly transactionCheckEnabled?: boolean;
 };
 
 /**

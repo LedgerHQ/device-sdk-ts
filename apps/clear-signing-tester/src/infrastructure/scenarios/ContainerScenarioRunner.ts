@@ -279,6 +279,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
       signer: {
         originToken: options.skipOriginToken ? "" : this.runtime.originToken,
         blindSigningEnabled: options.blindSigningEnabled ?? false,
+        transactionCheckEnabled: options.transactionCheckEnabled ?? false,
         // withAddressBook() is build-time, so the book belongs to the signer
         // rather than to the batch that runs against it.
         ...(options.addressBook

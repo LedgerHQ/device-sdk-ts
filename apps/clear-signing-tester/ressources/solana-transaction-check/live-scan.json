@@ -1,0 +1,21 @@
+{
+  "group": "solana-transaction-check",
+  "name": "live-scan",
+  "action": "signTransaction",
+  "devices": ["stax", "flex"],
+  "coinApp": "Solana",
+  "mode": "parallel",
+  "options": {
+    "transactionCheckEnabled": true
+  },
+  "cases": [
+    {
+      "rawTx": "AQABA834Tol70vfXk/BGsilxnlEP0lKgmL48kc2AluIafyUP47ijfDJfaYq4Z+JasyQbbUVs9vAD0F4/GKmkdDSGeT4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADlz4zDCm4MfP8sOSTdMxpc6/GmrWnHb0NmHKt3rm6TcAQICAAEMAgAAAEBCDwAAAAAA",
+      "description": "Transaction Check: System: Transfer 0.001 SOL"
+    },
+    {
+      "rawTx": "AQADBs34Tol70vfXk/BGsilxnlEP0lKgmL48kc2AluIafyUPZtC7nqg0HdehCcq+EXDzX2Z3Ni10W9DqeyvySGoZhHNfNzRJeVo3nuuFOn3xTPhORbQYerwPoSRp9HnVPM+YVwMGRm/lIRcy/+ytunLDm+e8jOW7xfcSayxDmzpAAAAABt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKkEednHzBA13nIR+Z60jAnXCyvfW9+eLla4ofu1ouozJ8zq3Co6xNFnM4763zAQT2JMyqZfPFZOxEbPl2XsuI5mAgMABQINGwAABAQBBQIACgxAQg8AAAAAAAY=",
+      "description": "Transaction Check: SPL Token: TransferChecked 1 JUP"
+    }
+  ]
+}

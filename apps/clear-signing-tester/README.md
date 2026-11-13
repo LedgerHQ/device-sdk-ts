@@ -77,6 +77,7 @@ requested `--device` is skipped rather than failed.
 | `erc7730-typed-data`        | stax, nanox, flex | Per-dapp typed-data descriptors                   |
 | `solana`                    | stax, nanox, flex | Solana transaction fixtures                       |
 | `solana-general-clear-sign` | stax, nanox, flex | Solana general (IDL-based) clear-signing fixtures |
+| `solana-transaction-check`  | stax, flex        | Transaction Check on live Web3 Checks, see below  |
 | `solana-programs`           | —                 | Live program transactions — disabled, see below   |
 | `solana-v1`                 | —                 | Solana v1 fixtures — disabled, see below          |
 | `tron`                      | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex   |
@@ -113,6 +114,21 @@ messages (same accounts and instructions, ComputeBudget values moved into the
 v1 config where present), plus a durable-nonce transfer. To switch it on, drop
 `"enabled": false` from `ressources/solana-v1/v1-transactions.json` and add
 `solana-v1` to the scenarios run by `pull_request.yml` and `nightly_solana.yml`.
+
+The `solana-transaction-check` group tests Transaction Check end to end: the
+Solana app, the signer and the live Web3 Checks backend. Its scenario sets the
+`transactionCheckEnabled` option, so the tester accepts the opt-in ("Yes,
+enable") instead of declining it. The signer then sends each transaction to the
+production Web3 Checks API with the run's origin token (`GATING_TOKEN`), and
+the device checks the signed report against the transaction it reviews. A case
+passes only when the review shows one of the three verdict lines — "No threat
+detected by Transaction Check", "Potential risk detected" or "Critical threat
+detected" — and never "Transaction Check unavailable", which the app shows when
+no valid report reached it. The warning that a risk or threat verdict shows
+first is accepted, so the review is still checked to its end. The backend
+decides the verdict, so the cases pin none; to pin one, add its line to the
+case's `expectedTexts`. The Nano models have no Transaction Check, so the
+option is refused for them, and for any coin app but Solana.
 
 ### Options
 
@@ -157,16 +173,16 @@ whatever `ressources/` holds:
 The selector is `group:name`, so this file is `core:erc20`. The directory it
 sits in is free — `erc7730/uniswap/` holds one scenario of each group.
 
-| Field                     | Required | Meaning                                                                      |
-| ------------------------- | -------- | ---------------------------------------------------------------------------- |
-| `group`, `name`           | yes      | Selector `group:name`; the group is selectable on its own                    |
-| `action`                  | yes      | `signTransaction`, `signTypedData`, `registerContact`, `solanaProgram`       |
-| `devices`                 | yes      | Devices this scenario supports; a run picks one                              |
-| `coinApp`                 | yes      | `Ethereum`, `Solana`, `Tron` or a legacy Bitcoin app (see below)             |
-| `cases`                   | yes\*    | The inputs; `solanaProgram` takes none, its input comes from the RPC         |
-| `mode`                    | no       | `parallel` (default) or `sequential`                                         |
-| `osVersion`, `appVersion` | no       | Override the device's pin, together                                          |
-| `options`                 | no       | `blindSigningEnabled`, `skipOriginToken`, `addressBook`, `useRpc`, `distill` |
+| Field                     | Required | Meaning                                                                                                 |
+| ------------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| `group`, `name`           | yes      | Selector `group:name`; the group is selectable on its own                                               |
+| `action`                  | yes      | `signTransaction`, `signTypedData`, `registerContact`, `solanaProgram`                                  |
+| `devices`                 | yes      | Devices this scenario supports; a run picks one                                                         |
+| `coinApp`                 | yes      | `Ethereum`, `Solana`, `Tron` or a legacy Bitcoin app (see below)                                        |
+| `cases`                   | yes\*    | The inputs; `solanaProgram` takes none, its input comes from the RPC                                    |
+| `mode`                    | no       | `parallel` (default) or `sequential`                                                                    |
+| `osVersion`, `appVersion` | no       | Override the device's pin, together                                                                     |
+| `options`                 | no       | `blindSigningEnabled`, `skipOriginToken`, `addressBook`, `useRpc`, `distill`, `transactionCheckEnabled` |
 
 A case may carry keys prefixed with `_`, which the tester never reads. They are
 notes for whoever maintains the fixture — `_txHash` records the transaction this

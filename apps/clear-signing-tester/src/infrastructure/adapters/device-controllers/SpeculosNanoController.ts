@@ -73,6 +73,20 @@ export class SpeculosNanoController implements DeviceController {
     return Promise.resolve();
   }
 
+  // Transaction Check does not exist on the Nano models, and the scenario
+  // catalog refuses `transactionCheckEnabled` there, so both are unreachable.
+  async acceptTransactionCheck(): Promise<void> {
+    throw new Error(
+      "Not implemented: Transaction Check is not supported on Nano devices",
+    );
+  }
+
+  async acceptTransactionCheckWarning(): Promise<void> {
+    throw new Error(
+      "Not implemented: Transaction Check is not supported on Nano devices",
+    );
+  }
+
   /**
    * Acknowledge blind signing on the device
    */
