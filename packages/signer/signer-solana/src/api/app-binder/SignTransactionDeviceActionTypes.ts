@@ -108,6 +108,10 @@ export type SignTransactionDAInternalState = {
   // is only set when the input was tx.serialize().
   readonly messageBytes: Uint8Array;
   readonly serializedForTxCheck: Uint8Array | undefined;
+  // Set by NormalizeTransaction: whether the input already holds a real
+  // signature, which a blockhash refresh would invalidate. `undefined` when the
+  // input format could not be recognised.
+  readonly hasSignatures: boolean | undefined;
   // Set when the generic clear-sign path streamed + FINALIZE-validated the
   // descriptors, so the terminal sign runs the generic PROMPT UI DISPLAY flow
   // instead of the legacy preview.

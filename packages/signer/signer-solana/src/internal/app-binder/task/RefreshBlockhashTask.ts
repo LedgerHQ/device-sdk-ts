@@ -6,6 +6,8 @@ export type RefreshBlockhashTaskArgs = {
   readonly transaction: Uint8Array;
   readonly rpcUrl?: string;
   readonly fetchBlockhash?: () => Promise<Uint8Array>;
+  /** The input transaction already holds signatures (see `BlockhashService.getRefreshBlocker`). */
+  readonly hasSignatures?: boolean;
   readonly blockhashService?: BlockhashService;
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
@@ -28,16 +30,18 @@ export class RefreshBlockhashTask {
   }
 
   async run(): Promise<Uint8Array> {
-    const { transaction, rpcUrl, fetchBlockhash } = this.args;
+    const { transaction, rpcUrl, fetchBlockhash, hasSignatures } = this.args;
 
     // No source: nothing to refresh, sign the original transaction.
     if (!rpcUrl && !fetchBlockhash) {
       return transaction;
     }
 
-    // Unsafe to refresh (durable nonce, co-signers, unparsable message): sign
-    // the original transaction without fetching.
-    const blocker = this.blockhashService.getRefreshBlocker(transaction);
+    // Unsafe to refresh (durable nonce, co-signer signatures already present,
+    // unparsable message): sign the original transaction without fetching.
+    const blocker = this.blockhashService.getRefreshBlocker(transaction, {
+      hasSignatures,
+    });
     if (blocker !== null) {
       this.logger.info(
         "[RefreshBlockhash] refresh not allowed, signing original blockhash",

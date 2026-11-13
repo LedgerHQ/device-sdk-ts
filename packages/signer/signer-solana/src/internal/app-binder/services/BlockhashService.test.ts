@@ -15,6 +15,7 @@ import {
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import bs58 from "bs58";
 
+import { UNSIGNED_TWO_SIGNER_V0_TRANSACTION } from "./__test-utils__/unsignedTwoSignerV0Transaction";
 import {
   SPEC_V1_MESSAGE,
   SPEC_V1_OFFSETS,
@@ -22,6 +23,7 @@ import {
   withTrailingBytes,
 } from "./__test-utils__/v1Fixtures";
 import { BlockhashService } from "./BlockhashService";
+import { TransactionInputNormaliser } from "./TransactionInputNormaliser";
 
 vi.mock("@solana/web3.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@solana/web3.js")>();
@@ -304,15 +306,47 @@ describe("BlockhashService", () => {
     });
 
     it.each(["legacy", 0, 1] as const)(
-      "should block refresh for a %s message with a co-signer",
+      "should block refresh for a %s message with a co-signer when the transaction already holds signatures",
+      (version) => {
+        expect(
+          service.getRefreshBlocker(
+            buildKitMessage({ version, coSigner: true }),
+            { hasSignatures: true },
+          ),
+        ).toBe("existingSignatures");
+      },
+    );
+
+    it.each(["legacy", 0, 1] as const)(
+      "should allow refresh for a %s message with a co-signer when no one has signed yet",
+      (version) => {
+        expect(
+          service.getRefreshBlocker(
+            buildKitMessage({ version, coSigner: true }),
+            { hasSignatures: false },
+          ),
+        ).toBe(null);
+      },
+    );
+
+    it.each(["legacy", 0, 1] as const)(
+      "should block refresh for a %s message with a co-signer when it is unknown whether signatures exist",
       (version) => {
         expect(
           service.getRefreshBlocker(
             buildKitMessage({ version, coSigner: true }),
           ),
-        ).toBe("multipleSigners");
+        ).toBe("existingSignatures");
       },
     );
+
+    it("should allow refresh for a single-signer message even with a signature", () => {
+      expect(
+        service.getRefreshBlocker(buildKitMessage({ version: 0 }), {
+          hasSignatures: true,
+        }),
+      ).toBe(null);
+    });
 
     it("should block refresh for an undecodable message", () => {
       expect(
@@ -362,6 +396,45 @@ describe("BlockhashService", () => {
         { commitment: "finalized" },
       );
       expect(mockGetLatestBlockhash).toHaveBeenCalledWith("finalized");
+    });
+  });
+
+  describe("unsigned multi-signer transaction (regression)", () => {
+    it("should refresh only the blockhash of a real 2-signer v0 transaction no one has signed yet", () => {
+      const { messageBytes, hasSignatures } =
+        new TransactionInputNormaliser().normalize(
+          UNSIGNED_TWO_SIGNER_V0_TRANSACTION,
+        );
+      expect(hasSignatures).toBe(false);
+      expect(service.getRefreshBlocker(messageBytes, { hasSignatures })).toBe(
+        null,
+      );
+
+      const freshBlockhash = new Uint8Array(32).fill(7);
+      const patched = service.patchBlockhash(messageBytes, freshBlockhash);
+      const offset = service.locateBlockhashOffset(messageBytes);
+
+      expect(patched.subarray(offset, offset + 32)).toStrictEqual(
+        freshBlockhash,
+      );
+      expect(patched.subarray(0, offset)).toStrictEqual(
+        messageBytes.subarray(0, offset),
+      );
+      expect(patched.subarray(offset + 32)).toStrictEqual(
+        messageBytes.subarray(offset + 32),
+      );
+    });
+
+    it("should keep the blockhash once a co-signer has signed it", () => {
+      const signed = new Uint8Array(UNSIGNED_TWO_SIGNER_V0_TRANSACTION);
+      signed.fill(0xab, 1 + 64, 1 + 2 * 64);
+      const { messageBytes, hasSignatures } =
+        new TransactionInputNormaliser().normalize(signed);
+
+      expect(hasSignatures).toBe(true);
+      expect(service.getRefreshBlocker(messageBytes, { hasSignatures })).toBe(
+        "existingSignatures",
+      );
     });
   });
 });

@@ -36,6 +36,7 @@ export type MachineDependencies = {
       transaction: Uint8Array;
       rpcUrl?: string;
       fetchBlockhash?: () => Promise<Uint8Array>;
+      hasSignatures?: boolean;
     };
   }) => Promise<Uint8Array>;
   readonly delayedSignTransaction: (arg0: {
@@ -250,6 +251,7 @@ export class SignGenericClearSignDeviceAction extends XStateDeviceAction<
               transaction: context.input.transaction,
               rpcUrl: context.input.rpcUrl,
               fetchBlockhash: context.input.fetchBlockhash,
+              hasSignatures: context.input.hasSignatures,
             }),
             // The refresh task is best-effort and never rejects; it resolves to
             // the bytes to sign (patched on success, original otherwise).
@@ -326,12 +328,14 @@ export class SignGenericClearSignDeviceAction extends XStateDeviceAction<
         transaction: Uint8Array;
         rpcUrl?: string;
         fetchBlockhash?: () => Promise<Uint8Array>;
+        hasSignatures?: boolean;
       };
     }) =>
       new RefreshBlockhashTask({
         transaction: arg0.input.transaction,
         rpcUrl: arg0.input.rpcUrl,
         fetchBlockhash: arg0.input.fetchBlockhash,
+        hasSignatures: arg0.input.hasSignatures,
         blockhashService: this.input.blockhashService,
         loggerFactory,
       }).run();

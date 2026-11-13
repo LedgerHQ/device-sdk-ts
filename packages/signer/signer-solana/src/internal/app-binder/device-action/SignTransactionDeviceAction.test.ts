@@ -185,12 +185,14 @@ function run(
     >[],
   ) => void,
   onError: (e: unknown) => void,
+  hasSignatures?: boolean,
 ) {
   const action = new SignTransactionDeviceAction({ input });
   parentSpy = vi.spyOn(action, "extractDependencies").mockReturnValue({
     normalizeTransaction: vi.fn().mockResolvedValue({
       messageBytes: input.transaction,
       serializedForTxCheck: undefined,
+      hasSignatures,
     }),
     getAppConfig: getAppConfigMock,
     reportSign: reportSignMock,
@@ -376,6 +378,9 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
             expect(
               refreshBlockhashMock.mock.calls[0]![0].input.rpcUrl,
             ).toBeDefined();
+            expect(
+              refreshBlockhashMock.mock.calls[0]![0].input.hasSignatures,
+            ).toBeUndefined();
             expect(delayedSignMock).toHaveBeenCalled();
             // Basic path not taken.
             expect(inspectMock).not.toHaveBeenCalled();
@@ -390,6 +395,40 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
           }
         },
         reject,
+      );
+    }));
+
+  it("forwards the normalised hasSignatures flag to the blockhash refresh", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue(
+        session(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+      );
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: appConfig(SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION),
+        }),
+      );
+      buildGenericMock.mockResolvedValue({
+        mode: "full",
+        poolContexts: [],
+        instructionInfoContexts: [],
+
+        unrecognizedProgramIds: [],
+      });
+      run(
+        withRpcDelayed,
+        () => {
+          try {
+            expect(
+              refreshBlockhashMock.mock.calls[0]![0].input.hasSignatures,
+            ).toBe(true);
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        },
+        reject,
+        true,
       );
     }));
 

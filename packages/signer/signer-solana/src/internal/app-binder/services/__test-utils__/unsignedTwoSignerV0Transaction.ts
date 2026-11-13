@@ -1,0 +1,33 @@
+import { base64StringToBuffer } from "@ledgerhq/device-management-kit";
+
+/**
+ * Real-world v0 transaction (`tx.serialize()`) with 2 required signers (one
+ * read-only), address lookup tables, a recent blockhash lifetime and both
+ * signature slots still zeroed: no one has signed it yet, so its blockhash
+ * can be refreshed for delayed signing.
+ */
+export const UNSIGNED_TWO_SIGNER_V0_TRANSACTION = base64StringToBuffer(
+  [
+    "AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "AAAAAAAAAAAAAAAAAAAAgAIBCA/cfn461DFAx2/kJqy+CVzo16XES6EB9ZRcSoEbGkPjiAz+LFft",
+    "dgEzD46YEwc9/q4nshWTIeMUTxUFBq3fkK5yMhnLoY/NGdAo8yDl+2MTfB5Nuve7C8+ASDuiC6mF",
+    "dNJOfafDsNRJnCKbIOgAMC6NCfClC1yk1ifNsBUp0pR6kYfJ9VXKaHTatNUFQVBqdKJQ6NzfYD5l",
+    "SMj2Q8tvWBUZ4ND8fZyhtTURrGcZ69KhNOG/+GHXKEezfs6ygen3jSnzm5xI6+kwFoXJ8PjUzVxK",
+    "6VOsKdV3JXL6nr3g0zCibQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANZtjiLgkUYJs",
+    "u4O7lCF6+WWGCGKfgWNPCiRJ3mtQnHaCRl5O14WI3iAqgtVQXuCVNuD9VqJEjxLu1wDbTc/Kl4yX",
+    "JY9OJInxuz0QKRSODYMLWhOZ2v8QhASOe9jb6fhZAwZGb+UhFzL/7K26csOb57yM5bvF9xJrLEOb",
+    "OkAAAAC916ogIop7wh5n3f541dibmG1L9cjV3J1FdNgasR5aAgR51VvyMcBu7nTFbs5oFQf9sbLe",
+    "o/SOUQKxzaJWvBOPBt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKm3sIV8asW7MLiOlE4G",
+    "pTmkvRPkYKZ9nFhswG/JZtmO/ggLAAUCwFwVAAsACQPqLgAAAAAAAAoGAAQAJgcOAQEHAgAEDAIA",
+    "AAA2yNkBAAAAAA4BBAERCgYABQAMBw4BAQ1dAAQCJiQODg0jDQ8wABscGgQCDg4mJDIxDQgJMyA0",
+    "HR4fIQQCAA4mDiQyCDMiNB0eHyEEAgAOJg4kMggrDiosAAQVFAMWFy4OLy0AAxkFGAYoKQ4nAAUC",
+    "EBESEwElTLtk+swxxK8UNsjZAQAAAAAeoCYAAAAAADIAAgAAAAQAAACSAwAAABUBRCMAABIAAAAA",
+    "EgAAAAAeBEQjAAQDzAMAAgAQJwIDChAnAwQOAwQAAAEJBym/lQcqT78E33F1k+c4vMwhJygVwkca",
+    "gNn59VWw1IQlASEEACgCF1cBZyeDWV6kPspwzFBVmG71IrXkAMf88QpKFuruWNG/BDo/QD4DQTs9",
+    "Wr0hffzsJejOSdJ1CQQSQyAsvMtnZUSxjptos4pXLmMEAwkEBgMIBQJeegps5m1CJg3xrwkeLI2w",
+    "sI9ioqFjpB24Se2n1N3SZgIQDAMLCQpqqcPrNb0kOj4f4oBo3tqeUfk5BcRkq+duwyJjby342QOA",
+    "hYQDgod/qbaT1GeP8YCDe1mi1FzhwdNw8EjVZbyst8IvHzxgLRQFOUE/N0ACPjjn9kFU8UNzoyeq",
+    "VmV05yUNI/aMsQJfP0+n+8I+oMx7DwG3AA==",
+  ].join(""),
+)!;
