@@ -318,14 +318,30 @@ describe("BlockhashService", () => {
     );
 
     it.each(["legacy", 0, 1] as const)(
-      "should allow refresh for a %s message with a co-signer when no one has signed yet",
+      "should allow refresh for a %s message with a co-signer when no one has signed yet and the caller supplies the blockhash",
       (version) => {
         expect(
           service.getRefreshBlocker(
             buildKitMessage({ version, coSigner: true }),
-            { hasSignatures: false },
+            { hasSignatures: false, callerSuppliesBlockhash: true },
           ),
         ).toBe(null);
+      },
+    );
+
+    it.each(["legacy", 0, 1] as const)(
+      "should block refresh for an unsigned %s message with a co-signer when the caller does not supply the blockhash",
+      (version) => {
+        const message = buildKitMessage({ version, coSigner: true });
+        expect(
+          service.getRefreshBlocker(message, { hasSignatures: false }),
+        ).toBe("blockhashUnknownToCaller");
+        expect(
+          service.getRefreshBlocker(message, {
+            hasSignatures: false,
+            callerSuppliesBlockhash: false,
+          }),
+        ).toBe("blockhashUnknownToCaller");
       },
     );
 
@@ -406,8 +422,15 @@ describe("BlockhashService", () => {
           UNSIGNED_TWO_SIGNER_V0_TRANSACTION,
         );
       expect(hasSignatures).toBe(false);
+      expect(
+        service.getRefreshBlocker(messageBytes, {
+          hasSignatures,
+          callerSuppliesBlockhash: true,
+        }),
+      ).toBe(null);
+      // With an RPC URL only, the caller would not know the signed blockhash.
       expect(service.getRefreshBlocker(messageBytes, { hasSignatures })).toBe(
-        null,
+        "blockhashUnknownToCaller",
       );
 
       const freshBlockhash = new Uint8Array(32).fill(7);

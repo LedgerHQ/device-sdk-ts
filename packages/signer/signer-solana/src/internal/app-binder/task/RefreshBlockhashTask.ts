@@ -38,9 +38,11 @@ export class RefreshBlockhashTask {
     }
 
     // Unsafe to refresh (durable nonce, co-signer signatures already present,
-    // unparsable message): sign the original transaction without fetching.
+    // co-signers unable to learn the new blockhash, unparsable message): sign
+    // the original transaction without fetching.
     const blocker = this.blockhashService.getRefreshBlocker(transaction, {
       hasSignatures,
+      callerSuppliesBlockhash: fetchBlockhash !== undefined,
     });
     if (blocker !== null) {
       this.logger.info(
