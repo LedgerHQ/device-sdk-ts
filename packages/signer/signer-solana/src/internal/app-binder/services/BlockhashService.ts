@@ -35,6 +35,7 @@ const SHORTVEC_MAX_SHIFT = 35;
 export type BlockhashRefreshBlocker =
   | "durableNonce"
   | "existingSignatures"
+  | "blockhashUnknownToCaller"
   | "undecodable";
 
 @injectable()
@@ -129,17 +130,27 @@ export class BlockhashService {
    *     does), which a new blockhash would invalidate. When no one has signed
    *     yet, the co-signers sign after us, so they can sign the refreshed
    *     message too.
+   *   - `blockhashUnknownToCaller`: the message has several signers, no one
+   *     has signed yet, but the caller does not supply the new blockhash
+   *     itself. Only the signature is returned, so the caller could not give
+   *     the co-signers the refreshed message our signature covers.
    *   - `undecodable`: the message cannot be parsed, so neither can be ruled out.
    *
    * @param options.hasSignatures - Whether the transaction the message comes
    *   from already holds real (non-placeholder) signatures. Only an explicit
    *   `false` allows refreshing a multi-signer message.
+   * @param options.callerSuppliesBlockhash - Whether the new blockhash comes
+   *   from the caller (`fetchBlockhash`), so the caller knows which blockhash
+   *   was signed. Required to refresh a multi-signer message.
    * @returns The reason the blockhash must be kept, or `null` if it can be
    *   refreshed safely.
    */
   getRefreshBlocker(
     serializedMessage: Uint8Array,
-    options: { hasSignatures?: boolean } = {},
+    options: {
+      hasSignatures?: boolean;
+      callerSuppliesBlockhash?: boolean;
+    } = {},
   ): BlockhashRefreshBlocker | null {
     const message = this.decodeMessage(serializedMessage);
     if (!message) {
@@ -169,11 +180,13 @@ export class BlockhashService {
       return "durableNonce";
     }
 
-    if (
-      message.header.numSignerAccounts > 1 &&
-      options.hasSignatures !== false
-    ) {
-      return "existingSignatures";
+    if (message.header.numSignerAccounts > 1) {
+      if (options.hasSignatures !== false) {
+        return "existingSignatures";
+      }
+      if (options.callerSuppliesBlockhash !== true) {
+        return "blockhashUnknownToCaller";
+      }
     }
 
     return null;
