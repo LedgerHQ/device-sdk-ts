@@ -31,6 +31,12 @@ const ROUTE_TIMEOUT_SECONDS = 60;
 const DEFAULT_SPECULOS_SEED =
   "glory promote mansion idle axis finger extra february uncover one trip resource lawn turtle enact monster seven myth punch hobby comfort wild raise skin";
 
+const speculosSeed = (): string =>
+  process.env["SPECULOS_SEED"] || DEFAULT_SPECULOS_SEED;
+
+const withoutSeed = (text: string): string =>
+  text.split(speculosSeed()).join("<seed>");
+
 /**
  * Address Book proofs are device-bound: the device mints them with its user and
  * attestation keys, which Speculos generates afresh on every boot unless they are
@@ -175,14 +181,12 @@ export class SpeculinhoServiceController implements ServiceController {
     appVersion: string | undefined,
     osVersion: string | undefined,
   ): Promise<void> {
-    const seed = process.env["SPECULOS_SEED"] ?? DEFAULT_SPECULOS_SEED;
-
     const body: Record<string, unknown> = {
       coin_app: appName,
       coin_app_version: appVersion,
       device: this.config.device,
       device_os_version: osVersion,
-      seed,
+      seed: speculosSeed(),
       run_id: this.runId,
       route_timeout_seconds: ROUTE_TIMEOUT_SECONDS,
     };
@@ -209,7 +213,7 @@ export class SpeculinhoServiceController implements ServiceController {
     body["extra_args"] = extraArgs;
 
     this.logger.debug("Acquiring Speculinho pod", {
-      data: { body },
+      data: { body: { ...body, seed: "<seed>" } },
     });
 
     let res: Response;
@@ -220,12 +224,14 @@ export class SpeculinhoServiceController implements ServiceController {
         body: JSON.stringify(body),
       });
     } catch (error) {
-      throw new Error(`Speculinho acquire request failed: ${String(error)}`);
+      throw new Error(
+        `Speculinho acquire request failed: ${withoutSeed(String(error))}`,
+      );
     }
 
     if (!res.ok) {
       throw new Error(
-        `Speculinho acquire failed (${res.status}): ${await res.text()}`,
+        `Speculinho acquire failed (${res.status}): ${withoutSeed(await res.text())}`,
       );
     }
   }
@@ -239,12 +245,14 @@ export class SpeculinhoServiceController implements ServiceController {
         const res = await fetch(`${this.baseUrl}/status/${this.runId}`);
         if (!res.ok) {
           throw new Error(
-            `Speculinho status failed (${res.status}): ${await res.text()}`,
+            `Speculinho status failed (${res.status}): ${withoutSeed(await res.text())}`,
           );
         }
         status = (await res.json()) as StatusResponse;
       } catch (error) {
-        throw new Error(`Speculinho status request failed: ${String(error)}`);
+        throw new Error(
+          `Speculinho status request failed: ${withoutSeed(String(error))}`,
+        );
       }
 
       if (status.status === "ready" && status.speculos_url) {
@@ -253,7 +261,7 @@ export class SpeculinhoServiceController implements ServiceController {
 
       if (status.status === "failed") {
         throw new PodNotUsableError(
-          `Speculinho pod ${this.runId} failed: ${status.error_details ?? "unknown"}`,
+          `Speculinho pod ${this.runId} failed: ${withoutSeed(status.error_details ?? "unknown")}`,
         );
       }
 

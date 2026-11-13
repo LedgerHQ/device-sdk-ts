@@ -35,6 +35,10 @@ inputs:
     description: "Solana RPC URL, required by the solana-programs group"
     required: false
     default: ""
+  speculos-seed:
+    description: "Emulator seed, required by the solana-transaction-check group"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -58,6 +62,7 @@ runs:
         INPUT_LOG_LEVEL: ${{ inputs.log-level }}
         INPUT_ENABLE_FILE_LOGGING: ${{ inputs.enable-file-logging }}
         INPUT_SOLANA_RPC_URL: ${{ inputs.solana-rpc-url }}
+        SPECULOS_SEED: ${{ inputs.speculos-seed }}
       run: |
         set -o pipefail
         mkdir -p /tmp/logs/screenshots

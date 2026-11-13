@@ -25,6 +25,7 @@ export const TYPES = {
   CompleteStateHandler: Symbol.for("CompleteStateHandler"),
   ErrorStateHandler: Symbol.for("ErrorStateHandler"),
   OptOutStateHandler: Symbol.for("OptOutStateHandler"),
+  OptInStateHandler: Symbol.for("OptInStateHandler"),
   SignTransactionStateHandler: Symbol.for("SignTransactionStateHandler"),
 
   // Service Controllers

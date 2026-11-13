@@ -61,6 +61,7 @@ export type ScenarioRuntime = {
   readonly scanLimit?: number;
   readonly samplesPerInstruction?: number;
   readonly originToken: string;
+  readonly customSpeculosSeed?: boolean;
   /**
    * CAL mode. Injected ERC7730 descriptors are served with test certificates,
    * so a run using them must not verify against the production PKI root.
@@ -217,6 +218,19 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         errorMessage: "cancelled before it started",
       };
     }
+    if (
+      run.scenario.options?.transactionCheckEnabled &&
+      !this.runtime.customSpeculosSeed
+    ) {
+      return {
+        run,
+        counts: NO_COUNTS,
+        failures: 1,
+        failedCases: [],
+        durationMs: 0,
+        errorMessage: "needs GH SPECULOS_SEED",
+      };
+    }
 
     const container = this.buildContainer(run);
     const services = container.get<ServiceController>(
@@ -279,6 +293,7 @@ export class ContainerScenarioRunner implements ScenarioRunner {
       signer: {
         originToken: options.skipOriginToken ? "" : this.runtime.originToken,
         blindSigningEnabled: options.blindSigningEnabled ?? false,
+        transactionCheckEnabled: options.transactionCheckEnabled ?? false,
         // withAddressBook() is build-time, so the book belongs to the signer
         // rather than to the batch that runs against it.
         ...(options.addressBook
