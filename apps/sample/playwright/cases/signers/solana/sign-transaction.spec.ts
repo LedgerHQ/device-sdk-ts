@@ -82,4 +82,56 @@ test.describe("signer solana: sign transaction", () => {
       expect(result.output).toBe(EXPECTED_SIGNATURE);
     });
   });
+
+  test("fails when the transaction is rejected on the device screen", async ({
+    device,
+    solSigner,
+    speculos,
+  }) => {
+    test.setTimeout(120_000);
+
+    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+    await test.step("Given the device with the Solana app is connected", async () => {
+      dev = await device.addAndConnect(STAX_WITH_SOLANA);
+    });
+
+    await test.step("When Sign transaction is executed for a SOL transfer", async () => {
+      await solSigner.open();
+      await solSigner.signTransaction(SOL_TRANSFER);
+    });
+
+    const emulator = speculos(dev);
+    await test.step("And the transaction is rejected on the Speculos screen", async () => {
+      await emulator.waitReady();
+      // Decline the "Enable Transaction Check?" prompt shown before the review.
+      await expect
+        .poll(
+          async () => {
+            const screen = await emulator.currentScreen();
+            if (screen.includes("Enable Transaction Check")) {
+              await emulator.touch().secondaryButton();
+              // Let the screen move on so the next sample does not tap again.
+              await new Promise((r) => setTimeout(r, 1500));
+            }
+            return screen;
+          },
+          { timeout: 60_000 },
+        )
+        .toContain("Review transaction");
+      // Rejecting takes two taps: "Reject" on the review, then "Yes, reject"
+      // on the confirmation it opens.
+      await emulator.touch().reject();
+      await expect
+        .poll(() => emulator.currentScreen(), { timeout: 15_000 })
+        .toContain("Yes, reject");
+      await emulator.touch().mainButton();
+    });
+
+    await test.step("Then the rejection is surfaced as an app error", async () => {
+      const error = await solSigner.lastError();
+
+      expect(error).toContain("SolanaAppCommandError");
+      expect(error).toContain("errorCode: '6985'");
+    });
+  });
 });
