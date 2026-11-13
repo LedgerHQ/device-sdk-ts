@@ -43,13 +43,20 @@ export class SolSignerDriver {
   /**
    * Open the Sign transaction action, fill the base64 serialized transaction
    * and Execute it. The action stays pending until the transaction is reviewed
-   * and signed on Speculos.
+   * and signed on Speculos. With `delayed`, the signer refreshes the blockhash
+   * from its RPC after the review and signs the refreshed message.
    */
-  async signTransaction(transaction: string): Promise<void> {
+  async signTransaction(
+    transaction: string,
+    { delayed = false }: { delayed?: boolean } = {},
+  ): Promise<void> {
     await this.page.getByTestId("CTA_command-Sign transaction").click();
     const input = this.page.getByTestId("input-text_transaction");
     await input.waitFor({ state: "visible" });
     await input.fill(transaction);
+    if (delayed) {
+      await this.setSwitch("delayed", true);
+    }
     await this.page.getByTestId("CTA_send-device-action").click();
   }
 
