@@ -62,6 +62,12 @@ export type ScenarioRuntime = {
   readonly samplesPerInstruction?: number;
   readonly originToken: string;
   /**
+   * A funded wallet's mnemonic, for the scenarios whose transactions the live
+   * Web3 Checks backend simulates. Every other scenario keeps the default seed,
+   * since its expected texts carry the default wallet's addresses.
+   */
+  readonly speculosSeed?: string;
+  /**
    * CAL mode. Injected ERC7730 descriptors are served with test certificates,
    * so a run using them must not verify against the production PKI root.
    */
@@ -275,10 +281,14 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         screenshotPath: this.runtime.screenshotPath,
         speculinhoUrl: this.runtime.speculinhoUrl,
         speculosHttpTimeoutMs: this.runtime.speculosHttpTimeoutMs,
+        ...(options.transactionCheckEnabled
+          ? { seed: this.runtime.speculosSeed }
+          : {}),
       },
       signer: {
         originToken: options.skipOriginToken ? "" : this.runtime.originToken,
         blindSigningEnabled: options.blindSigningEnabled ?? false,
+        transactionCheckEnabled: options.transactionCheckEnabled ?? false,
         // withAddressBook() is build-time, so the book belongs to the signer
         // rather than to the batch that runs against it.
         ...(options.addressBook

@@ -18,7 +18,11 @@ import {
   type ScenarioRun,
 } from "@root/src/domain/models/Scenario";
 import { expandToCases } from "@root/src/domain/scenarios/expandToCases";
-import { planRuns, selectScenarios } from "@root/src/domain/scenarios/planRuns";
+import {
+  planRuns,
+  selectScenarios,
+  skipSeedlessScenarios,
+} from "@root/src/domain/scenarios/planRuns";
 import {
   ContainerScenarioRunner,
   type ScenarioRuntime,
@@ -180,6 +184,11 @@ function reportUnsupported(
   }
 }
 
+/** Trimmed: a trailing newline in the secret would boot an unfunded wallet. */
+function readSpeculosSeed(): string | undefined {
+  return process.env["SPECULOS_SEED"]?.trim() || undefined;
+}
+
 /** A version flag overrides the defaults, never a scenario's own pin. */
 function reportOwnPins(
   selected: readonly Scenario[],
@@ -218,6 +227,7 @@ function buildRuntime(
     scanLimit: options.scanLimit,
     samplesPerInstruction: options.samplesPerInstruction,
     originToken: process.env["GATING_TOKEN"] || "test-origin-token",
+    speculosSeed: readSpeculosSeed(),
     calMode,
     osVersion: options.osVersion,
     ethAppVersion: options.appEthVersion,
@@ -237,7 +247,11 @@ function planCases(
     selectors,
   );
 
-  const catalog = all.filter(isEnabled);
+  const catalog = skipSeedlessScenarios(
+    all.filter(isEnabled),
+    selectors,
+    readSpeculosSeed(),
+  );
   const selected = selectScenarios(catalog, selectors);
   reportUnsupported(selected, options.device);
   reportOwnPins(selected, options);

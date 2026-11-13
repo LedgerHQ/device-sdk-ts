@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { TYPES } from "@root/src/di/types";
+import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
 import {
   type Scenario,
   type ScenarioRun,
@@ -52,6 +54,33 @@ describe("ContainerScenarioRunner", () => {
     // Counted as a failure, so a cancelled run cannot report as green.
     expect(outcome.failures).toBe(1);
   });
+
+  // Every other scenario's expected texts carry the default wallet's addresses.
+  it.each([
+    [true, "funded wallet words"],
+    [false, undefined],
+  ])(
+    "boots on the funded seed only when transactionCheckEnabled is %s",
+    (transactionCheckEnabled, seed) => {
+      const runner = new ContainerScenarioRunner({
+        ...RUNTIME,
+        speculosSeed: "funded wallet words",
+      });
+
+      const container = runner["buildContainer"]({
+        scenario: {
+          ...RUN.scenario,
+          coinApp: "Solana",
+          options: { transactionCheckEnabled },
+        },
+        device: "stax",
+      });
+
+      expect(container.get<SpeculinhoConfig>(TYPES.SpeculinhoConfig).seed).toBe(
+        seed,
+      );
+    },
+  );
 
   // Naming one elsewhere would run the scenario as if it had none.
   it("refuses an address book on a coin app whose signer takes none", async () => {

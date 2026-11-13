@@ -21,6 +21,17 @@ export interface DeviceController {
   rejectTransactionCheck(): Promise<void>;
 
   /**
+   * Accept transaction checks opt-in on the device ("Yes, enable")
+   */
+  acceptTransactionCheck(): Promise<void>;
+
+  /**
+   * Continue past a Transaction Check risk or threat warning
+   * ("Accept risk and continue" / "Accept threat and continue")
+   */
+  acceptTransactionCheckWarning(): Promise<void>;
+
+  /**
    * Acknowledge blind signing on the device (go back to safety)
    */
   acknowledgeBlindSigning(): Promise<void>;

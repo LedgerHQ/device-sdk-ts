@@ -9,6 +9,11 @@ export type TransactionInput = {
   /** Texts that must NOT appear on any screen of this signing flow. */
   readonly unexpectedTexts?: string[];
   /**
+   * Texts of which at least one must appear, for an outcome the case cannot
+   * pin, such as a live Transaction Check verdict. Read from Solana fixtures.
+   */
+  readonly oneOfTexts?: string[];
+  /**
    * Set when the transaction cannot be clear-signed and the point of the case
    * is that the device falls back to blind signing. Such a case passes on
    * `blind_signed` and fails if it ever clear-signs or errors.

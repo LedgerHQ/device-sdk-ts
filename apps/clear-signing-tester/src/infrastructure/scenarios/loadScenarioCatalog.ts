@@ -8,7 +8,9 @@ import {
   type ScenarioAction,
   type ScenarioCoinApp,
   type ScenarioDevice,
+  type ScenarioOptions,
 } from "@root/src/domain/models/Scenario";
+import { TRANSACTION_CHECK_DEVICES } from "@root/src/domain/models/TransactionCheck";
 
 /** Directory holding the scenario files, relative to the app root. */
 export const SCENARIOS_DIR = "ressources";
@@ -105,6 +107,16 @@ function isScenarioFile(parsed: unknown): parsed is Json {
   );
 }
 
+function hasOneOfTexts(raw: unknown): boolean {
+  const oneOfTexts = (raw as Json | null)?.["oneOfTexts"];
+  // A blank verdict is contained in every screen, so it would accept any review.
+  return (
+    Array.isArray(oneOfTexts) &&
+    oneOfTexts.length > 0 &&
+    oneOfTexts.every((text) => typeof text === "string" && text.trim() !== "")
+  );
+}
+
 function toScenario(raw: Json, path: string): Scenario {
   // Annotated, not inferred: TypeScript only narrows past a never-returning
   // call when the variable carries the type explicitly.
@@ -159,6 +171,36 @@ function toScenario(raw: Json, path: string): Scenario {
     fail(`needs a non-empty "cases" list.`);
   }
 
+  const options = raw["options"] as ScenarioOptions | undefined;
+  const transactionCheck: unknown = options?.transactionCheckEnabled ?? false;
+  if (typeof transactionCheck !== "boolean") {
+    fail(
+      `has a non-boolean "transactionCheckEnabled" ${JSON.stringify(transactionCheck)}.`,
+    );
+  }
+  if (transactionCheck) {
+    // Only the Solana fixtures read `oneOfTexts`, and only the Solana app's
+    // opt-in and warnings were checked against the tester.
+    if (coinApp !== "Solana") {
+      fail(`sets "transactionCheckEnabled", which only Solana supports.`);
+    }
+    const withoutCheck = (devices as ScenarioDevice[]).find(
+      (device) => !TRANSACTION_CHECK_DEVICES.includes(device),
+    );
+    if (withoutCheck !== undefined) {
+      fail(
+        `sets "transactionCheckEnabled" but lists ${JSON.stringify(withoutCheck)}, which has no Transaction Check.`,
+      );
+    }
+    // Without them, a case passes whether or not a report reached the device.
+    const cases = raw["cases"];
+    if (!Array.isArray(cases) || cases.some((c) => !hasOneOfTexts(c))) {
+      fail(
+        `sets "transactionCheckEnabled", so each case needs the verdicts it accepts in "oneOfTexts".`,
+      );
+    }
+  }
+
   return {
     name: `${group}:${name}`,
     group,
@@ -169,9 +211,7 @@ function toScenario(raw: Json, path: string): Scenario {
     ...(scenarioAction === "solanaProgram"
       ? { program: name }
       : { fixture: path }),
-    ...(raw["options"]
-      ? { options: raw["options"] as Scenario["options"] }
-      : {}),
+    ...(options ? { options } : {}),
     ...(typeof raw["osVersion"] === "string"
       ? { osVersion: raw["osVersion"] }
       : {}),

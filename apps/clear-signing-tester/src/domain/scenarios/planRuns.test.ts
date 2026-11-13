@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { type Scenario } from "@root/src/domain/models/Scenario";
 
-import { planRuns } from "./planRuns";
+import { planRuns, skipSeedlessScenarios } from "./planRuns";
 
 const scenario = (
   name: string,
@@ -58,4 +58,53 @@ describe("planRuns", () => {
       /Unknown scenario or group "nope".*contacts, core/s,
     );
   });
+});
+
+describe("skipSeedlessScenarios", () => {
+  const checked: Scenario = {
+    ...scenario("tx-check:live", "tx-check", ["stax"]),
+    coinApp: "Solana",
+    options: { transactionCheckEnabled: true },
+  };
+  const catalog = [...CATALOG, checked];
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("keeps every scenario when a seed is set", () => {
+    expect(skipSeedlessScenarios(catalog, ["tx-check"], "funded words")).toBe(
+      catalog,
+    );
+  });
+
+  it.each([[[]], [["all"]]])(
+    "leaves them out of %j without a seed, and says so",
+    (selectors) => {
+      const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+      expect(skipSeedlessScenarios(catalog, selectors, undefined)).toEqual(
+        CATALOG,
+      );
+      expect(log).toHaveBeenCalledWith(
+        expect.stringContaining("tx-check:live"),
+      );
+    },
+  );
+
+  it("leaves them out quietly when other groups are selected", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    expect(skipSeedlessScenarios(catalog, ["core"], undefined)).toEqual(
+      CATALOG,
+    );
+    expect(log).not.toHaveBeenCalled();
+  });
+
+  it.each(["tx-check", "tx-check:live"])(
+    "refuses %s by name without a seed",
+    (selector) => {
+      expect(() =>
+        skipSeedlessScenarios(catalog, [selector], undefined),
+      ).toThrow(/tx-check:live needs GH SPECULOS_SEED/);
+    },
+  );
 });

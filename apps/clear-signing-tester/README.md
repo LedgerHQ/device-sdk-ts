@@ -19,10 +19,11 @@ pnpm build:libs
 
 ## Environment variables
 
-| Variable         | Required                      | Default                             | Description             |
-| ---------------- | ----------------------------- | ----------------------------------- | ----------------------- |
-| `GATING_TOKEN`   | For CAL origin-gated features | —                                   | Origin token            |
-| `SPECULINHO_URL` | No                            | `https://speculinho.ledgerlabs.net` | Speculinho operator URL |
+| Variable         | Required                       | Default                             | Description                                                         |
+| ---------------- | ------------------------------ | ----------------------------------- | ------------------------------------------------------------------- |
+| `GATING_TOKEN`   | For CAL origin-gated features  | —                                   | Origin token                                                        |
+| `SPECULINHO_URL` | No                             | `https://speculinho.ledgerlabs.net` | Speculinho operator URL                                             |
+| `SPECULOS_SEED`  | For `solana-transaction-check` | Speculos' default test mnemonic     | Seed that group's emulators boot with: a funded wallet's, see below |
 
 ## Running scenarios
 
@@ -77,6 +78,7 @@ requested `--device` is skipped rather than failed.
 | `erc7730-typed-data`        | stax, nanox, flex | Per-dapp typed-data descriptors                   |
 | `solana`                    | stax, nanox, flex | Solana transaction fixtures                       |
 | `solana-general-clear-sign` | stax, nanox, flex | Solana general (IDL-based) clear-signing fixtures |
+| `solana-transaction-check`  | stax, flex        | Transaction Check on live Web3 Checks, CI only    |
 | `solana-programs`           | —                 | Live program transactions — disabled, see below   |
 | `solana-v1`                 | —                 | Solana v1 fixtures — disabled, see below          |
 | `tron`                      | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex   |
@@ -113,6 +115,44 @@ messages (same accounts and instructions, ComputeBudget values moved into the
 v1 config where present), plus a durable-nonce transfer. To switch it on, drop
 `"enabled": false` from `ressources/solana-v1/v1-transactions.json` and add
 `solana-v1` to the scenarios run by `pull_request.yml` and `nightly_solana.yml`.
+
+The `solana-transaction-check` group tests Transaction Check end to end: the
+Solana app, the signer and the live Web3 Checks backend. Its scenario sets the
+`transactionCheckEnabled` option, so the tester accepts the opt-in ("Yes,
+enable") instead of declining it. The signer then sends each transaction to the
+production Web3 Checks API with the run's origin token (`GATING_TOKEN`), and
+the device checks the signed report against the transaction it reviews. Each
+case lists the three verdict lines in `oneOfTexts` — "No threat detected by
+Transaction Check.", "Potential risk detected." and "Critical threat
+detected." — so it passes only when the review shows one of them, and lists
+"Transaction Check unavailable", which the app shows when no valid report
+reached it, in `unexpectedTexts`. The trailing period keeps the risk and
+threat warnings ("… Detected by Transaction_Checks") from matching. A scenario
+with the option is refused unless every case has `oneOfTexts`. The warning
+that a risk or threat verdict shows first is accepted, so the review is still
+checked to its end. The backend decides the verdict, so the cases pin none; to
+pin one, list only its line in `oneOfTexts`. The Nano models have no
+Transaction Check, so the option is refused for them, and for any coin app but
+Solana.
+
+The backend simulates each transaction on mainnet, and a simulation reverts
+when its fee payer has no SOL — even for a transaction that moves nothing. The
+crafter makes the device the fee payer, and Speculos' default wallet is empty
+(and public, so it cannot be funded), so the group needs `SPECULOS_SEED`: the
+BIP39 mnemonic of a dedicated test wallet whose `44'/501'/0'` address holds at
+least 0.01 SOL and 1 JUP. That covers both cases — a 0.0001 SOL transfer and
+a 1 JUP transfer — plus the fee and the rent-exempt minimum; nothing is ever
+broadcast, so nothing is spent. Only the scenarios with the option boot on the
+seed: every other one keeps the default wallet, whose addresses its expected
+texts carry, so one run can mix them. The seed never reaches the logs: the
+tester replaces it with `<seed>`.
+
+The group runs only in the Solana nightly, on `develop`, in its own job bound
+to the `solana-tx-check` environment. The seed is that environment's
+`SPECULOS_SEED` secret, and the environment only accepts `develop`, so no pull
+request can read it. Without the variable, `all` skips the group and naming it
+fails at once with `needs GH SPECULOS_SEED`. To run it locally, export a funded
+wallet's seed.
 
 ### Options
 
@@ -157,16 +197,16 @@ whatever `ressources/` holds:
 The selector is `group:name`, so this file is `core:erc20`. The directory it
 sits in is free — `erc7730/uniswap/` holds one scenario of each group.
 
-| Field                     | Required | Meaning                                                                      |
-| ------------------------- | -------- | ---------------------------------------------------------------------------- |
-| `group`, `name`           | yes      | Selector `group:name`; the group is selectable on its own                    |
-| `action`                  | yes      | `signTransaction`, `signTypedData`, `registerContact`, `solanaProgram`       |
-| `devices`                 | yes      | Devices this scenario supports; a run picks one                              |
-| `coinApp`                 | yes      | `Ethereum`, `Solana`, `Tron` or a legacy Bitcoin app (see below)             |
-| `cases`                   | yes\*    | The inputs; `solanaProgram` takes none, its input comes from the RPC         |
-| `mode`                    | no       | `parallel` (default) or `sequential`                                         |
-| `osVersion`, `appVersion` | no       | Override the device's pin, together                                          |
-| `options`                 | no       | `blindSigningEnabled`, `skipOriginToken`, `addressBook`, `useRpc`, `distill` |
+| Field                     | Required | Meaning                                                                                                 |
+| ------------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| `group`, `name`           | yes      | Selector `group:name`; the group is selectable on its own                                               |
+| `action`                  | yes      | `signTransaction`, `signTypedData`, `registerContact`, `solanaProgram`                                  |
+| `devices`                 | yes      | Devices this scenario supports; a run picks one                                                         |
+| `coinApp`                 | yes      | `Ethereum`, `Solana`, `Tron` or a legacy Bitcoin app (see below)                                        |
+| `cases`                   | yes\*    | The inputs; `solanaProgram` takes none, its input comes from the RPC                                    |
+| `mode`                    | no       | `parallel` (default) or `sequential`                                                                    |
+| `osVersion`, `appVersion` | no       | Override the device's pin, together                                                                     |
+| `options`                 | no       | `blindSigningEnabled`, `skipOriginToken`, `addressBook`, `useRpc`, `distill`, `transactionCheckEnabled` |
 
 A case may carry keys prefixed with `_`, which the tester never reads. They are
 notes for whoever maintains the fixture — `_txHash` records the transaction this

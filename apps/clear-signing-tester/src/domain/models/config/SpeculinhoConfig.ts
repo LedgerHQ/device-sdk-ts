@@ -7,4 +7,6 @@ export type SpeculinhoConfig = {
   speculinhoUrl?: string;
   resolvedUrl?: string;
   speculosHttpTimeoutMs?: number;
+  /** Mnemonic the emulator boots with. Absent boots Speculos' default one. */
+  seed?: string;
 };

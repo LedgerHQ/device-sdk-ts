@@ -119,9 +119,62 @@ describe("loadScenarioCatalog", () => {
       { ...VALID, enabled: "no" },
       /non-boolean "enabled"/,
     ],
+    [
+      "a non-boolean transactionCheckEnabled",
+      { ...VALID, options: { transactionCheckEnabled: "true" } },
+      /non-boolean "transactionCheckEnabled"/,
+    ],
+    [
+      "transactionCheckEnabled outside Solana",
+      { ...VALID, options: { transactionCheckEnabled: true } },
+      /only Solana supports/,
+    ],
+    [
+      "transactionCheckEnabled on a Nano",
+      {
+        ...VALID,
+        coinApp: "Solana",
+        devices: ["stax", "nanox"],
+        options: { transactionCheckEnabled: true },
+      },
+      /lists "nanox", which has no Transaction Check/,
+    ],
+    [
+      "transactionCheckEnabled with a case that accepts no verdict",
+      {
+        ...VALID,
+        coinApp: "Solana",
+        cases: [{ rawTx: "AQAB", oneOfTexts: ["Verdict."] }, { rawTx: "AQAB" }],
+        options: { transactionCheckEnabled: true },
+      },
+      /each case needs the verdicts it accepts in "oneOfTexts"/,
+    ],
+    [
+      "transactionCheckEnabled with a blank verdict",
+      {
+        ...VALID,
+        coinApp: "Solana",
+        cases: [{ rawTx: "AQAB", oneOfTexts: ["Verdict.", " "] }],
+        options: { transactionCheckEnabled: true },
+      },
+      /each case needs the verdicts it accepts in "oneOfTexts"/,
+    ],
   ])("rejects a file with %s", (_label, body, message) => {
     write("bad.json", body);
     expect(() => loadScenarioCatalog(dir)).toThrow(message);
+  });
+
+  it("carries transactionCheckEnabled through on Solana touchscreens", () => {
+    write("one.json", {
+      ...VALID,
+      coinApp: "Solana",
+      devices: ["stax", "flex", "apex"],
+      cases: [{ rawTx: "AQAB", oneOfTexts: ["Verdict."] }],
+      options: { transactionCheckEnabled: true },
+    });
+    expect(loadScenarioCatalog(dir)[0]!.options).toEqual({
+      transactionCheckEnabled: true,
+    });
   });
 
   it("rejects cases on a solanaProgram, whose input comes from the RPC", () => {

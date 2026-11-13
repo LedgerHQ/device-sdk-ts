@@ -27,7 +27,7 @@ const RELEASE_TIMEOUT_MS = 10_000;
 const ROUTE_TIMEOUT_SECONDS = 60;
 
 /** Speculos' own default seed, so a pod derives the same keys it would with no
- * `--seed` at all. Overridable via SPECULOS_SEED env var. */
+ * `--seed` at all. A scenario that needs a funded wallet sets its own. */
 const DEFAULT_SPECULOS_SEED =
   "glory promote mansion idle axis finger extra february uncover one trip resource lawn turtle enact monster seven myth punch hobby comfort wild raise skin";
 
@@ -170,19 +170,25 @@ export class SpeculinhoServiceController implements ServiceController {
     }
   }
 
+  private seed(): string {
+    return this.config.seed ?? DEFAULT_SPECULOS_SEED;
+  }
+
+  private withoutSeed(text: string): string {
+    return text.split(this.seed()).join("<seed>");
+  }
+
   private async acquire(
     appName: string,
     appVersion: string | undefined,
     osVersion: string | undefined,
   ): Promise<void> {
-    const seed = process.env["SPECULOS_SEED"] ?? DEFAULT_SPECULOS_SEED;
-
     const body: Record<string, unknown> = {
       coin_app: appName,
       coin_app_version: appVersion,
       device: this.config.device,
       device_os_version: osVersion,
-      seed,
+      seed: this.seed(),
       run_id: this.runId,
       route_timeout_seconds: ROUTE_TIMEOUT_SECONDS,
     };
@@ -209,7 +215,7 @@ export class SpeculinhoServiceController implements ServiceController {
     body["extra_args"] = extraArgs;
 
     this.logger.debug("Acquiring Speculinho pod", {
-      data: { body },
+      data: { body: { ...body, seed: "<seed>" } },
     });
 
     let res: Response;
@@ -220,12 +226,14 @@ export class SpeculinhoServiceController implements ServiceController {
         body: JSON.stringify(body),
       });
     } catch (error) {
-      throw new Error(`Speculinho acquire request failed: ${String(error)}`);
+      throw new Error(
+        `Speculinho acquire request failed: ${this.withoutSeed(String(error))}`,
+      );
     }
 
     if (!res.ok) {
       throw new Error(
-        `Speculinho acquire failed (${res.status}): ${await res.text()}`,
+        `Speculinho acquire failed (${res.status}): ${this.withoutSeed(await res.text())}`,
       );
     }
   }
@@ -239,12 +247,14 @@ export class SpeculinhoServiceController implements ServiceController {
         const res = await fetch(`${this.baseUrl}/status/${this.runId}`);
         if (!res.ok) {
           throw new Error(
-            `Speculinho status failed (${res.status}): ${await res.text()}`,
+            `Speculinho status failed (${res.status}): ${this.withoutSeed(await res.text())}`,
           );
         }
         status = (await res.json()) as StatusResponse;
       } catch (error) {
-        throw new Error(`Speculinho status request failed: ${String(error)}`);
+        throw new Error(
+          `Speculinho status request failed: ${this.withoutSeed(String(error))}`,
+        );
       }
 
       if (status.status === "ready" && status.speculos_url) {
@@ -253,7 +263,7 @@ export class SpeculinhoServiceController implements ServiceController {
 
       if (status.status === "failed") {
         throw new PodNotUsableError(
-          `Speculinho pod ${this.runId} failed: ${status.error_details ?? "unknown"}`,
+          `Speculinho pod ${this.runId} failed: ${this.withoutSeed(status.error_details ?? "unknown")}`,
         );
       }
 

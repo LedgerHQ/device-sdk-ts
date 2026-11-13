@@ -4,6 +4,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
+import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
@@ -32,6 +33,8 @@ export class SignTransactionStateHandler implements StateHandler {
     private readonly retryService: RetryService,
     @inject(TYPES.ScreenshotSaver)
     private readonly screenshotSaver: ScreenshotSaver,
+    @inject(TYPES.SignerConfig)
+    private readonly signerConfig: SignerConfig,
   ) {
     this.logger = this.loggerFactory("sign-transaction-state-handler");
   }
@@ -125,6 +128,16 @@ export class SignTransactionStateHandler implements StateHandler {
               "Detected 'blind signing ahead' screen, tapping 'Accept risk and continue'",
             );
             await this.deviceController.acceptBlindSigning();
+          } else if (
+            // Only a scenario that accepted the opt-in gets a verdict, so the
+            // others skip the extra screen read.
+            this.signerConfig.transactionCheckEnabled &&
+            (await this.screenAnalyzer.isTransactionCheckWarning())
+          ) {
+            this.logger.debug(
+              "Detected a Transaction Check risk or threat warning, continuing to the review",
+            );
+            await this.deviceController.acceptTransactionCheckWarning();
           } else if (await this.screenAnalyzer.isStepAcceptPage()) {
             this.logger.debug("Accepting a review step");
             await this.deviceController.signTransaction();
