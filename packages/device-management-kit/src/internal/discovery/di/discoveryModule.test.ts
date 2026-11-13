@@ -8,6 +8,7 @@ import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
 import { ListenToAvailableDevicesUseCase } from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
+import { ListenToConnectedDevicesUseCase } from "@internal/discovery/use-case/ListenToConnectedDevicesUseCase";
 import { ReconnectUseCase } from "@internal/discovery/use-case/ReconnectUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
@@ -82,6 +83,12 @@ describe("discoveryModuleFactory", () => {
     );
     expect(listConnectedDevicesUseCase).toBeInstanceOf(
       ListConnectedDevicesUseCase,
+    );
+    const listenToConnectedDevicesUseCase = container.get(
+      discoveryTypes.ListenToConnectedDevicesUseCase,
+    );
+    expect(listenToConnectedDevicesUseCase).toBeInstanceOf(
+      ListenToConnectedDevicesUseCase,
     );
     const reconnectUseCase = container.get(discoveryTypes.ReconnectUseCase);
     expect(reconnectUseCase).toBeInstanceOf(ReconnectUseCase);

@@ -8,6 +8,9 @@ export const discoveryTypes = {
     "ListenToAvailableDevicesUseCase",
   ),
   ListenToConnectedDeviceUseCase: Symbol.for("ListenToConnectedDeviceUseCase"),
+  ListenToConnectedDevicesUseCase: Symbol.for(
+    "ListenToConnectedDevicesUseCase",
+  ),
   ListConnectedDevicesUseCase: Symbol.for("ListConnectedDevicesUseCase"),
   ReconnectUseCase: Symbol.for("ReconnectUseCase"),
 };

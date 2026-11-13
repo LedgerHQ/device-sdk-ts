@@ -81,6 +81,10 @@ describe("DeviceManagementKit", () => {
       expect(dmk.listenToConnectedDevice).toBeDefined();
     });
 
+    it("should have listenToConnectedDevices method", () => {
+      expect(dmk.listenToConnectedDevices).toBeDefined();
+    });
+
     it("should have disableDeviceSessionRefresher method", () => {
       expect(dmk.disableDeviceSessionRefresher).toBeDefined();
     });
@@ -227,6 +231,7 @@ describe("DeviceManagementKit", () => {
       [deviceSessionTypes.GetDeviceSessionStateUseCase],
       [discoveryTypes.ListConnectedDevicesUseCase],
       [discoveryTypes.ListenToConnectedDeviceUseCase],
+      [discoveryTypes.ListenToConnectedDevicesUseCase],
       [managerApiTypes.SetProviderUseCase],
       [managerApiTypes.SetFirmwareDistributionSaltUseCase],
       [secureChannelTypes.SetWebSocketUrlUseCase],

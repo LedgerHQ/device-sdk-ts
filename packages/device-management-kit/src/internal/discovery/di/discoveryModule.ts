@@ -5,6 +5,7 @@ import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCas
 import { GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConnectedDeviceUseCase";
 import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
 import { ListenToAvailableDevicesUseCase } from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
+import { ListenToConnectedDevicesUseCase } from "@internal/discovery/use-case/ListenToConnectedDevicesUseCase";
 import { ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
 import { ReconnectUseCase } from "@internal/discovery/use-case/ReconnectUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
@@ -33,6 +34,9 @@ export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
     bind(discoveryTypes.ListenToConnectedDeviceUseCase).to(
       ListenToConnectedDeviceUseCase,
     );
+    bind(discoveryTypes.ListenToConnectedDevicesUseCase).to(
+      ListenToConnectedDevicesUseCase,
+    );
     bind(discoveryTypes.ListConnectedDevicesUseCase).to(
       ListConnectedDevicesUseCase,
     );
@@ -47,6 +51,9 @@ export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
         StubUseCase,
       );
       rebindSync(discoveryTypes.ListenToConnectedDeviceUseCase).to(StubUseCase);
+      rebindSync(discoveryTypes.ListenToConnectedDevicesUseCase).to(
+        StubUseCase,
+      );
       rebindSync(discoveryTypes.ListConnectedDevicesUseCase).to(StubUseCase);
     }
   });
