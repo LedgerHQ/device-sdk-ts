@@ -90,4 +90,16 @@ export class SolSignerDriver {
       { timeout },
     );
   }
+
+  /**
+   * The `step` of every state the device action emitted, oldest first, to tell
+   * which path the signer took.
+   */
+  async steps(): Promise<string[]> {
+    const texts = await this.responses.allTexts();
+    return texts.flatMap((text) => {
+      const step = /"step": "([^"]+)"/.exec(text)?.[1];
+      return step ? [step] : [];
+    });
+  }
 }
