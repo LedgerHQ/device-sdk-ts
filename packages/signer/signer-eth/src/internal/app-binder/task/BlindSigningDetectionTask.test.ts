@@ -126,6 +126,81 @@ describe("BlindSigningDetectionTask", () => {
     );
   });
 
+  describe("returned blindSignReason", () => {
+    it.each([
+      {
+        name: "no_clear_signing_context when no context was provided",
+        input: { hasContext: false, usedFallback: false },
+        expected: {
+          isBlindSign: true,
+          blindSignReason: "no_clear_signing_context",
+        },
+      },
+      {
+        name: "no_clear_signing_context when the signer fell back without any context",
+        input: { hasContext: false, usedFallback: true },
+        expected: {
+          isBlindSign: true,
+          blindSignReason: "no_clear_signing_context",
+        },
+      },
+      {
+        name: "device_rejected_context when the signer fell back",
+        input: { hasContext: true, usedFallback: true },
+        expected: {
+          isBlindSign: true,
+          blindSignReason: "device_rejected_context",
+        },
+      },
+      {
+        name: "no_clear_signing_context when only metadata contexts were provided",
+        input: {
+          hasContext: true,
+          usedFallback: false,
+          contextTypes: [ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK],
+        },
+        expected: {
+          isBlindSign: true,
+          blindSignReason: "no_clear_signing_context",
+        },
+      },
+      {
+        name: "null when the transaction was clear signed",
+        input: { hasContext: true, usedFallback: false },
+        expected: { isBlindSign: false, blindSignReason: null },
+      },
+    ])("returns $name", async ({ input, expected }) => {
+      const task = new BlindSigningDetectionTask({
+        input: { ...baseInput, ...input },
+        contextModule: mockContextModule,
+        loggerFactory: mockLoggerFactory,
+      });
+
+      await expect(task.run()).resolves.toEqual(expected);
+    });
+
+    it("still returns the reason when reporting fails", async () => {
+      vi.mocked(mockContextModule.report).mockRejectedValueOnce(
+        new Error("network down"),
+      );
+      const task = new BlindSigningDetectionTask({
+        input: {
+          ...baseInput,
+          type: "typedData",
+          hasContext: true,
+          usedFallback: true,
+        },
+        contextModule: mockContextModule,
+        loggerFactory: mockLoggerFactory,
+      });
+
+      await expect(task.run()).resolves.toEqual({
+        isBlindSign: true,
+        blindSignReason: "device_rejected_context",
+      });
+    });
+  });
+
   it("should detect blind signing for typed data", async () => {
     const args: BlindSigningDetectionTaskArgs = {
       input: {
@@ -145,7 +220,7 @@ describe("BlindSigningDetectionTask", () => {
     expect(mockContextModule.report).toHaveBeenCalledWith(
       expect.objectContaining({
         signingMethod: "eth_signTypedData",
-        blindSignReason: "device_rejected_context",
+        blindSignReason: "no_clear_signing_context",
       }),
     );
   });
@@ -502,6 +577,7 @@ describe("BlindSigningDetectionTask", () => {
 
       await expect(new BlindSigningDetectionTask(args).run()).resolves.toEqual({
         isBlindSign: true,
+        blindSignReason: "no_clear_signing_context",
       });
     });
   });

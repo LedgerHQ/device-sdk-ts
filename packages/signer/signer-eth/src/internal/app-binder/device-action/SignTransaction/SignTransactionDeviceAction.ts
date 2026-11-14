@@ -210,7 +210,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             transactionType: null,
             signature: null,
             isBlindSign: null,
+            blindSignReason: null,
             usedFallback: false,
+            contextsRejected: false,
           },
         };
       },
@@ -506,6 +508,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "SignTransaction",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  // The device refused one of the contexts: signing goes ahead,
+                  // but it can no longer be counted as clear signed.
+                  contextsRejected: event.output.isLeft(),
+                }),
+              }),
             },
             onError: {
               target: "Error",
@@ -672,7 +682,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   type: "transaction" as const,
                   hasContext: !hasCalldata || contexts.length > 0,
                   contextTypes: contexts.map((c) => c.context.type),
-                  usedFallback,
+                  usedFallback:
+                    usedFallback || context._internalState.contextsRejected,
                   chainId: subset?.chainId ?? null,
                   targetAddress: subset?.to ?? null,
                   selectorId:
@@ -699,6 +710,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     isBlindSign: event.output.isBlindSign,
+                    blindSignReason: event.output.blindSignReason,
                   }),
                 }),
               },
@@ -708,6 +720,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     isBlindSign: event.output.isBlindSign,
+                    blindSignReason: event.output.blindSignReason,
                   }),
                 }),
               },
@@ -727,7 +740,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       output: ({ context }) =>
         context._internalState.signature
-          ? Right(context._internalState.signature)
+          ? Right({
+              ...context._internalState.signature,
+              // If blind signing detection could not run, assume the worst.
+              isBlindSign: context._internalState.isBlindSign ?? true,
+              blindSignReason: context._internalState.blindSignReason,
+              clearSigningType: context._internalState.usedFallback
+                ? ClearSigningType.BASIC
+                : context._internalState.clearSigningType,
+            })
           : Left(
               context._internalState.error ||
                 new UnknownDAError("No error in final state"),
