@@ -92,6 +92,16 @@ export class SolSignerDriver {
   }
 
   /**
+   * Wait for the device action to fail and return the rendered error. Errors
+   * are rendered with `util.inspect`, not as JSON, so match on their `_tag`.
+   */
+  async lastError({
+    timeout = 90_000,
+  }: { timeout?: number } = {}): Promise<string> {
+    return this.responses.lastText(/_tag: '/, { timeout });
+  }
+
+  /**
    * The `step` of every state the device action emitted, oldest first, to tell
    * which path the signer took.
    */
