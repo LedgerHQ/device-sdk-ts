@@ -64,6 +64,6 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.11.1"
+    "@ledgerhq/device-management-kit": "^1.11.0"
   }
 }
