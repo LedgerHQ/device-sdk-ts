@@ -1,4 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
+import {
+  type DeviceScreenState,
+  type ScreenApi,
+  useScreenPolling,
+} from "@ledgerhq/device-mockserver-react-core";
 import { Banner, IconButton } from "@ledgerhq/lumen-ui-react";
 import { ChevronDown, ChevronUp } from "@ledgerhq/lumen-ui-react/symbols";
 
@@ -7,8 +12,7 @@ import { DeviceOsInfo } from "./DeviceOsInfo";
 import { DeviceScreenButtons } from "./DeviceScreenButtons";
 import { DeviceScreenImage } from "./DeviceScreenImage";
 import { ScreenFrame } from "./ScreenFrame";
-import { type DeviceScreenState, type ScreenApi } from "./types";
-import { useScreenPolling } from "./useScreenPolling";
+import { webScreenPlatform } from "./webScreenPlatform";
 
 export type DeviceScreenProps = {
   api: ScreenApi;
@@ -59,7 +63,11 @@ export const DeviceScreen: React.FC<DeviceScreenProps> = ({
 }) => {
   const model = findDeviceScreenModel(deviceType);
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
-  const state = useScreenPolling(api, !floating || !collapsed);
+  const state = useScreenPolling(
+    api,
+    !floating || !collapsed,
+    webScreenPlatform,
+  );
 
   if (!floating) {
     return (

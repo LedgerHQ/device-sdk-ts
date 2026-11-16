@@ -18,6 +18,7 @@ import { type LegacyCoinProfile } from "@api/model/LegacyCoinProfile";
 import { LegacyGetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { LegacyHashOutputFullCommand } from "@internal/app-binder/command/HashOutputFullCommand";
 import { LegacyProvideOutputFullChangePathCommand } from "@internal/app-binder/command/ProvideOutputFullChangePathCommand";
+import { LegacySaplingOutputCommitCommand } from "@internal/app-binder/command/SaplingOutputCommitCommand";
 import { LegacySignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { LegacyStartUntrustedHashTransactionInputCommand } from "@internal/app-binder/command/StartUntrustedHashTransactionInputCommand";
 import {
@@ -38,6 +39,7 @@ import {
   p2pkhScript,
   p2wpkhScript,
   sequenceToBytes,
+  SIGHASH_ALL,
   splitOutputBlocks,
   splitScriptBlocks,
 } from "@internal/app-binder/task/utils/legacyTransactionUtils";
@@ -48,6 +50,8 @@ const TRUSTED_INPUT_PREVOUT_OFFSET = 4;
 const PREVOUT_LENGTH = 36;
 const TRUSTED_INPUT_MARKER = 0x01;
 const WITNESS_ITEM_COUNT = 0x02;
+// Ledger Wallet sends no expiry height for Komodo.
+const EMPTY_EXPIRY_HEIGHT = new Uint8Array(4);
 
 type SignTransactionTaskError<ErrorCodes extends string> =
   CommandErrorResult<ErrorCodes>["error"];
@@ -188,12 +192,17 @@ export class SignTransactionTask<ErrorCodes extends string> {
       : additionals.includes("bech32")
         ? "native"
         : "wrapped";
-    const bip143 = segwit || this.profile.bip143;
+    const { transactionFormat } = this.profile;
+    const sapling = transactionFormat === "sapling";
+    const expiryHeight = sapling ? EMPTY_EXPIRY_HEIGHT : undefined;
+    const bip143 = segwit || transactionFormat !== "legacy";
     const transactionType = additionals.includes("cashaddr")
       ? TRANSACTION_TYPE.CASHADDR
-      : bip143
-        ? TRANSACTION_TYPE.BIP143
-        : TRANSACTION_TYPE.LEGACY;
+      : sapling
+        ? TRANSACTION_TYPE.SAPLING
+        : bip143
+          ? TRANSACTION_TYPE.BIP143
+          : TRANSACTION_TYPE.LEGACY;
 
     const trustedInputs: Uint8Array[] = [];
     for (const [previousTransaction, outputIndex] of inputs) {
@@ -243,7 +252,11 @@ export class SignTransactionTask<ErrorCodes extends string> {
           api,
           signedInputs.map(withoutScript),
           transactionType,
-        )) ?? (await this.hashOutputs(api, outputScript, changePath));
+        )) ??
+        (await this.hashOutputs(api, outputScript, changePath)) ??
+        (expiryHeight !== undefined
+          ? await this.commitSaplingOutputs(api, lockTime, expiryHeight)
+          : undefined);
       if (hashError !== undefined) {
         return DmkResultFactory({ error: hashError });
       }
@@ -266,7 +279,7 @@ export class SignTransactionTask<ErrorCodes extends string> {
 
       const signature = await api.sendCommand(
         new LegacySignTransactionCommand(
-          { derivationPath, lockTime, sigHashType },
+          { derivationPath, lockTime, sigHashType, expiryHeight },
           this.profile.errors,
         ),
       );
@@ -388,6 +401,20 @@ export class SignTransactionTask<ErrorCodes extends string> {
     }
 
     return undefined;
+  }
+
+  private async commitSaplingOutputs(
+    api: InternalApi,
+    lockTime: number,
+    expiryHeight: Uint8Array,
+  ): Promise<SignTransactionTaskError<ErrorCodes> | undefined> {
+    const result = await api.sendCommand(
+      new LegacySaplingOutputCommitCommand(
+        { lockTime, sigHashType: SIGHASH_ALL, expiryHeight },
+        this.profile.errors,
+      ),
+    );
+    return isSuccessCommandResult(result) ? undefined : result.error;
   }
 
   private async hashOutputs(

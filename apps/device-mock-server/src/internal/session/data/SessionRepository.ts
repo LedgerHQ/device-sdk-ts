@@ -54,6 +54,19 @@ export interface SessionRepository {
     connected: boolean,
   ): Maybe<Device>;
 
+  // --- Secure-channel flows -------------------------------------------------
+  /** Record that a secure-channel flow runs on this device. */
+  bindSecureChannelFlow(
+    record: SessionRecord,
+    flowId: string,
+    deviceId: string,
+  ): void;
+  /** Read and clear the device a secure-channel flow runs on, if any. */
+  takeSecureChannelFlowDevice(
+    record: SessionRecord,
+    flowId: string,
+  ): Maybe<Device>;
+
   // --- App store (catalog) / pending app operations -------------------------
   /**
    * Exact lookup of a seeded catalog app by its install hash. Used as an offline

@@ -20,9 +20,6 @@
     <a href="https://nextjs.org/">
       <img alt="NextJs" src="https://img.shields.io/badge/Next.js-000?logo=nextdotjs&logoColor=fff&style=for-the-badge" />
     </a>
-    <a href="https://vercel.com/">
-      <img alt="Vercel" src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" />
-    </a>
     <a href="https://www.npmjs.com/">
       <img alt="NPM" src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white" />
     </a>
@@ -73,7 +70,7 @@ This repository contains the **web implementation** of the Device Management Kit
 
 The Device Management Kit is structured as a monorepository that centralizes all TypeScript code related to the Device Management Kit in one place.
 
-This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and release different packages on NPM registry and a sample demo application on Vercel.
+This project uses [turbo monorepo](https://turbo.build/repo/docs) to build and release different packages on NPM registry and a sample demo application.
 
 ### Packages
 
@@ -136,12 +133,14 @@ See [devtools-core README](packages/devtools-core/README.md) for architecture de
 
 ### Development & Testing
 
-| Name                                                  | Path                             | Description                                                                     |
-| ----------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------- |
-| @ledgerhq/device-management-kit-sample                | apps/sample                      | React Next web app used to test & demonstrate the Device Management Kit         |
-| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client   | [Flipper](https://github.com/facebook/flipper) logger for Device Management Kit |
-| @ledgerhq/device-mockserver-client                    | packages/mockserver-client       | Client to interact with the mock-server                                         |
-| @ledgerhq/device-mockserver-react                     | packages/mockserver-device-react | React screen of a mock-server device, with its controls                         |
+| Name                                                  | Path                                    | Description                                                                     |
+| ----------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
+| @ledgerhq/device-management-kit-sample                | apps/sample                             | React Next web app used to test & demonstrate the Device Management Kit         |
+| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client          | [Flipper](https://github.com/facebook/flipper) logger for Device Management Kit |
+| @ledgerhq/device-mockserver-client                    | packages/mockserver-client              | Client to interact with the mock-server                                         |
+| @ledgerhq/device-mockserver-react                     | packages/mockserver-device-react        | React screen of a mock-server device, with its controls                         |
+| @ledgerhq/device-mockserver-react-core                | packages/mockserver-device-react-core   | Platform-free hooks behind the mock-server device screens                       |
+| @ledgerhq/device-mockserver-react-native              | packages/mockserver-device-react-native | React Native screen of a mock-server device, with its controls                  |
 
 ### Internal Configuration
 

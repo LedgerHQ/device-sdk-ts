@@ -4,7 +4,10 @@ export {
   INSPECTOR_COMMAND_TYPES,
   INSPECTOR_MESSAGE_TYPES,
 } from "./inspector/constants";
-export { DevToolsDmkInspector } from "./inspector/DevToolsDmkInspector";
+export {
+  DevToolsDmkInspector,
+  type DevToolsDmkInspectorOptions,
+} from "./inspector/DevToolsDmkInspector";
 export {
   serializeConnectedDevice,
   serializeDeviceSessionState,

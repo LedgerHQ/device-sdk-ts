@@ -7,7 +7,10 @@ import { logger } from "@internal/logger/logger";
 import { osTypes } from "@internal/os/di/osTypes";
 import { type OsApduService } from "@internal/os/service/OsApduService";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
-import { INSTALL_COMMIT_APDU } from "@internal/secure-channel/service/secureChannelApdus";
+import {
+  INSTALL_COMMIT_APDU,
+  parseSecureChannelFlowId,
+} from "@internal/secure-channel/service/secureChannelApdus";
 import { type SecureChannelApduService } from "@internal/secure-channel/service/SecureChannelApduService";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
@@ -68,6 +71,12 @@ export class ApduResolverService {
     device: Device,
     apduHex: string,
   ): Promise<string> {
+    // The client relays a secure-channel flow's permission APDU to the device
+    // it is using: that is the device the flow runs on.
+    const flowId = parseSecureChannelFlowId(apduHex.toLowerCase());
+    if (flowId !== undefined) {
+      this.repository.bindSecureChannelFlow(record, flowId, device.id);
+    }
     const response = await this.resolveResponse(record, device, apduHex);
     // A real device only applies the app change once it acknowledges the final
     // install block; mirror that by applying the armed install/uninstall when the

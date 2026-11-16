@@ -1,6 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { type DeviceActionProps } from "_common/types.ts";
+import {
+  SessionDeviceScreen,
+  useIsMockServerSession,
+} from "_components/SessionDeviceScreen";
 import { useForm } from "_hooks/useForm";
+import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
 import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
 import styled from "styled-components/native";
@@ -17,6 +22,13 @@ const OutputScrollView = styled.ScrollView`
   max-height: 300px;
 `;
 
+/** Small enough for the popin, which a running action cannot leave. */
+const DeviceScreenContainer = styled.View`
+  width: 220px;
+  align-self: center;
+  margin-top: 12px;
+`;
+
 export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
   deviceAction,
   onClose,
@@ -27,6 +39,10 @@ export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
   );
   const [loading, setLoading] = useState(false);
   const [output, setOutput] = useState("");
+  const {
+    state: { selectedId: deviceSessionId },
+  } = useDeviceSessionsContext();
+  const hasDeviceScreen = useIsMockServerSession(deviceSessionId);
 
   useEffect(() => {
     setOutput("");
@@ -78,6 +94,11 @@ export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
       onRightButtonPress={onSend}
       rightButtonText="Send">
       {loading && <InfiniteLoader />}
+      {loading && deviceSessionId && hasDeviceScreen && (
+        <DeviceScreenContainer>
+          <SessionDeviceScreen sessionId={deviceSessionId} />
+        </DeviceScreenContainer>
+      )}
       {deviceAction && !loading && (
         <deviceAction.FormComponent
           values={formValues}

@@ -418,17 +418,21 @@ Check [the sample app](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/ap
 
 Developer tools are available to help debug your DMK integration:
 
-- **Real-time logging** — View DMK logs with filtering by level and tag
+- **Real-time logging** — View DMK logs with filtering by level, tag and text, search and payload trees
 - **Device session inspector** — Monitor connected devices and their states
+- **APDU list** — Every APDU of a session, named after its command (needs the logger)
 - **Device discovery** — Discover and connect to devices from the dashboard
 - **APDU sender** — Send raw APDU commands to devices
-- **DMK configuration** — View and modify settings like the My Ledger API provider
+- **Mock server** — The mock device's live screen, when the app uses the mock server transport
+- **AI debugging** _(desktop app only)_ — Claude explains selected logs or APDUs and can file the bug in Jira
+
+See the [devtools-core README](../devtools/core/README.md#features) for details.
 
 ### Web, Node.js or Electron app
 
 For web apps, Node.js apps, Electron apps, or any JavaScript runtime with WebSocket support (including React Native), use the WebSocket-based devtools with the Electron dashboard app.
 
-> **React Native users:** This setup also works for React Native apps. However, if you have [Rozenite](https://www.rozenite.dev/) set up in your app, we recommend the [Rozenite-based devtools](#react-native-app-with-rozenite) instead — it provides a more integrated experience directly within the React Native DevTools, with less setup required.
+> **React Native users:** This setup also works for React Native apps. If you have [Rozenite](https://www.rozenite.dev/) set up in your app, the [Rozenite-based devtools](#react-native-app-with-rozenite) need less setup and run directly within the React Native DevTools, but they have no AI debugging yet. Use this setup to get it.
 
 #### Set up
 
@@ -462,7 +466,10 @@ const dmk = new DeviceManagementKitBuilder()
 
 // Optional: Enable inspector for device sessions and DMK interaction
 // This must be done AFTER the DMK is built
-const inspector = new DevToolsDmkInspector(connector, dmk);
+const inspector = new DevToolsDmkInspector(connector, dmk, {
+  // Optional: with the mock server transport, shows the mock device's screen
+  mockServer: { url: mockServerUrl, sessionToken },
+});
 
 // Clean up when done (e.g., on app unmount)
 // inspector.destroy();
@@ -478,6 +485,8 @@ The devtools can be accessed as an Electron app.
 ### React Native app (with Rozenite)
 
 If you have [Rozenite](https://www.rozenite.dev/) already set up in your React Native app, the DMK developer tools can be accessed directly in the React Native DevTools.
+
+> **AI debugging is not available yet in Rozenite.** It runs Claude Code on your computer, which only the desktop app can do. To use it, connect your app to the desktop app with the [WebSocket setup](#web-nodejs-or-electron-app) instead.
 
 #### Set up
 

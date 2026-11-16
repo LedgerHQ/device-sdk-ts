@@ -1,0 +1,5 @@
+{
+  "name": "ledger-devtools",
+  "description": "Skills the Ledger DMK DevTools gives Claude to explain DMK logs and APDU exchanges",
+  "version": "1.0.0"
+}

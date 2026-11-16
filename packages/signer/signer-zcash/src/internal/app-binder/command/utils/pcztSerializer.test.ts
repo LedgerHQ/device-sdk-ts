@@ -6,13 +6,17 @@ import {
   PCZT_P2,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
+  outputExtension,
   pcztP1,
   pcztP2,
   serializeIronwoodActions,
+  serializeIronwoodActionsIndexed,
   serializeOrchardActions,
+  serializeOrchardActionsIndexed,
   serializePcztHeader,
   serializeTransparentInputs,
   serializeTransparentOutputs,
+  serializeTransparentOutputsIndexed,
 } from "@internal/app-binder/command/utils/pcztSerializer";
 import {
   bytes,
@@ -24,9 +28,12 @@ import {
   SAMPLE_HEADER_HEX,
   SAMPLE_HEADER_HEX_V6,
   sampleIronwoodBundle,
+  sampleOrchardAction,
   sampleOrchardBundle,
   sampleTransparentInput,
   sampleTransparentOutput,
+  UA_SHIELDED_VALUE_HEX,
+  UA_TRANSPARENT_VALUE_HEX,
 } from "@internal/app-binder/task/__fixtures__/pcztFixtures";
 import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 
@@ -253,6 +260,132 @@ describe("pcztSerializer", () => {
       packets.forEach((packet) => {
         expect(packet.length).toBeLessThanOrEqual(PCZT_MAX_PACKET_SIZE);
       });
+    });
+  });
+
+  describe("user address receivers extension", () => {
+    const shielded = hexToBytes(UA_SHIELDED_VALUE_HEX);
+    const transparent = hexToBytes(UA_TRANSPARENT_VALUE_HEX);
+
+    it("outputExtension writes tag, length, value", () => {
+      expect(bytesToHex(outputExtension(0x02, Uint8Array.of(0xaa, 0xbb)))).toBe(
+        "0202aabb",
+      );
+      expect(bytesToHex(outputExtension(0x02, new Uint8Array()))).toBe("0200");
+    });
+
+    it("appends 02 41 <P2PKH + Sapling> to an Orchard metadata packet, after rcv", () => {
+      const base = serializeOrchardActionsIndexed(sampleOrchardBundle());
+      const tagged = serializeOrchardActionsIndexed(sampleOrchardBundle(), [
+        shielded,
+      ]);
+      const meta = base.lastPacketIndices[0]!;
+      expect(base.packets[meta]!.length).toBe(115);
+      expect(bytesToHex(tagged.packets[meta]!)).toBe(
+        bytesToHex(base.packets[meta]!) + "0241" + UA_SHIELDED_VALUE_HEX,
+      );
+      expect(shielded.length).toBe(0x41);
+    });
+
+    it("appends 02 00 for an Orchard-only address (empty list)", () => {
+      const base = serializeOrchardActionsIndexed(sampleOrchardBundle());
+      const tagged = serializeOrchardActionsIndexed(sampleOrchardBundle(), [
+        new Uint8Array(),
+      ]);
+      const meta = base.lastPacketIndices[0]!;
+      expect(bytesToHex(tagged.packets[meta]!)).toBe(
+        bytesToHex(base.packets[meta]!) + "0200",
+      );
+    });
+
+    it("leaves every other Orchard packet unchanged", () => {
+      const base = serializeOrchardActions(sampleOrchardBundle());
+      const tagged = serializeOrchardActions(sampleOrchardBundle(), [shielded]);
+      expect(tagged).toHaveLength(base.length);
+      const meta = serializeOrchardActionsIndexed(sampleOrchardBundle())
+        .lastPacketIndices[0]!;
+      tagged.forEach((packet, i) => {
+        if (i !== meta) {
+          expect(bytesToHex(packet)).toBe(bytesToHex(base[i]!));
+        }
+      });
+    });
+
+    it("puts the Ironwood extension strictly after notePlaintextVersion", () => {
+      const base = serializeIronwoodActionsIndexed(sampleIronwoodBundle());
+      const tagged = serializeIronwoodActionsIndexed(sampleIronwoodBundle(), [
+        shielded,
+      ]);
+      const meta = base.lastPacketIndices[0]!;
+      expect(base.packets[meta]!.length).toBe(116);
+      expect(base.packets[meta]![115]).toBe(0x03);
+      expect(bytesToHex(tagged.packets[meta]!)).toBe(
+        bytesToHex(base.packets[meta]!) + "0241" + UA_SHIELDED_VALUE_HEX,
+      );
+      expect(
+        bytesToHex(
+          serializeIronwoodActions(sampleIronwoodBundle(), [shielded])[meta]!,
+        ),
+      ).toBe(bytesToHex(tagged.packets[meta]!));
+    });
+
+    it("appends 00 02 58 <Sapling + Orchard> to a transparent output's derivation packet", () => {
+      const outputs = [sampleTransparentOutput()];
+      const base = serializeTransparentOutputsIndexed(outputs);
+      const tagged = serializeTransparentOutputsIndexed(outputs, [transparent]);
+      const last = tagged.lastPacketIndices[0]!;
+      expect(last).toBe(base.packets.length - 1);
+      expect(tagged.packets[last]!.length).toBe(91);
+      expect(bytesToHex(tagged.packets[last]!)).toBe(
+        "00" + "0258" + UA_TRANSPARENT_VALUE_HEX,
+      );
+      expect(
+        bytesToHex(serializeTransparentOutputs(outputs, [transparent])[last]!),
+      ).toBe(bytesToHex(tagged.packets[last]!));
+    });
+
+    it("only changes the outputs that carry a list in a mixed bundle", () => {
+      const outputs = [
+        sampleTransparentOutput(),
+        sampleTransparentOutput(),
+        sampleTransparentOutput(),
+      ];
+      const base = serializeTransparentOutputsIndexed(outputs);
+      const tagged = serializeTransparentOutputsIndexed(outputs, [
+        undefined,
+        transparent,
+        undefined,
+      ]);
+      expect(tagged.lastPacketIndices).toEqual(base.lastPacketIndices);
+      tagged.packets.forEach((packet, i) => {
+        if (i === tagged.lastPacketIndices[1]) {
+          expect(packet.length).toBe(91);
+        } else {
+          expect(bytesToHex(packet)).toBe(bytesToHex(base.packets[i]!));
+        }
+      });
+    });
+
+    it("indexes the last packet of each action with a split enc_ciphertext", () => {
+      const bundle = {
+        ...sampleOrchardBundle(),
+        actions: [sampleOrchardAction(), sampleOrchardAction()],
+      };
+      const { packets, lastPacketIndices } =
+        serializeOrchardActionsIndexed(bundle);
+      // count + 2 actions of (spend, zip32, cmx/epk, 3 enc, 1 out, metadata = 8 packets) + trailer
+      expect(packets).toHaveLength(1 + 2 * 8 + 1);
+      expect(lastPacketIndices).toEqual([8, 16]);
+      lastPacketIndices.forEach((i) => expect(packets[i]!.length).toBe(115));
+    });
+
+    it("returns no index for an empty bundle", () => {
+      expect(
+        serializeOrchardActionsIndexed({
+          ...sampleOrchardBundle(),
+          actions: [],
+        }).lastPacketIndices,
+      ).toEqual([]);
     });
   });
 

@@ -209,6 +209,15 @@ describe("CommandUtils", () => {
       expect(CommandUtils.isOutOfMemory(response)).toBe(true);
     });
 
+    it("should return true if the status code is 0x6733", () => {
+      const response = new ApduResponse({
+        statusCode: Uint8Array.from([0x67, 0x33]),
+        data: Uint8Array.from([]),
+      });
+
+      expect(CommandUtils.isOutOfMemory(response)).toBe(true);
+    });
+
     it("should return false if the status code is not 0x6a84", () => {
       const response = new ApduResponse({
         statusCode: Uint8Array.from([0x90, 0x00]),

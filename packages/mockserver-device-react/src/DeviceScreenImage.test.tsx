@@ -1,5 +1,6 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { HOLD_THRESHOLD_MS } from "@ledgerhq/device-mockserver-react-core";
 
 import { DeviceScreenImage } from "./DeviceScreenImage";
 
@@ -31,6 +32,7 @@ describe("DeviceScreenImage", () => {
   };
 
   beforeEach(() => {
+    vi.useFakeTimers();
     onTouch.mockReset();
     HTMLElement.prototype.setPointerCapture = vi.fn();
     HTMLElement.prototype.releasePointerCapture = vi.fn();
@@ -42,13 +44,31 @@ describe("DeviceScreenImage", () => {
   afterEach(() => {
     act(() => root.unmount());
     container.remove();
+    vi.useRealTimers();
   });
 
-  it("maps a touch to device pixels and releases it where it went down", () => {
+  it("maps a tap to device pixels", () => {
     render(onTouch);
     sizeImage();
 
     pointer("pointerdown", { clientX: 50, clientY: 150 });
+    pointer("pointerup", { clientX: 190, clientY: 10 });
+
+    expect(onTouch).toHaveBeenCalledExactlyOnceWith(
+      100,
+      300,
+      "press-and-release",
+    );
+  });
+
+  it("releases a hold where it went down", () => {
+    render(onTouch);
+    sizeImage();
+
+    pointer("pointerdown", { clientX: 50, clientY: 150 });
+    act(() => {
+      vi.advanceTimersByTime(HOLD_THRESHOLD_MS);
+    });
     pointer("pointerup", { clientX: 190, clientY: 10 });
 
     expect(onTouch.mock.calls).toEqual([
@@ -62,8 +82,9 @@ describe("DeviceScreenImage", () => {
     sizeImage();
 
     pointer("pointerdown", { clientX: 200, clientY: 300 });
+    pointer("pointerup");
 
-    expect(onTouch).toHaveBeenCalledWith(399, 599, "press");
+    expect(onTouch).toHaveBeenCalledWith(399, 599, "press-and-release");
   });
 
   it("ignores touches before the image has a size", () => {
@@ -88,6 +109,9 @@ describe("DeviceScreenImage", () => {
     render(onTouch);
     sizeImage();
     pointer("pointerdown", { clientX: 50, clientY: 150 });
+    act(() => {
+      vi.advanceTimersByTime(HOLD_THRESHOLD_MS);
+    });
 
     act(() => root.render(<></>));
 

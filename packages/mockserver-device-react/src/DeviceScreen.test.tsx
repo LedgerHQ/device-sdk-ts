@@ -1,9 +1,9 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { type Device } from "@ledgerhq/device-mockserver-client";
+import { type ScreenApi } from "@ledgerhq/device-mockserver-react-core";
 
 import { DeviceScreen, type DeviceScreenProps } from "./DeviceScreen";
-import { type ScreenApi } from "./types";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 

@@ -12,6 +12,7 @@
   },
   "scripts": {
     "cli": "tsx src/cli/index.ts",
+    "bump-versions": "tsx src/cli/bumpVersions.ts",
     "build": "tsc",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
@@ -38,7 +39,7 @@
     "inversify": "catalog:",
     "rxjs": "catalog:",
     "semver": "catalog:",
-    "undici": "^8.8.0"
+    "undici": "^8.12.2"
   },
   "devDependencies": {
     "@ledgerhq/vitest-config-dmk": "workspace:^",

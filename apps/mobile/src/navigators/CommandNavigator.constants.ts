@@ -3,6 +3,7 @@ export enum CommandsScreens {
   DeviceActionTester = "DEVICE_ACTION_TESTER_SCREEN",
   SendApdu = "SEND_APDU_SCREEN",
   ListenToAvailableDevices = "LISTEN_TO_AVAILABLE_DEVICES_SCREEN",
+  DeviceScreen = "DEVICE_SCREEN_SCREEN",
 }
 
 export type CommandTabNavigatorParamList = {
@@ -10,4 +11,5 @@ export type CommandTabNavigatorParamList = {
   [CommandsScreens.DeviceActionTester]: undefined;
   [CommandsScreens.SendApdu]: undefined;
   [CommandsScreens.ListenToAvailableDevices]: undefined;
+  [CommandsScreens.DeviceScreen]: undefined;
 };

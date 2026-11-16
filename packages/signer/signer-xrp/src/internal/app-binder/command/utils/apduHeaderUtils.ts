@@ -9,6 +9,7 @@ export const INS = {
   GET_PUBLIC_KEY: 0x02,
   SIGN: 0x04,
   GET_APP_CONFIGURATION: 0x06,
+  PROVIDE_MPT_DESCRIPTOR: 0x22,
 } as const;
 
 export const P1_DEFAULT = 0x00 as const;

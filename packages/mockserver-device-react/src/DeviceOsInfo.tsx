@@ -1,21 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { type Device } from "@ledgerhq/device-mockserver-client";
+import {
+  appIconUrl,
+  openableApps,
+  useOpenApp,
+} from "@ledgerhq/device-mockserver-react-core";
 
 import { type DeviceScreenModel } from "./deviceModels";
 import { ScreenFrame } from "./ScreenFrame";
 
-/** The OS reports itself as an app; it is not one the user can open. */
-const OS_APP_NAME = "BOLOS";
-
-const OPEN_TIMEOUT_MS = 10_000;
-
 /** A styled scrollbar stays visible where the OS would hide an overlay one. */
 const SCROLLBAR =
   "[&::-webkit-scrollbar]:size-[6px] [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full";
-
-/** Ledger Live's app icons, keyed by the app's Manager API icon name. */
-const iconUrl = (appName: string) =>
-  `https://cdn.live.ledger.com/icons/${appName.toLowerCase().replaceAll(" ", "_")}.png`;
 
 type AppIconProps = {
   name: string;
@@ -34,7 +30,7 @@ const AppIcon: React.FC<AppIconProps> = ({ name }) => {
 
   return (
     <img
-      src={iconUrl(name)}
+      src={appIconUrl(name)}
       alt=""
       draggable={false}
       className="size-[12.5cqw] rounded-full"
@@ -55,10 +51,8 @@ export const DeviceOsInfo: React.FC<DeviceOsInfoProps> = ({
   model,
   onOpenApp,
 }) => {
-  const apps = (device.apps ?? []).filter(({ name }) => name !== OS_APP_NAME);
-  /** Kept on success, until the live screen replaces the grid or times out. */
-  const [opening, setOpening] = useState<string>();
-  const [error, setError] = useState<string>();
+  const apps = openableApps(device);
+  const { opening, error, open } = useOpenApp(onOpenApp);
   const screen = model.lightScreen
     ? {
         background: "bg-white",
@@ -85,29 +79,6 @@ export const DeviceOsInfo: React.FC<DeviceOsInfoProps> = ({
         tile: "w-[28cqw] shrink-0 py-[1.5cqw]",
         opening: "flex-row",
       };
-
-  const openTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined,
-  );
-  useEffect(() => () => clearTimeout(openTimer.current), []);
-
-  const open = (appName: string) => {
-    if (!onOpenApp || opening) return;
-    setOpening(appName);
-    setError(undefined);
-    onOpenApp(appName).then(
-      () => {
-        openTimer.current = setTimeout(() => {
-          setOpening(undefined);
-          setError(`${appName} opened but its screen never showed up`);
-        }, OPEN_TIMEOUT_MS);
-      },
-      (cause: unknown) => {
-        setOpening(undefined);
-        setError(cause instanceof Error ? cause.message : String(cause));
-      },
-    );
-  };
 
   return (
     <div className="flex flex-col gap-8" data-testid="container_device-os-info">

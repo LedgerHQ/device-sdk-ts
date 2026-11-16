@@ -27,6 +27,7 @@ export const BTC_LEGACY_COIN_APPS = [
   "Bitcoin Cash",
   "Bitcoin Gold",
   "Horizen",
+  "Komodo",
 ] as const;
 
 export type BtcLegacyCoinApp = (typeof BTC_LEGACY_COIN_APPS)[number];
@@ -42,6 +43,7 @@ export type ScenarioAction =
   | "signTransaction"
   | "signTypedData"
   | "registerContact"
+  | "verifySafeAddress"
   | "solanaProgram";
 
 /** Per-scenario switches that used to be CLI flags on a bespoke script. */

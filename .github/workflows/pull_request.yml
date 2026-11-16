@@ -73,11 +73,11 @@ jobs:
           BTC_LEGACY_SIDE: ${{ steps.filter.outputs.signer-btc-legacy == 'true' }}
         run: |
           if [ "$ALL" = "true" ]; then
-            scenarios="core contacts solana solana-general-clear-sign tron btc-legacy"
+            scenarios="core contacts safe solana solana-general-clear-sign tron btc-legacy"
           else
             scenarios=""
             if [ "$ETH_SIDE" = "true" ]; then
-              scenarios="$scenarios core contacts"
+              scenarios="$scenarios core contacts safe"
             fi
             if [ "$SOLANA_SIDE" = "true" ]; then
               scenarios="$scenarios solana solana-general-clear-sign"
@@ -212,6 +212,11 @@ jobs:
         # Untrusted PRs use the local one and skip the specs tagged @speculos.
         if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' }}
         continue-on-error: true
+        env:
+          # Injected into the sample settings at runtime by the Playwright setup,
+          # so the token is never built into the sample bundle. Untrusted PRs
+          # do not use Speculinho, so they never get the token.
+          GATING_TOKEN: ${{ env.UNTRUSTED != 'true' && secrets.GATING_TOKEN || '' }}
         run: |
           if [ "$UNTRUSTED" = "true" ]; then
             MOCK_SERVER_URL=http://127.0.0.1:9752 pnpm --filter @ledgerhq/device-management-kit-sample test:playwright --grep-invert @speculos

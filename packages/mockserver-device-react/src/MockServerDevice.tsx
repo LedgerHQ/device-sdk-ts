@@ -1,9 +1,11 @@
 import React, { useMemo } from "react";
 import { MockClient } from "@ledgerhq/device-mockserver-client";
+import {
+  mockServerScreenApi,
+  useMockServerDevice,
+} from "@ledgerhq/device-mockserver-react-core";
 
 import { DeviceScreen, type DeviceScreenProps } from "./DeviceScreen";
-import { mockServerScreenApi } from "./mockServerScreenApi";
-import { useMockServerDevice } from "./useMockServerDevice";
 
 export type MockServerDeviceProps = Pick<
   DeviceScreenProps,

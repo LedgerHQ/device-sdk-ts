@@ -3,11 +3,13 @@ import {
   DeviceActionStatus,
   GLOBAL_ERRORS,
   GlobalCommandError,
+  OutOfMemoryDAError,
   RefusedByUserDAError,
   UnknownDAError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { BackgroundImageCommandError } from "@api/command/BackgroundImageCommandErrors";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { setupGoToDashboardMock } from "@api/device-action/__test-utils__/setupTestMachine";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
@@ -256,6 +258,35 @@ describe("UploadCustomLockScreenDeviceAction", () => {
           pendingState(UserInteractionRequired.None),
           pendingState(UserInteractionRequired.ConfirmLoadImage),
           errorState(new RefusedByUserDAError("User refused on device")),
+        ];
+
+        testDeviceActionStates(
+          new UploadCustomLockScreenDeviceAction({ input: { imageData } }),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          { onDone: resolve, onError: reject },
+        );
+      }));
+
+    it("should return an out of memory error if CreateImage fails with not enough memory", () =>
+      new Promise<void>((resolve, reject) => {
+        setupGoToDashboardMock();
+        const imageData = new Uint8Array([0x01, 0x02, 0x03]);
+
+        sendCommandMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new BackgroundImageCommandError({
+              errorCode: "5102",
+              message: "Not enough memory on device",
+            }),
+          }),
+        );
+
+        const expectedStates: UploadCustomLockScreenDAState[] = [
+          pendingState(UserInteractionRequired.None),
+          pendingState(UserInteractionRequired.None),
+          pendingState(UserInteractionRequired.ConfirmLoadImage),
+          errorState(new OutOfMemoryDAError("Not enough memory on device")),
         ];
 
         testDeviceActionStates(

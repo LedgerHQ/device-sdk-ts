@@ -4,12 +4,14 @@ import {
   type BtcLegacyErrorCodes,
   DOGECOIN_PROFILE,
   HORIZEN_PROFILE,
+  KOMODO_PROFILE,
   type LegacyCoinProfile,
   LITECOIN_PROFILE,
 } from "@ledgerhq/device-signer-kit-bitcoin-legacy";
 import { type Container } from "inversify";
 
 import { type TestBatchContactFromFileUseCase } from "@root/src/application/usecases/TestBatchContactFromFileUseCase";
+import { type TestBatchSafeAddressFromFileUseCase } from "@root/src/application/usecases/TestBatchSafeAddressFromFileUseCase";
 import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
 import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
 import { type TestSolanaProgramUseCase } from "@root/src/application/usecases/TestSolanaProgramUseCase";
@@ -124,6 +126,7 @@ const BTC_LEGACY_PROFILES: Record<
   "Bitcoin Cash": BITCOIN_CASH_PROFILE,
   "Bitcoin Gold": BITCOIN_GOLD_PROFILE,
   Horizen: HORIZEN_PROFILE,
+  Komodo: KOMODO_PROFILE,
 };
 
 const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {
@@ -342,6 +345,12 @@ export class ContainerScenarioRunner implements ScenarioRunner {
             TYPES.TestBatchContactFromFileUseCase,
           )
           .execute(fixture!);
+      case "verifySafeAddress":
+        return container
+          .get<TestBatchSafeAddressFromFileUseCase>(
+            TYPES.TestBatchSafeAddressFromFileUseCase,
+          )
+          .execute(fixture!, slice);
       case "solanaProgram":
         return container
           .get<TestSolanaProgramUseCase>(TYPES.TestSolanaProgramUseCase)

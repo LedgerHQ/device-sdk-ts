@@ -37,7 +37,14 @@ export type RestoreAppResult = {
   restoredAppStorage: boolean | undefined;
 };
 
+export enum RestoreBackupStatus {
+  FULL = "full",
+  PARTIAL = "partial",
+  OUT_OF_MEMORY = "outOfMemory",
+}
+
 export type RestoreBackupDAOutput = {
+  restoreStatus: RestoreBackupStatus;
   restoredLanguage: boolean | undefined;
   restoredCLS: boolean | undefined;
   restoredApps: RestoreAppResult[] | undefined;
@@ -75,6 +82,8 @@ export type RestoreBackupDAInternalState = {
   currentApp: string | null;
   isDeviceOnboarded: boolean;
   isMasterConsentGranted: boolean;
+  isMasterConsentRejected: boolean;
+  isOutOfMemory: boolean;
   restoredLanguage: boolean | undefined;
   restoredCLS: boolean | undefined;
   restoredApps: RestoreAppResult[] | undefined;

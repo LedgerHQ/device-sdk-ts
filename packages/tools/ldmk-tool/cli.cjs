@@ -158,7 +158,7 @@ async function main() {
         .catch((e) => {
           console.error(chalk.red("❌ Build failed"));
           console.error(e);
-          process.exitCode = e.exitCode;
+          process.exitCode = e.exitCode || 1;
         });
       break;
     case "watch":
@@ -175,7 +175,7 @@ async function main() {
       console.log(chalk.green("👀 (packages): Watching"));
       await watch(entryPoints, tsconfig, platform).catch((e) => {
         console.error(e);
-        process.exitCode = e.exitCode;
+        process.exitCode = e.exitCode || 1;
       });
       break;
     case "pack":

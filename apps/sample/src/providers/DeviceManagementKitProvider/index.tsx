@@ -63,9 +63,20 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   // Create inspector in useEffect to ensure proper lifecycle handling
   useEffect(() => {
-    const inspector = new DevToolsDmkInspector(devToolsConnector, dmk);
+    const inspector = new DevToolsDmkInspector(
+      devToolsConnector,
+      dmk,
+      transportConfig.type === "mockserver"
+        ? {
+            mockServer: {
+              url: transportConfig.url,
+              sessionToken: transportConfig.sessionToken,
+            },
+          }
+        : {},
+    );
     return () => inspector.destroy();
-  }, [dmk]);
+  }, [dmk, transportConfig]);
 
   // Sync settings overrides onto the current DMK instance.
   useEffect(() => {

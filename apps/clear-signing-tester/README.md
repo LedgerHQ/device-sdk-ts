@@ -72,6 +72,7 @@ requested `--device` is skipped rather than failed.
 | `core`                      | stax, nanox       | Ethereum transaction and typed-data fixtures      |
 | `contacts`                  | flex              | Ethereum Address Book registration and signing    |
 | `gating`                    | stax, flex        | Unauthenticated callers fall back to gating       |
+| `safe`                      | stax, flex        | Safe account address verification                 |
 | `erc7730`                   | stax, nanox, flex | Per-dapp calldata descriptors                     |
 | `erc7730-typed-data`        | stax, nanox, flex | Per-dapp typed-data descriptors                   |
 | `solana`                    | stax, nanox, flex | Solana transaction fixtures                       |
@@ -192,8 +193,8 @@ nobody wired up, and three descriptors known to be broken.
 
 The `btc-legacy` group signs with `@ledgerhq/device-signer-kit-bitcoin-legacy`,
 one scenario per coin app: `Litecoin`, `Dogecoin`, `Bitcoin Cash`,
-`Bitcoin Gold` and `Horizen`. The `coinApp` picks the signer profile, so another
-coin on the protocol is a profile entry, a pin and a scenario file.
+`Bitcoin Gold`, `Horizen` and `Komodo`. The `coinApp` picks the signer profile, so
+another coin on the protocol is a profile entry, a pin and a scenario file.
 
 ```bash
 pnpm cs-tester cli test btc-legacy --device nanox
@@ -232,13 +233,19 @@ asks for, keyed **device > OS > coin app > app version**:
 
 ```json
 {
-  "stax": { "1.10.1": { "Ethereum": "1.22.3", "Solana": "1.17.1" } },
-  "flex": { "1.6.1": { "Ethereum": "1.22.3", "Solana": "1.17.1" } }
+  "stax": {
+    "1.10.1": { "Solana": "1.17.1" },
+    "1.11.0": { "Ethereum": "1.24.0" }
+  },
+  "flex": {
+    "1.6.1": { "Solana": "1.17.1" },
+    "1.7.0": { "Ethereum": "1.24.0" }
+  }
 }
 ```
 
 The OS is not chosen separately: an app is pinned under exactly one OS per
-device, so `--device flex` plus an Ethereum run resolves `1.6.1` and `1.22.3`.
+device, so `--device flex` plus an Ethereum run resolves `1.7.0` and `1.24.0`.
 Pin an app under two OS versions for one device and the lookup fails as ambiguous
 rather than guessing.
 
@@ -269,10 +276,14 @@ to the very APDU it tests — the run prints which scenarios it left on their ow
 pin. Both CI and a local run read the same defaults file, so they cannot
 disagree.
 
-Bump a pin deliberately: the version has to exist **on Speculinho**, which trails
-coin-apps by up to about an hour after a release. Speculinho exposes no endpoint
-listing what it holds, so the only way to check a candidate is to acquire a pod
-with it — an unavailable version fails with `FileNotFoundError` from the pod.
+Pins are bumped automatically. Every day at 02:00 UTC, the
+[`bump_cs_tester_versions`](../../.github/workflows/bump_cs_tester_versions.yml)
+workflow reads Speculinho's `/catalogue` and, for each nightly family (ethereum,
+solana, tron, btc-legacy) with a newer stable app version, opens a draft PR,
+runs that family's nightly on it and comments the result. A green PR is marked
+ready; merging stays manual. Dev and RC builds are ignored, and the OS only moves
+when the current one does not carry the new version. The same bump runs locally
+with `pnpm bump-versions <family>`.
 
 ## ERC7730 Clear Signing Support
 

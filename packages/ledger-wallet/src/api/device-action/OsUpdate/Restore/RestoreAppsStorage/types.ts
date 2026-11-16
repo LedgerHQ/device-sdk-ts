@@ -22,7 +22,10 @@ export type RestoreAppStorageResult = {
   restoredAppStorage: boolean;
 };
 
-export type RestoreAppsStorageDAOutput = RestoreAppStorageResult[];
+export type RestoreAppsStorageDAOutput = {
+  appsStorageResults: RestoreAppStorageResult[];
+  isOutOfMemory: boolean;
+};
 
 export type RestoreAppsStorageDAError =
   | WaitForAppAndVersionDAError
@@ -53,6 +56,7 @@ export type RestoreAppsStorageDAInternalState = {
   currentAppStorageDataBytes: Uint8Array | null;
   currentAppStorageDataLength: number | null;
   restoreAppsStorageResult: RestoreAppStorageResult[];
+  isOutOfMemory: boolean;
 };
 
 export type RestoreAppsStorageDAState = DeviceActionState<
@@ -72,8 +76,9 @@ export enum RestoreAppsStorageSteps {
   CommitRestoreAppStorage = "commitRestoreAppStorage",
 }
 
-// Outcome of the consent prompt triggered by InitRestoreAppStorageCommand.
-export enum InitRestoreAppStorageConsentResult {
+// Outcome of InitRestoreAppStorageCommand: consent prompt result or out of memory.
+export enum InitRestoreAppStorageResult {
   GRANTED = "consentGranted",
   REJECTED = "consentRejected",
+  OUT_OF_MEMORY = "outOfMemory",
 }

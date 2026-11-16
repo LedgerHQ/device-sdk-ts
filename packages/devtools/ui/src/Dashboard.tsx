@@ -1,39 +1,61 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { type Connector } from "@ledgerhq/device-management-kit-devtools-core";
-import { StyleProvider } from "@ledgerhq/react-ui/styles/index";
-import styled from "styled-components";
+import {
+  type ColorSchemeName,
+  ThemeProvider,
+  useTheme,
+} from "@ledgerhq/lumen-ui-react";
 
-import { DashboardFooter } from "./components/DashboardFooter";
 import {
   DashboardNavigationBar,
   DashboardScreen,
 } from "./components/DashboardNavigationBar";
-import { DebugDrawer } from "./components/DebugDrawer";
-import { SplitView } from "./components/SplitView";
 import { useConnectorMessages } from "./hooks/useConnectorMessages";
+import { AiPanel, type AiPanelRequest } from "./screens/ai/AiPanel";
+import {
+  AiAvailable,
+  SelectionBarSlot,
+  SelectionBarVisible,
+} from "./screens/ai/SelectionBar";
+import { type AiClient, type AiSelection } from "./screens/ai/types";
 import { Inspector } from "./screens/inspector";
 import { Logger } from "./screens/logger";
-import { MockCapture } from "./screens/mock-capture";
 import { ErrorBoundary } from "./ErrorBoundary";
 
-const DashboardContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-`;
+const COLOR_SCHEME_STORAGE_KEY = "devtools-color-scheme";
 
-const ContentArea = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-`;
+function loadColorScheme(): ColorSchemeName {
+  try {
+    const stored = localStorage.getItem(COLOR_SCHEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark") {
+      return stored;
+    }
+  } catch {
+    // Ignore errors, follow the system
+  }
+  return "system";
+}
 
-const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
+function saveColorScheme(colorScheme: ColorSchemeName): void {
+  try {
+    localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, colorScheme);
+  } catch {
+    // Ignore errors (e.g., storage full, private mode)
+  }
+}
+
+const Dashboard: React.FC<{
+  connector: Connector;
+  onColorSchemeChange: (colorScheme: ColorSchemeName) => void;
+  rewriteMockServerUrl?: (url: string) => string;
+  ai?: AiClient;
+}> = ({ connector, onColorSchemeChange, rewriteMockServerUrl, ai }) => {
+  const { colorScheme } = useTheme();
+  useEffect(() => {
+    document.documentElement.style.colorScheme = colorScheme;
+  }, [colorScheme]);
+
   const {
-    receivedMessages,
-    sentMessages,
     logs,
     connectedDevices,
     sessionStates,
@@ -42,32 +64,60 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     isActivelyDiscovering,
     isLoggerConnected,
     isInspectorConnected,
-    providerValue,
+    mockServer,
     apduResponses,
-    apduExchanges,
-    isRecordingExchanges,
-    sendMessage,
     clearLogs,
-    startRecordingExchanges,
-    stopRecordingExchanges,
-    clearRecordedExchanges,
     startListening,
     stopListening,
     startDiscovering,
     stopDiscovering,
     connectDevice,
-    getProvider,
-    setProvider,
     sendApdu,
   } = useConnectorMessages(connector);
+
+  // The mock server website joins the session given in the URL fragment. Without
+  // the app's token it would open another session, and the URL comes from the
+  // app, so only a website is linked
+  const mockServerWebsiteUrl =
+    mockServer?.sessionToken && /^https?:\/\//i.test(mockServer.url)
+      ? `${mockServer.url.replace(/\/$/, "")}/#token=${mockServer.sessionToken}`
+      : null;
 
   const [currentScreen, setCurrentScreen] = useState<DashboardScreen>(
     DashboardScreen.logs,
   );
-  const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [showLiveScreen, setShowLiveScreen] = useState(true);
+  const [showSessions, setShowSessions] = useState(true);
+  const [aiRequest, setAiRequest] = useState<AiPanelRequest | null>(null);
+  const [selectionSlot, setSelectionSlot] = useState<HTMLDivElement | null>(
+    null,
+  );
+  // Every token the app shared, so logs from an earlier session are redacted too
+  const [secrets, setSecrets] = useState<string[]>([]);
+  const sessionToken = mockServer?.sessionToken;
+  useEffect(() => {
+    if (sessionToken) {
+      setSecrets((previous) =>
+        previous.includes(sessionToken)
+          ? previous
+          : [...previous, sessionToken],
+      );
+    }
+  }, [sessionToken]);
+
+  const explainWithAi = (request: AiSelection) => {
+    setAiOpen(true);
+    setAiRequest({ ...request, id: (aiRequest?.id ?? 0) + 1 });
+  };
 
   const logger = (
-    <Logger logs={logs} clearLogs={clearLogs} isConnected={isLoggerConnected} />
+    <Logger
+      logs={logs}
+      clearLogs={clearLogs}
+      isConnected={isLoggerConnected}
+      onExplain={explainWithAi}
+    />
   );
 
   const inspector = (
@@ -77,89 +127,124 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
       discoveredDevices={discoveredDevices}
       isListening={isListening}
       isActivelyDiscovering={isActivelyDiscovering}
-      sendMessage={sendMessage}
       isConnected={isInspectorConnected}
       startListening={startListening}
       stopListening={stopListening}
       startDiscovering={startDiscovering}
       stopDiscovering={stopDiscovering}
       connectDevice={connectDevice}
-      providerValue={providerValue}
-      getProvider={getProvider}
-      setProvider={setProvider}
       sendApdu={sendApdu}
       apduResponses={apduResponses}
+      logs={logs}
+      mockServer={mockServer}
+      rewriteMockServerUrl={rewriteMockServerUrl}
+      onExplain={explainWithAi}
+      showLiveScreen={showLiveScreen}
+      showSessions={showSessions}
     />
   );
-
-  const mockCapture = (
-    <MockCapture
-      apduExchanges={apduExchanges}
-      isRecording={isRecordingExchanges}
-      isConnected={isLoggerConnected}
-      startRecording={startRecordingExchanges}
-      stopRecording={stopRecordingExchanges}
-      clearRecorded={clearRecordedExchanges}
-      sessionStates={sessionStates}
-      connectedDevices={connectedDevices}
-    />
-  );
-
-  const content = (() => {
-    switch (currentScreen) {
-      case DashboardScreen.logs:
-        return logger;
-      case DashboardScreen.inspector:
-        return inspector;
-      case DashboardScreen.mockCapture:
-        return mockCapture;
-      case DashboardScreen.splitHorizontal:
-        return (
-          <SplitView direction="horizontal" first={logger} second={inspector} />
-        );
-      case DashboardScreen.splitVertical:
-        return (
-          <SplitView direction="vertical" first={logger} second={inspector} />
-        );
-      default:
-        return logger;
-    }
-  })();
 
   return (
-    <DashboardContainer>
-      <DashboardNavigationBar
-        currentScreen={currentScreen}
-        onScreenChange={setCurrentScreen}
-        isLoggerConnected={isLoggerConnected}
-        isInspectorConnected={isInspectorConnected}
-      />
-      <ContentArea>{content}</ContentArea>
-      <DashboardFooter
-        isDebugOpen={isDebugOpen}
-        onToggleDebug={() => setIsDebugOpen(!isDebugOpen)}
-      />
-      <DebugDrawer
-        isOpen={isDebugOpen}
-        onClose={() => setIsDebugOpen(false)}
-        sentMessages={sentMessages}
-        receivedMessages={receivedMessages}
-        sendMessage={sendMessage}
-      />
-    </DashboardContainer>
+    <AiAvailable.Provider value={ai !== undefined}>
+      <SelectionBarSlot.Provider value={selectionSlot}>
+        <div className="flex h-screen flex-col overflow-hidden bg-canvas text-base">
+          <DashboardNavigationBar
+            currentScreen={currentScreen}
+            onScreenChange={setCurrentScreen}
+            aiOpen={aiOpen}
+            onToggleAi={() => setAiOpen(!aiOpen)}
+            aiAvailable={ai !== undefined}
+            sessions={
+              currentScreen === DashboardScreen.inspector
+                ? {
+                    shown: showSessions,
+                    onToggle: () => setShowSessions(!showSessions),
+                  }
+                : undefined
+            }
+            liveScreen={
+              currentScreen === DashboardScreen.inspector && mockServer
+                ? {
+                    shown: showLiveScreen,
+                    onToggle: () => setShowLiveScreen(!showLiveScreen),
+                  }
+                : undefined
+            }
+            isLoggerConnected={isLoggerConnected}
+            isInspectorConnected={isInspectorConnected}
+            mockServerWebsiteUrl={mockServerWebsiteUrl}
+            colorScheme={colorScheme}
+            onColorSchemeChange={onColorSchemeChange}
+          />
+          {/* Scrolls sideways rather than clipping a panel when the window is too narrow for all of them */}
+          <div className="flex min-h-0 flex-1 overflow-x-auto overflow-y-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              {/* Both stay mounted, so switching tabs keeps the Logger's pause, search and filters */}
+              <div
+                className={
+                  currentScreen === DashboardScreen.inspector
+                    ? "hidden"
+                    : "contents"
+                }
+              >
+                <SelectionBarVisible.Provider
+                  value={currentScreen !== DashboardScreen.inspector}
+                >
+                  {logger}
+                </SelectionBarVisible.Provider>
+              </div>
+              <div
+                className={
+                  currentScreen === DashboardScreen.inspector
+                    ? "contents"
+                    : "hidden"
+                }
+              >
+                <SelectionBarVisible.Provider
+                  value={currentScreen === DashboardScreen.inspector}
+                >
+                  {inspector}
+                </SelectionBarVisible.Provider>
+              </div>
+            </div>
+            {/* Hidden, not unmounted: reopening shows the last answer instead of running it again */}
+            <div className={aiOpen ? "contents" : "hidden"}>
+              <AiPanel ai={ai} request={aiRequest} secrets={secrets} />
+            </div>
+          </div>
+          <div ref={setSelectionSlot} />
+        </div>
+      </SelectionBarSlot.Provider>
+    </AiAvailable.Provider>
   );
 };
 
 export function DashboardWithErrorBoundary({
   connector,
+  rewriteMockServerUrl,
+  ai,
 }: {
   connector: Connector;
+  /** Lets a host route the mock server calls elsewhere, e.g. through a proxy its CSP allows. */
+  rewriteMockServerUrl?: (url: string) => string;
+  /** Runs Claude for the AI panel; only a host that can run Claude Code provides one. */
+  ai?: AiClient;
 }) {
+  const [colorScheme, setColorScheme] = useState(loadColorScheme);
+  const changeColorScheme = (next: ColorSchemeName) => {
+    setColorScheme(next);
+    saveColorScheme(next);
+  };
   return (
-    <ErrorBoundary>
-      <StyleProvider selectedPalette="light">
-        <Dashboard connector={connector} />
-      </StyleProvider>
-    </ErrorBoundary>
+    <ThemeProvider colorScheme={colorScheme}>
+      <ErrorBoundary>
+        <Dashboard
+          connector={connector}
+          onColorSchemeChange={changeColorScheme}
+          rewriteMockServerUrl={rewriteMockServerUrl}
+          ai={ai}
+        />
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 }

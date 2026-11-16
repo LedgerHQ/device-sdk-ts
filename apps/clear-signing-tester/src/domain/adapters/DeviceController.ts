@@ -41,6 +41,11 @@ export interface DeviceController {
   confirmContactRegistration(): Promise<void>;
 
   /**
+   * Confirm the Safe address review
+   */
+  confirmSafeAddress(): Promise<void>;
+
+  /**
    * Navigate to the Ethereum app settings and enable the blind signing toggle
    */
   enableBlindSigningInSettings(): Promise<void>;

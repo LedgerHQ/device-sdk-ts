@@ -43,6 +43,41 @@ export class BtcSignerDriver {
   }
 
   /**
+   * Open the Get wallet address action, pick the default wallet type by its
+   * label (e.g. "Taproot"), which also sets its derivation path, and Execute it.
+   */
+  async getWalletAddress(walletType: string): Promise<void> {
+    await this.page.getByTestId("CTA_command-Get wallet address").click();
+    const form = this.page.getByTestId("form_device-action");
+    await form.locator('[class*="control"]').first().click();
+    await this.page.getByRole("option", { name: walletType }).click();
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
+   * Open the Sign message action and Execute it with its default inputs
+   * ("Hello World"). The action stays pending until the message is reviewed and
+   * signed on the device screen.
+   */
+  async signMessage(): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign message").click();
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
+   * Open the Sign psbt action for the default Native Segwit wallet, fill the
+   * PSBT and Execute it. The action stays pending until the transaction is
+   * reviewed and signed on the device screen.
+   */
+  async signPsbt(psbt: string): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign psbt").click();
+    const input = this.page.getByTestId("input-text_psbt");
+    await input.waitFor({ state: "visible" });
+    await input.fill(psbt);
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
    * Wait for the last emitted device-action state to be terminal and return it
    * parsed.
    */

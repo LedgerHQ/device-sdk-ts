@@ -64,7 +64,7 @@ const { observable, cancel } = signer.signTransaction({
 
 The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, with `Uint8Array`s instead of `Buffer`s:
 
-- `inputs`: for each input, the previous transaction (`version`, `inputs`, `outputs`, `locktime`, and Horizen's `extraData`), the index of the spent output, an optional redeem script in hexadecimal, and an optional sequence (defaults to `0xffffffff`). As in hw-app-btc, the redeem script is only hashed: the signed input script holds the signature and the public key, so P2SH inputs are not supported.
+- `inputs`: for each input, the previous transaction (`version`, `inputs`, `outputs`, `locktime`, and when it has them `nVersionGroupId`, `nExpiryHeight` and `extraData`), the index of the spent output, an optional redeem script in hexadecimal, and an optional sequence (defaults to `0xffffffff`). As in hw-app-btc, the redeem script is only hashed: the signed input script holds the signature and the public key, so P2SH inputs are not supported.
 - `associatedKeysets`: the derivation path of each input's key.
 - `changePath`: the derivation path of the change output, if any.
 - `outputScriptHex`: the serialized outputs, count included.
@@ -72,10 +72,16 @@ The argument has the shape of hw-app-btc's `createPaymentTransaction` argument, 
 - `segwit`: the inputs spend SegWit outputs and are signed with BIP143. They are native with `"bech32"` in `additionals`, P2SH-wrapped otherwise. The kit fails before any APDU when the profile has no SegWit, such as Dogecoin.
 - `additionals`: hw-app-btc's flags. The kit reads `"bech32"`, and `"cashaddr"` for a Bitcoin Cash transaction to show its outputs as cashaddr addresses. It ignores the others.
 
-Transactions are in the `standard` format of Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`), Bitcoin Cash (`BITCOIN_CASH_PROFILE`), Bitcoin Gold (`BITCOIN_GOLD_PROFILE`) and Horizen (`HORIZEN_PROFILE`). Bitcoin Cash and Bitcoin Gold hash every transaction with BIP143 (the profile's `bip143`). The output is the signed transaction in hexadecimal.
+Each profile picks a transaction format (the profile's `transactionFormat`):
+
+- `legacy`: Litecoin (`LITECOIN_PROFILE`), Dogecoin (`DOGECOIN_PROFILE`) and Horizen (`HORIZEN_PROFILE`). Only SegWit inputs are hashed with BIP143.
+- `bip143`: Bitcoin Cash (`BITCOIN_CASH_PROFILE`) and Bitcoin Gold (`BITCOIN_GOLD_PROFILE`). Every transaction is hashed with BIP143.
+- `sapling`: Komodo (`KOMODO_PROFILE`). Its v4 transactions are hashed with BIP143 with no expiry height, as Ledger Wallet sends them, and the app commits the outputs before signing the inputs.
+
+The output is the signed transaction in hexadecimal.
 
 `signTransaction` options:
 
 - `skipOpenApp`: do not open the app before sending the commands. Defaults to `false`.
 
-The trusted input and signing tasks are services of the module (`btcLegacyTypes.GetTrustedInputTask`, `btcLegacyTypes.SignTransactionTask`). Their format steps are hooks behind `btcLegacyTypes.TrustedInputSerializer` and `btcLegacyTypes.TransactionSerializer`, bound to the `standard` format: a kit on another format rebinds them in its container.
+The trusted input and signing tasks are services of the module (`btcLegacyTypes.GetTrustedInputTask`, `btcLegacyTypes.SignTransactionTask`). Their format steps are hooks behind `btcLegacyTypes.TrustedInputSerializer` and `btcLegacyTypes.TransactionSerializer`, bound to the profile's format: a kit on another format rebinds them in its container.

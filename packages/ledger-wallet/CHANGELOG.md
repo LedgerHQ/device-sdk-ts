@@ -1,5 +1,26 @@
 # @ledgerhq/dmk-ledger-wallet
 
+## 0.9.0
+
+### Minor Changes
+
+- [#2166](https://github.com/LedgerHQ/device-sdk-ts/pull/2166) [`3e1c7dc`](https://github.com/LedgerHQ/device-sdk-ts/commit/3e1c7dc7a6956cdce301602d074b4b9f8e130151) Thanks [@benruseau](https://github.com/benruseau)! - Restore backup DA completes with an out of memory status when the app storage restore (0x6733) or the custom lock screen upload (0x5102) runs out of memory. The restore apps storage DA output is now `{ appsStorageResults, isOutOfMemory }` and lists every app with storage, apps not restored being reported with `restoredAppStorage: false`
+
+### Patch Changes
+
+- [#2066](https://github.com/LedgerHQ/device-sdk-ts/pull/2066) [`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Exclude test files from the published package
+
+- Updated dependencies [[`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0), [`3e1c7dc`](https://github.com/LedgerHQ/device-sdk-ts/commit/3e1c7dc7a6956cdce301602d074b4b9f8e130151), [`194dfcc`](https://github.com/LedgerHQ/device-sdk-ts/commit/194dfcc3e3eed4866831ec2132d87f3625b79bca)]:
+  - @ledgerhq/device-management-kit@1.11.1
+
+## 0.8.0
+
+### Minor Changes
+
+- [#2115](https://github.com/LedgerHQ/device-sdk-ts/pull/2115) [`b1be015`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1be01553270e217a913a2f6048d594059333a3f) Thanks [@benruseau](https://github.com/benruseau)! - Restore the Security Key app and its data in a first pass of the RestoreBackup DA, before the other apps
+
+- [#2112](https://github.com/LedgerHQ/device-sdk-ts/pull/2112) [`9c21922`](https://github.com/LedgerHQ/device-sdk-ts/commit/9c2192281b769893e354ed55c32d0e5dbd171363) Thanks [@benruseau](https://github.com/benruseau)! - Add `restoreStatus` (full, partial, out of memory) to the RestoreBackup DA output. Running out of memory while installing the language pack or the apps now stops the restore with this status instead of ending in error
+
 ## 0.7.1
 
 ### Patch Changes

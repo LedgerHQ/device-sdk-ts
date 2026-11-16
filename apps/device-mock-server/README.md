@@ -151,8 +151,9 @@ DMK secure-channel envelope (`exchange` / `bulk` / `success` / `error`).
 
 Because the secure-channel WebSocket carries **no bearer header**, the session token is embedded in
 the path: `ws://<host>/secure-channel/<token>/<endpoint>`, where `<endpoint>` is one of `genuine`,
-`apps/list`, `install`, `mcu`. The handler resolves the session, picks the connected device (or the
-first one), and runs the scripted choreography for that endpoint.
+`apps/list`, `install`, `mcu`. The handler resolves the session and runs the scripted choreography
+for that endpoint. The URL has no device id: see
+[Which device runs the flow](#which-device-runs-the-flow) for how the server finds it.
 
 ```mermaid
 sequenceDiagram
@@ -162,7 +163,7 @@ sequenceDiagram
     participant Res as ApduResolverService
 
     DMK->>WS: connect /secure-channel/<token>/genuine
-    WS->>DMK: exchange (e051 permission)
+    WS->>DMK: exchange (e051 permission, with the flow id)
     DMK->>HTTP: POST /devices/:id/apdu { e051… }
     HTTP->>Res: resolve
     Res-->>DMK: 9000 (derived, or a mock)
@@ -182,9 +183,49 @@ The WebSocket is a thin relay: it never computes a verdict. A terminal `success`
 **last relayed APDU's reply** as its `result` (so the genuine verdict is just the resolved `e0f1`
 response), or sends an explicit structured `data` payload for `listApps`.
 
+### Which device runs the flow
+
+**Problem:** a session can hold several devices, but the WebSocket URL
+(`/secure-channel/<token>/<endpoint>`) has no device id. From the URL alone, the server cannot tell
+which device the client uses.
+
+**Solution:** the server gets the device from the permission APDU, the first APDU of every flow:
+
+1. The server generates a random 8-byte **flow id** and puts it in the permission APDU data:
+   `e051 00 00 08 <flow id>`.
+2. DMK sends that APDU to its device with `POST /devices/:id/apdu`. This URL has the device id, so
+   the server records `flow id → device id`.
+3. After the handshake, the server reads that record and runs the rest of the script on that device.
+
+Each flow has its own flow id. APDUs sent to other devices, and flows running on other devices at
+the same time, have no effect on it.
+
+```mermaid
+sequenceDiagram
+    participant DMK
+    participant WS as Mock ScriptRunner WS
+    participant API as POST /devices/:id/apdu
+    participant S as Session
+
+    DMK->>WS: connect /secure-channel/<token>/apps/list
+    Note over WS: flowId = 8 random bytes
+    WS->>DMK: exchange e051 00 00 08 <flowId>
+    DMK->>API: POST /devices/B/apdu
+    API->>S: bind flowId → device B
+    API-->>DMK: 9000
+    DMK->>WS: response 9000
+    WS->>DMK: exchange e052 (GetCertificate)
+    DMK->>API: POST /devices/B/apdu
+    API-->>DMK: certificate + 9000
+    DMK->>WS: response
+    WS->>S: take flowId → device B
+    Note over WS: run the apps/list script on device B
+    WS->>DMK: success (apps of device B)
+```
+
 ### Default scripts
 
-Each endpoint runs a minimal **handshake** (permission `e051`, then GetCertificate `e052`) followed
+Each endpoint runs a minimal **handshake** (permission `e051` with the flow id, then GetCertificate `e052`) followed
 by a terminal message ([`scripts.ts`](src/internal/secure-channel/service/scripts.ts)):
 
 | Endpoint   | Path        | After handshake                                                                          |

@@ -41,7 +41,8 @@ export type ZcashErrorCodes =
   | "9850"
   | "b007"
   // Not a status word: raised by the kit itself, before any APDU is sent.
-  | "unsupported_v6_transaction";
+  | "unsupported_v6_transaction"
+  | "user_address_refused";
 
 export const ZCASH_APP_ERRORS: CommandErrors<ZcashErrorCodes> = {
   "6300": { message: "GPAuthFailedError" },
@@ -84,6 +85,7 @@ export const ZCASH_APP_ERRORS: CommandErrors<ZcashErrorCodes> = {
   "9850": { message: "MaxValueReachedError" },
   b007: { message: "BadStateError" },
   unsupported_v6_transaction: { message: "UnsupportedV6TransactionError" },
+  user_address_refused: { message: "UserAddressRefusedError" },
 };
 
 export class ZcashAppCommandError extends DeviceExchangeError<ZcashErrorCodes> {

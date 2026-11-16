@@ -17,6 +17,7 @@ const ACTIONS: readonly ScenarioAction[] = [
   "signTransaction",
   "signTypedData",
   "registerContact",
+  "verifySafeAddress",
   "solanaProgram",
 ];
 const COIN_APPS: readonly ScenarioCoinApp[] = [

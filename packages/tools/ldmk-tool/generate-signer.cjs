@@ -1123,7 +1123,17 @@ async function generateSigner() {
       `${baseDir}/tsconfig.prod.json`,
       `{
   "extends": "./tsconfig.json",
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/__tests__",
+    "**/__mocks__",
+    "**/__test-utils__",
+    "**/__fixtures__"
+  ]
 }
 `,
     );

@@ -44,6 +44,11 @@ export interface SessionRecord {
   /** Installable apps known to the mock "app store", keyed by install hash. */
   catalog: Map<string, CatalogApp>;
   /**
+   * Device each in-flight secure-channel flow runs on: the device that received
+   * the flow's permission APDU. flowId -> deviceId.
+   */
+  secureChannelFlowDevices: Map<string, string>;
+  /**
    * App targeted by an in-flight secure-channel install/uninstall, awaiting
    * commit when the final install block is acknowledged: deviceId -> app.
    */

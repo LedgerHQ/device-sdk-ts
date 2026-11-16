@@ -6,6 +6,8 @@
  * explicit mock overrides them, e.g. to make the device reply with an error.
  */
 
+import { randomBytes } from "node:crypto";
+
 const STATUS_OK = "9000";
 
 /**
@@ -13,8 +15,45 @@ const STATUS_OK = "9000";
  * exercised, then GetCertificate (`0xE0 0x52`) so a device id is emitted. Both
  * are sent as `exchange` steps before every operation.
  */
-export const SECURE_CHANNEL_PERMISSION_APDU = "e051000000";
+const PERMISSION_PREFIX = "e051";
 export const SECURE_CHANNEL_GET_CERTIFICATE_APDU = "e052000000";
+
+/** Permission APDU header before the flow id: CLA, INS, P1, P2, then Lc `08`. */
+const PERMISSION_HEADER = `${PERMISSION_PREFIX}000008`;
+const FLOW_ID_PATTERN = /^[0-9a-f]{16}$/;
+
+/**
+ * Random id of one secure-channel flow (8 bytes, hex). The secure-channel URL
+ * has no device id, so the server uses this id to find the device: the flow
+ * sends it in its permission APDU, and the device that receives this APDU is
+ * the device the flow runs on.
+ */
+export function createSecureChannelFlowId(): string {
+  return randomBytes(8).toString("hex");
+}
+
+/**
+ * Permission APDU of one flow, with the flow id as its data. Clients relay it
+ * as is and only read its CLA/INS.
+ *
+ *   CLA INS P1 P2 | Lc | data
+ *   e0  51  00 00 | 08 | flow id (8 bytes)
+ */
+export function buildSecureChannelPermissionApdu(flowId: string): string {
+  return `${PERMISSION_HEADER}${flowId}`;
+}
+
+/**
+ * Flow id in a permission APDU built by {@link buildSecureChannelPermissionApdu},
+ * or `undefined` for any other APDU (a bare `e051000000` included).
+ */
+export function parseSecureChannelFlowId(apdu: string): string | undefined {
+  if (!apdu.startsWith(PERMISSION_HEADER)) {
+    return undefined;
+  }
+  const flowId = apdu.slice(PERMISSION_HEADER.length);
+  return FLOW_ID_PATTERN.test(flowId) ? flowId : undefined;
+}
 
 /**
  * Synthetic genuine-verdict APDU (`0xE0 0xF1`) relayed at the end of the genuine
@@ -63,7 +102,6 @@ export const INSTALL_COMMIT_APDU =
 const GET_CERTIFICATE_RESPONSE = "0004aabbccdd" + STATUS_OK;
 
 /** Match prefixes (cla+ins) derived from the relayed APDUs above. */
-const PERMISSION_PREFIX = SECURE_CHANNEL_PERMISSION_APDU.slice(0, 4);
 const GET_CERTIFICATE_PREFIX = SECURE_CHANNEL_GET_CERTIFICATE_APDU.slice(0, 4);
 const INSTALL_PREFIX = INSTALL_BLOCK_APDUS[0]!.slice(0, 4);
 const GENUINE_PREFIX = SECURE_CHANNEL_GENUINE_APDU.slice(0, 4);

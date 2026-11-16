@@ -1,171 +1,207 @@
 import React from "react";
-import styled from "styled-components";
+import {
+  type ColorSchemeName,
+  IconButton,
+  SegmentedControl,
+  SegmentedControlButton,
+} from "@ledgerhq/lumen-ui-react";
+import {
+  ExternalLink,
+  Moon,
+  Screens,
+  SparksFill,
+  Sun,
+} from "@ledgerhq/lumen-ui-react/symbols";
+
+import { AI_UNAVAILABLE } from "../screens/ai/SelectionBar";
+import { WithTooltip } from "./WithTooltip";
 
 export enum DashboardScreen {
   logs = "logs",
   inspector = "inspector",
-  mockCapture = "mockCapture",
-  splitHorizontal = "splitHorizontal",
-  splitVertical = "splitVertical",
 }
 
-const NavContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #f8f8f8;
-  border-bottom: 1px solid #e0e0e0;
-  flex-shrink: 0;
-`;
-
-const NavGroup = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 4px;
-`;
-
-const Divider = styled.div`
-  width: 1px;
-  height: 24px;
-  background: #ddd;
-  margin: 0 8px;
-`;
-
-const NavButton = styled.button<{
-  $isActive?: boolean;
-  $isConnected?: boolean;
-}>`
-  padding: 6px 12px;
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#2196F3" : "#ddd")};
-  border-radius: 4px;
-  background: ${({ $isActive }) => ($isActive ? "#e3f2fd" : "white")};
-  color: ${({ $isActive }) => ($isActive ? "#1976d2" : "#333")};
-  font-weight: ${({ $isActive }) => ($isActive ? "600" : "normal")};
-  font-size: 13px;
-  cursor: pointer;
-  opacity: ${({ $isConnected }) => ($isConnected === false ? 0.5 : 1)};
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: ${({ $isActive }) => ($isActive ? "#e3f2fd" : "#f5f5f5")};
-    border-color: ${({ $isActive }) => ($isActive ? "#2196F3" : "#bbb")};
-  }
-`;
-
-const SplitButton = styled.button<{ $isActive?: boolean }>`
-  padding: 6px 8px;
-  border: 1px solid ${({ $isActive }) => ($isActive ? "#2196F3" : "#ddd")};
-  border-radius: 4px;
-  background: ${({ $isActive }) => ($isActive ? "#e3f2fd" : "white")};
-  color: ${({ $isActive }) => ($isActive ? "#1976d2" : "#666")};
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: ${({ $isActive }) => ($isActive ? "#e3f2fd" : "#f5f5f5")};
-    border-color: ${({ $isActive }) => ($isActive ? "#2196F3" : "#bbb")};
-  }
-`;
-
-const ConnectionIndicator = styled.span<{ $connected: boolean }>`
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${({ $connected }) => ($connected ? "#4CAF50" : "#ff9800")};
-  margin-right: 6px;
-`;
-
-const SplitLabel = styled.span`
-  font-size: 12px;
-  color: #666;
-  margin-right: 4px;
-`;
-
-// Simple SVG icons for split buttons
-const SplitHorizontalIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <rect x="2" y="2" width="12" height="5" rx="1" opacity="0.6" />
-    <rect x="2" y="9" width="12" height="5" rx="1" />
+// Lumen has no sidebar icon: a window with its left column marked
+const SidebarIcon: React.FC<{
+  size?: React.ComponentProps<typeof Moon>["size"];
+  className?: string;
+}> = ({ size = 16, className }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.4"
+    aria-hidden="true"
+    className={className}
+  >
+    <rect x="2" y="2.5" width="12" height="11" rx="1.5" />
+    <path d="M6 2.5v11" />
   </svg>
 );
 
-const SplitVerticalIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <rect x="2" y="2" width="5" height="12" rx="1" opacity="0.6" />
-    <rect x="9" y="2" width="5" height="12" rx="1" />
-  </svg>
+const ConnectionIndicator: React.FC<{ connected: boolean }> = ({
+  connected,
+}) => (
+  <span
+    className={`size-8 shrink-0 rounded-full ${connected ? "bg-(--color-light-green-500)" : "bg-(--color-light-yellow-500)"}`}
+    title={connected ? "Connected" : "Not connected"}
+  />
 );
 
 type DashboardNavigationBarProps = {
   currentScreen: DashboardScreen;
   onScreenChange: (screen: DashboardScreen) => void;
+  aiOpen: boolean;
+  onToggleAi: () => void;
+  aiAvailable: boolean;
+  /** Only on the Inspector, whose sessions menu can hide. */
+  sessions?: { shown: boolean; onToggle: () => void };
+  /** Only when a live screen can show (the Inspector, with the app's mock server). */
+  liveScreen?: { shown: boolean; onToggle: () => void };
   isLoggerConnected: boolean;
   isInspectorConnected: boolean;
+  mockServerWebsiteUrl: string | null;
+  colorScheme: "light" | "dark";
+  onColorSchemeChange: (colorScheme: ColorSchemeName) => void;
 };
 
 export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
   currentScreen,
   onScreenChange,
+  aiOpen,
+  onToggleAi,
+  aiAvailable,
+  sessions,
+  liveScreen,
   isLoggerConnected,
   isInspectorConnected,
+  mockServerWebsiteUrl,
+  colorScheme,
+  onColorSchemeChange,
 }) => {
+  const nextColorScheme = colorScheme === "dark" ? "light" : "dark";
   return (
-    <NavContainer>
-      {/* Main view buttons */}
-      <NavGroup>
-        <NavButton
-          $isActive={currentScreen === DashboardScreen.logs}
-          $isConnected={isLoggerConnected}
-          onClick={() => onScreenChange(DashboardScreen.logs)}
+    <div className="flex shrink-0 items-center gap-16 border-b border-muted-subtle px-12 py-8">
+      <SegmentedControl
+        selectedValue={currentScreen}
+        onSelectedChange={(value) => onScreenChange(value as DashboardScreen)}
+        tabLayout="fixed"
+        className="w-256 shrink-0 bg-muted-transparent"
+        aria-label="Screen"
+      >
+        <SegmentedControlButton
+          value={DashboardScreen.logs}
+          trailingContent={
+            <ConnectionIndicator connected={isLoggerConnected} />
+          }
         >
-          <ConnectionIndicator $connected={isLoggerConnected} />
           Logger
-        </NavButton>
-        <NavButton
-          $isActive={currentScreen === DashboardScreen.inspector}
-          $isConnected={isInspectorConnected}
-          onClick={() => onScreenChange(DashboardScreen.inspector)}
+        </SegmentedControlButton>
+        <SegmentedControlButton
+          value={DashboardScreen.inspector}
+          trailingContent={
+            <ConnectionIndicator connected={isInspectorConnected} />
+          }
         >
-          <ConnectionIndicator $connected={isInspectorConnected} />
           Inspector
-        </NavButton>
-        <NavButton
-          $isActive={currentScreen === DashboardScreen.mockCapture}
-          $isConnected={isLoggerConnected}
-          onClick={() => onScreenChange(DashboardScreen.mockCapture)}
-        >
-          <ConnectionIndicator $connected={isLoggerConnected} />
-          Mock Capture
-        </NavButton>
-      </NavGroup>
+        </SegmentedControlButton>
+      </SegmentedControl>
 
-      <Divider />
-
-      {/* Split view buttons */}
-      <NavGroup>
-        <SplitLabel>Split:</SplitLabel>
-        <SplitButton
-          $isActive={currentScreen === DashboardScreen.splitHorizontal}
-          onClick={() => onScreenChange(DashboardScreen.splitHorizontal)}
-          title="Split Horizontal (top/bottom)"
+      <div className="ml-auto flex items-center gap-6">
+        {sessions && (
+          <WithTooltip
+            label={
+              sessions.shown
+                ? "Hide the sessions menu"
+                : "Show the sessions menu"
+            }
+            side="bottom"
+          >
+            <IconButton
+              aria-label={
+                sessions.shown
+                  ? "Hide the sessions menu"
+                  : "Show the sessions menu"
+              }
+              aria-pressed={sessions.shown}
+              icon={SidebarIcon}
+              size="xs"
+              appearance="transparent"
+              className={`rounded-sm ${sessions.shown ? "bg-active-subtle [&>svg]:text-active" : ""}`}
+              onClick={sessions.onToggle}
+            />
+          </WithTooltip>
+        )}
+        {liveScreen && (
+          <WithTooltip
+            label={
+              liveScreen.shown ? "Hide the live screen" : "Show the live screen"
+            }
+            side="bottom"
+          >
+            <IconButton
+              aria-label={
+                liveScreen.shown
+                  ? "Hide the live screen"
+                  : "Show the live screen"
+              }
+              aria-pressed={liveScreen.shown}
+              icon={Screens}
+              size="xs"
+              appearance="transparent"
+              className={`rounded-sm ${liveScreen.shown ? "bg-active-subtle [&>svg]:text-active" : ""}`}
+              onClick={liveScreen.onToggle}
+            />
+          </WithTooltip>
+        )}
+        <WithTooltip
+          label={
+            !aiAvailable
+              ? AI_UNAVAILABLE
+              : aiOpen
+                ? "Hide the AI panel"
+                : "Show the AI panel"
+          }
+          side="bottom"
         >
-          <SplitHorizontalIcon />
-        </SplitButton>
-        <SplitButton
-          $isActive={currentScreen === DashboardScreen.splitVertical}
-          onClick={() => onScreenChange(DashboardScreen.splitVertical)}
-          title="Split Vertical (left/right)"
-        >
-          <SplitVerticalIcon />
-        </SplitButton>
-      </NavGroup>
-    </NavContainer>
+          <IconButton
+            aria-label={aiOpen ? "Hide the AI panel" : "Show the AI panel"}
+            aria-pressed={aiOpen}
+            icon={SparksFill}
+            size="xs"
+            appearance="transparent"
+            className={`rounded-sm disabled:pointer-events-none ${aiOpen ? "bg-active-subtle [&>svg]:text-active" : ""}`}
+            onClick={onToggleAi}
+            disabled={!aiAvailable}
+          />
+        </WithTooltip>
+        {mockServerWebsiteUrl && (
+          <WithTooltip label="Open the mock server website" side="bottom">
+            <IconButton
+              aria-label="Open the mock server website"
+              icon={ExternalLink}
+              size="xs"
+              appearance="transparent"
+              className="rounded-sm"
+              onClick={() =>
+                window.open(mockServerWebsiteUrl, "_blank", "noopener")
+              }
+            />
+          </WithTooltip>
+        )}
+        <WithTooltip label={`Switch to ${nextColorScheme} theme`} side="bottom">
+          <IconButton
+            aria-label={`Switch to ${nextColorScheme} theme`}
+            icon={colorScheme === "dark" ? Sun : Moon}
+            size="xs"
+            appearance="transparent"
+            className="rounded-sm"
+            onClick={() => onColorSchemeChange(nextColorScheme)}
+          />
+        </WithTooltip>
+      </div>
+    </div>
   );
 };

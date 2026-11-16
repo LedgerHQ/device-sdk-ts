@@ -1,4 +1,5 @@
 import React from "react";
+import { Banner, Button } from "@ledgerhq/lumen-ui-react";
 
 type State =
   | {
@@ -29,14 +30,25 @@ export class ErrorBoundary extends React.Component<
   override render() {
     if (this.state.hasError) {
       console.log("rendering error boundary", this.state.error);
-      // You can render any custom fallback UI
       return (
-        <div
-          style={{ display: "flex", flexDirection: "column", height: "100vh" }}
-        >
-          <button onClick={() => this.reset()}>Retry</button>
-          <pre>{this.state.error.message}</pre>
-          <pre>{this.state.error.stack}</pre>
+        <div className="flex h-screen flex-col gap-16 overflow-auto bg-canvas p-24 text-base">
+          <Banner
+            appearance="error"
+            title="The DevTools crashed"
+            description={this.state.error.message}
+            primaryAction={
+              <Button
+                appearance="transparent"
+                size="sm"
+                onClick={() => this.reset()}
+              >
+                Retry
+              </Button>
+            }
+          />
+          <pre className="overflow-auto rounded-md bg-muted p-16 font-mono! body-3 text-muted">
+            {this.state.error.stack}
+          </pre>
         </div>
       );
     }

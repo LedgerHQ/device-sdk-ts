@@ -11,5 +11,5 @@ export const HORIZEN_PROFILE: LegacyCoinProfile<BtcLegacyErrorCodes> = {
   xpubVersion: 0x0488b21e,
   segwit: false,
   sigHashType: SIGHASH_ALL,
-  bip143: false,
+  transactionFormat: "legacy",
 };

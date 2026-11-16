@@ -30,6 +30,8 @@ export type SignTransactionCommandArgs = {
   readonly derivationPath: string;
   readonly lockTime: number;
   readonly sigHashType: number;
+  // Transactions in the sapling format.
+  readonly expiryHeight?: Uint8Array;
 };
 
 export type SignTransactionCommandResponse = {
@@ -78,11 +80,14 @@ export class LegacySignTransactionCommand<ErrorCodes extends string>
       builder.add32BitUIntToData(element);
     });
 
-    return builder
+    builder
       .add8BitUIntToData(USER_VALIDATION_CODE_LENGTH)
       .add32BitUIntToData(this.args.lockTime)
-      .add8BitUIntToData(this.args.sigHashType)
-      .build();
+      .add8BitUIntToData(this.args.sigHashType);
+    if (this.args.expiryHeight !== undefined) {
+      builder.addBufferToData(this.args.expiryHeight);
+    }
+    return builder.build();
   }
 
   parseResponse(

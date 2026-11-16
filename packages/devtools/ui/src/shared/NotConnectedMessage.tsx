@@ -1,35 +1,6 @@
 import React from "react";
-import styled from "styled-components";
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  padding: 24px;
-  opacity: 0.6;
-`;
-
-const Title = styled.h3`
-  margin: 0 0 16px 0;
-  font-size: 24px;
-`;
-
-const Description = styled.p`
-  text-align: center;
-  max-width: 500px;
-  margin: 0;
-`;
-
-const CodeBlock = styled.pre`
-  background: #f5f5f5;
-  padding: 16px;
-  border-radius: 8px;
-  margin-top: 16px;
-  font-size: 12px;
-  overflow: auto;
-`;
+import { Spot } from "@ledgerhq/lumen-ui-react";
+import { Unlink } from "@ledgerhq/lumen-ui-react/symbols";
 
 type Props = {
   title: string;
@@ -42,9 +13,12 @@ export const NotConnectedMessage: React.FC<Props> = ({
   description,
   codeExample,
 }) => (
-  <Container>
-    <Title>{title}</Title>
-    <Description>{description}</Description>
-    <CodeBlock>{codeExample}</CodeBlock>
-  </Container>
+  <div className="flex flex-1 flex-col items-center justify-center gap-16 overflow-auto p-24">
+    <Spot appearance="muted" icon={Unlink} size={56} />
+    <h3 className="heading-4-semi-bold">{title}</h3>
+    <p className="max-w-480 text-center body-2 text-muted">{description}</p>
+    <pre className="max-w-full overflow-auto rounded-md bg-muted p-16 font-mono! body-3">
+      {codeExample}
+    </pre>
+  </div>
 );

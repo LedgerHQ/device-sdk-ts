@@ -25,6 +25,21 @@ describe("LegacySignTransactionCommand", () => {
     );
   });
 
+  it("should send the expiry height of a sapling transaction", () => {
+    const sapling = new LegacySignTransactionCommand(
+      {
+        derivationPath: "44'/141'/0'/0/0",
+        lockTime: 1_700_000_000,
+        sigHashType: 1,
+        expiryHeight: Uint8Array.of(0x01, 0x02, 0x03, 0x04),
+      },
+      BTC_LEGACY_ERRORS,
+    );
+    expect(toHex(sapling.getApdu().getRawApdu())).toBe(
+      "e04800001f058000002c8000008d800000000000000000000000006553f1000101020304",
+    );
+  });
+
   it("should restore the DER sequence tag of the signature", () => {
     const result = command.parseResponse(
       new ApduResponse({

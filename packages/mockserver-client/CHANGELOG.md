@@ -1,5 +1,11 @@
 # @ledgerhq/device-mockserver-client
 
+## 1.4.0
+
+### Minor Changes
+
+- [#2132](https://github.com/LedgerHQ/device-sdk-ts/pull/2132) [`5d8afd3`](https://github.com/LedgerHQ/device-sdk-ts/commit/5d8afd30e1254dbd98ccbcd360c9b3f7cf1bd936) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Add getHealth, setSeed and a timeoutMs option to MockClient
+
 ## 1.3.0
 
 ### Minor Changes

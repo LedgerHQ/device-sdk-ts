@@ -5,20 +5,25 @@
  * Composes several section components for a clear separation of concerns.
  */
 
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   type ConnectedDevice,
   type DeviceSessionState,
   type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
-import { INSPECTOR_COMMAND_TYPES } from "@ledgerhq/device-management-kit-devtools-core";
 
-import { type ApduResponse } from "../../hooks/useConnectorMessages";
+import {
+  type ApduResponse,
+  type MockServerConfig,
+} from "../../hooks/useConnectorMessages";
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
-import { DeviceDiscoverySection } from "./DeviceDiscoverySection";
-import { MyLedgerProviderControl } from "./MyLedgerProviderControl";
-import { SessionsSection } from "./SessionsSection";
-import { Container } from "./styles";
+import { type AiSelection } from "../ai/types";
+import { type LogData } from "../logger/types";
+import { extractApduExchanges } from "./apduExchanges";
+import { DevicePanel } from "./DevicePanel";
+import { MOCK_SERVER_TRANSPORT } from "./deviceStatus";
+import { InspectorRail } from "./InspectorRail";
+import { MockScreenPanel } from "./MockScreenPanel";
 
 type InspectorProps = {
   devices: ConnectedDevice[];
@@ -26,7 +31,6 @@ type InspectorProps = {
   discoveredDevices: DiscoveredDevice[];
   isListening: boolean;
   isActivelyDiscovering: boolean;
-  sendMessage: (type: string, payload: string) => void;
   isConnected: boolean;
   startListening: () => void;
   stopListening: () => void;
@@ -39,11 +43,14 @@ type InspectorProps = {
       pollingInterval?: number;
     },
   ) => void;
-  providerValue: number | null;
-  getProvider: () => void;
-  setProvider: (value: number) => void;
   sendApdu: (sessionId: string, apduHex: string) => string;
   apduResponses: Map<string, ApduResponse>;
+  logs: LogData[];
+  mockServer: MockServerConfig | null;
+  rewriteMockServerUrl?: (url: string) => string;
+  onExplain: (request: AiSelection) => void;
+  showLiveScreen: boolean;
+  showSessions: boolean;
 };
 
 const INSPECTOR_CODE_EXAMPLE = `import { DevToolsDmkInspector } from "@ledgerhq/device-management-kit-devtools-core";
@@ -61,19 +68,41 @@ export const Inspector: React.FC<InspectorProps> = ({
   discoveredDevices,
   isListening,
   isActivelyDiscovering,
-  sendMessage,
   isConnected,
   startListening,
   stopListening,
   startDiscovering,
   stopDiscovering,
   connectDevice,
-  providerValue,
-  getProvider,
-  setProvider,
   sendApdu,
   apduResponses,
+  logs,
+  mockServer,
+  rewriteMockServerUrl,
+  onExplain,
+  showLiveScreen,
+  showSessions,
 }) => {
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null,
+  );
+  // Per session, so switching sessions does not bring cleared exchanges back
+  const [clearedUpTo, setClearedUpTo] = useState<Map<string, number>>(
+    new Map(),
+  );
+  const exchanges = useMemo(() => extractApduExchanges(logs), [logs]);
+
+  const selectedDevice =
+    devices.find((device) => device.sessionId === selectedSessionId) ??
+    devices.at(-1);
+  const selectedExchanges = useMemo(
+    () =>
+      exchanges.filter(
+        (exchange) => exchange.sessionId === selectedDevice?.sessionId,
+      ),
+    [exchanges, selectedDevice?.sessionId],
+  );
+
   if (!isConnected) {
     return (
       <NotConnectedMessage
@@ -89,42 +118,55 @@ export const Inspector: React.FC<InspectorProps> = ({
     );
   }
 
-  const handleDisconnect = (sessionId: string) => {
-    sendMessage(
-      INSPECTOR_COMMAND_TYPES.DISCONNECT,
-      JSON.stringify({ sessionId }),
-    );
-  };
-
-  const isAnyDiscoveryActive = isListening || isActivelyDiscovering;
-
   return (
-    <Container>
-      <MyLedgerProviderControl
-        currentValue={providerValue}
-        onGet={getProvider}
-        onSet={setProvider}
-      />
-
-      <DeviceDiscoverySection
-        discoveredDevices={discoveredDevices}
-        isListening={isListening}
-        isActivelyDiscovering={isActivelyDiscovering}
-        startListening={startListening}
-        stopListening={stopListening}
-        startDiscovering={startDiscovering}
-        stopDiscovering={stopDiscovering}
-        connectDevice={connectDevice}
-      />
-
-      <SessionsSection
-        devices={devices}
-        sessionStates={sessionStates}
-        onDisconnect={handleDisconnect}
-        onSendApdu={sendApdu}
-        apduResponses={apduResponses}
-        isAnyDiscoveryActive={isAnyDiscoveryActive}
-      />
-    </Container>
+    <div className="flex min-h-0 flex-1">
+      {showSessions && (
+        <InspectorRail
+          devices={devices}
+          sessionStates={sessionStates}
+          selectedSessionId={selectedDevice?.sessionId ?? null}
+          onSelect={setSelectedSessionId}
+          discoveredDevices={discoveredDevices}
+          isListening={isListening}
+          isActivelyDiscovering={isActivelyDiscovering}
+          startListening={startListening}
+          stopListening={stopListening}
+          startDiscovering={startDiscovering}
+          stopDiscovering={stopDiscovering}
+          connectDevice={connectDevice}
+          mockServer={mockServer}
+        />
+      )}
+      {selectedDevice ? (
+        <>
+          <DevicePanel
+            device={selectedDevice}
+            state={sessionStates.get(selectedDevice.sessionId)}
+            exchanges={selectedExchanges}
+            onSendApdu={sendApdu}
+            apduResponses={apduResponses}
+            clearedUpTo={clearedUpTo.get(selectedDevice.sessionId)}
+            onClear={(lastId) =>
+              setClearedUpTo((previous) =>
+                new Map(previous).set(selectedDevice.sessionId, lastId),
+              )
+            }
+            onExplain={onExplain}
+          />
+          {selectedDevice.transport === MOCK_SERVER_TRANSPORT &&
+            showLiveScreen && (
+              <MockScreenPanel
+                mockServer={mockServer}
+                rewriteUrl={rewriteMockServerUrl}
+                deviceId={selectedDevice.id}
+              />
+            )}
+        </>
+      ) : (
+        <div className="flex flex-1 items-center justify-center body-2 text-muted">
+          Connect a device to inspect its session.
+        </div>
+      )}
+    </div>
   );
 };

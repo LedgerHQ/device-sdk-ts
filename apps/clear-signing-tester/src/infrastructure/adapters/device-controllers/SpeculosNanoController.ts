@@ -108,6 +108,12 @@ export class SpeculosNanoController implements DeviceController {
     );
   }
 
+  async confirmSafeAddress(): Promise<void> {
+    throw new Error(
+      "Not implemented: Safe address verification is not supported on Nano devices",
+    );
+  }
+
   /**
    * Navigate to the next screen by pressing the right button
    */

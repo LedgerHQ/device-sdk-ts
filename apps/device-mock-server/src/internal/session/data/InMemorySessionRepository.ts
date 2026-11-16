@@ -60,6 +60,7 @@ export class InMemorySessionRepository implements SessionRepository {
       deviceMockCursors: new Map(),
       speculos: new Map(),
       catalog: new Map(),
+      secureChannelFlowDevices: new Map(),
       pendingAppOperations: new Map(),
       pendingFirmwareOperations: new Map(),
       pendingLanguageOperations: new Map(),
@@ -196,6 +197,27 @@ export class InMemorySessionRepository implements SessionRepository {
       record.devices.set(deviceId, updated);
       return updated;
     });
+  }
+
+  // --- Secure-channel flows -------------------------------------------------
+
+  bindSecureChannelFlow(
+    record: SessionRecord,
+    flowId: string,
+    deviceId: string,
+  ): void {
+    record.secureChannelFlowDevices.set(flowId, deviceId);
+  }
+
+  takeSecureChannelFlowDevice(
+    record: SessionRecord,
+    flowId: string,
+  ): Maybe<Device> {
+    const deviceId = record.secureChannelFlowDevices.get(flowId);
+    record.secureChannelFlowDevices.delete(flowId);
+    return Maybe.fromNullable(deviceId).chain((id) =>
+      this.findDevice(record, id),
+    );
   }
 
   // --- App store (catalog) / pending app operations -------------------------
@@ -431,6 +453,7 @@ export class InMemorySessionRepository implements SessionRepository {
     record.deviceMockCursors.clear();
     record.speculos.clear();
     record.catalog.clear();
+    record.secureChannelFlowDevices.clear();
     record.pendingAppOperations.clear();
     record.pendingFirmwareOperations.clear();
     record.pendingLanguageOperations.clear();

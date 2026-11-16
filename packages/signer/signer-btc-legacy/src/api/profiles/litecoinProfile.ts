@@ -11,5 +11,5 @@ export const LITECOIN_PROFILE: LegacyCoinProfile<BtcLegacyErrorCodes> = {
   xpubVersion: 0x019da462,
   segwit: true,
   sigHashType: SIGHASH_ALL,
-  bip143: false,
+  transactionFormat: "legacy",
 };

@@ -10,7 +10,12 @@ import { CommandsScreens } from "_navigators/CommandNavigator.constants.ts";
 import { RootScreens } from "_navigators/RootNavigator.constants.ts";
 import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
 import { useDmk } from "_providers/dmkProvider.tsx";
-import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
+import { useMockServer } from "_providers/mockServerProvider";
+import {
+  type DiscoveredDevice,
+  type TransportIdentifier,
+} from "@ledgerhq/device-management-kit";
+import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { rnHidTransportIdentifier } from "@ledgerhq/device-transport-kit-react-native-hid";
 import { Button, Text } from "@ledgerhq/native-ui";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
@@ -59,6 +64,10 @@ export const ConnectDeviceScreen: React.FC = () => {
     React.useState<Error | null>(null);
   const [connectionError, setConnectionError] = React.useState<unknown>(null);
   const [isScanningDevices, setIsScanningDevices] = React.useState(false);
+  /** Every transport when unset: one failing, like BLE in a simulator, ends the scan. */
+  const [scanTransport, setScanTransport] =
+    React.useState<TransportIdentifier>();
+  const { session: mockServerSession } = useMockServer();
   const {
     state: { selectedId: deviceSessionId },
     dispatch,
@@ -75,29 +84,32 @@ export const ConnectDeviceScreen: React.FC = () => {
     if (!isScanningDevices) return;
     if (!isFocused) return;
 
-    const subscription = dmk.listenToAvailableDevices({}).subscribe({
-      next: dvcs => {
-        setDevices(dvcs);
-      },
-      error: err => {
-        console.error("[dmk.listenToAvailableDevices] error", err);
-        setIsScanningDevices(false);
-        setListenToAvailableDevicesError(err);
-      },
-      complete: () => {
-        console.log("[dmk.listenToAvailableDevices] complete");
-        setIsScanningDevices(false);
-      },
-    });
+    const subscription = dmk
+      .listenToAvailableDevices({ transport: scanTransport })
+      .subscribe({
+        next: dvcs => {
+          setDevices(dvcs);
+        },
+        error: err => {
+          console.error("[dmk.listenToAvailableDevices] error", err);
+          setIsScanningDevices(false);
+          setListenToAvailableDevicesError(err);
+        },
+        complete: () => {
+          console.log("[dmk.listenToAvailableDevices] complete");
+          setIsScanningDevices(false);
+        },
+      });
 
     return () => {
       dmk.stopDiscovering();
       subscription.unsubscribe();
       setDevices([]);
     };
-  }, [dmk, isScanningDevices, isFocused]);
+  }, [dmk, isScanningDevices, isFocused, scanTransport]);
 
-  const startScanning = () => {
+  const startScanning = (transport?: TransportIdentifier) => {
+    setScanTransport(transport);
     setListenToAvailableDevicesError(null);
     setConnectionError(null);
     setIsScanningDevices(true);
@@ -156,9 +168,17 @@ export const ConnectDeviceScreen: React.FC = () => {
           Error while scanning for devices:{"\n"}
           {JSON.stringify(listenToAvailableDevicesError, null, 2)}
         </Text>
-        <Button type="color" onPress={startScanning}>
+        <Button type="color" onPress={() => startScanning()}>
           Start scan
         </Button>
+        {mockServerSession.status === "ready" && (
+          <Button
+            type="color"
+            mt={4}
+            onPress={() => startScanning(mockserverIdentifier)}>
+            Scan mock server devices
+          </Button>
+        )}
       </Container>
     );
   }
@@ -202,9 +222,16 @@ export const ConnectDeviceScreen: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <Button type="color" onPress={startScanning}>
+                      <Button type="color" onPress={() => startScanning()}>
                         Start scan
                       </Button>
+                      {mockServerSession.status === "ready" && (
+                        <Button
+                          type="color"
+                          onPress={() => startScanning(mockserverIdentifier)}>
+                          Scan mock server devices
+                        </Button>
+                      )}
                       <Button
                         type="color"
                         onPress={() => setAutoConnectingToFirstHidDevice(true)}>

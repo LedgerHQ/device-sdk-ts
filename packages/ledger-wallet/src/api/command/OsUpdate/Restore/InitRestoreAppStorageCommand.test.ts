@@ -92,9 +92,9 @@ describe("InitRestoreAppStorageCommand", () => {
         expectedMessage: "Invalid application name length, two chars minimum.",
       },
       {
-        description: "backup length value is invalid",
+        description: "device is out of memory",
         statusCode: [0x67, 0x33],
-        expectedMessage: "Invalid backup length value.",
+        expectedMessage: "Not enough memory to restore app storage.",
       },
       {
         description:

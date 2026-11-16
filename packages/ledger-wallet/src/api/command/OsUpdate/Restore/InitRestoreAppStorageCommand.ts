@@ -34,7 +34,7 @@ export const INIT_RESTORE_APP_STORAGE_ERRORS: CommandErrors<InitRestoreAppStorag
     "5501": { message: "Invalid consent, user rejected." },
     "5502": { message: "Invalid consent, pin is not set." },
     "670a": { message: "Invalid application name length, two chars minimum." },
-    "6733": { message: "Invalid backup length value." },
+    "6733": { message: "Not enough memory to restore app storage." },
   };
 
 export class InitRestoreAppStorageCommandError extends DeviceExchangeError<InitRestoreAppStorageCommandErrorCodes> {

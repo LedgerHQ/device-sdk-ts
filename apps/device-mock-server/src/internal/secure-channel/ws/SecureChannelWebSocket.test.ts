@@ -304,6 +304,106 @@ describe("secure channel WebSocket: install commits the app to the device contex
 });
 
 /**
+ * The secure-channel URL has no device id. In a session with several devices,
+ * the flow must run on the device the client sends its APDUs to, even when
+ * other devices receive APDUs at the same time.
+ */
+describe("secure channel WebSocket: several devices in one session", () => {
+  const BOLOS = [{ name: "BOLOS", version: "1.5.0" }];
+  const BTC = { hash: "abc123", name: "Bitcoin", version: "2.1.0" };
+  const ETH = { name: "Ethereum", version: "1.10.0", hash: "def456" };
+  const ETH_ENTRY = {
+    flags: 0,
+    hash: ETH.hash,
+    hash_code_data: ETH.hash,
+    name: "Ethereum",
+  };
+  const GET_OS_VERSION = "e001000000";
+  const GET_APP_AND_VERSION = "b001000000";
+
+  const addDevice = async (
+    token: string,
+    device_type: string,
+    apps: { name: string; version: string; hash?: string }[],
+  ) =>
+    (
+      (await (
+        await api(
+          "/devices",
+          {
+            method: "POST",
+            body: JSON.stringify({ device_type, apps, catalog: [BTC] }),
+          },
+          token,
+        )
+      ).json()) as { id: string }
+    ).id;
+
+  const connect = (token: string, id: string) =>
+    api(`/devices/${id}/connect`, { method: "POST" }, token);
+
+  const sendApdu = (token: string, id: string, apdu: string) =>
+    api(
+      `/devices/${id}/apdu`,
+      { method: "POST", body: JSON.stringify({ apdu }) },
+      token,
+    );
+
+  const appsOf = async (token: string, id: string) =>
+    (
+      (await (await api(`/devices/${id}`, {}, token)).json()) as {
+        apps: { name: string }[];
+      }
+    ).apps.map((app) => app.name);
+
+  const setupStaxAndNanoX = async () => {
+    const token = await authOnly();
+    const stax = await addDevice(token, "stax", [...BOLOS, ETH]);
+    const nanoX = await addDevice(token, "nanoX", BOLOS);
+    await connect(token, stax);
+    await connect(token, nanoX);
+    return { token, stax, nanoX };
+  };
+
+  it("runs on the device it is relayed to while another device is polled", async () => {
+    const { token, stax, nanoX } = await setupStaxAndNanoX();
+    // The Nano X gets a preparatory APDU, then the Stax a background refresh
+    // (DMK's DeviceSessionRefresher / DevicePinger) before the Nano X opens
+    // the secure channel, and the Stax keeps being polled during the flows.
+    await sendApdu(token, nanoX, GET_OS_VERSION);
+    await sendApdu(token, stax, GET_APP_AND_VERSION);
+    const poller = setInterval(() => {
+      sendApdu(token, stax, GET_APP_AND_VERSION).catch(() => undefined);
+    }, 5);
+
+    try {
+      const before = await drive(token, nanoX, "apps/list");
+      expect(before.data).toEqual([]);
+
+      const install = await drive(token, nanoX, `install?hash=${BTC.hash}`);
+      expect(install.type).toBe("bulk");
+    } finally {
+      clearInterval(poller);
+    }
+
+    expect(await appsOf(token, nanoX)).toEqual(["BOLOS", "Bitcoin"]);
+    expect(await appsOf(token, stax)).toEqual(["BOLOS", "Ethereum"]);
+  });
+
+  it("runs concurrent flows each on its own device", async () => {
+    const { token, stax, nanoX } = await setupStaxAndNanoX();
+
+    const [staxList, nanoXList] = await Promise.all([
+      drive(token, stax, "apps/list"),
+      drive(token, nanoX, "apps/list"),
+    ]);
+
+    expect(staxList.data).toEqual([ETH_ENTRY]);
+    expect(nanoXList.data).toEqual([]);
+  });
+});
+
+/**
  * A firmware install hits the same `install` endpoint as an app install but
  * carries `firmware`/`targetId` instead of an app `hash`. The single OSU install
  * advances the device's `firmware_version` to the clean next version (resolved

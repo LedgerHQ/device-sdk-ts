@@ -80,6 +80,24 @@ describe("CreateBackgroundImageCommand", () => {
       }
     });
 
+    it("should return error on out of memory (5102)", () => {
+      const response = new ApduResponse({
+        statusCode: new Uint8Array([0x51, 0x02]),
+        data: new Uint8Array([]),
+      });
+      const result = command.parseResponse(response);
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toBeInstanceOf(BackgroundImageCommandError);
+        expect((result.error as BackgroundImageCommandError).errorCode).toBe(
+          "5102",
+        );
+        expect((result.error as BackgroundImageCommandError).message).toBe(
+          "Not enough memory on device",
+        );
+      }
+    });
+
     it("should return global error on unknown status code", () => {
       const response = new ApduResponse({
         statusCode: new Uint8Array([0x6e, 0x00]),

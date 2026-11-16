@@ -84,6 +84,11 @@ export class SpeculosTouchscreenController implements DeviceController {
     await this.tap.confirmAddressBookReview();
   }
 
+  async confirmSafeAddress(): Promise<void> {
+    this.logger.debug("☝️ (touch) : Confirming Safe address");
+    await this.tap.confirmAddressBookReview();
+  }
+
   async enableBlindSigningInSettings(): Promise<void> {
     this.logger.debug("☝️ (touch) : Opening settings menu");
     await this.tap.enterMenu();
