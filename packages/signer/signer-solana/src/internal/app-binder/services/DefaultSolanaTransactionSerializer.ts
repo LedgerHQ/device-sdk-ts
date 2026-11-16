@@ -1,3 +1,4 @@
+import { isPlaceholderSignature } from "./utils/signatures";
 import { type SolanaTransactionSerializer } from "./SolanaTransactionSerializer";
 
 const SOLANA_SIGNATURE_LENGTH = 64;
@@ -7,7 +8,6 @@ const V1_VERSION_BYTE = 0x81;
 const SHORTVEC_CONTINUATION_BIT = 0x80;
 const SHORTVEC_DATA_MASK = 0x7f;
 const SHORTVEC_DATA_BITS = 7;
-const PLACEHOLDER_SIGNATURE_FILL = 0x01;
 const SHORTVEC_MAX_SHIFT = 21;
 
 export class DefaultSolanaTransactionSerializer
@@ -85,7 +85,7 @@ export class DefaultSolanaTransactionSerializer
         start,
         start + SOLANA_SIGNATURE_LENGTH,
       );
-      if (!this.isPlaceholderSignature(signature)) recovered.set(i, signature);
+      if (!isPlaceholderSignature(signature)) recovered.set(i, signature);
     }
     return recovered;
   }
@@ -116,7 +116,7 @@ export class DefaultSolanaTransactionSerializer
         start,
         start + SOLANA_SIGNATURE_LENGTH,
       );
-      if (!this.isPlaceholderSignature(signature)) recovered.set(i, signature);
+      if (!isPlaceholderSignature(signature)) recovered.set(i, signature);
     }
     return recovered;
   }
@@ -136,12 +136,6 @@ export class DefaultSolanaTransactionSerializer
       if (shift > SHORTVEC_MAX_SHIFT) return null;
     }
     return null;
-  }
-
-  private isPlaceholderSignature(signature: Uint8Array): boolean {
-    const first = signature[0];
-    if (first !== 0x00 && first !== PLACEHOLDER_SIGNATURE_FILL) return false;
-    return signature.every((byte) => byte === first);
   }
 
   private bytesEqual(a: Uint8Array, b: Uint8Array): boolean {

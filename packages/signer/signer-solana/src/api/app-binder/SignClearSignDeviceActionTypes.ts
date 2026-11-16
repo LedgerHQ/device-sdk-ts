@@ -31,13 +31,15 @@ export type SignClearSignDAStateStep =
  * Input shared by both terminal signing machines. The blockhash source
  * (`rpcUrl` / `fetchBlockhash`) is only populated by the caller when a delayed
  * blockhash refresh is allowed; when withheld, the original transaction is
- * signed as-is.
+ * signed as-is. `hasSignatures` tells the refresh that the input transaction
+ * already holds signatures, which a new blockhash would invalidate.
  */
 export type SignClearSignDAInput = {
   readonly derivationPath: string;
   readonly transaction: Uint8Array;
   readonly rpcUrl?: string;
   readonly fetchBlockhash?: () => Promise<Uint8Array>;
+  readonly hasSignatures?: boolean;
   readonly userInputType?: UserInputType;
   readonly blockhashService?: BlockhashService;
 };

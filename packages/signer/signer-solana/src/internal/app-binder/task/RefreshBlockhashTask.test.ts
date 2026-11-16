@@ -23,11 +23,13 @@ function task(args: {
   transaction?: Uint8Array;
   rpcUrl?: string;
   fetchBlockhash?: () => Promise<Uint8Array>;
+  hasSignatures?: boolean;
 }) {
   return new RefreshBlockhashTask({
     transaction: args.transaction ?? exampleTx,
     rpcUrl: args.rpcUrl,
     fetchBlockhash: args.fetchBlockhash,
+    hasSignatures: args.hasSignatures,
     blockhashService: blockhashService as unknown as BlockhashService,
     loggerFactory,
   });
@@ -71,7 +73,12 @@ describe("RefreshBlockhashTask", () => {
     expect(result).toStrictEqual(exampleTx);
   });
 
-  it.each(["durableNonce", "multipleSigners", "undecodable"] as const)(
+  it.each([
+    "durableNonce",
+    "existingSignatures",
+    "blockhashUnknownToCaller",
+    "undecodable",
+  ] as const)(
     "refresh blocked (%s): returns the original tx without fetching or patching",
     async (blocker) => {
       blockhashService.getRefreshBlocker.mockReturnValue(blocker);
@@ -81,6 +88,7 @@ describe("RefreshBlockhashTask", () => {
 
       expect(blockhashService.getRefreshBlocker).toHaveBeenCalledWith(
         exampleTx,
+        { hasSignatures: undefined, callerSuppliesBlockhash: true },
       );
       expect(fetchBlockhash).not.toHaveBeenCalled();
       expect(blockhashService.fetchLatestBlockhash).not.toHaveBeenCalled();
@@ -88,6 +96,25 @@ describe("RefreshBlockhashTask", () => {
       expect(result).toStrictEqual(exampleTx);
     },
   );
+
+  it("forwards hasSignatures to the refresh blocker check", async () => {
+    await task({ rpcUrl, hasSignatures: true }).run();
+
+    expect(blockhashService.getRefreshBlocker).toHaveBeenCalledWith(exampleTx, {
+      hasSignatures: true,
+      callerSuppliesBlockhash: false,
+    });
+  });
+
+  it("tells the refresh blocker check whether the caller supplies the blockhash", async () => {
+    const fetchBlockhash = vi.fn().mockResolvedValue(exampleBlockhash);
+    await task({ rpcUrl, fetchBlockhash, hasSignatures: false }).run();
+
+    expect(blockhashService.getRefreshBlocker).toHaveBeenCalledWith(exampleTx, {
+      hasSignatures: false,
+      callerSuppliesBlockhash: true,
+    });
+  });
 
   it("fetch failure: best-effort, returns the original tx (no patch)", async () => {
     blockhashService.fetchLatestBlockhash.mockRejectedValue(
