@@ -180,12 +180,11 @@ _For external contributors:_ a member of the Ledger will be required to validate
 
 Dependency upgrades are automated; a maintainer only reviews and merges the resulting PRs.
 
-| What                             | Tool                                                                       | When                |
-| -------------------------------- | -------------------------------------------------------------------------- | ------------------- |
-| GitHub Actions versions          | Dependabot (`.github/dependabot.yml`), one grouped PR                      | daily               |
-| npm libraries                    | Dependabot (`.github/dependabot.yml`), grouped by tool + minor/patch       | weekly (Sunday)     |
-| Node, pnpm and proto toolchain   | `update_toolchain.yml`                                                     | weekly (Sunday)     |
-| Review and fix of Dependabot PRs | Koda (`review-dependency-updates.yml` + `review-dependency-updates` skill) | weekdays, 07:00 UTC |
+| What                           | Tool                                                                 | When            |
+| ------------------------------ | -------------------------------------------------------------------- | --------------- |
+| GitHub Actions versions        | Dependabot (`.github/dependabot.yml`), one grouped PR                | daily           |
+| npm libraries                  | Dependabot (`.github/dependabot.yml`), grouped by tool + minor/patch | weekly (Sunday) |
+| Node, pnpm and proto toolchain | `update_toolchain.yml`                                               | weekly (Sunday) |
 
 Dependabot waits 7 days after a release before proposing it (`cooldown`), except for `@ledgerhq/*` packages and
 security updates. Reviewers are assigned from `CODEOWNERS`.
@@ -193,14 +192,6 @@ security updates. Reviewers are assigned from `CODEOWNERS`.
 Dependabot PRs, like PRs from forks, are untrusted: their CI runs on GitHub-hosted runners, never on our self-hosted
 ones. The clear-signing tester is skipped, and the sample Playwright tests run against a local mock server with no
 Speculos, skipping the tests tagged `@speculos`. Tag with `@speculos` any new Playwright test that opens a real app.
-
-Koda reviews the open Dependabot PRs: it analyzes red CI, pushes small mechanical fixes (lint, types, lockfile, renamed
-APIs) and posts a Slack report listing the PRs that are ready to merge. It never merges: a human approval is required on
-`develop`.
-
-Why Koda rather than a custom routine: Ledger already runs the same review in production on about ten repositories
-(Cloud Wallet, `LedgerHQ/team-cloud-wallet-koda`), and Koda is already configured on this repository (`koda.yaml`). Our
-skill is a copy of theirs adapted to Dependabot only, no merging, and our commit and changeset conventions.
 
 ### Developer Portal
 

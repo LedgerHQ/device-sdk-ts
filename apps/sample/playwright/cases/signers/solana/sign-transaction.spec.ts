@@ -27,7 +27,7 @@ const SOL_TRANSFER =
 const EXPECTED_SIGNATURE =
   "0x2d7771a3b8e43acf6c0a0062c51dacb77d7b2a259a11ca9f429c65b5f204edc87c7fa56670c8276f8b5f816fdffe2996e20322967b98029c43719441577e8e07";
 
-test.describe("signer solana: sign transaction", () => {
+test.describe("signer solana: sign transaction", { tag: "@speculos" }, () => {
   test("signs a SOL transfer clear-signed on the device screen", async ({
     device,
     solSigner,

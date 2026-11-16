@@ -21,7 +21,7 @@ interface SignMessageOutput {
   v: number;
 }
 
-test.describe("signer bitcoin: sign message", () => {
+test.describe("signer bitcoin: sign message", { tag: "@speculos" }, () => {
   test("signs a message approved on the device screen", async ({
     device,
     btcSigner,

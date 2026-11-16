@@ -18,7 +18,7 @@ const NANO_X_WITH_ALEO: DeviceConfig = {
 const EXPECTED_ADDRESS =
   "aleo1u3tu8qc4k8472hhtkfqvt4hjkqdp79wrgzdggspwp8egjjl77c9sj5gk7q";
 
-test.describe("signer aleo: get address", () => {
+test.describe("signer aleo: get address", { tag: "@speculos" }, () => {
   test("returns the address for the default derivation path", async ({
     device,
     aleoSigner,
