@@ -31,7 +31,7 @@ const RAW_TRANSFER_TX =
 const EXPECTED_SIGNATURE =
   "0xcea9f6b444f07f5cac4b68d08c0d9204427ba2c744d91cbc8cf65a47680df87b47e7b75de15062a56178a751ce0ebfea526fb6dcfedb2f2abae179fdece3b07500";
 
-test.describe("signer tron: sign transaction", () => {
+test.describe("signer tron: sign transaction", { tag: "@speculos" }, () => {
   test("signs a TRX transfer approved on the device screen", async ({
     device,
     trxSigner,

@@ -18,7 +18,7 @@ const STAX_WITH_SOLANA: DeviceConfig = {
 // path 44'/501'/0'/0', derived with SLIP-0010 outside DMK.
 const EXPECTED_ADDRESS = "8dzfFpL3fBFch2fPUSFufamU7FpFv2p4Ef11W5WbU5iq";
 
-test.describe("signer solana: get address", () => {
+test.describe("signer solana: get address", { tag: "@speculos" }, () => {
   test("returns the address for the default derivation path", async ({
     device,
     solSigner,

@@ -50,178 +50,188 @@ const reviewText = (screens: string[]): string =>
 // and they are uploaded as a public CI artifact.
 test.use({ trace: "off" });
 
-test.describe("signer ethereum: sign transaction with Transaction Check", () => {
-  test("shows the check verdict on a clear-signed transaction", async ({
-    device,
-    ethSigner,
-    speculos,
-  }) => {
-    test.setTimeout(180_000);
+test.describe(
+  "signer ethereum: sign transaction with Transaction Check",
+  { tag: "@speculos" },
+  () => {
+    test("shows the check verdict on a clear-signed transaction", async ({
+      device,
+      ethSigner,
+      speculos,
+    }) => {
+      test.setTimeout(180_000);
 
-    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
-    await test.step("Given the device with the Ethereum app is connected", async () => {
-      dev = await device.addAndConnect(FLEX_WITH_ETH);
-    });
+      let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+      await test.step("Given the device with the Ethereum app is connected", async () => {
+        dev = await device.addAndConnect(FLEX_WITH_ETH);
+      });
 
-    const emulator = speculos(dev);
-    await test.step("And blind signing is enabled on the device", async () => {
-      await ethSigner.open();
-      await ethSigner.getAddress();
-      await ethSigner.lastResult();
-      await emulator.waitReady();
-      await emulator.enableBlindSigning();
-    });
+      const emulator = speculos(dev);
+      await test.step("And blind signing is enabled on the device", async () => {
+        await ethSigner.open();
+        await ethSigner.getAddress();
+        await ethSigner.lastResult();
+        await emulator.waitReady();
+        await emulator.enableBlindSigning();
+      });
 
-    await test.step("When Sign transaction is executed for a Lido stETH approve", async () => {
-      await ethSigner.open();
-      await ethSigner.signTransaction(LIDO_APPROVE);
-    });
+      await test.step("When Sign transaction is executed for a Lido stETH approve", async () => {
+        await ethSigner.open();
+        await ethSigner.signTransaction(LIDO_APPROVE);
+      });
 
-    let screens: string[] = [];
-    await test.step("And the Transaction Check is enabled and the review approved", async () => {
-      screens = await emulator.approveSigning({ enableTransactionCheck: true });
-    });
+      let screens: string[] = [];
+      await test.step("And the Transaction Check is enabled and the review approved", async () => {
+        screens = await emulator.approveSigning({
+          enableTransactionCheck: true,
+        });
+      });
 
-    await test.step("Then the clear-signed review shows the check verdict", async () => {
-      const review = reviewText(screens);
-      expect(review).toContain("Approve stETH");
-      expect(review).toContain(CLEAR_SIGNED_VERDICT);
+      await test.step("Then the clear-signed review shows the check verdict", async () => {
+        const review = reviewText(screens);
+        expect(review).toContain("Approve stETH");
+        expect(review).toContain(CLEAR_SIGNED_VERDICT);
 
-      const result = await ethSigner.lastResult();
-      expect(result.status).toBe("completed");
-    });
-  });
-
-  test("shows no check verdict when the user declines the Transaction Check", async ({
-    device,
-    ethSigner,
-    speculos,
-  }) => {
-    test.setTimeout(180_000);
-
-    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
-    await test.step("Given the device with the Ethereum app is connected", async () => {
-      dev = await device.addAndConnect(FLEX_WITH_ETH);
-    });
-
-    const emulator = speculos(dev);
-    await test.step("And blind signing is enabled on the device", async () => {
-      await ethSigner.open();
-      await ethSigner.getAddress();
-      await ethSigner.lastResult();
-      await emulator.waitReady();
-      await emulator.enableBlindSigning();
-    });
-
-    await test.step("When Sign transaction is executed for a Lido stETH approve", async () => {
-      await ethSigner.open();
-      await ethSigner.signTransaction(LIDO_APPROVE);
-    });
-
-    let screens: string[] = [];
-    await test.step("And the Transaction Check is declined and the review approved", async () => {
-      screens = await emulator.approveSigning({
-        enableTransactionCheck: false,
+        const result = await ethSigner.lastResult();
+        expect(result.status).toBe("completed");
       });
     });
 
-    await test.step("Then the clear-signed review shows no check verdict", async () => {
-      const review = reviewText(
-        screens.filter(
-          (screen) => !screen.includes("Enable Transaction Check"),
-        ),
-      );
-      expect(review).toContain("Approve stETH");
-      expect(review).not.toContain("Transaction Check");
+    test("shows no check verdict when the user declines the Transaction Check", async ({
+      device,
+      ethSigner,
+      speculos,
+    }) => {
+      test.setTimeout(180_000);
 
-      const result = await ethSigner.lastResult();
-      expect(result.status).toBe("completed");
-    });
-  });
+      let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+      await test.step("Given the device with the Ethereum app is connected", async () => {
+        dev = await device.addAndConnect(FLEX_WITH_ETH);
+      });
 
-  test("shows the check verdict on a blind-signed transaction", async ({
-    device,
-    ethSigner,
-    speculos,
-  }) => {
-    test.setTimeout(180_000);
+      const emulator = speculos(dev);
+      await test.step("And blind signing is enabled on the device", async () => {
+        await ethSigner.open();
+        await ethSigner.getAddress();
+        await ethSigner.lastResult();
+        await emulator.waitReady();
+        await emulator.enableBlindSigning();
+      });
 
-    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
-    await test.step("Given the device with the Ethereum app is connected", async () => {
-      dev = await device.addAndConnect(FLEX_WITH_ETH);
-    });
+      await test.step("When Sign transaction is executed for a Lido stETH approve", async () => {
+        await ethSigner.open();
+        await ethSigner.signTransaction(LIDO_APPROVE);
+      });
 
-    const emulator = speculos(dev);
-    await test.step("And blind signing is enabled on the device", async () => {
-      await ethSigner.open();
-      await ethSigner.getAddress();
-      await ethSigner.lastResult();
-      await emulator.waitReady();
-      await emulator.enableBlindSigning();
-    });
+      let screens: string[] = [];
+      await test.step("And the Transaction Check is declined and the review approved", async () => {
+        screens = await emulator.approveSigning({
+          enableTransactionCheck: false,
+        });
+      });
 
-    await test.step("When Sign transaction is executed for a call without descriptor", async () => {
-      await ethSigner.open();
-      await ethSigner.signTransaction(UNKNOWN_CALL);
-    });
+      await test.step("Then the clear-signed review shows no check verdict", async () => {
+        const review = reviewText(
+          screens.filter(
+            (screen) => !screen.includes("Enable Transaction Check"),
+          ),
+        );
+        expect(review).toContain("Approve stETH");
+        expect(review).not.toContain("Transaction Check");
 
-    let screens: string[] = [];
-    await test.step("And the Transaction Check is enabled and the review approved", async () => {
-      screens = await emulator.approveSigning({ enableTransactionCheck: true });
-    });
-
-    await test.step("Then the blind-signed review shows the check verdict", async () => {
-      expect(reviewText(screens)).toContain(BLIND_SIGNED_VERDICT);
-
-      const result = await ethSigner.lastResult();
-      expect(result.status).toBe("completed");
-    });
-  });
-
-  test("shows the check verdict when clear signing falls back to blind signing", async ({
-    device,
-    ethSigner,
-    mockClient,
-    speculos,
-  }) => {
-    test.setTimeout(180_000);
-
-    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
-    await test.step("Given the device with the Ethereum app is connected", async () => {
-      dev = await device.addAndConnect(FLEX_WITH_ETH);
-    });
-
-    const emulator = speculos(dev);
-    await test.step("And blind signing is enabled on the device", async () => {
-      await ethSigner.open();
-      await ethSigner.getAddress();
-      await ethSigner.lastResult();
-      await emulator.waitReady();
-      await emulator.enableBlindSigning();
-    });
-
-    await test.step("And the transaction information never reaches the device", async () => {
-      await mockClient.addMock(dev.id, {
-        prefix: PROVIDE_TRANSACTION_INFO_PREFIX,
-        response: "9000",
+        const result = await ethSigner.lastResult();
+        expect(result.status).toBe("completed");
       });
     });
 
-    await test.step("When Sign transaction is executed for a Lido stETH approve", async () => {
-      await ethSigner.open();
-      await ethSigner.signTransaction(LIDO_APPROVE);
+    test("shows the check verdict on a blind-signed transaction", async ({
+      device,
+      ethSigner,
+      speculos,
+    }) => {
+      test.setTimeout(180_000);
+
+      let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+      await test.step("Given the device with the Ethereum app is connected", async () => {
+        dev = await device.addAndConnect(FLEX_WITH_ETH);
+      });
+
+      const emulator = speculos(dev);
+      await test.step("And blind signing is enabled on the device", async () => {
+        await ethSigner.open();
+        await ethSigner.getAddress();
+        await ethSigner.lastResult();
+        await emulator.waitReady();
+        await emulator.enableBlindSigning();
+      });
+
+      await test.step("When Sign transaction is executed for a call without descriptor", async () => {
+        await ethSigner.open();
+        await ethSigner.signTransaction(UNKNOWN_CALL);
+      });
+
+      let screens: string[] = [];
+      await test.step("And the Transaction Check is enabled and the review approved", async () => {
+        screens = await emulator.approveSigning({
+          enableTransactionCheck: true,
+        });
+      });
+
+      await test.step("Then the blind-signed review shows the check verdict", async () => {
+        expect(reviewText(screens)).toContain(BLIND_SIGNED_VERDICT);
+
+        const result = await ethSigner.lastResult();
+        expect(result.status).toBe("completed");
+      });
     });
 
-    let screens: string[] = [];
-    await test.step("And the Transaction Check is enabled and the review approved", async () => {
-      screens = await emulator.approveSigning({ enableTransactionCheck: true });
-    });
+    test("shows the check verdict when clear signing falls back to blind signing", async ({
+      device,
+      ethSigner,
+      mockClient,
+      speculos,
+    }) => {
+      test.setTimeout(180_000);
 
-    await test.step("Then the blind-signed fallback review shows the check verdict", async () => {
-      expect(reviewText(screens)).toContain(BLIND_SIGNED_VERDICT);
+      let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+      await test.step("Given the device with the Ethereum app is connected", async () => {
+        dev = await device.addAndConnect(FLEX_WITH_ETH);
+      });
 
-      const result = await ethSigner.lastResult();
-      expect(result.status).toBe("completed");
+      const emulator = speculos(dev);
+      await test.step("And blind signing is enabled on the device", async () => {
+        await ethSigner.open();
+        await ethSigner.getAddress();
+        await ethSigner.lastResult();
+        await emulator.waitReady();
+        await emulator.enableBlindSigning();
+      });
+
+      await test.step("And the transaction information never reaches the device", async () => {
+        await mockClient.addMock(dev.id, {
+          prefix: PROVIDE_TRANSACTION_INFO_PREFIX,
+          response: "9000",
+        });
+      });
+
+      await test.step("When Sign transaction is executed for a Lido stETH approve", async () => {
+        await ethSigner.open();
+        await ethSigner.signTransaction(LIDO_APPROVE);
+      });
+
+      let screens: string[] = [];
+      await test.step("And the Transaction Check is enabled and the review approved", async () => {
+        screens = await emulator.approveSigning({
+          enableTransactionCheck: true,
+        });
+      });
+
+      await test.step("Then the blind-signed fallback review shows the check verdict", async () => {
+        expect(reviewText(screens)).toContain(BLIND_SIGNED_VERDICT);
+
+        const result = await ethSigner.lastResult();
+        expect(result.status).toBe("completed");
+      });
     });
-  });
-});
+  },
+);

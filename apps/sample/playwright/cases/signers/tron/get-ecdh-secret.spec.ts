@@ -24,7 +24,7 @@ const PEER_PUBLIC_KEY =
 // sample app as a 0x-prefixed hex string.
 const SECRET_RE = /^0x[0-9a-f]{130}$/i;
 
-test.describe("signer tron: get ecdh secret", () => {
+test.describe("signer tron: get ecdh secret", { tag: "@speculos" }, () => {
   test("computes a shared secret approved on the device screen", async ({
     device,
     trxSigner,

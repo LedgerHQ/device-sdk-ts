@@ -42,30 +42,31 @@ test.describe("device: user interaction sequence", () => {
     });
   });
 
-  test("Open app asks to confirm the opening once", async ({
-    device,
-    deviceActions,
-  }) => {
-    // Opening Bitcoin provisions a real Speculos instance.
-    test.setTimeout(120_000);
+  test(
+    "Open app asks to confirm the opening once",
+    { tag: "@speculos" },
+    async ({ device, deviceActions }) => {
+      // Opening Bitcoin provisions a real Speculos instance.
+      test.setTimeout(120_000);
 
-    await test.step("Given a Nano X at the dashboard with Bitcoin installed", async () => {
-      await device.addAndConnect(NANO_X);
-    });
+      await test.step("Given a Nano X at the dashboard with Bitcoin installed", async () => {
+        await device.addAndConnect(NANO_X);
+      });
 
-    await test.step("When the Open app device action completes for Bitcoin", async () => {
-      await deviceActions.goto();
-      await deviceActions.openApp("Bitcoin");
-      const result = await deviceActions.lastResult();
-      expect(result.status).toBe("completed");
-    });
+      await test.step("When the Open app device action completes for Bitcoin", async () => {
+        await deviceActions.goto();
+        await deviceActions.openApp("Bitcoin");
+        const result = await deviceActions.lastResult();
+        expect(result.status).toBe("completed");
+      });
 
-    await test.step("Then the prompts are none, confirm-open-app, none", async () => {
-      expect(await deviceActions.userInteractionSequence()).toEqual([
-        "none",
-        "confirm-open-app",
-        "none",
-      ]);
-    });
-  });
+      await test.step("Then the prompts are none, confirm-open-app, none", async () => {
+        expect(await deviceActions.userInteractionSequence()).toEqual([
+          "none",
+          "confirm-open-app",
+          "none",
+        ]);
+      });
+    },
+  );
 });

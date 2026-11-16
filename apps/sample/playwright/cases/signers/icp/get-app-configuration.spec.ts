@@ -25,7 +25,7 @@ interface AppConfigurationOutput {
 // emulated ICP app, so we assert on the shape rather than a fixed version.
 const VERSION_RE = /^\d+\.\d+\.\d+$/;
 
-test.describe("signer icp: get app configuration", () => {
+test.describe("signer icp: get app configuration", { tag: "@speculos" }, () => {
   test("returns the ICP app configuration", async ({ device, icpSigner }) => {
     // Opening the ICP app provisions a real Speculos instance, which can take
     // a while to become ready.

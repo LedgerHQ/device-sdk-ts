@@ -28,7 +28,9 @@ env:
 
 jobs:
   build:
-    if: contains(github.event.pull_request.labels.*.name, 'preview')
+    # Untrusted code (fork and Dependabot PRs, matched by author) never runs on
+    # our self-hosted runners, even once labeled.
+    if: contains(github.event.pull_request.labels.*.name, 'preview') && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ledgerhq-device-sdk
     timeout-minutes: 30
     steps:

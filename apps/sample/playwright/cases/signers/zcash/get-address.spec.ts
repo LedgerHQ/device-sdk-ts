@@ -20,7 +20,7 @@ interface GetAddressOutput {
   chainCode?: string;
 }
 
-test.describe("signer zcash: get address", () => {
+test.describe("signer zcash: get address", { tag: "@speculos" }, () => {
   test("returns the transparent address of 44'/133'/0'/0/0", async ({
     device,
     zcashSigner,

@@ -28,7 +28,7 @@
     "prebuild": "rimraf lib",
     "build": "pnpm ldmk-tool build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "ui": "pnpm --filter @ledgerhq/device-mock-server-ui build",
-    "start": "node lib/cjs/main.js",
+    "start": "node lib/cjs/src/main.js",
     "dev": "pnpm ui; tsx watch src/main.ts",
     "serve": "pnpm ui; tsx src/main.ts",
     "generate:openapi": "tsx scripts/generate-openapi.ts",

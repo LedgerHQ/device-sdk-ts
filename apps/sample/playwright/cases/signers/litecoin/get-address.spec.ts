@@ -86,7 +86,7 @@ const waitForVerifyScreen = (emulator: SpeculosDriver) =>
 
 // Opening the Litecoin app provisions a real Speculos instance through the mock
 // server, which alone waits up to 120s for the pod, so the budget is larger.
-test.describe("signer litecoin: get address", () => {
+test.describe("signer litecoin: get address", { tag: "@speculos" }, () => {
   for (const {
     format,
     derivationPath,

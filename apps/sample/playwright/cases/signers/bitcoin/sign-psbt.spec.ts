@@ -28,7 +28,7 @@ interface SignPsbtOutput {
   pubkey: string;
 }
 
-test.describe("signer bitcoin: sign psbt", () => {
+test.describe("signer bitcoin: sign psbt", { tag: "@speculos" }, () => {
   test("signs a native segwit PSBT approved on the device screen", async ({
     device,
     btcSigner,
