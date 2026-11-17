@@ -39,7 +39,8 @@ Client makes its own device when it connects. To touch it:
 
 - Ask user for the FULL token. Logs show only first 8 letters.
 - Find device with `GET /devices`. Change it with `PATCH`.
-- NEVER delete then remake it. New id = client lost forever.
+- Remake it ONLY with its old `id`. New id = client lost forever.
+- Need it gone for a while? See [Make a device go away and come back](#make-a-device-go-away-and-come-back).
 
 ## The curl commands
 
@@ -53,11 +54,13 @@ curl -s $BASE/devices -H "$AUTH"
 curl -s $BASE/devices/<id> -H "$AUTH"
 curl -s -X POST $BASE/devices -H "$AUTH" -H "$JSON" \
   -d '{"name":"Ledger Flex","device_type":"flex","firmware_version":"1.9.1"}'
+curl -s -X POST $BASE/devices -H "$AUTH" -H "$JSON" \
+  -d '{"id":"flex-1","device_type":"flex"}'                  # pick the id (409 if taken)
 curl -s -X PATCH $BASE/devices/<id> -H "$AUTH" -H "$JSON" \
   -d '{"firmware_version":"1.10.0"}'
 curl -s -X DELETE $BASE/devices/<id> -H "$AUTH"
 
-# Plug / unplug
+# Connect / disconnect
 curl -s -X POST $BASE/devices/<id>/connect -H "$AUTH"        # or /disconnect
 
 # Send APDU
@@ -81,6 +84,23 @@ curl -s -X PUT $BASE/sessions/current/seed -H "$AUTH" -H "$JSON" \
 
 `device_type`: `nanoS`, `nanoSP`, `nanoX`, `stax`, `flex`, `apexp`. `PATCH` keeps
 the id and only changes fields you send.
+
+## Make a device go away and come back
+
+Delete the device, then add it again with the same `id`. Apps lose it, then
+find the same device again.
+
+- Delete forgets the settings and mocks. Save them first: `GET /export` gives
+  each device with its `id` and mocks. Post that entry back as is.
+- `id`: 1 to 64 letters, digits, `-` or `_`.
+
+```bash
+entry=$(curl -s $BASE/export -H "$AUTH" | jq -c '.devices[] | select(.id=="<id>")')
+curl -s -X DELETE $BASE/devices/<id> -H "$AUTH"                 # gone: apps lose it
+curl -s -X POST $BASE/devices -H "$AUTH" -H "$JSON" -d "$entry"  # back: same id, settings, mocks
+```
+
+The UI's Enabled switch does the same thing.
 
 ## Open App / Close App
 

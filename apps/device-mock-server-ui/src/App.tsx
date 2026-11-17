@@ -87,6 +87,8 @@ export function App() {
           </div>
         ) : token ? (
           <SessionPage
+            // A new mount per session, so no state leaks from one to the next.
+            key={token}
             token={token}
             onLeave={leaveSession}
             onSwitch={enterSession}

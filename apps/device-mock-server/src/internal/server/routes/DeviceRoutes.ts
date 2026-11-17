@@ -12,6 +12,7 @@ import {
 import {
   decodeDeviceConfig,
   decodeMockConfig,
+  decodeNewDeviceConfig,
 } from "@internal/server/validation/requests";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
@@ -62,6 +63,10 @@ export class DeviceRoutes {
      *   post:
      *     tags: [Devices]
      *     summary: Attach a device
+     *     description: >-
+     *       Attach a device with the `id` in the body, or with a random UUID
+     *       when the body has no `id`. Delete a device, then attach it again
+     *       with the same `id`, to make a known device go away and come back.
      *     requestBody:
      *       content:
      *         application/json:
@@ -72,18 +77,34 @@ export class DeviceRoutes {
      *         content:
      *           application/json:
      *             schema: { $ref: '#/components/schemas/Device' }
+     *       400:
+     *         $ref: '#/components/responses/BadRequest'
      *       401:
      *         $ref: '#/components/responses/Unauthorized'
+     *       409:
+     *         description: A device with this `id` already exists.
+     *         content:
+     *           application/json:
+     *             schema: { $ref: '#/components/schemas/Error' }
      */
     router.get("/devices", (req: AuthedRequest, res: Response) => {
       res.json(this.repository.listDevices(getSession(req)));
     });
 
     router.post("/devices", (req: AuthedRequest, res: Response) => {
-      decodeDeviceConfig(req.body ?? {}).caseOf({
+      decodeNewDeviceConfig(req.body ?? {}).caseOf({
         Left: (error) => res.status(400).json({ error }),
         Right: (config) => {
-          const device = this.repository.addDevice(getSession(req), config);
+          const session = getSession(req);
+          if (
+            config.id !== undefined &&
+            this.repository.findDevice(session, config.id).isJust()
+          ) {
+            return res
+              .status(409)
+              .json({ error: `Device ${config.id} already exists` });
+          }
+          const device = this.repository.addDevice(session, config);
           return res.status(201).json(device);
         },
       });

@@ -205,6 +205,27 @@ describe("MockClient", () => {
       });
     });
 
+    it("adds a device with a chosen id", async () => {
+      const http = httpClientStubBuilder().mockResponse({
+        method: "post",
+        endpoint: "devices",
+        response: aDevice({ id: "flex-1" }),
+      });
+      const client = new MockClient("http://localhost:8080", {
+        token: "tok",
+        httpClient: http,
+      });
+
+      const device = await client.addDevice({ id: "flex-1" });
+
+      expect(device.id).toBe("flex-1");
+      expect(http.calls).toContainEqual({
+        method: "post",
+        endpoint: "devices",
+        body: { id: "flex-1" },
+      });
+    });
+
     it("gets a single device", async () => {
       const http = httpClientStubBuilder().mockResponse({
         method: "get",
@@ -639,6 +660,7 @@ describe("MockClient", () => {
       const snapshot = {
         devices: [
           {
+            id: "flex-1",
             name: "Ledger Flex",
             device_type: "flex",
             mocks: [{ prefix: "e0010000", responses: ["aa9000", "5515"] }],

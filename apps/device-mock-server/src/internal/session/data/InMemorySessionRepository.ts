@@ -122,7 +122,7 @@ export class InMemorySessionRepository implements SessionRepository {
   }
 
   addDevice(record: SessionRecord, config: DeviceConfig): Device {
-    const id = randomUUID();
+    const id = config.id ?? randomUUID();
     const device = this.buildDevice(id, config);
     record.devices.set(id, device);
     record.deviceMocks.set(id, new Map());
@@ -439,6 +439,7 @@ export class InMemorySessionRepository implements SessionRepository {
   exportSession(record: SessionRecord): SessionExport {
     return {
       devices: [...record.devices.entries()].map(([id, device]) => ({
+        id,
         ...toDeviceConfig(device),
         mocks: [...(record.deviceMocks.get(id)?.values() ?? [])].map(
           (mock) => ({ prefix: mock.prefix, responses: [...mock.responses] }),
@@ -478,6 +479,7 @@ export class InMemorySessionRepository implements SessionRepository {
       masks: config.masks,
       connected: false,
       onboarded: config.onboarded,
+      language: config.language,
     };
   }
 
@@ -509,5 +511,6 @@ function toDeviceConfig(device: Device): DeviceConfig {
     apps: device.apps,
     masks: device.masks,
     onboarded: device.onboarded,
+    language: device.language,
   };
 }
