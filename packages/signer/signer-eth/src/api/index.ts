@@ -46,6 +46,7 @@ export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";
 export * from "@api/model/EvmAddressBook";
 export * from "@api/model/Signature";
+export * from "@api/model/SigningResult";
 export * from "@api/model/TransactionOptions";
 export * from "@api/model/TransactionType";
 export * from "@api/model/TypedData";

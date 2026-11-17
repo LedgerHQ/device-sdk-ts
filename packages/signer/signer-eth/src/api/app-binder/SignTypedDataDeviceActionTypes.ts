@@ -1,4 +1,7 @@
-import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  type BlindSignReason,
+  type ContextModule,
+} from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
   type DeviceActionState,
@@ -10,6 +13,7 @@ import {
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { type Signature } from "@api/model/Signature";
+import { type SigningResult } from "@api/model/SigningResult";
 import { type TypedData } from "@api/model/TypedData";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import type { BuildEIP712ContextTaskResult } from "@internal/app-binder/task/BuildEIP712ContextTask";
@@ -31,7 +35,7 @@ export enum SignTypedDataDAStateStep {
   DETECT_BLIND_SIGNING = "signer.eth.steps.detectBlindSigning",
 }
 
-export type SignTypedDataDAOutput = Signature;
+export type SignTypedDataDAOutput = Signature & SigningResult;
 
 export type SignTypedDataDAInput = {
   readonly derivationPath: string;
@@ -79,6 +83,7 @@ export type SignTypedDataDAInternalState = {
   readonly typedDataContext: BuildEIP712ContextTaskResult | null;
   readonly signature: Signature | null;
   readonly isBlindSign: boolean | null;
+  readonly blindSignReason: BlindSignReason | null;
   readonly usedFallback: boolean;
 };
 
