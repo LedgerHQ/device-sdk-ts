@@ -31,8 +31,33 @@ import { Panel } from "@/components/Panel";
 import { SeedPanel } from "@/components/SeedPanel";
 import { ServerStatus } from "@/components/ServerStatus";
 import { TransferPanel } from "@/components/TransferPanel";
+import {
+  type DisabledDevice,
+  getDisabledDevices,
+  setDisabledDevices,
+} from "@/domain/storage";
 
 type DialogTarget = Device | "new" | null;
+
+/** How a disabled device shows on its card, from the settings the UI kept. */
+const toDevice = ({ id, config }: DisabledDevice): Device => ({
+  id,
+  name: config.name ?? id,
+  device_type: config.device_type ?? "",
+  connectivity_type: config.connectivity_type ?? "",
+  firmware_version: config.firmware_version,
+  apps: config.apps,
+  masks: config.masks,
+  onboarded: config.onboarded,
+  language: config.language,
+  connected: false,
+});
+
+/** The dialog leaves out a field to keep its value, as `PATCH` does. */
+const withoutUndefined = (config: DeviceConfig): DeviceConfig =>
+  Object.fromEntries(
+    Object.entries(config).filter(([, value]) => value !== undefined),
+  ) as DeviceConfig;
 
 const relativeExpiry = (expiresAt: number): string => {
   const minutes = Math.round((expiresAt - Date.now()) / 60_000);
@@ -55,14 +80,30 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [seed, setSeed] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [disabled, setDisabled] = useState<DisabledDevice[]>(() =>
+    getDisabledDevices(token),
+  );
+
+  useEffect(() => setDisabledDevices(token, disabled), [token, disabled]);
 
   const refresh = useCallback(() => {
+    const startedAt = Date.now();
     setRefreshing(true);
     api
       .getSession(token)
       .then((next) => {
         setSession(next);
         setError(null);
+        // A device that is on the server again (an import, or a client that
+        // attached the same id) is no longer disabled. A device disabled after
+        // this request started is still on the server in this answer, so keep it.
+        const live = new Set(next.devices.map(({ id }) => id));
+        setDisabled((current) => {
+          const kept = current.filter(
+            ({ id, disabledAt }) => disabledAt > startedAt || !live.has(id),
+          );
+          return kept.length === current.length ? current : kept;
+        });
       })
       .catch((cause: unknown) =>
         setError(cause instanceof Error ? cause.message : String(cause)),
@@ -72,7 +113,24 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
 
   useEffect(refresh, [refresh]);
 
+  const isDisabled = (deviceId: string) =>
+    disabled.some(({ id }) => id === deviceId);
+
   const submitDevice = async (config: DeviceConfig) => {
+    if (dialog && dialog !== "new" && isDisabled(dialog.id)) {
+      // Not on the server: change the settings it gets back when enabled.
+      setDisabled((current) =>
+        current.map((entry) =>
+          entry.id === dialog.id
+            ? {
+                ...entry,
+                config: { ...entry.config, ...withoutUndefined(config) },
+              }
+            : entry,
+        ),
+      );
+      return;
+    }
     if (dialog && dialog !== "new") {
       await api.editDevice(token, dialog.id, config);
     } else {
@@ -82,15 +140,46 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
   };
 
   const removeDevice = async (deviceId: string) => {
+    if (isDisabled(deviceId)) {
+      setDisabled((current) => current.filter(({ id }) => id !== deviceId));
+      return;
+    }
     await api.deleteDevice(token, deviceId);
     if (interactingId === deviceId) setInteractingId(null);
     refresh();
   };
 
+  /**
+   * Disabling deletes the device on the server, so apps stop finding it, and
+   * keeps its export entry here. Enabling attaches that entry again: same id,
+   * settings and mocks.
+   */
+  const setEnabled = async (device: Device, enabled: boolean) => {
+    if (enabled) {
+      const entry = disabled.find(({ id }) => id === device.id);
+      if (!entry) return;
+      await api.addDevice(token, entry.config);
+      setDisabled((current) => current.filter(({ id }) => id !== device.id));
+      return;
+    }
+    const snapshot = await api.exportSession(token);
+    const config = snapshot.devices.find(({ id }) => id === device.id);
+    if (!config) throw new Error(`${device.name} is no longer on the server`);
+    await api.deleteDevice(token, device.id);
+    setDisabled((current) => [
+      ...current,
+      { id: device.id, config, disabledAt: Date.now() },
+    ]);
+    if (interactingId === device.id) setInteractingId(null);
+  };
+
   const disposeSession = () => {
     api
       .disposeSession(token)
-      .then(onLeave)
+      .then(() => {
+        setDisabledDevices(token, []);
+        onLeave();
+      })
       .catch((cause: unknown) =>
         setError(cause instanceof Error ? cause.message : String(cause)),
       );
@@ -105,8 +194,11 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
       );
   };
 
-  const devices = session?.devices ?? [];
-  const interacting = devices.find(({ id }) => id === interactingId);
+  const liveDevices = session?.devices ?? [];
+  const liveIds = new Set(liveDevices.map(({ id }) => id));
+  const disabledDevices = disabled.filter(({ id }) => !liveIds.has(id));
+  const devices = [...liveDevices, ...disabledDevices.map(toDevice)];
+  const interacting = liveDevices.find(({ id }) => id === interactingId);
 
   return (
     <>
@@ -237,7 +329,13 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
                   key={device.id}
                   token={token}
                   device={device}
+                  enabled={liveIds.has(device.id)}
+                  savedMockCount={
+                    disabledDevices.find(({ id }) => id === device.id)?.config
+                      .mocks?.length ?? 0
+                  }
                   interacting={device.id === interacting?.id}
+                  onEnabledChange={(enabled) => setEnabled(device, enabled)}
                   onChanged={refresh}
                   onEdit={() => setDialog(device)}
                   onInteract={() =>

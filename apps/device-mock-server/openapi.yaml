@@ -80,6 +80,12 @@ components:
             type: integer
         connected:
           type: boolean
+        onboarded:
+          type: boolean
+          description:
+            Whether the device is onboarded. Set to false to start the
+            onboarding simulation (the device reports itself as not onboarded
+            and auto-advances through the onboarding steps).
       required:
         - id
         - name
@@ -89,6 +95,14 @@ components:
       type: object
       description: Payload to attach (POST) or edit (PATCH) a device.
       properties:
+        id:
+          type: string
+          pattern: ^[A-Za-z0-9_-]{1,64}$
+          example: flex-1
+          description:
+            The id of a new device. Omit it to get a random UUID. `POST
+            /devices` and `POST /import` read it; `PATCH /devices/{id}` ignores
+            it. `GET /export` includes it.
         name:
           type: string
         device_type:
@@ -112,6 +126,11 @@ components:
           description: Device-scoped APDU mocks (used on attach / import).
           items:
             $ref: "#/components/schemas/MockConfig"
+        onboarded:
+          type: boolean
+          description:
+            Whether the device is onboarded. Omit (or true) for a normal
+            onboarded device; false starts the onboarding simulation.
     Mock:
       type: object
       properties:
@@ -297,6 +316,9 @@ paths:
       tags:
         - Transfer
       summary: Replace the session's devices and mocks with a snapshot
+      description:
+        Each device keeps the `id` it has in the snapshot. A device with no
+        `id` gets a random UUID.
       requestBody:
         required: true
         content:
@@ -311,7 +333,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/SessionExport"
         "400":
-          description: Malformed snapshot.
+          description:
+            Malformed snapshot, an `id` that is not valid, or the same `id` on
+            two devices. The session does not change.
         "401":
           $ref: "#/components/responses/Unauthorized"
   /sessions/current:
@@ -387,6 +411,10 @@ paths:
       tags:
         - Devices
       summary: Attach a device
+      description:
+        Attach a device with the `id` in the body, or with a random UUID
+        when the body has no `id`. Delete a device, then attach it again with
+        the same `id`, to make a known device go away and come back.
       requestBody:
         content:
           application/json:
@@ -399,8 +427,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Device"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: A device with this `id` already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /devices/{id}:
     get:
       tags:
@@ -640,6 +676,80 @@ paths:
           description: The emulator response.
         "409":
           description: No active Speculos instance for the device.
+  /speculos/catalogue/{deviceType}:
+    get:
+      tags:
+        - Speculos
+      summary: Firmware versions Speculos can boot on a model
+      security: []
+      parameters:
+        - in: path
+          name: deviceType
+          required: true
+          description: DMK DeviceModelId (`nanoX`, `stax`, ...).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Firmware versions, unordered.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  firmware:
+                    type: array
+                    items:
+                      type: string
+        "400":
+          description: The catalogue does not cover this model.
+        "404":
+          description: No Speculos operator is configured.
+        "502":
+          description: The catalogue could not be read.
+  /speculos/catalogue/{deviceType}/{firmwareVersion}:
+    get:
+      tags:
+        - Speculos
+      summary: App versions Speculos can boot on a model and firmware
+      description: >
+        Speculinho's catalogue narrowed to one model and OS. An app whose
+        version is missing here fails Open App with 6d00 once proxied.
+      security: []
+      parameters:
+        - in: path
+          name: deviceType
+          required: true
+          description: DMK DeviceModelId (`nanoX`, `stax`, ...).
+          schema:
+            type: string
+        - in: path
+          name: firmwareVersion
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description:
+            Versions keyed by app name; empty when Speculos has no build of
+            this firmware.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apps:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+        "400":
+          description: The catalogue does not cover this model.
+        "404":
+          description: No Speculos operator is configured.
+        "502":
+          description: The catalogue could not be read.
   /auth:
     post:
       tags:

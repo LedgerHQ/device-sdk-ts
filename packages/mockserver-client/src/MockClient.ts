@@ -93,6 +93,11 @@ export class MockClient {
     return this.decode(array(deviceCodec), data);
   }
 
+  /**
+   * Attach a device. Pass `config.id` to choose its id, for example to bring
+   * back a device you deleted with {@link deleteDevice}: clients that know the
+   * device find it again. The server answers `409` if the id is taken.
+   */
   async addDevice(config: DeviceConfig = {}): Promise<Device> {
     const data = await this.client.post(
       "devices",

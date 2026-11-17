@@ -52,6 +52,9 @@ export class TransferRoutes {
      *   post:
      *     tags: [Transfer]
      *     summary: Replace the session's devices and mocks with a snapshot
+     *     description: >-
+     *       Each device keeps the `id` it has in the snapshot. A device with no
+     *       `id` gets a random UUID.
      *     requestBody:
      *       required: true
      *       content:
@@ -66,7 +69,9 @@ export class TransferRoutes {
      *             schema:
      *               $ref: '#/components/schemas/SessionExport'
      *       400:
-     *         description: Malformed snapshot.
+     *         description: >-
+     *           Malformed snapshot, an `id` that is not valid, or the same `id`
+     *           on two devices. The session does not change.
      *       401:
      *         $ref: '#/components/responses/Unauthorized'
      */

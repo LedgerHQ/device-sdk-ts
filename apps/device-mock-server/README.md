@@ -432,7 +432,7 @@ All routes except `POST /auth` and `GET /health` require an `Authorization: Bear
 | `GET /health`                                 | Liveness probe (no auth).                                                                                                                                      |
 | `GET` / `DELETE /sessions/current`            | Inspect / dispose the current session.                                                                                                                         |
 | `PUT /sessions/current/seed`                  | Set the BIP39 mnemonic used for Speculos emulators in this session (`{ seed }`). ⚠️ **Not secure** — stored and transmitted in plaintext. Test mnemonics only. |
-| `GET` / `POST /devices`                       | List / attach devices.                                                                                                                                         |
+| `GET` / `POST /devices`                       | List / attach devices. `POST` takes an optional `id` (`409` if a device has it), so a deleted device can come back with the same id.                           |
 | `GET` / `PATCH` / `DELETE /devices/:id`       | Read / edit / remove a device.                                                                                                                                 |
 | `POST /devices/:id/connect` · `/disconnect`   | Toggle connection state.                                                                                                                                       |
 | `POST /devices/:id/apdu`                      | Resolve an APDU (`{ apdu }` → `{ response }`).                                                                                                                 |
@@ -440,7 +440,7 @@ All routes except `POST /auth` and `GET /health` require an `Authorization: Bear
 | `PATCH` / `DELETE /devices/:id/mocks/:mockId` | Edit / remove a single mock.                                                                                                                                   |
 | `GET /devices/:id/speculos`                   | The device's active Speculos instance (`409` if none).                                                                                                         |
 | `ALL /devices/:id/speculos/*`                 | Raw passthrough to the device's emulator.                                                                                                                      |
-| `GET /export` · `POST /import`                | Export / import a portable session snapshot (devices + nested mocks).                                                                                          |
+| `GET /export` · `POST /import`                | Export / import a portable session snapshot (devices with their ids + nested mocks).                                                                           |
 
 The full contract is generated as [`openapi.yaml`](./openapi.yaml).
 
