@@ -32,6 +32,7 @@ export enum ClearSignContextType {
   SOLANA_ALT_RESOLUTION = "solanaAltResolution",
   SOLANA_BASIC_FLOW_RULE = "solanaBasicFlowRule",
   TRON_TOKEN = "tronToken",
+  XRP_MPT = "xrpMpt",
 }
 
 export type ClearSignContextSuccessType = Exclude<
