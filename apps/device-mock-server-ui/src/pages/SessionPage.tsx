@@ -31,13 +31,19 @@ import { Panel } from "@/components/Panel";
 import { SeedPanel } from "@/components/SeedPanel";
 import { ServerStatus } from "@/components/ServerStatus";
 import { TransferPanel } from "@/components/TransferPanel";
-import {
-  type DisabledDevice,
-  getDisabledDevices,
-  setDisabledDevices,
-} from "@/domain/storage";
 
 type DialogTarget = Device | "new" | null;
+
+/**
+ * A device the user disabled in this page. The page deleted it on the server
+ * and keeps what `GET /export` said about it, id and mocks included. Enabling
+ * posts it back, so it comes back with the same id. A reload forgets it.
+ */
+interface DisabledDevice {
+  readonly id: string;
+  readonly config: DeviceConfig;
+  readonly disabledAt: number;
+}
 
 /** How a disabled device shows on its card, from the settings the UI kept. */
 const toDevice = ({ id, config }: DisabledDevice): Device => ({
@@ -80,11 +86,7 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [seed, setSeed] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [disabled, setDisabled] = useState<DisabledDevice[]>(() =>
-    getDisabledDevices(token),
-  );
-
-  useEffect(() => setDisabledDevices(token, disabled), [token, disabled]);
+  const [disabled, setDisabled] = useState<DisabledDevice[]>([]);
 
   const refresh = useCallback(() => {
     const startedAt = Date.now();
@@ -176,10 +178,7 @@ export function SessionPage({ token, onLeave, onSwitch }: SessionPageProps) {
   const disposeSession = () => {
     api
       .disposeSession(token)
-      .then(() => {
-        setDisabledDevices(token, []);
-        onLeave();
-      })
+      .then(onLeave)
       .catch((cause: unknown) =>
         setError(cause instanceof Error ? cause.message : String(cause)),
       );

@@ -1,5 +1,3 @@
-import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
-
 const ACTIVE_KEY = "mock-server-ui.active-token";
 const KNOWN_KEY = "mock-server-ui.known-tokens";
 
@@ -77,35 +75,3 @@ export const deleteSavedSnapshot = (name: string): void =>
     SNAPSHOTS_KEY,
     getSavedSnapshots().filter((entry) => entry.name !== name),
   );
-
-const DISABLED_KEY = "mock-server-ui.disabled-devices";
-
-/**
- * A device the user disabled in this UI. The UI deleted it on the server and
- * keeps here what `GET /export` said about it, id and mocks included. Enabling
- * posts it back, so it comes back with the same id.
- */
-export interface DisabledDevice {
-  readonly id: string;
-  readonly config: DeviceConfig;
-  readonly disabledAt: number;
-}
-
-type DisabledBySession = Record<string, DisabledDevice[]>;
-
-export const getDisabledDevices = (token: string): DisabledDevice[] =>
-  read<DisabledBySession>(DISABLED_KEY, {})[token] ?? [];
-
-export const setDisabledDevices = (
-  token: string,
-  devices: DisabledDevice[],
-): void => {
-  const { [token]: _replaced, ...others } = read<DisabledBySession>(
-    DISABLED_KEY,
-    {},
-  );
-  write(
-    DISABLED_KEY,
-    devices.length > 0 ? { ...others, [token]: devices } : others,
-  );
-};
