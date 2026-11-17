@@ -11,14 +11,6 @@ import { KeyId } from "@/modules/multichain/pki/model/KeyId";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("NftContextLoader", () => {
   const spyGetNftInfosPayload = vi.fn();
   const spyGetPluginPayload = vi.fn();
@@ -49,11 +41,7 @@ describe("NftContextLoader", () => {
         keyUsage === KeyUsage.PluginMeta ? pluginCertificate : nftCertificate,
       ),
     );
-    loader = new NftContextLoader(
-      mockDataSource,
-      mockCertificateLoader,
-      mockLoggerFactory,
-    );
+    loader = new NftContextLoader(mockDataSource, mockCertificateLoader);
   });
 
   describe("canHandle function", () => {

@@ -1,6 +1,7 @@
 import {
   ByteArrayBuilder,
   type CommandResult,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -21,7 +22,6 @@ type SignDataTaskArgs<T = Maybe<Signature>> = {
   sendingData: Uint8Array;
   derivationPath: string;
   commandFactory: CommandFactory<T, SolanaAppErrorCodes>;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export class SignDataTask<T = Maybe<Signature>> {
@@ -31,7 +31,7 @@ export class SignDataTask<T = Maybe<Signature>> {
     private api: InternalApi,
     private args: SignDataTaskArgs<T>,
   ) {
-    this.logger = args.loggerFactory("SignDataTask");
+    this.logger = getLogger("SignerSolana", "SignDataTask");
   }
 
   async run(): Promise<CommandResult<T, SolanaAppErrorCodes>> {

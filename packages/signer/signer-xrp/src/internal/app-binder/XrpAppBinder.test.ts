@@ -35,6 +35,12 @@ import { APP_NAME } from "@internal/app-binder/constants";
 import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 import { XrpAppBinder } from "@internal/app-binder/XrpAppBinder";
 
+const { getLoggerMock } = vi.hoisted(() => ({ getLoggerMock: vi.fn() }));
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: getLoggerMock,
+}));
+
 type GetAppConfigSendCommandAction = SendCommandInAppDeviceAction<
   GetAppConfigCommandResponse,
   void,
@@ -74,14 +80,11 @@ const loggerFactory = () =>
     error: vi.fn(),
     subscribers: [],
   }) as unknown as LoggerPublisherService;
+getLoggerMock.mockImplementation(loggerFactory);
 
 describe("XrpAppBinder", () => {
   it("should be defined", () => {
-    const binder = new XrpAppBinder(
-      {} as DeviceManagementKit,
-      "session-id",
-      loggerFactory,
-    );
+    const binder = new XrpAppBinder({} as DeviceManagementKit, "session-id");
 
     expect(binder).toBeDefined();
   });
@@ -105,7 +108,7 @@ describe("XrpAppBinder", () => {
       };
       const executeDeviceAction = vi.fn().mockReturnValue(expectedResult);
       const dmk = { executeDeviceAction } as unknown as DeviceManagementKit;
-      const binder = new XrpAppBinder(dmk, sessionId, loggerFactory);
+      const binder = new XrpAppBinder(dmk, sessionId);
 
       // WHEN
       const result = binder.getAppConfig({ skipOpenApp: false });
@@ -137,7 +140,7 @@ describe("XrpAppBinder", () => {
         cancel: vi.fn(),
       });
       const dmk = { executeDeviceAction } as unknown as DeviceManagementKit;
-      const binder = new XrpAppBinder(dmk, "test-session-id", loggerFactory);
+      const binder = new XrpAppBinder(dmk, "test-session-id");
 
       // WHEN
       binder.getAppConfig({ skipOpenApp: true });
@@ -160,7 +163,7 @@ describe("XrpAppBinder", () => {
         executeDeviceAction,
         expectedResult,
         sessionId,
-        binder: new XrpAppBinder(dmk, sessionId, loggerFactory),
+        binder: new XrpAppBinder(dmk, sessionId),
       };
     };
 
@@ -294,7 +297,7 @@ describe("XrpAppBinder", () => {
         executeDeviceAction,
         expectedResult,
         sessionId,
-        binder: new XrpAppBinder(dmk, sessionId, loggerFactory),
+        binder: new XrpAppBinder(dmk, sessionId),
       };
     };
 
@@ -344,41 +347,8 @@ describe("XrpAppBinder", () => {
       );
     });
 
-    it("should give the device action a named logger", () => {
-      // GIVEN
-      const tagged: string[] = [];
-      const taggingFactory = (tag: string) => {
-        tagged.push(tag);
-        return loggerFactory();
-      };
-      const executeDeviceAction = vi
-        .fn()
-        .mockReturnValue({ observable: from([]), cancel: vi.fn() });
-
-      // WHEN
-      new XrpAppBinder(
-        { executeDeviceAction } as unknown as DeviceManagementKit,
-        "test-session-id",
-        taggingFactory,
-      ).signTransaction({
-        derivationPath: DERIVATION_PATH,
-        transaction: TRANSACTION,
-        skipOpenApp: false,
-        curve: Curve.Secp256k1,
-      });
-
-      // THEN
-      expect(tagged).toContain("SignTransactionDeviceAction");
-      expect(lastCall(executeDeviceAction).deviceAction.logger).toBeDefined();
-    });
-
     it("should run the sign dependency with the derivation path and transaction", async () => {
-      // GIVEN a binder whose logger factory records the tags asked of it
-      const tagged: string[] = [];
-      const taggingFactory = (tag: string) => {
-        tagged.push(tag);
-        return loggerFactory();
-      };
+      // GIVEN
       const executeDeviceAction = vi
         .fn()
         .mockReturnValue({ observable: from([]), cancel: vi.fn() });
@@ -386,7 +356,6 @@ describe("XrpAppBinder", () => {
       new XrpAppBinder(
         { executeDeviceAction } as unknown as DeviceManagementKit,
         "test-session-id",
-        taggingFactory,
       ).signTransaction({
         derivationPath: DERIVATION_PATH,
         transaction: TRANSACTION,
@@ -416,8 +385,7 @@ describe("XrpAppBinder", () => {
       });
 
       // THEN the task ran against the arguments the binder was given, sending
-      // the encoded path followed by the transaction, and it built its logger
-      // from the factory that was threaded through.
+      // the encoded path followed by the transaction.
       expect(sendCommand).toHaveBeenCalledTimes(1);
       const apdu = (
         sendCommand.mock.calls[0]![0] as SignTransactionCommand
@@ -448,7 +416,10 @@ describe("XrpAppBinder", () => {
           ...TRANSACTION,
         ]),
       );
-      expect(tagged).toContain("SendSignTransactionTask");
+      expect(getLoggerMock).toHaveBeenCalledWith(
+        "SignerXrp",
+        "SendSignTransactionTask",
+      );
       expect(isSuccessCommandResult(taskResult)).toBe(true);
     });
 

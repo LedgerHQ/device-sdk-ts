@@ -2,6 +2,7 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type CommandResult,
   type DeviceActionStateMachine,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type StateMachineTypes,
@@ -67,7 +68,8 @@ export class ProvisionTransactionCheckDeviceAction extends XStateDeviceAction<
     const { transactionCheckOptIn, provideTransactionCheck } =
       this.extractDependencies(internalApi);
 
-    const logger = this.getLoggerFactory(internalApi)(
+    const logger = getLogger(
+      "SignerSolana",
       "ProvisionTransactionCheckDeviceAction",
     );
 
@@ -231,7 +233,6 @@ export class ProvisionTransactionCheckDeviceAction extends XStateDeviceAction<
         contextModule: arg0.input.contextModule,
         serializedTransactionForTransactionCheck:
           arg0.input.serializedForTxCheck,
-        loggerFactory: this.getLoggerFactory(internalApi),
       }).run();
 
     return { transactionCheckOptIn, provideTransactionCheck };

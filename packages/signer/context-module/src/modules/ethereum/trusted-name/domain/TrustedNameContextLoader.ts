@@ -1,11 +1,11 @@
 import {
   DeviceModelId,
+  getLogger,
   isHexaString,
-  LoggerPublisherService,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { configTypes } from "@/config/di/configTypes";
 import type { TrustedNameDataSource } from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
@@ -37,10 +37,8 @@ export class TrustedNameContextLoader
     private _dataSource: TrustedNameDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private _certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("TrustedNameContextLoader");
+    this.logger = getLogger("ContextModule", "TrustedNameContextLoader");
   }
 
   canHandle(

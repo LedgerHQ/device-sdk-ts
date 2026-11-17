@@ -4,7 +4,6 @@ import { type Mocked } from "vitest";
 import { FileLocalConfigDataSource } from "@internal/config/data/LocalConfigDataSource";
 import { RestRemoteConfigDataSource } from "@internal/config/data/RemoteConfigDataSource";
 import { JSONParseError } from "@internal/config/model/Errors";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { type ConfigService } from "./ConfigService";
 import { DefaultConfigService } from "./DefaultConfigService";
@@ -14,7 +13,6 @@ vi.mock("@internal/config/data/RemoteConfigDataSource");
 
 let localDataSource: Mocked<FileLocalConfigDataSource>;
 let remoteDataSource: Mocked<RestRemoteConfigDataSource>;
-let loggerService: Mocked<DefaultLoggerPublisherService>;
 
 let service: ConfigService;
 describe("DefaultConfigService", () => {
@@ -25,16 +23,7 @@ describe("DefaultConfigService", () => {
     remoteDataSource =
       new RestRemoteConfigDataSource() as Mocked<RestRemoteConfigDataSource>;
 
-    loggerService = new DefaultLoggerPublisherService(
-      [],
-      "config",
-    ) as Mocked<DefaultLoggerPublisherService>;
-
-    service = new DefaultConfigService(
-      localDataSource,
-      remoteDataSource,
-      () => loggerService,
-    );
+    service = new DefaultConfigService(localDataSource, remoteDataSource);
   });
 
   describe("when the local config is available", () => {

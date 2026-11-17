@@ -27,10 +27,9 @@ describe("RestoreAppStorage", () => {
         .mockResolvedValueOnce(CommandResultFactory({ data: undefined }));
       MockTask.mockImplementation(() => ({ run: runMock }) as never);
 
-      const result = await restoreAppStorage(
-        apiMock,
-        apiMock.loggerFactory!,
-      )({ input: { appStorageData } });
+      const result = await restoreAppStorage(apiMock)({
+        input: { appStorageData },
+      });
 
       expect(result.isRight()).toBe(true);
       expect(MockTask).toHaveBeenCalledWith(
@@ -53,10 +52,9 @@ describe("RestoreAppStorage", () => {
         .mockResolvedValueOnce(CommandResultFactory({ error }));
       MockTask.mockImplementation(() => ({ run: runMock }) as never);
 
-      const result = await restoreAppStorage(
-        apiMock,
-        apiMock.loggerFactory!,
-      )({ input: { appStorageData } });
+      const result = await restoreAppStorage(apiMock)({
+        input: { appStorageData },
+      });
 
       expect(result.isLeft()).toBe(true);
       result.mapLeft((e) => {

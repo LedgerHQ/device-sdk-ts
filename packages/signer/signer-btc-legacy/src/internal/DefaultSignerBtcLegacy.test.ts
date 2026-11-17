@@ -16,9 +16,15 @@ import { SignerBtcLegacyBuilder } from "@api/SignerBtcLegacyBuilder";
 import { LegacyGetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { REFERENCE_TRANSACTIONS } from "@internal/app-binder/task/__fixtures__/referenceTransactions";
 
+const { getLoggerMock } = vi.hoisted(() => ({ getLoggerMock: vi.fn() }));
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: getLoggerMock,
+}));
+
 describe("DefaultSignerBtcLegacy", () => {
   const logger = {} as LoggerPublisherService;
-  const getLoggerFactory = () => () => logger;
+  getLoggerMock.mockReturnValue(logger);
 
   it("should get an address from the profile's app", () => {
     const sessionId = "session-id" as DeviceSessionId;
@@ -26,7 +32,6 @@ describe("DefaultSignerBtcLegacy", () => {
     const signer = new SignerBtcLegacyBuilder({
       dmk: {
         executeDeviceAction,
-        getLoggerFactory,
       } as unknown as DeviceManagementKit,
       sessionId,
       profile: LITECOIN_PROFILE,
@@ -55,7 +60,6 @@ describe("DefaultSignerBtcLegacy", () => {
           requiredUserInteraction: UserInteractionRequired.VerifyAddress,
           skipOpenApp: false,
         },
-        logger,
       }),
     });
   });
@@ -65,7 +69,6 @@ describe("DefaultSignerBtcLegacy", () => {
     const signer = new SignerBtcLegacyBuilder({
       dmk: {
         executeDeviceAction,
-        getLoggerFactory,
       } as unknown as DeviceManagementKit,
       sessionId: "session-id" as DeviceSessionId,
       profile: LITECOIN_PROFILE,
@@ -92,7 +95,6 @@ describe("DefaultSignerBtcLegacy", () => {
     const signer = new SignerBtcLegacyBuilder({
       dmk: {
         executeDeviceAction,
-        getLoggerFactory,
       } as unknown as DeviceManagementKit,
       sessionId: "session-id" as DeviceSessionId,
       profile: LITECOIN_PROFILE,
@@ -114,7 +116,6 @@ describe("DefaultSignerBtcLegacy", () => {
     const signer = new SignerBtcLegacyBuilder({
       dmk: {
         executeDeviceAction,
-        getLoggerFactory,
       } as unknown as DeviceManagementKit,
       sessionId: "session-id" as DeviceSessionId,
       profile: DOGECOIN_PROFILE,

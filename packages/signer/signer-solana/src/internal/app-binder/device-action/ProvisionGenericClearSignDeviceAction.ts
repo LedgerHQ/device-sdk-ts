@@ -5,6 +5,7 @@ import {
 import {
   type CommandResult,
   type DeviceActionStateMachine,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type StateMachineTypes,
@@ -89,7 +90,8 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
       finalizeGenericClearSign,
     } = this.extractDependencies(internalApi);
 
-    const logger = this.getLoggerFactory(internalApi)(
+    const logger = getLogger(
+      "SignerSolana",
       "ProvisionGenericClearSignDeviceAction",
     );
 
@@ -307,8 +309,6 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const loggerFactory = this.getLoggerFactory(internalApi);
-
     const buildGenericClearSignContext = async (arg0: {
       input: { contextModule: ContextModule; transaction: Uint8Array };
     }) =>
@@ -316,7 +316,6 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
         contextModule: arg0.input.contextModule,
         transaction: arg0.input.transaction,
         deviceModelId: internalApi.getDeviceSessionState().deviceModelId,
-        loggerFactory,
       }).run();
 
     const provideGenericClearSignContext = async (arg0: {
@@ -336,7 +335,6 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
         poolContexts: arg0.input.poolContexts,
         instructionInfoContexts: arg0.input.instructionInfoContexts,
         challengeBoundRequirements: arg0.input.challengeBoundRequirements,
-        loggerFactory,
       }).run();
 
     const finalizeGenericClearSign = async () =>

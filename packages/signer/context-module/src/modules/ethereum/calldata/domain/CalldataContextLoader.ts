@@ -1,13 +1,13 @@
 import {
   DeviceModelId,
+  getLogger,
   HexaString,
   isHexaString,
-  LoggerPublisherService,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { MaybeAsync } from "purify-ts";
 
-import { configTypes } from "@/config/di/configTypes";
 import type { CalldataDescriptorDataSource } from "@/modules/ethereum/calldata/data/CalldataDescriptorDataSource";
 import { calldataTypes } from "@/modules/ethereum/calldata/di/calldataTypes";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
@@ -54,10 +54,8 @@ export class CalldataContextLoader
     private tokenDataSource: CalldataDescriptorDataSource,
     @inject(proxyTypes.ProxyDataSource)
     private proxyDataSource: ProxyDataSource,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("CalldataContextLoader");
+    this.logger = getLogger("ContextModule", "CalldataContextLoader");
   }
 
   canHandle(

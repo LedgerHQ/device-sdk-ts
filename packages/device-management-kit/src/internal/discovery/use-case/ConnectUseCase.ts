@@ -2,7 +2,8 @@ import { inject, injectable } from "inversify";
 import { EitherAsync } from "purify-ts";
 
 import { DeviceSessionId } from "@api/device-session/types";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { TransportNotSupportedError } from "@api/transport/model/Errors";
@@ -13,7 +14,6 @@ import {
   DeviceSessionRefresherOptions,
 } from "@internal/device-session/model/DeviceSession";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import type { ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
@@ -45,7 +45,6 @@ export type ConnectUseCaseArgs = {
 export class ConnectUseCase {
   private readonly _transportService: TransportService;
   private readonly _sessionService: DeviceSessionService;
-  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
   private readonly _managerApi: ManagerApiService;
   private readonly _secureChannel: SecureChannelService;
   private readonly _logger: LoggerPublisherService;
@@ -55,8 +54,6 @@ export class ConnectUseCase {
     transportService: TransportService,
     @inject(deviceSessionTypes.DeviceSessionService)
     sessionService: DeviceSessionService,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(managerApiTypes.ManagerApiService)
     managerApi: ManagerApiService,
     @inject(secureChannelTypes.SecureChannelService)
@@ -64,8 +61,7 @@ export class ConnectUseCase {
   ) {
     this._sessionService = sessionService;
     this._transportService = transportService;
-    this._loggerFactory = loggerFactory;
-    this._logger = loggerFactory("ConnectUseCase");
+    this._logger = getLogger("ConnectUseCase");
     this._managerApi = managerApi;
     this._secureChannel = secureChannel;
   }
@@ -110,7 +106,6 @@ export class ConnectUseCase {
       .map(async (connectedDevice) => {
         const deviceSession = new DeviceSession(
           { connectedDevice, id: deviceSessionId },
-          this._loggerFactory,
           this._managerApi,
           this._secureChannel,
           sessionRefresherOptions,

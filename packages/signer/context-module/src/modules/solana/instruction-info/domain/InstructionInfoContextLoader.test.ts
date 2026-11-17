@@ -17,14 +17,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { InstructionInfoContextLoader } from "./InstructionInfoContextLoader";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const mockCertificate = {
   keyUsageNumber: 8,
   payload: new Uint8Array([0x42]),
@@ -118,11 +110,7 @@ describe("InstructionInfoContextLoader", () => {
   });
 
   const makeLoader = () =>
-    new InstructionInfoContextLoader(
-      dataSource,
-      certificateLoader,
-      mockLoggerFactory,
-    );
+    new InstructionInfoContextLoader(dataSource, certificateLoader);
 
   describe("canHandle", () => {
     it("returns true when SOLANA_INSTRUCTION_INFO is requested and instructions are present", () => {

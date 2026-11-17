@@ -1,6 +1,5 @@
 import {
   type ApduResponse,
-  type LoggerPublisherService,
   OpeningConnectionError,
   SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
@@ -26,13 +25,6 @@ describe("NodeHidApduSender", () => {
 
   const mockApduReceiver = {
     handleFrame: vi.fn(),
-  };
-
-  const mockLogger = {
-    info: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
   };
 
   const mockDevice: NodeHIDDevice = nodeHidDeviceStubBuilder();
@@ -71,9 +63,6 @@ describe("NodeHidApduSender", () => {
       mockHidAsync as unknown as HIDAsync,
     );
 
-    const mockLoggerFactory = vi
-      .fn()
-      .mockReturnValue(mockLogger as unknown as LoggerPublisherService);
     const mockApduSenderFactory = vi.fn().mockReturnValue(mockApduSender);
     const mockApduReceiverFactory = vi.fn().mockReturnValue(mockApduReceiver);
 
@@ -81,7 +70,6 @@ describe("NodeHidApduSender", () => {
       dependencies: { device: mockDevice },
       apduSenderFactory: mockApduSenderFactory,
       apduReceiverFactory: mockApduReceiverFactory,
-      loggerFactory: mockLoggerFactory,
     });
   });
 
@@ -119,7 +107,6 @@ describe("NodeHidApduSender", () => {
     });
     expect(mockHidAsync.on).toHaveBeenCalledWith("data", expect.any(Function));
     expect(mockHidAsync.on).toHaveBeenCalledWith("error", expect.any(Function));
-    expect(mockLogger.info).toHaveBeenCalledWith("🔌 Connected to device");
   });
 
   it("should throw error if device path is missing", async () => {
@@ -182,7 +169,6 @@ describe("NodeHidApduSender", () => {
     await nodeHidApduSender.closeConnection();
 
     expect(mockHidAsync.close).toHaveBeenCalled();
-    expect(mockLogger.info).toHaveBeenCalledWith("🔚 Disconnect");
   });
 
   it("should handle close connection error", async () => {
@@ -194,12 +180,6 @@ describe("NodeHidApduSender", () => {
     await setupPromise;
 
     await expect(nodeHidApduSender.closeConnection()).rejects.toThrow(error);
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      "Error while closing device",
-      {
-        data: { device: mockDevice, error },
-      },
-    );
   });
 
   it("should do nothing when closing without connection", async () => {
@@ -325,10 +305,6 @@ describe("NodeHidApduSender", () => {
 
     expect(result.isLeft()).toBe(true);
     expect(result.extract()).toBeInstanceOf(NodeHidSendReportError);
-    expect(mockLogger.error).toHaveBeenCalledWith(
-      "Error while receiving data",
-      { data: { error: hidError } },
-    );
   });
 
   it("should handle send APDU timeout", async () => {

@@ -1,10 +1,10 @@
 import { inject, injectable } from "inversify";
 
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
-import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 
@@ -22,10 +22,8 @@ export class SetFirmwareDistributionSaltUseCase {
     private readonly sessionService: DeviceSessionService,
     @inject(managerApiTypes.ManagerApiDataSource)
     private readonly managerApiDataSource: ManagerApiDataSource,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._logger = loggerFactory("SetFirmwareDistributionSaltUseCase");
+    this._logger = getLogger("SetFirmwareDistributionSaltUseCase");
   }
 
   execute(salt: string) {

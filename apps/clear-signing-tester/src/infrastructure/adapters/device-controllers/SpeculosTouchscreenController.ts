@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import {
   type DeviceControllerClient,
   deviceControllerClientFactory,
@@ -37,13 +40,9 @@ export class SpeculosTouchscreenController implements DeviceController {
     return this._tap;
   }
 
-  constructor(
-    @inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
-  ) {
+  constructor(@inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig) {
     this.config = config;
-    this.logger = loggerFactory("touchscreen-controller");
+    this.logger = getLogger("touchscreen-controller");
     this.logger.info(`Initialized touchscreen controller for ${config.device}`);
   }
 

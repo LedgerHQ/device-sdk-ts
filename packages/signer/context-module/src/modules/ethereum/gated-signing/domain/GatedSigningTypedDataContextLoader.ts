@@ -1,11 +1,11 @@
 import {
   DeviceModelId,
+  getLogger,
   type HexaString,
-  LoggerPublisherService,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { configTypes } from "@/config/di/configTypes";
 import { type GatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/data/GatedDescriptorDataSource";
 import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
 import type { TypedDataSchema } from "@/modules/ethereum/model/TypedDataContext";
@@ -82,10 +82,11 @@ export class GatedSigningTypedDataContextLoader
     private readonly _certificateLoader: PkiCertificateLoader,
     @inject(proxyTypes.ProxyDataSource)
     private readonly _proxyDataSource: ProxyDataSource,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("GatedSigningTypedDataContextLoader");
+    this.logger = getLogger(
+      "ContextModule",
+      "GatedSigningTypedDataContextLoader",
+    );
   }
 
   canHandle(

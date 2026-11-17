@@ -1,3 +1,9 @@
+import {
+  type DeviceManagementKit,
+  DeviceManagementKitBuilder,
+  type LoggerSubscriberService,
+} from "@ledgerhq/device-management-kit";
+import { speculosTransportFactory } from "@ledgerhq/device-transport-kit-speculos";
 import { ContainerModule } from "inversify";
 
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
@@ -7,12 +13,14 @@ import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
+import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type DeviceSetupService } from "@root/src/domain/services/DeviceSetupService";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
+import { getEmulatorBaseUrl } from "@root/src/domain/utils/getEmulatorBaseUrl";
 import { SpeculosNanoController } from "@root/src/infrastructure/adapters/device-controllers/SpeculosNanoController";
 import { SpeculosTouchscreenController } from "@root/src/infrastructure/adapters/device-controllers/SpeculosTouchscreenController";
 import { SpeculosScreenReader } from "@root/src/infrastructure/adapters/speculos/SpeculosScreenReader";
@@ -71,6 +79,29 @@ export const sharedInfrastructureModuleFactory = (
       .inSingletonScope();
     bind<StateHandler>(TYPES.SignTransactionStateHandler)
       .to(SignTransactionStateHandler)
+      .inSingletonScope();
+
+    // Built when the container is first used, so its loggers are registered
+    // before Speculinho starts. The emulator URL is only known once it has,
+    // which is why the transport reads it lazily, on first discovery.
+    bind<DeviceManagementKit>(TYPES.Dmk)
+      .toDynamicValue((context) => {
+        const speculinhoConfig = context.get<SpeculinhoConfig>(
+          TYPES.SpeculinhoConfig,
+        );
+        const builder = new DeviceManagementKitBuilder().addTransport((args) =>
+          speculosTransportFactory(
+            getEmulatorBaseUrl(speculinhoConfig),
+            true,
+          )(args),
+        );
+        for (const subscriber of context.get<LoggerSubscriberService[]>(
+          TYPES.LoggerSubscribers,
+        )) {
+          builder.addLogger(subscriber);
+        }
+        return builder.build();
+      })
       .inSingletonScope();
 
     // Service Controllers (shared)

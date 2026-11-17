@@ -1,5 +1,6 @@
 import {
   DeviceActionStatus,
+  getLogger,
   LoggerPublisherService,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -41,8 +42,6 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
   private readonly logger: LoggerPublisherService;
 
   constructor(
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(TYPES.CompleteStateHandler)
     private readonly completeStateHandler: CompleteStateHandler,
     @inject(TYPES.ErrorStateHandler)
@@ -60,7 +59,7 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
     @inject(TYPES.LogLevel)
     private readonly logLevel: CliLogLevel,
   ) {
-    this.logger = loggerFactory("signing-flow-orchestrator");
+    this.logger = getLogger("signing-flow-orchestrator");
   }
 
   async orchestrateSigningFlow(

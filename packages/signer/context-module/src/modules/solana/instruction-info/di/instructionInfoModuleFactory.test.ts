@@ -1,5 +1,5 @@
 import { Container } from "inversify";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
@@ -14,9 +14,6 @@ describe("instructionInfoModuleFactory", () => {
     container.bind(configTypes.Config).toConstantValue({});
     container.bind(networkTypes.NetworkClient).toConstantValue({});
     container.bind(pkiTypes.PkiCertificateLoader).toConstantValue({});
-    container
-      .bind(configTypes.ContextModuleLoggerFactory)
-      .toConstantValue(() => ({ debug: vi.fn(), warn: vi.fn() }));
     container.loadSync(instructionInfoModuleFactory());
 
     const first = container.get(instructionInfoTypes.InstructionInfoDataSource);

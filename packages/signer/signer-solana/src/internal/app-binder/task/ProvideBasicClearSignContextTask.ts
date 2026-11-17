@@ -4,6 +4,7 @@ import {
   type SolanaContext,
 } from "@ledgerhq/context-module";
 import {
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -20,7 +21,6 @@ import { type BasicClearSignContext } from "./BuildBasicClearSignContextTask";
 
 export type ProvideBasicClearSignContextTaskArgs = BasicClearSignContext & {
   readonly transactionBytes: Uint8Array;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
   readonly normaliser?: SolanaMessageNormaliser;
 };
 
@@ -31,7 +31,10 @@ export class ProvideBasicClearSignContextTask {
     api: InternalApi,
     private readonly args: ProvideBasicClearSignContextTaskArgs,
   ) {
-    this._logger = args.loggerFactory("ProvideBasicClearSignContextTask");
+    this._logger = getLogger(
+      "SignerSolana",
+      "ProvideBasicClearSignContextTask",
+    );
     this._deps = {
       api,
       logger: this._logger,

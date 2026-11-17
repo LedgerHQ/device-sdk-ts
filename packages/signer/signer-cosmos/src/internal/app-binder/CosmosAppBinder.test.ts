@@ -3,7 +3,6 @@ import {
   DeviceActionStatus,
   type DeviceManagementKit,
   type ExecuteDeviceActionReturnType,
-  type LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -31,12 +30,6 @@ import { APP_NAME } from "@internal/app-binder/constants";
 import { CosmosAppBinder } from "@internal/app-binder/CosmosAppBinder";
 
 describe("CosmosAppBinder", () => {
-  const loggerMock = {
-    debug: vi.fn(),
-  } as unknown as LoggerPublisherService;
-
-  const loggerFactoryMock = vi.fn().mockReturnValue(loggerMock);
-
   it("getAppConfig should call dmk.executeDeviceAction with SendCommandInAppDeviceAction and return the result", () => {
     // ARRANGE
     const sessionId = "test-session-id";
@@ -61,7 +54,7 @@ describe("CosmosAppBinder", () => {
     const dmkMock = {
       executeDeviceAction: executeDeviceActionMock,
     } as unknown as DeviceManagementKit;
-    const binder = new CosmosAppBinder(dmkMock, sessionId, loggerFactoryMock);
+    const binder = new CosmosAppBinder(dmkMock, sessionId);
 
     // ACT
     const result = binder.getAppConfig({ skipOpenApp: false });
@@ -108,7 +101,7 @@ describe("CosmosAppBinder", () => {
     const dmkMock = {
       executeDeviceAction: executeDeviceActionMock,
     } as unknown as DeviceManagementKit;
-    const binder = new CosmosAppBinder(dmkMock, sessionId, loggerFactoryMock);
+    const binder = new CosmosAppBinder(dmkMock, sessionId);
 
     // ACT
     const result = binder.getAddress(getAddressArgs);
@@ -152,7 +145,7 @@ describe("CosmosAppBinder", () => {
     const dmkMock = {
       executeDeviceAction: executeDeviceActionMock,
     } as unknown as DeviceManagementKit;
-    const binder = new CosmosAppBinder(dmkMock, sessionId, loggerFactoryMock);
+    const binder = new CosmosAppBinder(dmkMock, sessionId);
 
     // ACT
     const result = binder.signTransaction(signTransactionArgs);

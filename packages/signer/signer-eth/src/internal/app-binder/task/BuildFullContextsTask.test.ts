@@ -30,16 +30,6 @@ import {
   type ParseNestedTransactionTaskArgs,
 } from "./ParseNestedTransactionTask";
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-
-const mockLoggerFactory = (_tag: string) => mockLogger;
-
 describe("BuildFullContextsTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock = {} as ContextModule;
@@ -97,7 +87,6 @@ describe("BuildFullContextsTask", () => {
         derivationPath: defaultDerivationPath,
         subset: defaultSubset,
         deviceModelId: DeviceModelId.STAX,
-        loggerFactory: mockLoggerFactory,
       });
 
       expect(task).toBeDefined();
@@ -146,7 +135,6 @@ describe("BuildFullContextsTask", () => {
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
           deviceModelId: DeviceModelId.STAX,
-          loggerFactory: mockLoggerFactory,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,
@@ -199,7 +187,6 @@ describe("BuildFullContextsTask", () => {
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
           deviceModelId: DeviceModelId.STAX,
-          loggerFactory: mockLoggerFactory,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,
@@ -285,7 +272,6 @@ describe("BuildFullContextsTask", () => {
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
           deviceModelId: DeviceModelId.STAX,
-          loggerFactory: mockLoggerFactory,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,
@@ -388,7 +374,6 @@ describe("BuildFullContextsTask", () => {
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
           deviceModelId: DeviceModelId.STAX,
-          loggerFactory: mockLoggerFactory,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,

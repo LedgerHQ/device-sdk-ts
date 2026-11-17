@@ -1,5 +1,6 @@
 import {
   type DeviceModelId,
+  getLogger,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
@@ -84,10 +85,8 @@ export class EnumVariantContextLoader
     private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("EnumVariantContextLoader");
+    this.logger = getLogger("ContextModule", "EnumVariantContextLoader");
   }
 
   public canHandle(

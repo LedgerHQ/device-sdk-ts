@@ -1,0 +1,5 @@
+---
+"@ledgerhq/device-transport-kit-node-hid": major
+---
+
+Log through `getLogger` and remove the logger factory constructor parameter

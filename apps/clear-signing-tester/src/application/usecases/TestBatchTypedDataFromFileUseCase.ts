@@ -1,4 +1,3 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -25,8 +24,6 @@ export class TestBatchTypedDataFromFileUseCase extends TestBatchFromFileUseCase<
     typedDataFileRepository: DataFileRepository<TypedDataInput>,
     @inject(TYPES.DeviceRepository)
     deviceRepository: DeviceRepository,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     super(
       typedDataFileRepository,
@@ -34,7 +31,6 @@ export class TestBatchTypedDataFromFileUseCase extends TestBatchFromFileUseCase<
       (deviceRepo, input, derivationPath) =>
         deviceRepo.performSign(input, derivationPath),
       { itemName: "typed data" },
-      loggerFactory,
       "test-batch-typed-data",
     );
   }

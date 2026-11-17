@@ -36,14 +36,6 @@ import { BlockhashService } from "./services/BlockhashService";
 import { APP_NAME } from "./constants";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("SolanaAppBinder", () => {
   // stub ContextModule for tests
   const contextModuleStub: ContextModule = {} as ContextModule;
@@ -61,7 +53,6 @@ describe("SolanaAppBinder", () => {
       {} as DeviceManagementKit,
       {} as DeviceSessionId,
       contextModuleStub,
-      mockLoggerFactory,
       undefined,
       new BlockhashService(),
     );
@@ -93,7 +84,6 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          mockLoggerFactory,
           undefined,
           new BlockhashService(),
         );
@@ -152,7 +142,6 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          mockLoggerFactory,
           undefined,
           new BlockhashService(),
         );
@@ -190,7 +179,6 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          mockLoggerFactory,
           undefined,
           new BlockhashService(),
         );
@@ -242,7 +230,6 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          mockLoggerFactory,
           undefined,
           new BlockhashService(),
         );
@@ -292,7 +279,6 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
-        mockLoggerFactory,
         undefined,
         new BlockhashService(),
       );
@@ -351,7 +337,6 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          mockLoggerFactory,
           undefined,
           new BlockhashService(),
         );
@@ -399,7 +384,6 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
-        mockLoggerFactory,
         undefined,
         new BlockhashService(),
       );
@@ -466,7 +450,6 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          mockLoggerFactory,
           undefined,
           new BlockhashService(),
         );
@@ -531,7 +514,6 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          mockLoggerFactory,
           undefined,
           new BlockhashService(),
         );
@@ -573,7 +555,6 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
-        mockLoggerFactory,
         undefined,
         new BlockhashService(),
       );

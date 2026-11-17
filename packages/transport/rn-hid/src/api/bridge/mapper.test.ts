@@ -174,6 +174,7 @@ describe("mapper", () => {
           {
             timestamp: 123456789,
             tag: "tag",
+            tags: ["tag"],
             data: { key: "value" },
           },
         ],
@@ -193,6 +194,7 @@ describe("mapper", () => {
           {
             timestamp: 123456789,
             tag: "tag",
+            tags: ["tag"],
             data: { key: "value" },
           },
         ],
@@ -212,6 +214,7 @@ describe("mapper", () => {
           {
             timestamp: 123456789,
             tag: "tag",
+            tags: ["tag"],
             data: { key: "value" },
           },
         ],
@@ -231,6 +234,7 @@ describe("mapper", () => {
           {
             timestamp: 123456789,
             tag: "tag",
+            tags: ["tag"],
             data: { key: "value" },
           },
         ],

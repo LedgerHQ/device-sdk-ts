@@ -1,10 +1,10 @@
 import { inject, injectable } from "inversify";
 
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { type LoggerPublisherService } from "@api/global/services/logger/LoggerPublisherService";
+import { getLogger } from "@api/global/services/logger/utils/getLogger";
 import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import type { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
-import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 
 /**
  * List all connected devices.
@@ -17,11 +17,9 @@ export class ListConnectedDevicesUseCase {
   constructor(
     @inject(deviceSessionTypes.DeviceSessionService)
     sessionService: DeviceSessionService,
-    @inject(loggerTypes.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._sessionService = sessionService;
-    this._logger = loggerFactory("ListConnectedDeviceUseCase");
+    this._logger = getLogger("ListConnectedDeviceUseCase");
   }
 
   execute(): ConnectedDevice[] {

@@ -15,7 +15,6 @@ import type {
   CommandResult,
   DeviceModelId,
   InternalApi,
-  LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import {
   bufferToHexaString,
@@ -87,7 +86,6 @@ export type ProvideEIP712ContextTaskArgs = {
     ContextWithSubContexts[]
   >;
   additionalContexts: EthereumClearSignContextSuccess[];
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 const DEVICE_ASSETS_MAX = 5;
@@ -703,7 +701,6 @@ export class ProvideEIP712ContextTask {
         await this.provideContextFactory({
           contexts: preContexts,
           derivationPath: this.args.derivationPath,
-          loggerFactory: this.args.loggerFactory,
         }).run();
         this.filteringCertificateLoaded = false;
       }
@@ -747,7 +744,6 @@ export class ProvideEIP712ContextTask {
           await this.provideContextFactory({
             contexts: metadata.postContexts,
             derivationPath: this.args.derivationPath,
-            loggerFactory: this.args.loggerFactory,
           }).run();
           this.filteringCertificateLoaded = false;
         }

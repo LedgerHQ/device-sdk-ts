@@ -5,18 +5,8 @@ import { SignerConcordiumBuilder } from "@api/SignerConcordiumBuilder";
 import { DefaultSignerConcordium } from "@internal/DefaultSignerConcordium";
 import { externalTypes } from "@internal/externalTypes";
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-
 describe("SignerConcordiumBuilder", () => {
-  const dmk: DeviceManagementKit = {
-    getLoggerFactory: () => () => mockLogger,
-  } as unknown as DeviceManagementKit;
+  const dmk: DeviceManagementKit = {} as unknown as DeviceManagementKit;
   const defaultConstructorArgs = { dmk, sessionId: "" };
 
   test("should be an instance of SignerConcordiumBuilder", () => {

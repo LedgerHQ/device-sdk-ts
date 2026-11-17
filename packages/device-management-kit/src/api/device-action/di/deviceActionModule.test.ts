@@ -2,7 +2,6 @@ import { Container } from "inversify";
 
 import { ExecuteDeviceActionUseCase } from "@api/device-action/use-case/ExecuteDeviceActionUseCase";
 import { deviceSessionModuleFactory } from "@internal/device-session/di/deviceSessionModule";
-import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
 import { StubUseCase } from "@root/src/di.stub";
 
 import { deviceActionModuleFactory } from "./deviceActionModule";
@@ -15,11 +14,7 @@ describe("deviceActionModule", () => {
     beforeEach(() => {
       mod = deviceActionModuleFactory();
       container = new Container();
-      container.loadSync(
-        mod,
-        deviceSessionModuleFactory(),
-        loggerModuleFactory(),
-      );
+      container.loadSync(mod, deviceSessionModuleFactory());
     });
 
     it("should return the config module", () => {

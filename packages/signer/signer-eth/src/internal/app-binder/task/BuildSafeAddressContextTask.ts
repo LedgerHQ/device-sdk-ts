@@ -6,6 +6,7 @@ import {
 } from "@ledgerhq/context-module";
 import {
   type DeviceModelId,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -19,7 +20,6 @@ export type BuildSafeAddressContextTaskArgs = {
   readonly safeContractAddress: string;
   readonly options: SafeAddressOptions;
   readonly deviceModelId: DeviceModelId;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type BuildSafeAddressContextTaskResult = {
@@ -33,7 +33,7 @@ export class BuildSafeAddressContextTask {
     private readonly _api: InternalApi,
     private readonly _args: BuildSafeAddressContextTaskArgs,
   ) {
-    this._logger = _args.loggerFactory("BuildSafeAddressContextTask");
+    this._logger = getLogger("SignerEth", "BuildSafeAddressContextTask");
   }
 
   async run(): Promise<BuildSafeAddressContextTaskResult> {

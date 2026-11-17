@@ -9,14 +9,6 @@ const apiGetDeviceSessionStateObservableMock = vi.fn();
 const setDeviceSessionStateMock = vi.fn();
 const getManagerApiServiceMock = vi.fn();
 const getSecureChannelServiceMock = vi.fn();
-const loggerFactoryMock = vi.fn((_tag: string) => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-}));
-
 export function makeDeviceActionInternalApiMock(): Mocked<InternalApi> {
   return {
     sendApdu: sendApduMock,
@@ -27,6 +19,5 @@ export function makeDeviceActionInternalApiMock(): Mocked<InternalApi> {
     setDeviceSessionState: setDeviceSessionStateMock,
     getManagerApiService: getManagerApiServiceMock,
     getSecureChannelService: getSecureChannelServiceMock,
-    loggerFactory: loggerFactoryMock,
   };
 }

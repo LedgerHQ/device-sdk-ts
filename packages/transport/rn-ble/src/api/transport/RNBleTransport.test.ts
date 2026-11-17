@@ -10,7 +10,6 @@ import {
   type DeviceModelDataSource,
   DeviceModelId,
   type DmkConfig,
-  type LoggerPublisherService,
   OpeningConnectionError,
   TransportConnectedDevice,
   TransportDeviceModel,
@@ -33,22 +32,6 @@ import { RNBleTransport } from "./RNBleTransport";
 import { RNBleTransportFactory } from "./RNBleTransportFactory";
 
 // ===== MOCKS =====
-const fakeLogger: LoggerPublisherService = {
-  error: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  debug: vi.fn(),
-  subscribers: [],
-};
-
-const consoleLogger: LoggerPublisherService = {
-  error: console.error,
-  info: console.info,
-  warn: console.warn,
-  debug: console.debug,
-  subscribers: [],
-};
-
 vi.mock("react-native", () => ({
   Platform: {},
   PermissionsAndroid: {},
@@ -100,8 +83,6 @@ const WINDOWS_PLATFORM = { OS: "windows" as const } as Platform;
 // ===== TEST HELPERS =====
 class TestTransportBuilder {
   private deviceModelDataSource: DeviceModelDataSource = createFakeDataSource();
-  private loggerServiceFactory = () =>
-    fakeLogger as unknown as LoggerPublisherService;
   private apduSenderServiceFactory =
     (() => {}) as unknown as ApduSenderServiceFactory;
   private apduReceiverServiceFactory =
@@ -114,7 +95,7 @@ class TestTransportBuilder {
     args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
   ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private deviceApduSenderFactory?: (args: any, loggerFactory: any) => any;
+  private deviceApduSenderFactory?: (args: any) => any;
   private scanThrottleDelayMs: number = 1000;
 
   withDeviceModelDataSource(dataSource: DeviceModelDataSource) {
@@ -147,13 +128,8 @@ class TestTransportBuilder {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  withDeviceApduSenderFactory(factory: (args: any, loggerFactory: any) => any) {
+  withDeviceApduSenderFactory(factory: (args: any) => any) {
     this.deviceApduSenderFactory = factory;
-    return this;
-  }
-
-  withLogger(logger: LoggerPublisherService = consoleLogger) {
-    this.loggerServiceFactory = () => logger;
     return this;
   }
 
@@ -165,7 +141,6 @@ class TestTransportBuilder {
   build(): RNBleTransport {
     return new RNBleTransport(
       this.deviceModelDataSource,
-      this.loggerServiceFactory,
       this.apduSenderServiceFactory,
       this.apduReceiverServiceFactory,
       this.bleManager,
@@ -246,8 +221,6 @@ describe("RNBleTransportFactory", () => {
     const fakeArgs = {
       deviceModelDataSource:
         createFakeDataSource() as unknown as DeviceModelDataSource,
-      loggerServiceFactory: () =>
-        fakeLogger as unknown as LoggerPublisherService,
       apduSenderServiceFactory:
         (() => {}) as unknown as ApduSenderServiceFactory,
       apduReceiverServiceFactory:

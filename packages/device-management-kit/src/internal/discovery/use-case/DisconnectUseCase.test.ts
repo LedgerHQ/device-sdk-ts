@@ -8,7 +8,6 @@ import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-sessi
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
@@ -28,11 +27,6 @@ let sessionService: DefaultDeviceSessionService;
 // TODO test several transports
 let transport: Transport;
 let transports: Transport[] = [];
-const loggerFactory = vi
-  .fn()
-  .mockReturnValue(
-    new DefaultLoggerPublisherService([], "DisconnectUseCaseTest"),
-  );
 let transportService: TransportService;
 let managerApi: ManagerApiService;
 let managerApiDataSource: ManagerApiDataSource;
@@ -45,7 +39,7 @@ describe("DisconnectUseCase", () => {
   beforeAll(() => {
     transport = new TransportMock();
     transports = [transport];
-    sessionService = new DefaultDeviceSessionService(loggerFactory);
+    sessionService = new DefaultDeviceSessionService();
     // @ts-expect-error mock
     transportService = new DefaultTransportService();
     vi.spyOn(transportService, "getTransport").mockReturnValue(
@@ -56,10 +50,7 @@ describe("DisconnectUseCase", () => {
   it("should disconnect from a device", async () => {
     // Given
     const connectedDevice = connectedDeviceStubBuilder();
-    managerApiDataSource = new HttpManagerApiDataSource(
-      {} as DmkConfig,
-      loggerFactory,
-    );
+    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,
@@ -70,7 +61,7 @@ describe("DisconnectUseCase", () => {
         id: sessionId,
         connectedDevice,
       },
-      loggerFactory,
+
       managerApi,
       secureChannel,
       DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
@@ -86,7 +77,6 @@ describe("DisconnectUseCase", () => {
     const disconnectUseCase = new DisconnectUseCase(
       transportService,
       sessionService,
-      loggerFactory,
     );
     // When
     await disconnectUseCase.execute({ sessionId });
@@ -104,7 +94,6 @@ describe("DisconnectUseCase", () => {
     const disconnectUseCase = new DisconnectUseCase(
       transportService,
       sessionService,
-      loggerFactory,
     );
 
     // When
@@ -122,7 +111,7 @@ describe("DisconnectUseCase", () => {
       Right(
         deviceSessionStubBuilder(
           { id: sessionId },
-          loggerFactory,
+
           managerApi,
           secureChannel,
           DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
@@ -137,7 +126,6 @@ describe("DisconnectUseCase", () => {
     const disconnectUseCase = new DisconnectUseCase(
       transportService,
       sessionService,
-      loggerFactory,
     );
 
     // When

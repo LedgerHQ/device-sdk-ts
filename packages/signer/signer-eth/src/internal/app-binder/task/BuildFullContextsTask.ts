@@ -8,6 +8,7 @@ import {
 } from "@ledgerhq/context-module";
 import {
   type DeviceModelId,
+  getLogger,
   type InternalApi,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
@@ -47,7 +48,6 @@ export type BuildFullContextsTaskArgs = {
   readonly subset: TransactionSubset;
   readonly deviceModelId: DeviceModelId;
   readonly transaction?: Uint8Array;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type ContextWithSubContexts = {
@@ -73,7 +73,7 @@ export class BuildFullContextsTask {
       args: ParseNestedTransactionTaskArgs,
     ) => new ParseNestedTransactionTask(args),
   ) {
-    this._logger = _args.loggerFactory("BuildFullContextsTask");
+    this._logger = getLogger("SignerEth", "BuildFullContextsTask");
   }
 
   async run(): Promise<BuildFullContextsTaskResult> {

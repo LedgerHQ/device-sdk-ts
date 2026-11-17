@@ -3,7 +3,6 @@ import {
   type DeviceActionState,
   DeviceActionStatus,
   type InternalApi,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { address } from "@solana/addresses";
 import { blockhash as toBlockhash } from "@solana/rpc-types";
@@ -50,6 +49,15 @@ const secondSigner = new PublicKey(
 );
 
 let warnSpy: ReturnType<typeof vi.fn>;
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@ledgerhq/device-management-kit")>()),
+  getLogger: () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: (...args: unknown[]) => warnSpy(...args),
+    error: vi.fn(),
+  }),
+}));
 let apiMock: InternalApi;
 
 function makeInternalApi(): InternalApi {
@@ -65,16 +73,6 @@ function makeInternalApi(): InternalApi {
     setDeviceSessionState: vi.fn(),
     getManagerApiService: vi.fn(),
     getSecureChannelService: vi.fn(),
-    loggerFactory: vi.fn(
-      () =>
-        ({
-          debug: vi.fn(),
-          info: vi.fn(),
-          warn: warnSpy,
-          error: vi.fn(),
-          subscribers: [],
-        }) as unknown as LoggerPublisherService,
-    ),
   } as unknown as InternalApi;
 }
 

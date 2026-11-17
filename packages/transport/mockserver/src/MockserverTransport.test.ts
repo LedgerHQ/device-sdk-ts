@@ -1,5 +1,4 @@
 import {
-  type LoggerPublisherService,
   OpeningConnectionError,
   type TransportConnectedDevice,
 } from "@ledgerhq/device-management-kit";
@@ -19,17 +18,8 @@ type TransportArgs = Parameters<
   ReturnType<typeof mockserverTransportFactory>
 >[0];
 
-const loggerServiceFactory = (): LoggerPublisherService =>
-  ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }) as unknown as LoggerPublisherService;
-
 const transportArgs = {
   config: { mockUrl: "http://localhost:8080" },
-  loggerServiceFactory,
 } as unknown as TransportArgs;
 
 /** Mirrors the transport's own discovery interval. */

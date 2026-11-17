@@ -1,8 +1,10 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { ethers } from "ethers";
-import { inject, injectable } from "inversify";
+import { injectable } from "inversify";
 
-import { TYPES } from "@root/src/di/types";
 import { TransactionCrafter } from "@root/src/domain/adapters/TransactionCrafter";
 import { TransactionData } from "@root/src/domain/models/TransactionData";
 
@@ -16,11 +18,8 @@ import { TransactionData } from "@root/src/domain/models/TransactionData";
 export class EthersTransactionCrafter implements TransactionCrafter {
   private readonly logger: LoggerPublisherService;
 
-  constructor(
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    private readonly loggerFactory: (tag: string) => LoggerPublisherService,
-  ) {
-    this.logger = this.loggerFactory("ethers-transaction-crafter");
+  constructor() {
+    this.logger = getLogger("ethers-transaction-crafter");
   }
 
   unsignRawTransaction(rawTransaction: string): string {

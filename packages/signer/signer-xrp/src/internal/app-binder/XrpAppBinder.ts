@@ -1,7 +1,6 @@
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
-  type LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -23,8 +22,6 @@ export class XrpAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
-    @inject(externalTypes.DmkLoggerFactory)
-    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getAppConfig(args: { skipOpenApp: boolean }): GetAppConfigDAReturnType {
@@ -69,7 +66,6 @@ export class XrpAppBinder {
       sessionId: this.sessionId,
       deviceAction: SignTransactionDeviceActionFactory({
         ...args,
-        loggerFactory: this.dmkLoggerFactory,
       }),
     });
   }

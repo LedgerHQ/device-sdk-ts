@@ -10,14 +10,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { OwnerInfoContextLoader } from "./OwnerInfoContextLoader";
 import type { SolanaTransactionContext } from "./solanaContextTypes";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("OwnerInfoContextLoader", () => {
   let mockDataSource: OwnerInfoDataSource;
   let mockCertLoader: PkiCertificateLoader;
@@ -45,11 +37,7 @@ describe("OwnerInfoContextLoader", () => {
   });
 
   const makeLoader = () =>
-    new OwnerInfoContextLoader(
-      mockDataSource,
-      mockCertLoader,
-      mockLoggerFactory,
-    );
+    new OwnerInfoContextLoader(mockDataSource, mockCertLoader);
 
   describe("canHandle", () => {
     it("returns true when SOLANA_BASIC_TRUSTED_NAME is in expectedTypes and tokenAddress is present", () => {

@@ -6,6 +6,7 @@ import {
 } from "@ledgerhq/context-module";
 import {
   type CommandResult,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -23,7 +24,6 @@ export type SendGetAddressTaskArgs = {
   readonly checkOnDevice: boolean;
   readonly returnChainCode: boolean;
   readonly chainId?: number;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export class SendGetAddressTask {
@@ -33,7 +33,7 @@ export class SendGetAddressTask {
     private readonly _api: InternalApi,
     private readonly _args: SendGetAddressTaskArgs,
   ) {
-    this._logger = _args.loggerFactory("SendGetAddressTask");
+    this._logger = getLogger("SignerEth", "SendGetAddressTask");
   }
 
   async run(): Promise<
@@ -73,7 +73,6 @@ export class SendGetAddressTask {
       for (const context of successContexts) {
         const result = await new ProvideContextTask(this._api, {
           context,
-          loggerFactory: this._args.loggerFactory,
         }).run();
 
         if (!isSuccessCommandResult(result)) {

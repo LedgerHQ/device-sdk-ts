@@ -20,14 +20,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { LifiContextLoader } from "./LifiContextLoader";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const mockCertificate = {
   keyUsageNumber: 13,
   payload: new Uint8Array([0x01, 0x02]),
@@ -115,12 +107,7 @@ describe("LifiContextLoader", () => {
   });
 
   const makeLoader = () =>
-    new LifiContextLoader(
-      mockDataSource,
-      mockConfig,
-      mockCertificateLoader,
-      mockLoggerFactory,
-    );
+    new LifiContextLoader(mockDataSource, mockConfig, mockCertificateLoader);
 
   describe("canHandle", () => {
     it("returns true when templateId is provided and SOLANA_LIFI is in expectedTypes", () => {

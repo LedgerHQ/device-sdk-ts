@@ -1,11 +1,11 @@
 import {
   type DeviceModelId,
+  getLogger,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { array, Codec, optional, string } from "purify-ts";
 
-import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { SolanaTransactionScanChainId } from "@/modules/solana/model/SolanaTransactionScanChainId";
@@ -72,10 +72,8 @@ export class SolanaTrustedNameContextLoader
     private readonly dataSource: SolanaTrustedNameDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly certificateLoader: PkiCertificateLoader,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("SolanaTrustedNameContextLoader");
+    this.logger = getLogger("ContextModule", "SolanaTrustedNameContextLoader");
   }
 
   public canHandle(

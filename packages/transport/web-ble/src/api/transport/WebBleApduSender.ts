@@ -10,6 +10,7 @@ import {
   type DmkError,
   formatApduReceivedLog,
   formatApduSentLog,
+  getLogger,
   type LoggerPublisherService,
   SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
@@ -31,7 +32,7 @@ export class WebBleApduSender
   private _apduSenderFactory: ApduSenderServiceFactory;
   private _apduReceiverFactory: ApduReceiverServiceFactory;
   private _apduFrameReceiver: ApduReceiverService;
-  private _logger: LoggerPublisherService;
+  private _logger: LoggerPublisherService = getLogger("WebBleApduSender");
 
   private _mtuNegotiated$ = new BehaviorSubject<boolean>(false);
   private _notificationsReady = false;
@@ -46,7 +47,6 @@ export class WebBleApduSender
       apduSenderFactory: ApduSenderServiceFactory;
       apduReceiverFactory: ApduReceiverServiceFactory;
     },
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._dependencies = {
       writeCharacteristic: initialDependencies.writeCharacteristic,
@@ -55,7 +55,6 @@ export class WebBleApduSender
     this._apduSenderFactory = initialDependencies.apduSenderFactory;
     this._apduReceiverFactory = initialDependencies.apduReceiverFactory;
     this._apduFrameReceiver = initialDependencies.apduReceiverFactory();
-    this._logger = loggerFactory("WebBleApduSender");
   }
 
   public async sendApdu(

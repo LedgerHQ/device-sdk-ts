@@ -9,14 +9,6 @@ import {
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 describe("CalldataContextLoader", () => {
   const getProxyImplementationAddress = vi.fn();
   const getDappDescriptorsMock = vi.fn();
@@ -34,7 +26,6 @@ describe("CalldataContextLoader", () => {
     mockDappDataSource,
     mockTokenDataSource,
     mockProxyDatasource,
-    mockLoggerFactory,
   );
   const SUPPORTED_TYPES: ClearSignContextType[] = [
     ClearSignContextType.ETHEREUM_TRANSACTION_INFO,

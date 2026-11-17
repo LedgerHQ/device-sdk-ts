@@ -1,5 +1,6 @@
 import {
   DmkNetworkClient,
+  getLogger,
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
@@ -21,13 +22,9 @@ export class SpeculosScreenReader implements ScreenReader {
   private readonly logger: LoggerPublisherService;
   private readonly http: DmkNetworkClient;
 
-  constructor(
-    @inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
-  ) {
+  constructor(@inject(TYPES.SpeculinhoConfig) config: SpeculinhoConfig) {
     this.config = config;
-    this.logger = loggerFactory("screen-reader");
+    this.logger = getLogger("screen-reader");
     this.http = new DmkNetworkClient();
   }
 

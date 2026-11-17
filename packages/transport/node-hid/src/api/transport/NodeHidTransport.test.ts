@@ -9,8 +9,6 @@ import {
   type DeviceModel,
   DeviceModelId,
   DeviceNotRecognizedError,
-  type LoggerPublisherService,
-  type LoggerSubscriberService,
   NoAccessibleDeviceError,
   OpeningConnectionError,
   StaticDeviceModelDataSource,
@@ -61,22 +59,8 @@ vi.mock("usb", () => ({
   Device: class {},
 }));
 
-class LoggerPublisherServiceStub implements LoggerPublisherService {
-  constructor(subscribers: LoggerSubscriberService[], tag: string) {
-    this.subscribers = subscribers;
-    this.tag = tag;
-  }
-  subscribers: LoggerSubscriberService[] = [];
-  tag: string = "";
-  error = vi.fn();
-  warn = vi.fn();
-  info = vi.fn();
-  debug = vi.fn();
-}
-
 // Our StaticDeviceModelDataSource can directly be used in our unit tests
 const usbDeviceModelDataSource = new StaticDeviceModelDataSource();
-const logger = new LoggerPublisherServiceStub([], "node-hid");
 
 const stubDevice: NodeHIDDevice = nodeHidDeviceStubBuilder();
 
@@ -189,7 +173,6 @@ describe("NodeHidTransport", () => {
     });
     transport = new NodeHidTransport(
       usbDeviceModelDataSource,
-      () => logger,
       apduSenderServiceFactoryStub,
       apduReceiverServiceFactoryStub,
       mockDeviceConnectionStateMachineFactory,

@@ -30,15 +30,6 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 
 import { SignTypedDataDeviceAction } from "./SignTypedDataDeviceAction";
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-const mockLoggerFactory = (_tag: string) => mockLogger;
-
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
@@ -108,7 +99,6 @@ describe("SignTypedDataDeviceAction", () => {
     calldatasPreContexts: {},
     calldatasPostContexts: {},
     additionalContexts: [],
-    loggerFactory: mockLoggerFactory,
   };
   const FROM = "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619";
 

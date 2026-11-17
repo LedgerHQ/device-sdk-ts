@@ -1,5 +1,6 @@
 import {
   type DmkNetworkClient,
+  getLogger,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
@@ -22,13 +23,11 @@ export class HttpSignReporterDatasource implements SignReporterDatasource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-    @inject(configTypes.ContextModuleLoggerFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(networkTypes.NetworkClient)
     networkClient?: DmkNetworkClient,
   ) {
     this.http = networkClient ?? networkClientFactory(config);
-    this.logger = loggerFactory("HttpSignReporterDatasource");
+    this.logger = getLogger("ContextModule", "HttpSignReporterDatasource");
   }
 
   async report(params: SignReportParams): Promise<Either<Error, void>> {

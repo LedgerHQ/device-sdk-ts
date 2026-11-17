@@ -3,6 +3,7 @@ import {
   ByteArrayBuilder,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   type InternalApi,
   InvalidArgumentError,
   isSuccessCommandResult,
@@ -26,7 +27,6 @@ type SendSignTransactionTaskArgs = {
   serializedTransaction: Uint8Array;
   /** Curve to sign with, sent on every chunk. */
   curve: Curve;
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 /**
@@ -41,7 +41,7 @@ export class SendSignTransactionTask {
     private api: InternalApi,
     private args: SendSignTransactionTaskArgs,
   ) {
-    this._logger = args.loggerFactory("SendSignTransactionTask");
+    this._logger = getLogger("SignerXrp", "SendSignTransactionTask");
   }
 
   async run(): Promise<CommandResult<Signature, XrpErrorCodes>> {

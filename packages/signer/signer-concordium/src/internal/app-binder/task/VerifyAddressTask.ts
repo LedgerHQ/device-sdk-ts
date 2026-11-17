@@ -9,6 +9,7 @@ import {
   bufferToHexaString,
   type CommandResult,
   CommandResultFactory,
+  getLogger,
   hexaStringToBuffer,
   type InternalApi,
   InvalidStatusWordError,
@@ -33,10 +34,14 @@ export type VerifyAddressTaskArgs = {
 };
 
 export class VerifyAddressTask {
+  private readonly logger: LoggerPublisherService = getLogger(
+    "SignerConcordium",
+    "VerifyAddressTask",
+  );
+
   constructor(
     private readonly api: InternalApi,
     private readonly args: VerifyAddressTaskArgs,
-    private readonly logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<CommandResult<true, VerifyAddressErrorCodes>> {

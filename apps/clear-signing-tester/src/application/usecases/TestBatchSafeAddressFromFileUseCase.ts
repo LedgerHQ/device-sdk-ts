@@ -1,4 +1,7 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -27,10 +30,8 @@ export class TestBatchSafeAddressFromFileUseCase {
     private readonly fileRepository: SafeAddressFileRepository,
     @inject(TYPES.TestSafeAddressUseCase)
     private readonly testSafeAddress: TestSafeAddressUseCase,
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("test-batch-safe-address");
+    this.logger = getLogger("test-batch-safe-address");
   }
 
   async execute(

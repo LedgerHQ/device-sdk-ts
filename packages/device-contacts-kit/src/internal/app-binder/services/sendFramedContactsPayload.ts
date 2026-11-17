@@ -11,6 +11,7 @@
 import {
   type Command,
   type CommandResult,
+  getLogger,
   type InternalApi,
   isSuccessDmkResult,
   type LoggerPublisherService,
@@ -30,7 +31,7 @@ export type SendFramedContactsPayloadArgs<Response> = {
     chunk: Uint8Array,
     p2: number,
   ) => Command<Response, unknown, unknown>;
-  /** Optional per-chunk diagnostic logging (one `debug` entry per outgoing chunk). */
+  /** Per-chunk diagnostic logging (one `debug` entry per outgoing chunk). Defaults to `getLogger("ContactsKit", commandTag)`. */
   readonly logger?: LoggerPublisherService;
   readonly commandTag?: string;
 };
@@ -47,12 +48,13 @@ export async function sendFramedContactsPayload<Response>(
   const framed = prependFrameLength(payload);
   const chunks = sliceChunks(framed, MAX_CHUNK_BYTES);
   const tag = commandTag ?? "framed-contacts";
+  const chunkLogger = logger ?? getLogger("ContactsKit", tag);
 
   // Intermediate chunks: dispatch and short-circuit on error.
   for (let i = 0; i < chunks.length - 1; i++) {
     const p2 = i === 0 ? P2_FIRST : P2_NEXT;
     const chunk = chunks[i]!;
-    logChunk(logger, tag, i, chunks.length, p2, chunk.length, framed.length);
+    logChunk(chunkLogger, i, chunks.length, p2, chunk.length, framed.length);
     const result = (await api.sendCommand(
       makeCommand(chunk, p2),
     )) as CommandResult<Response>;
@@ -65,8 +67,7 @@ export async function sendFramedContactsPayload<Response>(
   const lastP2 = lastIndex === 0 ? P2_FIRST : P2_NEXT;
   const lastChunk = chunks[lastIndex]!;
   logChunk(
-    logger,
-    tag,
+    chunkLogger,
     lastIndex,
     chunks.length,
     lastP2,
@@ -79,17 +80,14 @@ export async function sendFramedContactsPayload<Response>(
 }
 
 function logChunk(
-  logger: LoggerPublisherService | undefined,
-  tag: string,
+  logger: LoggerPublisherService,
   index: number,
   total: number,
   p2: number,
   chunkLen: number,
   framedLen: number,
 ): void {
-  if (!logger) return;
   logger.debug(`[chunk ${index + 1}/${total}] sending`, {
-    tag,
     data: {
       chunkIndex: index,
       chunkCount: total,

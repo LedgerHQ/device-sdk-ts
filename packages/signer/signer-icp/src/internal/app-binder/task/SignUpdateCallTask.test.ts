@@ -5,7 +5,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 import { vi } from "vitest";
@@ -44,12 +43,10 @@ const inspect = (command: SignUpdateCallCommand) => {
 describe("SignUpdateCallTask", () => {
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
-  let loggerMock: LoggerPublisherService;
 
   beforeEach(() => {
     sendCommandMock = vi.fn();
     apiMock = { sendCommand: sendCommandMock } as unknown as InternalApi;
-    loggerMock = { debug: vi.fn() } as unknown as LoggerPublisherService;
   });
 
   describe("run", () => {
@@ -63,11 +60,11 @@ describe("SignUpdateCallTask", () => {
           CommandResultFactory({ data: Just(deviceSignature) }),
         ); // LAST
 
-      const task = new SignUpdateCallTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, callRequest, readStateRequest },
-        loggerMock,
-      );
+      const task = new SignUpdateCallTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        callRequest,
+        readStateRequest,
+      });
 
       // ACT
       await task.run();
@@ -99,11 +96,11 @@ describe("SignUpdateCallTask", () => {
           CommandResultFactory({ data: Just(deviceSignature) }),
         ); // LAST
 
-      const task = new SignUpdateCallTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, callRequest, readStateRequest },
-        loggerMock,
-      );
+      const task = new SignUpdateCallTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        callRequest,
+        readStateRequest,
+      });
 
       // ACT
       const result = await task.run();
@@ -130,11 +127,11 @@ describe("SignUpdateCallTask", () => {
           CommandResultFactory({ data: Just(deviceSignature) }),
         ); // LAST
 
-      const task = new SignUpdateCallTask(
-        apiMock,
-        { derivationPath: DERIVATION_PATH, callRequest, readStateRequest },
-        loggerMock,
-      );
+      const task = new SignUpdateCallTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        callRequest,
+        readStateRequest,
+      });
 
       // ACT
       await task.run();
@@ -161,15 +158,11 @@ describe("SignUpdateCallTask", () => {
 
     it("should refuse a missing call request without touching the device", async () => {
       // ARRANGE
-      const task = new SignUpdateCallTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          callRequest: new Uint8Array(0),
-          readStateRequest: new Uint8Array([0x01]),
-        },
-        loggerMock,
-      );
+      const task = new SignUpdateCallTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        callRequest: new Uint8Array(0),
+        readStateRequest: new Uint8Array([0x01]),
+      });
 
       // ACT
       const result = await task.run();
@@ -188,15 +181,11 @@ describe("SignUpdateCallTask", () => {
 
     it("should refuse a missing read-state request without touching the device", async () => {
       // ARRANGE
-      const task = new SignUpdateCallTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          callRequest: new Uint8Array([0x01]),
-          readStateRequest: new Uint8Array(0),
-        },
-        loggerMock,
-      );
+      const task = new SignUpdateCallTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        callRequest: new Uint8Array([0x01]),
+        readStateRequest: new Uint8Array(0),
+      });
 
       // ACT
       const result = await task.run();
@@ -216,15 +205,11 @@ describe("SignUpdateCallTask", () => {
       });
       sendCommandMock.mockResolvedValueOnce(commandError);
 
-      const task = new SignUpdateCallTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          callRequest: new Uint8Array([0x01]),
-          readStateRequest: new Uint8Array([0x02]),
-        },
-        loggerMock,
-      );
+      const task = new SignUpdateCallTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        callRequest: new Uint8Array([0x01]),
+        readStateRequest: new Uint8Array([0x02]),
+      });
 
       // ACT
       const result = await task.run();
@@ -246,15 +231,11 @@ describe("SignUpdateCallTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(commandError); // LAST
 
-      const task = new SignUpdateCallTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          callRequest: new Uint8Array([0x01]),
-          readStateRequest: new Uint8Array([0x02]),
-        },
-        loggerMock,
-      );
+      const task = new SignUpdateCallTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        callRequest: new Uint8Array([0x01]),
+        readStateRequest: new Uint8Array([0x02]),
+      });
 
       // ACT
       const result = await task.run();
@@ -274,15 +255,11 @@ describe("SignUpdateCallTask", () => {
         .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(CommandResultFactory({ data: Nothing })); // LAST
 
-      const task = new SignUpdateCallTask(
-        apiMock,
-        {
-          derivationPath: DERIVATION_PATH,
-          callRequest: new Uint8Array([0x01]),
-          readStateRequest: new Uint8Array([0x02]),
-        },
-        loggerMock,
-      );
+      const task = new SignUpdateCallTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        callRequest: new Uint8Array([0x01]),
+        readStateRequest: new Uint8Array([0x02]),
+      });
 
       // ACT
       const result = await task.run();

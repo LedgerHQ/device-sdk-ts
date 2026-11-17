@@ -7,6 +7,7 @@ import { sendProvideContactPayload } from "@ledgerhq/device-contacts-kit";
 import {
   ByteArrayBuilder,
   type CommandErrorResult,
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -64,7 +65,6 @@ export type ProvideTransactionContextsTaskArgs = {
   /**
    * Logger factory for creating loggers with custom tags.
    */
-  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type ProvideTransactionContextsTaskResult = Either<
@@ -91,7 +91,7 @@ export class ProvideTransactionContextsTask {
       args: SendCommandInChunksTaskArgs<unknown>,
     ) => new SendCommandInChunksTask(api, args),
   ) {
-    this._logger = _args.loggerFactory("ProvideTransactionContextsTask");
+    this._logger = getLogger("SignerEth", "ProvideTransactionContextsTask");
   }
 
   async run(): Promise<ProvideTransactionContextsTaskResult> {
@@ -136,7 +136,6 @@ export class ProvideTransactionContextsTask {
         // Don't fail immediately on subcontext errors because the main context may still be successful
         await this._provideContextTaskFactory(this._api, {
           context: subcontext,
-          loggerFactory: this._args.loggerFactory,
         }).run();
       }
 
@@ -177,7 +176,6 @@ export class ProvideTransactionContextsTask {
 
       const res = await this._provideContextTaskFactory(this._api, {
         context,
-        loggerFactory: this._args.loggerFactory,
       }).run();
       if (!isSuccessCommandResult(res)) {
         this._logger.error("[run] Failed to provide context", {

@@ -1,5 +1,4 @@
 import { type DmkConfig } from "@api/DmkConfig";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
@@ -7,7 +6,6 @@ import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceS
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
-import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
@@ -19,7 +17,6 @@ import { type SecureChannelService } from "@internal/secure-channel/service/Secu
 
 vi.mock("@internal/manager-api/data/HttpManagerApiDataSource");
 
-let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
@@ -30,20 +27,13 @@ const fakeSessionId = "test-list-connected-device-session-id";
 
 describe("ListenToConnectedDevice", () => {
   beforeEach(() => {
-    logger = new DefaultLoggerPublisherService(
-      [],
-      "listen-to-connected-device-use-case",
-    );
-    managerApiDataSource = new HttpManagerApiDataSource(
-      {} as DmkConfig,
-      () => logger,
-    );
+    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,
     );
     secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
-    sessionService = new DefaultDeviceSessionService(() => logger);
+    sessionService = new DefaultDeviceSessionService();
   });
 
   it("should emit an instance of ConnectedDevice", () =>
@@ -54,14 +44,13 @@ describe("ListenToConnectedDevice", () => {
       });
       const deviceSession = deviceSessionStubBuilder(
         { id: fakeSessionId, connectedDevice },
-        () => logger,
+
         managerApi,
         secureChannel,
         DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
       );
       const observable = new ListenToConnectedDeviceUseCase(
         sessionService,
-        () => logger,
       ).execute();
 
       const subscription = observable.subscribe({

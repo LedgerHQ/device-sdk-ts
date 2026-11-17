@@ -28,7 +28,6 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { type ExistingContactGroup } from "@api/model/RegisterExternalAddress";
@@ -62,7 +61,6 @@ export type SendRegisterIdentityTaskArgs = {
   readonly blockchainFamily: string;
   readonly chainId?: bigint;
   readonly existingContactGroup?: ExistingContactGroup;
-  readonly logger?: LoggerPublisherService;
 };
 
 export class SendRegisterIdentityTask {
@@ -81,7 +79,6 @@ export class SendRegisterIdentityTask {
       p1: SUB_CMD_REGISTER_IDENTITY,
       makeCommand: (chunk, p2) =>
         new RegisterIdentityCommand({ data: chunk, p2 }),
-      logger: this.args.logger,
       commandTag: "SendRegisterIdentityTask",
     })) as CommandResult<
       {

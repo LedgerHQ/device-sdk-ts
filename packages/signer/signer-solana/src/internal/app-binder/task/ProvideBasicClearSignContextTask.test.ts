@@ -13,14 +13,6 @@ import { ProvideTransactionCheckCommand } from "@internal/app-binder/command/Pro
 
 import { ProvideBasicClearSignContextTask } from "./ProvideBasicClearSignContextTask";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const buildNormaliser = (message: any) =>
   ({ normaliseMessage: vi.fn(async () => message) }) as const;
 
@@ -70,7 +62,6 @@ describe("ProvideBasicClearSignContextTask", () => {
             },
           ],
           transactionBytes: new Uint8Array([0xf0]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 
@@ -95,7 +86,6 @@ describe("ProvideBasicClearSignContextTask", () => {
         {
           loadersResults: [],
           transactionBytes: new Uint8Array([0xf0]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 
@@ -119,7 +109,6 @@ describe("ProvideBasicClearSignContextTask", () => {
             },
           ],
           transactionBytes: new Uint8Array([0xca]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 
@@ -134,7 +123,6 @@ describe("ProvideBasicClearSignContextTask", () => {
         {
           loadersResults: [],
           transactionBytes: new Uint8Array([0xf0]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 
@@ -155,7 +143,6 @@ describe("ProvideBasicClearSignContextTask", () => {
             },
           ],
           transactionBytes: new Uint8Array([0xf0]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 
@@ -188,7 +175,6 @@ describe("ProvideBasicClearSignContextTask", () => {
             },
           ],
           transactionBytes: new Uint8Array([0x1a]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 
@@ -224,7 +210,6 @@ describe("ProvideBasicClearSignContextTask", () => {
             },
           ],
           transactionBytes: new Uint8Array([0xf0]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 
@@ -271,7 +256,6 @@ describe("ProvideBasicClearSignContextTask", () => {
             },
           ],
           transactionBytes: new Uint8Array([0xca]),
-          loggerFactory: mockLoggerFactory,
           normaliser: buildNormaliser({}) as any,
         } as any,
       );
@@ -304,7 +288,6 @@ describe("ProvideBasicClearSignContextTask", () => {
             },
           ],
           transactionBytes: new Uint8Array([0x1a]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 
@@ -358,7 +341,6 @@ describe("ProvideBasicClearSignContextTask", () => {
             },
           ],
           transactionBytes: new Uint8Array([0x1a]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 
@@ -390,7 +372,6 @@ describe("ProvideBasicClearSignContextTask", () => {
             },
           ],
           transactionBytes: new Uint8Array([0xf0]),
-          loggerFactory: mockLoggerFactory,
         } as any,
       );
 

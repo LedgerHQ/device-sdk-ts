@@ -1,5 +1,4 @@
 import { type ContextModule } from "@ledgerhq/context-module";
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type TypedData } from "@api/model/TypedData";
@@ -58,17 +57,6 @@ const typedDataStub: TypedData = {
   primaryType: "EIP712Domain",
 };
 
-const mockLoggerFactory = vi.fn(
-  (_tag: string) =>
-    ({
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      subscribers: [],
-    }) as unknown as LoggerPublisherService,
-);
-
 describe("SignTypedDataDeviceActionFactory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -114,20 +102,6 @@ describe("SignTypedDataDeviceActionFactory", () => {
     });
 
     expect(deviceAction.inspect).toBe(true);
-  });
-
-  it("should forward loggerFactory so it is used instead of internalApi.loggerFactory", () => {
-    SignTypedDataDeviceActionFactory({
-      derivationPath: "44'/60'/0'/0/0",
-      data: typedDataStub,
-      contextModule: contextModuleStub,
-      skipOpenApp: false,
-      loggerFactory: mockLoggerFactory,
-    });
-
-    expect(vi.mocked(SignTypedDataDeviceAction)).toHaveBeenCalledWith(
-      expect.objectContaining({ loggerFactory: mockLoggerFactory }),
-    );
   });
 
   it("should return a device action usable as an XState actor", () => {

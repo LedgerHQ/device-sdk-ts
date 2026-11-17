@@ -1,7 +1,4 @@
-import {
-  type DmkNetworkClient,
-  type LoggerPublisherService,
-} from "@ledgerhq/device-management-kit";
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
@@ -61,13 +58,6 @@ describe("HttpSignReporterDatasource", () => {
     httpMock = { post: vi.fn() };
     dataSource = new HttpSignReporterDatasource(
       config,
-      () =>
-        ({
-          debug: vi.fn(),
-          info: vi.fn(),
-          warn: vi.fn(),
-          error: vi.fn(),
-        }) as unknown as LoggerPublisherService,
       httpMock as unknown as DmkNetworkClient,
     );
   });

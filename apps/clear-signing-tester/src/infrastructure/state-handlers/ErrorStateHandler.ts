@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  getLogger,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -14,8 +17,6 @@ export class ErrorStateHandler implements StateHandler {
   private readonly logger: LoggerPublisherService;
 
   constructor(
-    @inject(TYPES.LoggerPublisherServiceFactory)
-    private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(TYPES.ScreenAnalyzerService)
     private readonly screenAnalyzer: ScreenAnalyzerService,
     @inject(TYPES.DeviceController)
@@ -23,7 +24,7 @@ export class ErrorStateHandler implements StateHandler {
     @inject(TYPES.ScreenshotSaver)
     private readonly screenshotSaver: ScreenshotSaver,
   ) {
-    this.logger = this.loggerFactory("error-state-handler");
+    this.logger = getLogger("error-state-handler");
   }
 
   async handle(ctx: { input: SignableInput }): Promise<StateHandlerResult> {

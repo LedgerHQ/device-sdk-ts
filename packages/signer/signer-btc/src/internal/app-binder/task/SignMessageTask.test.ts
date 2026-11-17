@@ -35,15 +35,6 @@ const SIGNATURE_APDU = new Uint8Array([
   0xef, 0xc4, 0x63, 0xf6, 0x7f, 0x60, 0xce, 0xfe, 0x8c, 0x3f, 0x87, 0xcf, 0xce,
 ]);
 
-const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-};
-const mockLoggerFactory = (_tag: string) => mockLogger;
-
 describe("SignMessageTask", () => {
   const signatureResult = CommandResultFactory<ApduResponse, void>({
     data: new ApduResponse({
@@ -65,7 +56,6 @@ describe("SignMessageTask", () => {
       const args = {
         derivationPath: DERIVATION_PATH,
         message: EXACT_ONE_CHUNK_MESSAGE,
-        loggerFactory: mockLoggerFactory,
       };
 
       const dataStoreService = {
@@ -98,7 +88,6 @@ describe("SignMessageTask", () => {
       const args = {
         derivationPath: DERIVATION_PATH,
         message: EXACT_TWO_CHUNKS_MESSAGE,
-        loggerFactory: mockLoggerFactory,
       };
 
       const dataStoreService = {
@@ -134,7 +123,6 @@ describe("SignMessageTask", () => {
       const args = {
         derivationPath: DERIVATION_PATH,
         message: EXACT_ONE_CHUNK_MESSAGE,
-        loggerFactory: mockLoggerFactory,
       };
 
       const resultError = CommandResultFactory<Signature, void>({

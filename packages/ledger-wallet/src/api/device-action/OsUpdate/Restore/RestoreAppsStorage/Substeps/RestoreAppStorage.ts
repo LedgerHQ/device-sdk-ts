@@ -1,7 +1,7 @@
 import {
+  getLogger,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts/Either";
 
@@ -21,14 +21,11 @@ type RestoreAppStorageHandler = (
 ) => RestoreAppStorageHandlerResponse;
 
 export const restoreAppStorage =
-  (
-    internalApi: InternalApi,
-    loggerFactory: (tag: string) => LoggerPublisherService,
-  ): RestoreAppStorageHandler =>
+  (internalApi: InternalApi): RestoreAppStorageHandler =>
   async ({
     input,
   }: RestoreAppStorageHandlerArgs): RestoreAppStorageHandlerResponse => {
-    const logger = loggerFactory("RestoreAppStorageTask");
+    const logger = getLogger("RestoreAppStorageTask");
     const result = await new RestoreAppStorageTask(
       { appStorageData: input.appStorageData },
       internalApi,
