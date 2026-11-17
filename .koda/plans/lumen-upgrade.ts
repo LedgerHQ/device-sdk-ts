@@ -3,6 +3,8 @@
 import {
   agent,
   allTools,
+  inputsOf,
+  literal,
   plan,
   retryShellSlot,
   task,
@@ -22,8 +24,28 @@ const lumenManifests =
 const verifyCommand =
   "git fetch --quiet origin develop && pnpm turbo run lint typecheck --filter='...[origin/develop]' --force";
 
+// What the Lumen workflow sends. The plan bumps to latest and doesn't read targetVersions yet.
+const planInput = z.object({
+  targetVersions: z.record(z.string(), z.string()),
+  pr: z.object({ title: z.string(), labels: z.array(z.string()) }),
+  changeset: z.boolean(),
+  upstreamPackages: z.array(
+    z.object({ package: z.string(), repo: z.string() }),
+  ),
+});
+const inputs = inputsOf(planInput);
+
 const prUrl = variable("prUrl", z.string().url(), {
   description: "Pull request URL opened by the upgrade.",
+});
+
+const humanReview = variable("humanReview", z.array(z.string()), {
+  description:
+    "What the migrations leave for a human to decide, one item per entry, with the file paths. Empty when nothing.",
+});
+
+const prBody = variable("prBody", z.object({ body: z.string() }), {
+  description: "The pull request body, in Markdown.",
 });
 
 const result = variable(
@@ -77,9 +99,9 @@ const checkOpenPrTask = task("check-open-pr")
       `n=$(gh pr list --state open --limit 1000 --json number,headRefName --jq '[.[] | select(.headRefName | startswith("${branchPrefix}"))][0].number // empty') || exit 2`,
       '[ -z "$n" ] && exit 0',
       'gh pr view "$n" --json url,headRefName || exit 2',
-      `bot=$(gh pr view "$n" --json author --jq '.author.is_bot') || exit 2`,
-      `authors=$(gh pr view "$n" --json commits --jq '[.commits[].authors[].login] | unique | length') || exit 2`,
-      '[ "$bot" = true ] && [ "$authors" -le 1 ] && exit 1',
+      // Empty logins (unlinked co-authors) and the bot's own login, with or without `app/` and `[bot]`, aren't people.
+      `owner=$(gh pr view "$n" --json author,commits --jq '(.author.login | ltrimstr("app/") | rtrimstr("[bot]")) as $bot | ([.commits[].authors[].login | select(. != null and . != "") | rtrimstr("[bot]") | select(. != $bot)] | unique | length) as $humans | if .author.is_bot and $humans == 0 then "bot" else "human" end') || exit 2`,
+      '[ "$owner" = bot ] && exit 1',
       'gh pr comment "$n" --body "A newer Lumen release is out. People have committed to this branch, so the automated upgrade left it unchanged: the next release after this PR merges picks up the rest." || exit 2',
       "exit 3",
     ].join("\n"),
@@ -132,8 +154,9 @@ const migrateTask = task("migrate")
 2. For each of them, run \`${migrationsCli} list --package <name> --from <previous> --to <new> --json\`.
 3. For each migration listed, run \`${migrationsCli} show <id>\` and follow it (Before → after, Decide).
 4. For each package, run \`${migrationsCli} check --package <name> --from <previous> --to <new>\` from the repo root, so every package using Lumen is scanned. Exit code 1 means \`expect: none\` patterns still have hits: fix them and run it again. Hits listed as review are for a human: do not edit them.
-5. List what you cannot decide for a human.`,
-  );
+5. Write what you cannot decide, and every review hit, as humanReview.`,
+  )
+  .writes(humanReview);
 
 const commitTask = task("commit")
   .uses(upgrader)
@@ -151,15 +174,15 @@ const commitChangesetTask = task("commit-changeset")
 
 const pushTask = task("push").uses(upgrader).push();
 
-const createPrTask = task("create-pr")
-  .uses(upgrader)
-  .createPr({
-    title: "⬆️ (repo) [NO-ISSUE]: Upgrade Lumen to latest",
-    body: `### 📝 Description
+const prBodyTemplate = `### 📝 Description
 
 Automated Lumen upgrade to the latest versions, run by Koda from \`.koda/plans/lumen-upgrade.ts\`: bumps the pinned \`@ledgerhq/lumen-*\` versions and applies the Lumen migrations in range. Checked with \`${verifyCommand}\`.
 
 Review before merging.
+
+### 👀 Needs a human
+
+<humanReview>
 
 ### ❓ Context
 
@@ -173,9 +196,32 @@ Review before merging.
 - [ ] **Documentation is up-to-date**
 - [ ] **Copilot comments are handled**
 - [ ] **Impact of the changes:**
-  - Lumen-based UIs: devtools, mock server UI, sample`,
+  - Lumen-based UIs: devtools, mock server UI, sample`;
+
+const prBodyTask = task("pr-body")
+  .uses(recorder)
+  .message(
+    "Write prBody: the template with <humanReview> replaced by humanReview as a Markdown list, or by `Nothing.` when it is empty. Change nothing else.",
+  )
+  .with({ template: literal(prBodyTemplate), humanReview })
+  .writes(prBody);
+
+// Lumen's `pr.title` (`chore(deps): …`) fails this repo's Danger title rule, so the title stays local.
+const createPrTask = task("create-pr")
+  .uses(upgrader)
+  .createPr({
+    title: "⬆️ (repo) [NO-ISSUE]: Upgrade Lumen to latest",
+    body: prBody.field("body"),
   })
   .writes({ url: prUrl });
+
+// `createPr` has no labels option.
+const labelsTask = task("labels")
+  .uses(upgrader)
+  .message(
+    "If labels is not empty, add them to prUrl with `gh pr edit <prUrl> --add-label <label>`, one flag per label. Skip a label the repo doesn't have.",
+  )
+  .with({ prUrl, labels: inputs.pr.field("labels") });
 
 const recordPrCreatedTask = task("record-pr-created")
   .uses(recorder)
@@ -223,16 +269,6 @@ const recordFailureTask = task("record-failure")
   .with({ verify })
   .writes(result);
 
-// What the Lumen workflow sends. The plan bumps to latest and doesn't read it yet.
-const planInput = z.object({
-  targetVersions: z.record(z.string(), z.string()),
-  pr: z.object({ title: z.string(), labels: z.array(z.string()) }),
-  changeset: z.boolean(),
-  upstreamPackages: z.array(
-    z.object({ package: z.string(), repo: z.string() }),
-  ),
-});
-
 const upgrade = (b) =>
   b
     .do(createBranchTask)
@@ -264,7 +300,9 @@ const upgrade = (b) =>
                 .do(changesetTask)
                 .do(commitChangesetTask)
                 .do(pushTask)
+                .do(prBodyTask)
                 .do(createPrTask)
+                .do(labelsTask)
                 .do(closeOldPrTask, { when: openPrExitCode.eq(1) })
                 .do(recordPrCreatedTask),
             (d) => d.do(recordFailureTask),
@@ -273,7 +311,7 @@ const upgrade = (b) =>
     );
 
 export default plan("lumen-upgrade")
-  .input(planInput.partial())
+  .input(planInput.partial().required({ pr: true }))
   .do(checkOpenPrTask)
   .if(openPrExitCode.eq(3), (b) => b.do(recordHumanCommitsTask))
   .elseif(openPrExitCode.eq(2), (b) => b.do(recordLookupFailedTask))
