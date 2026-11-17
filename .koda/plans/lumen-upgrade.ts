@@ -69,16 +69,17 @@ const openPr = variable("openPr", z.string(), {
     "The open upgrade PR as JSON, with its url and headRefName. Empty when none is open.",
 });
 
-// Exit 0: no open upgrade PR. Exit 1: one is open (stdout is its JSON). Exit 2: `gh` failed.
-// Exit 3: people committed to it (the first commit is the bot's), so it gets a comment and is left alone.
+// Exit 0: no open upgrade PR. Exit 1: the bot's PR is open (stdout is its JSON), so the new PR replaces it.
+// Exit 2: `gh` failed. Exit 3: a person opened it or committed to it, so it gets a comment and is left alone.
 const checkOpenPrTask = task("check-open-pr")
   .runs(
     [
       `n=$(gh pr list --state open --limit 1000 --json number,headRefName --jq '[.[] | select(.headRefName | startswith("${branchPrefix}"))][0].number // empty') || exit 2`,
       '[ -z "$n" ] && exit 0',
       'gh pr view "$n" --json url,headRefName || exit 2',
+      `bot=$(gh pr view "$n" --json author --jq '.author.is_bot') || exit 2`,
       `authors=$(gh pr view "$n" --json commits --jq '[.commits[].authors[].login] | unique | length') || exit 2`,
-      '[ "$authors" -le 1 ] && exit 1',
+      '[ "$bot" = true ] && [ "$authors" -le 1 ] && exit 1',
       'gh pr comment "$n" --body "A newer Lumen release is out. People have committed to this branch, so the automated upgrade left it unchanged: the next release after this PR merges picks up the rest." || exit 2',
       "exit 3",
     ].join("\n"),
@@ -86,14 +87,14 @@ const checkOpenPrTask = task("check-open-pr")
   .continueOnError()
   .writes({ exit_code: openPrExitCode, stdout: openPr });
 
-const reuseBranchTask = task("reuse-branch")
+// Replacing the bot's PR instead of updating it keeps every run a full upgrade from develop:
+// code merged on develop since then gets every migration in range.
+const closeOldPrTask = task("close-old-pr")
   .uses(upgrader)
   .message(
-    `An upgrade PR is already open: its url and branch (headRefName) are in openPr. Update that PR instead of opening a new one.
-Run git fetch, check out that branch, and merge origin/develop into it.
-Then restore pnpm-lock.yaml and every package.json that pins a Lumen version from origin/develop, whatever the conflicts: the frozen install needs them consistent, and the next steps redo the bump.`,
+    'Close the previous upgrade PR in openPr with `gh pr close <url> --delete-branch --comment "Superseded by <prUrl>."`.',
   )
-  .with({ openPr });
+  .with({ openPr, prUrl });
 
 const createBranchTask = task("create-branch")
   .uses(upgrader)
@@ -102,14 +103,19 @@ const createBranchTask = task("create-branch")
 const installTask = task("install").runs("pnpm install --frozen-lockfile");
 
 // Sets each exact Lumen pin to the latest published version, then updates the lockfile.
-// Caret ranges (peerDependencies) are left alone.
+// Caret ranges (peerDependencies) are left alone, and so is a pin newer than `latest` (dist-tag rollback, prerelease).
 const bumpTask = task("bump").runs(
   [
     "set -e",
     `files=$(${lumenManifests})`,
     `for pkg in $(grep -hoE '"@ledgerhq/lumen-[a-z-]+"' $files | tr -d '"' | sort -u); do`,
     '  version=$(npm view "$pkg" version)',
-    '  for f in $files; do sed -i.bak -E "s|(\\"$pkg\\": \\")[0-9][^\\"]*\\"|\\1$version\\"|" "$f" && rm "$f.bak"; done',
+    "  for f in $files; do",
+    '    current=$(sed -nE "s|.*\\"$pkg\\": \\"([0-9][^\\"]*)\\".*|\\1|p" "$f" | head -1)',
+    '    [ -n "$current" ] || continue',
+    '    [ "$(printf \'%s\\n%s\\n\' "$current" "$version" | sort -V | tail -1)" = "$version" ] || continue',
+    '    sed -i.bak -E "s|(\\"$pkg\\": \\")[0-9][^\\"]*\\"|\\1$version\\"|" "$f" && rm "$f.bak"',
+    "  done",
     "done",
     "pnpm install --no-frozen-lockfile",
   ].join("\n"),
@@ -118,18 +124,16 @@ const bumpTask = task("bump").runs(
 // Always `@latest`: the index only knows the releases published before the CLI version.
 const migrationsCli = "npx --yes @ledgerhq/lumen-migrations@latest";
 
-// The range starts at the versions the open upgrade PR already migrated to, or at develop's when there is none.
 const migrateTask = task("migrate")
   .uses(upgrader)
   .message(
     `Apply the Lumen migrations for the upgrade range with the migrations CLI.
-1. Get the previous version of each bumped @ledgerhq/lumen-* package from the package.json files that pin it: if openPr is set, from the open PR's branch (\`git show origin/<headRefName>:<path>\`), as its migrations are already applied; otherwise from \`git show origin/develop:<path>\`. The new version is in the working tree. When packages pin different previous versions, use the lowest.
+1. Get the previous version of each bumped @ledgerhq/lumen-* package from the package.json files that pin it on develop (\`git show origin/develop:<path>\`). The new version is in the working tree. When packages pin different previous versions, use the lowest.
 2. For each of them, run \`${migrationsCli} list --package <name> --from <previous> --to <new> --json\`.
 3. For each migration listed, run \`${migrationsCli} show <id>\` and follow it (Before → after, Decide).
 4. For each package, run \`${migrationsCli} check --package <name> --from <previous> --to <new>\` from the repo root, so every package using Lumen is scanned. Exit code 1 means \`expect: none\` patterns still have hits: fix them and run it again. Hits listed as review are for a human: do not edit them.
 5. List what you cannot decide for a human.`,
-  )
-  .with({ openPr });
+  );
 
 const commitTask = task("commit")
   .uses(upgrader)
@@ -181,18 +185,10 @@ const recordPrCreatedTask = task("record-pr-created")
   .with({ prUrl, verify })
   .writes(result);
 
-const recordPrUpdatedTask = task("record-pr-updated")
-  .uses(recorder)
-  .message(
-    "Write the terminal result as pr-created: the open PR in openPr was updated. Give a one-sentence summary and its url as prUrl.",
-  )
-  .with({ openPr, verify })
-  .writes(result);
-
 const recordHumanCommitsTask = task("record-human-commits")
   .uses(recorder)
   .message(
-    "Write the terminal result as skipped: people committed to the open upgrade PR in openPr, so it was left unchanged.",
+    "Write the terminal result as skipped: a person opened or committed to the open upgrade PR in openPr, so it was left unchanged.",
   )
   .with({ openPr })
   .writes(result);
@@ -239,8 +235,7 @@ const planInput = z.object({
 
 const upgrade = (b) =>
   b
-    .do(reuseBranchTask, { when: openPrExitCode.eq(1) })
-    .do(createBranchTask, { when: openPrExitCode.eq(0) })
+    .do(createBranchTask)
     .do(installTask)
     .do(bumpTask)
     .do(checkChangesTask)
@@ -269,11 +264,9 @@ const upgrade = (b) =>
                 .do(changesetTask)
                 .do(commitChangesetTask)
                 .do(pushTask)
-                .if(
-                  openPrExitCode.eq(1),
-                  (e) => e.do(recordPrUpdatedTask),
-                  (e) => e.do(createPrTask).do(recordPrCreatedTask),
-                ),
+                .do(createPrTask)
+                .do(closeOldPrTask, { when: openPrExitCode.eq(1) })
+                .do(recordPrCreatedTask),
             (d) => d.do(recordFailureTask),
           ),
       (c) => c.do(recordUpToDateTask),
