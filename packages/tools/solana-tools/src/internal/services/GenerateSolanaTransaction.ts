@@ -1,5 +1,10 @@
 import { bufferToBase64String } from "@ledgerhq/device-management-kit";
-import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import {
+  type Blockhash,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -7,6 +12,10 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
 } from "@internal/services/utils/splToken";
+
+// Hardcoded: these transactions are never broadcast, only used for testing.
+const PLACEHOLDER_BLOCKHASH =
+  "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg" as Blockhash;
 
 export const COIN_DATA = {
   USDC: {
@@ -62,8 +71,7 @@ export class GenerateSolanaTransaction {
     const amount = BigInt(Math.round(amountInTokens * 10 ** decimals));
 
     const tx = new Transaction({
-      // hardcoded as transaction won't be broadcasted but only used for testing
-      recentBlockhash: "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg",
+      recentBlockhash: PLACEHOLDER_BLOCKHASH,
       feePayer,
     });
     for (let i = 0; i < numberOfTransfers; i++) {
@@ -95,8 +103,7 @@ export class GenerateSolanaTransaction {
     const recipient = new PublicKey(recipientKey);
 
     const tx = new Transaction({
-      // hardcoded as transaction won't be broadcasted but only used for testing
-      recentBlockhash: "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg",
+      recentBlockhash: PLACEHOLDER_BLOCKHASH,
       feePayer,
     });
     for (let i = 0; i < numberOfTransactions; i++) {

@@ -20,9 +20,9 @@ export class DefaultAltResolverService implements AltResolverService {
     message: VersionedMessage,
     rpcUrl?: string,
   ): Promise<AddressLookupTableAccount[]> {
-    // Legacy messages cannot reference lookup tables. Their version is the
-    // string "legacy", whereas v0 messages report the number 0.
-    if (message.version === "legacy") {
+    // Only v0 messages reference lookup tables: legacy messages report the
+    // string "legacy", v1 messages the number 1.
+    if (message.version !== 0) {
       return [];
     }
 

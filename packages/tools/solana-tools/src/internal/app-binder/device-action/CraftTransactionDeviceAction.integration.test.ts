@@ -40,7 +40,7 @@ import { CraftTransactionDeviceAction } from "./CraftTransactionDeviceAction";
 // serialisedTransaction path, so the whole flow runs without any network call.
 
 const derivationPath = "44'/501'/0'/0'";
-const blockhash = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
+const blockhash = toBlockhash("a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg");
 
 const oldPayer = new PublicKey("2cHm11EeTGQixAkyaqNRFczpi1XB1n6rK7bSwNiZbCdB");
 const newPayer = new PublicKey("DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy");

@@ -1,7 +1,7 @@
 import {
   AddressLookupTableAccount,
   PublicKey,
-  type VersionedMessage,
+  VersionedMessage,
 } from "@solana/web3.js";
 
 import { type SolanaTransactionDataSource } from "@internal/data-source/SolanaTransactionDataSource";
@@ -22,6 +22,7 @@ vi.mock("@solana/web3.js", async () => {
   };
 });
 
+import { buildV1MessageBytes } from "./crafter/__test-utils__/v1Message";
 import { DefaultAltResolverService } from "./DefaultAltResolverService";
 
 const tableKeyOne = new PublicKey(new Uint8Array(32).fill(1));
@@ -63,6 +64,16 @@ describe("DefaultAltResolverService", () => {
     const result = await service.resolveAddressLookupTables(legacyMessage());
 
     expect(result).toEqual([]);
+    expect(getAccountsDataMock).not.toHaveBeenCalled();
+  });
+
+  it("returns no lookup tables for a v1 message without fetching", async () => {
+    const service = new DefaultAltResolverService(dataSource);
+    const message = VersionedMessage.deserialize(buildV1MessageBytes());
+
+    await expect(service.resolveAddressLookupTables(message)).resolves.toEqual(
+      [],
+    );
     expect(getAccountsDataMock).not.toHaveBeenCalled();
   });
 

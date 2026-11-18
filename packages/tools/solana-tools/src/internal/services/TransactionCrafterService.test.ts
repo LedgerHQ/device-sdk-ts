@@ -1,5 +1,6 @@
 import {
   AddressLookupTableAccount,
+  type Blockhash,
   ComputeBudgetProgram,
   PublicKey,
   SystemProgram,
@@ -38,7 +39,7 @@ import {
   TransactionCrafterService,
 } from "./TransactionCrafterService";
 
-const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
+const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg" as Blockhash;
 
 describe("TransactionCrafterService", () => {
   const crafter = new TransactionCrafterService();
@@ -237,7 +238,7 @@ describe("TransactionCrafterService", () => {
         state: {
           // u64 max: an active (never deactivated) table.
           deactivationSlot: 18446744073709551615n,
-          lastExtendedSlot: 0,
+          lastExtendedSlot: 0n,
           lastExtendedSlotStartIndex: 0,
           authority: undefined,
           addresses: [altSupplied],
