@@ -201,4 +201,70 @@ describe("DefaultDeviceSessionService", () => {
     expect(emittedSessions).toEqual([deviceSession, lastDeviceSession]);
     subscription.unsubscribe();
   });
+
+  describe("DeviceSessionService sessionListObs", () => {
+    it("should emit an empty list when no session was added", () => {
+      const emittedLists: DeviceSession[][] = [];
+
+      const subscription = sessionService.sessionListObs.subscribe((list) =>
+        emittedLists.push(list),
+      );
+
+      expect(emittedLists).toEqual([[]]);
+      subscription.unsubscribe();
+    });
+
+    it("should emit the current list on subscribe", () => {
+      const emittedLists: DeviceSession[][] = [];
+      sessionService.addDeviceSession(deviceSession);
+
+      const subscription = sessionService.sessionListObs.subscribe((list) =>
+        emittedLists.push(list),
+      );
+
+      expect(emittedLists).toEqual([[deviceSession]]);
+      subscription.unsubscribe();
+    });
+
+    it("should emit the list when a session is added or removed", () => {
+      const otherDeviceSession = deviceSessionStubBuilder(
+        { id: "other-session" },
+        () => loggerService,
+        managerApi,
+        secureChannel,
+        DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
+      );
+      const emittedLists: DeviceSession[][] = [];
+      const subscription = sessionService.sessionListObs.subscribe((list) =>
+        emittedLists.push(list),
+      );
+
+      sessionService.addDeviceSession(deviceSession);
+      sessionService.addDeviceSession(otherDeviceSession);
+      sessionService.removeDeviceSession(deviceSession.id);
+
+      expect(emittedLists).toEqual([
+        [],
+        [deviceSession],
+        [deviceSession, otherDeviceSession],
+        [otherDeviceSession],
+      ]);
+      subscription.unsubscribe();
+      otherDeviceSession.close();
+    });
+
+    it("should not emit when the list does not change", () => {
+      const emittedLists: DeviceSession[][] = [];
+      sessionService.addDeviceSession(deviceSession);
+      const subscription = sessionService.sessionListObs.subscribe((list) =>
+        emittedLists.push(list),
+      );
+
+      sessionService.addDeviceSession(deviceSession);
+      sessionService.removeDeviceSession("non-existent-id");
+
+      expect(emittedLists).toEqual([[deviceSession]]);
+      subscription.unsubscribe();
+    });
+  });
 });

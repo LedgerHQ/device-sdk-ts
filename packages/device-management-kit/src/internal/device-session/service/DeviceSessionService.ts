@@ -45,4 +45,11 @@ export interface DeviceSessionService {
    * @returns An observable of device sessions.
    */
   get sessionsObs(): Observable<DeviceSession>;
+
+  /**
+   * Get an observable of the list of device sessions.
+   * @returns An observable that emits the current list on subscribe, then
+   * each time a session is added or removed.
+   */
+  get sessionListObs(): Observable<DeviceSession[]>;
 }

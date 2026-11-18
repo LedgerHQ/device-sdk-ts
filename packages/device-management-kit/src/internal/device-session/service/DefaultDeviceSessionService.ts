@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify";
 import { Either, Maybe } from "purify-ts";
-import { Observable, ReplaySubject } from "rxjs";
+import { BehaviorSubject, Observable, ReplaySubject } from "rxjs";
 
 import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { DeviceId } from "@api/types";
@@ -13,6 +13,7 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 export class DefaultDeviceSessionService implements DeviceSessionService {
   private _sessions: DeviceSession[];
   private readonly _sessionsSubject: ReplaySubject<DeviceSession>;
+  private readonly _sessionListSubject: BehaviorSubject<DeviceSession[]>;
   private readonly _logger: LoggerPublisherService;
 
   constructor(
@@ -21,11 +22,16 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
   ) {
     this._sessions = [];
     this._sessionsSubject = new ReplaySubject();
+    this._sessionListSubject = new BehaviorSubject<DeviceSession[]>([]);
     this._logger = loggerModuleFactory("DeviceSessionService");
   }
 
   public get sessionsObs(): Observable<DeviceSession> {
     return this._sessionsSubject.asObservable();
+  }
+
+  public get sessionListObs(): Observable<DeviceSession[]> {
+    return this._sessionListSubject.asObservable();
   }
 
   addDeviceSession(deviceSession: DeviceSession): DeviceSessionService {
@@ -38,6 +44,7 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
     }
     this._sessions.push(deviceSession);
     this._sessionsSubject.next(deviceSession);
+    this._sessionListSubject.next([...this._sessions]);
     this._logger.info("DeviceSession added", {
       data: { sessionId: deviceSession.id },
     });
@@ -49,6 +56,7 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
     if (found) {
       found.close();
       this._sessions = this._sessions.filter((s) => s.id !== sessionId);
+      this._sessionListSubject.next([...this._sessions]);
       this._logger.info("DeviceSession removed", { data: { sessionId } });
       return this;
     }
