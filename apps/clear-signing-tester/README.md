@@ -78,7 +78,7 @@ requested `--device` is skipped rather than failed.
 | `erc7730-typed-data`        | stax, nanox, flex | Per-dapp typed-data descriptors                   |
 | `solana`                    | stax, nanox, flex | Solana transaction fixtures                       |
 | `solana-general-clear-sign` | stax, nanox, flex | Solana general (IDL-based) clear-signing fixtures |
-| `solana-transaction-check`  | stax, flex        | Transaction Check on live Web3 Checks, CI only    |
+| `solana-transaction-check`  | stax, flex        | Transaction Check on the live backend, CI only    |
 | `solana-programs`           | —                 | Live program transactions — disabled, see below   |
 | `solana-v1`                 | —                 | Solana v1 fixtures — disabled, see below          |
 | `tron`                      | stax, nanox, flex | TRC10/TRC20 transfers, and Address Book on flex   |
@@ -117,23 +117,21 @@ v1 config where present), plus a durable-nonce transfer. To switch it on, drop
 `solana-v1` to the scenarios run by `pull_request.yml` and `nightly_solana.yml`.
 
 The `solana-transaction-check` group tests Transaction Check end to end: the
-Solana app, the signer and the live Web3 Checks backend. Its scenario sets the
-`transactionCheckEnabled` option, so the tester accepts the opt-in ("Yes,
-enable") instead of declining it. The signer then sends each transaction to the
-production Web3 Checks API with the run's origin token (`GATING_TOKEN`), and
-the device checks the signed report against the transaction it reviews. Each
-case lists the three verdict lines in `oneOfTexts` — "No threat detected by
-Transaction Check.", "Potential risk detected." and "Critical threat
-detected." — so it passes only when the review shows one of them, and lists
+Solana app, the signer and the live Transaction Check backend. Its scenario
+sets the `transactionCheckEnabled` option, so the tester accepts the opt-in
+("Yes, enable") instead of declining it. The signer then sends each
+transaction to the production Transaction Check API with the run's origin
+token (`GATING_TOKEN`), and the device checks the signed report against the
+transaction it reviews. Each case expects the verdict line its review should
+show in `expectedTexts` — "No threat detected by Transaction Check.",
+"Potential risk detected." or "Critical threat detected." — and lists
 "Transaction Check unavailable", which the app shows when no valid report
-reached it, in `unexpectedTexts`. The trailing period keeps the risk and
-threat warnings ("… Detected by Transaction_Checks") from matching. A scenario
-with the option is refused unless every case has `oneOfTexts`. The warning
-that a risk or threat verdict shows first is accepted, so the review is still
-checked to its end. The backend decides the verdict, so the cases pin none; to
-pin one, list only its line in `oneOfTexts`. The Nano models have no
-Transaction Check, so the option is refused for them, and for any coin app but
-Solana.
+reached it, in `unexpectedTexts`. A scenario with the option is refused unless
+every case expects one of those lines, trailing period included: the period
+keeps the risk and threat warnings ("… Detected by Transaction_Checks") from
+matching. The warning that a risk or threat verdict shows first is accepted,
+so the review is still checked to its end. The Nano models have no Transaction
+Check, so the option is refused for them, and for any coin app but Solana.
 
 The backend simulates each transaction on mainnet, and a simulation reverts
 when its fee payer has no SOL — even for a transaction that moves nothing. The

@@ -6,37 +6,12 @@ import { type DeviceController } from "@root/src/domain/adapters/DeviceControlle
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type RetryService } from "@root/src/domain/services/RetryService";
-import {
-  type ScreenAnalyzerService,
-  type ScreenTextAnalysis,
-} from "@root/src/domain/services/ScreenAnalyzer";
+import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
 
 import { type StateHandler, type StateHandlerResult } from "./StateHandler";
 
 const WAIT_FOR_SIGN_SCREEN_MAX_ATTEMPTS = 5;
 const WAIT_FOR_SIGN_SCREEN_DELAY = 1500;
-
-const quoted = (texts: readonly string[]) =>
-  texts.map((text) => `"${text}"`).join(", ");
-
-/** What a review that fell short of its case missed or showed anyway. */
-function shortfall(
-  analysis: ScreenTextAnalysis,
-  oneOfTexts: readonly string[],
-): string {
-  const reasons = [
-    ...(analysis.missing.length > 0
-      ? [`never showed ${quoted(analysis.missing)}`]
-      : []),
-    ...(analysis.forbidden.length > 0
-      ? [`showed ${quoted(analysis.forbidden)}, which the case forbids`]
-      : []),
-    ...(oneOfTexts.length > 0 && analysis.foundOneOf.length === 0
-      ? [`showed none of ${quoted(oneOfTexts)}`]
-      : []),
-  ];
-  return `The review ${reasons.join("; ")}`;
-}
 
 @injectable()
 export class CompleteStateHandler implements StateHandler {
@@ -78,12 +53,9 @@ export class CompleteStateHandler implements StateHandler {
       throw new Error("Home page not detected");
     }
 
-    const oneOfTexts =
-      "oneOfTexts" in ctx.input ? (ctx.input.oneOfTexts ?? []) : [];
     const analysis = await this.screenAnalyzer.analyzeAccumulatedTexts(
       ctx.input.expectedTexts || [],
       ctx.input.unexpectedTexts || [],
-      oneOfTexts,
     );
 
     if (analysis.containsAll) {
@@ -93,11 +65,6 @@ export class CompleteStateHandler implements StateHandler {
     } else {
       return {
         status: "partially_clear_signed",
-        // Only the cases with alternatives carry a reason, so every other
-        // case reports as it did before them.
-        ...(oneOfTexts.length > 0
-          ? { errorMessage: shortfall(analysis, oneOfTexts) }
-          : {}),
       };
     }
   }

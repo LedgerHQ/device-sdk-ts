@@ -93,28 +93,20 @@ export interface ScreenAnalyzerService {
    *
    * @param expectedTexts - Array of texts that must appear
    * @param unexpectedTexts - Array of texts that must not appear
-   * @param oneOfTexts - Texts of which at least one must appear; empty means
-   * no such requirement
    * @returns Promise<ScreenTextAnalysis> - Result of the analysis
    */
   analyzeAccumulatedTexts(
     expectedTexts: string[],
     unexpectedTexts?: string[],
-    oneOfTexts?: readonly string[],
   ): Promise<ScreenTextAnalysis>;
 }
 
 /** Outcome of matching a set of texts against the accumulated screens. */
 export type ScreenTextAnalysis = {
-  /**
-   * True when every expected text was found, no unexpected one was, and one of
-   * `oneOfTexts` was when any were given.
-   */
+  /** True when every expected text was found and no unexpected one was. */
   readonly containsAll: boolean;
   readonly found: string[];
   readonly missing: string[];
   /** Texts from `unexpectedTexts` that were found on screen anyway. */
   readonly forbidden: string[];
-  /** Texts from `oneOfTexts` that were found on screen. */
-  readonly foundOneOf: string[];
 };

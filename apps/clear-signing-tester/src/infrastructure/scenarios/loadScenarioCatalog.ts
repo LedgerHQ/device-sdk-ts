@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
+import { boolean, Codec, type FromType, optional, string } from "purify-ts";
 
 import {
   BTC_LEGACY_COIN_APPS,
@@ -10,7 +11,10 @@ import {
   type ScenarioDevice,
   type ScenarioOptions,
 } from "@root/src/domain/models/Scenario";
-import { TRANSACTION_CHECK_DEVICES } from "@root/src/domain/models/TransactionCheck";
+import {
+  TRANSACTION_CHECK_DEVICES,
+  TRANSACTION_CHECK_VERDICTS,
+} from "@root/src/domain/models/TransactionCheck";
 
 /** Directory holding the scenario files, relative to the app root. */
 export const SCENARIOS_DIR = "ressources";
@@ -31,6 +35,15 @@ const COIN_APPS: readonly ScenarioCoinApp[] = [
 const MODES = ["parallel", "sequential"] as const;
 
 type Json = Record<string, unknown>;
+
+// Typed from ScenarioOptions so a new option cannot be left out of it.
+const scenarioOptionsCodec: Codec<FromType<ScenarioOptions>> = Codec.interface({
+  blindSigningEnabled: optional(boolean),
+  skipOriginToken: optional(boolean),
+  addressBook: optional(string),
+  distill: optional(boolean),
+  transactionCheckEnabled: optional(boolean),
+});
 
 /**
  * A scenario file describes how to run itself, so adding a scenario is a new
@@ -107,13 +120,14 @@ function isScenarioFile(parsed: unknown): parsed is Json {
   );
 }
 
-function hasOneOfTexts(raw: unknown): boolean {
-  const oneOfTexts = (raw as Json | null)?.["oneOfTexts"];
-  // A blank verdict is contained in every screen, so it would accept any review.
+function expectsVerdict(raw: unknown): boolean {
+  const expectedTexts: unknown = (raw as Json | null)?.["expectedTexts"];
   return (
-    Array.isArray(oneOfTexts) &&
-    oneOfTexts.length > 0 &&
-    oneOfTexts.every((text) => typeof text === "string" && text.trim() !== "")
+    Array.isArray(expectedTexts) &&
+    expectedTexts.some(
+      (text) =>
+        typeof text === "string" && TRANSACTION_CHECK_VERDICTS.includes(text),
+    )
   );
 }
 
@@ -171,16 +185,14 @@ function toScenario(raw: Json, path: string): Scenario {
     fail(`needs a non-empty "cases" list.`);
   }
 
-  const options = raw["options"] as ScenarioOptions | undefined;
-  const transactionCheck: unknown = options?.transactionCheckEnabled ?? false;
-  if (typeof transactionCheck !== "boolean") {
-    fail(
-      `has a non-boolean "transactionCheckEnabled" ${JSON.stringify(transactionCheck)}.`,
-    );
-  }
-  if (transactionCheck) {
-    // Only the Solana fixtures read `oneOfTexts`, and only the Solana app's
-    // opt-in and warnings were checked against the tester.
+  const options = optional(scenarioOptionsCodec)
+    .decode(raw["options"])
+    .caseOf({
+      Left: (error) => fail(`has invalid "options": ${error}`),
+      Right: (decoded) => decoded,
+    });
+  if (options?.transactionCheckEnabled) {
+    // Only the Solana app's opt-in and warnings were checked against the tester.
     if (coinApp !== "Solana") {
       fail(`sets "transactionCheckEnabled", which only Solana supports.`);
     }
@@ -192,11 +204,11 @@ function toScenario(raw: Json, path: string): Scenario {
         `sets "transactionCheckEnabled" but lists ${JSON.stringify(withoutCheck)}, which has no Transaction Check.`,
       );
     }
-    // Without them, a case passes whether or not a report reached the device.
+    // Without one, a case passes whether or not a report reached the device.
     const cases = raw["cases"];
-    if (!Array.isArray(cases) || cases.some((c) => !hasOneOfTexts(c))) {
+    if (!Array.isArray(cases) || !cases.every(expectsVerdict)) {
       fail(
-        `sets "transactionCheckEnabled", so each case needs the verdicts it accepts in "oneOfTexts".`,
+        `sets "transactionCheckEnabled", so each case needs a Transaction Check verdict in "expectedTexts".`,
       );
     }
   }

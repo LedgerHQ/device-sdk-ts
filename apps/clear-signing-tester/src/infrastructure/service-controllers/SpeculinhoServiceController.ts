@@ -27,7 +27,7 @@ const RELEASE_TIMEOUT_MS = 10_000;
 const ROUTE_TIMEOUT_SECONDS = 60;
 
 /** Speculos' own default seed, so a pod derives the same keys it would with no
- * `--seed` at all. A scenario that needs a funded wallet sets its own. */
+ * `--seed` at all. Scenarios needing non-default wallet state set up their own. */
 const DEFAULT_SPECULOS_SEED =
   "glory promote mansion idle axis finger extra february uncover one trip resource lawn turtle enact monster seven myth punch hobby comfort wild raise skin";
 

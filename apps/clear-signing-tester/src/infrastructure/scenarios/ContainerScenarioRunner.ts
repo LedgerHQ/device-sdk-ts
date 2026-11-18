@@ -63,8 +63,7 @@ export type ScenarioRuntime = {
   readonly originToken: string;
   /**
    * A funded wallet's mnemonic, for the scenarios whose transactions the live
-   * Web3 Checks backend simulates. Every other scenario keeps the default seed,
-   * since its expected texts carry the default wallet's addresses.
+   * Transaction Check backend simulates.
    */
   readonly speculosSeed?: string;
   /**
@@ -281,6 +280,9 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         screenshotPath: this.runtime.screenshotPath,
         speculinhoUrl: this.runtime.speculinhoUrl,
         speculosHttpTimeoutMs: this.runtime.speculosHttpTimeoutMs,
+        // Only the Transaction Check scenarios need a funded wallet. The others
+        // keep the default seed: their expected texts carry its addresses, so
+        // moving every scenario to the funded seed would break them.
         ...(options.transactionCheckEnabled
           ? { seed: this.runtime.speculosSeed }
           : {}),

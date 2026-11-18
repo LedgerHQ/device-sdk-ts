@@ -11,9 +11,9 @@ import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnal
 
 import { type StateHandler, type StateHandlerResult } from "./StateHandler";
 
-const WEB3_CHECKS_MODAL_MAX_ATTEMPTS = 6;
-const WEB3_CHECKS_MODAL_POLL_DELAY_MS = 1000;
-const WEB3_CHECKS_MODAL_SETTLE_DELAY_MS = 1500;
+const TRANSACTION_CHECK_MODAL_MAX_ATTEMPTS = 6;
+const TRANSACTION_CHECK_MODAL_POLL_DELAY_MS = 1000;
+const TRANSACTION_CHECK_MODAL_SETTLE_DELAY_MS = 1500;
 // Accepting shows a "Transaction Check enabled" screen that closes by itself
 // after a few seconds, before the app answers the opt-in APDU.
 const OPT_IN_CLOSE_MAX_ATTEMPTS = 10;
@@ -56,8 +56,8 @@ export class OptInStateHandler implements StateHandler {
     try {
       await this.retryService.pollUntil(
         async () => await this.screenAnalyzer.isWeb3ChecksOptInScreen(),
-        WEB3_CHECKS_MODAL_MAX_ATTEMPTS,
-        WEB3_CHECKS_MODAL_POLL_DELAY_MS,
+        TRANSACTION_CHECK_MODAL_MAX_ATTEMPTS,
+        TRANSACTION_CHECK_MODAL_POLL_DELAY_MS,
       );
     } catch (_error) {
       // Unlike a declined opt-in, a missed one cannot be skipped: the signer
@@ -69,7 +69,7 @@ export class OptInStateHandler implements StateHandler {
       };
     }
 
-    await this.delay(WEB3_CHECKS_MODAL_SETTLE_DELAY_MS);
+    await this.delay(TRANSACTION_CHECK_MODAL_SETTLE_DELAY_MS);
 
     if (this.logLevel === "debug") {
       const screenshotPath = await this.screenshotSaver.save();

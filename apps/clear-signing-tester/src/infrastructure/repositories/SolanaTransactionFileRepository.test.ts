@@ -41,7 +41,6 @@ describe("SolanaTransactionFileRepository", () => {
           rawTx: "gAEB",
           expectedTexts: ["Owner"],
           unexpectedTexts: ["Close"],
-          oneOfTexts: ["Potential risk detected."],
           expectBlindSigned: true,
           skipCraft: true,
         },
@@ -53,7 +52,6 @@ describe("SolanaTransactionFileRepository", () => {
     expect(input).toMatchObject({
       expectedTexts: ["Owner"],
       unexpectedTexts: ["Close"],
-      oneOfTexts: ["Potential risk detected."],
       expectBlindSigned: true,
       skipCraft: true,
     });

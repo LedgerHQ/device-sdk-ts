@@ -55,12 +55,6 @@ const REVIEW_UNAVAILABLE = [
   "Transaction Check unavailable",
   "Reject",
 ];
-// The verdict lines of the Solana app, as live-scan.json lists them.
-const VERDICTS = [
-  "No threat detected by Transaction Check.",
-  "Potential risk detected.",
-  "Critical threat detected.",
-];
 const REVIEW_WITHOUT_VERDICT = ["Review transaction to\nsend SOL", "Reject"];
 const REVIEW_RISK = [
   "Review transaction to\nsend SOL",
@@ -157,38 +151,24 @@ describe("DefaultScreenAnalyzer", () => {
     });
   });
 
-  describe("analyzeAccumulatedTexts with oneOfTexts", () => {
-    it("passes when a screen read earlier showed one of them", async () => {
-      const analyzer = analyzerShowing(REVIEW_NO_THREAT, HOME);
-      await analyzer.isHomePage();
-      await analyzer.isHomePage();
-
-      const analysis = await analyzer.analyzeAccumulatedTexts([], [], VERDICTS);
-
-      expect(analysis.containsAll).toBe(true);
-      expect(analysis.foundOneOf).toEqual([
-        "No threat detected by Transaction Check.",
-      ]);
-    });
-
+  // A warning's heading and its "Detected by Transaction_Checks" run together
+  // into "potential risk detected…" once whitespace is stripped, so only the
+  // verdict's trailing period keeps a warning from passing for the verdict.
+  describe("analyzeAccumulatedTexts with a Transaction Check verdict", () => {
     it.each([
-      ["risk", RISK_WARNING],
-      ["threat", THREAT_WARNING],
+      ["risk", RISK_WARNING, "Potential risk detected."],
+      ["threat", THREAT_WARNING, "Critical threat detected."],
     ])(
-      "fails when a %s warning precedes a review without a verdict",
-      async (_label, warning) => {
+      "fails when a %s warning precedes a review without its verdict",
+      async (_label, warning, verdict) => {
         const analyzer = analyzerShowing(warning, REVIEW_WITHOUT_VERDICT);
         await analyzer.isHomePage();
         await analyzer.isHomePage();
 
-        const analysis = await analyzer.analyzeAccumulatedTexts(
-          [],
-          [],
-          VERDICTS,
-        );
+        const analysis = await analyzer.analyzeAccumulatedTexts([verdict]);
 
         expect(analysis.containsAll).toBe(false);
-        expect(analysis.foundOneOf).toEqual([]);
+        expect(analysis.missing).toEqual([verdict]);
       },
     );
 
@@ -197,30 +177,11 @@ describe("DefaultScreenAnalyzer", () => {
       await analyzer.isHomePage();
       await analyzer.isHomePage();
 
-      const analysis = await analyzer.analyzeAccumulatedTexts([], [], VERDICTS);
+      const analysis = await analyzer.analyzeAccumulatedTexts([
+        "Potential risk detected.",
+      ]);
 
       expect(analysis.containsAll).toBe(true);
-      expect(analysis.foundOneOf).toEqual(["Potential risk detected."]);
-    });
-
-    it("fails when no screen showed any of them", async () => {
-      const analyzer = analyzerShowing(REVIEW_UNAVAILABLE);
-      await analyzer.isHomePage();
-
-      const analysis = await analyzer.analyzeAccumulatedTexts([], [], VERDICTS);
-
-      expect(analysis.containsAll).toBe(false);
-      expect(analysis.foundOneOf).toEqual([]);
-    });
-
-    it("requires nothing when none are given", async () => {
-      const analyzer = analyzerShowing(HOME);
-      await analyzer.isHomePage();
-
-      const analysis = await analyzer.analyzeAccumulatedTexts([], []);
-
-      expect(analysis.containsAll).toBe(true);
-      expect(analysis.foundOneOf).toEqual([]);
     });
   });
 });

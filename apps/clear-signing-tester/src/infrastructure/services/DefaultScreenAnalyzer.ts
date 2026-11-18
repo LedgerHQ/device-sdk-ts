@@ -31,10 +31,9 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
   async analyzeAccumulatedTexts(
     expectedTexts: string[],
     unexpectedTexts: string[] = [],
-    oneOfTexts: readonly string[] = [],
   ): Promise<ScreenTextAnalysis> {
     this.logger.debug("Analyzing accumulated screen texts", {
-      data: { expectedTexts, unexpectedTexts, oneOfTexts },
+      data: { expectedTexts, unexpectedTexts },
     });
     const accumulatedTexts = await this.getAndClearAccumulatedTexts();
 
@@ -62,11 +61,8 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     }
 
     const forbidden = unexpectedTexts.filter(isOnScreen);
-    const foundOneOf = oneOfTexts.filter(isOnScreen);
-    const oneOfSatisfied = oneOfTexts.length === 0 || foundOneOf.length > 0;
 
-    const containsAll =
-      missing.length === 0 && forbidden.length === 0 && oneOfSatisfied;
+    const containsAll = missing.length === 0 && forbidden.length === 0;
 
     this.logger.info(
       `Summary: ${found.length}/${expectedTexts.length} expected texts found`,
@@ -81,15 +77,6 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
         `Texts that should not have appeared: ${forbidden.map((t) => `"${t}"`).join(", ")}`,
       );
     }
-    if (foundOneOf.length > 0) {
-      this.logger.info(
-        `One of the alternatives appeared: ${foundOneOf.map((t) => `"${t}"`).join(", ")}`,
-      );
-    } else if (!oneOfSatisfied) {
-      this.logger.info(
-        `None of these texts appeared: ${oneOfTexts.map((t) => `"${t}"`).join(", ")}`,
-      );
-    }
     this.logger.info(
       `Result: ${containsAll ? "All expected texts found (clear signed)" : "Assertion not satisfied (partially clear signed)"}`,
     );
@@ -101,13 +88,12 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
         found,
         missing,
         forbidden,
-        foundOneOf,
         containsAll,
         totalAccumulatedTexts: accumulatedTexts.length,
       },
     });
 
-    return { containsAll, found, missing, forbidden, foundOneOf };
+    return { containsAll, found, missing, forbidden };
   }
 
   /** {@inheritDoc ScreenAnalyzerService.screenContains} */

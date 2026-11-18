@@ -13,7 +13,6 @@ type RawTransactionData = {
   description?: string;
   expectedTexts?: string[];
   unexpectedTexts?: string[];
-  oneOfTexts?: string[];
   expectBlindSigned?: boolean;
   skipCraft?: boolean;
 };
@@ -50,7 +49,6 @@ export class SolanaTransactionFileRepository
         description: rawTx.description || `Transaction ${index + 1}`,
         expectedTexts: rawTx.expectedTexts,
         unexpectedTexts: rawTx.unexpectedTexts,
-        oneOfTexts: rawTx.oneOfTexts,
         expectBlindSigned: rawTx.expectBlindSigned,
         skipCraft: rawTx.skipCraft,
       };
