@@ -1,4 +1,5 @@
 import { inject, injectable } from "inversify";
+import { array, Codec, string } from "purify-ts";
 
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
@@ -12,8 +13,14 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
+import { deviceModelIdCodec } from "@/shared/utils/deviceModelIdCodec";
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [ClearSignContextType.XRP_MPT];
+
+const xrpTransactionContextCodec = Codec.interface({
+  mptIssuanceIds: array(string),
+  deviceModelId: deviceModelIdCodec,
+});
 
 @injectable()
 export class MptContextLoader implements ContextLoader<XrpTransactionContext> {
@@ -28,17 +35,13 @@ export class MptContextLoader implements ContextLoader<XrpTransactionContext> {
     input: unknown,
     expectedTypes: ClearSignContextType[],
   ): input is XrpTransactionContext {
-    return (
-      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type)) &&
-      typeof input === "object" &&
-      input !== null &&
-      "mptIssuanceIds" in input &&
-      Array.isArray(input.mptIssuanceIds) &&
-      input.mptIssuanceIds.length > 0 &&
-      input.mptIssuanceIds.every((id) => typeof id === "string") &&
-      "deviceModelId" in input &&
-      input.deviceModelId !== undefined
-    );
+    if (!SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))) {
+      return false;
+    }
+    return xrpTransactionContextCodec.decode(input).caseOf({
+      Left: () => false,
+      Right: ({ mptIssuanceIds }) => mptIssuanceIds.length > 0,
+    });
   }
 
   /**

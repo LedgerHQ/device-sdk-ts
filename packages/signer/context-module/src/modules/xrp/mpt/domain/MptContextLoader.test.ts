@@ -56,6 +56,10 @@ describe("MptContextLoader", () => {
       ["no issuance id", { ...input, mptIssuanceIds: [] }],
       ["a non-string issuance id", { ...input, mptIssuanceIds: [42] }],
       ["no device model", { mptIssuanceIds: [LIQUCF] }],
+      [
+        "an unsupported device model",
+        { ...input, deviceModelId: DeviceModelId.NANO_S },
+      ],
     ])("should not handle %s", (_label, value) => {
       expect(loader.canHandle(value, [ClearSignContextType.XRP_MPT])).toBe(
         false,
