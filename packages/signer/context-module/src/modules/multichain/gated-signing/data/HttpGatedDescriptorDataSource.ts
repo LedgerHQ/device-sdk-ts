@@ -38,31 +38,13 @@ export class HttpGatedDescriptorDataSource
   }: GetGatedDescriptorParams): Promise<
     Either<Error, GetGatedDescriptorResponse>
   > {
-    let dto: GatedDappsDto | undefined;
-    try {
-      dto = (await this.http.get(`${this.config.cal.url}/gated_dapps`, {
-        params: {
-          ref: `branch:${this.config.cal.branch}`,
-          output: "gated_descriptors,app,category",
-          contracts: contractAddress,
-          chain_id: chainId,
-        },
-      })) as GatedDappsDto;
-    } catch (error) {
-      return Left(
-        new Error(
-          `[ContextModule] HttpGatedDescriptorDataSource: Failed to fetch gated descriptors: ${error}`,
-        ),
-      );
-    }
-
-    if (!this.isGatedDappsDto(dto)) {
-      return Left(
-        new Error(
-          `[ContextModule] HttpGatedDescriptorDataSource: Invalid gated descriptors response`,
-        ),
-      );
-    }
+    const fetched = await this.fetchGatedDapps(
+      contractAddress,
+      chainId,
+      "gated_descriptors,app,category",
+    );
+    if (fetched.isLeft()) return Left(fetched.extract());
+    const dto = fetched.unsafeCoerce();
 
     const normalizedAddress = contractAddress.toLowerCase();
     const selectorWithout0x = selector.startsWith("0x")
@@ -103,31 +85,13 @@ export class HttpGatedDescriptorDataSource
   }: GetGatedDescriptorForTypedDataParams): Promise<
     Either<Error, GetGatedDescriptorResponse>
   > {
-    let dto: GatedDappsDto | undefined;
-    try {
-      dto = (await this.http.get(`${this.config.cal.url}/gated_dapps`, {
-        params: {
-          ref: `branch:${this.config.cal.branch}`,
-          output: "gated_descriptors",
-          contracts: contractAddress,
-          chain_id: chainId,
-        },
-      })) as GatedDappsDto;
-    } catch (error) {
-      return Left(
-        new Error(
-          `[ContextModule] HttpGatedDescriptorDataSource: Failed to fetch gated descriptors: ${error}`,
-        ),
-      );
-    }
-
-    if (!this.isGatedDappsDto(dto)) {
-      return Left(
-        new Error(
-          `[ContextModule] HttpGatedDescriptorDataSource: Invalid gated descriptors response`,
-        ),
-      );
-    }
+    const fetched = await this.fetchGatedDapps(
+      contractAddress,
+      chainId,
+      "gated_descriptors",
+    );
+    if (fetched.isLeft()) return Left(fetched.extract());
+    const dto = fetched.unsafeCoerce();
 
     const normalizedAddress = contractAddress.toLowerCase();
     const normalizedSchemaHash = schemaHash.toLowerCase();
@@ -153,6 +117,39 @@ export class HttpGatedDescriptorDataSource
         `[ContextModule] HttpGatedDescriptorDataSource: No gated descriptor for contract ${contractAddress} and schema hash ${schemaHash}`,
       ),
     );
+  }
+
+  private async fetchGatedDapps(
+    contractAddress: string,
+    chainId: number,
+    output: string,
+  ): Promise<Either<Error, GatedDappsDto>> {
+    let dto: GatedDappsDto | undefined;
+    try {
+      dto = (await this.http.get(`${this.config.cal.url}/gated_dapps`, {
+        params: {
+          ref: `branch:${this.config.cal.branch}`,
+          output,
+          contracts: contractAddress,
+          chain_id: chainId,
+        },
+      })) as GatedDappsDto;
+    } catch (error) {
+      return Left(
+        new Error(
+          `[ContextModule] HttpGatedDescriptorDataSource: Failed to fetch gated descriptors: ${error}`,
+        ),
+      );
+    }
+
+    if (!this.isGatedDappsDto(dto)) {
+      return Left(
+        new Error(
+          `[ContextModule] HttpGatedDescriptorDataSource: Invalid gated descriptors response`,
+        ),
+      );
+    }
+    return Right(dto);
   }
 
   private isGatedDappsDto(data: unknown): data is GatedDappsDto {

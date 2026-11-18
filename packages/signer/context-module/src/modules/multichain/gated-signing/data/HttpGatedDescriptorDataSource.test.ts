@@ -2,7 +2,7 @@ import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { HttpGatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/data/HttpGatedDescriptorDataSource";
+import { HttpGatedDescriptorDataSource } from "@/modules/multichain/gated-signing/data/HttpGatedDescriptorDataSource";
 
 describe("HttpGatedDescriptorDataSource", () => {
   const config: ContextModuleServiceConfig = {
