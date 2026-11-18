@@ -114,6 +114,7 @@ const getSecureElementFinalFirmware = (
     .map((finalFirmware) => ({
       id: finalFirmware.id,
       perso: finalFirmware.perso,
+      name: finalFirmware.name,
       version: finalFirmware.version,
       bytes: finalFirmware.bytes,
       firmware: finalFirmware.firmware,

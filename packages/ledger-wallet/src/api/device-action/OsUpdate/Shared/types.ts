@@ -19,6 +19,7 @@ export type OsuFirmware = BaseFirmware & {
 };
 
 export type FinalFirmware = BaseFirmware & {
+  name: string;
   version: string;
   bytes: number | null;
   firmware: string | null;

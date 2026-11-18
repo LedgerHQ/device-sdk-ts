@@ -157,6 +157,7 @@ const getNextFirmware = (
     .map((nextFirmware) => ({
       id: nextFirmware.id,
       perso: nextFirmware.perso,
+      name: nextFirmware.name,
       version: nextFirmware.version,
       bytes: nextFirmware.bytes,
       firmware: nextFirmware.firmware,
