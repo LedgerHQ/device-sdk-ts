@@ -96,13 +96,14 @@ flowchart TB
 
 `createMockServer(config)` accepts a `MockServerConfig`. The standalone server ([`src/main.ts`](../src/main.ts)) builds it from the environment variables listed in the [README](../README.md#run-it-locally).
 
-| Option            | Description                                                                                                                       |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `ttlMs`           | Sliding inactivity timeout (refreshed on each authed request).                                                                    |
-| `maxLifetimeMs`   | Hard cap on session lifetime regardless of activity.                                                                              |
-| `sweepIntervalMs` | Expired-session sweep interval; `0` disables the sweeper.                                                                         |
-| `speculos`        | `{ baseUrl, speculosVersion?, readyTimeoutMs?, pollIntervalMs?, routeTimeoutSeconds? }`. When omitted, the server is a pure mock. |
-| `webUiDir`        | Directory holding the built [web UI](#-web-ui). When omitted, the server exposes the HTTP API only.                               |
+| Option            | Description                                                                                                                                                                                                                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ttlMs`           | Sliding inactivity timeout (refreshed on each authed request). Default: 30 minutes.                                                                                                                                                               |
+| `maxLifetimeMs`   | Hard cap on session lifetime regardless of activity. Default: 4 hours.                                                                                                                                                                            |
+| `sweepIntervalMs` | Expired-session sweep interval; `0` disables the sweeper. Default: 1 minute.                                                                                                                                                                      |
+| `managerApiUrl`   | Manager API base URL. The server uses it for the MCU version in `GetOsVersion`, for the app an install hash names, and for the firmware update target. Default: `https://manager.api.live.ledger.com/api`. The standalone server does not set it. |
+| `speculos`        | `{ baseUrl, speculosVersion?, readyTimeoutMs?, pollIntervalMs?, routeTimeoutSeconds? }`. When omitted, the server is a pure mock.                                                                                                                 |
+| `webUiDir`        | Directory holding the built [web UI](#-web-ui). When omitted, the server exposes the HTTP API only.                                                                                                                                               |
 
 `attachWebSocket(server)` wires the [secure-channel WebSocket](#-secure-channel-websocket) onto the HTTP server's `upgrade` event.
 
@@ -257,7 +258,7 @@ An app can also be quit from the device screen itself, which exits Speculos with
 
 ## 🔹 Web UI
 
-The server hands out [`@ledgerhq/device-mock-server-ui`](../../device-mock-server-ui) at its **root URL**. The UI talks to the same HTTP API as any other client, so nothing in it is exclusive to the UI.
+The server hands out [`@ledgerhq/device-mock-server-ui`](../../device-mock-server-ui), built with the [Lumen](https://ldls.vercel.app) design system, at its **root URL**. The UI talks to the same HTTP API as any other client, so nothing in it is exclusive to the UI.
 
 The UI is a static bundle, built as part of `serve`, `dev` and the workspace `build`. The server serves whatever bundle it finds and exposes the API alone if there is none. `MOCK_SERVER_WEB_DIR` points the server at a specific bundle; otherwise it looks at `./public` (where the Docker image puts it), `./apps/device-mock-server-ui/dist` and `../device-mock-server-ui/dist`, in that order.
 
@@ -275,7 +276,7 @@ Install dependencies from the **monorepo root** (`pnpm install`), then from `app
 pnpm dev          # tsx watch src/main.ts
 pnpm serve        # run once without watching
 pnpm build        # compile to lib/
-pnpm start        # node lib/cjs/main.js
+pnpm start        # node lib/cjs/src/main.js
 ```
 
 The Docker image is built from the full workspace, so the **build context must be the monorepo root**. `docker compose` (run from `apps/device-mock-server/`) sets it. For a standalone build:

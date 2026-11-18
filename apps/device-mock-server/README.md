@@ -7,7 +7,7 @@ The server can:
 - attach fake devices with the model, firmware and apps you choose,
 - answer the standard APDUs from that metadata, so a device works with no setup,
 - return your own responses for any APDU (**mocks**), to force errors and edge cases,
-- run genuine check and app install/list/uninstall offline, with no HSM,
+- run genuine check, app install, list and uninstall, and firmware update with no HSM,
 - run a real app in a [Speculos](https://github.com/LedgerHQ/speculos) emulator when the app is opened, and let you read its screen and press its buttons.
 
 This README is for people who **use** the server. To work on the server itself, read [`doc/architecture.md`](./doc/architecture.md).
@@ -46,7 +46,7 @@ flowchart LR
 ```
 
 - **Session.** Everything lives in a session. `POST /auth` creates one and returns a **bearer token**. Every client that uses the same token sees the same devices. Your app and your test must use the **same token**.
-- **Device.** A fake device in the session: model, firmware, installed apps, connected or not. Your app discovers it like a USB device.
+- **Device.** A fake device in the session: model, firmware, installed apps, connected or not. Your app discovers it as a USB or BLE device, as its `connectivity_type` says.
 - **Mock.** A rule on one device: "when an APDU starts with this prefix, answer this". Mocks always win over the default answers.
 - **Speculos.** When your app opens an app that is installed on the device, the server can start a Speculos emulator and send the next APDUs to it. You then get the real app's answers and screens.
 
@@ -83,20 +83,27 @@ Or with Docker (the build context is the monorepo root, `docker compose` handles
 
 ```bash
 cd apps/device-mock-server
-docker compose up --build                      # with Speculos
-SPECULINHO_URL= docker compose up --build      # pure mock, fully offline
+docker compose up --build   # with Speculos
 ```
 
-Copy `.env.example` to `.env` to keep your settings. The server reads these variables:
+Docker Compose always runs with Speculos: it replaces an empty `SPECULINHO_URL` with the default URL. This is also true for the empty `SPECULINHO_URL=` in `.env.example`. To run the image with no Speculos, use `docker run`:
 
-| Variable                    | Default                             | Description                                                                                                     |
-| --------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `PORT`                      | `9752`                              | HTTP port.                                                                                                      |
-| `SPECULINHO_URL`            | `https://speculinho.ledgerlabs.net` | Service that starts the Speculos emulators. Set it to empty (`SPECULINHO_URL=`) to run with no Speculos.        |
-| `SPECULOS_VERSION`          | _unset_                             | Pin a Speculos version.                                                                                         |
-| `SPECULOS_READY_TIMEOUT_MS` | `120000`                            | How long to wait for an emulator to start.                                                                      |
-| `MOCK_SERVER_LOG_LEVEL`     | `info`                              | One of `silent`, `error`, `warn`, `info`, `debug`.                                                              |
-| `MOCK_SERVER_WEB_DIR`       | _auto-detected_                     | Directory of the built web UI. See [`doc/architecture.md`](./doc/architecture.md#-web-ui) for the lookup order. |
+```bash
+# From the monorepo root:
+docker build -f apps/device-mock-server/Dockerfile -t device-mock-server .
+docker run --rm -p 9752:9752 -e SPECULINHO_URL= device-mock-server
+```
+
+Copy `.env.example` to `.env` to keep your Docker Compose settings. The server reads these variables:
+
+| Variable                    | Default                             | Description                                                                                                                                                                     |
+| --------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                      | `9752`                              | HTTP port.                                                                                                                                                                      |
+| `SPECULINHO_URL`            | `https://speculinho.ledgerlabs.net` | Service that starts the Speculos emulators. Set it to empty (`SPECULINHO_URL=`) to run with no Speculos.                                                                        |
+| `SPECULOS_VERSION`          | _unset_                             | Pin a Speculos version.                                                                                                                                                         |
+| `SPECULOS_READY_TIMEOUT_MS` | `120000`                            | How long to wait for an emulator to start.                                                                                                                                      |
+| `MOCK_SERVER_LOG_LEVEL`     | `info`                              | One of `silent`, `error`, `warn`, `info`, `debug`.                                                                                                                              |
+| `MOCK_SERVER_WEB_DIR`       | _auto-detected_                     | Directory of the built web UI. If it has no `index.html`, the server serves the HTTP API only. See [`doc/architecture.md`](./doc/architecture.md#-web-ui) for the lookup order. |
 
 ### Run it in your test process
 
@@ -162,7 +169,10 @@ Then discover and connect as with any transport:
 ```ts
 import { firstValueFrom } from "rxjs";
 
-const device = await mockClient.addDevice({ device_type: "stax" });
+const device = await mockClient.addDevice({
+  device_type: "stax",
+  firmware_version: "1.8.1",
+});
 
 const discovered = await firstValueFrom(
   dmk.startDiscovering({ transport: mockserverIdentifier }),
@@ -172,7 +182,7 @@ const sessionId = await dmk.connect({ device: discovered });
 
 `dmk.connect()` also marks the device as connected on the server.
 
-The transport asks the server for its devices every second. A device you add appears in the next second. When you delete or disconnect a device through the API, DMK gets a disconnect event in the next second too, as if you unplugged a real device.
+The transport asks the server for its devices every second. A device you add appears in the next second. When you delete or disconnect a device through the API, DMK gets a disconnect event in the next second too.
 
 The [sample app](../sample/src/providers/DeviceManagementKitProvider/transportConfig.ts) does the same setup from its settings.
 
@@ -205,20 +215,23 @@ const token = await fresh.authenticate(); // or create it now and read the token
 
 `addDevice()` and `editDevice()` take a `DeviceConfig`. Every field is optional. `editDevice()` keeps the device id and changes only the fields you send.
 
-| Field               | Default            | Description                                                                                                                                                                                     |
-| ------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `device_type`       | `nanoX`            | `nanoS`, `nanoSP`, `nanoX`, `stax`, `flex` or `apexp`.                                                                                                                                          |
-| `name`              | `Ledger Nano X`    | Device name.                                                                                                                                                                                    |
-| `firmware_version`  | `2.2.3`            | OS version reported to DMK.                                                                                                                                                                     |
-| `apps`              | `BOLOS 1.4.0` only | Installed apps, `{ name, version }`. List `BOLOS` first. An app must be in this list to open.                                                                                                   |
-| `connectivity_type` | `USB`              | `USB` or `BLE`.                                                                                                                                                                                 |
-| `masks`             | `[0x33000000]`     | Target id masks of the model.                                                                                                                                                                   |
-| `onboarded`         | `true`             | `false` starts a device that is not set up and goes through the onboarding steps.                                                                                                               |
-| `language`          | _English_          | Installed language pack, by name (`"french"`, `"german"`, …).                                                                                                                                   |
-| `mocks`             | none               | Mocks to add with the device.                                                                                                                                                                   |
-| `catalog`           | none               | Apps the install flow knows, `{ hash, name, version }`. The install flow finds the app from the hash DMK sends: first in `catalog`, then on the Manager API. Use it for tests that run offline. |
+| Field               | Default          | Description                                                                                                                                                                                                                        |
+| ------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                | a random UUID    | Id of a new device: 1 to 64 letters, digits, `-` or `_`. `addDevice()` fails with `409` if a device of the session has this id. `editDevice()` ignores it.                                                                         |
+| `device_type`       | `nanoX`          | `nanoS`, `nanoSP`, `nanoX`, `stax`, `flex` or `apexp`.                                                                                                                                                                             |
+| `name`              | `Ledger Nano X`  | Device name. The default is the same for all models.                                                                                                                                                                               |
+| `firmware_version`  | none             | OS version reported to DMK. **Set it.** With no version, `GetOsVersion` and `OpenApp` fail with `6d00`, and `GetAppAndVersion` reports `0.0.0`. Use a version that exists for the model: the Manager API must know it (see below). |
+| `apps`              | none             | Installed apps, `{ name, version }`. An app must be in this list to open. The server ignores a `BOLOS` entry.                                                                                                                      |
+| `connectivity_type` | `USB`            | `USB` or `BLE`.                                                                                                                                                                                                                    |
+| `masks`             | the model's mask | Target id masks. Set them only to report a target id that is not the model's.                                                                                                                                                      |
+| `onboarded`         | `true`           | `false` starts a device that is not set up and goes through the onboarding steps.                                                                                                                                                  |
+| `language`          | _English_        | Installed language pack, by name (`"french"`, `"german"`, …).                                                                                                                                                                      |
+| `mocks`             | none             | Mocks to add with the device.                                                                                                                                                                                                      |
+| `catalog`           | none             | Apps the install flow knows, `{ hash, name, version }`. The install flow finds the app from the hash DMK sends: first in `catalog`, then on the Manager API. Use it for an app that the Manager API does not know.                 |
 
 To find a firmware version and app versions that exist for a model, build the device in the [web UI](#-manual-tests): it asks the Manager API. Then export the session to get the JSON.
+
+To make a device unavailable and then available again, delete it, then add it again with the same `id`. Your app finds the same device again.
 
 ## 🔹 What a device does with no mocks
 
@@ -226,9 +239,12 @@ A new device answers these APDUs from its metadata. You do not need mocks for th
 
 | APDU or flow                                | Answer                                                                                                                                                        |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GetOsVersion`, `GetAppAndVersion`          | Built from the device metadata (`device_type`, `firmware_version`, `language`) and the open app.                                                              |
+| `GetAppAndVersion`                          | `BOLOS` and the `firmware_version` while no app is open.                                                                                                      |
+| `GetOsVersion`                              | Built from `device_type`, `firmware_version` and `language`. Needs the Manager API: see the note below the table.                                             |
+| `GetDeviceName`, `GetBatteryStatus`         | The device `name`. A battery at 100 % on the models that have a battery.                                                                                      |
+| Custom lock screen                          | No image on the device. Uploading an image succeeds, but the device keeps no image.                                                                           |
 | Genuine check                               | Genuine.                                                                                                                                                      |
-| List apps                                   | The device's `apps`.                                                                                                                                          |
+| List apps (secure channel or `ListApps`)    | The device's `apps`.                                                                                                                                          |
 | Install and uninstall an app                | Success. After the last block, the app is added to or removed from the device's `apps`.                                                                       |
 | Firmware update                             | Success. After the last block, the device reports the new `firmware_version`.                                                                                 |
 | `SetDeviceName`                             | Renames the device. `GetDeviceName`, the device list and the export show the new name.                                                                        |
@@ -237,6 +253,14 @@ A new device answers these APDUs from its metadata. You do not need mocks for th
 | `OpenApp`                                   | Starts Speculos for an app in `apps` (see [Speculos](#-run-real-apps-on-speculos)). `6807` if the app is not in `apps`. `6d00` if the server has no Speculos. |
 | `CloseApp` (app open on Speculos)           | Stops Speculos. The device is back on the dashboard.                                                                                                          |
 | Any other APDU (no app open)                | `6d00`.                                                                                                                                                       |
+
+**`GetOsVersion` needs the Manager API.** The server asks the Manager API (`https://manager.api.live.ledger.com`) for the MCU version that goes with the device's firmware. `GetOsVersion` returns `6d00` in these cases:
+
+- the device has no `firmware_version`,
+- the Manager API does not know this version for the model,
+- the server cannot reach the Manager API.
+
+When the device is on the dashboard, DMK sends `GetOsVersion` at the start of most device actions, signers included. If `GetOsVersion` fails, the device action fails.
 
 On a server with no Speculos, you can fake an open app with mocks: answer `OpenApp` (`e0d8`) with `9000`, and `GetAppAndVersion` (`b0010000`) with the app's name and version.
 
@@ -272,6 +296,7 @@ Rules:
 | Unknown command                         | the command's prefix → `6d00`                       |
 | User refuses the secure channel         | `e051` → `5501` or `6985`                           |
 | Device locked during the secure channel | `e051` → `5515` or `6982`                           |
+| Genuine check: device not genuine       | `e0f1` → `00019000`                                 |
 | Genuine check: certificate failure      | `e052` → `6d00`                                     |
 | Install: not enough memory              | `e0f0` → `6a84`                                     |
 | Install: app already installed          | `e0f0` → `6a80`                                     |
@@ -374,49 +399,57 @@ afterEach(async () => {
 });
 
 it("reports a locked device", async () => {
-  const device = await mockClient.addDevice({ device_type: "stax" });
+  const device = await mockClient.addDevice({
+    device_type: "stax",
+    firmware_version: "1.8.1",
+  });
   await mockClient.addMock(device.id, { prefix: "b0010000", response: "5515" });
 
   // connect DMK, send GetAppAndVersionCommand, expect a DeviceLockedError
 });
 ```
 
-**Load a session from a file.** Build a session once in the web UI, export it to JSON, and keep the file next to your tests. Then call `importSession(snapshot)` in the test. It replaces all the devices and mocks of the session.
+**Load a session from a file.** Build a session once in the web UI, export it to JSON, and keep the file next to your tests. Then call `importSession(snapshot)` in the test. It replaces all the devices and mocks of the session. Each device keeps the `id` it has in the file.
 
 **Full example.** The [sample app's Playwright suite](../sample/playwright) uses this pattern. Its [`mockClient` fixture](../sample/playwright/fixtures.ts) creates the session, gives the token to the app before the page loads and deletes the session after the test. Its [`SpeculosDriver`](../sample/playwright/utils/drivers/SpeculosDriver.ts) goes through a signing screen by screen.
 
 ## 🔹 Manual tests
 
 1. Open the web UI: the [hosted instance](#hosted-instance) on the VPN, or <http://127.0.0.1:9752> for a [local server](#run-it-locally).
-2. Create a session.
+2. Create a session, or open a session that you used before in this browser.
 3. Add a device. The UI checks that the firmware exists for the model and lists the apps available for it.
 4. Give the **server URL** and **token** shown in the UI to your app:
    - **DMK sample app:** in Settings, choose the mock server transport, then fill in _Mock Server URL_ and _Mock Server Session Token_.
    - **Ledger Wallet:** scan the QR code (mobile) or open the link (desktop). Both contain a `ledgerlive://mockserver/config` deep link.
    - **Your app:** set up the transport as in [Connect a DMK app](#-connect-a-dmk-app).
 5. Connect from your app.
-6. While you test, change the device or its mocks in the UI. The **ready-made scenarios** add the common mocks (device locked, app not installed, user refusal) in one click. **Interact** opens the device screen when an app runs on Speculos.
+6. While you test, change the device or its mocks in the UI:
+   - The **common scenarios** add the usual mocks in one click: device locked, app not installed, user refusal of an Ethereum signature, device not genuine.
+   - Turn **Enabled** off to make the device unavailable: your app stops discovering it and loses its connection. Turn it on again: your app finds the same device, with the same id.
+   - **Interact** opens the device screen when an app runs on Speculos.
+   - **Speculos seed** sets the mnemonic of the emulators. Use test mnemonics only.
 7. **Export** the session to JSON to share it or to start from it again later. **Import** loads it back. You can also paste the token of a session already in use, for example your app's, to join it.
 
 ### With an AI agent
 
 This repo has a [`mock-server` agent skill](../../agent-files/skills/mock-server/SKILL.md) for Claude Code and Cursor. When you mention the mock server in a chat opened in this repo, the agent loads it and drives the server with `curl`: it adds devices, changes their firmware or apps, adds mocks, sends APDUs and taps the Speculos screen.
 
-The skill uses a local server (`http://127.0.0.1:9752`) by default. For the hosted instance or your app's session, give the agent the URL and the **full** token. Your app's logs show only the first characters of the token.
+The skill uses a local server (`http://127.0.0.1:9752`) by default. For the hosted instance or your app's session, give the agent the URL and the **full** token. The server logs and DMK DevTools show only the first 8 characters of the token.
 
 ## 🔹 Troubleshooting
 
-| Problem                                                              | Cause and fix                                                                                                                                                                                                                                |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The hosted instance does not answer.                                 | You are not on the Ledger VPN.                                                                                                                                                                                                               |
-| The device does not appear in your app.                              | Your app and your test use different sessions. Give the same token to the transport and to `MockClient`. A transport with no token creates its own session.                                                                                  |
-| Genuine check, list apps or install fails.                           | `webSocketUrl` is not set, so DMK connects to the real secure-channel backend. Set it to `ws(s)://<host>/secure-channel/<token>` (see [Connect a DMK app](#-connect-a-dmk-app)).                                                             |
-| Calls fail with `401 Invalid or expired session`.                    | The session expired (30 minutes with no request, or 4 hours in all), or the server restarted. Create a new session.                                                                                                                          |
-| Your app disconnects from the device.                                | A client of the session deleted or disconnected the device, or an APDU request to the server failed (server down, session expired).                                                                                                          |
-| A mock has no effect.                                                | The mock is on another device, the APDU does not start with the prefix, or a mock with a longer prefix matches too. `listMocks()` shows the mocks of the device.                                                                             |
-| `OpenApp` returns `6807`.                                            | The app is not in the device's `apps`. Add it with `editDevice()`.                                                                                                                                                                           |
-| `OpenApp` returns `6d00`.                                            | The server has no Speculos, or the emulator did not start: the app name is not exact (`Ethereum`, not `eth`), the app version was not built for the firmware, or it took longer than `SPECULOS_READY_TIMEOUT_MS`. The server logs the cause. |
-| Speculos calls (`getSpeculos()`, `getScreenshot()`, …) return `409`. | No app runs on Speculos: the app is not open yet, the emulator is still starting, or the app was closed or quit from the device screen.                                                                                                      |
+| Problem                                                              | Cause and fix                                                                                                                                                                                                                                                                      |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The hosted instance does not answer.                                 | You are not on the Ledger VPN.                                                                                                                                                                                                                                                     |
+| The device does not appear in your app.                              | Your app and your test use different sessions. Give the same token to the transport and to `MockClient`. A transport with no token creates its own session.                                                                                                                        |
+| Genuine check, list apps or install fails.                           | `webSocketUrl` is not set, so DMK connects to the real secure-channel backend. Set it to `ws(s)://<host>/secure-channel/<token>` (see [Connect a DMK app](#-connect-a-dmk-app)).                                                                                                   |
+| Most device actions fail, and `GetOsVersion` returns `6d00`.         | The device has no `firmware_version`, the Manager API does not know this version for the model, or the server cannot reach the Manager API. Set a version that exists for the model: the web UI checks it.                                                                         |
+| Calls fail with `401 Invalid or expired session`.                    | The session expired (30 minutes with no request, or 4 hours in all), or the server restarted. Create a new session.                                                                                                                                                                |
+| Your app disconnects from the device.                                | A client of the session deleted or disconnected the device, or an APDU request to the server failed (server down, session expired).                                                                                                                                                |
+| A mock has no effect.                                                | The mock is on another device, the APDU does not start with the prefix, or a mock with a longer prefix matches too. `listMocks()` shows the mocks of the device.                                                                                                                   |
+| `OpenApp` returns `6807`.                                            | The app is not in the device's `apps`. Add it with `editDevice()`.                                                                                                                                                                                                                 |
+| `OpenApp` returns `6d00`.                                            | The server has no Speculos, the device has no `firmware_version`, or the emulator did not start: the app name is not exact (`Ethereum`, not `eth`), the app version was not built for the firmware, or it took longer than `SPECULOS_READY_TIMEOUT_MS`. The server logs the cause. |
+| Speculos calls (`getSpeculos()`, `getScreenshot()`, …) return `409`. | No app runs on Speculos: the app is not open yet, the emulator is still starting, or the app was closed or quit from the device screen.                                                                                                                                            |
 
 ## 🔹 Limits
 
@@ -426,29 +459,32 @@ The skill uses a local server (`http://127.0.0.1:9752`) by default. For the host
 - **No real secure channel.** No HSM takes part. The genuine check always says "genuine", and install and uninstall only change the device's `apps`. Use mocks to test failures.
 - **No real transport.** The transport sends each APDU as an HTTP request. There is no USB or BLE framing, BLE pairing or MTU, and no realistic timing. `connectivity_type` only changes what DMK reports.
 - **Polling delay.** The transport asks the server for its devices every second, so a change made through the API (device added, removed or disconnected) reaches DMK up to one second later.
+- **Not fully offline.** The server asks the Manager API for `GetOsVersion`, for the apps to install (unless they are in `catalog`) and for firmware updates. With no internet access, most device actions fail (see [`GetOsVersion` needs the Manager API](#-what-a-device-does-with-no-mocks)).
 - **Speculos start-up is slow.** Opening an app on Speculos can take a minute or more.
 - **Nothing is kept.** The server keeps sessions in memory. They expire, and a restart deletes them all. Export a session to keep it.
 - **Not for secrets.** The Speculos seed is kept and sent in plain text, and other people use the hosted instance. Use test mnemonics only.
 
 ## 🔹 HTTP API
 
-`MockClient` covers this API. Use it directly from other languages or from `curl`. All routes except `POST /auth` and `GET /health` need an `Authorization: Bearer <token>` header.
+`MockClient` covers this API. Use it directly from other languages or from `curl`. All routes except `POST /auth`, `GET /health` and `GET /speculos/catalogue/…` need an `Authorization: Bearer <token>` header.
 
-| Method & path                                 | Description                                                                                        |
-| --------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `POST /auth`                                  | Create a session. Returns `{ token, expires_at }`.                                                 |
-| `GET /health`                                 | Check that the server is up (no auth).                                                             |
-| `GET` / `DELETE /sessions/current`            | Read / delete the session.                                                                         |
-| `PUT /sessions/current/seed`                  | Set the Speculos mnemonic of the session (`{ seed }`). ⚠️ Kept in plain text: test mnemonics only. |
-| `GET` / `POST /devices`                       | List / add devices.                                                                                |
-| `GET` / `PATCH` / `DELETE /devices/:id`       | Read / edit / remove a device.                                                                     |
-| `POST /devices/:id/connect` · `/disconnect`   | Connect / disconnect a device.                                                                     |
-| `POST /devices/:id/apdu`                      | Send an APDU (`{ apdu }` → `{ response }`).                                                        |
-| `GET` / `POST` / `DELETE /devices/:id/mocks`  | List / add / delete all mocks of a device.                                                         |
-| `PATCH` / `DELETE /devices/:id/mocks/:mockId` | Edit / delete one mock.                                                                            |
-| `GET /devices/:id/speculos`                   | The device's running emulator (`409` if no app is open).                                           |
-| `ALL /devices/:id/speculos/*`                 | Send a request to the device's emulator (Speculos REST API).                                       |
-| `GET /export` · `POST /import`                | Export / import the session's devices and mocks as JSON.                                           |
+| Method & path                                          | Description                                                                                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `POST /auth`                                           | Create a session. Returns `{ token, expires_at }`.                                                                |
+| `GET /health`                                          | Check that the server is up (no auth).                                                                            |
+| `GET` / `DELETE /sessions/current`                     | Read / delete the session.                                                                                        |
+| `PUT /sessions/current/seed`                           | Set the Speculos mnemonic of the session (`{ seed }`). ⚠️ Kept in plain text: test mnemonics only.                |
+| `GET` / `POST /devices`                                | List / add devices. `POST` takes an optional `id` (`409` if a device of the session has it).                      |
+| `GET` / `PATCH` / `DELETE /devices/:id`                | Read / edit / remove a device.                                                                                    |
+| `POST /devices/:id/connect` · `/disconnect`            | Connect / disconnect a device.                                                                                    |
+| `POST /devices/:id/apdu`                               | Send an APDU (`{ apdu }` → `{ response }`).                                                                       |
+| `GET` / `POST` / `DELETE /devices/:id/mocks`           | List / add / delete all mocks of a device.                                                                        |
+| `PATCH` / `DELETE /devices/:id/mocks/:mockId`          | Edit / delete one mock.                                                                                           |
+| `GET /devices/:id/speculos`                            | The device's running emulator (`409` if no app is open).                                                          |
+| `ALL /devices/:id/speculos/*`                          | Send a request to the device's emulator (Speculos REST API).                                                      |
+| `GET /export` · `POST /import`                         | Export / import the session's devices, with their ids, and their mocks as JSON.                                   |
+| `GET /speculos/catalogue/:deviceType`                  | The firmware versions that Speculos can start for a model (no auth). `404` if the server has no Speculos.         |
+| `GET /speculos/catalogue/:deviceType/:firmwareVersion` | The app versions that Speculos can start for a model and firmware (no auth). `404` if the server has no Speculos. |
 
 The full contract is in [`openapi.yaml`](./openapi.yaml).
 
@@ -456,5 +492,6 @@ The full contract is in [`openapi.yaml`](./openapi.yaml).
 URL=http://127.0.0.1:9752
 TOKEN=$(curl -s -X POST $URL/auth | jq -r .token)
 curl -s -X POST $URL/devices -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" -d '{"device_type":"flex"}'
+  -H "Content-Type: application/json" \
+  -d '{"device_type":"flex","firmware_version":"1.6.1"}'
 ```
