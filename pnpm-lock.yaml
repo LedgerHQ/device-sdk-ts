@@ -2295,6 +2295,9 @@ importers:
       '@ledgerhq/signer-utils':
         specifier: workspace:^
         version: link:../signer-utils
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
       '@solana/transaction-messages':
         specifier: 'catalog:'
         version: 8.3.0(typescript@5.9.2)
@@ -2590,6 +2593,9 @@ importers:
 
   packages/tools/solana-tools:
     dependencies:
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
       '@solana/addresses':
         specifier: 'catalog:'
         version: 8.3.0(typescript@5.9.2)
