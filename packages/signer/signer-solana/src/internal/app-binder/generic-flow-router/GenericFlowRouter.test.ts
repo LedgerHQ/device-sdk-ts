@@ -1,5 +1,6 @@
 import {
   AddressLookupTableAccount,
+  type Blockhash,
   ComputeBudgetProgram,
   PublicKey,
   TransactionInstruction,
@@ -24,7 +25,9 @@ import { type BasicFlowRule } from "./BasicFlowRule";
 import { SOLANA_BASIC_FLOW_RULES } from "./basicFlowRules";
 import { GenericFlowRouter } from "./GenericFlowRouter";
 
-const BLOCKHASH = DefaultBs58Encoder.encode(new Uint8Array(32).fill(0xaa));
+const BLOCKHASH = DefaultBs58Encoder.encode(
+  new Uint8Array(32).fill(0xaa),
+) as Blockhash;
 const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 
 const payer = testPublicKey();
@@ -192,7 +195,7 @@ describe("GenericFlowRouter", () => {
         key: testPublicKey(),
         state: {
           deactivationSlot: BigInt("18446744073709551615"),
-          lastExtendedSlot: 0,
+          lastExtendedSlot: 0n,
           lastExtendedSlotStartIndex: 0,
           authority: payer,
           addresses: [altAccount],

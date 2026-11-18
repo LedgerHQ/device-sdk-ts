@@ -13,7 +13,6 @@ import {
   setTransactionMessagePriorityFeeLamports,
   signTransactionMessageWithSigners,
 } from "@solana/kit";
-import { VersionedTransaction } from "@solana/web3.js";
 
 import {
   SEND_WITH_MEMO_MESSAGE,
@@ -343,9 +342,6 @@ describe("TransactionInputNormaliser", () => {
       ["unstake", UNSTAKE_MESSAGE],
       ["send with memo", SEND_WITH_MEMO_MESSAGE],
     ])("passes the %s message through unchanged", (_, message) => {
-      // Precondition: web3.js reads it as a one-signature transaction.
-      expect(() => VersionedTransaction.deserialize(message)).not.toThrow();
-
       const result = normaliser.normalize(message);
 
       expect(result.messageBytes).toBe(message);

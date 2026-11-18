@@ -1,4 +1,5 @@
 import {
+  type Blockhash,
   ComputeBudgetProgram,
   MessageV0,
   PublicKey,
@@ -13,7 +14,7 @@ import { testPublicKey } from "@internal/app-binder/services/__test-utils__/test
 import { topLevelInstructions } from "./topLevelInstructions";
 import { TransactionParser } from "./TransactionParser";
 
-const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
+const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg" as Blockhash;
 const payer = new PublicKey("2cHm11EeTGQixAkyaqNRFczpi1XB1n6rK7bSwNiZbCdB");
 const recipient = new PublicKey("7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2");
 

@@ -7,6 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import {
   AddressLookupTableAccount,
+  type Blockhash,
   ComputeBudgetProgram,
   MessageV0,
   PublicKey,
@@ -22,7 +23,7 @@ import { testPublicKey } from "@internal/app-binder/services/__test-utils__/test
 
 import { ProvideGatedSigningTask } from "./ProvideGatedSigningTask";
 
-const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
+const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg" as Blockhash;
 const payer = new PublicKey("2cHm11EeTGQixAkyaqNRFczpi1XB1n6rK7bSwNiZbCdB");
 const recipient = new PublicKey("7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2");
 const PARTNER = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
@@ -115,7 +116,7 @@ describe("ProvideGatedSigningTask", () => {
       key: testPublicKey(),
       state: {
         deactivationSlot: BigInt("18446744073709551615"),
-        lastExtendedSlot: 0,
+        lastExtendedSlot: 0n,
         lastExtendedSlotStartIndex: 0,
         authority: undefined,
         addresses: [lookedUp],

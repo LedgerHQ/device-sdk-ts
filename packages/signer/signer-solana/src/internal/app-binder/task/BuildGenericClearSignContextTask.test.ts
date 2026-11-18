@@ -6,10 +6,11 @@ import {
 } from "@ledgerhq/context-module";
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import {
-  Keypair,
+  type Blockhash,
   PublicKey,
   Transaction,
   TransactionInstruction,
+  VersionedTransaction,
 } from "@solana/web3.js";
 import { Buffer } from "buffer";
 import { Right } from "purify-ts";
@@ -24,7 +25,7 @@ import { BuildGenericClearSignContextTask } from "./BuildGenericClearSignContext
 
 const DUMMY_BLOCKHASH = DefaultBs58Encoder.encode(
   new Uint8Array(32).fill(0xaa),
-);
+) as Blockhash;
 const KNOWN_PROGRAM = new PublicKey(
   "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin",
 );
@@ -56,13 +57,13 @@ function makeIx(programId: PublicKey, data: number[]): TransactionInstruction {
 }
 
 function makeRawTx(ixs: TransactionInstruction[]): Uint8Array {
-  const payer = Keypair.generate();
+  const payer = testPublicKey();
   const tx = new Transaction();
   tx.recentBlockhash = DUMMY_BLOCKHASH;
-  tx.feePayer = payer.publicKey;
+  tx.feePayer = payer;
   tx.add(...ixs);
-  tx.sign(payer);
-  return tx.serialize();
+  // Signed wire format with zero-filled signatures; nothing here verifies them.
+  return new VersionedTransaction(tx.compileMessage()).serialize();
 }
 
 function instructionInfoContext(
@@ -257,10 +258,10 @@ describe("BuildGenericClearSignContextTask", () => {
 
 describe("BuildGenericClearSignContextTask — v1 messages", () => {
   it("returns mode `full` with no ALT requirements, ComputeBudget skipped from CAL", async () => {
-    const payer = Keypair.generate();
+    const payer = testPublicKey();
     const tx = new Transaction();
     tx.recentBlockhash = DUMMY_BLOCKHASH;
-    tx.feePayer = payer.publicKey;
+    tx.feePayer = payer;
     tx.add(
       makeIx(new PublicKey(COMPUTE_BUDGET_PROGRAM_ID), [0x02, 0x40, 0x42]),
       makeIx(KNOWN_PROGRAM, [0x01, 0x02, 0xaa]),

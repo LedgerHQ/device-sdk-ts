@@ -23,7 +23,9 @@ export class RpcAddressLookupTableResolver
   constructor(private readonly connection: Connection) {}
 
   async resolve(msg: VersionedMessage): Promise<LoadedAddresses | undefined> {
-    const lookups = msg.addressTableLookups ?? [];
+    // Only v0 messages reference address lookup tables.
+    if (msg.version !== 0) return undefined;
+    const lookups = msg.addressTableLookups;
     if (!lookups.length) return undefined;
 
     const writable: PublicKey[] = [];

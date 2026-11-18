@@ -7,7 +7,12 @@ import {
   CommandResultFactory,
   DeviceModelId,
 } from "@ledgerhq/device-management-kit";
-import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import {
+  type Blockhash,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
@@ -21,7 +26,7 @@ const SIGNER = "So1anaSignerPubKey111111111111111111111111111";
 const TX = new Uint8Array([1, 2, 3]);
 const WRAPPED = new Uint8Array([0x42, 0x43]);
 
-const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
+const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg" as Blockhash;
 const payer = new PublicKey("2cHm11EeTGQixAkyaqNRFczpi1XB1n6rK7bSwNiZbCdB");
 const recipient = new PublicKey("7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2");
 
