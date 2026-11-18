@@ -14,11 +14,17 @@ import { accountAltRefAt } from "@internal/app-binder/clear-sign/requirements/va
  * only by a later instruction whose account at `CONSUMER_ACCOUNT_INDEX` has the
  * same address as the declaring instruction's account at `WITNESS_RESET_INDEX`
  * (the ledger). The device compares the two addresses, and an ALT slot with no
- * attested resolution has no address and equals nothing. Either end left
- * unresolved therefore makes the witness admit no consumer, and the route stays
- * apart from the reset that funds it. The consumer end is usually read-only
- * (`routeWithTokenLedger` only reads the ledger), so the writable-list category
- * of `applyAltResolutionRule` does not reach it.
+ * attested resolution has no address and equals nothing.
+ *
+ * For a legitimate merge this rule adds nothing to what the writable-list
+ * category of `applyAltResolutionRule` already requests. Writability belongs to
+ * the message, not to an instruction: the declaring instruction writes the
+ * ledger, so every slot holding the ledger is writable, the consumer's
+ * included, and is resolved there. The rule implements the spec's list as
+ * written, so the requirement does not hinge on that property of Solana
+ * messages. Where the consumer reads another account, that account may be
+ * read-only and only this rule resolves it; the device then rejects the
+ * consumer on the address mismatch, as it would on an unresolved slot.
  *
  * This rule reads the whole transaction. Candidates are the instructions
  * *after* the declaring one whose program id is the scope's and whose data
@@ -28,9 +34,8 @@ import { accountAltRefAt } from "@internal/app-binder/clear-sign/requirements/va
  * the ledger in between). A `CONSUMER_ACCOUNT_INDEX` out of range of a
  * candidate only means that consumer does not admit it, so it is skipped.
  *
- * Streaming these entries is what lets the legitimate merge happen. It is never
- * what keeps the merge safe: an entry the host fails to stream makes the device
- * reject the consumer, not admit it.
+ * An entry the host fails to stream never makes the merge unsafe: the device
+ * rejects the consumer, it does not admit it.
  */
 export function applyResetWitnessRule(
   instructions: { match: MatchedInstruction; records: ParsedInstruction }[],

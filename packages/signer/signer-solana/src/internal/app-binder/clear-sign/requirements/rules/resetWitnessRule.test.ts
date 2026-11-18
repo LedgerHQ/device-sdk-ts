@@ -140,9 +140,10 @@ function run(
 }
 
 describe("applyResetWitnessRule", () => {
-  it("resolves a read-only ALT ledger on the consumer side", () => {
-    // The regression this rule fixes: the route only reads the ledger, so no
-    // other rule streams it, and the device cannot compare the two ends.
+  it("resolves the consumer's slot even when it is read-only", () => {
+    // In a real transaction that slot is the ledger, writable for the whole
+    // message, and the writable-list category resolves it too. Read-only here
+    // isolates this rule: the slot is then resolved by nothing else.
     expect(
       run([setTokenLedger(addr("ledger", true)), routeWithTokenLedger(alt(9))]),
     ).toEqual([{ altAddress: "ALT", entryIndex: 9 }]);
