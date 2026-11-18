@@ -1793,6 +1793,8 @@ describe("HttpCalldataDescriptorDataSource", () => {
 
     it.each([
       ["maps are not an object", "badMaps"],
+      ["a map is null", { 0: null }],
+      ["a map entry is null", { 0: { "0x00": null } }],
       [
         "a map key is not hex",
         { 0: { notHex: maps[0]!["0x" + "00".repeat(32)] } },

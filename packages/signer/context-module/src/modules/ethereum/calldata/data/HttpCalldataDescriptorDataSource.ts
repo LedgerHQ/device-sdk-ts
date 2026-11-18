@@ -454,6 +454,7 @@ export class HttpCalldataDescriptorDataSource
             ([key, obj]) =>
               this.isHexBytes(key) &&
               typeof obj === "object" &&
+              obj !== null &&
               typeof obj.value === "string" &&
               this.isHexBytes(obj.value) &&
               typeof obj.data === "string" &&
