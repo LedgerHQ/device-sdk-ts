@@ -16,6 +16,7 @@ import { Right } from "purify-ts";
 import { describe, expect, it, vi } from "vitest";
 
 import { COMPUTE_BUDGET_PROGRAM_ID } from "@internal/app-binder/constants";
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 import { v1FromLegacyMessage } from "@internal/app-binder/services/__test-utils__/v1Fixtures";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
@@ -44,7 +45,7 @@ function makeIx(programId: PublicKey, data: number[]): TransactionInstruction {
   return new TransactionInstruction({
     keys: [
       {
-        pubkey: Keypair.generate().publicKey,
+        pubkey: testPublicKey(),
         isSigner: false,
         isWritable: true,
       },

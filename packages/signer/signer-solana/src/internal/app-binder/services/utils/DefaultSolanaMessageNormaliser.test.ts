@@ -7,6 +7,8 @@ import {
 import bs58 from "bs58";
 import { describe, expect, it } from "vitest";
 
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
+
 import {
   DefaultSolanaMessageNormaliser,
   type SolanaMessageNormaliser,
@@ -91,10 +93,10 @@ describe("DefaultSolanaMessageNormaliser", () => {
   it("can be used via the SolanaMessageNormaliser interface", async () => {
     // given
     const payer = Keypair.generate();
-    const recipient = Keypair.generate();
+    const recipient = testPublicKey();
     const instruction = SystemProgram.transfer({
       fromPubkey: payer.publicKey,
-      toPubkey: recipient.publicKey,
+      toPubkey: recipient,
       lamports: 1_000,
     });
     const { raw } = makeSignedRawTx([instruction], [payer], payer);
@@ -112,18 +114,18 @@ describe("DefaultSolanaMessageNormaliser", () => {
 
     const accounts = compiled.accountKeyIndexes.map((i) => msg.allKeys[i]!);
     expect((accounts[0] as PublicKey).equals(payer.publicKey)).toBe(true);
-    expect((accounts[1] as PublicKey).equals(recipient.publicKey)).toBe(true);
+    expect((accounts[1] as PublicKey).equals(recipient)).toBe(true);
   });
 
   it("handles single-instruction tx and preserves indices mapping", async () => {
     // given
     const payer = Keypair.generate();
-    const recipient = Keypair.generate();
+    const recipient = testPublicKey();
     const lamports = 5;
 
     const instruction = SystemProgram.transfer({
       fromPubkey: payer.publicKey,
-      toPubkey: recipient.publicKey,
+      toPubkey: recipient,
       lamports,
     });
 
@@ -145,6 +147,6 @@ describe("DefaultSolanaMessageNormaliser", () => {
       (i) => msg.allKeys[i]!,
     );
     expect((fromPk as PublicKey).equals(payer.publicKey)).toBe(true);
-    expect((toPk as PublicKey).equals(recipient.publicKey)).toBe(true);
+    expect((toPk as PublicKey).equals(recipient)).toBe(true);
   });
 });

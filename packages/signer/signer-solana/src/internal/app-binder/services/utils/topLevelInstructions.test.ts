@@ -1,6 +1,5 @@
 import {
   ComputeBudgetProgram,
-  Keypair,
   MessageV0,
   PublicKey,
   SystemProgram,
@@ -9,6 +8,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { COMPUTE_BUDGET_PROGRAM_ID } from "@internal/app-binder/constants";
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 
 import { topLevelInstructions } from "./topLevelInstructions";
 import { TransactionParser } from "./TransactionParser";
@@ -63,7 +63,7 @@ describe("topLevelInstructions", () => {
       ],
       addressTableLookups: [
         {
-          accountKey: Keypair.generate().publicKey,
+          accountKey: testPublicKey(),
           writableIndexes: [],
           readonlyIndexes: [0],
         },
@@ -101,7 +101,7 @@ describe("topLevelInstructions", () => {
       ],
       addressTableLookups: [
         {
-          accountKey: Keypair.generate().publicKey,
+          accountKey: testPublicKey(),
           writableIndexes: [],
           readonlyIndexes: [0],
         },

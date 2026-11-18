@@ -8,7 +8,6 @@ import {
 import {
   AddressLookupTableAccount,
   ComputeBudgetProgram,
-  Keypair,
   MessageV0,
   PublicKey,
   SystemProgram,
@@ -19,6 +18,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { ProvideGatedSigningCommand } from "@internal/app-binder/command/ProvideGatedSigningCommand";
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 
 import { ProvideGatedSigningTask } from "./ProvideGatedSigningTask";
 
@@ -110,9 +110,9 @@ describe("ProvideGatedSigningTask", () => {
   });
 
   it("reads program IDs of a v0 message that uses a lookup table", async () => {
-    const lookedUp = Keypair.generate().publicKey;
+    const lookedUp = testPublicKey();
     const table = new AddressLookupTableAccount({
-      key: Keypair.generate().publicKey,
+      key: testPublicKey(),
       state: {
         deactivationSlot: BigInt("18446744073709551615"),
         lastExtendedSlot: 0,
@@ -158,7 +158,7 @@ describe("ProvideGatedSigningTask", () => {
       ],
       addressTableLookups: [
         {
-          accountKey: Keypair.generate().publicKey,
+          accountKey: testPublicKey(),
           writableIndexes: [],
           readonlyIndexes: [0],
         },

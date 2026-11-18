@@ -1,7 +1,6 @@
 import {
   AddressLookupTableAccount,
   ComputeBudgetProgram,
-  Keypair,
   PublicKey,
   TransactionInstruction,
   TransactionMessage,
@@ -13,6 +12,7 @@ import {
   STAKE_PROGRAM_ID,
   SYSTEM_PROGRAM_ID,
 } from "@internal/app-binder/constants";
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 import { type NormalizedMessage } from "@internal/app-binder/services/TransactionInspector";
 import {
@@ -27,8 +27,8 @@ import { GenericFlowRouter } from "./GenericFlowRouter";
 const BLOCKHASH = DefaultBs58Encoder.encode(new Uint8Array(32).fill(0xaa));
 const MEMO_PROGRAM_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 
-const payer = Keypair.generate().publicKey;
-const stakeAccount = Keypair.generate().publicKey;
+const payer = testPublicKey();
+const stakeAccount = testPublicKey();
 
 // Native programs encode the instruction index as u32 LE, followed by args.
 const u32le = (index: number) => [index & 0xff, (index >> 8) & 0xff, 0, 0];
@@ -187,9 +187,9 @@ describe("GenericFlowRouter", () => {
 
     // The app's basic flow can't read accounts loaded from a lookup table.
     it("does not match a v0 message using an address lookup table", async () => {
-      const altAccount = Keypair.generate().publicKey;
+      const altAccount = testPublicKey();
       const lookupTable = new AddressLookupTableAccount({
-        key: Keypair.generate().publicKey,
+        key: testPublicKey(),
         state: {
           deactivationSlot: BigInt("18446744073709551615"),
           lastExtendedSlot: 0,

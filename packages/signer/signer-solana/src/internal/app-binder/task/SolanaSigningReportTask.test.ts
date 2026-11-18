@@ -17,6 +17,7 @@ import {
 import { Buffer } from "buffer";
 import { describe, expect, it, vi } from "vitest";
 
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 import {
   encodeV1Message,
   filledAddress,
@@ -39,7 +40,7 @@ function makeIx(programId: PublicKey): TransactionInstruction {
   return new TransactionInstruction({
     keys: [
       {
-        pubkey: Keypair.generate().publicKey,
+        pubkey: testPublicKey(),
         isSigner: false,
         isWritable: false,
       },

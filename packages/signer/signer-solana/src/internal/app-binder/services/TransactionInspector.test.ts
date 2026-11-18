@@ -6,6 +6,7 @@ import {
 } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
 
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 import { v1FromLegacyMessage } from "@internal/app-binder/services/__test-utils__/v1Fixtures";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 import {
@@ -61,7 +62,7 @@ function makeSignedRawTx(
 describe("TransactionInspector", () => {
   it("falls back to STANDARD for a plain SystemProgram transfer", async () => {
     const payer = Keypair.generate();
-    const dest = Keypair.generate().publicKey;
+    const dest = testPublicKey();
 
     const instruction = SystemProgram.transfer({
       fromPubkey: payer.publicKey,
@@ -79,8 +80,8 @@ describe("TransactionInspector", () => {
 
   it("detects an SPL Transfer and returns the destination address", async () => {
     const owner = Keypair.generate();
-    const source = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
+    const source = testPublicKey();
+    const destination = testPublicKey();
 
     const instruction = createTransferInstruction(
       source,
@@ -101,9 +102,9 @@ describe("TransactionInspector", () => {
 
   it("detects an SPL TransferChecked and returns the destination address and mint", async () => {
     const owner = Keypair.generate();
-    const mint = Keypair.generate().publicKey;
-    const source = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
+    const mint = testPublicKey();
+    const source = testPublicKey();
+    const destination = testPublicKey();
 
     const instruction = createTransferCheckedInstruction(
       source,
@@ -127,9 +128,9 @@ describe("TransactionInspector", () => {
 
   it("detects InitializeAccount and returns the new account and mint", async () => {
     const payer = Keypair.generate();
-    const mint = Keypair.generate().publicKey;
-    const newAccount = Keypair.generate().publicKey;
-    const owner = Keypair.generate().publicKey;
+    const mint = testPublicKey();
+    const newAccount = testPublicKey();
+    const owner = testPublicKey();
 
     const instruction = createInitializeAccountInstruction(
       newAccount,
@@ -151,9 +152,9 @@ describe("TransactionInspector", () => {
 
   it("detects InitializeAccount2 and returns the new account and mint", async () => {
     const payer = Keypair.generate();
-    const mint = Keypair.generate().publicKey;
-    const newAccount = Keypair.generate().publicKey;
-    const owner = Keypair.generate().publicKey;
+    const mint = testPublicKey();
+    const newAccount = testPublicKey();
+    const owner = testPublicKey();
 
     const instruction = createInitializeAccount2Instruction(
       newAccount,
@@ -175,8 +176,8 @@ describe("TransactionInspector", () => {
 
   it("detects InitializeAccount3 and returns the new account and mint", async () => {
     const payer = Keypair.generate();
-    const mint = Keypair.generate().publicKey;
-    const newAccount = Keypair.generate().publicKey;
+    const mint = testPublicKey();
+    const newAccount = testPublicKey();
 
     const instruction = createInitializeAccount3Instruction(
       newAccount,
@@ -197,8 +198,8 @@ describe("TransactionInspector", () => {
 
   it("detects ATA creation via Associated Token Program (classic TOKEN program)", async () => {
     const payer = Keypair.generate();
-    const owner = Keypair.generate().publicKey;
-    const mint = Keypair.generate().publicKey;
+    const owner = testPublicKey();
+    const mint = testPublicKey();
     const ata = getAssociatedTokenAddressSync(
       mint,
       owner,
@@ -229,8 +230,8 @@ describe("TransactionInspector", () => {
 
   it("detects ATA creation via Associated Token Program (TOKEN-2022 program)", async () => {
     const payer = Keypair.generate();
-    const owner = Keypair.generate().publicKey;
-    const mint = Keypair.generate().publicKey;
+    const owner = testPublicKey();
+    const mint = testPublicKey();
     const ata22 = getAssociatedTokenAddressSync(
       mint,
       owner,
@@ -261,8 +262,8 @@ describe("TransactionInspector", () => {
 
   it("detects CloseAccount and returns the closed token account", async () => {
     const owner = Keypair.generate();
-    const account = Keypair.generate().publicKey;
-    const dest = Keypair.generate().publicKey;
+    const account = testPublicKey();
+    const dest = testPublicKey();
 
     const instruction = createCloseAccountInstruction(
       account,
@@ -280,7 +281,7 @@ describe("TransactionInspector", () => {
 
   it("detects SyncNative and returns the WSOL account", async () => {
     const payer = Keypair.generate();
-    const account = Keypair.generate().publicKey;
+    const account = testPublicKey();
 
     const instruction = createSyncNativeInstruction(account, TOKEN_PROGRAM_ID);
 
@@ -321,8 +322,8 @@ describe("TransactionInspector", () => {
 
   it("fast path: tokenAddress override + SPL instruction, SPL and returns override", async () => {
     const owner = Keypair.generate();
-    const source = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
+    const source = testPublicKey();
+    const destination = testPublicKey();
 
     const instruction = createTransferInstruction(
       source,
@@ -334,7 +335,7 @@ describe("TransactionInspector", () => {
     );
     const { raw } = makeSignedRawTx([instruction], [owner], owner);
 
-    const overrideToken = Keypair.generate().publicKey.toBase58();
+    const overrideToken = testPublicKey().toBase58();
 
     const result = await new TransactionInspector().inspectTransactionType(
       raw,
@@ -347,8 +348,8 @@ describe("TransactionInspector", () => {
 
   it("fast path: createATA override + ATA instruction, SPL and returns override", async () => {
     const payer = Keypair.generate();
-    const owner = Keypair.generate().publicKey;
-    const mint = Keypair.generate().publicKey;
+    const owner = testPublicKey();
+    const mint = testPublicKey();
     const ata = getAssociatedTokenAddressSync(
       mint,
       owner,
@@ -368,8 +369,8 @@ describe("TransactionInspector", () => {
     const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     const overrideATA = {
-      address: Keypair.generate().publicKey.toBase58(),
-      mintAddress: Keypair.generate().publicKey.toBase58(),
+      address: testPublicKey().toBase58(),
+      mintAddress: testPublicKey().toBase58(),
     };
 
     const result = await new TransactionInspector().inspectTransactionType(
@@ -384,7 +385,7 @@ describe("TransactionInspector", () => {
 
   it("classifies as SWAP when templateId is provided", async () => {
     const payer = Keypair.generate();
-    const dest = Keypair.generate().publicKey;
+    const dest = testPublicKey();
 
     const instruction = SystemProgram.transfer({
       fromPubkey: payer.publicKey,
@@ -407,8 +408,8 @@ describe("TransactionInspector", () => {
 
   it("SWAP takes precedence over SPL when templateId is provided", async () => {
     const owner = Keypair.generate();
-    const source = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
+    const source = testPublicKey();
+    const destination = testPublicKey();
 
     const instruction = createTransferInstruction(
       source,
@@ -434,8 +435,8 @@ describe("TransactionInspector", () => {
 
   it("fast path: both overrides + SPL instruction, SPL and returns both", async () => {
     const owner = Keypair.generate();
-    const source = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
+    const source = testPublicKey();
+    const destination = testPublicKey();
 
     const instruction = createTransferInstruction(
       source,
@@ -447,10 +448,10 @@ describe("TransactionInspector", () => {
     );
     const { raw } = makeSignedRawTx([instruction], [owner], owner);
 
-    const tokenOverride = Keypair.generate().publicKey.toBase58();
+    const tokenOverride = testPublicKey().toBase58();
     const ataOverride = {
-      address: Keypair.generate().publicKey.toBase58(),
-      mintAddress: Keypair.generate().publicKey.toBase58(),
+      address: testPublicKey().toBase58(),
+      mintAddress: testPublicKey().toBase58(),
     };
 
     const result = await new TransactionInspector().inspectTransactionType(
@@ -477,12 +478,12 @@ describe("TransactionInspector — v1 messages", () => {
 
   it("detects an SPL TransferChecked and returns the destination address and mint", async () => {
     const owner = Keypair.generate();
-    const mint = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
+    const mint = testPublicKey();
+    const destination = testPublicKey();
     const message = makeV1Message(
       [
         createTransferCheckedInstruction(
-          Keypair.generate().publicKey,
+          testPublicKey(),
           mint,
           destination,
           owner.publicKey,
@@ -506,8 +507,8 @@ describe("TransactionInspector — v1 messages", () => {
 
   it("detects ATA creation", async () => {
     const payer = Keypair.generate();
-    const owner = Keypair.generate().publicKey;
-    const mint = Keypair.generate().publicKey;
+    const owner = testPublicKey();
+    const mint = testPublicKey();
     const ata = getAssociatedTokenAddressSync(
       mint,
       owner,
@@ -545,8 +546,8 @@ describe("TransactionInspector — v1 messages", () => {
     const message = makeV1Message(
       [
         createTransferInstruction(
-          Keypair.generate().publicKey,
-          Keypair.generate().publicKey,
+          testPublicKey(),
+          testPublicKey(),
           owner.publicKey,
           1n,
           [],
@@ -555,7 +556,7 @@ describe("TransactionInspector — v1 messages", () => {
       ],
       owner,
     );
-    const overrideToken = Keypair.generate().publicKey.toBase58();
+    const overrideToken = testPublicKey().toBase58();
 
     const result = await new TransactionInspector().inspectTransactionType(
       message,
@@ -573,10 +574,10 @@ describe("extractMintAddress", () => {
 
   it("extracts mint from a TransferChecked instruction in static keys", () => {
     const tokenProgram = TOKEN_PROGRAM_ID;
-    const source = Keypair.generate().publicKey;
-    const mint = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
-    const owner = Keypair.generate().publicKey;
+    const source = testPublicKey();
+    const mint = testPublicKey();
+    const destination = testPublicKey();
+    const owner = testPublicKey();
 
     // allKeys layout: [tokenProgram, source, mint, destination, owner]
     // TransferChecked accounts: [source=1, mint=2, destination=3, owner=4]
@@ -598,9 +599,9 @@ describe("extractMintAddress", () => {
 
   it("returns undefined for a plain Transfer instruction (no mint slot)", () => {
     const tokenProgram = TOKEN_PROGRAM_ID;
-    const source = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
-    const owner = Keypair.generate().publicKey;
+    const source = testPublicKey();
+    const destination = testPublicKey();
+    const owner = testPublicKey();
 
     // Transfer accounts: [source=1, destination=2, owner=3] — no mint
     const message: NormalizedMessage = {
@@ -621,9 +622,9 @@ describe("extractMintAddress", () => {
 
   it("bails out when mint account index is out of static-keys range and tx uses ALTs", () => {
     const tokenProgram = TOKEN_PROGRAM_ID;
-    const source = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
-    const owner = Keypair.generate().publicKey;
+    const source = testPublicKey();
+    const destination = testPublicKey();
+    const owner = testPublicKey();
 
     // Mint global index 99 is outside allKeys (4 entries) → undefined at runtime
     const message: NormalizedMessage = {
@@ -644,10 +645,10 @@ describe("extractMintAddress", () => {
 
   it("returns mint when it is in static keys even if the tx also uses ALTs", () => {
     const tokenProgram = TOKEN_PROGRAM_ID;
-    const source = Keypair.generate().publicKey;
-    const mint = Keypair.generate().publicKey;
-    const destination = Keypair.generate().publicKey;
-    const owner = Keypair.generate().publicKey;
+    const source = testPublicKey();
+    const mint = testPublicKey();
+    const destination = testPublicKey();
+    const owner = testPublicKey();
 
     // Mint is in static keys (index 2) — ALTs are used for other accounts
     const message: NormalizedMessage = {
@@ -667,9 +668,9 @@ describe("extractMintAddress", () => {
   });
 
   it("skips non-SPL instructions and returns undefined when no SPL instruction carries a mint", () => {
-    const systemProgram = Keypair.generate().publicKey; // non-SPL
-    const from = Keypair.generate().publicKey;
-    const to = Keypair.generate().publicKey;
+    const systemProgram = testPublicKey(); // non-SPL
+    const from = testPublicKey();
+    const to = testPublicKey();
 
     const message: NormalizedMessage = {
       compiledInstructions: [

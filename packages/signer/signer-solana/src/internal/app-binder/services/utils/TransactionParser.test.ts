@@ -19,6 +19,7 @@ import {
   UNSTAKE_MESSAGE,
   withOneSignature,
 } from "@internal/app-binder/services/__test-utils__/ambiguousMessages";
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 import {
   encodeV1Message,
   filledAddress,
@@ -122,7 +123,7 @@ describe("TransactionParser", () => {
   describe("legacy transactions", () => {
     it("parses a legacy transaction and returns a normalised message", async () => {
       const payer = Keypair.generate();
-      const dest = Keypair.generate().publicKey;
+      const dest = testPublicKey();
 
       const raw = makeSignedRawTx(
         [
@@ -146,7 +147,7 @@ describe("TransactionParser", () => {
 
     it("derives writable flags from the message header (signer-fee-payer is writable)", async () => {
       const payer = Keypair.generate();
-      const dest = Keypair.generate().publicKey;
+      const dest = testPublicKey();
 
       const raw = makeSignedRawTx(
         [
@@ -188,7 +189,7 @@ describe("TransactionParser", () => {
 
     it("derives signer flags from the message header (fee-payer is a signer; recipient is not)", async () => {
       const payer = Keypair.generate();
-      const dest = Keypair.generate().publicKey;
+      const dest = testPublicKey();
 
       const raw = makeSignedRawTx(
         [
@@ -226,12 +227,12 @@ describe("TransactionParser", () => {
         [
           SystemProgram.transfer({
             fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            toPubkey: testPublicKey(),
             lamports: 1_000,
           }),
           SystemProgram.transfer({
             fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            toPubkey: testPublicKey(),
             lamports: 2_000,
           }),
         ],
@@ -301,7 +302,7 @@ describe("TransactionParser", () => {
         instructions: [
           SystemProgram.transfer({
             fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            toPubkey: testPublicKey(),
             lamports: 1,
           }),
         ],
@@ -405,11 +406,8 @@ describe("TransactionParser", () => {
   describe("address lookup tables", () => {
     it("resolves ALT entries when a resolver is provided (existing behaviour)", async () => {
       const payer = Keypair.generate();
-      const altKey = Keypair.generate().publicKey;
-      const altEntries = [
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-      ];
+      const altKey = testPublicKey();
+      const altEntries = [testPublicKey(), testPublicKey()];
 
       const raw = makeV0TxWithFakeAlt({
         payer,
@@ -443,11 +441,8 @@ describe("TransactionParser", () => {
 
     it("preserves raw ALT refs when no resolver is provided and preserveAltRefs=true", async () => {
       const payer = Keypair.generate();
-      const altKey = Keypair.generate().publicKey;
-      const altEntries = [
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-      ];
+      const altKey = testPublicKey();
+      const altEntries = [testPublicKey(), testPublicKey()];
 
       const raw = makeV0TxWithFakeAlt({
         payer,
@@ -504,8 +499,8 @@ describe("TransactionParser", () => {
 
     it("does not preserve raw refs by default (no resolver, no opt-in)", async () => {
       const payer = Keypair.generate();
-      const altKey = Keypair.generate().publicKey;
-      const altEntries = [Keypair.generate().publicKey];
+      const altKey = testPublicKey();
+      const altEntries = [testPublicKey()];
 
       const raw = makeV0TxWithFakeAlt({
         payer,
@@ -544,7 +539,7 @@ describe("TransactionParser", () => {
         [
           SystemProgram.transfer({
             fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            toPubkey: testPublicKey(),
             lamports: 1_000,
           }),
         ],
@@ -566,7 +561,7 @@ describe("TransactionParser", () => {
         [
           SystemProgram.transfer({
             fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            toPubkey: testPublicKey(),
             lamports: 1_000,
           }),
         ],
