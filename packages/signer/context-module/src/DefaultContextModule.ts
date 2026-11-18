@@ -157,6 +157,9 @@ export class DefaultContextModule implements ContextModule {
           this._container.get<ContextLoader>(
             instructionInfoTypes.SolanaBasicFlowRuleContextLoader,
           ),
+          this._container.get<ContextLoader>(
+            gatedSigningTypes.SolanaGatedSigningContextLoader,
+          ),
         ];
       case ContextModuleChainID.Concordium:
         return [
