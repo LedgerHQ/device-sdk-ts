@@ -1,6 +1,5 @@
 import { type RequirementInstruction } from "@internal/app-binder/clear-sign/requirements/model";
 import {
-  ActiveWhenPredicate,
   HideCondition,
   OptionalAccountStrategy,
   PARAM_TYPE_TOKEN_AMOUNT,
@@ -37,7 +36,6 @@ function port(
     accountIndices:
       accountIndices ?? (accountIndex !== undefined ? [accountIndex] : []),
     optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
-    activeWhen: [],
     ...rest,
   };
 }
@@ -96,16 +94,6 @@ function withAltSlot(
   return { ...instruction, accounts };
 }
 
-/** An instruction whose slot `signerIndex` is a required signer in the header. */
-function withSignerSlot(
-  instruction: RequirementInstruction,
-  signerIndex: number,
-): RequirementInstruction {
-  const accounts = [...instruction.accounts];
-  accounts[signerIndex] = { ...accounts[signerIndex]!, isSigner: true };
-  return { ...instruction, accounts };
-}
-
 function accountPathValue(index: number): ParsedValue {
   return {
     source: ValueSource.ACCOUNT_PATH,
@@ -113,18 +101,20 @@ function accountPathValue(index: number): ParsedValue {
   };
 }
 
-function isSignerRule(target: ParsedValue): ParsedHideRule {
-  return { ruleSetIndex: 0, condition: HideCondition.IS_SIGNER, target };
+function hideRule(
+  condition: HideCondition,
+  target: ParsedValue,
+): ParsedHideRule {
+  return { ruleSetIndex: 0, condition, target };
 }
 
 function run(
   records: ParsedInstruction,
   instruction: RequirementInstruction,
   mints: Map<string, string> = new Map(),
-  owners: Map<string, string> = new Map(),
 ) {
   const accumulator = new RequirementAccumulator();
-  applyTokenRule(records, instruction, { mints, owners }, accumulator);
+  applyTokenRule(records, instruction, { mints }, accumulator);
   return accumulator.build();
 }
 
@@ -388,7 +378,7 @@ describe("applyTokenRule", () => {
       expect(oob.tokenAccountStates).toEqual([]);
     });
 
-    it("path 5: adds TOKEN_ACCOUNT_STATE for splToken+RESOLVE reset with no binding and no fallback", () => {
+    it("path 4: adds TOKEN_ACCOUNT_STATE for splToken+RESOLVE reset with no binding and no fallback", () => {
       const result = run(
         parsed({
           accountResets: [
@@ -406,7 +396,7 @@ describe("applyTokenRule", () => {
       expect(result.tokenAccountStates).toEqual(["ata"]);
     });
 
-    it("path 5: skips TOKEN_ACCOUNT_STATE when mint is already bound, emits TOKEN_INFO instead", () => {
+    it("path 4: skips TOKEN_ACCOUNT_STATE when mint is already bound, emits TOKEN_INFO instead", () => {
       const result = run(
         parsed({
           accountResets: [
@@ -426,7 +416,7 @@ describe("applyTokenRule", () => {
       expect(result.tokenInfos).toContain("MINT");
     });
 
-    it("path 5: skips TOKEN_ACCOUNT_STATE when fallbackAccountIndex is set", () => {
+    it("path 4: skips TOKEN_ACCOUNT_STATE when fallbackAccountIndex is set", () => {
       const result = run(
         parsed({
           accountResets: [
@@ -445,7 +435,7 @@ describe("applyTokenRule", () => {
       expect(result.tokenInfos).toContain("MINT");
     });
 
-    it("path 5: does not trigger for a native reset", () => {
+    it("path 4: does not trigger for a native reset", () => {
       const result = run(
         parsed({
           accountResets: [
@@ -460,11 +450,11 @@ describe("applyTokenRule", () => {
         }),
         makeInstruction(["ata"]),
       );
-      // native reset with no pre-balance flags emits nothing from path 5
+      // native reset with no pre-balance flags emits nothing from path 4
       expect(result.tokenAccountStates).toEqual([]);
     });
 
-    it("path 5: does not trigger when tokenValue is absent", () => {
+    it("path 4: does not trigger when tokenValue is absent", () => {
       const result = run(
         parsed({
           accountResets: [
@@ -481,7 +471,7 @@ describe("applyTokenRule", () => {
       expect(result.tokenAccountStates).toEqual([]);
     });
 
-    it("path 5: does not trigger for a splToken reset with a DIRECT token value", () => {
+    it("path 4: does not trigger for a splToken reset with a DIRECT token value", () => {
       const result = run(
         parsed({
           accountResets: [
@@ -499,7 +489,7 @@ describe("applyTokenRule", () => {
       expect(result.tokenAccountStates).toEqual([]);
     });
 
-    it("path 5: uses tokenValue.accountIndex instead of reset.accountIndex when set", () => {
+    it("path 4: uses tokenValue.accountIndex instead of reset.accountIndex when set", () => {
       const result = run(
         parsed({
           accountResets: [
@@ -517,7 +507,7 @@ describe("applyTokenRule", () => {
       expect(result.tokenAccountStates).toEqual(["rightAta"]);
     });
 
-    it("path 5: routes an ALT-backed token account to tokenAccountStateAltRefs", () => {
+    it("path 4: routes an ALT-backed token account to tokenAccountStateAltRefs", () => {
       const result = run(
         parsed({
           accountResets: [
@@ -686,177 +676,47 @@ describe("applyTokenRule", () => {
     });
   });
 
-  describe("IS_SIGNER owner attestation (trigger path 3)", () => {
-    it("emits TOKEN_ACCOUNT_STATE for an IS_SIGNER hide-rule target", () => {
+  describe("signer hide conditions", () => {
+    // The device holds IS_SIGNER only for its own key and IS_ANOTHER_SIGNER only
+    // for another key in the signer list. Neither reads the owner-binding map,
+    // so an attested TOKEN_ACCOUNT_STATE.OWNER cannot change either answer: a
+    // token account bound to the user is still not the user's key.
+    it.each([
+      ["IS_SIGNER", HideCondition.IS_SIGNER],
+      ["IS_ANOTHER_SIGNER", HideCondition.IS_ANOTHER_SIGNER],
+    ])("requests no TOKEN_ACCOUNT_STATE for an %s target", (_, condition) => {
       const result = run(
-        parsed({ hideRules: [isSignerRule(accountPathValue(1))] }),
-        makeInstruction(["other", "maybeAta"]),
-      );
-      expect(result.tokenAccountStates).toEqual(["maybeAta"]);
-    });
-
-    it("skips a target already bound by a TX-derived OWNER_ASSOC", () => {
-      const result = run(
-        parsed({ hideRules: [isSignerRule(accountPathValue(0))] }),
-        makeInstruction(["boundAta"]),
-        new Map(),
-        new Map([["boundAta", "itsOwner"]]),
-      );
-      expect(result.tokenAccountStates).toEqual([]);
-    });
-
-    it("ignores hide rules on any other condition", () => {
-      const result = run(
-        parsed({
-          hideRules: [
-            {
-              ruleSetIndex: 0,
-              condition: HideCondition.CREATED_IN_TRANSACTION,
-              target: accountPathValue(0),
-            },
-          ],
-        }),
-        makeInstruction(["someAccount"]),
-      );
-      expect(result.tokenAccountStates).toEqual([]);
-    });
-
-    it("emits TOKEN_ACCOUNT_STATE for a port with an IS_SIGNER ACTIVE_WHEN", () => {
-      const result = run(
-        parsed({
-          valueFlowPorts: [
-            port({
-              accountIndex: 1,
-              activeWhen: [ActiveWhenPredicate.IS_SIGNER],
-              tokenValue: { kind: TokenKind.NATIVE },
-            }),
-          ],
-        }),
-        makeInstruction(["other", "portAccount"]),
-      );
-      expect(result.tokenAccountStates).toEqual(["portAccount"]);
-    });
-
-    it("routes an ALT-backed hide-rule target to tokenAccountStateAltRefs", () => {
-      // Without this the owner map stays unseeded, the predicate evaluates
-      // false, and the device shows the screens the rule meant to hide.
-      const result = run(
-        parsed({ hideRules: [isSignerRule(accountPathValue(0))] }),
-        withAltSlot(makeInstruction([undefined]), 0, 6),
-      );
-      expect(result.tokenAccountStateAltRefs).toEqual([
-        { altAddress: "ALT", entryIndex: 6 },
-      ]);
-      expect(result.tokenAccountStates).toEqual([]);
-    });
-
-    it("routes an ALT-backed IS_SIGNER ACTIVE_WHEN port to tokenAccountStateAltRefs", () => {
-      const result = run(
-        parsed({
-          valueFlowPorts: [
-            port({
-              accountIndex: 0,
-              activeWhen: [ActiveWhenPredicate.IS_SIGNER],
-              tokenValue: { kind: TokenKind.NATIVE },
-            }),
-          ],
-        }),
-        withAltSlot(makeInstruction([undefined]), 0, 7),
-      );
-      expect(result.tokenAccountStateAltRefs).toEqual([
-        { altAddress: "ALT", entryIndex: 7 },
-      ]);
-    });
-
-    it("ignores a constant IS_SIGNER target: a CONSTANT is already an address, never an ALT ref", () => {
-      const result = run(
-        parsed({
-          hideRules: [
-            isSignerRule({
-              source: ValueSource.CONSTANT,
-              payload: new Uint8Array(4),
-            }),
-          ],
-        }),
-        withAltSlot(makeInstruction([undefined]), 0, 8),
+        parsed({ hideRules: [hideRule(condition, accountPathValue(1))] }),
+        makeInstruction(["other", "userAta"]),
       );
       expect(result.tokenAccountStates).toEqual([]);
       expect(result.tokenAccountStateAltRefs).toEqual([]);
     });
 
-    it("ignores a port whose ACTIVE_WHEN carries no IS_SIGNER", () => {
+    it("requests no TOKEN_ACCOUNT_STATE for an ALT-backed IS_SIGNER target", () => {
+      // The target's ALT_RESOLUTION comes from the ALT rule, as for any other
+      // hide-rule target; nothing graduates it to the state bucket.
       const result = run(
         parsed({
-          valueFlowPorts: [
-            port({
-              accountIndex: 0,
-              activeWhen: [ActiveWhenPredicate.CREATED_IN_TRANSACTION],
-              tokenValue: { kind: TokenKind.NATIVE },
-            }),
-          ],
+          hideRules: [hideRule(HideCondition.IS_SIGNER, accountPathValue(0))],
         }),
-        makeInstruction(["portAccount"]),
+        withAltSlot(makeInstruction([undefined]), 0, 6),
       );
       expect(result.tokenAccountStates).toEqual([]);
+      expect(result.tokenAccountStateAltRefs).toEqual([]);
     });
 
-    it("skips a hide-rule target the header marks as a signer", () => {
-      // A header signer produced an ed25519 signature, so it is a plain key and
-      // never a token account: the device derives it from its own seed and the
-      // owner map has nothing to add. Asking the backend to attest a non-token
-      // address risks a descriptor that binds an owner that should not exist.
-      const result = run(
-        parsed({ hideRules: [isSignerRule(accountPathValue(0))] }),
-        withSignerSlot(makeInstruction(["walletKey"]), 0),
-      );
-      expect(result.tokenAccountStates).toEqual([]);
-    });
-
-    it("skips an IS_SIGNER ACTIVE_WHEN port whose account is a header signer", () => {
+    it("leaves the other paths alone: a RESOLVE port on an IS_SIGNER target still gets its state", () => {
       const result = run(
         parsed({
+          hideRules: [hideRule(HideCondition.IS_SIGNER, accountPathValue(0))],
           valueFlowPorts: [
-            port({
-              accountIndex: 1,
-              activeWhen: [ActiveWhenPredicate.IS_SIGNER],
-              tokenValue: { kind: TokenKind.NATIVE },
-            }),
+            port({ accountIndex: 0, tokenValue: { kind: TokenKind.RESOLVE } }),
           ],
         }),
-        withSignerSlot(makeInstruction(["other", "walletKey"]), 1),
+        makeInstruction(["userAta"]),
       );
-      expect(result.tokenAccountStates).toEqual([]);
-    });
-
-    it("guards per slot: a non-signer target alongside a signer one still fetches", () => {
-      const result = run(
-        parsed({
-          hideRules: [
-            isSignerRule(accountPathValue(0)),
-            isSignerRule(accountPathValue(1)),
-          ],
-        }),
-        withSignerSlot(makeInstruction(["walletKey", "maybeAta"]), 0),
-      );
-      expect(result.tokenAccountStates).toEqual(["maybeAta"]);
-    });
-
-    it("still fetches for a signer's candidate port when the port resolves to a non-signer slot", () => {
-      // `resolvePortAccountIndex` picks the first provided candidate; the guard
-      // has to read the slot that was actually chosen, not the first listed.
-      const result = run(
-        parsed({
-          valueFlowPorts: [
-            port({
-              accountIndices: [5, 1],
-              activeWhen: [ActiveWhenPredicate.IS_SIGNER],
-              tokenValue: { kind: TokenKind.NATIVE },
-            }),
-          ],
-        }),
-        withSignerSlot(makeInstruction(["walletKey", "maybeAta"]), 0),
-      );
-      expect(result.tokenAccountStates).toEqual(["maybeAta"]);
+      expect(result.tokenAccountStates).toEqual(["userAta"]);
     });
   });
 });

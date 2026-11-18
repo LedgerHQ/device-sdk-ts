@@ -39,7 +39,6 @@ export {
 } from "./model";
 export { parseInstructionDescriptor } from "./parseInstruction";
 export {
-  ActiveWhenPredicate,
   HideCondition,
   type MintAssociation,
   OptionalAccountStrategy,

@@ -4,7 +4,6 @@ import { poolFromJson } from "@internal/app-binder/clear-sign/idl-type-pool";
 
 import {
   type CalAccountReset,
-  type CalActiveWhenPredicate,
   type CalDisplayField,
   type CalHideRule,
   type CalIdlDescriptor,
@@ -15,7 +14,6 @@ import {
   type CalValueFlowPort,
 } from "./calTypes";
 import {
-  type ActiveWhenPredicate,
   type HideCondition,
   type MintAssociation,
   OptionalAccountStrategy,
@@ -51,14 +49,6 @@ const HIDE_CONDITION_BY_NAME: Readonly<Record<string, HideCondition>> = {
   ACCOUNT_USED_ELSEWHERE: 0x02,
   IS_ANOTHER_SIGNER: 0x03,
   ACCOUNT_EFFECTS_DISPLAYED_ELSEWHERE: 0x04,
-};
-
-const ACTIVE_WHEN_BY_NAME: Readonly<Record<string, ActiveWhenPredicate>> = {
-  CREATED_IN_TRANSACTION: 0x00,
-  IS_SIGNER: 0x01,
-  ACCOUNT_USED_ELSEWHERE: 0x02,
-  MINT_PREDICATE: 0x03,
-  IS_ANOTHER_SIGNER: 0x04,
 };
 
 /**
@@ -127,28 +117,6 @@ export function fromCalTokenValue(tokenValue: CalTokenValue): ParsedTokenValue {
 }
 
 /**
- * `VALUE_FLOW_PORT.ACTIVE_WHEN`: a bare `ActiveWhenPredicate` name, or an object
- * whose `kind` names it (`MINT_PREDICATE` carries the mint the device compares
- * against itself, so only the code is kept).
- *
- * An unrecognized predicate is dropped rather than rejected. Nothing host-side
- * evaluates activation — the only requirement keyed off this list is the
- * `IS_SIGNER` owner attestation, and an unknown name is by definition not
- * `IS_SIGNER` — so dropping it cannot under-request a descriptor, while
- * rejecting would fail the whole requirement build and degrade every
- * transaction touching the program to blind signing.
- */
-function fromCalActiveWhen(
-  predicates: CalActiveWhenPredicate[] | undefined,
-): ActiveWhenPredicate[] {
-  return (predicates ?? []).flatMap((predicate) => {
-    const name = typeof predicate === "string" ? predicate : predicate.kind;
-    const code = ACTIVE_WHEN_BY_NAME[name];
-    return code === undefined ? [] : [code];
-  });
-}
-
-/**
  * `VALUE_FLOW_PORT.OPTIONAL_ACCOUNT_STRATEGY`: absent defaults to `PROGRAM_ID`
  * (spec); any unrecognized value is rejected rather than silently treated as
  * `PROGRAM_ID`.
@@ -167,6 +135,13 @@ function fromCalOptionalAccountStrategy(
   }
 }
 
+/**
+ * One `VALUE_FLOW_PORT`. `ACTIVE_WHEN` is deliberately not read (see
+ * {@link ParsedValueFlowPort}): no predicate makes the host request anything,
+ * so a predicate name this build does not know — including the `IS_SIGNER`,
+ * `IS_ANOTHER_SIGNER` and `ACCOUNT_USED_ELSEWHERE` names the spec has since
+ * removed — can never fail the decode and push the program to blind signing.
+ */
 export function fromCalValueFlowPort(
   port: CalValueFlowPort,
 ): ParsedValueFlowPort {
@@ -178,7 +153,6 @@ export function fromCalValueFlowPort(
       port.optional_account_strategy,
     ),
     tokenValue: fromCalTokenValue(port.token_value),
-    activeWhen: fromCalActiveWhen(port.active_when),
   };
 }
 
@@ -186,10 +160,11 @@ export function fromCalValueFlowPort(
  * One `HIDE_RULE`. An absent or unrecognized condition leaves `condition`
  * undefined instead of failing the decode: the rule's `target` is resolved by
  * the device for *every* rule it receives, so the entry must survive to keep
- * that target's `ALT_RESOLUTION` in the requirement set. Only the `IS_SIGNER`
- * owner attestation keys off the condition, and an unknown name is not
- * `IS_SIGNER`. `RULE_SET_INDEX` defaults to 0 (a single AND-set), matching the
- * spec's OR-of-ANDs default.
+ * that target's `ALT_RESOLUTION` in the requirement set. No requirement keys off
+ * the condition itself: `IS_SIGNER` and `IS_ANOTHER_SIGNER` are decided on the
+ * device from its own key and the signer list, never from an attested owner.
+ * `RULE_SET_INDEX` defaults to 0 (a single AND-set), matching the spec's
+ * OR-of-ANDs default.
  */
 export function fromCalHideRule(rule: CalHideRule): ParsedHideRule {
   return {

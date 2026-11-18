@@ -112,7 +112,6 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0, 1, 2],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
-          activeWhen: [],
         },
       ],
     };
@@ -130,7 +129,6 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
-          activeWhen: [],
           tokenValue: { kind: TokenKind.RESOLVE, accountIndex: 2 },
         },
       ],
@@ -148,7 +146,6 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [1],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
-          activeWhen: [],
           tokenValue: { kind: TokenKind.RESOLVE },
         },
       ],
@@ -166,7 +163,6 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
-          activeWhen: [],
           tokenValue: { kind: TokenKind.DIRECT, value: accountPath(1) },
         },
       ],
@@ -218,7 +214,6 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
-          activeWhen: [],
           tokenValue: {
             kind: TokenKind.RESOLVE,
             accountIndex: 0,
@@ -242,7 +237,6 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
-          activeWhen: [],
           tokenValue: { kind: TokenKind.NATIVE, fallbackAccountIndex: 1 },
         },
       ],
@@ -357,7 +351,6 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [0],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
-          activeWhen: [],
           tokenValue: { kind: TokenKind.RESOLVE, accountIndex: 0 },
         },
       ],
@@ -394,7 +387,6 @@ describe("applyAltResolutionRule", () => {
         {
           accountIndices: [],
           optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
-          activeWhen: [],
           tokenValue: { kind: TokenKind.RESOLVE },
         },
       ],

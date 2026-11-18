@@ -152,8 +152,9 @@ export type SolanaCalHideRule = {
 
 /**
  * An `OWNER_ASSOC_ACCOUNT` / `OWNER_ASSOC_OWNER` pair: binds a token account to
- * its owner, seeding the transaction-scoped owner map the `IS_SIGNER` /
- * `IS_ANOTHER_SIGNER` predicates read.
+ * its owner, seeding the transaction-scoped owner map the device uses to label an
+ * account as the user's. The `IS_SIGNER` and `IS_ANOTHER_SIGNER` hide conditions
+ * never read it.
  */
 export type SolanaCalOwnerAssociation = {
   account_index: number;

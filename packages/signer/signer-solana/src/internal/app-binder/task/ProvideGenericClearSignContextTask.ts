@@ -395,8 +395,8 @@ export class ProvideGenericClearSignContextTask {
       await this.provideDescriptor(mintTokenInfoCtx);
     }
 
-    // ALT-backed accounts needing an attested TOKEN_ACCOUNT_STATE: IS_SIGNER
-    // predicate targets (owner map) and RESOLVE port token accounts (mint map).
+    // ALT-backed accounts needing an attested TOKEN_ACCOUNT_STATE: RESOLVE port
+    // and reset token accounts (mint map) and pre-balance-zero reset targets.
     // Same shape as the direct tokenAccountStates loop above, except the address
     // only exists once ALT_RESOLUTION comes back, so the fetch happens here.
     // Order is the mirror image of the tokenAmountAltRefs loop: the state comes

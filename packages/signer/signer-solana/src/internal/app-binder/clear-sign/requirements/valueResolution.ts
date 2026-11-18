@@ -61,18 +61,6 @@ export function resolvePortAccountIndex(
 }
 
 /**
- * Whether a slot is a required signer in the message header, bounds-checked.
- * Out-of-range answers `false`: a slot that is not there signed nothing.
- */
-export function accountIsSignerAt(
-  instruction: RequirementInstruction,
-  index: number,
-): boolean {
-  if (index < 0 || index >= instruction.accounts.length) return false;
-  return instruction.accounts[index]!.isSigner;
-}
-
-/**
  * The account slot a pubkey-bearing VALUE reads, when it reads one. A
  * `CONSTANT` carries its address inline and an `ARGUMENT_PATH` names no slot,
  * so both yield `undefined` — the value is an address with no slot behind it

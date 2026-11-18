@@ -12,7 +12,6 @@ import {
 } from "./__tests__/fixtures/calBuilders";
 import { parseInstructionDescriptor } from "./parseInstruction";
 import {
-  ActiveWhenPredicate,
   HideCondition,
   PARAM_TYPE_TOKEN_AMOUNT,
   PARAM_TYPE_TRUSTED_NAME,
@@ -80,7 +79,7 @@ describe("parseInstructionDescriptor", () => {
     expect(field.token).toBeDefined();
   });
 
-  it("maps hide rules, owner associations and port activation predicates", () => {
+  it("maps hide rules, owner associations and a port's fallback account", () => {
     const parsed = parseInstructionDescriptor(
       descriptor({
         ownerAssociations: [ownerAssociation(1, accountPathValue(0))],
@@ -100,9 +99,6 @@ describe("parseInstructionDescriptor", () => {
       { accountIndex: 1, owner: expect.objectContaining({}) },
     ]);
     expect(parsed.hideRules[0]!.condition).toBe(HideCondition.IS_SIGNER);
-    expect(parsed.valueFlowPorts[0]!.activeWhen).toEqual([
-      ActiveWhenPredicate.CREATED_IN_TRANSACTION,
-    ]);
     expect(parsed.valueFlowPorts[0]!.tokenValue?.fallbackAccountIndex).toBe(4);
   });
 });
