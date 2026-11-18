@@ -506,6 +506,9 @@ importers:
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2

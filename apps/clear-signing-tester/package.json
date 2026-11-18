@@ -37,6 +37,7 @@
     "commander": "catalog:",
     "ethers": "catalog:",
     "inversify": "catalog:",
+    "purify-ts": "catalog:",
     "rxjs": "catalog:",
     "semver": "catalog:",
     "undici": "^8.12.2"

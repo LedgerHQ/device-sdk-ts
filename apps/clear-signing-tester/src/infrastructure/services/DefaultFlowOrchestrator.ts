@@ -15,6 +15,7 @@ import {
 import { TYPES } from "@root/src/di/types";
 import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
 import { type CliLogLevel } from "@root/src/domain/models/config/LoggerConfig";
+import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
 import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
@@ -23,6 +24,7 @@ import { type TestResult } from "@root/src/domain/types/TestStatus";
 import { logScreenContents } from "@root/src/domain/utils/screenDebug";
 import { CompleteStateHandler } from "@root/src/infrastructure/state-handlers/CompleteStateHandler";
 import { ErrorStateHandler } from "@root/src/infrastructure/state-handlers/ErrorStateHandler";
+import { OptInStateHandler } from "@root/src/infrastructure/state-handlers/OptInStateHandler";
 import { OptOutStateHandler } from "@root/src/infrastructure/state-handlers/OptOutStateHandler";
 import { SignTransactionStateHandler } from "@root/src/infrastructure/state-handlers/SignTransactionStateHandler";
 import { type StateHandlerResult } from "@root/src/infrastructure/state-handlers/StateHandler";
@@ -49,6 +51,10 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
     private readonly errorStateHandler: ErrorStateHandler,
     @inject(TYPES.OptOutStateHandler)
     private readonly optOutStateHandler: OptOutStateHandler,
+    @inject(TYPES.OptInStateHandler)
+    private readonly optInStateHandler: OptInStateHandler,
+    @inject(TYPES.SignerConfig)
+    private readonly signerConfig: SignerConfig,
     @inject(TYPES.SignTransactionStateHandler)
     private readonly signTransactionStateHandler: SignTransactionStateHandler,
     @inject(TYPES.SignableInteractions)
@@ -201,7 +207,9 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
         } else if (
           requiredUserInteraction === UserInteractionRequired.Web3ChecksOptIn
         ) {
-          return await this.optOutStateHandler.handle({ input });
+          return this.signerConfig.transactionCheckEnabled
+            ? await this.optInStateHandler.handle({ input })
+            : await this.optOutStateHandler.handle({ input });
         }
 
         return ongoingResult;

@@ -17,6 +17,8 @@ const VALID = {
   cases: [{ rawTx: "0x00" }],
 };
 
+const NO_THREAT = "No threat detected by Transaction Check.";
+
 describe("loadScenarioCatalog", () => {
   let dir: string;
 
@@ -119,9 +121,72 @@ describe("loadScenarioCatalog", () => {
       { ...VALID, enabled: "no" },
       /non-boolean "enabled"/,
     ],
+    [
+      "a non-string addressBook",
+      { ...VALID, options: { addressBook: 1 } },
+      /invalid "options".*property "addressBook"/,
+    ],
+    [
+      "a non-boolean transactionCheckEnabled",
+      { ...VALID, options: { transactionCheckEnabled: "true" } },
+      /invalid "options".*property "transactionCheckEnabled"/,
+    ],
+    [
+      "transactionCheckEnabled outside Solana",
+      { ...VALID, options: { transactionCheckEnabled: true } },
+      /only Solana supports/,
+    ],
+    [
+      "transactionCheckEnabled on a Nano",
+      {
+        ...VALID,
+        coinApp: "Solana",
+        devices: ["stax", "nanox"],
+        options: { transactionCheckEnabled: true },
+      },
+      /lists "nanox", which has no Transaction Check/,
+    ],
+    [
+      "transactionCheckEnabled with a case that expects no verdict",
+      {
+        ...VALID,
+        coinApp: "Solana",
+        cases: [
+          { rawTx: "AQAB", expectedTexts: [NO_THREAT] },
+          { rawTx: "AQAB", expectedTexts: ["0.0001 SOL"] },
+        ],
+        options: { transactionCheckEnabled: true },
+      },
+      /each case needs a Transaction Check verdict in "expectedTexts"/,
+    ],
+    // The warning's heading, which shows before a review that may have no
+    // verdict line at all.
+    [
+      "transactionCheckEnabled with a case that expects a warning, not a verdict",
+      {
+        ...VALID,
+        coinApp: "Solana",
+        cases: [{ rawTx: "AQAB", expectedTexts: ["Potential risk"] }],
+        options: { transactionCheckEnabled: true },
+      },
+      /each case needs a Transaction Check verdict in "expectedTexts"/,
+    ],
   ])("rejects a file with %s", (_label, body, message) => {
     write("bad.json", body);
     expect(() => loadScenarioCatalog(dir)).toThrow(message);
+  });
+
+  it("carries transactionCheckEnabled through on Solana touchscreens", () => {
+    write("one.json", {
+      ...VALID,
+      coinApp: "Solana",
+      devices: ["stax", "flex", "apex"],
+      cases: [{ rawTx: "AQAB", expectedTexts: [NO_THREAT] }],
+      options: { transactionCheckEnabled: true },
+    });
+    expect(loadScenarioCatalog(dir)[0]!.options).toEqual({
+      transactionCheckEnabled: true,
+    });
   });
 
   it("rejects cases on a solanaProgram, whose input comes from the RPC", () => {
