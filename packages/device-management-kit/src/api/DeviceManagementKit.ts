@@ -42,6 +42,7 @@ import {
   type ListenToAvailableDevicesUseCase,
   type ListenToAvailableDevicesUseCaseArgs,
 } from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
+import { type ListenToConnectedDevicesUseCase } from "@internal/discovery/use-case/ListenToConnectedDevicesUseCase";
 import { type ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
 import {
   type ReconnectUseCase,
@@ -299,6 +300,23 @@ export class DeviceManagementKit {
     return this.container
       .get<ListenToConnectedDeviceUseCase>(
         discoveryTypes.ListenToConnectedDeviceUseCase,
+      )
+      .execute();
+  }
+
+  /**
+   * Listen to the list of connected devices.
+   *
+   * Emits the current list on subscribe, then each time a device session is
+   * opened or closed. Unlike `listenToConnectedDevice`, a closed session
+   * never shows in the list.
+   *
+   * @returns {Observable<ConnectedDevice[]>} An observable of the connected devices.
+   */
+  listenToConnectedDevices(): Observable<ConnectedDevice[]> {
+    return this.container
+      .get<ListenToConnectedDevicesUseCase>(
+        discoveryTypes.ListenToConnectedDevicesUseCase,
       )
       .execute();
   }

@@ -32,34 +32,35 @@ interface GetAppAndVersionResponse {
 }
 
 test.describe("device action: open app", () => {
-  test("opens an installed app from the dashboard", async ({
-    device,
-    deviceActions,
-    commands,
-  }) => {
-    test.setTimeout(120_000);
+  test(
+    "opens an installed app from the dashboard",
+    { tag: "@speculos" },
+    async ({ device, deviceActions, commands }) => {
+      test.setTimeout(120_000);
 
-    await test.step("Given a Nano X at the dashboard with Bitcoin installed", async () => {
-      await device.addAndConnect(NANO_X);
-    });
+      await test.step("Given a Nano X at the dashboard with Bitcoin installed", async () => {
+        await device.addAndConnect(NANO_X);
+      });
 
-    await test.step("When the Open app device action is executed for Bitcoin", async () => {
-      await deviceActions.goto();
-      await deviceActions.openApp("Bitcoin");
-    });
+      await test.step("When the Open app device action is executed for Bitcoin", async () => {
+        await deviceActions.goto();
+        await deviceActions.openApp("Bitcoin");
+      });
 
-    await test.step("Then it completes", async () => {
-      const result = await deviceActions.lastResult();
-      expect(result.status).toBe("completed");
-    });
+      await test.step("Then it completes", async () => {
+        const result = await deviceActions.lastResult();
+        expect(result.status).toBe("completed");
+      });
 
-    await test.step("And Bitcoin is the running app", async () => {
-      await commands.goto();
-      await commands.execute("Get app and version");
-      const response = await commands.lastResponse<GetAppAndVersionResponse>();
-      expect(response.data?.name).toBe("Bitcoin");
-    });
-  });
+      await test.step("And Bitcoin is the running app", async () => {
+        await commands.goto();
+        await commands.execute("Get app and version");
+        const response =
+          await commands.lastResponse<GetAppAndVersionResponse>();
+        expect(response.data?.name).toBe("Bitcoin");
+      });
+    },
+  );
 
   test("fails when the app is not installed", async ({
     device,
@@ -104,49 +105,49 @@ test.describe("device action: open app", () => {
     });
   });
 
-  test("asks to unlock the device, then opens the app once unlocked", async ({
-    device,
-    deviceActions,
-    mockClient,
-    commands,
-  }) => {
-    test.setTimeout(120_000);
-    let devId = "";
-    let lockMockId = "";
+  test(
+    "asks to unlock the device, then opens the app once unlocked",
+    { tag: "@speculos" },
+    async ({ device, deviceActions, mockClient, commands }) => {
+      test.setTimeout(120_000);
+      let devId = "";
+      let lockMockId = "";
 
-    await test.step("Given a locked Nano X with Bitcoin installed", async () => {
-      const dev = await device.addAndConnect(NANO_X);
-      devId = dev.id;
-      const mock = await mockClient.addMock(devId, {
-        prefix: GET_APP_AND_VERSION_PREFIX,
-        response: LOCKED_RESPONSE,
+      await test.step("Given a locked Nano X with Bitcoin installed", async () => {
+        const dev = await device.addAndConnect(NANO_X);
+        devId = dev.id;
+        const mock = await mockClient.addMock(devId, {
+          prefix: GET_APP_AND_VERSION_PREFIX,
+          response: LOCKED_RESPONSE,
+        });
+        lockMockId = mock.id;
       });
-      lockMockId = mock.id;
-    });
 
-    await test.step("When the Open app device action is executed for Bitcoin", async () => {
-      await deviceActions.goto();
-      await deviceActions.openApp("Bitcoin");
-    });
+      await test.step("When the Open app device action is executed for Bitcoin", async () => {
+        await deviceActions.goto();
+        await deviceActions.openApp("Bitcoin");
+      });
 
-    await test.step("Then user interaction unlock-device is required", async () => {
-      await deviceActions.expectRequiredUserInteraction("unlock-device");
-    });
+      await test.step("Then user interaction unlock-device is required", async () => {
+        await deviceActions.expectRequiredUserInteraction("unlock-device");
+      });
 
-    await test.step("When the device is unlocked", async () => {
-      await mockClient.deleteMock(devId, lockMockId);
-    });
+      await test.step("When the device is unlocked", async () => {
+        await mockClient.deleteMock(devId, lockMockId);
+      });
 
-    await test.step("Then it completes", async () => {
-      const result = await deviceActions.lastResult();
-      expect(result.status).toBe("completed");
-    });
+      await test.step("Then it completes", async () => {
+        const result = await deviceActions.lastResult();
+        expect(result.status).toBe("completed");
+      });
 
-    await test.step("And Bitcoin is the running app", async () => {
-      await commands.goto();
-      await commands.execute("Get app and version");
-      const response = await commands.lastResponse<GetAppAndVersionResponse>();
-      expect(response.data?.name).toBe("Bitcoin");
-    });
-  });
+      await test.step("And Bitcoin is the running app", async () => {
+        await commands.goto();
+        await commands.execute("Get app and version");
+        const response =
+          await commands.lastResponse<GetAppAndVersionResponse>();
+        expect(response.data?.name).toBe("Bitcoin");
+      });
+    },
+  );
 });

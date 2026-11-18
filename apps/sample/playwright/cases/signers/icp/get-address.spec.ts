@@ -32,7 +32,7 @@ const EXPECTED_PRINCIPAL =
 const EXPECTED_ACCOUNT_ID =
   "5ad4babeaeec2b4e368f40105e9157c9e8eec6b0e46b5e03380ab726526ee140";
 
-test.describe("signer icp: get address", () => {
+test.describe("signer icp: get address", { tag: "@speculos" }, () => {
   test("returns an address with default inputs (no options selected)", async ({
     device,
     icpSigner,

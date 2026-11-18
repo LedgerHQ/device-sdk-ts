@@ -34,30 +34,34 @@ interface GetWalletAddressOutput {
   address: string;
 }
 
-test.describe("signer bitcoin: get wallet address", () => {
-  for (const { type, address } of WALLETS) {
-    test(`returns the first ${type} receive address`, async ({
-      device,
-      btcSigner,
-    }) => {
-      // Opening the Bitcoin app provisions a real Speculos instance.
-      test.setTimeout(120_000);
+test.describe(
+  "signer bitcoin: get wallet address",
+  { tag: "@speculos" },
+  () => {
+    for (const { type, address } of WALLETS) {
+      test(`returns the first ${type} receive address`, async ({
+        device,
+        btcSigner,
+      }) => {
+        // Opening the Bitcoin app provisions a real Speculos instance.
+        test.setTimeout(120_000);
 
-      await test.step("Given the device with the Bitcoin app is connected", async () => {
-        await device.addAndConnect(NANO_X_WITH_BTC);
+        await test.step("Given the device with the Bitcoin app is connected", async () => {
+          await device.addAndConnect(NANO_X_WITH_BTC);
+        });
+
+        await test.step(`When Get wallet address is executed for a ${type} wallet`, async () => {
+          await btcSigner.open();
+          await btcSigner.getWalletAddress(type);
+        });
+
+        await test.step("Then the expected address is returned", async () => {
+          const result = await btcSigner.lastResult<GetWalletAddressOutput>();
+
+          expect(result.status).toBe("completed");
+          expect(result.output!.address).toBe(address);
+        });
       });
-
-      await test.step(`When Get wallet address is executed for a ${type} wallet`, async () => {
-        await btcSigner.open();
-        await btcSigner.getWalletAddress(type);
-      });
-
-      await test.step("Then the expected address is returned", async () => {
-        const result = await btcSigner.lastResult<GetWalletAddressOutput>();
-
-        expect(result.status).toBe("completed");
-        expect(result.output!.address).toBe(address);
-      });
-    });
-  }
-});
+    }
+  },
+);

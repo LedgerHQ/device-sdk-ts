@@ -19,7 +19,7 @@ interface GetAddressOutput {
   address: string;
 }
 
-test.describe("signer cosmos: get address", () => {
+test.describe("signer cosmos: get address", { tag: "@speculos" }, () => {
   test("returns the address for the default derivation path", async ({
     device,
     cosmosSigner,

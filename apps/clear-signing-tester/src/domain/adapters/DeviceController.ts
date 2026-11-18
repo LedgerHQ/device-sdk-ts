@@ -21,6 +21,17 @@ export interface DeviceController {
   rejectTransactionCheck(): Promise<void>;
 
   /**
+   * Accept transaction checks opt-in on the device ("Yes, enable")
+   */
+  acceptTransactionCheck(): Promise<void>;
+
+  /**
+   * Continue past a Transaction Check risk or threat warning
+   * ("Accept risk and continue" / "Accept threat and continue")
+   */
+  acceptTransactionCheckWarning(): Promise<void>;
+
+  /**
    * Acknowledge blind signing on the device (go back to safety)
    */
   acknowledgeBlindSigning(): Promise<void>;
@@ -39,6 +50,11 @@ export interface DeviceController {
    * Confirm the Address Book contact review (REGISTER IDENTITY)
    */
   confirmContactRegistration(): Promise<void>;
+
+  /**
+   * Confirm the Safe address review
+   */
+  confirmSafeAddress(): Promise<void>;
 
   /**
    * Navigate to the Ethereum app settings and enable the blind signing toggle

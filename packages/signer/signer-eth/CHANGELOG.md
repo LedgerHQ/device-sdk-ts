@@ -1,5 +1,21 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.18.3
+
+### Patch Changes
+
+- [#2174](https://github.com/LedgerHQ/device-sdk-ts/pull/2174) [`6842ce8`](https://github.com/LedgerHQ/device-sdk-ts/commit/6842ce86543a2a32b4330237213fbe06281a7da0) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Send the descriptor join ID in EIP-712 amount-join filters on Ethereum app 1.23.0 and later
+
+- [#2066](https://github.com/LedgerHQ/device-sdk-ts/pull/2066) [`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Exclude test files from the published package
+
+- [#2163](https://github.com/LedgerHQ/device-sdk-ts/pull/2163) [`84a235a`](https://github.com/LedgerHQ/device-sdk-ts/commit/84a235a5522066010ce61bf0521df752a2c05c05) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Reload the typed-data certificate before each EIP-712 filter or token once another certificate replaced it
+
+- [#2183](https://github.com/LedgerHQ/device-sdk-ts/pull/2183) [`1522dee`](https://github.com/LedgerHQ/device-sdk-ts/commit/1522deee6511d9f82ad3700ef0d4bf7729ab9149) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Provide the transaction check again before the blind sign fallback, since the failed sign clears it on the device
+
+- Updated dependencies [[`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0), [`fe1e363`](https://github.com/LedgerHQ/device-sdk-ts/commit/fe1e363fcc36ba1462d9cf8b14a32a76582f1aed), [`58b64fa`](https://github.com/LedgerHQ/device-sdk-ts/commit/58b64fa1e280d1e1496d03743b2d9886919c838b), [`52e3862`](https://github.com/LedgerHQ/device-sdk-ts/commit/52e386221447e2068a6ef2f97b7098b109a5b993), [`9568758`](https://github.com/LedgerHQ/device-sdk-ts/commit/95687582a071f25d5eeb362c561225c5d4d30a7c), [`f645a5d`](https://github.com/LedgerHQ/device-sdk-ts/commit/f645a5d68cf21f333ad7acaaaa7ec39415d1e054), [`0f1f603`](https://github.com/LedgerHQ/device-sdk-ts/commit/0f1f603dc354baa5742951445d60ee239deb173b)]:
+  - @ledgerhq/context-module@2.9.0
+  - @ledgerhq/device-management-kit@1.12.0
+
 ## 1.18.2
 
 ### Patch Changes

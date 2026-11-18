@@ -1,5 +1,26 @@
 # @ledgerhq/context-module
 
+## 2.9.0
+
+### Minor Changes
+
+- [#2163](https://github.com/LedgerHQ/device-sdk-ts/pull/2163) [`58b64fa`](https://github.com/LedgerHQ/device-sdk-ts/commit/58b64fa1e280d1e1496d03743b2d9886919c838b) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Attach the Ledger PKI certificate to ERC-20 token, external plugin, Uniswap token, NFT and plugin contexts, so the Ethereum app can verify them without its hardcoded keys. Breaking: `TokenContextLoader`, `NftContextLoader`, `NftContextFieldLoader`, `UniswapContextLoader` and `ExternalPluginContextLoader` now take a `PkiCertificateLoader` in their constructor. Their input now requires a `deviceModelId`, used to fetch the certificate: inputs without it are no longer handled.
+
+- [#2160](https://github.com/LedgerHQ/device-sdk-ts/pull/2160) [`9568758`](https://github.com/LedgerHQ/device-sdk-ts/commit/95687582a071f25d5eeb362c561225c5d4d30a7c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add the Solana gated-signing context to the Solana context types, so the Solana signer can provide it
+
+- [#2159](https://github.com/LedgerHQ/device-sdk-ts/pull/2159) [`f645a5d`](https://github.com/LedgerHQ/device-sdk-ts/commit/f645a5d68cf21f333ad7acaaaa7ec39415d1e054) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add a Solana gated-signing loader: it fetches the gating descriptors of the programs a transaction calls and picks the one whose program and discriminator match a top-level instruction
+
+### Patch Changes
+
+- [#2066](https://github.com/LedgerHQ/device-sdk-ts/pull/2066) [`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Exclude test files from the published package
+
+- [#2158](https://github.com/LedgerHQ/device-sdk-ts/pull/2158) [`fe1e363`](https://github.com/LedgerHQ/device-sdk-ts/commit/fe1e363fcc36ba1462d9cf8b14a32a76582f1aed) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Move the gated-signing module to the multichain modules folder, so other chains can add their gated-signing loaders next to Ethereum's
+
+- [#1998](https://github.com/LedgerHQ/device-sdk-ts/pull/1998) [`52e3862`](https://github.com/LedgerHQ/device-sdk-ts/commit/52e386221447e2068a6ef2f97b7098b109a5b993) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Cover Solana v1 transactions in the transaction-check and ALT loader tests
+
+- Updated dependencies [[`0f1f603`](https://github.com/LedgerHQ/device-sdk-ts/commit/0f1f603dc354baa5742951445d60ee239deb173b)]:
+  - @ledgerhq/device-management-kit@1.12.0
+
 ## 2.8.0
 
 ### Minor Changes

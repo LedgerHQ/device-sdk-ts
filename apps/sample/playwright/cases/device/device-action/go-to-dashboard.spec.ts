@@ -48,28 +48,32 @@ test.describe("device action: go to dashboard", () => {
     });
   });
 
-  test("closes the running app", async ({ device, deviceActions }) => {
-    // Opening Bitcoin provisions a real Speculos instance.
-    test.setTimeout(120_000);
+  test(
+    "closes the running app",
+    { tag: "@speculos" },
+    async ({ device, deviceActions }) => {
+      // Opening Bitcoin provisions a real Speculos instance.
+      test.setTimeout(120_000);
 
-    await test.step("Given a Nano X running Bitcoin", async () => {
-      await device.addAndConnect(NANO_X);
-      await deviceActions.goto();
-      await deviceActions.openApp("Bitcoin");
-      const opened = await deviceActions.lastResult();
-      expect(opened.status).toBe("completed");
-    });
+      await test.step("Given a Nano X running Bitcoin", async () => {
+        await device.addAndConnect(NANO_X);
+        await deviceActions.goto();
+        await deviceActions.openApp("Bitcoin");
+        const opened = await deviceActions.lastResult();
+        expect(opened.status).toBe("completed");
+      });
 
-    await test.step("When the Go to dashboard device action is executed", async () => {
-      await deviceActions.backToList();
-      await deviceActions.execute("Go to dashboard");
-    });
+      await test.step("When the Go to dashboard device action is executed", async () => {
+        await deviceActions.backToList();
+        await deviceActions.execute("Go to dashboard");
+      });
 
-    await test.step("Then it completes", async () => {
-      const result = await deviceActions.lastResult();
-      expect(result.status).toBe("completed");
-    });
-  });
+      await test.step("Then it completes", async () => {
+        const result = await deviceActions.lastResult();
+        expect(result.status).toBe("completed");
+      });
+    },
+  );
 
   test("asks to unlock the device, then completes once unlocked", async ({
     device,

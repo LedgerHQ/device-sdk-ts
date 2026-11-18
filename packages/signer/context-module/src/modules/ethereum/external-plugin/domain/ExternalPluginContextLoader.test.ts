@@ -1,3 +1,4 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Interface } from "ethers";
 import { Left, Right } from "purify-ts";
 
@@ -11,6 +12,9 @@ import { type DappInfos } from "@/modules/ethereum/external-plugin/model/DappInf
 import { type SelectorDetails } from "@/modules/ethereum/external-plugin/model/SelectorDetails";
 import { type TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
 import { type UniswapContextLoader } from "@/modules/ethereum/uniswap/domain/UniswapContextLoader";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 const mockLoggerFactory = () => ({
@@ -53,6 +57,7 @@ const inputBuilder = (
     data: data as `0x${string}`,
     selector: data.slice(0, 10) as `0x${string}`,
     chainId: 1,
+    deviceModelId: DeviceModelId.STAX,
   };
 };
 
@@ -67,10 +72,14 @@ describe("ExternalPluginContextLoader", () => {
     canHandle: vi.fn(),
     load: vi.fn(),
   } as unknown as UniswapContextLoader;
+  const mockCertificateLoader: PkiCertificateLoader = {
+    loadCertificate: vi.fn(),
+  };
   const loader = new ExternalPluginContextLoader(
     mockExternalPluginDataSource,
     mockTokenDataSource,
     mockUniswapLoader,
+    mockCertificateLoader,
     mockLoggerFactory,
   );
 
@@ -87,6 +96,7 @@ describe("ExternalPluginContextLoader", () => {
       data: "0x095ea7b30000000000000000000000001234567890123456789012345678901234567890",
       selector: "0x095ea7b3",
       chainId: 1,
+      deviceModelId: DeviceModelId.STAX,
     };
 
     it("should return true for valid input", () => {
@@ -132,6 +142,7 @@ describe("ExternalPluginContextLoader", () => {
       [{ ...validInput, data: undefined }, "missing data"],
       [{ ...validInput, selector: undefined }, "missing selector"],
       [{ ...validInput, chainId: undefined }, "missing chainId"],
+      [{ ...validInput, deviceModelId: undefined }, "missing deviceModelId"],
     ])("should return false for %s", (input, _description) => {
       expect(
         loader.canHandle(input, [
@@ -252,6 +263,53 @@ describe("ExternalPluginContextLoader", () => {
           },
         ]),
       );
+    });
+
+    it("should attach the coin meta certificate to the plugin and its tokens", async () => {
+      // GIVEN
+      const certificate = {
+        keyUsageNumber: 8,
+        payload: new Uint8Array([0x08]),
+      };
+      const dappInfos = dappInfosBuilder({
+        abi: ABI,
+        selectorDetails: {
+          erc20OfInterest: ["fromToken"],
+          method: "singleParam",
+          plugin: "TestPlugin",
+        },
+      });
+      const input = inputBuilder(ABI, "singleParam", [
+        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      ]);
+      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
+        Right(dappInfos),
+      );
+      vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValueOnce(
+        certificate,
+      );
+
+      // WHEN
+      const result = await loader.load(input);
+
+      // THEN
+      expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
+        keyId: KeyId.Erc20MetadataKey,
+        keyUsage: KeyUsage.CoinMeta,
+        targetDevice: DeviceModelId.STAX,
+      });
+      expect(result).toEqual([
+        {
+          type: ClearSignContextType.ETHEREUM_TOKEN,
+          payload: "payload-0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          certificate,
+        },
+        {
+          type: ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN,
+          payload: "1234567890",
+          certificate,
+        },
+      ]);
     });
 
     it("should return a context response with only set external plugin when one erc20OfInterest is provided for a single parameter but no payload is feched", async () => {

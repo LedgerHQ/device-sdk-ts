@@ -75,7 +75,8 @@ export type SolanaContextSuccessType =
   | ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE
   | ClearSignContextType.SOLANA_ALT_RESOLUTION
   | ClearSignContextType.SOLANA_TRUSTED_NAME
-  | ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME;
+  | ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME
+  | ClearSignContextType.SOLANA_GATED_SIGNING;
 
 export type SolanaContextSuccess<
   T extends SolanaContextSuccessType = SolanaContextSuccessType,
@@ -114,6 +115,10 @@ export type SolanaTrustedNameContextSuccess =
 
 export type SolanaBasicTrustedNameContextSuccess =
   ClearSignContextSuccess<ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME>;
+
+/** Payload: descriptor TLV with the CAL signature appended, hex encoded. */
+export type SolanaGatedSigningContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_GATED_SIGNING>;
 
 export type SolanaTokenContextResult =
   | SolanaTokenContextSuccess

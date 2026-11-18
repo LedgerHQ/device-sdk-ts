@@ -136,7 +136,7 @@ describe("InMemorySessionRepository", () => {
     expect(repo.listMocks(record, device.id).isNothing()).toBe(true);
   });
 
-  it("exports devices with their mocks nested (config-only)", () => {
+  it("exports devices with their ids and their mocks nested", () => {
     const { repo, record } = newSession();
     const device = repo.addDevice(record, {
       name: "Ledger Stax",
@@ -147,11 +147,46 @@ describe("InMemorySessionRepository", () => {
     const snapshot = repo.exportSession(record);
     expect(snapshot).not.toHaveProperty("mocks");
     expect(snapshot.devices[0]).toMatchObject({
+      id: device.id,
       name: "Ledger Stax",
       device_type: "stax",
       mocks: [{ prefix: "ff", responses: ["aa", "bb"] }],
     });
-    expect(snapshot.devices[0]).not.toHaveProperty("id");
+    expect(snapshot.devices[0]).not.toHaveProperty("connected");
+  });
+
+  it("attaches a device with the id in its config", () => {
+    const { repo, record } = newSession();
+    const device = repo.addDevice(record, {
+      id: "flex-1",
+      device_type: "flex",
+    });
+
+    expect(device.id).toBe("flex-1");
+    expect(repo.findDevice(record, "flex-1").isJust()).toBe(true);
+  });
+
+  it("gives a random UUID to a device with no id in its config", () => {
+    const { repo, record } = newSession();
+    const device = repo.addDevice(record, { device_type: "flex" });
+
+    expect(device.id).toMatch(/^[0-9a-f-]{36}$/);
+  });
+
+  it("brings back a deleted device with the same id", () => {
+    const { repo, record } = newSession();
+    const device = repo.addDevice(record, {
+      id: "flex-1",
+      device_type: "flex",
+    });
+    repo.addMock(record, device.id, { prefix: "aa", responses: ["00"] });
+    repo.deleteDevice(record, device.id);
+
+    repo.addDevice(record, { id: "flex-1", device_type: "flex" });
+
+    expect(repo.listDevices(record).map(({ id }) => id)).toEqual(["flex-1"]);
+    // Deleting forgot the mocks: the new device starts with none.
+    expect(repo.listMocks(record, "flex-1").extract()).toEqual([]);
   });
 
   it("imports a snapshot, replacing devices and their mocks", () => {
@@ -174,6 +209,30 @@ describe("InMemorySessionRepository", () => {
     expect(devices[0]?.name).toBe("Imported");
     expect(result.devices[0]?.mocks).toEqual([
       { prefix: "ff", responses: ["11", "22"] },
+    ]);
+  });
+
+  it("keeps the installed language pack through an export and an import", () => {
+    const { repo, record } = newSession();
+    repo.addDevice(record, { device_type: "flex", language: "french" });
+
+    const snapshot = repo.exportSession(record);
+    expect(snapshot.devices[0]?.language).toBe("french");
+    repo.importSession(record, snapshot);
+
+    expect(repo.listDevices(record)[0]?.language).toBe("french");
+  });
+
+  it("keeps the device ids through an export and an import", () => {
+    const { repo, record } = newSession();
+    repo.addDevice(record, { id: "flex-1", device_type: "flex" });
+    const random = repo.addDevice(record, { device_type: "nanoX" });
+
+    repo.importSession(record, repo.exportSession(record));
+
+    expect(repo.listDevices(record).map(({ id }) => id)).toEqual([
+      "flex-1",
+      random.id,
     ]);
   });
 

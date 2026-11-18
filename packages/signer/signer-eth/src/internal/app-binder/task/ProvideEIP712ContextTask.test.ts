@@ -247,6 +247,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -368,6 +369,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -406,6 +408,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -446,6 +449,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -482,10 +486,62 @@ describe("ProvideEIP712ContextTask", () => {
     );
   });
 
+  it("Send the descriptor join IDs instead of the device token indexes", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: true,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
+      additionalContexts: [],
+      loggerFactory: mockLoggerFactory,
+    };
+    apiMock.sendCommand.mockImplementation(async (command) =>
+      command instanceof ProvideTokenInformationCommand
+        ? CommandResultFactory({ data: { tokenIndex: 4 } })
+        : CommandResultFactory({ data: undefined }),
+    );
+
+    // WHEN
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Token,
+        discarded: false,
+        tokenIndex: 0,
+        signature:
+          "3044022075103b38995e031d1ebbfe38ac6603bec32854b5146a664e49b4cc4f460c1da6022029f4b0fd1f3b7995ffff1627d4b57f27888a2dcc9b3a4e85c37c67571092c733",
+      }),
+    );
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Amount,
+        discarded: false,
+        displayName: "Amount allowance",
+        tokenIndex: 255,
+        signature:
+          "304402201a46e6b4ef89eaf9fcf4945d053bfc5616a826400fd758312fbbe976bafc07ec022025a9b408722baf983ee053f90179c75b0c55bb0668f437d55493e36069bbd5a3",
+      }),
+    );
+  });
+
   it("Send context with clear signing", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -693,6 +749,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -759,6 +816,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -979,6 +1037,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1035,6 +1094,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1100,6 +1160,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1149,6 +1210,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1200,6 +1262,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1249,6 +1312,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1280,10 +1344,224 @@ describe("ProvideEIP712ContextTask", () => {
     expect(certificateCallIndex).toBe(-1);
   });
 
+  it("Reload the certificate before a filter that follows a trusted name", async () => {
+    // GIVEN
+    const filteringCertificate = {
+      keyUsageNumber: 8,
+      payload: new Uint8Array([0x08]),
+    };
+    const trustedNameCertificate = {
+      keyUsageNumber: 4,
+      payload: new Uint8Array([0x04]),
+    };
+    const trustedNameFilter = {
+      type: "trusted-name" as const,
+      displayName: "Spender",
+      types: ["eoa"],
+      sources: ["ens"],
+      typesAndSourcesPayload: "0001",
+      path: "spender",
+      signature: "sig-trusted-name",
+    };
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        ...TEST_CLEAR_SIGN_CONTEXT,
+        certificate: filteringCertificate,
+        filters: { spender: trustedNameFilter },
+        trustedNamesAddresses: {
+          spender: "0xec7be89e9d109e7e3fec59c222cf297125fefda2",
+        },
+        tokens: {},
+      }),
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
+      additionalContexts: [],
+      loggerFactory: mockLoggerFactory,
+    };
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { challenge: "0x01020304" } }),
+    );
+    contextModuleMock.getFieldContext.mockResolvedValue({
+      type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+      payload: "0x01",
+      certificate: trustedNameCertificate,
+    });
+
+    // WHEN
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN
+    const commands = apiMock.sendCommand.mock.calls.map((call) => call[0]);
+    const expectedFilter = new SendEIP712FilteringCommand({
+      type: Eip712FilterType.TrustedName,
+      discarded: false,
+      displayName: trustedNameFilter.displayName,
+      typesAndSourcesPayload: trustedNameFilter.typesAndSourcesPayload,
+      signature: trustedNameFilter.signature,
+    });
+    const filterIndex = commands.findIndex((command) => {
+      try {
+        expect(command).toStrictEqual(expectedFilter);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    expect(filterIndex).toBeGreaterThan(0);
+    expect(commands[filterIndex - 1]).toStrictEqual(
+      new LoadCertificateCommand({
+        keyUsage: filteringCertificate.keyUsageNumber,
+        certificate: filteringCertificate.payload,
+      }),
+    );
+    expect(
+      commands.filter((command) => command instanceof LoadCertificateCommand),
+    ).toStrictEqual([
+      new LoadCertificateCommand({
+        keyUsage: filteringCertificate.keyUsageNumber,
+        certificate: filteringCertificate.payload,
+      }),
+      new LoadCertificateCommand({
+        keyUsage: trustedNameCertificate.keyUsageNumber,
+        certificate: trustedNameCertificate.payload,
+      }),
+      new LoadCertificateCommand({
+        keyUsage: filteringCertificate.keyUsageNumber,
+        certificate: filteringCertificate.payload,
+      }),
+    ]);
+  });
+
+  it("Reload the certificate before the calldata info filter that follows nested contexts", async () => {
+    // GIVEN
+    const filteringCertificate = {
+      keyUsageNumber: 8,
+      payload: new Uint8Array([0x08]),
+    };
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
+        certificate: filteringCertificate,
+        filters: {
+          "details.token": {
+            displayName: "Value",
+            path: "details.token",
+            signature: "sig-value",
+            calldataIndex: 0,
+            type: "calldata-value",
+          },
+        },
+        trustedNamesAddresses: {},
+        calldatas: {
+          0: {
+            filter: {
+              calldataIndex: 0,
+              displayName: "Transaction",
+              valueFlag: true,
+              calleeFlag: TypedDataCalldataParamPresence.None,
+              chainIdFlag: false,
+              selectorFlag: false,
+              amountFlag: false,
+              spenderFlag: TypedDataCalldataParamPresence.None,
+              signature: "sig-info",
+            },
+            subset: {
+              chainId: 0x1234,
+              data: "0x",
+              from: "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              selector: "0x",
+              to: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              value: 4200000000000000n,
+            },
+          },
+        },
+        proxy: undefined,
+        tokens: {},
+      }),
+      calldatasPreContexts: {
+        0: [
+          {
+            context: {
+              type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+              payload: "trusted-name-payload",
+            },
+            subcontextCallbacks: [],
+          },
+        ],
+      },
+      calldatasPostContexts: {},
+      additionalContexts: [],
+      loggerFactory: mockLoggerFactory,
+    };
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    provideContextFactoryMock.mockReturnValue({
+      run: vi.fn().mockResolvedValue(undefined),
+    });
+
+    // WHEN
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN
+    const commands = apiMock.sendCommand.mock.calls.map((call) => call[0]);
+    const expectedCalldataInfo = new SendEIP712FilteringCommand({
+      type: Eip712FilterType.CalldataInfo,
+      discarded: false,
+      calldataIndex: 0,
+      valueFlag: true,
+      calleeFlag: CalldataParamPresence.None,
+      chainIdFlag: false,
+      selectorFlag: false,
+      amountFlag: false,
+      spenderFlag: CalldataParamPresence.None,
+      signature: "sig-info",
+    });
+    const calldataInfoIndex = commands.findIndex((command) => {
+      try {
+        expect(command).toStrictEqual(expectedCalldataInfo);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    expect(calldataInfoIndex).toBeGreaterThan(0);
+    expect(commands[calldataInfoIndex - 1]).toStrictEqual(
+      new LoadCertificateCommand({
+        keyUsage: filteringCertificate.keyUsageNumber,
+        certificate: filteringCertificate.payload,
+      }),
+    );
+  });
+
   it("Error when providing tokens", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1319,6 +1597,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1356,6 +1635,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1406,6 +1686,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: {},
       domain: [],
@@ -1537,6 +1818,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1685,6 +1967,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -1787,6 +2070,7 @@ describe("ProvideEIP712ContextTask", () => {
     };
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,

@@ -176,6 +176,23 @@ The description format is similar to gitmoji:
 
 _For external contributors:_ a member of the Ledger will be required to validate the execution of the CI for external contributions
 
+### Dependency updates
+
+Dependency upgrades are automated; a maintainer only reviews and merges the resulting PRs.
+
+| What                           | Tool                                                                 | When            |
+| ------------------------------ | -------------------------------------------------------------------- | --------------- |
+| GitHub Actions versions        | Dependabot (`.github/dependabot.yml`), one grouped PR                | daily           |
+| npm libraries                  | Dependabot (`.github/dependabot.yml`), grouped by tool + minor/patch | weekly (Sunday) |
+| Node, pnpm and proto toolchain | `update_toolchain.yml`                                               | weekly (Sunday) |
+
+Dependabot waits 7 days after a release before proposing it (`cooldown`), except for `@ledgerhq/*` packages and
+security updates. Reviewers are assigned from `CODEOWNERS`.
+
+Dependabot PRs, like PRs from forks, are untrusted: their CI runs on GitHub-hosted runners, never on our self-hosted
+ones. The clear-signing tester is skipped, and the sample Playwright tests run against a local mock server with no
+Speculos, skipping the tests tagged `@speculos`. Tag with `@speculos` any new Playwright test that opens a real app.
+
 ### Developer Portal
 
 Ledger provides the tools and resources you need to build on top of our platform. They are accessible in the [Ledger Developer Portal](https://developers.ledger.com/).

@@ -107,6 +107,7 @@ export const SolanaContextType = {
   TOKEN_INFO: ClearSignContextType.SOLANA_TOKEN_INFO,
   TOKEN_ACCOUNT_STATE: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
   ALT_RESOLUTION: ClearSignContextType.SOLANA_ALT_RESOLUTION,
+  GATED_SIGNING: ClearSignContextType.SOLANA_GATED_SIGNING,
 } as const;
 
 /**

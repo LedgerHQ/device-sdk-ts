@@ -27,7 +27,10 @@ import {
   type ContextWithSubContexts,
 } from "@internal/app-binder/task/BuildFullContextsTask";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
-import { MIN_ETH_APP_VERSION_FOR_GATED_SIGNING } from "@internal/shared/EthAppVersions";
+import {
+  MIN_ETH_APP_VERSION_FOR_EIP712_JOIN_ID,
+  MIN_ETH_APP_VERSION_FOR_GATED_SIGNING,
+} from "@internal/shared/EthAppVersions";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { TypedDataValueField } from "@internal/typed-data/model/Types";
@@ -129,6 +132,13 @@ export class BuildEIP712ContextTask {
       calldatasPreContexts,
       calldatasPostContexts,
       deviceModelId: deviceState.deviceModelId,
+      useDescriptorJoinId: new ApplicationChecker(
+        deviceState,
+        this.appConfig,
+        new EthereumApplicationResolver(),
+      )
+        .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_EIP712_JOIN_ID)
+        .check(),
       loggerFactory: this.loggerFactory,
     };
     return {

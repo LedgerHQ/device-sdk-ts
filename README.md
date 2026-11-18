@@ -133,14 +133,16 @@ See [devtools-core README](packages/devtools-core/README.md) for architecture de
 
 ### Development & Testing
 
-| Name                                                  | Path                                    | Description                                                                     |
-| ----------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
-| @ledgerhq/device-management-kit-sample                | apps/sample                             | React Next web app used to test & demonstrate the Device Management Kit         |
-| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client          | [Flipper](https://github.com/facebook/flipper) logger for Device Management Kit |
-| @ledgerhq/device-mockserver-client                    | packages/mockserver-client              | Client to interact with the mock-server                                         |
-| @ledgerhq/device-mockserver-react                     | packages/mockserver-device-react        | React screen of a mock-server device, with its controls                         |
-| @ledgerhq/device-mockserver-react-core                | packages/mockserver-device-react-core   | Platform-free hooks behind the mock-server device screens                       |
-| @ledgerhq/device-mockserver-react-native              | packages/mockserver-device-react-native | React Native screen of a mock-server device, with its controls                  |
+| Name                                                  | Path                                    | Description                                                                                       |
+| ----------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| @ledgerhq/device-management-kit-sample                | apps/sample                             | React Next web app used to test & demonstrate the Device Management Kit                           |
+| @ledgerhq/device-management-kit-flipper-plugin-client | packages/flipper-plugin-client          | [Flipper](https://github.com/facebook/flipper) logger for Device Management Kit                   |
+| @ledgerhq/device-mock-server                          | apps/device-mock-server                 | Server that emulates Ledger devices for tests, see its [guide](apps/device-mock-server/README.md) |
+| @ledgerhq/device-mock-server-ui                       | apps/device-mock-server-ui              | Web UI of the mock server                                                                         |
+| @ledgerhq/device-mockserver-client                    | packages/mockserver-client              | Client to interact with the mock-server                                                           |
+| @ledgerhq/device-mockserver-react                     | packages/mockserver-device-react        | React screen of a mock-server device, with its controls                                           |
+| @ledgerhq/device-mockserver-react-core                | packages/mockserver-device-react-core   | Platform-free hooks behind the mock-server device screens                                         |
+| @ledgerhq/device-mockserver-react-native              | packages/mockserver-device-react-native | React Native screen of a mock-server device, with its controls                                    |
 
 ### Internal Configuration
 
@@ -337,6 +339,14 @@ You can use it with the following command:
 ```shell
 # At the root of the repository
 pnpm cli dev
+```
+
+## Test without a device
+
+The [device mock server](apps/device-mock-server/README.md) emulates Ledger devices over HTTP. Connect DMK to it with the mock server transport. Then, from your tests or from its web UI, add devices, mock APDU responses and run real apps on Speculos. Its README explains how to use the hosted instance, set up DMK and write automated and manual tests.
+
+```bash
+pnpm --filter @ledgerhq/device-mock-server serve   # http://127.0.0.1:9752
 ```
 
 # Documentation

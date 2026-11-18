@@ -1,4 +1,5 @@
 import { type ContactInput } from "@root/src/domain/models/ContactInput";
+import { type SafeAddressInput } from "@root/src/domain/models/SafeAddressInput";
 import { type SignableInput } from "@root/src/domain/models/SignableInput";
 
 /**
@@ -14,7 +15,7 @@ export type TestStatus =
  * Common type for test results with status
  */
 export type TestResult = {
-  readonly input: SignableInput | ContactInput;
+  readonly input: SignableInput | ContactInput | SafeAddressInput;
   readonly status: TestStatus;
   readonly timestamp: string;
   readonly errorMessage?: string;

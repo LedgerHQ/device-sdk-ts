@@ -27,7 +27,7 @@ const EXPECTED_ADDRESS = "TXQ69biZpJvofiNdai4jrehHTNkGPoUAdk";
 const EXPECTED_PUBLIC_KEY =
   "0441bf179a21ed3af2bd108e5d190a90b32a216cce963445bd6df284a4f28699d5dfb929b0c8db99e5ee05260a9176449187576b792bcd2d5eb86f33524aca4d98";
 
-test.describe("signer tron: get address", () => {
+test.describe("signer tron: get address", { tag: "@speculos" }, () => {
   test("returns an address with default inputs (no options selected)", async ({
     device,
     trxSigner,

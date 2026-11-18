@@ -70,6 +70,22 @@ export interface ScreenAnalyzerService {
   isWeb3ChecksOptInScreen(): Promise<boolean>;
 
   /**
+   * Check if the Transaction Check opt-in is still on screen after a tap: its
+   * modal, or the "Transaction Check enabled" confirmation that follows it
+   * @returns Promise<boolean> - True while either is shown, or while the
+   * screen reads empty
+   */
+  isTransactionCheckOptInShown(): Promise<boolean>;
+
+  /**
+   * Check if the current screen is the warning a Transaction Check risk or
+   * threat verdict shows before the review ("Potential risk" / "Critical
+   * threat", with "Back to safety")
+   * @returns Promise<boolean> - True if the screen is that warning
+   */
+  isTransactionCheckWarning(): Promise<boolean>;
+
+  /**
    * Analyze all accumulated screen texts for expected texts
    *
    * Clears the accumulated buffer, so each call scopes its assertion to the

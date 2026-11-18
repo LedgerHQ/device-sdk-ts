@@ -73,6 +73,7 @@ export class HttpSpeculosOperatorDataSource
         ...req,
         seed,
         run_id: runId,
+        origin: "device-sdk-ts/device-mock-server",
         route_timeout_seconds: this.routeTimeoutSeconds,
         extra_args: ["-p"],
       };

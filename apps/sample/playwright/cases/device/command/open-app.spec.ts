@@ -84,7 +84,7 @@ interface OpenAppResponse {
   pending?: object;
 }
 
-test.describe("device command: open app", () => {
+test.describe("device command: open app", { tag: "@speculos" }, () => {
   for (const scenario of SCENARIOS) {
     test.describe(scenario.device.device_type!, () => {
       test(scenario.title, async ({ device, commands }) => {
