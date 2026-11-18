@@ -20,10 +20,12 @@ import {
   RequirementsDecodeError,
   type RequirementsError,
 } from "./RequirementsError";
+import { checkResetIndices } from "./resetIndices";
 import {
   applyAltResolutionRule,
   applyEnumVariantRule,
   applyInstructionInfoRule,
+  applyResetWitnessRule,
   applyTokenRule,
   applyTrustedNameRule,
   type EnumVariantSelector,
@@ -83,16 +85,28 @@ export function buildRequirements(
     // stale descriptor is always reported as AccountSchemaMismatchError, even
     // when an earlier instruction would otherwise fail first for an unrelated
     // reason (e.g. a decode error) and short-circuit the main loop.
+    // A reset index out of range of the instruction's accounts is the same kind
+    // of mismatch (the device refuses it at finalize), so it is reported the
+    // same way.
     for (const match of matched) {
-      if (match.descriptor.accountSchema === undefined) continue;
-      const schemaMismatch = checkAccountSchema(
-        match.descriptor.accountSchema,
-        match.instruction.accounts,
-      );
+      const { accountSchema, accountResets, discriminator } = match.descriptor;
+      const { accounts } = match.instruction;
+      const schemaMismatch =
+        accountSchema === undefined
+          ? null
+          : checkAccountSchema(accountSchema, accounts);
       if (schemaMismatch !== null) {
         return Left(
           new AccountSchemaMismatchError(
-            `ACCOUNT_SCHEMA mismatch for (${match.descriptor.discriminator}): ${schemaMismatch}`,
+            `ACCOUNT_SCHEMA mismatch for (${discriminator}): ${schemaMismatch}`,
+          ),
+        );
+      }
+      const resetMismatch = checkResetIndices(accountResets, accounts.length);
+      if (resetMismatch !== null) {
+        return Left(
+          new AccountSchemaMismatchError(
+            `ACCOUNT_RESET mismatch for (${discriminator}): ${resetMismatch}`,
           ),
         );
       }
@@ -150,6 +164,10 @@ export function buildRequirements(
         bs58Encoder,
       );
     }
+
+    // Witnessed reset scopes pair the declaring instruction with later ones,
+    // so this rule runs once over the whole transaction.
+    applyResetWitnessRule(instructions, accumulator);
 
     return Right(accumulator.build());
   } catch (error) {

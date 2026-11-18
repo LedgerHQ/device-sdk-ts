@@ -112,6 +112,34 @@ export type ParsedAccountReset = {
   /** Present when valueKind === ValueKind.SPL_TOKEN. */
   tokenValue?: ParsedTokenValue;
   requireNativePreBalanceZero: boolean;
+  /**
+   * Present when the reset's `RESET_SCOPE` is witnessed. A plain scope drives
+   * no requirement, so it is not carried.
+   */
+  witness?: ParsedResetWitness;
+};
+
+/**
+ * A witnessed `RESET_SCOPE` (sRFC 41). The reset is relied on only by a later
+ * instruction of `programId` that some consumer admits: its data starts with
+ * the consumer's `discriminator`, and its account at the consumer's
+ * `accountIndex` is the declaring instruction's account at `resetAccountIndex`
+ * (the ledger the reset snapshots). The device compares the two addresses
+ * itself, so the host only has to make both of them known.
+ */
+export type ParsedResetWitness = {
+  programId: string;
+  resetAccountIndex: number;
+  /** At least one. ORed. */
+  consumers: ParsedWitnessConsumer[];
+};
+
+/** One `RESET_SCOPE.WITNESS_CONSUMER`. */
+export type ParsedWitnessConsumer = {
+  /** Prefix (0 to 8 bytes) the consumer's instruction data must start with. */
+  discriminator: Uint8Array;
+  /** Index, in the consumer's accounts, of the account that must be the ledger. */
+  accountIndex: number;
 };
 
 export type ParsedDisplayField = {

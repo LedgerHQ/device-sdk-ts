@@ -19,6 +19,7 @@ import {
   tokenValue,
   trustedNameDisplayField,
   valueFlowPort,
+  witnessedScope,
 } from "./__tests__/fixtures/calBuilders";
 import { buildRequirements } from "./buildRequirements";
 import { type CalValue, type CalValueFlowPort } from "./calTypes";
@@ -683,5 +684,112 @@ describe("buildRequirements", () => {
     expect(result.altResolutions).toEqual([
       { altAddress: "ALT", entryIndex: 7 },
     ]);
+  });
+
+  describe("witnessed RESET_SCOPE", () => {
+    const JUPITER = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
+    const ROUTE_WITH_TOKEN_LEDGER = "96564774a75d0e68";
+    const alt = (entryIndex: number, isWritable = false) =>
+      account(undefined, { altAddress: "ALT", entryIndex }, isWritable);
+
+    /** Jupiter's `setTokenLedger`: [tokenLedger (w), tokenAccount], reset on 1. */
+    function setTokenLedger(
+      accounts: RequirementAccount[],
+      resetScope = witnessedScope(JUPITER, 0, [
+        [ROUTE_WITH_TOKEN_LEDGER, 7],
+        ["e6798f50779f6aaa", 11],
+      ]),
+    ): MatchedInstruction {
+      return matched({
+        programId: JUPITER,
+        discriminator: "e455b9704e4f4d02",
+        accounts,
+        descriptor: {
+          accountResets: [
+            accountReset({
+              accountIndex: 1,
+              valueKind: "SPL_TOKEN",
+              token: tokenValue("RESOLVE"),
+              resetScope,
+            }),
+          ],
+        },
+      });
+    }
+
+    /** `routeWithTokenLedger`, reading the ledger at slot 7. */
+    function routeWithTokenLedger(ledger: RequirementAccount) {
+      return matched({
+        programId: JUPITER,
+        discriminator: ROUTE_WITH_TOKEN_LEDGER,
+        data: bytes(0x96, 0x56, 0x47, 0x74, 0xa7, 0x5d, 0x0e, 0x68, 0x00),
+        accounts: [
+          ...Array.from({ length: 7 }, (_, i) => account(`acc${i}`)),
+          ledger,
+          account("tail"),
+        ],
+      });
+    }
+
+    it("resolves the route's read-only ALT ledger, which no other rule streams", () => {
+      const result = run([
+        setTokenLedger([
+          account("tokenLedger", undefined, true),
+          account("ata"),
+        ]),
+        routeWithTokenLedger(alt(9)),
+      ]);
+      expect(result.altResolutions).toEqual([
+        { altAddress: "ALT", entryIndex: 9 },
+      ]);
+      // The reset's own mint comes from its token account (path 4), as before.
+      expect(result.tokenAccountStates).toEqual(["ata"]);
+    });
+
+    it("streams no consumer slot for a plain scope", () => {
+      const result = run([
+        setTokenLedger(
+          [account("tokenLedger", undefined, true), account("ata")],
+          {
+            program_id: JUPITER,
+            discriminators: [ROUTE_WITH_TOKEN_LEDGER],
+          },
+        ),
+        routeWithTokenLedger(alt(9)),
+      ]);
+      expect(result.altResolutions).toEqual([]);
+    });
+
+    it("falls back on a stale descriptor when WITNESS_RESET_INDEX is out of range", () => {
+      const result = buildRequirements(
+        [
+          setTokenLedger(
+            [account("tokenLedger"), account("ata")],
+            witnessedScope(JUPITER, 2, [[ROUTE_WITH_TOKEN_LEDGER, 7]]),
+          ),
+        ],
+        { selectEnumVariants: NO_ENUMS },
+      );
+      expect(result.isLeft()).toBe(true);
+      result.ifLeft((error) => {
+        expect(error).toBeInstanceOf(AccountSchemaMismatchError);
+        expect(error.originalError.message).toMatch(
+          /ACCOUNT_RESET mismatch for \(e455b9704e4f4d02\): RESET_SCOPE witness reset_account_index 2/,
+        );
+      });
+    });
+
+    it("falls back on a stale descriptor when a reset's ACCOUNT_INDEX is out of range", () => {
+      // The device refuses the transaction at finalize: the descriptor does not
+      // describe this instruction.
+      const result = buildRequirements(
+        [setTokenLedger([account("tokenLedger")])],
+        { selectEnumVariants: NO_ENUMS },
+      );
+      result.ifLeft((error) =>
+        expect(error).toBeInstanceOf(AccountSchemaMismatchError),
+      );
+      expect(result.isLeft()).toBe(true);
+    });
   });
 });

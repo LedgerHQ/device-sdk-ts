@@ -26,7 +26,7 @@ import { type ChallengeBoundRequirements } from "@internal/app-binder/task/Build
 export type ProvisionGenericClearSignDAOutput = {
   status: "prepared" | "degraded";
   unrecognizedProgramIds: string[];
-  /** `true` when `"degraded"` specifically because an ACCOUNT_SCHEMA pre-check failed (stale CAL descriptor). */
+  /** `true` when `"degraded"` specifically because a CAL descriptor is stale: its ACCOUNT_SCHEMA pre-check failed, or an ACCOUNT_RESET index is out of range. */
   staleDescriptor: boolean;
 };
 

@@ -224,4 +224,60 @@ describe("fromCalAccountReset", () => {
       fromCalAccountReset({ account_index: 0, value_kind: "SPL_TOKEN" }),
     ).toThrow(/missing the required TOKEN field/);
   });
+
+  it("maps a witnessed reset_scope", () => {
+    const out = fromCalAccountReset({
+      account_index: 1,
+      value_kind: "NATIVE",
+      reset_scope: {
+        program_id: "Jup",
+        witness: {
+          reset_account_index: 0,
+          consumers: [
+            { discriminator: "9656", account_index: 7 },
+            { discriminator: "", account_index: 11 },
+          ],
+        },
+      },
+    });
+    expect(out.witness).toEqual({
+      programId: "Jup",
+      resetAccountIndex: 0,
+      consumers: [
+        { discriminator: Uint8Array.of(0x96, 0x56), accountIndex: 7 },
+        { discriminator: new Uint8Array(), accountIndex: 11 },
+      ],
+    });
+  });
+
+  it("carries no witness for a plain or absent scope", () => {
+    expect(
+      fromCalAccountReset({
+        account_index: 1,
+        value_kind: "NATIVE",
+        reset_scope: { program_id: "Jup", discriminators: ["01"] },
+      }).witness,
+    ).toBeUndefined();
+    expect(
+      fromCalAccountReset({ account_index: 1, value_kind: "NATIVE" }).witness,
+    ).toBeUndefined();
+  });
+
+  it("drops a witness whose discriminator does not decode, instead of failing the decode", () => {
+    // The view only decides which ALT entries are streamed: losing it leaves
+    // the route unmerged, while failing would blind-sign the whole program.
+    expect(
+      fromCalAccountReset({
+        account_index: 1,
+        value_kind: "NATIVE",
+        reset_scope: {
+          program_id: "Jup",
+          witness: {
+            reset_account_index: 0,
+            consumers: [{ discriminator: "zz", account_index: 7 }],
+          },
+        },
+      }).witness,
+    ).toBeUndefined();
+  });
 });
