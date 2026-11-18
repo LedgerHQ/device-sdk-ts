@@ -27,7 +27,6 @@ import { type SignClearSignDAStateStep } from "./SignClearSignDeviceActionTypes"
 export const signTransactionDAStateSteps = Object.freeze({
   OPEN_APP: "signer.sol.steps.openApp",
   GET_APP_CONFIG: "signer.sol.steps.getAppConfig",
-  PROVIDE_GATED_SIGNING: "signer.sol.steps.provideGatedSigning",
   TRANSACTION_CHECKS_OPT_IN: "signer.sol.steps.transactionChecksOptIn",
   TRANSACTION_CHECKS_OPT_IN_RESULT:
     "signer.sol.steps.transactionChecksOptInResult",

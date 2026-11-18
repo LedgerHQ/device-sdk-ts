@@ -9,7 +9,6 @@ import {
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
-  UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Just, Left, Nothing, Right } from "purify-ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -990,14 +989,6 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
                   input: { messageBytes: exampleTx, context: null },
                 }),
               );
-              // The UI shows the gating step, with nothing to do on device.
-              expect(states).toContainEqual({
-                status: DeviceActionStatus.Pending,
-                intermediateValue: {
-                  requiredUserInteraction: UserInteractionRequired.None,
-                  step: signTransactionDAStateSteps.PROVIDE_GATED_SIGNING,
-                },
-              });
               const gatingOrder =
                 provideGatedSigningMock.mock.invocationCallOrder[0]!;
               expect(gatingOrder).toBeGreaterThan(

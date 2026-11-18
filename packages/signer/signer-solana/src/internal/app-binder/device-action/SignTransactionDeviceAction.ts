@@ -453,12 +453,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         ProvideGatedSigning: {
-          entry: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.PROVIDE_GATED_SIGNING,
-            },
-          }),
           invoke: {
             id: "provideGatedSigning",
             src: "provideGatedSigning",
@@ -723,12 +717,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         GatedSigningReprovision: {
-          entry: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.PROVIDE_GATED_SIGNING,
-            },
-          }),
           invoke: {
             id: "provideGatedSigningReprovision",
             src: "provideGatedSigning",
