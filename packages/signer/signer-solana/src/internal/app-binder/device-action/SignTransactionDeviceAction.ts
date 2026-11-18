@@ -283,6 +283,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           appConfig: null,
           messageBytes: this.input.transaction,
           serializedForTxCheck: undefined,
+          hasSignatures: undefined,
           clearSignPrepared: false,
           unrecognizedProgramIds: [],
           staleDescriptor: false,
@@ -314,6 +315,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     ...context._internalState,
                     messageBytes: event.output.messageBytes,
                     serializedForTxCheck: event.output.serializedForTxCheck,
+                    hasSignatures: event.output.hasSignatures,
                   }),
                 }),
               },
@@ -324,6 +326,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     ...context._internalState,
                     messageBytes: event.output.messageBytes,
                     serializedForTxCheck: event.output.serializedForTxCheck,
+                    hasSignatures: event.output.hasSignatures,
                   }),
                 }),
               },
@@ -654,6 +657,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 transaction: context._internalState.messageBytes,
                 rpcUrl,
                 fetchBlockhash,
+                hasSignatures: context._internalState.hasSignatures,
                 userInputType:
                   context.input.transactionOptions?.transactionResolutionContext
                     ?.userInputType,
@@ -858,6 +862,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 transaction: context._internalState.messageBytes,
                 rpcUrl,
                 fetchBlockhash,
+                hasSignatures: context._internalState.hasSignatures,
                 userInputType:
                   context.input.transactionOptions?.transactionResolutionContext
                     ?.userInputType,

@@ -1,5 +1,15 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.16.0
+
+### Minor Changes
+
+- [#2197](https://github.com/LedgerHQ/device-sdk-ts/pull/2197) [`0000aca`](https://github.com/LedgerHQ/device-sdk-ts/commit/0000aca0df800a5b530c3b54f3a89c773985865f) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Refresh the blockhash on delayed signing for multi-signer transactions when no signature is present yet and the caller supplies it through fetchBlockhash
+
+### Patch Changes
+
+- [#2066](https://github.com/LedgerHQ/device-sdk-ts/pull/2066) [`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Exclude test files from the published package
+
 ## 1.15.0
 
 ### Minor Changes
