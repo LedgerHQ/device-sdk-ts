@@ -9,6 +9,11 @@ import {
   type ScreenTextAnalysis,
 } from "@root/src/domain/services/ScreenAnalyzer";
 
+// Strip all whitespace for comparison to ignore formatting differences, such
+// as a label the device wraps over two lines
+const stripWhitespace = (text: string) =>
+  text.toLowerCase().replace(/\s+/g, "");
+
 @injectable()
 export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
   private readonly logger: LoggerPublisherService;
@@ -39,10 +44,6 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
 
     const found: string[] = [];
     const missing: string[] = [];
-
-    // Strip all whitespace for comparison to ignore formatting differences
-    const stripWhitespace = (text: string) =>
-      text.toLowerCase().replace(/\s+/g, "");
 
     const isOnScreen = (needle: string) => {
       const stripped = stripWhitespace(needle);
@@ -237,6 +238,40 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     }
 
     return isScreen;
+  }
+
+  async isTransactionCheckOptInShown(): Promise<boolean> {
+    const content = await this.readScreenContent();
+    // A screen in transition reads empty, and so does a failed read: neither
+    // proves the opt-in closed.
+    if (content.isEmpty) {
+      return true;
+    }
+    const text = stripWhitespace(content.text);
+    // Not "transaction check" alone: the review's verdict line has it too.
+    const isShown =
+      text.includes("maybelater") || text.includes("transactioncheckenabled");
+
+    if (isShown) {
+      this.logger.debug("Transaction Check opt-in is still on screen");
+    }
+
+    return isShown;
+  }
+
+  async isTransactionCheckWarning(): Promise<boolean> {
+    const text = stripWhitespace((await this.readScreenContent()).text);
+    // The review's first page repeats "Potential risk" / "Critical threat" as
+    // its verdict line, but only the warning offers "Back to safety".
+    const isWarning =
+      text.includes("backtosafety") &&
+      (text.includes("potentialrisk") || text.includes("criticalthreat"));
+
+    if (isWarning) {
+      this.logger.debug("Current screen is a Transaction Check warning");
+    }
+
+    return isWarning;
   }
 
   async isHomePage(): Promise<boolean> {

@@ -19,7 +19,7 @@ interface GetAddressOutput {
   address: string;
 }
 
-test.describe("signer polkadot: get address", () => {
+test.describe("signer polkadot: get address", { tag: "@speculos" }, () => {
   test("returns the address for the default derivation path", async ({
     device,
     polkadotSigner,

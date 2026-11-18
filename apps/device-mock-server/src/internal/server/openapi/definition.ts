@@ -89,6 +89,15 @@ export const openapiDefinition: OAS3Definition = {
         type: "object",
         description: "Payload to attach (POST) or edit (PATCH) a device.",
         properties: {
+          id: {
+            type: "string",
+            pattern: "^[A-Za-z0-9_-]{1,64}$",
+            example: "flex-1",
+            description:
+              "The id of a new device. Omit it to get a random UUID. " +
+              "`POST /devices` and `POST /import` read it; " +
+              "`PATCH /devices/{id}` ignores it. `GET /export` includes it.",
+          },
           name: { type: "string" },
           device_type: { type: "string", example: "nanoX" },
           connectivity_type: { type: "string", example: "USB" },

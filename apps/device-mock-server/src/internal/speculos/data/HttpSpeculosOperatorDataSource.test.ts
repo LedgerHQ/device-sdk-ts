@@ -58,6 +58,7 @@ describe("HttpSpeculosOperatorDataSource", () => {
       device: "nanox",
       seed: TEST_SEED,
       run_id: "run-1",
+      origin: "device-sdk-ts/device-mock-server",
       route_timeout_seconds: 300,
       extra_args: ["-p"],
     });

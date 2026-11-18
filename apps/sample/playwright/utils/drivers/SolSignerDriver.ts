@@ -43,13 +43,20 @@ export class SolSignerDriver {
   /**
    * Open the Sign transaction action, fill the base64 serialized transaction
    * and Execute it. The action stays pending until the transaction is reviewed
-   * and signed on Speculos.
+   * and signed on Speculos. With `delayed`, the signer refreshes the blockhash
+   * from its RPC after the review and signs the refreshed message.
    */
-  async signTransaction(transaction: string): Promise<void> {
+  async signTransaction(
+    transaction: string,
+    { delayed = false }: { delayed?: boolean } = {},
+  ): Promise<void> {
     await this.page.getByTestId("CTA_command-Sign transaction").click();
     const input = this.page.getByTestId("input-text_transaction");
     await input.waitFor({ state: "visible" });
     await input.fill(transaction);
+    if (delayed) {
+      await this.setSwitch("delayed", true);
+    }
     await this.page.getByTestId("CTA_send-device-action").click();
   }
 
@@ -89,5 +96,27 @@ export class SolSignerDriver {
       /"status": "(completed|error)"/,
       { timeout },
     );
+  }
+
+  /**
+   * Wait for the device action to fail and return the rendered error. Errors
+   * are rendered with `util.inspect`, not as JSON, so match on their `_tag`.
+   */
+  async lastError({
+    timeout = 90_000,
+  }: { timeout?: number } = {}): Promise<string> {
+    return this.responses.lastText(/_tag: '/, { timeout });
+  }
+
+  /**
+   * The `step` of every state the device action emitted, oldest first, to tell
+   * which path the signer took.
+   */
+  async steps(): Promise<string[]> {
+    const texts = await this.responses.allTexts();
+    return texts.flatMap((text) => {
+      const step = /"step": "([^"]+)"/.exec(text)?.[1];
+      return step ? [step] : [];
+    });
   }
 }

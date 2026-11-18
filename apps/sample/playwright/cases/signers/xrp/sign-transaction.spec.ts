@@ -77,7 +77,7 @@ const DER_SIGNATURE_RE = /^0x30[0-9a-f]{2}02[0-9a-f]+$/i;
 
 type SignTransactionOutput = string;
 
-test.describe("signer xrp: sign transaction", () => {
+test.describe("signer xrp: sign transaction", { tag: "@speculos" }, () => {
   test("signs a payment that fits a single APDU", async ({
     device,
     xrpSigner,

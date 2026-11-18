@@ -36,6 +36,10 @@ export interface SessionRepository {
 
   // --- Devices --------------------------------------------------------------
   listDevices(record: SessionRecord): Device[];
+  /**
+   * Attach a device with `config.id`, or a random UUID when it is omitted. The
+   * caller checks that the id is free: a taken id replaces that device.
+   */
   addDevice(record: SessionRecord, config: DeviceConfig): Device;
   findDevice(record: SessionRecord, deviceId: string): Maybe<Device>;
   editDevice(

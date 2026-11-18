@@ -225,6 +225,7 @@ describe("BuildEIP712ContextTask", () => {
     // THEN
     expect(builtContext).toStrictEqual({
       deviceModelId: DeviceModelId.NANO_S,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       additionalContexts: [],
       types: TEST_TYPES,
@@ -279,6 +280,7 @@ describe("BuildEIP712ContextTask", () => {
     // THEN
     expect(builtContext).toStrictEqual({
       deviceModelId: DeviceModelId.FLEX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       additionalContexts: [],
       types: TEST_TYPES,
@@ -291,6 +293,47 @@ describe("BuildEIP712ContextTask", () => {
       clearSigningType: ClearSigningType.BASIC,
       contextErrorCount: 0,
     });
+  });
+
+  it("Build context using the descriptor join IDs from app 1.23.0", async () => {
+    // GIVEN
+    const task = new BuildEIP712ContextTask(
+      apiMock,
+      contextModuleMock as unknown as ContextModule,
+      parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
+      TEST_DATA,
+      "44'/60'/0'/0/0",
+      createAppConfig(false),
+      TEST_FROM,
+      mockLoggerFactory,
+      buildFullContextFactoryMock,
+    );
+    parserMock.parse.mockReturnValueOnce(
+      Right({
+        types: TEST_TYPES,
+        domain: TEST_DOMAIN_VALUES,
+        message: TEST_MESSAGE_VALUES,
+      }),
+    );
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.23.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+    contextModuleMock.getTypedDataFilters.mockResolvedValueOnce({
+      type: ClearSignContextType.ERROR,
+      error: new Error("no filter"),
+    });
+    contextModuleMock.getContexts.mockResolvedValueOnce([]);
+    // WHEN
+    const builtContext = await task.run();
+    // THEN
+    expect(builtContext.useDescriptorJoinId).toBe(true);
   });
 
   it("Build context with clear signing context", async () => {
@@ -336,6 +379,7 @@ describe("BuildEIP712ContextTask", () => {
     // THEN
     expect(builtContext).toStrictEqual({
       deviceModelId: DeviceModelId.FLEX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       additionalContexts: [],
       types: TEST_TYPES,
@@ -412,6 +456,7 @@ describe("BuildEIP712ContextTask", () => {
     // THEN
     expect(builtContext).toStrictEqual({
       deviceModelId: DeviceModelId.FLEX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
@@ -556,6 +601,7 @@ describe("BuildEIP712ContextTask", () => {
     // THEN
     expect(builtContext).toStrictEqual({
       deviceModelId: DeviceModelId.FLEX,
+      useDescriptorJoinId: false,
       derivationPath: "44'/60'/0'/0/0",
       additionalContexts: [],
       types: TEST_TYPES,

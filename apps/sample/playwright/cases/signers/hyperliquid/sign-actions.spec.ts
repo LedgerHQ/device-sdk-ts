@@ -31,7 +31,7 @@ interface SignActionsOutput {
   v: number;
 }
 
-test.describe("signer hyperliquid: sign actions", () => {
+test.describe("signer hyperliquid: sign actions", { tag: "@speculos" }, () => {
   test("signs an order approved on the device screen", async ({
     device,
     hyperliquidSigner,

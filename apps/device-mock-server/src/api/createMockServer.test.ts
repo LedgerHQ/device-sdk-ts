@@ -204,6 +204,89 @@ describe("createMockServer (HTTP contract)", () => {
     });
   });
 
+  describe("chosen device id", () => {
+    const post = (token: string, body: Record<string, unknown>) =>
+      api("/devices", { method: "POST", body: JSON.stringify(body) }, token);
+
+    const listIds = async (token: string) =>
+      (
+        (await (await api("/devices", {}, token)).json()) as { id: string }[]
+      ).map(({ id }) => id);
+
+    it("creates a device with the id in the body", async () => {
+      const token = await authenticate();
+
+      const res = await post(token, { id: "flex-1", device_type: "flex" });
+
+      expect(res.status).toBe(201);
+      expect(await res.json()).toMatchObject({ id: "flex-1" });
+      expect((await api("/devices/flex-1", {}, token)).status).toBe(200);
+    });
+
+    it("brings back a deleted device with the same id", async () => {
+      const token = await authenticate();
+      await post(token, { id: "flex-1", device_type: "flex" });
+
+      await api("/devices/flex-1", { method: "DELETE" }, token);
+      expect(await listIds(token)).toEqual([]);
+
+      expect(
+        (await post(token, { id: "flex-1", device_type: "flex" })).status,
+      ).toBe(201);
+      expect(await listIds(token)).toEqual(["flex-1"]);
+    });
+
+    it("refuses an id that is already taken (409)", async () => {
+      const token = await authenticate();
+      await post(token, { id: "flex-1", name: "First", device_type: "flex" });
+
+      const res = await post(token, {
+        id: "flex-1",
+        name: "Second",
+        device_type: "stax",
+      });
+
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({
+        error: "Device flex-1 already exists",
+      });
+      const kept = (await (await api("/devices/flex-1", {}, token)).json()) as {
+        name: string;
+      };
+      expect(kept.name).toBe("First");
+    });
+
+    it.each(["", "has space", "a.b", "x".repeat(65)])(
+      "refuses the id %j (400)",
+      async (id) => {
+        const token = await authenticate();
+
+        const res = await post(token, { id, device_type: "flex" });
+
+        expect(res.status).toBe(400);
+        expect(await listIds(token)).toEqual([]);
+      },
+    );
+
+    it("ignores the id in a PATCH body", async () => {
+      const token = await authenticate();
+      const { id } = await addDevice(token);
+
+      const res = await api(
+        `/devices/${id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ id: "other", name: "Renamed" }),
+        },
+        token,
+      );
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ id, name: "Renamed" });
+      expect(await listIds(token)).toEqual([id]);
+    });
+  });
+
   describe("apdu resolution", () => {
     const sendApdu = async (token: string, id: string, apdu: string) => {
       const res = await api(
@@ -431,6 +514,80 @@ describe("createMockServer (HTTP contract)", () => {
         token,
       );
       expect(imported.status).toBe(200);
+    });
+
+    it("keeps the device ids through an export and an import", async () => {
+      const token = await authenticate();
+      const { id } = await addDevice(token);
+      await api(
+        "/devices",
+        {
+          method: "POST",
+          body: JSON.stringify({ id: "flex-1", device_type: "flex" }),
+        },
+        token,
+      );
+
+      const exported = (await (await api("/export", {}, token)).json()) as {
+        devices: { id?: string }[];
+      };
+      expect(exported.devices.map((device) => device.id)).toEqual([
+        id,
+        "flex-1",
+      ]);
+
+      await api(
+        "/import",
+        { method: "POST", body: JSON.stringify(exported) },
+        token,
+      );
+      const devices = (await (await api("/devices", {}, token)).json()) as {
+        id: string;
+      }[];
+      expect(devices.map((device) => device.id)).toEqual([id, "flex-1"]);
+    });
+
+    it("refuses an import with the same id twice and keeps the session (400)", async () => {
+      const token = await authenticate();
+      const { id } = await addDevice(token);
+
+      const res = await api(
+        "/import",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            devices: [
+              { id: "flex-1", device_type: "flex" },
+              { id: "flex-1", device_type: "stax" },
+            ],
+          }),
+        },
+        token,
+      );
+
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "device ids must be unique" });
+      const devices = (await (await api("/devices", {}, token)).json()) as {
+        id: string;
+      }[];
+      expect(devices.map((device) => device.id)).toEqual([id]);
+    });
+
+    it("refuses an import with an id that is not valid (400)", async () => {
+      const token = await authenticate();
+
+      const res = await api(
+        "/import",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            devices: [{ id: "has space", device_type: "flex" }],
+          }),
+        },
+        token,
+      );
+
+      expect(res.status).toBe(400);
     });
 
     it("rejects an import whose device mock lacks a response (400)", async () => {

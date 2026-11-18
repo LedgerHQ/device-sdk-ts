@@ -14,6 +14,17 @@ const STAX_WITH_SOLANA: DeviceConfig = {
   masks: [0x33200000],
 };
 
+// The RPC the sample's Solana signer refreshes blockhashes from
+// (SignerSolanaView's solanaRPCURL).
+const SOLANA_RPC_HOST = "solana.coin.ledger.com";
+// The blockhash that RPC is made to return: 32 bytes of 0x07.
+const REFRESHED_BLOCKHASH = "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx";
+// SOL_TRANSFER with REFRESHED_BLOCKHASH in place of its own, signed by the
+// fixed Speculos seed. Computed outside DMK with the key that reproduces
+// EXPECTED_SIGNATURE for the original message.
+const EXPECTED_DELAYED_SIGNATURE =
+  "0x114f874474cfaa2d7dd64cdb5955f29d89732e8d6857459547e70c5f14856fb5be2fd8810db57a449d8fdd26cd2eaa6d0be132fefde9d736098bc013a3e1550f";
+
 // A legacy transaction transferring 0.001 SOL from 44'/501'/0'/0'
 // (8dzfFpL3fBFch2fPUSFufamU7FpFv2p4Ef11W5WbU5iq) to 44'/501'/0'
 // (2eMqnf1SwJanSEaT36BCXKL2EWFezS4ZfqKNk69mLN8P), built with @solana/web3.js
@@ -27,7 +38,7 @@ const SOL_TRANSFER =
 const EXPECTED_SIGNATURE =
   "0x2d7771a3b8e43acf6c0a0062c51dacb77d7b2a259a11ca9f429c65b5f204edc87c7fa56670c8276f8b5f816fdffe2996e20322967b98029c43719441577e8e07";
 
-test.describe("signer solana: sign transaction", () => {
+test.describe("signer solana: sign transaction", { tag: "@speculos" }, () => {
   test("signs a SOL transfer clear-signed on the device screen", async ({
     device,
     solSigner,
@@ -80,6 +91,128 @@ test.describe("signer solana: sign transaction", () => {
 
       expect(result.status).toBe("completed");
       expect(result.output).toBe(EXPECTED_SIGNATURE);
+    });
+  });
+
+  test("fails when the transaction is rejected on the device screen", async ({
+    device,
+    solSigner,
+    speculos,
+  }) => {
+    test.setTimeout(120_000);
+
+    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+    await test.step("Given the device with the Solana app is connected", async () => {
+      dev = await device.addAndConnect(STAX_WITH_SOLANA);
+    });
+
+    await test.step("When Sign transaction is executed for a SOL transfer", async () => {
+      await solSigner.open();
+      await solSigner.signTransaction(SOL_TRANSFER);
+    });
+
+    const emulator = speculos(dev);
+    await test.step("And the transaction is rejected on the Speculos screen", async () => {
+      await emulator.waitReady();
+      // Decline the "Enable Transaction Check?" prompt shown before the review.
+      await expect
+        .poll(
+          async () => {
+            const screen = await emulator.currentScreen();
+            if (screen.includes("Enable Transaction Check")) {
+              await emulator.touch().secondaryButton();
+              // Let the screen move on so the next sample does not tap again.
+              await new Promise((r) => setTimeout(r, 1500));
+            }
+            return screen;
+          },
+          { timeout: 60_000 },
+        )
+        .toContain("Review transaction");
+      // Rejecting takes two taps: "Reject" on the review, then "Yes, reject"
+      // on the confirmation it opens.
+      await emulator.touch().reject();
+      await expect
+        .poll(() => emulator.currentScreen(), { timeout: 15_000 })
+        .toContain("Yes, reject");
+      await emulator.touch().mainButton();
+    });
+
+    await test.step("Then the rejection is surfaced as an app error", async () => {
+      const error = await solSigner.lastError();
+
+      expect(error).toContain("SolanaAppCommandError");
+      expect(error).toContain("errorCode: '6985'");
+    });
+  });
+
+  test("signs over a refreshed blockhash when delayed signing is on", async ({
+    page,
+    device,
+    solSigner,
+    speculos,
+  }) => {
+    test.setTimeout(120_000);
+
+    let blockhashRequests = 0;
+    await test.step("Given the Solana RPC returns a known latest blockhash", async () => {
+      await page.route(
+        (url) => url.hostname === SOLANA_RPC_HOST,
+        async (route) => {
+          const request = route.request();
+          const body =
+            request.method() === "POST"
+              ? (request.postDataJSON() as { id?: unknown; method?: string })
+              : undefined;
+          if (body?.method !== "getLatestBlockhash") {
+            await route.continue();
+            return;
+          }
+          blockhashRequests += 1;
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            headers: { "access-control-allow-origin": "*" },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: body.id,
+              result: {
+                context: { slot: 1 },
+                value: {
+                  blockhash: REFRESHED_BLOCKHASH,
+                  lastValidBlockHeight: 1,
+                },
+              },
+            }),
+          });
+        },
+      );
+    });
+
+    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+    await test.step("And the device with the Solana app is connected", async () => {
+      dev = await device.addAndConnect(STAX_WITH_SOLANA);
+    });
+
+    await test.step("When Sign transaction is executed with delayed signing", async () => {
+      await solSigner.open();
+      await solSigner.signTransaction(SOL_TRANSFER, { delayed: true });
+    });
+
+    const emulator = speculos(dev);
+    await test.step("And the transaction is approved on the Speculos screen", async () => {
+      await emulator.waitReady();
+      await emulator.approveSigning();
+    });
+
+    await test.step("Then the signature covers the refreshed blockhash", async () => {
+      const result = await solSigner.lastResult<string>();
+      expect(result.status).toBe("completed");
+      expect(
+        blockhashRequests,
+        "the signer never fetched a blockhash",
+      ).toBeGreaterThan(0);
+      expect(result.output).toBe(EXPECTED_DELAYED_SIGNATURE);
     });
   });
 });

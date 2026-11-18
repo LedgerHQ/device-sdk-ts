@@ -64,6 +64,18 @@ export class SpeculosTouchscreenController implements DeviceController {
     await this.tap.secondaryButton();
   }
 
+  async acceptTransactionCheck(): Promise<void> {
+    this.logger.debug("☝️ (touch) : Accepting tx checks optin");
+    await this.tap.mainButton();
+  }
+
+  async acceptTransactionCheckWarning(): Promise<void> {
+    this.logger.debug("☝️ (touch) : Accepting tx checks warning");
+    // Same footer button as the blind-signing warning's "Accept risk and
+    // continue".
+    await this.tap.acceptBlindSigning();
+  }
+
   async acknowledgeBlindSigning(): Promise<void> {
     this.logger.debug("☝️ (touch) : Acknowledging blind sign");
     await this.tap.secondaryButton();
@@ -81,6 +93,11 @@ export class SpeculosTouchscreenController implements DeviceController {
 
   async confirmContactRegistration(): Promise<void> {
     this.logger.debug("☝️ (touch) : Confirming contact registration");
+    await this.tap.confirmAddressBookReview();
+  }
+
+  async confirmSafeAddress(): Promise<void> {
+    this.logger.debug("☝️ (touch) : Confirming Safe address");
     await this.tap.confirmAddressBookReview();
   }
 

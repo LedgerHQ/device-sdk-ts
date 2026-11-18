@@ -73,11 +73,11 @@ jobs:
           BTC_LEGACY_SIDE: ${{ steps.filter.outputs.signer-btc-legacy == 'true' }}
         run: |
           if [ "$ALL" = "true" ]; then
-            scenarios="core contacts solana solana-general-clear-sign tron btc-legacy"
+            scenarios="core contacts safe solana solana-general-clear-sign tron btc-legacy"
           else
             scenarios=""
             if [ "$ETH_SIDE" = "true" ]; then
-              scenarios="$scenarios core contacts"
+              scenarios="$scenarios core contacts safe"
             fi
             if [ "$SOLANA_SIDE" = "true" ]; then
               scenarios="$scenarios solana solana-general-clear-sign"
@@ -94,9 +94,13 @@ jobs:
           echo "scenarios=$scenarios" >> "$GITHUB_OUTPUT"
           echo "clear-signing groups: ${scenarios:-<none>}"
 
+  # Untrusted code (fork PRs, and Dependabot PRs whose freshly released
+  # dependencies may be malicious) runs on GitHub-hosted runners only, never on
+  # our self-hosted runners. Dependabot PRs are matched by author, so fixes
+  # pushed on them by Koda or a maintainer stay untrusted too.
   setup:
     name: Setup toolchain and dependencies
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ${{ (github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]') && 'ubuntu-22.04' || 'ledgerhq-device-sdk' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -126,10 +130,11 @@ jobs:
     # no cross-job build-cache upload/download. `--affected` restricts every
     # task to the packages changed versus the PR base branch.
     needs: [setup]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ${{ (github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]') && 'ubuntu-22.04' || 'ledgerhq-device-sdk' }}
     env:
       # Base reference used by `turbo run --affected` to detect changed packages.
       TURBO_SCM_BASE: origin/${{ github.event.pull_request.base.ref }}
+      UNTRUSTED: ${{ github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -171,7 +176,9 @@ jobs:
         run: pnpm turbo run test:coverage --affected
 
       - uses: sonarsource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8
-        if: ${{ steps.test.outcome == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
+        # UNTRUSTED matches Dependabot PRs by author, so a maintainer's push to
+        # one never exposes SONAR_TOKEN to the dependencies run in this job.
+        if: ${{ steps.test.outcome == 'success' && env.UNTRUSTED != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -191,13 +198,33 @@ jobs:
         if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' }}
         run: pnpm --filter @ledgerhq/device-management-kit-sample exec playwright install --with-deps chromium
 
+      # GitHub-hosted runners cannot reach the hosted mock server nor
+      # Speculinho: untrusted PRs use a local mock server with no Speculos.
+      - name: Start local mock server
+        if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' && env.UNTRUSTED == 'true' }}
+        run: |
+          pnpm turbo run build --filter=@ledgerhq/device-mock-server
+          SPECULINHO_URL= nohup pnpm --filter @ledgerhq/device-mock-server start > mock-server.log 2>&1 &
+          timeout 60 sh -c 'until curl -sf http://127.0.0.1:9752/health; do sleep 1; done'
+
       - name: Run sample Playwright tests
         id: playwright
         # The Playwright webServer (start-servers.sh) starts the sample app.
-        # Tests connect to the hosted mock server; no local mock server is needed.
+        # Trusted PRs use the hosted mock server and its Speculos emulators.
+        # Untrusted PRs use the local one and skip the specs tagged @speculos.
         if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' }}
         continue-on-error: true
-        run: pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
+        env:
+          # Injected into the sample settings at runtime by the Playwright setup,
+          # so the token is never built into the sample bundle. Untrusted PRs
+          # do not use Speculinho, so they never get the token.
+          GATING_TOKEN: ${{ env.UNTRUSTED != 'true' && secrets.GATING_TOKEN || '' }}
+        run: |
+          if [ "$UNTRUSTED" = "true" ]; then
+            MOCK_SERVER_URL=http://127.0.0.1:9752 pnpm --filter @ledgerhq/device-management-kit-sample test:playwright --grep-invert @speculos
+          else
+            pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
+          fi
 
       # Playwright exits 0 once a retry passes, so uploading only on failure
       # loses the traces of flaky tests, which are the ones worth reading.
@@ -275,9 +302,10 @@ jobs:
     # Runs alongside `checks`, not after it: the composite builds its own
     # dependency chain, so it never consumed anything `checks` produced.
     needs: [setup, detect-changes]
-    if: needs.detect-changes.outputs.cs-scenarios != ''
+    # Needs Speculinho and GATING_TOKEN: skipped for untrusted PRs (see setup).
+    if: needs.detect-changes.outputs.cs-scenarios != '' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]'
     name: Clear Signing Test (${{ matrix.device }})
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ledgerhq-device-sdk
     permissions:
       contents: read
     strategy:

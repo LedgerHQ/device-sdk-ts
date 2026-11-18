@@ -22,6 +22,8 @@ export type XrpErrorCodes =
   | "6985"
   | "6a80"
   | "6a81"
+  | "6a84"
+  | "6a87"
   | "6b00"
   | "6d00"
   | "6e00"
@@ -34,6 +36,8 @@ export const XRP_APP_ERRORS: CommandErrors<XrpErrorCodes> = {
   "6985": { message: "Condition of use not satisfied (Rejected by user)" },
   "6a80": { message: "Invalid data" },
   "6a81": { message: "Invalid derivation path" },
+  "6a84": { message: "No free slot to store the MPT descriptor" },
+  "6a87": { message: "Wrong APDU data length" },
   "6b00": { message: "Incorrect parameter P1 or P2" },
   "6d00": { message: "Incorrect parameter INS" },
   "6e00": { message: "Incorrect parameter CLA" },

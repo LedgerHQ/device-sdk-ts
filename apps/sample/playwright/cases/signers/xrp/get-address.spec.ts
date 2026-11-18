@@ -144,138 +144,141 @@ test.describe("signer xrp: get address", () => {
     });
   });
 
-  test("returns an address from the real XRP app", async ({
-    device,
-    xrpSigner,
-  }) => {
-    // Opening the XRP app provisions a real Speculos instance. The mock server
-    // alone waits up to 120s for the pod, so the budget here is larger.
-    test.setTimeout(180_000);
+  test(
+    "returns an address from the real XRP app",
+    { tag: "@speculos" },
+    async ({ device, xrpSigner }) => {
+      // Opening the XRP app provisions a real Speculos instance. The mock server
+      // alone waits up to 120s for the pod, so the budget here is larger.
+      test.setTimeout(180_000);
 
-    await test.step("Given a connected Stax with the XRP app and no APDU mock", async () => {
-      await device.addAndConnect(STAX_WITH_XRP);
-    });
-
-    await test.step("When Get Address is executed without skipOpenApp", async () => {
-      await xrpSigner.open();
-      await xrpSigner.getAddress();
-    });
-
-    await test.step("Then a valid XRP address is returned", async () => {
-      const result = await xrpSigner.lastResult<GetAddressOutput>({
-        timeout: 150_000,
+      await test.step("Given a connected Stax with the XRP app and no APDU mock", async () => {
+        await device.addAndConnect(STAX_WITH_XRP);
       });
 
-      expect(result.status).toBe("completed");
-      expect(result.output!.address).toBe(SPECULOS_ADDRESS);
-      // app-xrp 2.6.1 answers with a *compressed* secp256k1 key (33 bytes,
-      // `02`/`03` prefix), not the uncompressed one the APDU spec describes.
-      // The command reads the key by its length prefix, so both parse — the
-      // mocked test above feeds it a 65 byte key for exactly that reason.
-      expect(result.output!.publicKey).toMatch(/^0[23][0-9a-f]{64}$/);
-      expect(result.output!.chainCode).toBeUndefined();
-    });
-  });
-
-  test("returns the chain code from the real XRP app when requested", async ({
-    device,
-    xrpSigner,
-  }) => {
-    test.setTimeout(180_000);
-
-    await test.step("Given a connected Stax with the XRP app", async () => {
-      await device.addAndConnect(STAX_WITH_XRP);
-    });
-
-    await test.step("When Get Address is executed with returnChainCode", async () => {
-      await xrpSigner.open();
-      await xrpSigner.getAddress({ returnChainCode: true });
-    });
-
-    await test.step("Then a 32 byte chain code comes back with the address", async () => {
-      const result = await xrpSigner.lastResult<GetAddressOutput>({
-        timeout: 150_000,
+      await test.step("When Get Address is executed without skipOpenApp", async () => {
+        await xrpSigner.open();
+        await xrpSigner.getAddress();
       });
 
-      expect(result.status).toBe("completed");
-      expect(result.output!.address).toMatch(XRP_ADDRESS_RE);
-      expect(result.output!.chainCode).toMatch(/^[0-9a-f]{64}$/);
-    });
-  });
+      await test.step("Then a valid XRP address is returned", async () => {
+        const result = await xrpSigner.lastResult<GetAddressOutput>({
+          timeout: 150_000,
+        });
 
-  test("validates the address on the device screen", async ({
-    device,
-    xrpSigner,
-    speculos,
-  }) => {
-    // The address has to be approved on screen, so this flow is slow.
-    test.setTimeout(180_000);
+        expect(result.status).toBe("completed");
+        expect(result.output!.address).toBe(SPECULOS_ADDRESS);
+        // app-xrp 2.6.1 answers with a *compressed* secp256k1 key (33 bytes,
+        // `02`/`03` prefix), not the uncompressed one the APDU spec describes.
+        // The command reads the key by its length prefix, so both parse — the
+        // mocked test above feeds it a 65 byte key for exactly that reason.
+        expect(result.output!.publicKey).toMatch(/^0[23][0-9a-f]{64}$/);
+        expect(result.output!.chainCode).toBeUndefined();
+      });
+    },
+  );
 
-    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+  test(
+    "returns the chain code from the real XRP app when requested",
+    { tag: "@speculos" },
+    async ({ device, xrpSigner }) => {
+      test.setTimeout(180_000);
 
-    await test.step("Given a connected Stax with the XRP app", async () => {
-      dev = await device.addAndConnect(STAX_WITH_XRP);
-    });
-
-    await test.step("When Get Address is executed with on-device verification", async () => {
-      await xrpSigner.open();
-      await xrpSigner.getAddress({ checkOnDevice: true });
-    });
-
-    await test.step("And the address is approved on the Speculos screen", async () => {
-      const emulator = speculos(dev);
-      await emulator.waitReady();
-      // The XRP app spreads the confirmation over two pages ("Verify XRP
-      // Address / Swipe to continue", then the address itself), so it has to be
-      // paged before the approval gesture lands on the right screen.
-      await emulator.waitForAnyScreen();
-      // The app spreads the confirmation over two pages:
-      //   1 of 2  "Verify XRP Address / Swipe to continue / Cancel"
-      //   2 of 2  "Address <addr> / Cancel / Confirm"
-      // The second page ends in a Confirm button rather than a hold-to-sign,
-      // so `approve()` (which holds) would miss it — page over, then tap the
-      // main button.
-      await emulator.touch().navigateNext();
-      await emulator.attachScreenshot("confirm-address");
-      await emulator.touch().mainButton();
-    });
-
-    await test.step("Then a valid XRP address is returned", async () => {
-      const result = await xrpSigner.lastResult<GetAddressOutput>({
-        timeout: 150_000,
+      await test.step("Given a connected Stax with the XRP app", async () => {
+        await device.addAndConnect(STAX_WITH_XRP);
       });
 
-      expect(result.status).toBe("completed");
-      // The very address that was shown on, and confirmed from, the screen.
-      expect(result.output!.address).toBe(SPECULOS_ADDRESS);
-    });
-  });
-
-  test("returns an Ed25519 address from the real XRP app", async ({
-    device,
-    xrpSigner,
-  }) => {
-    test.setTimeout(180_000);
-
-    await test.step("Given a connected Stax with an XRP app supporting Ed25519", async () => {
-      await device.addAndConnect(STAX_WITH_XRP_ED25519);
-    });
-
-    await test.step("When Get Address is executed on the Ed25519 curve", async () => {
-      await xrpSigner.open();
-      await xrpSigner.getAddress({ curve: Curve.Ed25519 });
-    });
-
-    await test.step("Then the Ed25519 account of the default path is returned", async () => {
-      const result = await xrpSigner.lastResult<GetAddressOutput>({
-        timeout: 150_000,
+      await test.step("When Get Address is executed with returnChainCode", async () => {
+        await xrpSigner.open();
+        await xrpSigner.getAddress({ returnChainCode: true });
       });
 
-      expect(result.status).toBe("completed");
-      expect(result.output!.publicKey).toBe(SPECULOS_ED25519_PUBLIC_KEY);
-      // The same path is another account on the other curve.
-      expect(result.output!.address).toBe(SPECULOS_ED25519_ADDRESS);
-      expect(result.output!.address).not.toBe(SPECULOS_ADDRESS);
-    });
-  });
+      await test.step("Then a 32 byte chain code comes back with the address", async () => {
+        const result = await xrpSigner.lastResult<GetAddressOutput>({
+          timeout: 150_000,
+        });
+
+        expect(result.status).toBe("completed");
+        expect(result.output!.address).toMatch(XRP_ADDRESS_RE);
+        expect(result.output!.chainCode).toMatch(/^[0-9a-f]{64}$/);
+      });
+    },
+  );
+
+  test(
+    "validates the address on the device screen",
+    { tag: "@speculos" },
+    async ({ device, xrpSigner, speculos }) => {
+      // The address has to be approved on screen, so this flow is slow.
+      test.setTimeout(180_000);
+
+      let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+
+      await test.step("Given a connected Stax with the XRP app", async () => {
+        dev = await device.addAndConnect(STAX_WITH_XRP);
+      });
+
+      await test.step("When Get Address is executed with on-device verification", async () => {
+        await xrpSigner.open();
+        await xrpSigner.getAddress({ checkOnDevice: true });
+      });
+
+      await test.step("And the address is approved on the Speculos screen", async () => {
+        const emulator = speculos(dev);
+        await emulator.waitReady();
+        // The XRP app spreads the confirmation over two pages ("Verify XRP
+        // Address / Swipe to continue", then the address itself), so it has to be
+        // paged before the approval gesture lands on the right screen.
+        await emulator.waitForAnyScreen();
+        // The app spreads the confirmation over two pages:
+        //   1 of 2  "Verify XRP Address / Swipe to continue / Cancel"
+        //   2 of 2  "Address <addr> / Cancel / Confirm"
+        // The second page ends in a Confirm button rather than a hold-to-sign,
+        // so `approve()` (which holds) would miss it — page over, then tap the
+        // main button.
+        await emulator.touch().navigateNext();
+        await emulator.attachScreenshot("confirm-address");
+        await emulator.touch().mainButton();
+      });
+
+      await test.step("Then a valid XRP address is returned", async () => {
+        const result = await xrpSigner.lastResult<GetAddressOutput>({
+          timeout: 150_000,
+        });
+
+        expect(result.status).toBe("completed");
+        // The very address that was shown on, and confirmed from, the screen.
+        expect(result.output!.address).toBe(SPECULOS_ADDRESS);
+      });
+    },
+  );
+
+  test(
+    "returns an Ed25519 address from the real XRP app",
+    { tag: "@speculos" },
+    async ({ device, xrpSigner }) => {
+      test.setTimeout(180_000);
+
+      await test.step("Given a connected Stax with an XRP app supporting Ed25519", async () => {
+        await device.addAndConnect(STAX_WITH_XRP_ED25519);
+      });
+
+      await test.step("When Get Address is executed on the Ed25519 curve", async () => {
+        await xrpSigner.open();
+        await xrpSigner.getAddress({ curve: Curve.Ed25519 });
+      });
+
+      await test.step("Then the Ed25519 account of the default path is returned", async () => {
+        const result = await xrpSigner.lastResult<GetAddressOutput>({
+          timeout: 150_000,
+        });
+
+        expect(result.status).toBe("completed");
+        expect(result.output!.publicKey).toBe(SPECULOS_ED25519_PUBLIC_KEY);
+        // The same path is another account on the other curve.
+        expect(result.output!.address).toBe(SPECULOS_ED25519_ADDRESS);
+        expect(result.output!.address).not.toBe(SPECULOS_ADDRESS);
+      });
+    },
+  );
 });

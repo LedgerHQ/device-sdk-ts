@@ -21,7 +21,7 @@ interface SignMessageOutput {
   v: number;
 }
 
-test.describe("signer ethereum: sign message", () => {
+test.describe("signer ethereum: sign message", { tag: "@speculos" }, () => {
   test("signs a personal message approved on the device screen", async ({
     device,
     ethSigner,

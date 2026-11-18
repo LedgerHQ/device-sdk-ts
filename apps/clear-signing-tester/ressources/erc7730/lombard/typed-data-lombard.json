@@ -5,6 +5,7 @@
   "devices": ["stax", "nanox", "flex"],
   "coinApp": "Ethereum",
   "mode": "parallel",
+  "enabled": false,
   "cases": [
     {
       "data": {

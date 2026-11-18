@@ -12,6 +12,7 @@ import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 import {
   isSolanaSignerFeatureSupported,
   SolanaApplicationResolver,
+  type SolanaSignerFeaturesNames,
 } from "./SolanaApplicationResolver";
 
 function createAppConfig(version: string): AppConfig {
@@ -98,6 +99,33 @@ describe("isSolanaSignerFeatureSupported", () => {
       new Set(["spl"]),
     );
     expect(result).toBe(false);
+  });
+
+  it("gatedSigning is a default feature: disabledFeatures can't name it", () => {
+    // @ts-expect-error gatedSigning is not a switchable feature
+    const switchable: SolanaSignerFeaturesNames = "gatedSigning";
+    expect(switchable).toBe("gatedSigning");
+  });
+
+  it("keeps gatedSigning on when it is passed as a plain string", () => {
+    const disabled = new Set(["gatedSigning", "spl"]) as ReadonlySet<string>;
+
+    expect(
+      isSolanaSignerFeatureSupported(
+        apiFor("Solana"),
+        "gatedSigning",
+        appConfig,
+        disabled as ReadonlySet<SolanaSignerFeaturesNames>,
+      ),
+    ).toBe(true);
+    expect(
+      isSolanaSignerFeatureSupported(
+        apiFor("Solana"),
+        "spl",
+        appConfig,
+        disabled as ReadonlySet<SolanaSignerFeaturesNames>,
+      ),
+    ).toBe(false);
   });
 
   function apiFor(appName: string): InternalApi {

@@ -11,6 +11,7 @@ import {
 import { type Container } from "inversify";
 
 import { type TestBatchContactFromFileUseCase } from "@root/src/application/usecases/TestBatchContactFromFileUseCase";
+import { type TestBatchSafeAddressFromFileUseCase } from "@root/src/application/usecases/TestBatchSafeAddressFromFileUseCase";
 import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
 import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
 import { type TestSolanaProgramUseCase } from "@root/src/application/usecases/TestSolanaProgramUseCase";
@@ -60,6 +61,11 @@ export type ScenarioRuntime = {
   readonly scanLimit?: number;
   readonly samplesPerInstruction?: number;
   readonly originToken: string;
+  /**
+   * A funded wallet's mnemonic, for the scenarios whose transactions the live
+   * Transaction Check backend simulates.
+   */
+  readonly speculosSeed?: string;
   /**
    * CAL mode. Injected ERC7730 descriptors are served with test certificates,
    * so a run using them must not verify against the production PKI root.
@@ -274,10 +280,17 @@ export class ContainerScenarioRunner implements ScenarioRunner {
         screenshotPath: this.runtime.screenshotPath,
         speculinhoUrl: this.runtime.speculinhoUrl,
         speculosHttpTimeoutMs: this.runtime.speculosHttpTimeoutMs,
+        // Only the Transaction Check scenarios need a funded wallet. The others
+        // keep the default seed: their expected texts carry its addresses, so
+        // moving every scenario to the funded seed would break them.
+        ...(options.transactionCheckEnabled
+          ? { seed: this.runtime.speculosSeed }
+          : {}),
       },
       signer: {
         originToken: options.skipOriginToken ? "" : this.runtime.originToken,
         blindSigningEnabled: options.blindSigningEnabled ?? false,
+        transactionCheckEnabled: options.transactionCheckEnabled ?? false,
         // withAddressBook() is build-time, so the book belongs to the signer
         // rather than to the batch that runs against it.
         ...(options.addressBook
@@ -344,6 +357,12 @@ export class ContainerScenarioRunner implements ScenarioRunner {
             TYPES.TestBatchContactFromFileUseCase,
           )
           .execute(fixture!);
+      case "verifySafeAddress":
+        return container
+          .get<TestBatchSafeAddressFromFileUseCase>(
+            TYPES.TestBatchSafeAddressFromFileUseCase,
+          )
+          .execute(fixture!, slice);
       case "solanaProgram":
         return container
           .get<TestSolanaProgramUseCase>(TYPES.TestSolanaProgramUseCase)

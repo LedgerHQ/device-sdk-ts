@@ -69,3 +69,38 @@ export function planRuns(
   }
   return runs;
 }
+
+/**
+ * A Transaction Check scenario boots on a funded wallet, so without a seed
+ * "all" leaves it out and naming it is refused: a job that asks for it fails
+ * rather than passing on nothing.
+ *
+ * @throws If a selector names one by its group or name
+ */
+export function skipSeedlessScenarios(
+  catalog: readonly Scenario[],
+  selectors: readonly string[],
+  seed: string | undefined,
+): readonly Scenario[] {
+  if (seed) return catalog;
+  const needSeed = catalog.filter(
+    (s) => s.options?.transactionCheckEnabled === true,
+  );
+  const named = needSeed.filter((s) =>
+    selectors.some((selector) => selector === s.group || selector === s.name),
+  );
+  if (named.length > 0) {
+    throw new Error(
+      `${named.map((s) => s.name).join(", ")} needs GH SPECULOS_SEED, ` +
+        `a funded wallet's mnemonic (see the README).`,
+    );
+  }
+  const wantsAll = selectors.length === 0 || selectors.includes(ALL_SELECTOR);
+  if (wantsAll && needSeed.length > 0) {
+    console.log(
+      `Skipping ${needSeed.length} scenario(s) that need SPECULOS_SEED: ` +
+        needSeed.map((s) => s.name).join(", "),
+    );
+  }
+  return catalog.filter((s) => !needSeed.includes(s));
+}

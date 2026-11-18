@@ -30,9 +30,9 @@ const LAST_PAGE_MARKERS = [
 const CONTINUE_TO_BLIND_MARKERS = ["continue to blind signing"];
 const BLIND_WARNING_MARKERS = ["blind signing ahead"];
 const BLIND_BLOCKED_MARKERS = ["go to settings"];
-// Web3 Checks opt-in prompt ("Enable Transaction Check?"). Declined ("Maybe
-// later") so the flow proceeds without calling the unreachable backend.
-const TX_CHECK_MARKERS = ["transaction check"];
+// Web3 Checks opt-in prompt ("Enable Transaction Check?"). Not just
+// "transaction check": the review shows the check verdict with those words.
+const TX_CHECK_MARKERS = ["enable transaction check"];
 
 const includesAny = (text: string, markers: string[]): boolean => {
   const lower = text.toLowerCase();
@@ -239,13 +239,17 @@ export class SpeculosDriver {
    * mirroring the clear-signing-tester flow: wait for the review to start, page
    * through to the last screen - handling the "continue to blind signing" /
    * "blind signing ahead" screens, and rejecting if blind signing is blocked
-   * ("Go to settings") - then hold to sign on the last page.
+   * ("Go to settings") - then hold to sign on the last page. The Transaction
+   * Check opt-in is declined unless `enableTransactionCheck` is set. Returns the
+   * screens seen during the review.
    */
-  async approveSigning(): Promise<void> {
+  async approveSigning({
+    enableTransactionCheck = false,
+  }: { enableTransactionCheck?: boolean } = {}): Promise<string[]> {
     if (!this.isTouch()) {
       await this.waitForAnyScreen();
       await this.buttons().pressSequence(["right", "right", "both"]);
-      return;
+      return [];
     }
 
     const touch = this.touch();
@@ -259,9 +263,11 @@ export class SpeculosDriver {
     );
 
     // 2. Page to the last screen, handling the blind-signing screens.
+    const screens: string[] = [];
     for (let step = 0; step < REVIEW_MAX_STEPS; step += 1) {
       const screen = await this.currentScreen();
       console.log(`[speculos ${this.label}] review: ${screen}`);
+      screens.push(screen);
 
       await this.attachScreenshot("review");
       if (includesAny(screen, LAST_PAGE_MARKERS)) break;
@@ -270,8 +276,12 @@ export class SpeculosDriver {
         throw new Error("Blind signing is not enabled on the device");
       }
       if (includesAny(screen, TX_CHECK_MARKERS)) {
-        // "Enable Transaction Check?" -> tap "Maybe later" to decline.
-        await touch.secondaryButton();
+        // "Enable Transaction Check?": "Yes, enable" or "Maybe later".
+        if (enableTransactionCheck) {
+          await touch.mainButton();
+        } else {
+          await touch.secondaryButton();
+        }
       } else if (includesAny(screen, CONTINUE_TO_BLIND_MARKERS)) {
         await touch.continueToBlindSigning();
       } else if (includesAny(screen, BLIND_WARNING_MARKERS)) {
@@ -292,6 +302,7 @@ export class SpeculosDriver {
     // 3. Hold to sign on the last page.
     await this.attachScreenshot("sign");
     await touch.sign(this.signHoldMs());
+    return screens;
   }
 
   /**

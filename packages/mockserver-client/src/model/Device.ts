@@ -82,6 +82,13 @@ export const deviceCodec = Codec.interface({
  * Payload used to attach (POST /devices) or edit (PATCH /devices/:id) a device.
  */
 export interface DeviceConfig {
+  /**
+   * The id of a new device: 1 to 64 letters, digits, `-` or `_`. Omitted means
+   * the server picks a random UUID. `POST /devices` and `POST /import` read it;
+   * `PATCH /devices/:id` ignores it. Delete a device, then attach it again with
+   * the same id, to make a known device go away and come back.
+   */
+  readonly id?: string;
   readonly name?: string;
   readonly device_type?: string;
   readonly connectivity_type?: string;
@@ -102,6 +109,7 @@ export interface DeviceConfig {
 }
 
 export const deviceConfigCodec = Codec.interface({
+  id: optional(string),
   name: optional(string),
   device_type: optional(string),
   connectivity_type: optional(string),
