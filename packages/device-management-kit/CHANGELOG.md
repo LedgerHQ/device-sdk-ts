@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 1.12.0
+
+### Minor Changes
+
+- [#2189](https://github.com/LedgerHQ/device-sdk-ts/pull/2189) [`0f1f603`](https://github.com/LedgerHQ/device-sdk-ts/commit/0f1f603dc354baa5742951445d60ee239deb173b) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Add `listenToConnectedDevices()`, an observable of the connected devices that emits the current list on subscribe, then each time a device session is opened or closed
+
 ## 1.11.1
 
 ### Patch Changes
