@@ -1,4 +1,4 @@
-import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
+import { type BlindSigningReportParams } from "@/modules/multichain/reporter/BlindSigningReporterV1";
 import { type SignReportParams } from "@/modules/multichain/sign-reporter/model/SignReportParams";
 import {
   type ClearSignContext,
@@ -20,6 +20,7 @@ export interface ContextModule {
   getTypedDataFilters(
     typedData: TypedDataContext,
   ): Promise<TypedDataClearSignContext>;
+  /** @deprecated Does nothing: v1 blind signing reports are no longer sent. Use signReport instead; will be removed in the next major. */
   report(params: BlindSigningReportParams): Promise<void>;
   signReport?(params: SignReportParams): Promise<void>;
 }

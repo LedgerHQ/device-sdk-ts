@@ -20,9 +20,7 @@ import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedName
 import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { gatedSigningTypes } from "@/modules/multichain/gated-signing/di/gatedSigningTypes";
-import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
-import { reporterTypes } from "@/modules/multichain/reporter/di/reporterTypes";
-import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
+import { type BlindSigningReportParams } from "@/modules/multichain/reporter/BlindSigningReporterV1";
 import { signReporterTypes } from "@/modules/multichain/sign-reporter/di/signReporterTypes";
 import { type SignReporter } from "@/modules/multichain/sign-reporter/domain/SignReporter";
 import { type SignReportParams } from "@/modules/multichain/sign-reporter/model/SignReportParams";
@@ -51,7 +49,6 @@ export class DefaultContextModule implements ContextModule {
   private _loaders: ContextLoader<unknown>[];
   private _typedDataLoader: TypedDataContextLoader;
   private _fieldLoaders: ContextFieldLoader<unknown>[];
-  private _blindSigningReporter: BlindSigningReporter | null;
   private _signReporter: SignReporter | null;
 
   constructor(args: ContextModuleServiceConfig & ContextModuleLoaderConfig) {
@@ -68,8 +65,6 @@ export class DefaultContextModule implements ContextModule {
 
     this._typedDataLoader =
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
-    this._blindSigningReporter =
-      args.customBlindSigningReporter ?? this._getBlindSigningReporter();
     this._signReporter = args.customSignReporter ?? this._getSignReporter();
   }
 
@@ -195,15 +190,6 @@ export class DefaultContextModule implements ContextModule {
     );
   }
 
-  private _getBlindSigningReporter(): BlindSigningReporter | null {
-    if (this._container.isBound(reporterTypes.BlindSigningReporter)) {
-      return this._container.get<BlindSigningReporter>(
-        reporterTypes.BlindSigningReporter,
-      );
-    }
-    return null;
-  }
-
   private _getSignReporter(): SignReporter | null {
     if (this._container.isBound(signReporterTypes.SignReporter)) {
       return this._container.get<SignReporter>(signReporterTypes.SignReporter);
@@ -261,8 +247,9 @@ export class DefaultContextModule implements ContextModule {
     return this._typedDataLoader.load(typedData);
   }
 
-  public async report(params: BlindSigningReportParams): Promise<void> {
-    await this._blindSigningReporter?.report(params);
+  /** @deprecated Does nothing: v1 blind signing reports are no longer sent. Use signReport instead. */
+  public report(_params: BlindSigningReportParams): Promise<void> {
+    return Promise.resolve();
   }
 
   public async signReport(params: SignReportParams): Promise<void> {

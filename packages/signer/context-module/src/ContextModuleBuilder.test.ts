@@ -14,6 +14,7 @@ import { proxyTypes } from "./modules/ethereum/proxy/di/proxyTypes";
 import { HttpTrustedNameDataSource } from "./modules/ethereum/trusted-name/data/HttpTrustedNameDataSource";
 import { type TrustedNameDataSource } from "./modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "./modules/ethereum/trusted-name/di/trustedNameTypes";
+import { type BlindSigningReportParams } from "./modules/multichain/reporter/BlindSigningReporterV1";
 import { DefaultSignReporter } from "./modules/multichain/sign-reporter/domain/DefaultSignReporter";
 import { type SignReporter } from "./modules/multichain/sign-reporter/domain/SignReporter";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
@@ -454,6 +455,20 @@ describe("ContextModuleBuilder", () => {
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(injectedDataSource).toBeInstanceOf(HttpTrustedNameDataSource);
+    });
+  });
+
+  describe("setBlindSigningReporter (deprecated)", () => {
+    it("should ignore the reporter and send no v1 report", async () => {
+      const report = vi.fn();
+      const contextModule = new ContextModuleBuilder(defaultBuilderArgs)
+        .setBlindSigningReporter({ report })
+        .setChain(ContextModuleChainID.Ethereum)
+        .build();
+
+      await contextModule.report({} as BlindSigningReportParams);
+
+      expect(report).not.toHaveBeenCalled();
     });
   });
 

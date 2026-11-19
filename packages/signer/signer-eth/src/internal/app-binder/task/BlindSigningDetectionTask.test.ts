@@ -70,7 +70,8 @@ describe("BlindSigningDetectionTask", () => {
     const result = await task.run();
 
     expect(result.isBlindSign).toBe(true);
-    expect(mockContextModule.report).toHaveBeenCalledWith({
+    expect(mockContextModule.signReport).toHaveBeenCalledWith({
+      chain: "ETH",
       signatureId: "aBcDeF-1700000000000",
       signingMethod: "eth_signTransaction",
       isBlindSign: true,
@@ -80,8 +81,19 @@ describe("BlindSigningDetectionTask", () => {
       modelId: "flex",
       signerAppVersion: "1.12.1",
       deviceVersion: "2.2.3",
-      ethContext: null,
     });
+  });
+
+  it("should not send the deprecated v1 report", async () => {
+    const args: BlindSigningDetectionTaskArgs = {
+      input: { ...baseInput, hasContext: false, usedFallback: false },
+      contextModule: mockContextModule,
+      loggerFactory: mockLoggerFactory,
+    };
+
+    await new BlindSigningDetectionTask(args).run();
+
+    expect(mockContextModule.report).not.toHaveBeenCalled();
   });
 
   it("should detect non-blind signing for transaction and report", async () => {
@@ -99,7 +111,7 @@ describe("BlindSigningDetectionTask", () => {
     const result = await task.run();
 
     expect(result.isBlindSign).toBe(false);
-    expect(mockContextModule.report).toHaveBeenCalledWith(
+    expect(mockContextModule.signReport).toHaveBeenCalledWith(
       expect.objectContaining({ isBlindSign: false, blindSignReason: null }),
     );
   });
@@ -119,7 +131,7 @@ describe("BlindSigningDetectionTask", () => {
     const result = await task.run();
 
     expect(result.isBlindSign).toBe(true);
-    expect(mockContextModule.report).toHaveBeenCalledWith(
+    expect(mockContextModule.signReport).toHaveBeenCalledWith(
       expect.objectContaining({
         blindSignReason: "device_rejected_context",
       }),
@@ -142,34 +154,12 @@ describe("BlindSigningDetectionTask", () => {
     const result = await task.run();
 
     expect(result.isBlindSign).toBe(true);
-    expect(mockContextModule.report).toHaveBeenCalledWith(
+    expect(mockContextModule.signReport).toHaveBeenCalledWith(
       expect.objectContaining({
         signingMethod: "eth_signTypedData",
         blindSignReason: "device_rejected_context",
       }),
     );
-  });
-
-  it("should not fail if contextModule.report throws", async () => {
-    (mockContextModule.report as ReturnType<typeof vi.fn>).mockRejectedValue(
-      new Error("Network error"),
-    );
-
-    const args: BlindSigningDetectionTaskArgs = {
-      input: {
-        ...baseInput,
-        hasContext: false,
-        usedFallback: false,
-      },
-      contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
-    };
-
-    const task = new BlindSigningDetectionTask(args);
-    const result = await task.run();
-
-    expect(result.isBlindSign).toBe(true);
-    expect(mockLogger.error).toHaveBeenCalled();
   });
 
   it("should return true when hasContext is true but only metadata-only context types are present", async () => {
@@ -283,57 +273,8 @@ describe("BlindSigningDetectionTask", () => {
     const task = new BlindSigningDetectionTask(args);
     await task.run();
 
-    expect(mockContextModule.report).toHaveBeenCalledWith(
+    expect(mockContextModule.signReport).toHaveBeenCalledWith(
       expect.objectContaining({ modelId: "nanoX" }),
-    );
-  });
-
-  it("should populate ethContext when clearSigningType is provided", async () => {
-    const args: BlindSigningDetectionTaskArgs = {
-      input: {
-        ...baseInput,
-        hasContext: true,
-        usedFallback: false,
-        clearSigningType: ClearSigningType.EIP7730,
-        partialContextErrors: 2,
-      },
-      contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
-    };
-
-    const task = new BlindSigningDetectionTask(args);
-    await task.run();
-
-    expect(mockContextModule.report).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ethContext: {
-          clearSigningType: "eip7730",
-          partialContextErrors: 2,
-        },
-      }),
-    );
-  });
-
-  it("should set ethContext to null when clearSigningType is null", async () => {
-    const args: BlindSigningDetectionTaskArgs = {
-      input: {
-        ...baseInput,
-        hasContext: true,
-        usedFallback: false,
-        clearSigningType: null,
-        partialContextErrors: 0,
-      },
-      contextModule: mockContextModule,
-      loggerFactory: mockLoggerFactory,
-    };
-
-    const task = new BlindSigningDetectionTask(args);
-    await task.run();
-
-    expect(mockContextModule.report).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ethContext: null,
-      }),
     );
   });
 

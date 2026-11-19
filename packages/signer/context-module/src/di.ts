@@ -21,7 +21,6 @@ import { uniswapModuleFactory } from "@/modules/ethereum/uniswap/di/uniswapModul
 import { ethereumGatedSigningModuleFactory } from "@/modules/multichain/gated-signing/di/ethereumGatedSigningModuleFactory";
 import { solanaGatedSigningModuleFactory } from "@/modules/multichain/gated-signing/di/solanaGatedSigningModuleFactory";
 import { nanoPkiModuleFactory } from "@/modules/multichain/pki/di/pkiModuleFactory";
-import { reporterModuleFactory } from "@/modules/multichain/reporter/di/reporterModuleFactory";
 import { signReporterModuleFactory } from "@/modules/multichain/sign-reporter/di/signReporterModuleFactory";
 import { ethereumTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/ethereumTransactionCheckModuleFactory";
 import { solanaTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/solanaTransactionCheckModuleFactory";
@@ -60,7 +59,6 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     case ContextModuleChainID.Ethereum:
       container.loadSync(
         nanoPkiModuleFactory(),
-        reporterModuleFactory(),
         signReporterModuleFactory(),
         trustedNameModuleFactory(config.customTrustedNameDataSource),
         externalPluginModuleFactory(),
