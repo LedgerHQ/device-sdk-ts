@@ -37,7 +37,11 @@ export function getAssociatedTokenAddressSync(
   return address;
 }
 
-const PDA_MARKER = new TextEncoder().encode("ProgramDerivedAddress");
+// ASCII bytes of the PDA marker, built without TextEncoder so this module adds
+// no runtime global requirement of its own.
+const PDA_MARKER = Uint8Array.from("ProgramDerivedAddress", (char) =>
+  char.charCodeAt(0),
+);
 
 // Synchronous PDA derivation. web3.js v3 only offers an async
 // `PublicKey.findProgramAddress`, and making token-account derivation async
