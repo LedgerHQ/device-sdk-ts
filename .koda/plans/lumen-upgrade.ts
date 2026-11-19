@@ -219,9 +219,9 @@ const createPrTask = task("create-pr")
 const labelsTask = task("labels")
   .uses(upgrader)
   .message(
-    "If labels is not empty, add them to prUrl with `gh pr edit <prUrl> --add-label <label>`, one flag per label. Skip a label the repo doesn't have.",
+    "If pr.labels is not empty, add them to prUrl with `gh pr edit <prUrl> --add-label <label>`, one flag per label. Skip a label the repo doesn't have.",
   )
-  .with({ prUrl, labels: inputs.pr.field("labels") });
+  .with({ prUrl, pr: inputs.pr });
 
 const recordPrCreatedTask = task("record-pr-created")
   .uses(recorder)
