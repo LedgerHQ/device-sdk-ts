@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0
+
+### Minor Changes
+
+- [#2122](https://github.com/LedgerHQ/device-sdk-ts/pull/2122) [`8f5ec81`](https://github.com/LedgerHQ/device-sdk-ts/commit/8f5ec81a0bea62191a7cba91a1837ef0eb95d744) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Send the receivers of the unified address the user entered with each shielded action and transparent output, so the Zcash app (3.11.0 or later) can show that address in full; omitted for older apps.
+
+### Patch Changes
+
+- [#2066](https://github.com/LedgerHQ/device-sdk-ts/pull/2066) [`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Exclude test files from the published package
+
 ## 0.9.0
 
 ### Minor Changes
