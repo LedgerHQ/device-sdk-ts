@@ -39,8 +39,9 @@ export function getAssociatedTokenAddressSync(
 
 // ASCII bytes of the PDA marker, built without TextEncoder so this module adds
 // no runtime global requirement of its own.
-const PDA_MARKER = Uint8Array.from("ProgramDerivedAddress", (char) =>
-  char.charCodeAt(0),
+const PDA_MARKER = Uint8Array.from(
+  "ProgramDerivedAddress",
+  (char) => char.codePointAt(0) ?? 0,
 );
 
 // Synchronous PDA derivation. web3.js v3 only offers an async
