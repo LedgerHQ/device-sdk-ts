@@ -2,7 +2,6 @@ import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 import { type TrustedNameDataSource } from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
-import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
 import { type SignReporter } from "@/modules/multichain/sign-reporter/domain/SignReporter";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
@@ -54,7 +53,6 @@ export type ContextModuleLoaderConfig = {
   customFieldLoaders: ContextFieldLoader[];
   customLoaders: ContextLoader[];
   customTypedDataLoader?: TypedDataContextLoader;
-  customBlindSigningReporter?: BlindSigningReporter;
   customSignReporter?: SignReporter;
   customTrustedNameDataSource?: TrustedNameDataSource;
 };

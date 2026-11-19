@@ -1,4 +1,4 @@
-import { type BlindSignReason } from "@/modules/multichain/reporter/model/BlindSigningEvent";
+import { type BlindSignReason } from "@/modules/multichain/sign-reporter/model/BlindSignReason";
 import { type BlindSigningModelId } from "@/shared/model/BlindSigningModelId";
 
 type SigningEventEnvDataDto = {

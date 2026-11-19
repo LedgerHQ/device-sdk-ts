@@ -5,7 +5,7 @@ import {
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { BlindSignReason } from "@/modules/multichain/reporter/model/BlindSigningEvent";
+import { BlindSignReason } from "@/modules/multichain/sign-reporter/model/BlindSignReason";
 import {
   type EthSignReportParams,
   type SolSignReportParams,
