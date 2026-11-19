@@ -6,10 +6,12 @@ import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleCon
 
 import { HttpMptDataSource } from "./HttpMptDataSource";
 
-// LIQUCF, as CAL serves it on branch `next`.
+// LIQUCF, as CAL serves it.
 const ISSUANCE_ID = "06361CB09DBAF9976AB0CFB549A54DC608D1C0DF0AD59EC7";
 const DATA =
   "010190020101030480000090040358525005064c4951554346060102071a101806361cb09dbaf9976ab0cfb549a54dc608d1c0df0ad59ec7";
+const PROD_SIGNATURE =
+  "3045022100e245db612050f5e1e73266be703b469757868236bcb976c5b0a154ead50ca330022005764df82711dc22a49965aa8eed4c68863c694bd0f66727ce2d8cc261006acc";
 const TEST_SIGNATURE =
   "304402200debc0857130be224e8b9527d6a32bfdd6b03f0c29fe0abc5e7e2230962adfa1022063028feadadb79ae144607d5a43bea52073e81f181b91c3b01a3ef49e13d65dc";
 
@@ -22,16 +24,20 @@ describe("HttpMptDataSource", () => {
         cal: {
           url: "https://crypto-assets-service.api.ledger.com/v1",
           mode,
-          branch: "next",
+          branch: "main",
         },
       } as ContextModuleServiceConfig,
       httpMock as unknown as DmkNetworkClient,
     );
 
-  const response = (signatures: { prod?: string; test?: string }) => [
+  const response = [
     {
       id: "ripple/mpt/06361cb09dbaf9976ab0cfb549a54dc608d1c0df0ad59ec7:reprn4dbxvhnbdjghqwuf92nzlu3murfc3",
-      descriptor: { data: DATA, descriptorType: "token", signatures },
+      descriptor: {
+        data: DATA,
+        descriptorType: "token",
+        signatures: { prod: PROD_SIGNATURE, test: TEST_SIGNATURE },
+      },
     },
   ];
 
@@ -60,31 +66,27 @@ describe("HttpMptDataSource", () => {
           network_family: "ripple",
           token_identifier: ISSUANCE_ID,
           output: "id,descriptor",
-          ref: "branch:next",
+          ref: "branch:main",
         },
       },
     );
   });
 
-  it("should append the signature of the configured mode with tag 08", async () => {
-    httpMock.get.mockResolvedValue(response({ test: TEST_SIGNATURE }));
+  it.each([
+    ["prod", `${DATA}0847${PROD_SIGNATURE}`],
+    ["test", `${DATA}0846${TEST_SIGNATURE}`],
+  ] as const)(
+    "should append the %s signature with tag 08",
+    async (mode, descriptor) => {
+      httpMock.get.mockResolvedValue(response);
 
-    const result = await makeDataSource("test").getMptDescriptor({
-      issuanceId: ISSUANCE_ID,
-    });
+      const result = await makeDataSource(mode).getMptDescriptor({
+        issuanceId: ISSUANCE_ID,
+      });
 
-    expect(result).toEqual(Right(`${DATA}0846${TEST_SIGNATURE}`));
-  });
-
-  it("should return an error when the mode has no signature", async () => {
-    httpMock.get.mockResolvedValue(response({ test: TEST_SIGNATURE }));
-
-    const result = await makeDataSource("prod").getMptDescriptor({
-      issuanceId: ISSUANCE_ID,
-    });
-
-    expect(result).toEqual(noDescriptor);
-  });
+      expect(result).toEqual(Right(descriptor));
+    },
+  );
 
   it.each([
     ["no token matches", []],
@@ -92,11 +94,11 @@ describe("HttpMptDataSource", () => {
     ["an entry carries no descriptor", [{ id: "ripple/mpt/x" }]],
     [
       "the descriptor data is empty",
-      [{ descriptor: { data: "", signatures: { prod: "sig" } } }],
+      [{ descriptor: { data: "", signatures: { prod: "sig", test: "sig" } } }],
     ],
     [
-      "a signature is not a string",
-      [{ descriptor: { data: DATA, signatures: { prod: 42 } } }],
+      "a signature is missing",
+      [{ descriptor: { data: DATA, signatures: { test: TEST_SIGNATURE } } }],
     ],
   ])("should return an error when %s", async (_case, payload) => {
     httpMock.get.mockResolvedValue(payload);
