@@ -63,6 +63,7 @@ describe("ResolveOsUpdatePath", () => {
 
   const currentFirmware = {
     id: 100,
+    name: "1.3.0",
     version: "1.3.0",
     perso: "perso",
     firmware: null,
@@ -90,6 +91,7 @@ describe("ResolveOsUpdatePath", () => {
 
   const firstFinalFirmware = {
     id: 300,
+    name: "1.4.0-il3",
     version: "1.4.0",
     perso: "perso",
     firmware: "final",
@@ -102,6 +104,7 @@ describe("ResolveOsUpdatePath", () => {
   const secondFinalFirmware = {
     ...firstFinalFirmware,
     id: 301,
+    name: "1.5.0-il3",
     version: "1.5.0",
     mcuVersions: [3],
   } satisfies FinalFirmware;

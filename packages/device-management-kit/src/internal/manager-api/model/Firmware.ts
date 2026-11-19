@@ -10,6 +10,7 @@ export type OsuFirmware = {
 
 export type FinalFirmware = {
   id: number;
+  name: string;
   version: string;
   perso: string;
   firmware: string | null;

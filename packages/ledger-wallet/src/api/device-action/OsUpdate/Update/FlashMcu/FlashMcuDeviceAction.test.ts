@@ -102,6 +102,7 @@ describe("FlashMcuDeviceAction", () => {
 
   const finalFirmware = {
     id: 300,
+    name: "1.4.0",
     version: "1.4.0",
     perso: "perso",
     firmware: "final",
