@@ -14,6 +14,8 @@ import { proxyTypes } from "./modules/ethereum/proxy/di/proxyTypes";
 import { HttpTrustedNameDataSource } from "./modules/ethereum/trusted-name/data/HttpTrustedNameDataSource";
 import { type TrustedNameDataSource } from "./modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "./modules/ethereum/trusted-name/di/trustedNameTypes";
+import { DefaultSignReporter } from "./modules/multichain/sign-reporter/domain/DefaultSignReporter";
+import { type SignReporter } from "./modules/multichain/sign-reporter/domain/SignReporter";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
@@ -452,6 +454,34 @@ describe("ContextModuleBuilder", () => {
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(injectedDataSource).toBeInstanceOf(HttpTrustedNameDataSource);
+    });
+  });
+
+  describe("setSignReporter", () => {
+    it("should use the custom sign reporter", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customSignReporter: SignReporter = { report: vi.fn() };
+
+      const res = contextModuleBuilder
+        .setSignReporter(customSignReporter)
+        .setChain(ContextModuleChainID.Ethereum)
+        .build();
+
+      expect((res as DefaultContextModule)["_signReporter"]).toBe(
+        customSignReporter,
+      );
+    });
+
+    it("should use DefaultSignReporter when no custom sign reporter is set", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+
+      const res = contextModuleBuilder
+        .setChain(ContextModuleChainID.Ethereum)
+        .build();
+
+      expect((res as DefaultContextModule)["_signReporter"]).toBeInstanceOf(
+        DefaultSignReporter,
+      );
     });
   });
 });

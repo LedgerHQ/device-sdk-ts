@@ -70,7 +70,7 @@ export class DefaultContextModule implements ContextModule {
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
     this._blindSigningReporter =
       args.customBlindSigningReporter ?? this._getBlindSigningReporter();
-    this._signReporter = this._getSignReporter();
+    this._signReporter = args.customSignReporter ?? this._getSignReporter();
   }
 
   private _getDefaultFieldLoaders(): ContextFieldLoader[] {
