@@ -132,7 +132,11 @@ const createBranchTask = task("create-branch")
   .uses(upgrader)
   .createBranch({ name: branchPrefix });
 
-const installTask = task("install").runs("pnpm install --frozen-lockfile");
+// The sandbox image ships a checkout whose origin/develop is as old as the image, and Cairn fetches the branch by URL,
+// which leaves it there: the migration range and the changeset read origin/develop, so refresh it first.
+const installTask = task("install").runs(
+  "git fetch --quiet origin develop && pnpm install --frozen-lockfile",
+);
 
 // Sets each exact Lumen pin to the latest published version, then updates the lockfile.
 // Caret ranges (peerDependencies) are left alone, and so is a pin newer than `latest` (dist-tag rollback, prerelease).
