@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   isAppVersionAtLeast,
+  MIN_APP_VERSION_FOR_OUTPUT_ACCOUNT,
   MIN_APP_VERSION_FOR_USER_ADDRESS,
 } from "./appVersion";
 
@@ -29,6 +30,10 @@ describe("isAppVersionAtLeast", () => {
 
   it("returns false for an unreadable floor", () => {
     expect(isAppVersionAtLeast("3.11.0", "x")).toBe(false);
+  });
+
+  it("floors the output account declaration at 3.10.0", () => {
+    expect(MIN_APP_VERSION_FOR_OUTPUT_ACCOUNT).toBe("3.10.0");
   });
 
   it("floors the user address receivers at 3.11.0", () => {

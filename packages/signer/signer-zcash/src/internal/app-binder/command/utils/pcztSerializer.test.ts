@@ -27,6 +27,7 @@ import {
   SAMPLE_GLOBAL_V6,
   SAMPLE_HEADER_HEX,
   SAMPLE_HEADER_HEX_V6,
+  sampleIronwoodAction,
   sampleIronwoodBundle,
   sampleOrchardAction,
   sampleOrchardBundle,
@@ -276,9 +277,9 @@ describe("pcztSerializer", () => {
 
     it("appends 02 41 <P2PKH + Sapling> to an Orchard metadata packet, after rcv", () => {
       const base = serializeOrchardActionsIndexed(sampleOrchardBundle());
-      const tagged = serializeOrchardActionsIndexed(sampleOrchardBundle(), [
-        shielded,
-      ]);
+      const tagged = serializeOrchardActionsIndexed(sampleOrchardBundle(), {
+        userAddresses: [shielded],
+      });
       const meta = base.lastPacketIndices[0]!;
       expect(base.packets[meta]!.length).toBe(115);
       expect(bytesToHex(tagged.packets[meta]!)).toBe(
@@ -289,9 +290,9 @@ describe("pcztSerializer", () => {
 
     it("appends 02 00 for an Orchard-only address (empty list)", () => {
       const base = serializeOrchardActionsIndexed(sampleOrchardBundle());
-      const tagged = serializeOrchardActionsIndexed(sampleOrchardBundle(), [
-        new Uint8Array(),
-      ]);
+      const tagged = serializeOrchardActionsIndexed(sampleOrchardBundle(), {
+        userAddresses: [new Uint8Array()],
+      });
       const meta = base.lastPacketIndices[0]!;
       expect(bytesToHex(tagged.packets[meta]!)).toBe(
         bytesToHex(base.packets[meta]!) + "0200",
@@ -300,7 +301,9 @@ describe("pcztSerializer", () => {
 
     it("leaves every other Orchard packet unchanged", () => {
       const base = serializeOrchardActions(sampleOrchardBundle());
-      const tagged = serializeOrchardActions(sampleOrchardBundle(), [shielded]);
+      const tagged = serializeOrchardActions(sampleOrchardBundle(), {
+        userAddresses: [shielded],
+      });
       expect(tagged).toHaveLength(base.length);
       const meta = serializeOrchardActionsIndexed(sampleOrchardBundle())
         .lastPacketIndices[0]!;
@@ -313,9 +316,9 @@ describe("pcztSerializer", () => {
 
     it("puts the Ironwood extension strictly after notePlaintextVersion", () => {
       const base = serializeIronwoodActionsIndexed(sampleIronwoodBundle());
-      const tagged = serializeIronwoodActionsIndexed(sampleIronwoodBundle(), [
-        shielded,
-      ]);
+      const tagged = serializeIronwoodActionsIndexed(sampleIronwoodBundle(), {
+        userAddresses: [shielded],
+      });
       const meta = base.lastPacketIndices[0]!;
       expect(base.packets[meta]!.length).toBe(116);
       expect(base.packets[meta]![115]).toBe(0x03);
@@ -324,7 +327,9 @@ describe("pcztSerializer", () => {
       );
       expect(
         bytesToHex(
-          serializeIronwoodActions(sampleIronwoodBundle(), [shielded])[meta]!,
+          serializeIronwoodActions(sampleIronwoodBundle(), {
+            userAddresses: [shielded],
+          })[meta]!,
         ),
       ).toBe(bytesToHex(tagged.packets[meta]!));
     });
@@ -386,6 +391,155 @@ describe("pcztSerializer", () => {
           actions: [],
         }).lastPacketIndices,
       ).toEqual([]);
+    });
+  });
+
+  describe("output account declaration", () => {
+    const orchardMeta =
+      "0a".repeat(43) + // recipient
+      "0500000000000000" + // value 5 LE
+      "0b".repeat(32) + // rseed
+      "0c".repeat(32); // rcv
+    const ironwoodMeta =
+      "1a".repeat(43) +
+      "0500000000000000" +
+      "1b".repeat(32) +
+      "1c".repeat(32) +
+      "03"; // notePlaintextVersion
+    const METADATA = 8;
+
+    const orchardBundleOf = (n: number) => ({
+      ...sampleOrchardBundle(),
+      actions: Array.from({ length: n }, () => sampleOrchardAction()),
+    });
+
+    it("appends tag 01, length 04 and the LE account after rcv on Orchard", () => {
+      const declared = serializeOrchardActions(sampleOrchardBundle(), {
+        accounts: [1],
+      });
+      const undeclared = serializeOrchardActions(sampleOrchardBundle());
+
+      expect(declared[METADATA]).toHaveLength(121);
+      expect(bytesToHex(declared[METADATA]!)).toBe(
+        orchardMeta + "0104" + "01000000",
+      );
+      declared.forEach((packet, index) => {
+        if (index !== METADATA) {
+          expect(bytesToHex(packet)).toBe(bytesToHex(undeclared[index]!));
+        }
+      });
+    });
+
+    it("appends the entry strictly after notePlaintextVersion on Ironwood", () => {
+      const declared = serializeIronwoodActions(sampleIronwoodBundle(), {
+        accounts: [2],
+      });
+
+      expect(declared[METADATA]).toHaveLength(122);
+      expect(bytesToHex(declared[METADATA]!)).toBe(
+        ironwoodMeta + "0104" + "02000000",
+      );
+    });
+
+    it("encodes account 100 as 64000000", () => {
+      const declared = serializeOrchardActions(sampleOrchardBundle(), {
+        accounts: [100],
+      });
+      expect(bytesToHex(declared[METADATA]!)).toBe(
+        orchardMeta + "0104" + "64000000",
+      );
+    });
+
+    it("extends only the declared actions of a mixed bundle", () => {
+      const packets = serializeOrchardActions(orchardBundleOf(2), {
+        accounts: [undefined, 3],
+      });
+      const indices = serializeOrchardActionsIndexed(
+        orchardBundleOf(2),
+      ).lastPacketIndices;
+
+      expect(packets[indices[0]!]).toHaveLength(115);
+      expect(bytesToHex(packets[indices[1]!]!)).toBe(
+        orchardMeta + "0104" + "03000000",
+      );
+    });
+
+    it("leaves the bytes unchanged when no account is declared", () => {
+      expect(
+        serializeOrchardActions(sampleOrchardBundle(), {
+          accounts: [undefined],
+        }).map(bytesToHex),
+      ).toEqual(serializeOrchardActions(sampleOrchardBundle()).map(bytesToHex));
+      expect(
+        serializeIronwoodActions(sampleIronwoodBundle(), {
+          accounts: [undefined],
+        })[METADATA],
+      ).toHaveLength(116);
+      expect(sampleIronwoodAction().notePlaintextVersion).toBe(3);
+    });
+
+    it("ignores the public outputZip32Derivation field unless the account is passed", () => {
+      const bundle = {
+        ...sampleOrchardBundle(),
+        actions: [
+          {
+            ...sampleOrchardAction(),
+            outputZip32Derivation: { path: "32'/133'/1'" },
+          },
+        ],
+      };
+      expect(serializeOrchardActions(bundle)[METADATA]).toHaveLength(115);
+    });
+
+    it("returns the metadata packet index of each action with a split enc_ciphertext", () => {
+      expect(
+        serializeOrchardActionsIndexed(orchardBundleOf(0)).lastPacketIndices,
+      ).toEqual([]);
+      // count, then 8 packets per action (spend, zip32, cmx, enc x3, out, metadata).
+      expect(
+        serializeOrchardActionsIndexed(orchardBundleOf(1)).lastPacketIndices,
+      ).toEqual([8]);
+      expect(
+        serializeOrchardActionsIndexed(orchardBundleOf(2)).lastPacketIndices,
+      ).toEqual([8, 16]);
+    });
+  });
+
+  describe("output extensions on one action", () => {
+    it("sends tag 01 only when an action has both an account and a receiver list", () => {
+      const meta = serializeOrchardActionsIndexed(sampleOrchardBundle())
+        .lastPacketIndices[0]!;
+      const both = serializeOrchardActions(sampleOrchardBundle(), {
+        accounts: [1],
+        userAddresses: [hexToBytes(UA_SHIELDED_VALUE_HEX)],
+      });
+      const accountOnly = serializeOrchardActions(sampleOrchardBundle(), {
+        accounts: [1],
+      });
+      expect(both.map(bytesToHex)).toEqual(accountOnly.map(bytesToHex));
+      expect(bytesToHex(both[meta]!).endsWith("010401000000")).toBe(true);
+    });
+
+    it("puts each extension on its own action in a mixed bundle", () => {
+      const bundle = {
+        ...sampleOrchardBundle(),
+        actions: [sampleOrchardAction(), sampleOrchardAction()],
+      };
+      const { packets, lastPacketIndices } = serializeOrchardActionsIndexed(
+        bundle,
+        {
+          accounts: [2, undefined],
+          userAddresses: [undefined, hexToBytes(UA_SHIELDED_VALUE_HEX)],
+        },
+      );
+      expect(
+        bytesToHex(packets[lastPacketIndices[0]!]!).endsWith("010402000000"),
+      ).toBe(true);
+      expect(
+        bytesToHex(packets[lastPacketIndices[1]!]!).endsWith(
+          "0241" + UA_SHIELDED_VALUE_HEX,
+        ),
+      ).toBe(true);
     });
   });
 
