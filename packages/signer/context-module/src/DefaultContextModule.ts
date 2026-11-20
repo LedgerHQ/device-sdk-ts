@@ -37,6 +37,7 @@ import { tokenAccountStateTypes } from "@/modules/solana/token-account-state/di/
 import { tokenInfoTypes } from "@/modules/solana/token-info/di/tokenInfoTypes";
 import { solanaTrustedNameTypes } from "@/modules/solana/trusted-name/di/trustedNameTypes";
 import { tokenTypes as tronTokenTypes } from "@/modules/tron/token/di/tokenTypes";
+import { mptTypes } from "@/modules/xrp/mpt/di/mptTypes";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
@@ -171,6 +172,8 @@ export class DefaultContextModule implements ContextModule {
         return [
           this._container.get<ContextLoader>(tronTokenTypes.TokenContextLoader),
         ];
+      case ContextModuleChainID.Xrp:
+        return [this._container.get<ContextLoader>(mptTypes.MptContextLoader)];
       default: {
         const exhaustiveCheck: never = chain;
         void exhaustiveCheck;

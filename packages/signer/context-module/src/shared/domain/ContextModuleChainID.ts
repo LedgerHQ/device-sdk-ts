@@ -3,4 +3,5 @@ export enum ContextModuleChainID {
   Solana = "solana",
   Concordium = "concordium",
   Tron = "tron",
+  Xrp = "xrp",
 }
