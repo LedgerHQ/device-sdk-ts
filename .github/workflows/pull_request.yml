@@ -32,6 +32,7 @@ jobs:
     outputs:
       cs-scenarios: ${{ steps.select.outputs.scenarios }}
       sample: ${{ steps.filter.outputs.sample }}
+      rn-hid-android: ${{ steps.filter.outputs.rn-hid-android }}
       # Untrusted code (fork PRs, and Dependabot PRs whose freshly released
       # dependencies may be malicious) runs on GitHub-hosted runners only, never
       # on our self-hosted runners. Dependabot PRs are matched by author, so
@@ -76,6 +77,10 @@ jobs:
               - 'pnpm-workspace.yaml'
               - 'turbo.json'
               - '.github/actions/sample-e2e-composite/**'
+              - '.github/actions/setup-composite/**'
+              - '.github/workflows/pull_request.yml'
+            rn-hid-android:
+              - 'packages/transport/rn-hid/android/**'
               - '.github/actions/setup-composite/**'
               - '.github/workflows/pull_request.yml'
 
@@ -234,12 +239,42 @@ jobs:
           fi
           echo "All checks passed."
 
+  rn-hid-android-tests:
+    name: RN HID Android unit tests
+    # The turbo `test` task runs only the TypeScript tests. This job runs the
+    # Kotlin tests of the native module, when the native code changes.
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.rn-hid-android == 'true'
+    runs-on: ${{ needs.detect-changes.outputs.runner }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: ./.github/actions/setup-composite
+
+      - name: Set Up JDK
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: "zulu"
+          java-version: "20"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+
+      # The module builds only inside an app build: on its own, Gradle cannot
+      # find React Native. The mobile sample app links it from node_modules.
+      - name: Run Kotlin unit tests
+        working-directory: ./apps/mobile/android
+        run: ./gradlew :ledgerhq_device-transport-kit-react-native-hid:testDebugUnitTest
+
   health-check:
     name: Run health check
     # Aggregates the checks into a single required status so branch protection
     # only needs to require "Run health check". `!cancelled()` is what lets a
-    # skipped cs-tester through instead of skipping this too.
-    needs: [detect-changes, checks, sample-e2e, cs-tester]
+    # skipped cs-tester or rn-hid-android-tests through instead of skipping
+    # this too.
+    needs: [detect-changes, checks, sample-e2e, cs-tester, rn-hid-android-tests]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     steps:
