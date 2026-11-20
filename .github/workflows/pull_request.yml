@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       cs-scenarios: ${{ steps.select.outputs.scenarios }}
+      rn-hid-android: ${{ steps.filter.outputs.rn-hid-android }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -57,6 +58,9 @@ jobs:
             cs-tester:
               - 'apps/clear-signing-tester/**'
               - '.github/**'
+            rn-hid-android:
+              - 'packages/transport/rn-hid/android/**'
+              - '.github/workflows/pull_request.yml'
 
       - name: Select clear-signing groups
         id: select
@@ -281,12 +285,43 @@ jobs:
           fi
           echo "All checks passed."
 
+  rn-hid-android-tests:
+    name: RN HID Android unit tests
+    # The turbo `test` task runs only the TypeScript tests. This job runs the
+    # Kotlin tests of the native module, when the native code changes.
+    needs: [setup, detect-changes]
+    if: needs.detect-changes.outputs.rn-hid-android == 'true'
+    runs-on: ${{ (github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]') && 'ubuntu-22.04' || 'ledgerhq-device-sdk' }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+
+      - name: Set Up JDK
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: "zulu"
+          java-version: "20"
+          cache: "gradle"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+
+      # The module builds only inside an app build: on its own, Gradle cannot
+      # find React Native. The mobile sample app links it from node_modules.
+      - name: Run Kotlin unit tests
+        working-directory: ./apps/mobile/android
+        run: ./gradlew :ledgerhq_device-transport-kit-react-native-hid:testDebugUnitTest
+
   health-check:
     name: Run health check
     # Aggregates the checks into a single required status so branch protection
     # only needs to require "Run health check". `!cancelled()` is what lets a
-    # skipped cs-tester through instead of skipping this too.
-    needs: [checks, cs-tester]
+    # skipped cs-tester or rn-hid-android-tests through instead of skipping
+    # this too.
+    needs: [checks, cs-tester, rn-hid-android-tests]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     steps:
