@@ -19,10 +19,20 @@ const branchPrefix = "chore/no-issue-lumen-upgrade";
 const lumenManifests =
   'grep -rlE --include=package.json --exclude-dir=node_modules \'"@ledgerhq/lumen-[a-z-]+": "[0-9]\' apps packages';
 
-// The bump touches every package that pins Lumen, so check them and their dependents.
-// Lint and typecheck hashes leave out external dependencies, so a cached result would predate the bump.
-const verifyCommand =
-  "git fetch --quiet origin develop && pnpm turbo run lint typecheck --filter='...[origin/develop]' --force";
+// Lints only the packages whose files differ from develop, the lockfile aside: the bump and the migrations.
+// Checking their dependents and typecheck builds most of the repo first, so both are left to the PR's CI.
+// Lint hashes leave out external dependencies, so a cached result would predate the bump.
+const verifyCommand = [
+  "set -eo pipefail",
+  "git fetch --quiet origin develop",
+  "filters=$(git diff --name-only FETCH_HEAD -- apps packages ':!**/pnpm-lock.yaml' | while read -r file; do",
+  '  dir=$(dirname "$file")',
+  '  while [ "$dir" != . ] && [ ! -f "$dir/package.json" ]; do dir=$(dirname "$dir"); done',
+  '  if [ "$dir" != . ]; then node -p "\'--filter=\' + require(\'./$dir/package.json\').name"; fi',
+  "done | sort -u)",
+  'if [ -z "$filters" ]; then echo "No package changed."; exit 0; fi',
+  "pnpm turbo run lint $filters --force",
+].join("\n");
 
 // What the Lumen workflow sends. The plan bumps to latest and doesn't read targetVersions yet.
 const planInput = z.object({
@@ -176,7 +186,7 @@ const pushTask = task("push").uses(upgrader).push();
 
 const prBodyTemplate = `### 📝 Description
 
-Automated Lumen upgrade to the latest versions, run by Koda from \`.koda/plans/lumen-upgrade.ts\`: bumps the pinned \`@ledgerhq/lumen-*\` versions and applies the Lumen migrations in range. Checked with \`${verifyCommand}\`.
+Automated Lumen upgrade to the latest versions, run by Koda from \`.koda/plans/lumen-upgrade.ts\`: bumps the pinned \`@ledgerhq/lumen-*\` versions and applies the Lumen migrations in range. Koda only linted the packages the upgrade changed: typecheck and tests run in this PR's CI.
 
 Review before merging.
 
@@ -191,7 +201,7 @@ Review before merging.
 
 ### ✅ Checklist
 
-- [x] **Covered by automatic tests**: lint and typecheck of the affected packages
+- [x] **Covered by automatic tests**: lint of the changed packages, typecheck and tests in CI
 - [x] **Changeset is provided**
 - [ ] **Documentation is up-to-date**
 - [ ] **Copilot comments are handled**
