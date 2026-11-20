@@ -201,6 +201,16 @@ export class HttpCalldataDescriptorDataSource
         type: ClearSignContextReferenceType.TOKEN,
         value: param.token.value,
       };
+    } else if (param.type === "TOKEN" && param.value.type === "path") {
+      return {
+        type: ClearSignContextReferenceType.TOKEN,
+        valuePath: this.toGenericPath(param.value.binary_path),
+      };
+    } else if (param.type === "TOKEN" && param.value.type === "constant") {
+      return {
+        type: ClearSignContextReferenceType.TOKEN,
+        value: param.value.value,
+      };
     } else if (param.type === "NFT" && param.collection.type === "path") {
       return {
         type: ClearSignContextReferenceType.NFT,
@@ -358,6 +368,7 @@ export class HttpCalldataDescriptorDataSource
         data.param.type === "DURATION" ||
         data.param.type === "UNIT" ||
         data.param.type === "ENUM" ||
+        data.param.type === "TOKEN" ||
         (data.param.type === "NFT" &&
           this.isDescriptorValueV1(data.param.collection)) ||
         (data.param.type === "TOKEN_AMOUNT" &&
