@@ -28,7 +28,6 @@ import {
   applyTrustedNameRule,
   type EnumVariantSelector,
 } from "./rules";
-import { resolvePubkeyValue } from "./valueResolution";
 
 export type BuildRequirementsOptions = {
   /** Enum-variant decoder; defaults to the real type-pool decoder. */
@@ -38,42 +37,29 @@ export type BuildRequirementsOptions = {
 };
 
 /**
- * The TX-derived binding maps, both scoped to the whole transaction: token
- * account to mint (`MINT_ASSOC`) and token account to owner (`OWNER_ASSOC`).
- * Slots that stay unresolved host-side (ALT-backed, or out of range) contribute
- * no binding — the device then falls back to the attested descriptors, which is
- * exactly what the rules request for an uncovered account.
+ * The TX-derived mint-binding map, scoped to the whole transaction: token
+ * account to mint (`MINT_ASSOC`). Slots that stay unresolved host-side
+ * (ALT-backed, or out of range) contribute no binding — the device then falls
+ * back to the attested descriptors, which is exactly what the rules request for
+ * an uncovered account.
  */
 function buildTxBindings(
   matched: MatchedInstruction[],
   parsed: ParsedInstruction[],
-  bs58Encoder: Bs58Encoder,
 ): TxBindings {
   const mints = new Map<string, string>();
-  const owners = new Map<string, string>();
   matched.forEach((match, index) => {
     const { accounts } = match.instruction;
-    const { mintAssociations, ownerAssociations } = parsed[index]!.info;
-    for (const { accountIndex, mintIndex } of mintAssociations) {
+    for (const { accountIndex, mintIndex } of parsed[index]!.info
+      .mintAssociations) {
       const account = accounts[accountIndex]?.address;
       const mint = accounts[mintIndex]?.address;
       if (account !== undefined && mint !== undefined) {
         mints.set(account, mint);
       }
     }
-    for (const { accountIndex, owner } of ownerAssociations) {
-      const account = accounts[accountIndex]?.address;
-      const ownerAddress = resolvePubkeyValue(
-        owner,
-        match.instruction,
-        bs58Encoder,
-      );
-      if (account !== undefined && ownerAddress !== undefined) {
-        owners.set(account, ownerAddress);
-      }
-    }
   });
-  return { mints, owners };
+  return { mints };
 }
 
 /**
@@ -120,7 +106,6 @@ export function buildRequirements(
     const bindings = buildTxBindings(
       matched,
       instructions.map(({ records }) => records),
-      bs58Encoder,
     );
 
     for (const { match, records } of instructions) {

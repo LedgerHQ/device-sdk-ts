@@ -7,7 +7,6 @@ import {
   fromCalValueFlowPort,
 } from "./fromCal";
 import {
-  ActiveWhenPredicate,
   HideCondition,
   OptionalAccountStrategy,
   TokenKind,
@@ -115,39 +114,30 @@ describe("fromCalOwnerAssociation", () => {
 });
 
 describe("fromCalValueFlowPort ACTIVE_WHEN", () => {
-  it("defaults to no predicates", () => {
-    expect(
-      fromCalValueFlowPort({
-        account_indices: [0],
-        token_value: { kind: "NATIVE" },
-      }).activeWhen,
-    ).toEqual([]);
-  });
-
-  it("maps bare names and MINT_PREDICATE alike", () => {
-    expect(
-      fromCalValueFlowPort({
-        account_indices: [0],
-        token_value: { kind: "NATIVE" },
-        active_when: ["IS_SIGNER", { kind: "MINT_PREDICATE", mint: "Mint" }],
-      }).activeWhen,
-    ).toEqual([
-      ActiveWhenPredicate.IS_SIGNER,
-      ActiveWhenPredicate.MINT_PREDICATE,
-    ]);
-  });
-
-  it("drops an unknown predicate instead of failing the decode", () => {
-    // Nothing host-side evaluates activation, and an unknown name cannot be
-    // IS_SIGNER, so dropping it can never under-request a descriptor — whereas
-    // rejecting would degrade the whole transaction to blind signing.
-    expect(
-      fromCalValueFlowPort({
-        account_indices: [0],
-        token_value: { kind: "NATIVE" },
-        active_when: ["IS_LUCKY", "IS_SIGNER"],
-      }).activeWhen,
-    ).toEqual([ActiveWhenPredicate.IS_SIGNER]);
+  it("decodes a port whatever its predicates, without carrying them", () => {
+    // No predicate makes the host request a descriptor, so ACTIVE_WHEN is not
+    // read: a name the spec no longer defines (IS_SIGNER, from a bundle encoded
+    // before it was removed) or never defined must not fail the decode and
+    // degrade the whole transaction to blind signing.
+    const port = fromCalValueFlowPort({
+      account_indices: [0],
+      token_value: { kind: "NATIVE" },
+      active_when: [
+        "IS_SIGNER",
+        "IS_LUCKY",
+        { kind: "MINT_PREDICATE", mint: "Mint" },
+      ],
+    });
+    expect(port).toEqual({
+      accountIndices: [0],
+      optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+      tokenValue: {
+        kind: TokenKind.NATIVE,
+        value: undefined,
+        accountIndex: undefined,
+        fallbackAccountIndex: undefined,
+      },
+    });
   });
 });
 

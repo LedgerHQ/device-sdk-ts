@@ -557,23 +557,18 @@ describe("buildRequirements", () => {
         },
       }),
     ]);
-    // Entry 3 is the IS_SIGNER target, so it graduates to the higher-priority
-    // bucket that streams the same ALT_RESOLUTION and then fetches the state.
-    // Entry 4 is only the OWNER_ASSOC owner half: resolution and nothing more.
-    expect(result.tokenAccountStateAltRefs).toEqual([
-      { altAddress: "ALT", entryIndex: 3 },
-    ]);
+    // Entry 3 is the IS_SIGNER target and entry 4 the OWNER_ASSOC owner half:
+    // both need their resolution and nothing more.
     expect(result.altResolutions).toEqual([
+      { altAddress: "ALT", entryIndex: 3 },
       { altAddress: "ALT", entryIndex: 4 },
     ]);
+    expect(result.tokenAccountStateAltRefs).toEqual([]);
   });
 
-  it("emits TOKEN_ACCOUNT_STATE_ALT_REF for an ALT-backed IS_SIGNER hide-rule target", () => {
-    // Gap: the address is unknown host-side, so the owner map can only be seeded
-    // from a state fetched after ALT_RESOLUTION. Without it the predicate
-    // evaluates false and the device shows the screens the rule meant to hide.
-    // An ALT slot is never a message signer, so the owner map is the only path
-    // by which such a target can satisfy IS_SIGNER at all.
+  it("resolves an ALT-backed IS_SIGNER hide-rule target without fetching its state", () => {
+    // The device holds IS_SIGNER only for its own key, never through the owner
+    // map, so an attested owner for the target could not change the answer.
     const result = run([
       matched({
         accounts: [account(undefined, { altAddress: "ALT", entryIndex: 5 })],
@@ -584,12 +579,10 @@ describe("buildRequirements", () => {
         },
       }),
     ]);
-    expect(result.tokenAccountStateAltRefs).toEqual([
+    expect(result.altResolutions).toEqual([
       { altAddress: "ALT", entryIndex: 5 },
     ]);
-    // Stripped from the plain bucket: one ALT_RESOLUTION per entry, and the
-    // device rejects a second one.
-    expect(result.altResolutions).toEqual([]);
+    expect(result.tokenAccountStateAltRefs).toEqual([]);
     expect(result.tokenAccountStates).toEqual([]);
   });
 
@@ -610,14 +603,15 @@ describe("buildRequirements", () => {
     expect(result.tokenAccountStates).toEqual([]);
   });
 
-  it("keeps an ALT-backed ACTIVE_WHEN IS_SIGNER port out of the plain ALT bucket", () => {
+  it("raises nothing for a port's ACTIVE_WHEN, even a predicate the spec has removed", () => {
+    // A bundle encoded before ACTIVE_WHEN lost IS_SIGNER still decodes, and the
+    // port's account gets only the resolution any port candidate gets.
     const result = run([
       matched({
         accounts: [account(undefined, { altAddress: "ALT", entryIndex: 2 })],
         descriptor: {
           valueFlowPorts: [
-            // NULL kind: no token requirement of its own, so the ACTIVE_WHEN
-            // path is the only thing that can emit anything here.
+            // NULL kind: no token requirement of its own.
             port(TokenKind.NULL, {
               accountIndex: 0,
               activeWhen: ["IS_SIGNER"],
@@ -626,13 +620,14 @@ describe("buildRequirements", () => {
         },
       }),
     ]);
-    expect(result.tokenAccountStateAltRefs).toEqual([
+    expect(result.altResolutions).toEqual([
       { altAddress: "ALT", entryIndex: 2 },
     ]);
-    expect(result.altResolutions).toEqual([]);
+    expect(result.tokenAccountStateAltRefs).toEqual([]);
+    expect(result.tokenAccountStates).toEqual([]);
   });
 
-  it("emits TOKEN_ACCOUNT_STATE for an IS_SIGNER hide-rule target, unless a TX-derived OWNER_ASSOC covers it", () => {
+  it("requests no TOKEN_ACCOUNT_STATE for an IS_SIGNER hide-rule target, with or without an OWNER_ASSOC", () => {
     const withoutBinding = run([
       matched({
         accounts: [account("ata")],
@@ -643,7 +638,7 @@ describe("buildRequirements", () => {
         },
       }),
     ]);
-    expect(withoutBinding.tokenAccountStates).toEqual(["ata"]);
+    expect(withoutBinding.tokenAccountStates).toEqual([]);
 
     const withBinding = run([
       matched({
@@ -657,30 +652,6 @@ describe("buildRequirements", () => {
       }),
     ]);
     expect(withBinding.tokenAccountStates).toEqual([]);
-  });
-
-  it("honours an OWNER_ASSOC declared by another instruction of the transaction", () => {
-    // The owner map is transaction-scoped on the device, so a binding declared
-    // by the ATA-creation instruction covers a hide rule elsewhere.
-    const result = run([
-      matched({
-        programId: "Ata",
-        accounts: [account("ata"), account("owner")],
-        descriptor: {
-          ownerAssociations: [ownerAssociation(0, accountPathValue(1))],
-        },
-      }),
-      matched({
-        programId: "Token",
-        accounts: [account("ata")],
-        descriptor: {
-          hideRules: [
-            hideRule({ condition: "IS_SIGNER", target: accountPathValue(0) }),
-          ],
-        },
-      }),
-    ]);
-    expect(result.tokenAccountStates).toEqual([]);
   });
 
   it("treats a RESOLVE port's FALLBACK_ACCOUNT address as a mint candidate", () => {
@@ -705,17 +676,11 @@ describe("buildRequirements", () => {
       matched({
         accounts: [account(undefined, { altAddress: "ALT", entryIndex: 7 })],
         descriptor: {
-          hideRules: [
-            { target: accountPathValue(0) },
-            hideRule({ condition: "IS_SIGNER", target: accountPathValue(0) }),
-          ],
+          hideRules: [{ target: accountPathValue(0) }],
         },
       }),
     ]);
-    // The IS_SIGNER rule routes the entry to the state bucket, which streams
-    // the same ALT_RESOLUTION — the undecodable rule still costs nothing.
-    expect(result.altResolutions).toEqual([]);
-    expect(result.tokenAccountStateAltRefs).toEqual([
+    expect(result.altResolutions).toEqual([
       { altAddress: "ALT", entryIndex: 7 },
     ]);
   });

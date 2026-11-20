@@ -24,15 +24,6 @@ export enum HideCondition {
   ACCOUNT_EFFECTS_DISPLAYED_ELSEWHERE = 0x04,
 }
 
-/** `VALUE_FLOW_PORT.ACTIVE_WHEN` predicate (`ActiveWhenPredicate` enum). */
-export enum ActiveWhenPredicate {
-  CREATED_IN_TRANSACTION = 0x00,
-  IS_SIGNER = 0x01,
-  ACCOUNT_USED_ELSEWHERE = 0x02,
-  MINT_PREDICATE = 0x03,
-  IS_ANOTHER_SIGNER = 0x04,
-}
-
 /**
  * How a candidate-array port's optional (non-final) candidates are detected as
  * *unset* (`VALUE_FLOW_PORT.OPTIONAL_ACCOUNT_STRATEGY`). Only meaningful when a
@@ -75,6 +66,12 @@ export type ParsedTokenValue = {
   fallbackAccountIndex?: number;
 };
 
+/**
+ * One `VALUE_FLOW_PORT`. Its `ACTIVE_WHEN` predicates are not carried: the
+ * device evaluates them itself (`CREATED_IN_TRANSACTION` from earlier ports,
+ * `MINT_PREDICATE` against the resolved token), and none of them makes the host
+ * request a descriptor.
+ */
 export type ParsedValueFlowPort = {
   /**
    * Ordered candidate account indices (length 1 for the common single-account
@@ -84,12 +81,6 @@ export type ParsedValueFlowPort = {
   accountIndices: number[];
   optionalAccountStrategy: OptionalAccountStrategy;
   tokenValue?: ParsedTokenValue;
-  /**
-   * `ACTIVE_WHEN` predicates, ANDed. Only the predicate codes are carried:
-   * `MINT_PREDICATE`'s trailing mint drives nothing host-side (the device
-   * compares it against the resolved token itself).
-   */
-  activeWhen: ActiveWhenPredicate[];
 };
 
 /**
