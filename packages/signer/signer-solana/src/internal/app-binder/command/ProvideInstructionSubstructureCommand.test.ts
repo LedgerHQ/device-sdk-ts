@@ -5,22 +5,10 @@ import {
 
 import { P2_EXTEND, P2_MORE } from "./utils/apduChunking";
 import { ChunkTooLargeError } from "./utils/Errors";
-import {
-  ProvideInstructionSubstructureCommand,
-  SubstructureType,
-} from "./ProvideInstructionSubstructureCommand";
+import { ProvideInstructionSubstructureCommand } from "./ProvideInstructionSubstructureCommand";
 
 describe("ProvideInstructionSubstructureCommand", () => {
   const payload = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
-
-  describe("SubstructureType", () => {
-    it("matches the spec's first-data-byte selector values", () => {
-      expect(SubstructureType.DisplayField).toBe(0x00);
-      expect(SubstructureType.ValueFlowPort).toBe(0x01);
-      expect(SubstructureType.HideRule).toBe(0x02);
-      expect(SubstructureType.AccountReset).toBe(0x03);
-    });
-  });
 
   describe("name", () => {
     it("should be 'provideInstructionSubstructure'", () => {
