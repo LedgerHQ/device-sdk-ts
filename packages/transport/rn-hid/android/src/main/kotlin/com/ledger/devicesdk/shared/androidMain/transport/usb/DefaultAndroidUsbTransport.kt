@@ -10,12 +10,10 @@ import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.hardware.usb.UsbRequest
 import com.ledger.devicesdk.shared.androidMain.transport.usb.connection.AndroidUsbApduSender
-import com.ledger.devicesdk.shared.androidMain.transport.usb.model.LedgerUsbDevice
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.UsbPermissionEvent
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.UsbState
 import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toLedgerUsbDevice
 import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toScannedDevice
-import com.ledger.devicesdk.shared.androidMain.transport.usb.utils.toUsbDevices
 import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnection.DeviceConnection
 import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
@@ -42,6 +40,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -62,8 +61,9 @@ internal class DefaultAndroidUsbTransport(
     private val internalUsbPermissionEventFlow: MutableSharedFlow<UsbPermissionEvent> =
         MutableSharedFlow()
 
+    // The scan loop reads the connections while other coroutines change them.
     private val usbConnections: MutableMap<String, DeviceConnection<AndroidUsbApduSender.Dependencies>> =
-        mutableMapOf()
+        ConcurrentHashMap()
     private val usbConnectionsPendingReconnection: MutableSet<DeviceConnection<AndroidUsbApduSender.Dependencies>> =
         mutableSetOf()
 
@@ -77,8 +77,7 @@ internal class DefaultAndroidUsbTransport(
             scope.launch {
                 while (isActive) {
                     loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] isActive loop"))
-                    val usbDevices = usbManager.deviceList.values.toList().toUsbDevices()
-                    scanStateFlow.value = usbDevices.toScannedDevices()
+                    scanStateFlow.value = scanDevices()
                     loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] scannedDevices=${scanStateFlow.value}"))
                     delay(scanDelay)
                 }
@@ -91,6 +90,27 @@ internal class DefaultAndroidUsbTransport(
         discoveryJob?.cancel()
         discoveryJob = null
     }
+
+    private fun scanDevices(): List<DiscoveryDevice> =
+        usbManager.deviceList.values.mapNotNull { usbDevice ->
+            usbDevice.toLedgerUsbDevice()?.toScannedDevice(uid = getDeviceId(usbDevice))
+        }
+
+    /**
+     * Gives the id of a USB device. Discovery and connect use the same id.
+     *
+     * - A device with an open connection gets the session id of that connection.
+     *   When the device re-enumerates (for example, when the user opens an app),
+     *   Android gives it a new device number. The reconnection gives the new
+     *   [UsbDevice] to the open connection, so the device keeps its session id.
+     * - A device without a connection gets [generateSessionId]. [connect] gives
+     *   the same value as the session id.
+     */
+    private fun getDeviceId(usbDevice: UsbDevice): String =
+        findConnection(usbDevice)?.sessionId ?: generateSessionId(usbDevice)
+
+    private fun findConnection(usbDevice: UsbDevice): DeviceConnection<AndroidUsbApduSender.Dependencies>? =
+        usbConnections.values.firstOrNull { it.getApduSender().dependencies.usbDevice == usbDevice }
 
     override fun updateUsbState(state: UsbState) {
         when (state) {
@@ -286,7 +306,7 @@ internal class DefaultAndroidUsbTransport(
 
     override suspend fun connect(discoveryDevice: DiscoveryDevice): InternalConnectionResult {
         val usbDevice: UsbDevice? =
-            usbManager.deviceList.values.firstOrNull { it.deviceId == discoveryDevice.uid.toInt() }
+            usbManager.deviceList.values.firstOrNull { getDeviceId(it) == discoveryDevice.uid }
 
         val ledgerUsbDevice = usbDevice?.toLedgerUsbDevice()
 
@@ -294,11 +314,7 @@ internal class DefaultAndroidUsbTransport(
             InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound)
         } else {
 
-            val existingConnection = usbConnections.firstNotNullOfOrNull {
-                if (it.value.getApduSender().dependencies.usbDevice == usbDevice) it.value
-                else if (it.key == generateSessionId(usbDevice)) it.value
-                else null
-            }
+            val existingConnection = findConnection(usbDevice)
 
             if (existingConnection != null) {
                 val connectedDevice =
@@ -372,12 +388,8 @@ internal class DefaultAndroidUsbTransport(
         usbConnectionsPendingReconnection.find { it.sessionId == deviceId }?.requestCloseConnection()
     }
 
+    // The "usb_" prefix keeps the id unique across transports.
     private fun generateSessionId(usbDevice: UsbDevice): String = "usb_${usbDevice.deviceId}"
 }
 
 private val POST_CONNECTION_DELAY = 200.milliseconds
-
-private fun List<LedgerUsbDevice>.toScannedDevices(): List<DiscoveryDevice> =
-    this.map {
-        it.toScannedDevice()
-    }
