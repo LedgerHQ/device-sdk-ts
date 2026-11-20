@@ -1,5 +1,10 @@
 import { base64StringToBuffer } from "@ledgerhq/device-management-kit";
-import { VersionedMessage, VersionedTransaction } from "@solana/web3.js";
+import {
+  type Message,
+  type MessageV0,
+  VersionedMessage,
+  VersionedTransaction,
+} from "@solana/web3.js";
 
 /**
  * Branch on the input kind and return the message to operate on.
@@ -14,11 +19,14 @@ import { VersionedMessage, VersionedTransaction } from "@solana/web3.js";
  * tells a bare message apart from a full transaction without guessing from the
  * leading bytes alone.
  *
+ * v1 (SIMD-0385) input is refused: web3.js v3 can decode it, but it belongs to
+ * `V1TransactionCrafterService`, and recompiling it here would turn it into v0.
+ *
  * Throws when the input is not valid base64, or when it matches neither shape.
  */
 export function deserializeToMessage(
   transactionBase64: string,
-): VersionedMessage {
+): Message | MessageV0 {
   const bytes = base64StringToBuffer(transactionBase64);
   if (bytes === null) {
     throw new Error("Input is not a valid base64 string.");
@@ -39,11 +47,13 @@ export function deserializeToMessage(
   );
 }
 
-function tryDeserializeTransaction(bytes: Uint8Array): VersionedMessage | null {
+function tryDeserializeTransaction(
+  bytes: Uint8Array,
+): Message | MessageV0 | null {
   try {
     const transaction = VersionedTransaction.deserialize(bytes);
     if (bytesEqual(transaction.serialize(), bytes)) {
-      return transaction.message;
+      return legacyOrV0(transaction.message);
     }
   } catch {
     // Not a full transaction, fall through to the bare-message branch.
@@ -51,11 +61,11 @@ function tryDeserializeTransaction(bytes: Uint8Array): VersionedMessage | null {
   return null;
 }
 
-function tryDeserializeMessage(bytes: Uint8Array): VersionedMessage | null {
+function tryDeserializeMessage(bytes: Uint8Array): Message | MessageV0 | null {
   try {
     const message = VersionedMessage.deserialize(bytes);
     if (bytesEqual(message.serialize(), bytes)) {
-      return message;
+      return legacyOrV0(message);
     }
   } catch {
     // Not a bare message either.
@@ -72,6 +82,10 @@ function tryDeserializeMessage(bytes: Uint8Array): VersionedMessage | null {
 export function isFullTransaction(transactionBase64: string): boolean {
   const bytes = base64StringToBuffer(transactionBase64);
   return bytes !== null && tryDeserializeTransaction(bytes) !== null;
+}
+
+function legacyOrV0(message: VersionedMessage): Message | MessageV0 | null {
+  return message.version === 1 ? null : message;
 }
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {

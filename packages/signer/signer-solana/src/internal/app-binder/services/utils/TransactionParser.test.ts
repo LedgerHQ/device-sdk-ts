@@ -1,12 +1,12 @@
 import {
   AddressLookupTableAccount,
-  Keypair,
+  type Blockhash,
   Message,
   MessageV0,
   type PublicKey,
   SystemProgram,
   Transaction,
-  type TransactionInstruction,
+  TransactionInstruction,
   TransactionMessage,
   VersionedMessage,
   VersionedTransaction,
@@ -19,6 +19,7 @@ import {
   UNSTAKE_MESSAGE,
   withOneSignature,
 } from "@internal/app-binder/services/__test-utils__/ambiguousMessages";
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 import {
   encodeV1Message,
   filledAddress,
@@ -53,15 +54,16 @@ import {
 
 const DUMMY_BLOCKHASH = DefaultBs58Encoder.encode(
   new Uint8Array(32).fill(0xaa),
-);
+) as Blockhash;
 
-function makeSignedRawTx(ixs: TransactionInstruction[], payer: Keypair) {
+// Signed wire format with zero-filled signatures: the parser reads the message
+// and never verifies signatures.
+function makeSignedRawTx(ixs: TransactionInstruction[], payer: PublicKey) {
   const tx = new Transaction();
   tx.recentBlockhash = DUMMY_BLOCKHASH;
-  tx.feePayer = payer.publicKey;
+  tx.feePayer = payer;
   tx.add(...ixs);
-  tx.sign(payer);
-  return tx.serialize();
+  return new VersionedTransaction(tx.compileMessage()).serialize();
 }
 
 /**
@@ -69,7 +71,7 @@ function makeSignedRawTx(ixs: TransactionInstruction[], payer: Keypair) {
  * that exercise ALT resolution without standing up a real on-chain table.
  */
 function makeV0TxWithFakeAlt(opts: {
-  payer: Keypair;
+  payer: PublicKey;
   staticIxs: TransactionInstruction[];
   altKey: PublicKey;
   altEntries: PublicKey[];
@@ -81,9 +83,9 @@ function makeV0TxWithFakeAlt(opts: {
     key: opts.altKey,
     state: {
       deactivationSlot: BigInt("18446744073709551615"),
-      lastExtendedSlot: 0,
+      lastExtendedSlot: 0n,
       lastExtendedSlotStartIndex: 0,
-      authority: opts.payer.publicKey,
+      authority: opts.payer,
       addresses: opts.altEntries,
     },
   });
@@ -91,43 +93,44 @@ function makeV0TxWithFakeAlt(opts: {
   const writableSet = new Set(opts.writableEntryIndexes);
   const readonlySet = new Set(opts.readonlyEntryIndexes);
 
-  const altIxs: TransactionInstruction[] = opts.altIxs.map((spec) => ({
-    programId: spec.programId,
-    keys: spec.accountAddresses.map((addr) => {
-      const entryIdx = opts.altEntries.findIndex((e) => e.equals(addr));
-      const isFromAlt = entryIdx >= 0;
-      return {
-        pubkey: addr,
-        isSigner: false,
-        isWritable: isFromAlt
-          ? writableSet.has(entryIdx)
-          : !readonlySet.has(entryIdx),
-      };
-    }),
-    data: Buffer.from([]),
-  }));
+  const altIxs = opts.altIxs.map(
+    (spec) =>
+      new TransactionInstruction({
+        programId: spec.programId,
+        keys: spec.accountAddresses.map((addr) => {
+          const entryIdx = opts.altEntries.findIndex((e) => e.equals(addr));
+          const isFromAlt = entryIdx >= 0;
+          return {
+            pubkey: addr,
+            isSigner: false,
+            isWritable: isFromAlt
+              ? writableSet.has(entryIdx)
+              : !readonlySet.has(entryIdx),
+          };
+        }),
+        data: Buffer.from([]),
+      }),
+  );
 
   const message = new TransactionMessage({
-    payerKey: opts.payer.publicKey,
+    payerKey: opts.payer,
     recentBlockhash: DUMMY_BLOCKHASH,
     instructions: [...opts.staticIxs, ...altIxs],
   }).compileToV0Message([lookupAccount]);
 
-  const vt = new VersionedTransaction(message);
-  vt.sign([opts.payer]);
-  return vt.serialize();
+  return new VersionedTransaction(message).serialize();
 }
 
 describe("TransactionParser", () => {
   describe("legacy transactions", () => {
     it("parses a legacy transaction and returns a normalised message", async () => {
-      const payer = Keypair.generate();
-      const dest = Keypair.generate().publicKey;
+      const payer = testPublicKey();
+      const dest = testPublicKey();
 
       const raw = makeSignedRawTx(
         [
           SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
+            fromPubkey: payer,
             toPubkey: dest,
             lamports: 1_000,
           }),
@@ -145,13 +148,13 @@ describe("TransactionParser", () => {
     });
 
     it("derives writable flags from the message header (signer-fee-payer is writable)", async () => {
-      const payer = Keypair.generate();
-      const dest = Keypair.generate().publicKey;
+      const payer = testPublicKey();
+      const dest = testPublicKey();
 
       const raw = makeSignedRawTx(
         [
           SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
+            fromPubkey: payer,
             toPubkey: dest,
             lamports: 1_000,
           }),
@@ -165,9 +168,7 @@ describe("TransactionParser", () => {
 
       expect(ix.accountWritable).toHaveLength(ix.accountKeyIndexes.length);
       // The fee-payer slot of SystemProgram.transfer (from) is signer + writable.
-      const payerIdx = message.allKeys.findIndex((k) =>
-        k.equals(payer.publicKey),
-      );
+      const payerIdx = message.allKeys.findIndex((k) => k.equals(payer));
       const payerSlot = ix.accountKeyIndexes.indexOf(payerIdx);
       expect(payerSlot).toBeGreaterThanOrEqual(0);
       expect(ix.accountWritable[payerSlot]).toBe(true);
@@ -187,13 +188,13 @@ describe("TransactionParser", () => {
     });
 
     it("derives signer flags from the message header (fee-payer is a signer; recipient is not)", async () => {
-      const payer = Keypair.generate();
-      const dest = Keypair.generate().publicKey;
+      const payer = testPublicKey();
+      const dest = testPublicKey();
 
       const raw = makeSignedRawTx(
         [
           SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
+            fromPubkey: payer,
             toPubkey: dest,
             lamports: 1_000,
           }),
@@ -207,9 +208,7 @@ describe("TransactionParser", () => {
 
       expect(ix.accountSigner).toHaveLength(ix.accountKeyIndexes.length);
       // The fee payer is the only required signer.
-      const payerIdx = message.allKeys.findIndex((k) =>
-        k.equals(payer.publicKey),
-      );
+      const payerIdx = message.allKeys.findIndex((k) => k.equals(payer));
       const payerSlot = ix.accountKeyIndexes.indexOf(payerIdx);
       expect(ix.accountSigner[payerSlot]).toBe(true);
 
@@ -220,18 +219,18 @@ describe("TransactionParser", () => {
     });
 
     it("preserves instruction count across multiple instructions", async () => {
-      const payer = Keypair.generate();
+      const payer = testPublicKey();
 
       const raw = makeSignedRawTx(
         [
           SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            fromPubkey: payer,
+            toPubkey: testPublicKey(),
             lamports: 1_000,
           }),
           SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            fromPubkey: payer,
+            toPubkey: testPublicKey(),
             lamports: 2_000,
           }),
         ],
@@ -274,14 +273,13 @@ describe("TransactionParser", () => {
     });
 
     it("returns EmptyInstructionsError when the decoded message has zero instructions", async () => {
-      const payer = Keypair.generate();
+      const payer = testPublicKey();
       const message = new TransactionMessage({
-        payerKey: payer.publicKey,
+        payerKey: payer,
         recentBlockhash: DUMMY_BLOCKHASH,
         instructions: [],
       }).compileToV0Message();
       const vt = new VersionedTransaction(message);
-      vt.sign([payer]);
       const raw = vt.serialize();
 
       const parser = new TransactionParser();
@@ -294,14 +292,14 @@ describe("TransactionParser", () => {
     });
 
     it("returns AccountIndexOutOfRangeError when an instruction references a key past the logical count", async () => {
-      const payer = Keypair.generate();
+      const payer = testPublicKey();
       const messageBase = new TransactionMessage({
-        payerKey: payer.publicKey,
+        payerKey: payer,
         recentBlockhash: DUMMY_BLOCKHASH,
         instructions: [
           SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            fromPubkey: payer,
+            toPubkey: testPublicKey(),
             lamports: 1,
           }),
         ],
@@ -323,7 +321,6 @@ describe("TransactionParser", () => {
         addressTableLookups: messageBase.addressTableLookups,
       });
       const vt = new VersionedTransaction(tampered);
-      vt.sign([payer]);
       const raw = vt.serialize();
 
       const parser = new TransactionParser();
@@ -404,12 +401,9 @@ describe("TransactionParser", () => {
 
   describe("address lookup tables", () => {
     it("resolves ALT entries when a resolver is provided (existing behaviour)", async () => {
-      const payer = Keypair.generate();
-      const altKey = Keypair.generate().publicKey;
-      const altEntries = [
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-      ];
+      const payer = testPublicKey();
+      const altKey = testPublicKey();
+      const altEntries = [testPublicKey(), testPublicKey()];
 
       const raw = makeV0TxWithFakeAlt({
         payer,
@@ -442,12 +436,9 @@ describe("TransactionParser", () => {
     });
 
     it("preserves raw ALT refs when no resolver is provided and preserveAltRefs=true", async () => {
-      const payer = Keypair.generate();
-      const altKey = Keypair.generate().publicKey;
-      const altEntries = [
-        Keypair.generate().publicKey,
-        Keypair.generate().publicKey,
-      ];
+      const payer = testPublicKey();
+      const altKey = testPublicKey();
+      const altEntries = [testPublicKey(), testPublicKey()];
 
       const raw = makeV0TxWithFakeAlt({
         payer,
@@ -503,9 +494,9 @@ describe("TransactionParser", () => {
     });
 
     it("does not preserve raw refs by default (no resolver, no opt-in)", async () => {
-      const payer = Keypair.generate();
-      const altKey = Keypair.generate().publicKey;
-      const altEntries = [Keypair.generate().publicKey];
+      const payer = testPublicKey();
+      const altKey = testPublicKey();
+      const altEntries = [testPublicKey()];
 
       const raw = makeV0TxWithFakeAlt({
         payer,
@@ -539,12 +530,12 @@ describe("TransactionParser", () => {
         resolve: vi.fn().mockResolvedValue(undefined),
       };
 
-      const payer = Keypair.generate();
+      const payer = testPublicKey();
       const raw = makeSignedRawTx(
         [
           SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            fromPubkey: payer,
+            toPubkey: testPublicKey(),
             lamports: 1_000,
           }),
         ],
@@ -561,12 +552,12 @@ describe("TransactionParser", () => {
 
   describe("hasAddressLookupTables", () => {
     it("returns false for legacy transactions", () => {
-      const payer = Keypair.generate();
+      const payer = testPublicKey();
       const raw = makeSignedRawTx(
         [
           SystemProgram.transfer({
-            fromPubkey: payer.publicKey,
-            toPubkey: Keypair.generate().publicKey,
+            fromPubkey: payer,
+            toPubkey: testPublicKey(),
             lamports: 1_000,
           }),
         ],
@@ -605,9 +596,6 @@ describe("TransactionParser", () => {
         ],
       ],
     ])("parses the %s message as a message", async (_, message, programIds) => {
-      // Precondition: web3.js reads it as a one-signature transaction.
-      expect(() => VersionedTransaction.deserialize(message)).not.toThrow();
-
       const result = (
         await new TransactionParser().parse(message).run()
       ).unsafeCoerce();
@@ -831,7 +819,7 @@ describe("TransactionParser", () => {
       expect(error).toBeInstanceOf(EmptyInstructionsError);
     });
 
-    it("never calls the web3.js decoders, which cannot read v1", async () => {
+    it("never calls the web3.js decoders for v1", async () => {
       const spies = [
         vi.spyOn(VersionedTransaction, "deserialize"),
         vi.spyOn(VersionedMessage, "deserialize"),

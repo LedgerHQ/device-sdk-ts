@@ -1,4 +1,4 @@
-import { Keypair } from "@solana/web3.js";
+import { testPublicKey } from "@internal/services/__test-utils__/testKeys";
 
 import {
   COIN_DATA,
@@ -82,8 +82,8 @@ describe("GenerateSolanaTransaction", () => {
   });
 
   describe("generateUsdcTransaction", () => {
-    const payer = Keypair.generate().publicKey.toBase58();
-    const recipient = Keypair.generate().publicKey.toBase58();
+    const payer = testPublicKey().toBase58();
+    const recipient = testPublicKey().toBase58();
 
     it("should return a valid base64-encoded string", () => {
       const result = generator.generateUsdcTransaction(payer, recipient, 10);
@@ -105,8 +105,8 @@ describe("GenerateSolanaTransaction", () => {
 
   describe("generateSplTokenTransaction", () => {
     it("should return a valid base64-encoded string for a custom mint", () => {
-      const payer = Keypair.generate().publicKey.toBase58();
-      const recipient = Keypair.generate().publicKey.toBase58();
+      const payer = testPublicKey().toBase58();
+      const recipient = testPublicKey().toBase58();
       const mint = COIN_DATA.USDC.mint.toBase58();
 
       const result = generator.generateSplTokenTransaction(

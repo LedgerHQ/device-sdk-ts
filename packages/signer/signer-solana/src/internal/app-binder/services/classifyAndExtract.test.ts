@@ -1,6 +1,7 @@
-import { Keypair, type PublicKey, SystemProgram } from "@solana/web3.js";
+import { type PublicKey, SystemProgram } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
 
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
@@ -20,8 +21,8 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Generate a fresh random PublicKey. */
-const pk = () => Keypair.generate().publicKey;
+/** A fresh, unique PublicKey. */
+const pk = () => testPublicKey();
 
 /**
  * Build a minimal NormalizedMessage from a list of instruction descriptors.

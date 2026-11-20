@@ -20,6 +20,13 @@ const standalone =
 const nextConfig = {
   ...standalone,
   reactStrictMode: true,
+  // @solana/web3.js v3 ships classes whose static fields reference their own
+  // class name (e.g. `var Lockup = class Lockup { static default = new Lockup() }`).
+  // Next 14's SWC minifier drops such a class when it is unused but keeps the
+  // static initializer, so the page crashes with "Lockup is not defined".
+  // Transpiling the package first turns the static fields into plain
+  // assignments the minifier handles correctly.
+  transpilePackages: ["@solana/web3.js"],
   compiler: {
     styledComponents: true,
   },

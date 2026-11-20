@@ -9,14 +9,16 @@ import {
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import {
-  Keypair,
+  type Blockhash,
   PublicKey,
   Transaction,
   TransactionInstruction,
+  VersionedTransaction,
 } from "@solana/web3.js";
 import { Buffer } from "buffer";
 import { describe, expect, it, vi } from "vitest";
 
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 import {
   encodeV1Message,
   filledAddress,
@@ -26,7 +28,9 @@ import {
 import { SolanaSigningReportTask } from "./SolanaSigningReportTask";
 
 // Real-transaction helpers — used to exercise the extractProgramIds branches.
-const DUMMY_BLOCKHASH = new PublicKey(new Uint8Array(32).fill(0xaa)).toBase58();
+const DUMMY_BLOCKHASH = new PublicKey(
+  new Uint8Array(32).fill(0xaa),
+).toString() as Blockhash;
 const COMPUTE_BUDGET_PROGRAM = new PublicKey(
   "ComputeBudget111111111111111111111111111111",
 );
@@ -39,7 +43,7 @@ function makeIx(programId: PublicKey): TransactionInstruction {
   return new TransactionInstruction({
     keys: [
       {
-        pubkey: Keypair.generate().publicKey,
+        pubkey: testPublicKey(),
         isSigner: false,
         isWritable: false,
       },
@@ -50,13 +54,13 @@ function makeIx(programId: PublicKey): TransactionInstruction {
 }
 
 function makeTx(...programs: PublicKey[]): Uint8Array {
-  const payer = Keypair.generate();
+  const payer = testPublicKey();
   const tx = new Transaction();
   tx.recentBlockhash = DUMMY_BLOCKHASH;
-  tx.feePayer = payer.publicKey;
+  tx.feePayer = payer;
   tx.add(...programs.map(makeIx));
-  tx.sign(payer);
-  return tx.serialize();
+  // Signed wire format with zero-filled signatures; nothing here verifies them.
+  return new VersionedTransaction(tx.compileMessage()).serialize();
 }
 
 const loggerFactory = (): LoggerPublisherService =>

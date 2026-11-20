@@ -34,6 +34,21 @@ To install the `device-signer-kit-solana` package, run the following command:
 npm install @ledgerhq/device-signer-kit-solana
 ```
 
+### Bundling and runtime notes
+
+The signer depends on `@solana/web3.js` v3, which has two requirements to check in apps that bundle it:
+
+- **Next.js 14 (SWC minifier):** web3.js v3 defines classes whose static fields reference their own name. The SWC minifier can drop such a class while keeping its initializer, and the page then fails on load with `ReferenceError: Lockup is not defined`. Have Next.js transpile the package:
+
+  ```js
+  // next.config.js
+  module.exports = {
+    transpilePackages: ["@solana/web3.js"],
+  };
+  ```
+
+- **`TextEncoder`:** web3.js v3 uses the global `TextEncoder` when it is imported. On React Native, use 0.74 or later (Hermes provides it) or install a polyfill before importing the signer.
+
 ## 🔹 Initialisation
 
 To initialise a Solana signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `SignerSolanaBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
