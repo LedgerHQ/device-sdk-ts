@@ -19,12 +19,15 @@ const branchPrefix = "chore/no-issue-lumen-upgrade";
 const lumenManifests =
   'grep -rlE --include=package.json --exclude-dir=node_modules \'"@ledgerhq/lumen-[a-z-]+": "[0-9]\' apps packages';
 
+// Cairn has no timeout on shell tasks: a stalled fetch would hang the run, so it gives up after 5 minutes.
+const fetchDevelop = "GIT_TERMINAL_PROMPT=0 timeout 300 git fetch --quiet origin develop";
+
 // Lints only the packages whose files differ from develop, the lockfile aside: the bump and the migrations.
 // Checking their dependents and typecheck builds most of the repo first, so both are left to the PR's CI.
 // Lint hashes leave out external dependencies, so a cached result would predate the bump.
 const verifyCommand = [
   "set -eo pipefail",
-  "git fetch --quiet origin develop",
+  fetchDevelop,
   "filters=$(git diff --name-only FETCH_HEAD -- apps packages ':!**/pnpm-lock.yaml' | while read -r file; do",
   '  dir=$(dirname "$file")',
   '  while [ "$dir" != . ] && [ ! -f "$dir/package.json" ]; do dir=$(dirname "$dir"); done',
@@ -134,9 +137,7 @@ const createBranchTask = task("create-branch")
 
 // The sandbox image ships a checkout whose origin/develop is as old as the image, and Cairn fetches the branch by URL,
 // which leaves it there: the migration range and the changeset read origin/develop, so refresh it first.
-const installTask = task("install").runs(
-  "git fetch --quiet origin develop && pnpm install --frozen-lockfile",
-);
+const installTask = task("install").runs(`${fetchDevelop} && pnpm install --frozen-lockfile`);
 
 // Sets each exact Lumen pin to the latest published version, then updates the lockfile.
 // Caret ranges (peerDependencies) are left alone, and so is a pin newer than `latest` (dist-tag rollback, prerelease).
