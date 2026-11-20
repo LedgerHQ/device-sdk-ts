@@ -261,6 +261,11 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          # The default also installs the legacy `tools` package, which the
+          # current command-line tools no longer provide, so sdkmanager fails.
+          # Gradle downloads the SDK platform and build tools that it needs.
+          packages: "platform-tools"
 
       # The module builds only inside an app build: on its own, Gradle cannot
       # find React Native. The mobile sample app links it from node_modules.
