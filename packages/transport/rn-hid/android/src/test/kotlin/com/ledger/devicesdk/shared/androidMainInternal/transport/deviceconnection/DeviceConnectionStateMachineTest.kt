@@ -136,7 +136,7 @@ class DeviceConnectionStateMachineTest {
         }
 
     @Test
-    fun `GIVEN the device connection state machine WHEN an APDU with triggersDisconnection is sent and triggers a disconnection THEN the machine moves to WaitingForReconnection and recovers when device reconnects`() =
+    fun `GIVEN the device connection state machine WHEN an APDU triggers a disconnection THEN the machine waits for reconnection and recovers`() =
         runTest {
             var sendApduCalled: ByteArray? = null
             var sendApduResult: SendApduResult? = null
@@ -257,7 +257,7 @@ class DeviceConnectionStateMachineTest {
         }
 
     @Test
-    fun `GIVEN the device connection state machine WHEN an APDU with triggersDisconnection is sent and device does not disconnect but is first busy THEN the machine retries and moves to Connected`() =
+    fun `GIVEN the device connection state machine WHEN the expected disconnection does not occur and the device is busy THEN the machine retries and moves to Connected`() =
         runTest {
             var sendApduCalled: ByteArray? = null
             var sendApduResult: SendApduResult? = null
@@ -319,7 +319,7 @@ class DeviceConnectionStateMachineTest {
 
 
     @Test
-    fun `GIVEN the device connection state machine WHEN an APDU with triggersDisconnection is sent and triggers a disconnection THEN the machine moves to WaitingForReconnection and the next APDU is queued until reconnection`() =
+    fun `GIVEN the device connection state machine WHEN an APDU triggers a disconnection THEN the next APDU is queued until reconnection`() =
         runTest {
             val sendApduCalled: MutableList<ByteArray> = mutableListOf()
             var terminated = false
