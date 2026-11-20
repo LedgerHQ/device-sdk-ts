@@ -1,5 +1,8 @@
 import { type MockClient } from "@ledgerhq/device-mockserver-client";
-import { deviceControllerClientFactory } from "@ledgerhq/speculos-device-controller";
+import {
+  deviceControllerClientFactory,
+  type PercentCoordinates,
+} from "@ledgerhq/speculos-device-controller";
 import { type TestInfo } from "@playwright/test";
 
 type DeviceControllerClient = ReturnType<typeof deviceControllerClientFactory>;
@@ -309,14 +312,19 @@ export class SpeculosDriver {
    * Enable blind signing in the app settings (touch devices). Call from the app
    * home screen - e.g. after a first action has opened the app - so the
    * transaction review can proceed without clear-signing context.
+   *
+   * `toggle` overrides the position of the setting, for an app whose settings
+   * page is laid out differently from Ethereum's.
    */
-  async enableBlindSigning(): Promise<void> {
+  async enableBlindSigning(toggle?: PercentCoordinates): Promise<void> {
     if (!this.isTouch()) return;
     await this.waitForAnyScreen();
     const touch = this.touch();
     await touch.enterMenu();
     await sleep(SETTINGS_NAV_DELAY_MS);
-    await touch.enableBlindSigningSettings();
+    await (toggle
+      ? touch.tapQuick(toggle)
+      : touch.enableBlindSigningSettings());
     await sleep(SETTINGS_NAV_DELAY_MS);
     await touch.exitMenu();
     await sleep(SETTINGS_NAV_DELAY_MS);

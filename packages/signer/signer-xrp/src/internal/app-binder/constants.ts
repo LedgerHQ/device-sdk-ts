@@ -8,3 +8,6 @@ export const APP_NAME = "XRP";
  * layer below those takes the curve as a required argument.
  */
 export const DEFAULT_CURVE = Curve.Secp256k1;
+
+/** Descriptor slots of the XRP app: one per MPT of the transaction. */
+export const MAX_MPT_DESCRIPTORS = 2;

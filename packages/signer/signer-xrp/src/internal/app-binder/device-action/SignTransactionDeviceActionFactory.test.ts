@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   type InternalApi,
@@ -25,6 +26,7 @@ describe("SignTransactionDeviceActionFactory", () => {
     derivationPath: "44'/144'/0'/0/0",
     transaction: Uint8Array.from([0x12, 0x00, 0x00]),
     skipOpenApp: false,
+    contextModule: { getContexts: vi.fn() } as unknown as ContextModule,
     loggerFactory,
   };
 
