@@ -8,7 +8,8 @@
       "Bitcoin Cash": "2.4.13",
       "Bitcoin Gold": "2.4.13",
       "Horizen": "2.4.13",
-      "Komodo": "2.4.13"
+      "Komodo": "2.4.13",
+      "Dash": "2.4.13"
     },
     "1.11.0": {
       "Ethereum": "1.24.0"
@@ -23,7 +24,8 @@
       "Bitcoin Cash": "2.4.13",
       "Bitcoin Gold": "2.4.13",
       "Horizen": "2.4.13",
-      "Komodo": "2.4.13"
+      "Komodo": "2.4.13",
+      "Dash": "2.4.13"
     },
     "2.8.0": {
       "Ethereum": "1.24.0"
@@ -38,7 +40,8 @@
       "Bitcoin Cash": "2.4.13",
       "Bitcoin Gold": "2.4.13",
       "Horizen": "2.4.13",
-      "Komodo": "2.4.13"
+      "Komodo": "2.4.13",
+      "Dash": "2.4.13"
     },
     "1.7.0": {
       "Ethereum": "1.24.0"
