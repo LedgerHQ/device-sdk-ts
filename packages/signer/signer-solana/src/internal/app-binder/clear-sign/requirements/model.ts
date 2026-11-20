@@ -77,6 +77,7 @@ export type MatchedInstruction = {
 
 // ---- output ---------------------------------------------------------------
 
+/** @deprecated Unused; will be removed in the next major version. */
 export type ProgramDiscriminator = { programId: string; discriminator: string };
 
 export type EnumVariantKey = {
@@ -87,7 +88,6 @@ export type EnumVariantKey = {
 
 /** The deduplicated set of descriptors the device needs, per descriptor type. */
 export type DescriptorRequirements = {
-  instructionInfos: ProgramDiscriminator[];
   enumVariants: EnumVariantKey[];
   tokenInfos: string[];
   tokenAccountStates: string[];

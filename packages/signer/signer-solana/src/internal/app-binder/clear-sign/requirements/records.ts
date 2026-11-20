@@ -97,7 +97,6 @@ export type ParsedValueFlowPort = {
  * mapped to a `VALUE` (CAL omitted it), which makes the rule inert host-side.
  */
 export type ParsedHideRule = {
-  ruleSetIndex: number;
   condition?: HideCondition;
   target?: ParsedValue;
 };

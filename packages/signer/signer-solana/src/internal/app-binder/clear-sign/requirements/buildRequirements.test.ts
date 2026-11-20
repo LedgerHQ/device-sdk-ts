@@ -95,7 +95,7 @@ function run(matchedList: MatchedInstruction[], selector = NO_ENUMS) {
 }
 
 describe("buildRequirements", () => {
-  it("System transfer: only INSTRUCTION_INFO, native port pulls no token info", () => {
+  it("System transfer: a native port pulls no descriptor at all", () => {
     const result = run([
       matched({
         programId: "11111111111111111111111111111111",
@@ -106,14 +106,18 @@ describe("buildRequirements", () => {
         },
       }),
     ]);
-    expect(result.instructionInfos).toEqual([
-      {
-        programId: "11111111111111111111111111111111",
-        discriminator: "02000000",
-      },
-    ]);
-    expect(result.tokenInfos).toEqual([]);
-    expect(result.tokenAccountStates).toEqual([]);
+    expect(result).toEqual({
+      enumVariants: [],
+      tokenInfos: [],
+      tokenAccountStates: [],
+      altResolutions: [],
+      trustedNames: [],
+      trustedNameAltRefs: [],
+      tokenAmountRefs: [],
+      tokenAmountAltRefs: [],
+      tokenAccountStateAltRefs: [],
+      mintAltRefs: [],
+    });
   });
 
   it("DIRECT port: a constant mint becomes a TOKEN_INFO", () => {
@@ -365,9 +369,11 @@ describe("buildRequirements", () => {
           ],
         },
       });
-    const result = run([direct(), direct()]);
-    expect(result.instructionInfos).toEqual([
-      { programId: "P", discriminator: "01" },
+    const sameVariant: EnumVariantSelector = () =>
+      Right([{ enumId: "k", variantIndex: 1 }]);
+    const result = run([direct(), direct()], sameVariant);
+    expect(result.enumVariants).toEqual([
+      { programId: "P", enumId: "k", variantIndex: 1 },
     ]);
     expect(result.tokenInfos).toEqual([DefaultBs58Encoder.encode(usdc)]);
   });
@@ -436,40 +442,42 @@ describe("buildRequirements", () => {
   });
 
   it("no accountSchema on the descriptor: check is skipped, requirements build normally", () => {
-    const result = run([
-      matched({
-        accounts: [account("a"), account("b")],
-        descriptor: { accountSchema: undefined },
-      }),
-    ]);
-    expect(result.instructionInfos).toEqual([
-      { programId: "Prog", discriminator: "00" },
-    ]);
+    const result = buildRequirements(
+      [
+        matched({
+          accounts: [account("a"), account("b")],
+          descriptor: { accountSchema: undefined },
+        }),
+      ],
+      { selectEnumVariants: NO_ENUMS },
+    );
+    expect(result.isRight()).toBe(true);
   });
 
   it("accountSchema matches the live accounts: requirements build normally", () => {
-    const result = run([
-      matched({
-        accounts: [
-          account("a", undefined, false),
-          account("b", undefined, true),
-        ],
-        descriptor: {
-          accountSchema: {
-            count_min: 2,
-            count_max: 2,
-            remaining_policy: { signer: "EITHER", writable: "EITHER" },
-            slots: [
-              { signer: "EITHER", writable: "FORBIDDEN" },
-              { signer: "EITHER", writable: "REQUIRED" },
-            ],
+    const result = buildRequirements(
+      [
+        matched({
+          accounts: [
+            account("a", undefined, false),
+            account("b", undefined, true),
+          ],
+          descriptor: {
+            accountSchema: {
+              count_min: 2,
+              count_max: 2,
+              remaining_policy: { signer: "EITHER", writable: "EITHER" },
+              slots: [
+                { signer: "EITHER", writable: "FORBIDDEN" },
+                { signer: "EITHER", writable: "REQUIRED" },
+              ],
+            },
           },
-        },
-      }),
-    ]);
-    expect(result.instructionInfos).toEqual([
-      { programId: "Prog", discriminator: "00" },
-    ]);
+        }),
+      ],
+      { selectEnumVariants: NO_ENUMS },
+    );
+    expect(result.isRight()).toBe(true);
   });
 
   it("accountSchema mismatch: surfaces a typed AccountSchemaMismatchError Left and short-circuits", () => {

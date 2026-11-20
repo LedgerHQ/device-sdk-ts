@@ -2,7 +2,6 @@ import {
   type AltEntryKey,
   type DescriptorRequirements,
   type EnumVariantKey,
-  type ProgramDiscriminator,
 } from "./model";
 
 /**
@@ -10,7 +9,6 @@ import {
  * preserving first-seen order, so the output is deterministic.
  */
 export class RequirementAccumulator {
-  private readonly instructionInfos = new OrderedSet<ProgramDiscriminator>();
   private readonly enumVariants = new OrderedSet<EnumVariantKey>();
   private readonly tokenInfos = new OrderedSet<string>();
   private readonly tokenAccountStates = new OrderedSet<string>();
@@ -22,12 +20,11 @@ export class RequirementAccumulator {
   private readonly tokenAccountStateAltRefs = new OrderedSet<AltEntryKey>();
   private readonly trustedNameAltRefs = new OrderedSet<AltEntryKey>();
 
-  addInstructionInfo(programId: string, discriminator: string): void {
-    this.instructionInfos.add(`${programId}:${discriminator}`, {
-      programId,
-      discriminator,
-    });
-  }
+  /**
+   * @deprecated Unused; will be removed in the next major version.
+   * Instruction-info requirements are no longer collected, so this does nothing.
+   */
+  addInstructionInfo(_programId: string, _discriminator: string): void {}
 
   addEnumVariant(
     programId: string,
@@ -129,7 +126,6 @@ export class RequirementAccumulator {
     const tokenAccountKeys = new Set(this.tokenAccountStates.values());
 
     return {
-      instructionInfos: this.instructionInfos.values(),
       enumVariants: this.enumVariants.values(),
       tokenInfos: this.tokenInfos.values(),
       tokenAccountStates: this.tokenAccountStates.values(),

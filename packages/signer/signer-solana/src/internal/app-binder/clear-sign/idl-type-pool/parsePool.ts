@@ -172,6 +172,9 @@ function parseEntry(reader: ByteReader, inline: boolean): Entry {
 /**
  * Parse the `IDL_TYPE_POOL` TLV value into a list of {@link Entry}.
  *
+ * Production builds the pool from CAL JSON (`poolFromJson`); this TLV parser is
+ * kept as the reference the decoder and `poolFromJson` tests are checked against.
+ *
  * The TLV value is `u8 count || entry_0 || ... || entry_{count-1}`.
  *
  * @throws never — wrap with the public `decode` entry points which return

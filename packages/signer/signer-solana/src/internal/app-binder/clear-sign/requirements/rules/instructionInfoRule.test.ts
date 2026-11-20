@@ -3,8 +3,8 @@ import { RequirementAccumulator } from "@internal/app-binder/clear-sign/requirem
 
 import { applyInstructionInfoRule } from "./instructionInfoRule";
 
-describe("applyInstructionInfoRule", () => {
-  it("records the instruction's (programId, discriminator)", () => {
+describe("applyInstructionInfoRule (deprecated)", () => {
+  it("adds no requirement", () => {
     const matched = {
       instruction: { programId: "P", accounts: [], data: new Uint8Array() },
       descriptor: {
@@ -21,9 +21,9 @@ describe("applyInstructionInfoRule", () => {
     } satisfies MatchedInstruction;
 
     const accumulator = new RequirementAccumulator();
+    const empty = accumulator.build();
     applyInstructionInfoRule(matched, accumulator);
-    expect(accumulator.build().instructionInfos).toEqual([
-      { programId: "P", discriminator: "ab" },
-    ]);
+
+    expect(accumulator.build()).toEqual(empty);
   });
 });

@@ -41,6 +41,7 @@ export type SelectedEnumVariant = {
 };
 
 export type DecodeResult = {
+  /** No production reader today; kept on purpose (leaf emission is do-not-touch). */
   leaves: Leaf[];
   /** Selected variants in the order decoded; deduplication is the caller's concern. */
   selectedEnumVariants: SelectedEnumVariant[];
