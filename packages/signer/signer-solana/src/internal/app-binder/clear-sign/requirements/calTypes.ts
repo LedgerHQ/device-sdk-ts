@@ -6,6 +6,7 @@ import {
   type SolanaCalHideRule,
   type SolanaCalMintAssociation,
   type SolanaCalOwnerAssociation,
+  type SolanaCalResetScope,
   type SolanaCalTokenValue,
   type SolanaCalTypePoolEntry,
   type SolanaCalValue,
@@ -22,6 +23,7 @@ export type CalValue = SolanaCalValue;
 export type CalTokenValue = SolanaCalTokenValue;
 export type CalValueFlowPort = SolanaCalValueFlowPort;
 export type CalAccountReset = SolanaCalAccountReset;
+export type CalResetScope = SolanaCalResetScope;
 export type CalAccountSchema = SolanaCalAccountSchema;
 export type CalDisplayField = SolanaCalDisplayField;
 export type CalMintAssociation = SolanaCalMintAssociation;

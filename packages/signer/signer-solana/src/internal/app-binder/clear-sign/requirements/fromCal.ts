@@ -9,6 +9,7 @@ import {
   type CalIdlDescriptor,
   type CalMintAssociation,
   type CalOwnerAssociation,
+  type CalResetScope,
   type CalTokenValue,
   type CalValue,
   type CalValueFlowPort,
@@ -22,9 +23,11 @@ import {
   type ParsedHideRule,
   type ParsedInstructionInfo,
   type ParsedOwnerAssociation,
+  type ParsedResetWitness,
   type ParsedTokenValue,
   type ParsedValue,
   type ParsedValueFlowPort,
+  type ParsedWitnessConsumer,
   type TokenKind,
   ValueKind,
   type ValueSource,
@@ -217,6 +220,32 @@ export function fromCalAccountReset(
     valueKind,
     tokenValue: reset.token ? fromCalTokenValue(reset.token) : undefined,
     requireNativePreBalanceZero: reset.require_native_pre_balance_zero ?? false,
+    witness: fromCalResetWitness(reset.reset_scope),
+  };
+}
+
+/**
+ * The witness of a `RESET_SCOPE` view, or `undefined` for a plain or absent
+ * scope. The view only decides which ALT entries the host streams, so a
+ * discriminator that does not decode drops the witness instead of failing the
+ * requirement build: the cost is a route left unmerged, never a wrong screen,
+ * while failing would push every transaction of the program to blind signing.
+ */
+function fromCalResetWitness(
+  scope: CalResetScope | undefined,
+): ParsedResetWitness | undefined {
+  const witness = scope?.witness;
+  if (scope === undefined || witness === undefined) return undefined;
+  const consumers: ParsedWitnessConsumer[] = [];
+  for (const consumer of witness.consumers) {
+    const discriminator = hexaStringToBuffer(consumer.discriminator);
+    if (discriminator === null) return undefined;
+    consumers.push({ discriminator, accountIndex: consumer.account_index });
+  }
+  return {
+    programId: scope.program_id,
+    resetAccountIndex: witness.reset_account_index,
+    consumers,
   };
 }
 

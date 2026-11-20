@@ -167,6 +167,40 @@ export type SolanaCalAccountReset = {
   value_kind?: string;
   token?: SolanaCalTokenValue;
   require_native_pre_balance_zero?: boolean;
+  /** Absent when the reset has no `RESET_SCOPE`, or CAL served a malformed view of it. */
+  reset_scope?: SolanaCalResetScope;
+};
+
+/**
+ * The parsed view of an `ACCOUNT_RESET.RESET_SCOPE`. A scope is either plain
+ * (`discriminators`, absent meaning any instruction of `program_id`) or
+ * witnessed (`witness`), never both. The signed TLV is what the device reads;
+ * the view only tells the host which accounts the scope names.
+ */
+export type SolanaCalResetScope = {
+  program_id: string;
+  /** Discriminator prefixes (hex, 0 to 8 bytes each), ORed. */
+  discriminators?: string[];
+  witness?: SolanaCalResetScopeWitness;
+};
+
+/**
+ * A witnessed scope (sRFC 41): the reset is relied on only by a later
+ * instruction that one of `consumers` admits, and only when that consumer's
+ * account at its `account_index` is the declaring instruction's account at
+ * `reset_account_index` (the ledger the reset snapshots).
+ */
+export type SolanaCalResetScopeWitness = {
+  reset_account_index: number;
+  /** At least one. ORed. */
+  consumers: SolanaCalResetScopeWitnessConsumer[];
+};
+
+export type SolanaCalResetScopeWitnessConsumer = {
+  /** Discriminator prefix (hex, 0 to 8 bytes) the consumer's data starts with. */
+  discriminator: string;
+  /** Index, in the consumer's accounts, of the account that must be the ledger. */
+  account_index: number;
 };
 
 export type SolanaCalSlotConstraint = {
