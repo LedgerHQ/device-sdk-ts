@@ -43,7 +43,7 @@ class DeviceConnectionTest {
     }
 
     @Test
-    fun `GIVEN a device connection with an initial APDU sender and an APDU that triggers disconnection WHEN requestSendApdu is called and a reconnection occurs THEN the second apduSender is used and the result is obtained`() =
+    fun `GIVEN an APDU that triggers disconnection WHEN a reconnection occurs THEN the second apduSender is used and the result is obtained`() =
         runTest {
             apdusTriggeringDisconnection.forEach { apduTriggeringDisconnection ->
                 val apduSender1 = MockedApduSender()
