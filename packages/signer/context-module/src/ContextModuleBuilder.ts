@@ -17,6 +17,7 @@ import {
 import { type TrustedNameDataSource } from "./modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { type BlindSigningReporter } from "./modules/multichain/reporter/domain/BlindSigningReporter";
+import { type SignReporter } from "./modules/multichain/sign-reporter/domain/SignReporter";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { type ContextModule } from "./ContextModule";
@@ -65,6 +66,7 @@ const DEFAULT_LOADER_CONFIG: ContextModuleLoaderConfig = {
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customBlindSigningReporter: undefined,
+  customSignReporter: undefined,
   customTrustedNameDataSource: undefined,
 };
 
@@ -195,6 +197,17 @@ export class ContextModuleBuilder {
    */
   setBlindSigningReporter(reporter: BlindSigningReporter) {
     this.config.customBlindSigningReporter = reporter;
+    return this;
+  }
+
+  /**
+   * Set a custom sign reporter
+   *
+   * @param reporter reporter to use for sign events
+   * @returns this
+   */
+  setSignReporter(reporter: SignReporter) {
+    this.config.customSignReporter = reporter;
     return this;
   }
 
