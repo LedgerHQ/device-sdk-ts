@@ -69,6 +69,7 @@ export type {
   PcztTransparentInput,
   PcztTransparentOutput,
   PcztUserAddressReceiver,
+  PcztZip32Derivation,
 } from "@api/model/PcztTransaction";
 export { PCZT_RECEIVER_TYPECODE } from "@api/model/PcztTransaction";
 export * from "@api/SignerZcash";
