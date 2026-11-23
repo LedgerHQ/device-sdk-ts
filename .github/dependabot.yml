@@ -61,3 +61,5 @@ updates:
     ignore:
       - dependency-name: "purify-ts"
         versions: [2.1.1] # https://github.com/gigobyte/purify/releases/tag/v2.1.1 Broken ESM build
+      # The Lumen upgrade plan (.koda/plans/lumen-upgrade.ts) opens these, with migrations applied
+      - dependency-name: "@ledgerhq/lumen-*"
