@@ -1,0 +1,12 @@
+# Koda project config, read by Cairn (moved from the deprecated root koda.yaml).
+# Cairn's default sandbox (generic image, 2 CPU, 3 GB, 5 GB disk) is too small for this monorepo:
+# the Lumen upgrade run lost its sandbox during the plan's shell steps.
+sandbox:
+  image: jfrog.ledgerlabs.net/daytona-oci-internal-green/node/daytona:24
+  cpu: 4
+  memory: 8
+  disk: 20
+setup: COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack enable && pnpm install --frozen-lockfile
+lint: pnpm lint
+test: pnpm test
+max_fix_attempts: 1
