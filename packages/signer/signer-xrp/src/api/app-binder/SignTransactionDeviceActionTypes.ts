@@ -1,4 +1,8 @@
 import {
+  type ClearSignContextSuccess,
+  type ContextModule,
+} from "@ledgerhq/context-module";
+import {
   type CommandErrorResult,
   type ExecuteDeviceActionReturnType,
   type LoggerPublisherService,
@@ -7,6 +11,7 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { type AppConfig } from "@api/model/AppConfig";
 import { type Curve } from "@api/model/Curve";
 import { type Signature } from "@api/model/Signature";
 import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplicationErrors";
@@ -31,6 +36,7 @@ export type SignTransactionDAInput = {
   readonly transaction: Uint8Array;
   readonly skipOpenApp: boolean;
   readonly curve: Curve;
+  readonly contextModule: ContextModule;
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
@@ -44,6 +50,9 @@ type SignTransactionDARequiredInteraction =
 
 export enum SignTransactionDAStep {
   OPEN_APP = "signer.xrp.steps.openApp",
+  GET_APP_CONFIG = "signer.xrp.steps.getAppConfig",
+  BUILD_CONTEXT = "signer.xrp.steps.buildContext",
+  PROVIDE_CONTEXT = "signer.xrp.steps.provideContext",
   SIGN_TRANSACTION = "signer.xrp.steps.signTransaction",
 }
 
@@ -54,6 +63,8 @@ export type SignTransactionDAIntermediateValue = {
 
 export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
+  readonly appConfig: AppConfig | null;
+  readonly contexts: ClearSignContextSuccess[];
   readonly signature: Signature | null;
 };
 

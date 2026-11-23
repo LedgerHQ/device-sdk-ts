@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 import { type Curve } from "@api/model/Curve";
@@ -28,6 +29,7 @@ export const SignTransactionDeviceActionFactory = (args: {
   skipOpenApp: boolean;
   /** Curve to sign with. Defaults to `Curve.Secp256k1`. */
   curve?: Curve;
+  contextModule: ContextModule;
   loggerFactory: (tag: string) => LoggerPublisherService;
 }): SignTransactionDeviceAction =>
   new SignTransactionDeviceAction({
@@ -36,6 +38,7 @@ export const SignTransactionDeviceActionFactory = (args: {
       transaction: args.transaction ?? new Uint8Array(),
       skipOpenApp: args.skipOpenApp,
       curve: args.curve ?? DEFAULT_CURVE,
+      contextModule: args.contextModule,
       loggerFactory: args.loggerFactory,
     },
     logger: args.loggerFactory("SignTransactionDeviceAction"),

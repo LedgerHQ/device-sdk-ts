@@ -1,4 +1,8 @@
 import {
+  type ClearSignContextSuccess,
+  type ContextModule,
+} from "@ledgerhq/context-module";
+import {
   type CommandResult,
   type DeviceActionStateMachine,
   type InternalApi,
@@ -20,13 +24,28 @@ import {
   type SignTransactionDAOutput,
   SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type AppConfig } from "@api/model/AppConfig";
 import { type Curve } from "@api/model/Curve";
 import { type Signature } from "@api/model/Signature";
+import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
 import { type XrpErrorCodes } from "@internal/app-binder/command/utils/xrpApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { BuildMptContextTask } from "@internal/app-binder/task/BuildMptContextTask";
+import { ProvideMptContextTask } from "@internal/app-binder/task/ProvideMptContextTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
+import { isXrpSignerFeatureSupported } from "@internal/app-binder/XrpApplicationResolver";
 
 export type MachineDependencies = {
+  readonly getAppConfig: () => Promise<CommandResult<AppConfig, XrpErrorCodes>>;
+  readonly buildContext: (arg0: {
+    input: {
+      contextModule: ContextModule;
+      transaction: Uint8Array;
+    };
+  }) => Promise<ClearSignContextSuccess[]>;
+  readonly provideContext: (arg0: {
+    input: { contexts: ClearSignContextSuccess[] };
+  }) => Promise<void>;
   readonly signTransaction: (arg0: {
     input: {
       derivationPath: string;
@@ -37,13 +56,17 @@ export type MachineDependencies = {
 };
 
 /**
- * Opens the XRP app (unless skipped), then runs {@link SendSignTransactionTask}.
+ * Opens the XRP app (unless skipped), gives it the MPT descriptors of the
+ * transaction, then runs {@link SendSignTransactionTask}.
  *
  * Unlike `CallTaskInAppDeviceAction`, the serialized transaction is not closed
  * over a task. It lives on machine `context.input.transaction` and can be
  * supplied from either source:
  * - factory / constructor args (direct `executeDeviceAction`);
  * - parent invoke `input` when this DA is nested via `makeStateMachine`.
+ *
+ * No descriptor step fails the signature: without a descriptor, the app shows
+ * the transaction without the ticker, or blind signs it.
  */
 export class SignTransactionDeviceAction extends XStateDeviceAction<
   SignTransactionDAOutput,
@@ -69,7 +92,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       SignTransactionDAInternalState
     >;
 
-    const { signTransaction } = this.extractDependencies(internalApi);
+    const { getAppConfig, buildContext, provideContext, signTransaction } =
+      this.extractDependencies(internalApi);
 
     return setup({
       types: {
@@ -78,6 +102,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         output: {} as types["output"],
       },
       actors: {
+        getAppConfig: fromPromise(getAppConfig),
+        buildContext: fromPromise(buildContext),
+        provideContext: fromPromise(provideContext),
         signTransaction: fromPromise(signTransaction),
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
@@ -85,6 +112,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       guards: {
         skipOpenApp: ({ context }) => context.input.skipOpenApp,
+        isMptSupported: ({ context }) =>
+          context._internalState.appConfig !== null &&
+          isXrpSignerFeatureSupported(
+            internalApi,
+            "mpt",
+            context._internalState.appConfig,
+          ),
         noInternalError: ({ context }) => context._internalState.error === null,
       },
       actions: {
@@ -95,7 +129,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           }): SignTransactionDAInternalState => {
             const eventError: unknown = (event as { error?: unknown }).error;
             return {
-              signature: context._internalState.signature,
+              ...context._internalState,
               error: new UnknownDAError(
                 eventError instanceof Error
                   ? eventError.message
@@ -116,13 +150,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         _internalState: {
           error: null,
+          appConfig: null,
+          contexts: [],
           signature: null,
         },
       }),
       states: {
         InitialState: {
           always: [
-            { target: "SignTransaction", guard: "skipOpenApp" },
+            { target: "GetAppConfig", guard: "skipOpenApp" },
             "OpenAppDeviceAction",
           ],
         },
@@ -156,9 +192,84 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         CheckOpenAppDeviceActionResult: {
           always: [
-            { target: "SignTransaction", guard: "noInternalError" },
+            { target: "GetAppConfig", guard: "noInternalError" },
             "Error",
           ],
+        },
+        GetAppConfig: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.GET_APP_CONFIG,
+            },
+          }),
+          invoke: {
+            id: "getAppConfig",
+            src: "getAppConfig",
+            onDone: {
+              target: "CheckMptSupported",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  appConfig: isSuccessCommandResult(event.output)
+                    ? event.output.data
+                    : null,
+                }),
+              }),
+            },
+            onError: { target: "CheckMptSupported" },
+          },
+        },
+        // The XRP app takes MPT descriptors from 2.9.0. An older one still gets
+        // the transaction, without them.
+        CheckMptSupported: {
+          always: [
+            { target: "BuildContext", guard: "isMptSupported" },
+            "SignTransaction",
+          ],
+        },
+        BuildContext: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BUILD_CONTEXT,
+            },
+          }),
+          invoke: {
+            id: "buildContext",
+            src: "buildContext",
+            input: ({ context }) => ({
+              contextModule: context.input.contextModule,
+              transaction: context.input.transaction,
+            }),
+            onDone: {
+              target: "ProvideContext",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  contexts: event.output,
+                }),
+              }),
+            },
+            onError: { target: "SignTransaction" },
+          },
+        },
+        ProvideContext: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.PROVIDE_CONTEXT,
+            },
+          }),
+          invoke: {
+            id: "provideContext",
+            src: "provideContext",
+            input: ({ context }) => ({
+              contexts: context._internalState.contexts,
+            }),
+            onDone: { target: "SignTransaction" },
+            onError: { target: "SignTransaction" },
+          },
         },
         SignTransaction: {
           entry: assign({
@@ -221,6 +332,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       this.input.loggerFactory ?? this.getLoggerFactory(internalApi);
 
     return {
+      getAppConfig: () => internalApi.sendCommand(new GetAppConfigCommand()),
+      buildContext: ({ input }) =>
+        new BuildMptContextTask({
+          ...input,
+          deviceModelId: internalApi.getDeviceSessionState().deviceModelId,
+        }).run(),
+      provideContext: ({ input }) =>
+        new ProvideMptContextTask(internalApi, input).run(),
       signTransaction: ({
         input,
       }: {

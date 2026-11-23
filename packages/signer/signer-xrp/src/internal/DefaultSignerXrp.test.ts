@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -26,6 +27,7 @@ type GetAppConfigCallArgs = {
 
 describe("DefaultSignerXrp", () => {
   const sessionId = "test-session-id" as DeviceSessionId;
+  const contextModule = { getContexts: vi.fn() } as unknown as ContextModule;
 
   const setup = () => {
     const expectedResult = { observable: from([]), cancel: vi.fn() };
@@ -35,7 +37,7 @@ describe("DefaultSignerXrp", () => {
     return {
       executeDeviceAction,
       expectedResult,
-      signer: new DefaultSignerXrp({ dmk, sessionId }),
+      signer: new DefaultSignerXrp({ dmk, sessionId, contextModule }),
     };
   };
 
@@ -43,6 +45,7 @@ describe("DefaultSignerXrp", () => {
     const signer = new DefaultSignerXrp({
       dmk: {} as DeviceManagementKit,
       sessionId,
+      contextModule,
     });
 
     expect(signer).toBeDefined();
