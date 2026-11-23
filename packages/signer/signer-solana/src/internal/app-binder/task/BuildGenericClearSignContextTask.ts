@@ -64,8 +64,9 @@ export type GenericClearSignContext = {
   readonly unrecognizedProgramIds: string[];
   /**
    * `true` when `mode` is `"none"` specifically because an instruction failed
-   * its `ACCOUNT_SCHEMA` pre-check (a stale/incompatible CAL descriptor for a
-   * program that has since changed its account layout) — as opposed to any
+   * its `ACCOUNT_SCHEMA` pre-check or left an `ACCOUNT_RESET` index out of
+   * range (a stale/incompatible CAL descriptor for a program that has since
+   * changed its account layout) — as opposed to any
    * other reason clear-signing was skipped. Lets the caller report a distinct
    * blind-sign reason instead of the generic `NO_CLEAR_SIGNING_CONTEXT`.
    */

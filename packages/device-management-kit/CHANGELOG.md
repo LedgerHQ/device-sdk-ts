@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 1.13.0
+
+### Minor Changes
+
+- [#2215](https://github.com/LedgerHQ/device-sdk-ts/pull/2215) [`3f3acd3`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f3acd3dcdf83e975f83aea2e214419cec21df5a) Thanks [@benruseau](https://github.com/benruseau)! - Expose the final firmware name from the Manager API
+
 ## 1.12.0
 
 ### Minor Changes

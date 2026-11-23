@@ -278,6 +278,7 @@ describe("HttpManagerApiDataSource", () => {
         new Response(
           JSON.stringify({
             id: 361,
+            name: "1.6.0-il3",
             version: "1.6.0",
             perso: "perso_11",
             firmware: null,
@@ -299,6 +300,7 @@ describe("HttpManagerApiDataSource", () => {
       expect(response).toEqual(
         Right({
           id: 361,
+          name: "1.6.0-il3",
           version: "1.6.0",
           perso: "perso_11",
           firmware: null,
@@ -315,6 +317,7 @@ describe("HttpManagerApiDataSource", () => {
         new Response(
           JSON.stringify({
             id: "invalidId",
+            name: "1.6.0-il3",
             version: "1.6.0",
             perso: "perso_11",
             firmware: null,
@@ -425,6 +428,7 @@ describe("HttpManagerApiDataSource", () => {
         new Response(
           JSON.stringify({
             id: 361,
+            name: "1.6.0-il3",
             version: "1.6.0",
             perso: "perso_11",
             firmware: null,
@@ -443,6 +447,7 @@ describe("HttpManagerApiDataSource", () => {
       expect(response).toEqual(
         Right({
           id: 361,
+          name: "1.6.0-il3",
           version: "1.6.0",
           perso: "perso_11",
           firmware: null,

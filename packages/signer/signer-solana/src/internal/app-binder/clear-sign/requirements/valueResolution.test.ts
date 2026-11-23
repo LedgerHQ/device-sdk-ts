@@ -146,7 +146,6 @@ describe("resolvePortAccountIndex", () => {
   ): ParsedValueFlowPort => ({
     accountIndices,
     optionalAccountStrategy,
-    activeWhen: [],
   });
 
   // `instruction` accounts: [0]="first", [1]=undefined, [2]="third".

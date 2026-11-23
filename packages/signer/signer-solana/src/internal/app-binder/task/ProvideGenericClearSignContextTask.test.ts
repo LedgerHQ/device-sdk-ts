@@ -584,9 +584,8 @@ describe("ProvideGenericClearSignContextTask", () => {
   });
 
   it("tokenAccountStateAltRefs: streams ALT_RESOLUTION, then TOKEN_ACCOUNT_STATE, then TOKEN_INFO for the attested mint", async () => {
-    // The IS_SIGNER / RESOLVE case: the state payload is the point (it seeds the
-    // device's owner and mint maps), so no TOKEN_INFO is probed on the resolved
-    // address itself.
+    // The RESOLVE case: the state payload is the point (it seeds the device's
+    // mint map), so no TOKEN_INFO is probed on the resolved address itself.
     const getContexts = vi.fn(
       async (_input: any, types: ClearSignContextType[]) => {
         if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)

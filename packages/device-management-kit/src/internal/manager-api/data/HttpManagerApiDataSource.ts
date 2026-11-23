@@ -391,6 +391,7 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
       if (
         typeof finalFirmware !== "object" ||
         typeof finalFirmware.id !== "number" ||
+        typeof finalFirmware.name !== "string" ||
         typeof finalFirmware.version !== "string" ||
         typeof finalFirmware.perso !== "string" ||
         (finalFirmware.firmware !== null &&
@@ -409,6 +410,7 @@ export class HttpManagerApiDataSource implements ManagerApiDataSource {
       }
       const ret: FinalFirmware = {
         id: finalFirmware.id,
+        name: finalFirmware.name,
         version: finalFirmware.version,
         perso: finalFirmware.perso,
         firmware: finalFirmware.firmware,

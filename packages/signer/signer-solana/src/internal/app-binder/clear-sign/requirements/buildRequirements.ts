@@ -20,15 +20,16 @@ import {
   RequirementsDecodeError,
   type RequirementsError,
 } from "./RequirementsError";
+import { checkResetIndices } from "./resetIndices";
 import {
   applyAltResolutionRule,
   applyEnumVariantRule,
   applyInstructionInfoRule,
+  applyResetWitnessRule,
   applyTokenRule,
   applyTrustedNameRule,
   type EnumVariantSelector,
 } from "./rules";
-import { resolvePubkeyValue } from "./valueResolution";
 
 export type BuildRequirementsOptions = {
   /** Enum-variant decoder; defaults to the real type-pool decoder. */
@@ -38,42 +39,29 @@ export type BuildRequirementsOptions = {
 };
 
 /**
- * The TX-derived binding maps, both scoped to the whole transaction: token
- * account to mint (`MINT_ASSOC`) and token account to owner (`OWNER_ASSOC`).
- * Slots that stay unresolved host-side (ALT-backed, or out of range) contribute
- * no binding — the device then falls back to the attested descriptors, which is
- * exactly what the rules request for an uncovered account.
+ * The TX-derived mint-binding map, scoped to the whole transaction: token
+ * account to mint (`MINT_ASSOC`). Slots that stay unresolved host-side
+ * (ALT-backed, or out of range) contribute no binding — the device then falls
+ * back to the attested descriptors, which is exactly what the rules request for
+ * an uncovered account.
  */
 function buildTxBindings(
   matched: MatchedInstruction[],
   parsed: ParsedInstruction[],
-  bs58Encoder: Bs58Encoder,
 ): TxBindings {
   const mints = new Map<string, string>();
-  const owners = new Map<string, string>();
   matched.forEach((match, index) => {
     const { accounts } = match.instruction;
-    const { mintAssociations, ownerAssociations } = parsed[index]!.info;
-    for (const { accountIndex, mintIndex } of mintAssociations) {
+    for (const { accountIndex, mintIndex } of parsed[index]!.info
+      .mintAssociations) {
       const account = accounts[accountIndex]?.address;
       const mint = accounts[mintIndex]?.address;
       if (account !== undefined && mint !== undefined) {
         mints.set(account, mint);
       }
     }
-    for (const { accountIndex, owner } of ownerAssociations) {
-      const account = accounts[accountIndex]?.address;
-      const ownerAddress = resolvePubkeyValue(
-        owner,
-        match.instruction,
-        bs58Encoder,
-      );
-      if (account !== undefined && ownerAddress !== undefined) {
-        owners.set(account, ownerAddress);
-      }
-    }
   });
-  return { mints, owners };
+  return { mints };
 }
 
 /**
@@ -97,16 +85,28 @@ export function buildRequirements(
     // stale descriptor is always reported as AccountSchemaMismatchError, even
     // when an earlier instruction would otherwise fail first for an unrelated
     // reason (e.g. a decode error) and short-circuit the main loop.
+    // A reset index out of range of the instruction's accounts is the same kind
+    // of mismatch (the device refuses it at finalize), so it is reported the
+    // same way.
     for (const match of matched) {
-      if (match.descriptor.accountSchema === undefined) continue;
-      const schemaMismatch = checkAccountSchema(
-        match.descriptor.accountSchema,
-        match.instruction.accounts,
-      );
+      const { accountSchema, accountResets, discriminator } = match.descriptor;
+      const { accounts } = match.instruction;
+      const schemaMismatch =
+        accountSchema === undefined
+          ? null
+          : checkAccountSchema(accountSchema, accounts);
       if (schemaMismatch !== null) {
         return Left(
           new AccountSchemaMismatchError(
-            `ACCOUNT_SCHEMA mismatch for (${match.descriptor.discriminator}): ${schemaMismatch}`,
+            `ACCOUNT_SCHEMA mismatch for (${discriminator}): ${schemaMismatch}`,
+          ),
+        );
+      }
+      const resetMismatch = checkResetIndices(accountResets, accounts.length);
+      if (resetMismatch !== null) {
+        return Left(
+          new AccountSchemaMismatchError(
+            `ACCOUNT_RESET mismatch for (${discriminator}): ${resetMismatch}`,
           ),
         );
       }
@@ -120,7 +120,6 @@ export function buildRequirements(
     const bindings = buildTxBindings(
       matched,
       instructions.map(({ records }) => records),
-      bs58Encoder,
     );
 
     for (const { match, records } of instructions) {
@@ -165,6 +164,10 @@ export function buildRequirements(
         bs58Encoder,
       );
     }
+
+    // Witnessed reset scopes pair the declaring instruction with later ones,
+    // so this rule runs once over the whole transaction.
+    applyResetWitnessRule(instructions, accumulator);
 
     return Right(accumulator.build());
   } catch (error) {

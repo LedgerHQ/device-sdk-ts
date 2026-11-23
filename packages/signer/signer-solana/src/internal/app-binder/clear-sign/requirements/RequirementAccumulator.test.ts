@@ -96,7 +96,7 @@ describe("RequirementAccumulator", () => {
   it("build() ranks tokenAccountStateAltRefs above every other ALT bucket", () => {
     const accumulator = new RequirementAccumulator();
 
-    // (ALT, 1) is an IS_SIGNER target that is also a PARAM_TOKEN_AMOUNT ref, a
+    // (ALT, 1) is a RESOLVE token account that is also a PARAM_TOKEN_AMOUNT ref, a
     // MINT_ASSOC mint and a writable slot: four buckets, one ALT entry, and the
     // device rejects a second ALT_RESOLUTION for it.
     accumulator.addAltResolution("ALT", 1);

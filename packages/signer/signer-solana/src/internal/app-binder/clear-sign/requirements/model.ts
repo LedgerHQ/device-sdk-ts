@@ -58,15 +58,17 @@ export type InstructionDescriptor = {
 };
 
 /**
- * The transaction-scoped binding maps the TX's own descriptors declare, both
- * keyed by token-account address: `mints` from the `MINT_ASSOC` pairs and
- * `owners` from the `OWNER_ASSOC` pairs. The device seeds the same two maps at
- * finalize, and a fact the transaction already carries needs no attestation —
- * so each map lets the matching `TOKEN_ACCOUNT_STATE` requirement be skipped.
+ * The transaction-scoped mint-binding map the TX's own descriptors declare,
+ * keyed by token-account address and built from the `MINT_ASSOC` pairs. The
+ * device seeds the same map at finalize, and a mint the transaction already
+ * carries needs no attestation — so the map lets the matching
+ * `TOKEN_ACCOUNT_STATE` requirement be skipped.
+ *
+ * There is no host-side owner map: no requirement is fetched to seed the
+ * device's (see `applyTokenRule`).
  */
 export type TxBindings = {
   mints: ReadonlyMap<string, string>;
-  owners: ReadonlyMap<string, string>;
 };
 
 /** A transaction instruction paired with its matched CAL descriptor. */
@@ -114,9 +116,10 @@ export type DescriptorRequirements = {
    */
   tokenAmountAltRefs: AltEntryKey[];
   /**
-   * ALT-backed accounts that need an attested `TOKEN_ACCOUNT_STATE`: `IS_SIGNER`
-   * predicate targets (the device's owner map has no other source for them) and
-   * `RESOLVE` port token accounts (its mint map likewise). The address is
+   * ALT-backed accounts that need an attested `TOKEN_ACCOUNT_STATE`: `RESOLVE`
+   * port and reset token accounts (no `MINT_ASSOC` binding can cover an
+   * ALT-backed slot, so the device's mint map has no other source for them) and
+   * pre-balance-zero reset targets. The address is
    * unknown at build time, so the fetch happens in the provide phase once
    * `ALT_RESOLUTION` comes back: TOKEN_ACCOUNT_STATE first, then TOKEN_INFO for
    * the attested mint, then — only if the address turns out not to be a token

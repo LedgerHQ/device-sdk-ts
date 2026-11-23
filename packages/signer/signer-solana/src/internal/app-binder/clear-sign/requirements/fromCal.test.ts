@@ -7,7 +7,6 @@ import {
   fromCalValueFlowPort,
 } from "./fromCal";
 import {
-  ActiveWhenPredicate,
   HideCondition,
   OptionalAccountStrategy,
   TokenKind,
@@ -115,39 +114,30 @@ describe("fromCalOwnerAssociation", () => {
 });
 
 describe("fromCalValueFlowPort ACTIVE_WHEN", () => {
-  it("defaults to no predicates", () => {
-    expect(
-      fromCalValueFlowPort({
-        account_indices: [0],
-        token_value: { kind: "NATIVE" },
-      }).activeWhen,
-    ).toEqual([]);
-  });
-
-  it("maps bare names and MINT_PREDICATE alike", () => {
-    expect(
-      fromCalValueFlowPort({
-        account_indices: [0],
-        token_value: { kind: "NATIVE" },
-        active_when: ["IS_SIGNER", { kind: "MINT_PREDICATE", mint: "Mint" }],
-      }).activeWhen,
-    ).toEqual([
-      ActiveWhenPredicate.IS_SIGNER,
-      ActiveWhenPredicate.MINT_PREDICATE,
-    ]);
-  });
-
-  it("drops an unknown predicate instead of failing the decode", () => {
-    // Nothing host-side evaluates activation, and an unknown name cannot be
-    // IS_SIGNER, so dropping it can never under-request a descriptor — whereas
-    // rejecting would degrade the whole transaction to blind signing.
-    expect(
-      fromCalValueFlowPort({
-        account_indices: [0],
-        token_value: { kind: "NATIVE" },
-        active_when: ["IS_LUCKY", "IS_SIGNER"],
-      }).activeWhen,
-    ).toEqual([ActiveWhenPredicate.IS_SIGNER]);
+  it("decodes a port whatever its predicates, without carrying them", () => {
+    // No predicate makes the host request a descriptor, so ACTIVE_WHEN is not
+    // read: a name the spec no longer defines (IS_SIGNER, from a bundle encoded
+    // before it was removed) or never defined must not fail the decode and
+    // degrade the whole transaction to blind signing.
+    const port = fromCalValueFlowPort({
+      account_indices: [0],
+      token_value: { kind: "NATIVE" },
+      active_when: [
+        "IS_SIGNER",
+        "IS_LUCKY",
+        { kind: "MINT_PREDICATE", mint: "Mint" },
+      ],
+    });
+    expect(port).toEqual({
+      accountIndices: [0],
+      optionalAccountStrategy: OptionalAccountStrategy.PROGRAM_ID,
+      tokenValue: {
+        kind: TokenKind.NATIVE,
+        value: undefined,
+        accountIndex: undefined,
+        fallbackAccountIndex: undefined,
+      },
+    });
   });
 });
 
@@ -233,5 +223,61 @@ describe("fromCalAccountReset", () => {
     expect(() =>
       fromCalAccountReset({ account_index: 0, value_kind: "SPL_TOKEN" }),
     ).toThrow(/missing the required TOKEN field/);
+  });
+
+  it("maps a witnessed reset_scope", () => {
+    const out = fromCalAccountReset({
+      account_index: 1,
+      value_kind: "NATIVE",
+      reset_scope: {
+        program_id: "Jup",
+        witness: {
+          reset_account_index: 0,
+          consumers: [
+            { discriminator: "9656", account_index: 7 },
+            { discriminator: "", account_index: 11 },
+          ],
+        },
+      },
+    });
+    expect(out.witness).toEqual({
+      programId: "Jup",
+      resetAccountIndex: 0,
+      consumers: [
+        { discriminator: Uint8Array.of(0x96, 0x56), accountIndex: 7 },
+        { discriminator: new Uint8Array(), accountIndex: 11 },
+      ],
+    });
+  });
+
+  it("carries no witness for a plain or absent scope", () => {
+    expect(
+      fromCalAccountReset({
+        account_index: 1,
+        value_kind: "NATIVE",
+        reset_scope: { program_id: "Jup", discriminators: ["01"] },
+      }).witness,
+    ).toBeUndefined();
+    expect(
+      fromCalAccountReset({ account_index: 1, value_kind: "NATIVE" }).witness,
+    ).toBeUndefined();
+  });
+
+  it("drops a witness whose discriminator does not decode, instead of failing the decode", () => {
+    // The view only decides which ALT entries are streamed: losing it leaves
+    // the route unmerged, while failing would blind-sign the whole program.
+    expect(
+      fromCalAccountReset({
+        account_index: 1,
+        value_kind: "NATIVE",
+        reset_scope: {
+          program_id: "Jup",
+          witness: {
+            reset_account_index: 0,
+            consumers: [{ discriminator: "zz", account_index: 7 }],
+          },
+        },
+      }).witness,
+    ).toBeUndefined();
   });
 });

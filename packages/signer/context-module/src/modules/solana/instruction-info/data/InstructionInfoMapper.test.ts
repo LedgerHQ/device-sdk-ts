@@ -9,10 +9,12 @@ import {
   toInstructionInfoPayload,
   toOwnerAssociations,
   toProgramEnumVariants,
+  toResetScope,
   toValueFlowPorts,
 } from "./InstructionInfoMapper";
 
 const PROGRAM = "11111111111111111111111111111111";
+const JUPITER = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 
 function makeDescriptor(
   overrides: Partial<CalInstructionDescriptorDto> = {},
@@ -198,6 +200,122 @@ describe("InstructionInfoMapper", () => {
         { account_index: 0, require_pre_balance_zero: undefined },
         { account_index: 1, require_pre_balance_zero: undefined },
       ]);
+    });
+
+    it("carries the reset_scope view, and keeps the reset when the view is malformed", () => {
+      const [witnessed, malformed] = toAccountResets([
+        {
+          descriptor: "ar0",
+          account_index: 1,
+          reset_scope: {
+            program_id: JUPITER,
+            witness: {
+              reset_account_index: 0,
+              consumers: [
+                { discriminator: "96564774a75d0e68", account_index: 7 },
+              ],
+            },
+          },
+        },
+        {
+          descriptor: "ar1",
+          account_index: 2,
+          reset_scope: { program_id: JUPITER, discriminators: ["zz"] },
+        },
+      ]);
+      expect(witnessed!.reset_scope?.witness?.consumers).toEqual([
+        { discriminator: "96564774a75d0e68", account_index: 7 },
+      ]);
+      expect(malformed).toEqual({ account_index: 2 });
+    });
+  });
+
+  describe("toResetScope", () => {
+    const witness = {
+      reset_account_index: 0,
+      consumers: [
+        { discriminator: "96564774a75d0e68", account_index: 7 },
+        { discriminator: "e6798f50779f6aaa", account_index: 11 },
+      ],
+    };
+
+    it("returns undefined for an absent scope", () => {
+      expect(toResetScope(undefined)).toBeUndefined();
+    });
+
+    it("maps a plain scope, with or without discriminators", () => {
+      expect(
+        toResetScope({ program_id: JUPITER, discriminators: ["0102", ""] }),
+      ).toEqual({ program_id: JUPITER, discriminators: ["0102", ""] });
+      expect(toResetScope({ program_id: JUPITER })).toEqual({
+        program_id: JUPITER,
+      });
+    });
+
+    it("maps a witnessed scope, dropping fields the view does not define", () => {
+      expect(
+        toResetScope({
+          program_id: JUPITER,
+          witness: {
+            ...witness,
+            extra: true,
+          } as unknown as typeof witness,
+        }),
+      ).toEqual({ program_id: JUPITER, witness });
+    });
+
+    it.each([
+      [
+        "mixes discriminators with a witness",
+        { program_id: JUPITER, discriminators: ["01"], witness },
+      ],
+      [
+        "has a witness with no consumer",
+        {
+          program_id: JUPITER,
+          witness: { reset_account_index: 0, consumers: [] },
+        },
+      ],
+      [
+        "has a discriminator longer than 8 bytes",
+        { program_id: JUPITER, discriminators: ["000102030405060708"] },
+      ],
+      [
+        "has an odd-length discriminator",
+        { program_id: JUPITER, discriminators: ["012"] },
+      ],
+      [
+        "has a consumer index that is not a u8",
+        {
+          program_id: JUPITER,
+          witness: {
+            reset_account_index: 0,
+            consumers: [{ discriminator: "01", account_index: 256 }],
+          },
+        },
+      ],
+      [
+        "has a negative reset_account_index",
+        {
+          program_id: JUPITER,
+          witness: { ...witness, reset_account_index: -1 },
+        },
+      ],
+      ["has no program_id", { witness } as unknown as { program_id: string }],
+    ])("drops a view that %s", (_, scope) => {
+      expect(toResetScope(scope)).toBeUndefined();
+    });
+
+    it("keeps an empty witness discriminator: a 0-byte prefix admits any data", () => {
+      expect(
+        toResetScope({
+          program_id: JUPITER,
+          witness: {
+            reset_account_index: 0,
+            consumers: [{ discriminator: "", account_index: 3 }],
+          },
+        })?.witness?.consumers,
+      ).toEqual([{ discriminator: "", account_index: 3 }]);
     });
   });
 

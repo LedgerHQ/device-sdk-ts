@@ -12,6 +12,7 @@ export {
   type CalIdlDescriptor,
   type CalMintAssociation,
   type CalOwnerAssociation,
+  type CalResetScope,
   type CalTokenValue,
   type CalValue,
   type CalValueFlowPort,
@@ -39,7 +40,6 @@ export {
 } from "./model";
 export { parseInstructionDescriptor } from "./parseInstruction";
 export {
-  ActiveWhenPredicate,
   HideCondition,
   type MintAssociation,
   OptionalAccountStrategy,
@@ -51,9 +51,11 @@ export {
   type ParsedInstruction,
   type ParsedInstructionInfo,
   type ParsedOwnerAssociation,
+  type ParsedResetWitness,
   type ParsedTokenValue,
   type ParsedValue,
   type ParsedValueFlowPort,
+  type ParsedWitnessConsumer,
   TokenKind,
   ValueKind,
   ValueSource,
@@ -63,4 +65,5 @@ export {
   RequirementsDecodeError,
   type RequirementsError,
 } from "./RequirementsError";
+export { checkResetIndices } from "./resetIndices";
 export { type EnumVariantSelector } from "./rules";

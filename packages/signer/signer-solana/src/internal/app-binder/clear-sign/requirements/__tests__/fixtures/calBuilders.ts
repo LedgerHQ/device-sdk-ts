@@ -11,6 +11,7 @@ import {
   type CalIdlDescriptor,
   type CalMintAssociation,
   type CalOwnerAssociation,
+  type CalResetScope,
   type CalTokenValue,
   type CalValue,
   type CalValueFlowPort,
@@ -99,6 +100,7 @@ export function accountReset(opts: {
   valueKind?: CalAccountReset["value_kind"];
   token?: CalAccountReset["token"];
   requireNativePreBalanceZero?: boolean;
+  resetScope?: CalResetScope;
 }): CalAccountReset {
   return {
     account_index: opts.accountIndex,
@@ -106,6 +108,28 @@ export function accountReset(opts: {
     value_kind: opts.valueKind ?? "NATIVE",
     token: opts.token,
     require_native_pre_balance_zero: opts.requireNativePreBalanceZero,
+    reset_scope: opts.resetScope,
+  };
+}
+
+/**
+ * A witnessed `reset_scope` view: the ledger at `resetAccountIndex` in the
+ * declaring instruction, and one consumer per `[discriminatorHex, index]`.
+ */
+export function witnessedScope(
+  programId: string,
+  resetAccountIndex: number,
+  consumers: [discriminator: string, accountIndex: number][],
+): CalResetScope {
+  return {
+    program_id: programId,
+    witness: {
+      reset_account_index: resetAccountIndex,
+      consumers: consumers.map(([discriminator, accountIndex]) => ({
+        discriminator,
+        account_index: accountIndex,
+      })),
+    },
   };
 }
 

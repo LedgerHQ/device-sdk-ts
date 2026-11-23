@@ -24,15 +24,6 @@ export enum HideCondition {
   ACCOUNT_EFFECTS_DISPLAYED_ELSEWHERE = 0x04,
 }
 
-/** `VALUE_FLOW_PORT.ACTIVE_WHEN` predicate (`ActiveWhenPredicate` enum). */
-export enum ActiveWhenPredicate {
-  CREATED_IN_TRANSACTION = 0x00,
-  IS_SIGNER = 0x01,
-  ACCOUNT_USED_ELSEWHERE = 0x02,
-  MINT_PREDICATE = 0x03,
-  IS_ANOTHER_SIGNER = 0x04,
-}
-
 /**
  * How a candidate-array port's optional (non-final) candidates are detected as
  * *unset* (`VALUE_FLOW_PORT.OPTIONAL_ACCOUNT_STRATEGY`). Only meaningful when a
@@ -75,6 +66,12 @@ export type ParsedTokenValue = {
   fallbackAccountIndex?: number;
 };
 
+/**
+ * One `VALUE_FLOW_PORT`. Its `ACTIVE_WHEN` predicates are not carried: the
+ * device evaluates them itself (`CREATED_IN_TRANSACTION` from earlier ports,
+ * `MINT_PREDICATE` against the resolved token), and none of them makes the host
+ * request a descriptor.
+ */
 export type ParsedValueFlowPort = {
   /**
    * Ordered candidate account indices (length 1 for the common single-account
@@ -84,12 +81,6 @@ export type ParsedValueFlowPort = {
   accountIndices: number[];
   optionalAccountStrategy: OptionalAccountStrategy;
   tokenValue?: ParsedTokenValue;
-  /**
-   * `ACTIVE_WHEN` predicates, ANDed. Only the predicate codes are carried:
-   * `MINT_PREDICATE`'s trailing mint drives nothing host-side (the device
-   * compares it against the resolved token itself).
-   */
-  activeWhen: ActiveWhenPredicate[];
 };
 
 /**
@@ -121,6 +112,34 @@ export type ParsedAccountReset = {
   /** Present when valueKind === ValueKind.SPL_TOKEN. */
   tokenValue?: ParsedTokenValue;
   requireNativePreBalanceZero: boolean;
+  /**
+   * Present when the reset's `RESET_SCOPE` is witnessed. A plain scope drives
+   * no requirement, so it is not carried.
+   */
+  witness?: ParsedResetWitness;
+};
+
+/**
+ * A witnessed `RESET_SCOPE` (sRFC 41). The reset is relied on only by a later
+ * instruction of `programId` that some consumer admits: its data starts with
+ * the consumer's `discriminator`, and its account at the consumer's
+ * `accountIndex` is the declaring instruction's account at `resetAccountIndex`
+ * (the ledger the reset snapshots). The device compares the two addresses
+ * itself, so the host only has to make both of them known.
+ */
+export type ParsedResetWitness = {
+  programId: string;
+  resetAccountIndex: number;
+  /** At least one. ORed. */
+  consumers: ParsedWitnessConsumer[];
+};
+
+/** One `RESET_SCOPE.WITNESS_CONSUMER`. */
+export type ParsedWitnessConsumer = {
+  /** Prefix (0 to 8 bytes) the consumer's instruction data must start with. */
+  discriminator: Uint8Array;
+  /** Index, in the consumer's accounts, of the account that must be the ledger. */
+  accountIndex: number;
 };
 
 export type ParsedDisplayField = {

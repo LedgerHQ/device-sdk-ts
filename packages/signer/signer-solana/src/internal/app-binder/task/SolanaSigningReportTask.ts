@@ -21,7 +21,7 @@ export type SolanaSigningReportTaskArgs = {
   isBlindSign: boolean;
   messageBytes: Uint8Array;
   unrecognizedProgramIds: string[];
-  /** Set when clear-signing was skipped due to an ACCOUNT_SCHEMA mismatch (stale descriptor). */
+  /** Set when clear-signing was skipped due to a stale descriptor (an ACCOUNT_SCHEMA mismatch, or an ACCOUNT_RESET index out of range). */
   staleDescriptor?: boolean;
   contextModule: ContextModule;
   signerAppVersion: string;

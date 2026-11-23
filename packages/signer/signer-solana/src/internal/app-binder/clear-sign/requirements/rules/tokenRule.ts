@@ -4,8 +4,6 @@ import {
   type TxBindings,
 } from "@internal/app-binder/clear-sign/requirements/model";
 import {
-  ActiveWhenPredicate,
-  HideCondition,
   PARAM_TYPE_TOKEN_AMOUNT,
   type ParsedInstruction,
   TokenKind,
@@ -16,9 +14,6 @@ import { type RequirementAccumulator } from "@internal/app-binder/clear-sign/req
 import {
   accountAddressAt,
   accountAltRefAt,
-  accountIsSignerAt,
-  altRefForPubkeyValue,
-  pubkeyValueAccountIndex,
   resolvePortAccountIndex,
   resolvePubkeyValue,
 } from "@internal/app-binder/clear-sign/requirements/valueResolution";
@@ -28,8 +23,9 @@ import {
 } from "@internal/app-binder/services/bs58Encoder";
 
 /**
- * TOKEN_INFO + TOKEN_ACCOUNT_STATE requirements:
- * - RESOLVE port: TOKEN_ACCOUNT_STATE for its token account unless a TX-derived
+ * TOKEN_INFO + TOKEN_ACCOUNT_STATE requirements. The path numbers are the
+ * `TOKEN_ACCOUNT_STATE` triggers of `spec/dmk/clear_signing_pipeline.md`:
+ * - Path 1, RESOLVE port: TOKEN_ACCOUNT_STATE for its token account unless a TX-derived
  *   MINT_ASSOC binding already covers it; the bound mint (when any) needs
  *   TOKEN_INFO. An ALT-backed token account can carry no such binding (a
  *   binding needs both halves resolved host-side), so it goes to
@@ -39,26 +35,29 @@ import {
  *   needs TOKEN_INFO too — every `fallbackAccount` in the registry names a mint
  *   slot, and it is the only ticker source when both binding sources miss.
  * - DIRECT port: the embedded mint needs TOKEN_INFO.
- * - ACCOUNT_RESET path 2: mandatory TOKEN_ACCOUNT_STATE when `requirePreBalanceZero`
+ * - Path 2, ACCOUNT_RESET: mandatory TOKEN_ACCOUNT_STATE when `requirePreBalanceZero`
  *   or `requireNativePreBalanceZero` is set (the device must read the pre-balance
  *   to validate the reset is applicable).
- * - ACCOUNT_RESET path 5: TOKEN_ACCOUNT_STATE for an SPL reset whose `TOKEN_VALUE`
- *   is `RESOLVE`, unless the mint is already bound by a TX-derived `MINT_ASSOC`
- *   pair or by a `FALLBACK_ACCOUNT`. Without the mint the reset resolves to no
- *   domain and establishes nothing.
- * - IS_SIGNER hide rule / port activation predicate: TOKEN_ACCOUNT_STATE for the
- *   target unless a TX-derived OWNER_ASSOC binding already covers it, or the
- *   header already marks the slot a signer. The device's `IS_SIGNER` predicate
- *   reaches a token account only through the owner map, which it seeds from
- *   OWNER_ASSOC pairs first and from attested `TOKEN_ACCOUNT_STATE.OWNER`
- *   second. An ALT-backed target goes to `tokenAccountStateAltRefs`, the
- *   post-ALT_RESOLUTION equivalent.
- * - PARAM_TOKEN_AMOUNT display field: the amount formatter's token needs
+ * - Path 3, PARAM_TOKEN_AMOUNT display field: the amount formatter's token needs
  *   TOKEN_INFO. For CONSTANT source: always a mint. For ACCOUNT_PATH source:
  *   if covered by a TX-derived MINT_ASSOC binding, use the bound mint. If not,
  *   add as a `tokenAmountRef` (non-ALT) or `tokenAmountAltRef` (ALT-backed)
  *   so the fetch stage can try TOKEN_INFO first then fall back to
  *   TOKEN_ACCOUNT_STATE + TOKEN_INFO for the attested mint.
+ * - Path 4, ACCOUNT_RESET: TOKEN_ACCOUNT_STATE for an SPL reset whose `TOKEN_VALUE`
+ *   is `RESOLVE`, unless the mint is already bound by a TX-derived `MINT_ASSOC`
+ *   pair or by a `FALLBACK_ACCOUNT`. Without the mint the reset resolves to no
+ *   domain and establishes nothing.
+ *
+ * No path is keyed off the `IS_SIGNER` / `IS_ANOTHER_SIGNER` hide conditions.
+ * The device decides both from its own key and the transaction's signer list
+ * alone, never from the owner-binding map: a token account bound to the user is
+ * owned by the user inside the Token program, but its address is not the
+ * user's key, so a hide that accepted it would conceal an authority handed to
+ * someone else. An attested `TOKEN_ACCOUNT_STATE.OWNER` therefore cannot change
+ * either answer, and fetching one for them would only cost a round trip.
+ * `ACTIVE_WHEN` has no signer predicate either (the spec keeps only
+ * `CREATED_IN_TRANSACTION` and `MINT_PREDICATE`), so a port raises nothing here.
  */
 export function applyTokenRule(
   parsed: ParsedInstruction,
@@ -121,7 +120,7 @@ export function applyTokenRule(
     }
   }
 
-  // Path 5: TOKEN_ACCOUNT_STATE for an SPL reset whose TOKEN_VALUE is RESOLVE,
+  // Path 4: TOKEN_ACCOUNT_STATE for an SPL reset whose TOKEN_VALUE is RESOLVE,
   // unless the mint is already bound by a TX-derived MINT_ASSOC pair or by a
   // FALLBACK_ACCOUNT. Without the mint the reset resolves to no domain.
   for (const reset of parsed.accountResets) {
@@ -155,14 +154,7 @@ export function applyTokenRule(
     );
   }
 
-  applyOwnerAttestationRule(
-    parsed,
-    instruction,
-    bindings,
-    accumulator,
-    bs58Encoder,
-  );
-
+  // Path 3: the PARAM_TOKEN_AMOUNT token reference.
   for (const field of parsed.displayFields) {
     if (
       field.paramType !== PARAM_TYPE_TOKEN_AMOUNT ||
@@ -231,91 +223,6 @@ function requestFallbackMint(
       account.altRef.altAddress,
       account.altRef.entryIndex,
     );
-  }
-}
-
-/**
- * `TOKEN_ACCOUNT_STATE` trigger path 3: an `IS_SIGNER` predicate — on a
- * `HIDE_RULE` target or on a port's `ACTIVE_WHEN`.
- *
- * The device answers `IS_SIGNER` by deriving the address from its own seed and
- * comparing, which needs no help for a plain key. A token account defeats that:
- * its address is a program derivation the seed never produces, so the device
- * first dereferences the account to its owner — from a TX-derived `OWNER_ASSOC`
- * pair, else from an attested `TOKEN_ACCOUNT_STATE.OWNER` — and derives against
- * that instead. The descriptor is therefore worth fetching only where the target
- * may be a token account; anywhere else there is nothing to dereference and the
- * fetch buys no answer the device could not already reach.
- *
- * A slot the message header marks as a signer is one case the host can settle
- * for free: it produced an ed25519 signature, so it is a plain key and never a
- * program-owned token account. Requesting state for it asks the backend to
- * attest an address that is not a token account — and a descriptor that comes
- * back anyway seeds the device's owner map with a binding that has no business
- * being there, turning a wasted round trip into a wrong answer.
- *
- * An ALT-backed target has no host-side address, so neither the binding lookup
- * nor the signer check nor a build-time fetch is possible: it goes to
- * `tokenAccountStateAltRefs` and the provide phase fetches the state once
- * `ALT_RESOLUTION` names the address. Skipping it would leave a token account's
- * owner map unseeded and the predicate false. ALT-supplied slots are never
- * message signers, so the check below cannot pre-empt that fetch the way it does
- * for a static slot: a plain key reached through an ALT still costs one fetch
- * that finds nothing.
- *
- * `IS_SIGNER` is the only predicate worth a descriptor. The structural ones
- * (`CREATED_IN_TRANSACTION`, `ACCOUNT_USED_ELSEWHERE`,
- * `ACCOUNT_EFFECTS_DISPLAYED_ELSEWHERE`) never read the owner map.
- * `IS_ANOTHER_SIGNER` does read it, but only to short-circuit to `false`:
- * without the binding it falls through to a header signer check, which a
- * program-owned token account can never pass, so the answer is `false` either
- * way and the descriptor changes nothing.
- */
-function applyOwnerAttestationRule(
-  parsed: ParsedInstruction,
-  instruction: RequirementInstruction,
-  bindings: TxBindings,
-  accumulator: RequirementAccumulator,
-  bs58Encoder: Bs58Encoder,
-): void {
-  // `accountIndex` is the slot the target was reached through, when it was
-  // reached through one — a `CONSTANT` target carries its address inline and
-  // names no slot, so it cannot be signer-checked.
-  const request = (
-    address: string | undefined,
-    accountIndex: number | undefined,
-  ): void => {
-    if (address === undefined) return;
-    if (bindings.owners.has(address)) return;
-    if (
-      accountIndex !== undefined &&
-      accountIsSignerAt(instruction, accountIndex)
-    )
-      return;
-    accumulator.addTokenAccountState(address);
-  };
-
-  for (const rule of parsed.hideRules) {
-    if (rule.condition !== HideCondition.IS_SIGNER) continue;
-    const target = rule.target;
-    if (target === undefined) continue;
-    const address = resolvePubkeyValue(target, instruction, bs58Encoder);
-    if (address !== undefined) {
-      request(address, pubkeyValueAccountIndex(target));
-    } else {
-      requestAltState(altRefForPubkeyValue(target, instruction), accumulator);
-    }
-  }
-
-  for (const port of parsed.valueFlowPorts) {
-    if (!port.activeWhen.includes(ActiveWhenPredicate.IS_SIGNER)) continue;
-    const accountIndex = resolvePortAccountIndex(port, instruction);
-    const address = accountAddressAt(instruction, accountIndex);
-    if (address !== undefined) {
-      request(address, accountIndex);
-    } else {
-      requestAltState(accountAltRefAt(instruction, accountIndex), accumulator);
-    }
   }
 }
 

@@ -11,6 +11,7 @@ import {
   type SolanaCalDisplayField,
   type SolanaCalHideRule,
   type SolanaCalOwnerAssociation,
+  type SolanaCalResetScope,
   type SolanaCalSlotConstraint,
   type SolanaCalValueFlowPort,
   type SolanaInstructionEnumVariant,
@@ -28,6 +29,8 @@ import {
   type CalHideRuleDto,
   type CalInstructionDescriptorDto,
   type CalOwnerAssociationDto,
+  calResetScopeCodec,
+  type CalResetScopeDto,
   type CalSignatures,
   calSigningRouteCodec,
   type CalSlotConstraintDto,
@@ -74,9 +77,48 @@ export function toAccountResets(
             token: reset.token,
             require_native_pre_balance_zero:
               reset.require_native_pre_balance_zero,
+            reset_scope: toResetScope(reset.reset_scope),
           },
         ],
   );
+}
+
+/**
+ * The `reset_scope` view of one reset, validated with
+ * {@link calResetScopeCodec}. A scope is plain or witnessed, never both: a view
+ * that mixes the two, or a witness with no consumer, describes a scope the
+ * device rejects at ingest, so it is dropped like any other malformed view.
+ * Only the view is dropped. The reset's signed TLV still reaches the device,
+ * and without the view the host merely streams no ALT entry for a witness.
+ */
+export function toResetScope(
+  dto: CalResetScopeDto | undefined,
+): SolanaCalResetScope | undefined {
+  if (dto === undefined) return undefined;
+  return calResetScopeCodec
+    .decode(dto)
+    .caseOf<SolanaCalResetScope | undefined>({
+      Left: () => undefined,
+      Right: ({ program_id, discriminators, witness }) => {
+        if (witness === undefined) return { program_id, discriminators };
+        if (discriminators !== undefined && discriminators.length > 0) {
+          return undefined;
+        }
+        if (witness.consumers.length === 0) return undefined;
+        return {
+          program_id,
+          witness: {
+            reset_account_index: witness.reset_account_index,
+            consumers: witness.consumers.map(
+              ({ discriminator, account_index }) => ({
+                discriminator,
+                account_index,
+              }),
+            ),
+          },
+        };
+      },
+    });
 }
 
 /**
