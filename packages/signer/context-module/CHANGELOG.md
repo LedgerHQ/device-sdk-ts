@@ -1,5 +1,18 @@
 # @ledgerhq/context-module
 
+## 2.10.0
+
+### Minor Changes
+
+- [#2204](https://github.com/LedgerHQ/device-sdk-ts/pull/2204) [`58b8c3e`](https://github.com/LedgerHQ/device-sdk-ts/commit/58b8c3e4f869c9dc90521cb822890b5395336af9) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add the XRP chain with an MPT context loader that fetches the signed MPT descriptor from CAL and the COIN_META certificate
+
+- [#2213](https://github.com/LedgerHQ/device-sdk-ts/pull/2213) [`cee0c78`](https://github.com/LedgerHQ/device-sdk-ts/commit/cee0c78e683c3e886f71a24d4afce1e6614228eb) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Carry the reset_scope view of a Solana account reset, plain or witnessed, so the signer can tell which accounts a witnessed scope names. A malformed view is dropped and the reset is kept
+
+### Patch Changes
+
+- Updated dependencies [[`3f3acd3`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f3acd3dcdf83e975f83aea2e214419cec21df5a)]:
+  - @ledgerhq/device-management-kit@1.13.0
+
 ## 2.9.0
 
 ### Minor Changes

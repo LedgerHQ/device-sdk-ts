@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- [#2205](https://github.com/LedgerHQ/device-sdk-ts/pull/2205) [`6b7542f`](https://github.com/LedgerHQ/device-sdk-ts/commit/6b7542f9b6ef9a05947e592500aa2f34a7f138fe) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Clear sign MPT transactions: before signing, load the MPT descriptors from the context module and give them to XRP app 2.9.0 or later. Adds an optional context module and origin token to `SignerXrpBuilder`, makes `@ledgerhq/context-module` a peer dependency, and makes `contextModule` required on `SignTransactionDeviceActionFactory`
+
+- [#2182](https://github.com/LedgerHQ/device-sdk-ts/pull/2182) [`6e7cb6e`](https://github.com/LedgerHQ/device-sdk-ts/commit/6e7cb6e536da1f701bcc56031048b78d3e5b50ad) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add the command that sends a signed MPT descriptor to the XRP app (E0 22), and map the 6A84 and 6A87 status words
+
+### Patch Changes
+
+- [#2066](https://github.com/LedgerHQ/device-sdk-ts/pull/2066) [`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Exclude test files from the published package
+
+- Updated dependencies [[`58b8c3e`](https://github.com/LedgerHQ/device-sdk-ts/commit/58b8c3e4f869c9dc90521cb822890b5395336af9), [`cee0c78`](https://github.com/LedgerHQ/device-sdk-ts/commit/cee0c78e683c3e886f71a24d4afce1e6614228eb), [`3f3acd3`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f3acd3dcdf83e975f83aea2e214419cec21df5a)]:
+  - @ledgerhq/context-module@2.10.0
+  - @ledgerhq/device-management-kit@1.13.0
+
 ## 0.3.0
 
 ### Minor Changes
