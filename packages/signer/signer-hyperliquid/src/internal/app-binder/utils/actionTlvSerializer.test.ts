@@ -5,6 +5,7 @@ import type { HyperliquidAction } from "@internal/app-binder/di/appBinderTypes";
 
 import {
   buildActionStructure,
+  serializeActionToTlv,
   serializeOrderToTlv,
 } from "./actionTlvSerializer";
 
@@ -719,6 +720,16 @@ describe("buildActionStructure", () => {
         "2302a4b1" + // CHAIN_ID (tag 0x23, length 2, value a4b1)
         "81df0101", // ABSTRACTION (tag 0xdf, length 1, value 0x01 = unifiedAccount)
     },
+    {
+      // TODO(DEV-0): replace placeholder tag/vector with device-app test vector once ADR lands
+      name: "action type setReferrer",
+      action: {
+        type: "setReferrer",
+        code: "LEDGER",
+        nonce: 1772440978175,
+      } satisfies HyperliquidAction,
+      expectedHex: "81ef064c4544474552", // REFERRAL_CODE (tag 0xef, length 6, ASCII "LEDGER")
+    },
   ])("$name", ({ action, expectedHex }) => {
     const result = buildActionStructure(action);
 
@@ -726,5 +737,29 @@ describe("buildActionStructure", () => {
     expect(result.length).toBeGreaterThan(0);
     const expected = hexaStringToBuffer(expectedHex);
     expect(result).toEqual(expected);
+  });
+});
+
+describe("serializeActionToTlv", () => {
+  it("serializes a setReferrer action with ACTION_TYPE and REFERRAL_CODE", () => {
+    // TODO(DEV-0): replace placeholder action_type/tag/vector with device-app test vector once ADR lands
+    const action: HyperliquidAction = {
+      type: "setReferrer",
+      code: "LEDGER",
+      nonce: 5,
+    };
+
+    const result = serializeActionToTlv(action);
+
+    expect(result).toEqual(
+      hexaStringToBuffer(
+        "01012c" + // STRUCTURE_TYPE
+          "020101" + // VERSION
+          "81d00107" + // ACTION_TYPE (SET_REFERRER = 0x07)
+          "81da0105" + // NONCE (5)
+          "81db09" + // ACTION_STRUCTURE (9 bytes)
+          "81ef064c4544474552", // REFERRAL_CODE ("LEDGER")
+      ),
+    );
   });
 });

@@ -96,4 +96,9 @@ export type HyperliquidAction =
       user: HexaString; // User address — NOT sent to the device per ADR; device computes it
       abstraction: "disabled" | "unifiedAccount" | "portfolioMargin";
       nonce: number;
+    }
+  | {
+      type: "setReferrer";
+      code: string;
+      nonce: number;
     };
