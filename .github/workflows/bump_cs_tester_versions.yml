@@ -18,6 +18,9 @@ permissions:
 jobs:
   bump:
     name: Bump ${{ matrix.family }}
+    permissions:
+      actions: write
+      contents: write
     # Speculinho is only reachable from the self-hosted runners.
     runs-on: ledgerhq-device-sdk
     timeout-minutes: 120
@@ -58,7 +61,7 @@ jobs:
             && git show "origin/$BRANCH:$VERSIONS_FILE" 2>/dev/null | cmp -s - "$VERSIONS_FILE" \
             && HEAD_SHA=$(git rev-parse -q --verify "origin/$BRANCH") \
             && gh pr view "$BRANCH" --json state,comments \
-              --jq 'select(.state == "OPEN") | .comments[].body' 2>/dev/null | grep -qF "$HEAD_SHA"; then
+              --jq 'select(.state == "OPEN") | .comments[].body | select(startswith("Nightly "))' 2>/dev/null | grep -qF "$HEAD_SHA"; then
             echo "$BRANCH already has these versions and a nightly report."
             exit 0
           fi
@@ -67,7 +70,7 @@ jobs:
       - name: Reset branch on develop
         if: steps.bump.outputs.changed
         env:
-          TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+          TOKEN: ${{ github.token }}
         run: git push --force "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" "HEAD:refs/heads/$BRANCH"
 
       - name: Commit and sign
@@ -79,7 +82,7 @@ jobs:
           branch: ${{ env.BRANCH }}
           file_pattern: ${{ env.VERSIONS_FILE }}
         env:
-          GITHUB_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Open the PR
         id: pr
@@ -106,7 +109,7 @@ jobs:
         id: nightly
         if: steps.bump.outputs.changed
         env:
-          GH_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+          GH_TOKEN: ${{ github.token }}
           DETAILS: "*Bump:* ${{ steps.bump.outputs.summary }} · <${{ steps.pr.outputs.url }}|PR #${{ steps.pr.outputs.number }}>"
         run: |
           WORKFLOW="nightly_$(echo ${{ matrix.family }} | tr - _).yml"
