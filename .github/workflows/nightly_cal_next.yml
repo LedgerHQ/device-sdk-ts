@@ -1,5 +1,10 @@
 name: "[Tests] CAL Next Nightly"
 on:
+  # TEMPORARY, DSDK-1823 only: runs this workflow on its own PR, so the CAL next
+  # setup is tried on the self-hosted runner before merge. A workflow_dispatch
+  # workflow can only be dispatched once it is on develop. Drop this commit
+  # before merging.
+  pull_request:
   # Ships without its schedule: the drop-in gate ticket enables it once the parity
   # run (cal-branch main, cal-mode test) matches the prod-mode nightlies.
   # schedule:
