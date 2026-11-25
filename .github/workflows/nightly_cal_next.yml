@@ -1,0 +1,97 @@
+name: "[Tests] CAL Next Nightly"
+on:
+  # Ships without its schedule: the drop-in gate ticket enables it once the parity
+  # run (cal-branch main, cal-mode test) matches the prod-mode nightlies.
+  # schedule:
+  #   # Run every day at 6:00 AM UTC, after the Ethereum, Solana, Tron and legacy
+  #   # Bitcoin nightlies at 2:00-5:00 AM, so they do not compete for emulators
+  #   - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      cal-branch:
+        description: "CAL branch the scenarios read"
+        type: choice
+        options: [next, main, demo]
+        default: next
+      cal-mode:
+        description: "CAL mode: prod or test. Empty lets the CLI choose (test off main, prod on main)"
+        required: false
+        default: ""
+      scenarios:
+        description: >-
+          Space-separated selectors. Leave out solana-transaction-check: it runs
+          in its own job, with the funded seed.
+        required: false
+        default: "erc7730 erc7730-typed-data gating safe core solana solana-general-clear-sign solana-programs"
+
+env:
+  FORCE_COLOR: "1"
+
+permissions:
+  contents: read
+
+# Keyed on the CAL setup too, so an on-demand parity run does not cancel a next
+# run, or the other way round.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.cal-branch || 'next' }}-${{ inputs.cal-mode }}
+  cancel-in-progress: true
+
+# Scheduled runs have no inputs, so each one falls back to its dispatch default.
+# Both jobs are non-blocking: a failure is a CAL change to triage, not a broken build.
+jobs:
+  cs-tester:
+    name: CAL ${{ inputs.cal-branch || 'next' }} Clear Signing Test (${{ matrix.device }})
+    runs-on: ledgerhq-device-sdk
+    continue-on-error: true
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox, flex]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          scenarios: ${{ inputs.scenarios || 'erc7730 erc7730-typed-data gating safe core solana solana-general-clear-sign solana-programs' }}
+          device: ${{ matrix.device }}
+          concurrency: "10"
+          log-level: error
+          enable-file-logging: "true"
+          cal-branch: ${{ inputs.cal-branch || 'next' }}
+          cal-mode: ${{ inputs.cal-mode }}
+          artifact-prefix: cal-nightly-logs
+          summary-prefix: "Clear Signing Test"
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+
+  # The seed is a secret of the develop-only solana-tx-check environment, which
+  # would fail the job on any other branch. The CLI refuses to name this group
+  # without the seed, so it cannot share the main job's selection.
+  cs-tester-transaction-check:
+    name: CAL ${{ inputs.cal-branch || 'next' }} Solana Transaction Check Test (${{ matrix.device }})
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ledgerhq-device-sdk
+    environment: solana-tx-check
+    continue-on-error: true
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, flex]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          scenarios: solana-transaction-check
+          device: ${{ matrix.device }}
+          concurrency: "10"
+          log-level: error
+          enable-file-logging: "true"
+          cal-branch: ${{ inputs.cal-branch || 'next' }}
+          cal-mode: ${{ inputs.cal-mode }}
+          artifact-prefix: cal-solana-transaction-check-nightly-logs
+          summary-prefix: "Solana Transaction Check Test"
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          speculos-seed: ${{ secrets.SPECULOS_SEED }}
