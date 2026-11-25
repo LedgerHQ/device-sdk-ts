@@ -18,6 +18,8 @@ permissions:
 jobs:
   bump:
     name: Bump ${{ matrix.family }}
+    permissions:
+      contents: write
     # Speculinho is only reachable from the self-hosted runners.
     runs-on: ledgerhq-device-sdk
     timeout-minutes: 120
@@ -67,7 +69,7 @@ jobs:
       - name: Reset branch on develop
         if: steps.bump.outputs.changed
         env:
-          TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+          TOKEN: ${{ github.token }}
         run: git push --force "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" "HEAD:refs/heads/$BRANCH"
 
       - name: Commit and sign
@@ -79,7 +81,7 @@ jobs:
           branch: ${{ env.BRANCH }}
           file_pattern: ${{ env.VERSIONS_FILE }}
         env:
-          GITHUB_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Open the PR
         id: pr
