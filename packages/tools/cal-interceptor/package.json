@@ -32,13 +32,17 @@
     "postpack": "find . -name '*.tgz' -exec cp {} ../../dist/ \\; ",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {},
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*"
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*"
   }
 }

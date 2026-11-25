@@ -1,11 +1,14 @@
 import hashlib
+import json
+import logging
 import os
+import re
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import ecdsa
 import requests
 from ecdsa.util import sigencode_der
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
 from pydantic import ValidationError
 
 
@@ -56,6 +59,17 @@ CAL_CERTIFICATES_OVERRIDES = {
     "domain_metadata_key",
     "token_metadata_key"
 }
+# Served by /api/signer-info. Raise it when a client must tell this proxy from
+# an older one. 2: re-signs by key, forwards upstream statuses, proxies POST.
+RESIGNING_PROXY_VERSION = 2
+# Metadata-service routes whose responses carry no keyId, mapped to the key the
+# device checks their descriptors under
+METADATA_ROUTE_KEY_IDS: List[Tuple[re.Pattern, str]] = [
+    # Solana owner-info: hard-coded in the context-module's OwnerInfoContextLoader
+    (re.compile(r"v2/solana/owner/[^/]+"), "domain_metadata_key"),
+    (re.compile(r"v2/solana/computed-token-account/[^/]+/[^/]+"), "domain_metadata_key"),
+    (re.compile(r"v1/ethereum/[^/]+/contracts/[^/]+/plugin-selector/[^/]+"), "plugin_selector_key"),
+]
 
 def _is_v2_descriptor(data: Dict[str, Any]) -> bool:
     """Check if the descriptor uses the v2 schema."""
@@ -65,6 +79,8 @@ def _is_v2_descriptor(data: Dict[str, Any]) -> bool:
 
 # Global state
 app = Flask(__name__)
+# Show the re-signing proxy's info logs under gunicorn too, not only in debug
+app.logger.setLevel(logging.INFO)
 
 
 def remove_null_values(obj: Any) -> Any:
@@ -540,94 +556,207 @@ def get_certificates() -> Tuple[Dict[str, Any], int]:
         return {"error": f"Failed to process certificates: {str(e)}"}, 500
 
 
+def _split_hex_prefix(value: str) -> Tuple[str, bytes]:
+    """Split an optional `0x` prefix off a hex string and decode the rest."""
+    prefix = value[:2] if value[:2].lower() == "0x" else ""
+    return prefix, bytes.fromhex(value[len(prefix):])
+
+
+def _is_der_signature(value: bytes) -> bool:
+    """Whether `value` is shaped like a DER-encoded ECDSA signature."""
+    return len(value) >= 8 and value[0] == 0x30 and value[1] == len(value) - 2
+
+
+def _sign(message: bytes) -> bytes:
+    """DER signature of `message` with TEST_SIGNING_KEY."""
+    return bytes.fromhex(sign_payload(message.hex())["signatures"]["test"])
+
+
+def find_trailing_signature_tlv(data: bytes) -> int:
+    """
+    Return the offset of the trailing SIGNATURE field (tag 0x15) of a TLV
+    descriptor: the position p where data[p] is 0x15 and the field ends exactly
+    at the end of the descriptor.
+
+    The scan goes backward from the end. Walking the tags from the start would
+    break on descriptors that use multi-byte tags (0x81...), such as the Safe
+    account descriptor.
+    """
+    for offset in range(len(data) - 2, -1, -1):
+        if (
+            data[offset] == SIGNATURE_TLV_TAG
+            and offset + 2 + data[offset + 1] == len(data)
+            and _is_der_signature(data[offset + 2:])
+        ):
+            return offset
+    raise ValueError("no trailing SIGNATURE (tag 0x15) field found in descriptor")
+
+
+def find_legacy_signature_length(data: bytes) -> int:
+    """
+    Return the offset of the signature-length byte of a legacy metadata-service
+    payload (NFT plugin selector, NFT info), laid out as
+    `...[key id][algorithm][signature length][DER signature]`.
+    """
+    for offset in range(len(data) - 1, -1, -1):
+        if offset + 1 + data[offset] == len(data) and _is_der_signature(data[offset + 1:]):
+            return offset
+    raise ValueError("no trailing DER signature found in payload")
+
+
 def resign_signed_descriptor(signed_descriptor_hex: str) -> str:
     """
     Re-sign a signed TLV descriptor with the CAL interceptor key.
 
-    The descriptor is a sequence of TLV fields (1-byte tag, 1-byte length,
-    value) whose last field is a SIGNATURE (tag 0x15) holding a DER-encoded
-    ECDSA signature over the SHA-256 of every preceding TLV byte. We walk the
-    TLV fields to locate that trailing SIGNATURE, recompute the signature over
-    the preceding bytes with TEST_SIGNING_KEY, and splice it back in so a
-    Speculos device provisioned with the test certificates accepts it.
+    The descriptor's last field is a SIGNATURE (tag 0x15) holding a DER-encoded
+    ECDSA signature over the SHA-256 of every preceding byte. We recompute it
+    over those bytes with TEST_SIGNING_KEY, so a Speculos device provisioned with
+    the test certificates accepts the descriptor. An `0x` prefix is kept.
     """
-    data = bytes.fromhex(signed_descriptor_hex)
-
-    # Walk TLV fields from the start; the SIGNATURE field is always last.
-    offset = 0
-    signature_offset: Optional[int] = None
-    while offset < len(data):
-        if offset + 1 >= len(data):
-            raise ValueError("truncated TLV: missing length byte")
-        tag = data[offset]
-        length = data[offset + 1]
-        value_end = offset + 2 + length
-        if value_end > len(data):
-            raise ValueError("truncated TLV: value exceeds descriptor length")
-        if tag == SIGNATURE_TLV_TAG:
-            signature_offset = offset
-        offset = value_end
-
-    if signature_offset is None:
-        raise ValueError("no SIGNATURE (tag 0x15) field found in descriptor")
-
-    payload = data[:signature_offset]
-    signature = bytes.fromhex(sign_payload(payload.hex())["signatures"]["test"])
-    signature_tlv = bytes([SIGNATURE_TLV_TAG, len(signature)]) + signature
-    return (payload + signature_tlv).hex()
+    prefix, data = _split_hex_prefix(signed_descriptor_hex)
+    payload = data[:find_trailing_signature_tlv(data)]
+    signature = _sign(payload)
+    return prefix + (payload + bytes([SIGNATURE_TLV_TAG, len(signature)]) + signature).hex()
 
 
-def resign_descriptors_in_response(obj: Any) -> Any:
+def resign_legacy_payload(payload_hex: str) -> str:
     """
-    Recursively re-sign every `signedDescriptor` string found in a metadata
-    service response. Works for both single-descriptor objects and any
-    array/batch shape the service might return.
+    Re-sign a legacy metadata-service payload (NFT plugin selector) with the CAL
+    interceptor key.
+
+    Its signature covers every byte before the signature-length byte, the key id
+    and algorithm bytes included. We recompute it, then rewrite the length and
+    the signature. An `0x` prefix is kept.
     """
-    if isinstance(obj, dict):
-        return {
-            key: resign_signed_descriptor(value)
-            if key == "signedDescriptor" and isinstance(value, str)
-            else resign_descriptors_in_response(value)
-            for key, value in obj.items()
-        }
-    elif isinstance(obj, list):
-        return [resign_descriptors_in_response(item) for item in obj]
-    else:
-        return obj
+    prefix, data = _split_hex_prefix(payload_hex)
+    signed = data[:find_legacy_signature_length(data)]
+    signature = _sign(signed)
+    return prefix + (signed + bytes([len(signature)]) + signature).hex()
 
 
-@app.route("/api/dynamic-descriptor-proxy/<path:subpath>", methods=["GET"])
-def dynamic_descriptor_proxy(subpath: str) -> Tuple[Any, int]:
+def route_key_id(subpath: str) -> Optional[str]:
     """
-    Proxy dynamic-descriptor metadata-service requests to the real service and
-    re-sign every `signedDescriptor` in the response with the CAL interceptor
-    key. Dynamic descriptors carry a single prod signature embedded in the TLV
-    (trailing SIGNATURE tag), so they must be re-signed for a Speculos test
-    device to accept them.
+    Return the key the device checks a metadata-service route's descriptors
+    under, for routes whose responses carry no keyId.
+    """
+    for pattern, key_id in METADATA_ROUTE_KEY_IDS:
+        if pattern.fullmatch(subpath.strip("/")):
+            return key_id
+    return None
 
-    Fully generic: works for any dynamic-descriptor endpoint (e.g. ALT
-    resolution `/v2/solana/alt-resolution/<alt>/<index>`, token account state
-    `/v2/solana/token-account-state/<account>`).
 
-    The sample app's CAL interceptor redirects those requests here; the original
-    path and query string are forwarded to the upstream metadata service.
+def _resign_signed_descriptor_value(value: Any) -> Tuple[Any, int]:
+    """
+    Re-sign a `signedDescriptor`: a hex string, or an object whose `data` embeds
+    its signature and whose `signatures` is empty (ENS names). An object with its
+    own `signatures` (Solana names) already carries CAL's staging `test`
+    signature, so it is left as it is. Returns the value and how many
+    descriptors were re-signed.
+    """
+    if isinstance(value, str):
+        return resign_signed_descriptor(value), 1
+    if isinstance(value, dict) and not value.get("signatures") and isinstance(value.get("data"), str):
+        return {**value, "data": resign_signed_descriptor(value["data"])}, 1
+    return value, 0
+
+
+def resign_descriptors_in_response(obj: Any, default_key_id: Optional[str] = None) -> Tuple[Any, int]:
+    """
+    Re-sign every descriptor of a metadata-service response that the device
+    checks under a key in CAL_CERTIFICATES_OVERRIDES. Returns the new response
+    and how many descriptors were re-signed.
+
+    That key is the `keyId` of the object holding the descriptor, or
+    `default_key_id` (see METADATA_ROUTE_KEY_IDS) when it has none. Descriptors
+    checked under any other key keep their prod signature, which CAL's own
+    certificate verifies: re-signing them would break them.
+    """
+    if isinstance(obj, list):
+        results = [resign_descriptors_in_response(item, default_key_id) for item in obj]
+        return [item for item, _ in results], sum(count for _, count in results)
+    if not isinstance(obj, dict):
+        return obj, 0
+
+    key_id = obj.get("keyId") if isinstance(obj.get("keyId"), str) else default_key_id
+    is_replaced_key = key_id in CAL_CERTIFICATES_OVERRIDES
+    resigned: Dict[str, Any] = {}
+    count = 0
+    for key, value in obj.items():
+        if is_replaced_key and key == "signedDescriptor":
+            resigned[key], value_count = _resign_signed_descriptor_value(value)
+        elif is_replaced_key and key == "payload" and isinstance(value, str):
+            resigned[key], value_count = resign_legacy_payload(value), 1
+        else:
+            resigned[key], value_count = resign_descriptors_in_response(value, default_key_id)
+        count += value_count
+    return resigned, count
+
+
+def _metadata_service_response(upstream: requests.Response, body: bytes) -> Response:
+    """Build a response with the upstream status and content type."""
+    return Response(body, status=upstream.status_code, content_type=upstream.headers.get("Content-Type"))
+
+
+@app.route("/api/signer-info", methods=["GET"])
+def signer_info() -> Dict[str, Any]:
+    """
+    What this signer supports, so a client can refuse an older deployment
+    instead of failing on the device.
+    """
+    return {"resigningProxyVersion": RESIGNING_PROXY_VERSION}
+
+
+@app.route("/api/dynamic-descriptor-proxy/<path:subpath>", methods=["GET", "POST"])
+def dynamic_descriptor_proxy(subpath: str) -> Union[Response, Tuple[Response, int]]:
+    """
+    Proxy a metadata-service GET or POST, and re-sign with the CAL interceptor
+    key the descriptors the device checks under a key whose certificate
+    `/api/certificates` replaces. A Speculos device provisioned with those
+    certificates rejects their prod signature.
+
+    Everything else is forwarded byte for byte, with the upstream status:
+    errors, non-JSON bodies, and responses with nothing to re-sign. Only a
+    network failure becomes a 502.
+
+    The CAL interceptor sends every metadata-service GET and POST here; the
+    original path, query string, body and content type are forwarded to the
+    upstream metadata service.
     """
     try:
         upstream_url = f"{DEFAULT_METADATA_SERVICE_URL}/{subpath}"
-        response = requests.get(upstream_url, params=request.args, timeout=10)
-        response.raise_for_status()
-        payload = response.json()
-    except requests.RequestException as e:
-        return jsonify({"error": f"Failed to fetch from metadata service."}), 502
-    except ValueError as e:
-        return jsonify({"error": f"Metadata service returned non-JSON response."}), 502
+        upstream = requests.request(
+            request.method,
+            upstream_url,
+            params=request.args,
+            data=request.get_data() or None,
+            headers={"Content-Type": request.content_type} if request.content_type else {},
+            timeout=10,
+        )
+    except requests.RequestException:
+        return jsonify({"error": "Failed to fetch from metadata service."}), 502
+
+    if not 200 <= upstream.status_code < 300:
+        app.logger.info("Forwarded %s as is: metadata service answered %s", subpath, upstream.status_code)
+        return _metadata_service_response(upstream, upstream.content)
 
     try:
-        resigned = resign_descriptors_in_response(payload)
-    except ValueError as e:
-        return jsonify({"error": f"Failed to re-sign descriptor."}), 500
+        payload = json.loads(upstream.content)
+    except ValueError:
+        app.logger.info("Forwarded %s as is: not JSON", subpath)
+        return _metadata_service_response(upstream, upstream.content)
 
-    return jsonify(resigned), 200
+    try:
+        resigned, count = resign_descriptors_in_response(payload, route_key_id(subpath))
+    except ValueError:
+        return jsonify({"error": "Failed to re-sign descriptor."}), 500
+
+    if count == 0:
+        app.logger.info("Forwarded %s as is: nothing checked under a replaced key", subpath)
+        return _metadata_service_response(upstream, upstream.content)
+
+    app.logger.info("Re-signed %d descriptor(s) of %s", count, subpath)
+    body = json.dumps(resigned, separators=(",", ":"), ensure_ascii=False).encode()
+    return _metadata_service_response(upstream, body)
 
 
 if __name__ == "__main__":
