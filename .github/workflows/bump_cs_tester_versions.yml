@@ -61,7 +61,7 @@ jobs:
             && git show "origin/$BRANCH:$VERSIONS_FILE" 2>/dev/null | cmp -s - "$VERSIONS_FILE" \
             && HEAD_SHA=$(git rev-parse -q --verify "origin/$BRANCH") \
             && gh pr view "$BRANCH" --json state,comments \
-              --jq 'select(.state == "OPEN") | .comments[].body' 2>/dev/null | grep -qF "$HEAD_SHA"; then
+              --jq 'select(.state == "OPEN") | .comments[].body | select(startswith("Nightly "))' 2>/dev/null | grep -qF "$HEAD_SHA"; then
             echo "$BRANCH already has these versions and a nightly report."
             exit 0
           fi
