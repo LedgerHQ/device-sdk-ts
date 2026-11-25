@@ -19,6 +19,7 @@ jobs:
   bump:
     name: Bump ${{ matrix.family }}
     permissions:
+      actions: write
       contents: write
     # Speculinho is only reachable from the self-hosted runners.
     runs-on: ledgerhq-device-sdk
@@ -108,7 +109,7 @@ jobs:
         id: nightly
         if: steps.bump.outputs.changed
         env:
-          GH_TOKEN: ${{ secrets.DEVICE_SDK_TS_CI }}
+          GH_TOKEN: ${{ github.token }}
           DETAILS: "*Bump:* ${{ steps.bump.outputs.summary }} · <${{ steps.pr.outputs.url }}|PR #${{ steps.pr.outputs.number }}>"
         run: |
           WORKFLOW="nightly_$(echo ${{ matrix.family }} | tr - _).yml"
