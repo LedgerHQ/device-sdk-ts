@@ -74,6 +74,10 @@ export * from "./modules/multichain/reporter/data/HttpBlindSigningReporterDataso
 export * from "./modules/multichain/reporter/domain/BlindSigningReporter";
 export * from "./modules/multichain/reporter/domain/DefaultBlindSigningReporter";
 export * from "./modules/multichain/reporter/model/BlindSigningEvent";
+export * from "./modules/multichain/sign-reporter/data/HttpSignReporterDatasource";
+export * from "./modules/multichain/sign-reporter/data/SignReporterDatasource";
+export * from "./modules/multichain/sign-reporter/domain/DefaultSignReporter";
+export * from "./modules/multichain/sign-reporter/domain/SignReporter";
 export * from "./modules/multichain/sign-reporter/model/SignReportParams";
 export * from "./modules/multichain/transaction-check/utils/constants";
 export * from "./modules/solana/alt-resolution/data/AltResolutionDataSource";
