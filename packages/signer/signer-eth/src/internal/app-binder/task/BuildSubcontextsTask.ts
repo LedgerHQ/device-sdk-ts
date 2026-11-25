@@ -1,5 +1,6 @@
 import {
   type ClearSignContext,
+  type ClearSignContextMapReference,
   type ClearSignContextReference,
   ClearSignContextReferenceType,
   type ClearSignContextSuccess,
@@ -11,6 +12,7 @@ import {
 import {
   bufferToHexaString,
   type DeviceModelId,
+  hexaStringToBuffer,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -51,6 +53,7 @@ export class BuildSubcontextsTask {
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
       case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_MAP_ENTRY:
       case ClearSignContextType.ETHEREUM_TOKEN:
       case ClearSignContextType.ETHEREUM_NFT:
       case ClearSignContextType.ETHEREUM_SAFE:
@@ -60,10 +63,17 @@ export class BuildSubcontextsTask {
           subcontextCallbacks: [],
         };
       case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
+        // Map entries come first: the device needs them to resolve the field,
+        // and the reference may be resolved from a map entry value
         return {
-          subcontextCallbacks: context.reference
-            ? this._getSubcontextsFromReference(context.reference)
-            : [],
+          subcontextCallbacks: [
+            ...this._getSubcontextsFromMapReferences(
+              context.mapReferences ?? [],
+            ),
+            ...(context.reference
+              ? this._getSubcontextsFromReference(context.reference)
+              : []),
+          ],
         };
       case ClearSignContextType.ETHEREUM_PROXY_INFO:
         return {
@@ -135,11 +145,18 @@ export class BuildSubcontextsTask {
     const subcontextCallbacks: SubcontextCallback[] = [];
 
     // if the reference is a path, it means we need to extract the value
-    // from the transaction and provide it to the device
-    if (reference.valuePath !== undefined) {
-      const referenceValues = this.args.transactionParser
-        .extractValue(this.args.subset, reference.valuePath)
-        .orDefault([]);
+    // from the transaction and provide it to the device.
+    // if the reference is a map, the value is the one of the map entry
+    // matching the key extracted from the transaction
+    if (reference.valuePath !== undefined || reference.map !== undefined) {
+      const referenceValues =
+        reference.valuePath !== undefined
+          ? this.args.transactionParser
+              .extractValue(this.args.subset, reference.valuePath)
+              .orDefault([])
+          : this._findMapEntries(reference.map).flatMap(
+              (mapEntry) => hexaStringToBuffer(mapEntry.value) ?? [],
+            );
 
       for (const value of referenceValues) {
         const address = bufferToHexaString(
@@ -165,6 +182,44 @@ export class BuildSubcontextsTask {
     }
 
     return subcontextCallbacks;
+  }
+
+  private _getSubcontextsFromMapReferences(
+    mapReferences: ClearSignContextMapReference[],
+  ): SubcontextCallback[] {
+    return mapReferences
+      .flatMap((mapReference) => this._findMapEntries(mapReference))
+      .map((mapEntry) => () => Promise.resolve(mapEntry));
+  }
+
+  /**
+   * Find the map entries matching the keys read from the transaction.
+   * Keys are compared byte for byte, as the device does.
+   */
+  private _findMapEntries(
+    mapReference: ClearSignContextMapReference,
+  ): ClearSignContextSuccess<ClearSignContextType.ETHEREUM_MAP_ENTRY>[] {
+    const mapEntries = this.args.contextOptional
+      .filter(
+        (
+          c,
+        ): c is ClearSignContextSuccess<ClearSignContextType.ETHEREUM_MAP_ENTRY> =>
+          c.type === ClearSignContextType.ETHEREUM_MAP_ENTRY,
+      )
+      .filter((c) => c.id === mapReference.id);
+    if (mapEntries.length === 0) {
+      return [];
+    }
+
+    return this.args.transactionParser
+      .extractValue(this.args.subset, mapReference.keyPath)
+      .orDefault([])
+      .flatMap((key) => {
+        const keyHex = bufferToHexaString(key);
+        return mapEntries.filter(
+          (mapEntry) => mapEntry.key.toLowerCase() === keyHex,
+        );
+      });
   }
 
   private _getSubcontextsFromEnumReference(
