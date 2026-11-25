@@ -8,7 +8,7 @@ on:
       - "apps/devtools/**"
       - "packages/devtools/**"
       - ".github/workflows/build_devtools.yml"
-      - ".github/actions/setup-with-cache-composite/**"
+      - ".github/actions/setup-composite/**"
   workflow_dispatch:
     inputs:
       ref:
@@ -35,7 +35,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.ref || github.sha }}
 
-      - uses: ./.github/actions/setup-with-cache-composite
+      - uses: ./.github/actions/setup-composite
 
       - name: Build workspace libraries
         run: pnpm build:libs
@@ -67,7 +67,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.ref || github.sha }}
 
-      - uses: ./.github/actions/setup-with-cache-composite
+      - uses: ./.github/actions/setup-composite
 
       - name: Build workspace libraries
         run: pnpm build:libs
