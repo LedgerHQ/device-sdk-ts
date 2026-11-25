@@ -7,6 +7,12 @@ import { Command } from "commander";
 
 import { RunScenariosUseCase } from "@root/src/application/scenarios/RunScenariosUseCase";
 import {
+  CAL_BRANCHES,
+  CAL_MODES,
+  type CalBranch,
+  type CalMode,
+} from "@root/src/domain/models/config/CalConfig";
+import {
   CLI_LOG_LEVELS,
   type CliLogLevel,
   parseLogLevel,
@@ -23,6 +29,7 @@ import {
   selectScenarios,
   skipSeedlessScenarios,
 } from "@root/src/domain/scenarios/planRuns";
+import { readCalCommit } from "@root/src/infrastructure/adapters/external/readCalCommit";
 import {
   ContainerScenarioRunner,
   type ScenarioRuntime,
@@ -32,10 +39,11 @@ import {
   isEnabled,
   loadScenarioCatalog,
 } from "@root/src/infrastructure/scenarios/loadScenarioCatalog";
-import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
+import { CalInterceptorService } from "@root/src/infrastructure/services/CalInterceptorService";
 import { LoggerPublisherService } from "@root/src/services/LoggerPublisherService";
 
-import { reportScenarios } from "./reportScenarios";
+import { calBranchWarnings, resolveCalMode } from "./calOptions";
+import { type CalRun, describeCal, reportScenarios } from "./reportScenarios";
 
 /** Everything `test` accepts. Kept beside the flags so the two cannot drift. */
 type TestOptions = {
@@ -56,6 +64,9 @@ type TestOptions = {
   solanaDerivationPath: string;
   tronDerivationPath: string;
   erc7730Files?: string[];
+  calBranch: CalBranch;
+  /** Absent lets the branch and the ERC7730 files decide, see resolveCalMode. */
+  calMode?: CalMode;
   osVersion?: string;
   appEthVersion?: string;
   appSolVersion?: string;
@@ -229,6 +240,7 @@ function buildRuntime(
     originToken: process.env["GATING_TOKEN"] || "test-origin-token",
     speculosSeed: readSpeculosSeed(),
     calMode,
+    calBranch: options.calBranch,
     osVersion: options.osVersion,
     ethAppVersion: options.appEthVersion,
     solanaAppVersion: options.appSolVersion,
@@ -272,10 +284,37 @@ function planCases(
   return { runs, scenarioRuns };
 }
 
+/**
+ * The commit CAL serves for the run's branch. `main` is what every other run
+ * reads, so only another branch needs naming, and a commit that cannot be read
+ * costs the label rather than the run.
+ */
+async function readCommitOf(branch: CalBranch): Promise<string | undefined> {
+  if (branch === "main") return undefined;
+  return (await readCalCommit(branch)).caseOf({
+    Left: (error) => {
+      console.warn(
+        `Warning: could not read the CAL ${branch} commit, carrying on ` +
+          `without it: ${error.message}`,
+      );
+      return undefined;
+    },
+    Right: (commit) => commit,
+  });
+}
+
 async function runTest(
   selectors: string[],
   options: TestOptions,
 ): Promise<number> {
+  const files = options.erc7730Files ?? [];
+  // First, so a combination that cannot verify fails before anything else.
+  const calMode = resolveCalMode({
+    branch: options.calBranch,
+    mode: options.calMode,
+    hasErc7730Files: files.length > 0,
+  });
+
   const { runs, scenarioRuns } = planCases(selectors, options);
 
   if (runs.length === 0) {
@@ -285,9 +324,15 @@ async function runTest(
     return 0;
   }
 
-  // Injected descriptors are served over HTTP for the whole process, so the
-  // interceptor is set up once rather than per scenario.
-  const files = options.erc7730Files ?? [];
+  for (const warning of calBranchWarnings(
+    options.calBranch,
+    scenarioRuns.map((r) => r.scenario),
+  )) {
+    console.warn(`Warning: ${warning}`);
+  }
+
+  // The interceptor patches fetch for the whole process, so it is set up once
+  // rather than per scenario.
   const cliLogger = new LoggerPublisherService(
     ((level) => (level === null ? [] : [new ConsoleLogger(level)]))(
       parseLogLevel(options.logLevel),
@@ -295,15 +340,21 @@ async function runTest(
     "cli",
   );
   const interceptor =
-    files.length > 0 ? new ERC7730InterceptorService(cliLogger) : undefined;
-  if (interceptor) await interceptor.setupFromFiles(files);
+    calMode === "test" ? new CalInterceptorService(cliLogger) : undefined;
+  await interceptor?.start(files);
 
-  const runtime = buildRuntime(options, interceptor ? "test" : "prod");
+  const cal: CalRun = {
+    branch: options.calBranch,
+    mode: calMode,
+    commit: await readCommitOf(options.calBranch),
+  };
+  const runtime = buildRuntime(options, calMode);
 
   console.log(
     `Running ${runs.length} case(s) from ${scenarioRuns.length} scenario run(s) on ` +
       `${options.device ?? "every supported device"}, ${options.concurrency} at a time.`,
   );
+  console.log(`${describeCal(cal)}.`);
 
   const runner = new ContainerScenarioRunner(runtime);
   const stopListening = releaseOnSignal(runner);
@@ -329,7 +380,7 @@ async function runTest(
               : `${outcome.failures === 0 ? "passed" : `${outcome.failures} failing`}`),
         ),
     });
-    reportScenarios(report);
+    reportScenarios(report, cal);
     return asExitCode(report.failures);
   } finally {
     stopListening();
@@ -446,8 +497,20 @@ function buildProgram(): Command {
       "Override the default Tron app version",
     )
     .option(
+      "--cal-branch <branch>",
+      `CAL branch to read: ${CAL_BRANCHES.join(", ")}`,
+      oneOf("cal-branch", CAL_BRANCHES),
+      "main" as CalBranch,
+    )
+    .option(
+      "--cal-mode <mode>",
+      `CAL signatures to verify: ${CAL_MODES.join(", ")} (default: test when ` +
+        "--cal-branch is not main or --erc7730-files is given, prod otherwise)",
+      oneOf("cal-mode", CAL_MODES),
+    )
+    .option(
       "--erc7730-files <files...>",
-      "ERC7730 descriptors to inject, which also switches CAL to test mode",
+      "ERC7730 descriptors to inject, which implies --cal-mode test",
     )
     .action(async (scenarios: string[], options: TestOptions) => {
       process.exitCode = await runTest(scenarios, options);

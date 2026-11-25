@@ -6,7 +6,6 @@ import { ContainerModule } from "inversify";
 
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
-import { type CalAdapter } from "@root/src/domain/adapters/CalAdapter";
 import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCrafter";
 import { type ContactsChain } from "@root/src/domain/models/ContactsChain";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
@@ -17,7 +16,6 @@ import { type SafeAddressRepository } from "@root/src/domain/repositories/SafeAd
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { type SigningService } from "@root/src/domain/services/SigningService";
 import { EthersTransactionCrafter } from "@root/src/infrastructure/adapters/evm/EthersTransactionCrafter";
-import { HttpCalAdapter } from "@root/src/infrastructure/adapters/external/HttpCalAdapter";
 import { ContactFileRepository } from "@root/src/infrastructure/repositories/ContactFileRepository";
 import { SafeAddressFileRepository } from "@root/src/infrastructure/repositories/SafeAddressFileRepository";
 import { SpeculosContactsRepository } from "@root/src/infrastructure/repositories/SpeculosContactsRepository";
@@ -113,7 +111,6 @@ export const ethereumInfrastructureModuleFactory = (
       .inSingletonScope();
 
     // Adapters
-    bind<CalAdapter>(TYPES.CalAdapter).to(HttpCalAdapter).inSingletonScope();
     bind<TransactionCrafter>(TYPES.TransactionCrafter)
       .to(EthersTransactionCrafter)
       .inSingletonScope();
