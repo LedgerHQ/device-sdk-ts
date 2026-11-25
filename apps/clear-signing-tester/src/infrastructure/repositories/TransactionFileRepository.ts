@@ -20,6 +20,7 @@ type RawTransactionData = {
   rawTx: string;
   description?: string;
   expectedTexts?: string[];
+  unexpectedTexts?: string[];
   expectBlindSigned?: boolean;
 };
 
@@ -85,6 +86,7 @@ export class TransactionFileRepository
       rawTx: unsignedRawTx,
       description: rawTx.description || `Transaction ${index + 1}`,
       expectedTexts: rawTx.expectedTexts,
+      unexpectedTexts: rawTx.unexpectedTexts,
       expectBlindSigned: rawTx.expectBlindSigned,
     };
   }
