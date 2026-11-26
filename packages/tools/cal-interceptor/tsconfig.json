@@ -11,7 +11,8 @@
       "@api/*": ["./*"]
     },
     "resolveJsonModule": true,
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "DOM"],
+    "types": ["node", "vitest/globals"]
   },
-  "include": ["src"]
+  "include": ["src", "vitest.*.mjs"]
 }

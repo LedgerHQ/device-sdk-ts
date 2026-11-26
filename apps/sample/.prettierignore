@@ -1,1 +1,3 @@
 **/lotties/**/*.json
+# Metadata-service responses kept byte for byte as captured
+api/fixtures/

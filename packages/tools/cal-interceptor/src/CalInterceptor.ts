@@ -1,18 +1,20 @@
 import { MemoryStorage } from "./storage/MemoryStorage";
 import type { StorageInterface } from "./storage/StorageInterface";
-import { FetchInterceptor } from "./AxiosInterceptor";
+import { FetchInterceptor, type InterceptedRequest } from "./AxiosInterceptor";
 
 /**
- * Metadata-service paths serving dynamic descriptors. Dynamic descriptors carry
- * a single prod signature embedded in the TLV, so they must be re-signed with
- * the CAL interceptor key before a Speculos test device will accept them.
- * Requests to these paths are redirected to the local re-signing proxy
- * (see `DYNAMIC_DESCRIPTOR_PROXY_PREFIX`).
+ * Host of the metadata service. Its descriptors carry a prod signature, so
+ * every GET and POST to it goes through the re-signing proxy, which re-signs
+ * those the device checks under a key the interceptor's certificates replace.
  */
-const DYNAMIC_DESCRIPTOR_PATHS = [
-  "/v2/solana/alt-resolution",
-  "/v2/solana/token-account-state",
-];
+const DEFAULT_METADATA_SERVICE_HOST = "nft.api.live.ledger.com";
+
+/**
+ * Methods sent through the re-signing proxy: GET for most descriptors, POST
+ * for the proxy delegate one. HEAD goes straight to the service, since the
+ * clear-signing tester's probes must see its real answer.
+ */
+const PROXIED_METHODS: ReadonlySet<string> = new Set(["GET", "POST"]);
 
 /**
  * Base path of the sample app's re-signing proxy (Flask
@@ -21,6 +23,37 @@ const DYNAMIC_DESCRIPTOR_PATHS = [
  */
 const DYNAMIC_DESCRIPTOR_PROXY_PREFIX = "/api/dynamic-descriptor-proxy";
 
+const jsonResponse = (body: string): Response =>
+  new Response(body, {
+    status: 200,
+    statusText: "OK",
+    headers: { "Content-Type": "application/json" },
+  });
+
+/**
+ * Options of {@link CalInterceptor}.
+ */
+export type CalInterceptorOptions = {
+  /** Where descriptors and certificates are kept. Defaults to memory. */
+  storage?: StorageInterface;
+  /**
+   * Base URL of the re-signing proxy (the sample app's Flask API), such as
+   * `http://127.0.0.1:5328`. Needed outside a browser; in a browser it
+   * defaults to `location.origin`.
+   */
+  dynamicDescriptorProxyBaseUrl?: string;
+  /**
+   * Metadata-service host whose GET and POST requests go through the
+   * re-signing proxy. Defaults to `nft.api.live.ledger.com`.
+   */
+  metadataServiceHost?: string;
+};
+
+const isStorage = (
+  value: StorageInterface | CalInterceptorOptions,
+): value is StorageInterface =>
+  typeof (value as StorageInterface).getDescriptors === "function";
+
 /**
  * CAL Interceptor - intercepts CAL (Crypto Assets List) API calls
  * and returns locally stored descriptors when available
@@ -28,11 +61,27 @@ const DYNAMIC_DESCRIPTOR_PROXY_PREFIX = "/api/dynamic-descriptor-proxy";
 export class CalInterceptor {
   private readonly interceptor: FetchInterceptor;
   private readonly storage: StorageInterface;
+  private readonly dynamicDescriptorProxyBaseUrl: string | undefined;
+  private readonly metadataServiceHost: string;
+  private hasWarnedMissingProxyBaseUrl = false;
 
-  constructor(storage?: StorageInterface) {
+  /**
+   * @param storageOrOptions - a storage, as before, or the options. A bare
+   * storage is kept for the callers that only pass one.
+   */
+  constructor(storageOrOptions?: StorageInterface | CalInterceptorOptions) {
+    const options: CalInterceptorOptions =
+      storageOrOptions === undefined
+        ? {}
+        : isStorage(storageOrOptions)
+          ? { storage: storageOrOptions }
+          : storageOrOptions;
     // Default to in-memory storage for environment-agnostic behavior
-    this.storage = storage ?? new MemoryStorage();
-    this.interceptor = new FetchInterceptor(this.modifyCalResponse.bind(this));
+    this.storage = options.storage ?? new MemoryStorage();
+    this.dynamicDescriptorProxyBaseUrl = options.dynamicDescriptorProxyBaseUrl;
+    this.metadataServiceHost =
+      options.metadataServiceHost ?? DEFAULT_METADATA_SERVICE_HOST;
+    this.interceptor = new FetchInterceptor(this.interceptRequest.bind(this));
   }
 
   /**
@@ -149,22 +198,39 @@ export class CalInterceptor {
   }
 
   /**
-   * Modify CAL response - called by interceptor
-   * Returns modified response or null to pass through
+   * Called by the fetch interceptor for every request.
+   * Returns the response to serve, or null to pass through
    */
-  private async modifyCalResponse(url: string): Promise<string | null> {
+  private async interceptRequest({
+    url,
+    method,
+    init,
+    readBody,
+  }: InterceptedRequest): Promise<Response | null> {
+    let parsedUrl: URL;
     try {
-      const parsedUrl = new URL(url);
+      parsedUrl = new URL(url);
+    } catch (error) {
+      console.error("Failed to parse URL params:", error);
+      return null;
+    }
 
-      // Dynamic descriptors (ALT resolution, token account state, ...) embed a
-      // signature in the TLV that must be re-signed with the CAL interceptor
-      // key, which only the local proxy can do. Fetch them through that proxy
-      // and serve the re-signed response.
-      const resigned = await this.fetchResignedDynamicDescriptor(parsedUrl);
-      if (resigned !== null) {
-        return resigned;
-      }
+    // Metadata-service descriptors carry a prod signature that only the
+    // re-signing proxy can replace, so fetch them through it.
+    if (this.isMetadataServiceRequest(parsedUrl, method)) {
+      return this.fetchThroughResigningProxy(parsedUrl, init, readBody);
+    }
 
+    const storedResponse = this.getStoredCalResponse(parsedUrl);
+    return storedResponse === null ? null : jsonResponse(storedResponse);
+  }
+
+  /**
+   * Look up a CAL request in the stored descriptors and certificates
+   * Returns the stored JSON or null to pass through
+   */
+  private getStoredCalResponse(parsedUrl: URL): string | null {
+    try {
       // Check if it's a CAL request
       if (!parsedUrl.pathname.startsWith("/cal")) {
         return null;
@@ -230,38 +296,63 @@ export class CalInterceptor {
   }
 
   /**
-   * Fetch a dynamic descriptor (ALT resolution, token account state, ...)
-   * through the local re-signing proxy and return its (re-signed) body. Returns
-   * null when the request is not a dynamic descriptor request that needs
-   * re-signing, so the caller passes it through untouched.
+   * Whether a request is a metadata-service request to send through the
+   * re-signing proxy (see PROXIED_METHODS).
    */
-  private async fetchResignedDynamicDescriptor(
-    parsedUrl: URL,
-  ): Promise<string | null> {
-    // Ignore requests already targeting the proxy (this method re-enters the
-    // interceptor when it fetches, and must not redirect the proxy call itself).
-    if (parsedUrl.pathname.startsWith(DYNAMIC_DESCRIPTOR_PROXY_PREFIX)) {
-      return null;
-    }
-
-    const needsResign = DYNAMIC_DESCRIPTOR_PATHS.some((path) =>
-      parsedUrl.pathname.startsWith(path),
+  private isMetadataServiceRequest(parsedUrl: URL, method: string): boolean {
+    return (
+      PROXIED_METHODS.has(method) &&
+      parsedUrl.host === this.metadataServiceHost &&
+      // The proxy call re-enters the interceptor: never redirect it again.
+      !parsedUrl.pathname.startsWith(DYNAMIC_DESCRIPTOR_PROXY_PREFIX)
     );
-    if (!needsResign) {
+  }
+
+  /**
+   * Fetch a metadata-service request through the re-signing proxy and return
+   * the proxy's response as it is, error statuses included. Returns null, so
+   * the request goes through untouched, when there is no proxy to reach.
+   *
+   * @param readBody - Reads the body of a `Request` input, see
+   * InterceptedRequest
+   */
+  private async fetchThroughResigningProxy(
+    parsedUrl: URL,
+    init?: RequestInit,
+    readBody?: () => Promise<ArrayBuffer>,
+  ): Promise<Response | null> {
+    const baseUrl = this.getProxyBaseUrl();
+    if (baseUrl === null) {
       return null;
     }
 
-    const base =
-      typeof globalThis.location !== "undefined"
-        ? globalThis.location.origin
-        : parsedUrl.origin;
-    const proxyUrl = new URL(
-      `${DYNAMIC_DESCRIPTOR_PROXY_PREFIX}${parsedUrl.pathname}${parsedUrl.search}`,
-      base,
-    ).toString();
-
+    const origin = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+    const proxyUrl = `${origin}${DYNAMIC_DESCRIPTOR_PROXY_PREFIX}${parsedUrl.pathname}${parsedUrl.search}`;
     console.log(`Fetching ${parsedUrl.pathname} via re-signing proxy`);
-    const response = await fetch(proxyUrl);
-    return response.text();
+    return fetch(
+      proxyUrl,
+      readBody === undefined ? init : { ...init, body: await readBody() },
+    );
+  }
+
+  /**
+   * The proxy's base URL: the configured one, else the page's origin in a
+   * browser. Outside a browser the upstream origin has no proxy, so there is
+   * no fallback: warn once and return null.
+   */
+  private getProxyBaseUrl(): string | null {
+    if (this.dynamicDescriptorProxyBaseUrl) {
+      return this.dynamicDescriptorProxyBaseUrl;
+    }
+    if (typeof globalThis.location !== "undefined") {
+      return globalThis.location.origin;
+    }
+    if (!this.hasWarnedMissingProxyBaseUrl) {
+      this.hasWarnedMissingProxyBaseUrl = true;
+      console.warn(
+        `CAL Interceptor: no dynamicDescriptorProxyBaseUrl outside a browser, so ${this.metadataServiceHost} responses are not re-signed`,
+      );
+    }
+    return null;
   }
 }
