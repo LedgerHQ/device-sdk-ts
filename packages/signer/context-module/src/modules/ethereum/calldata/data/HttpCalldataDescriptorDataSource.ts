@@ -241,6 +241,21 @@ export class HttpCalldataDescriptorDataSource
         type: ClearSignContextReferenceType.TOKEN,
         map: this.toMapReference(param.token),
       };
+    } else if (param.type === "TOKEN" && param.value.type === "path") {
+      return {
+        type: ClearSignContextReferenceType.TOKEN,
+        valuePath: this.toGenericPath(param.value.binary_path),
+      };
+    } else if (param.type === "TOKEN" && param.value.type === "constant") {
+      return {
+        type: ClearSignContextReferenceType.TOKEN,
+        value: param.value.value,
+      };
+    } else if (param.type === "TOKEN" && param.value.type === "map") {
+      return {
+        type: ClearSignContextReferenceType.TOKEN,
+        map: this.toMapReference(param.value),
+      };
     } else if (param.type === "NFT" && param.collection.type === "path") {
       return {
         type: ClearSignContextReferenceType.NFT,
@@ -490,6 +505,7 @@ export class HttpCalldataDescriptorDataSource
         (data.param.type === "TOKEN_AMOUNT" &&
           (data.param.token === undefined ||
             this.isDescriptorValueV1(data.param.token))) ||
+        data.param.type === "TOKEN" ||
         (data.param.type === "TRUSTED_NAME" &&
           Array.isArray(data.param.types) &&
           Array.isArray(data.param.sources) &&

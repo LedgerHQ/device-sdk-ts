@@ -944,6 +944,116 @@ describe("HttpCalldataDescriptorDataSource", () => {
     ]);
   });
 
+  it("Calldata with a TOKEN field", async () => {
+    // GIVEN
+    // "Token (all allowed)" field of RelayDepository depositErc20(address,address,bytes32), shown with tokenTicker
+    const field = {
+      name: "Token (all allowed)",
+      param: {
+        type: "TOKEN",
+        value: {
+          type: "path",
+          version: 1,
+          abi_path: {
+            type: "data",
+            absolute: true,
+            elements: [{ type: "field", identifier: "token" }],
+          },
+          type_size: 20,
+          binary_path: {
+            type: "DATA",
+            version: 1,
+            elements: [
+              { type: "TUPLE", offset: 1 },
+              { type: "LEAF", leaf_type: "STATIC_LEAF" },
+            ],
+          },
+          type_family: "ADDRESS",
+        },
+        version: 1,
+      },
+      version: 1,
+      descriptor:
+        "0001010113546f6b656e2028616c6c20616c6c6f7765642902010a031a0001010115000101010105020114030a00010101020001040103",
+    };
+    const calldataDTO = createCalldata(transactionInfo, [], [field]);
+    httpMock.get.mockResolvedValue([calldataDTO]);
+    vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
+      undefined,
+    );
+
+    // WHEN
+    const result = await datasource.getCalldataDescriptors({
+      deviceModelId: DeviceModelId.FLEX,
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      expect.objectContaining({ type: "ethereumTransactionInfo" }),
+      {
+        payload: field.descriptor,
+        type: "ethereumTransactionFieldDescription",
+        reference: {
+          type: "ethereumToken",
+          valuePath: [
+            { type: "TUPLE", offset: 1 },
+            { type: "LEAF", leafType: "STATIC_LEAF" },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it("Calldata with a TOKEN field as a constant", async () => {
+    // GIVEN
+    const field = {
+      name: "Token",
+      param: {
+        type: "TOKEN",
+        value: {
+          raw: "0xae7ab96520de3a18e5e111b5eaab095312d7fe84",
+          type: "constant",
+          value: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+          version: 1,
+          type_size: 20,
+          type_family: "ADDRESS",
+        },
+        version: 1,
+      },
+      version: 1,
+      descriptor: "0001010105546f6b656e",
+    };
+    const calldataDTO = createCalldata(transactionInfo, [], [field]);
+    httpMock.get.mockResolvedValue([calldataDTO]);
+    vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
+      undefined,
+    );
+
+    // WHEN
+    const result = await datasource.getCalldataDescriptors({
+      deviceModelId: DeviceModelId.FLEX,
+      chainId: 1,
+      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
+      selector: "0x69328dec",
+    });
+
+    // THEN
+    expect(result.extract()).toEqual([
+      expect.objectContaining({ type: "ethereumTransactionInfo" }),
+      {
+        payload: field.descriptor,
+        type: "ethereumTransactionFieldDescription",
+        reference: {
+          type: "ethereumToken",
+          value: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+        },
+      },
+    ]);
+  });
+
   it("Calldata with collection fields references as constants", async () => {
     // GIVEN
     const field = {
@@ -1705,6 +1815,39 @@ describe("HttpCalldataDescriptorDataSource", () => {
         {
           type: "ethereumTransactionFieldDescription",
           payload: fieldTokenMap.descriptor,
+          reference: {
+            type: "ethereumToken",
+            map: { id: 0, keyPath: genericKeyPath },
+          },
+          mapReferences: [{ id: 0, keyPath: genericKeyPath }],
+        },
+      ]);
+    });
+
+    it("should return a TOKEN field reference looked up in a map", async () => {
+      // GIVEN
+      const fieldTokenParamMap = {
+        descriptor: fieldTokenMap.descriptor,
+        param: {
+          type: "TOKEN",
+          value: mapRefValue,
+        },
+      };
+      httpMock.get.mockResolvedValue([
+        createCalldataWithMaps(maps, [fieldTokenParamMap]),
+      ]);
+
+      // WHEN
+      const result = await getDescriptors();
+
+      // THEN
+      expect(result.extract()).toEqual([
+        expect.objectContaining({ type: "ethereumTransactionInfo" }),
+        expect.objectContaining({ type: "ethereumMapEntry", id: 0 }),
+        expect.objectContaining({ type: "ethereumMapEntry", id: 0 }),
+        {
+          type: "ethereumTransactionFieldDescription",
+          payload: fieldTokenParamMap.descriptor,
           reference: {
             type: "ethereumToken",
             map: { id: 0, keyPath: genericKeyPath },
