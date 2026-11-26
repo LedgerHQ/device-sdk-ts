@@ -6,7 +6,7 @@ import {
 
 export interface Eip712V2DescriptorDto {
   descriptors_calldata_eip712: {
-    [address: string]: {
+    [domainSeparator: string]: {
       [primaryTypeHash: string]: Eip712V2Descriptor;
     };
   };

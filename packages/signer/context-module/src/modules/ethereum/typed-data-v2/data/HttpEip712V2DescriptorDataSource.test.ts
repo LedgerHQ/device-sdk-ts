@@ -26,6 +26,9 @@ const config = {
 } as ContextModuleServiceConfig;
 
 const PERMIT2 = "0x000000000022d473030f116ddee9f6b43ac78ba3";
+// hashStruct of the Permit2 domain on Ethereum
+const PERMIT2_DOMAIN_SEPARATOR =
+  "0x866a5aba21966af95d6c7ab78eb2b2fc913915c28be3b9aa07cc04ff903e3f28";
 // keccak256(encodeType("PermitSingle"))
 const PERMIT_SINGLE_TYPE_HASH =
   "0xf3841cd1ff0085026a6327b620b67997ce40f282c88a8e905a7a5626e310f3d0";
@@ -121,7 +124,7 @@ const createDescriptor = (
 const createResponse = (descriptor: Eip712V2Descriptor) => [
   {
     descriptors_calldata_eip712: {
-      [PERMIT2]: { [PERMIT_SINGLE_TYPE_HASH]: descriptor },
+      [PERMIT2_DOMAIN_SEPARATOR]: { [PERMIT_SINGLE_TYPE_HASH]: descriptor },
     },
   },
 ];
@@ -138,6 +141,7 @@ describe("HttpEip712V2DescriptorDataSource", () => {
   const params = {
     verifyingContract: PERMIT2,
     chainId: 1,
+    domainSeparator: PERMIT2_DOMAIN_SEPARATOR,
     primaryTypeHash: PERMIT_SINGLE_TYPE_HASH,
     deviceModelId: DeviceModelId.FLEX,
   };
@@ -153,7 +157,7 @@ describe("HttpEip712V2DescriptorDataSource", () => {
     );
   });
 
-  it("should query CAL for the descriptors of the verifying contract", async () => {
+  it("should query CAL for the descriptors of the domain", async () => {
     httpMock.get.mockResolvedValue(createResponse(createDescriptor()));
 
     await datasource.getDescriptors(params);
@@ -163,8 +167,7 @@ describe("HttpEip712V2DescriptorDataSource", () => {
       {
         params: {
           output: "descriptors_calldata_eip712",
-          chain_id: 1,
-          contracts: PERMIT2,
+          domain_separators: PERMIT2_DOMAIN_SEPARATOR,
           ref: "branch:main",
         },
       },
@@ -211,12 +214,16 @@ describe("HttpEip712V2DescriptorDataSource", () => {
     ]);
   });
 
-  it("should match the contract and the primary type hash whatever their case", async () => {
+  it("should match the contract, the domain separator and the primary type hash whatever their case", async () => {
     httpMock.get.mockResolvedValue(createResponse(createDescriptor()));
 
     const result = await datasource.getDescriptors({
       ...params,
       verifyingContract: PERMIT2.toUpperCase().replace("0X", "0x"),
+      domainSeparator: PERMIT2_DOMAIN_SEPARATOR.toUpperCase().replace(
+        "0X",
+        "0x",
+      ),
       primaryTypeHash: PERMIT_SINGLE_TYPE_HASH.toUpperCase().replace(
         "0X",
         "0x",
@@ -379,6 +386,7 @@ describe("HttpEip712V2DescriptorDataSource", () => {
 
   it.each([
     ["another chain", { chain_id: 137 }],
+    ["another contract", { address: `0x${"11".repeat(20)}` }],
     ["another type", { type: "calldata" as unknown as "eip712" }],
     ["another version", { version: "v2" as unknown as "v1" }],
     [
@@ -403,6 +411,17 @@ describe("HttpEip712V2DescriptorDataSource", () => {
     const result = await datasource.getDescriptors({
       ...params,
       primaryTypeHash: `0x${"00".repeat(32)}`,
+    });
+
+    expect(result.isLeft()).toBe(true);
+  });
+
+  it("should return an error when CAL has no descriptor for the domain", async () => {
+    httpMock.get.mockResolvedValue(createResponse(createDescriptor()));
+
+    const result = await datasource.getDescriptors({
+      ...params,
+      domainSeparator: `0x${"00".repeat(32)}`,
     });
 
     expect(result.isLeft()).toBe(true);
