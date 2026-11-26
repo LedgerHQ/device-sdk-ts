@@ -19,6 +19,9 @@ import { BuildEIP712V2ContextsTask } from "./BuildEIP712V2ContextsTask";
 const PERMIT2 = "0x000000000022d473030f116ddee9f6b43ac78ba3";
 const TOKEN = "0x6b175474e89094c44da98b954eedeac495271d0f";
 const SPENDER = "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad";
+// Permit2's DOMAIN_SEPARATOR() on Ethereum
+const PERMIT2_DOMAIN_SEPARATOR =
+  "0x866a5aba21966af95d6c7ab78eb2b2fc913915c28be3b9aa07cc04ff903e3f28";
 // keccak256(encodeType("PermitSingle"))
 const PERMIT_SINGLE_TYPE_HASH =
   "0xf3841cd1ff0085026a6327b620b67997ce40f282c88a8e905a7a5626e310f3d0";
@@ -107,7 +110,7 @@ describe("BuildEIP712V2ContextsTask", () => {
     vi.clearAllMocks();
   });
 
-  it("should look the descriptors up by contract, chain and primary type hash", async () => {
+  it("should look the descriptors up by contract, chain, domain separator and primary type hash", async () => {
     contextModule.getContexts.mockResolvedValue([]);
 
     await run();
@@ -116,6 +119,7 @@ describe("BuildEIP712V2ContextsTask", () => {
       {
         verifyingContract: PERMIT2,
         chainId: 1,
+        domainSeparator: PERMIT2_DOMAIN_SEPARATOR,
         primaryTypeHash: PERMIT_SINGLE_TYPE_HASH,
         deviceModelId: DeviceModelId.FLEX,
       },
@@ -124,6 +128,23 @@ describe("BuildEIP712V2ContextsTask", () => {
         ClearSignContextType.ETHEREUM_EIP712_FIELD_DESCRIPTION,
         ClearSignContextType.ETHEREUM_ENUM,
       ],
+    );
+  });
+
+  it("should hash a domain whose contract has a bad checksum", async () => {
+    contextModule.getContexts.mockResolvedValue([]);
+
+    await run({
+      ...PERMIT_SINGLE,
+      domain: {
+        ...PERMIT_SINGLE.domain,
+        verifyingContract: "0x000000000022D473030F116dDEE9F6B43aC78ba3",
+      },
+    });
+
+    expect(contextModule.getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({ domainSeparator: PERMIT2_DOMAIN_SEPARATOR }),
+      expect.anything(),
     );
   });
 

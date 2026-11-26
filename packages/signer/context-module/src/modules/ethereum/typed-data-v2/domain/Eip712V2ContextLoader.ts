@@ -17,6 +17,8 @@ import {
 export type Eip712V2ContextInput = {
   verifyingContract: string;
   chainId: number;
+  /** hashStruct(domain), the key CAL files the descriptors of a domain under */
+  domainSeparator: string;
   /** keccak256(encodeType(primaryType)), the key CAL files the descriptors under */
   primaryTypeHash: string;
   deviceModelId: DeviceModelId;
@@ -51,12 +53,14 @@ export class Eip712V2ContextLoader
       input !== null &&
       "verifyingContract" in input &&
       "chainId" in input &&
+      "domainSeparator" in input &&
       "primaryTypeHash" in input &&
       "deviceModelId" in input &&
       input.deviceModelId !== undefined &&
       input.deviceModelId !== DeviceModelId.NANO_S &&
       typeof input.chainId === "number" &&
       isHexaString(input.verifyingContract) &&
+      isHexaString(input.domainSeparator) &&
       isHexaString(input.primaryTypeHash) &&
       SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );

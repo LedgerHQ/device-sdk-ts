@@ -6,6 +6,7 @@ import { type ClearSignContextSuccess } from "@/shared/model/ClearSignContext";
 export type GetEip712V2DescriptorsParams = {
   verifyingContract: string;
   chainId: number;
+  domainSeparator: string;
   primaryTypeHash: string;
   deviceModelId: DeviceModelId;
 };

@@ -7,7 +7,7 @@
   "osVersion": "1.7.0",
   "appVersion": "1.24.0",
   "mode": "parallel",
-  "enabled": false,
+  "enabled": true,
   "cases": [
     {
       "description": "Permit2 PermitSingle: a token amount read in a nested struct",

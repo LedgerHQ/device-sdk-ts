@@ -7,13 +7,13 @@
   "osVersion": "1.7.0",
   "appVersion": "1.24.0",
   "mode": "parallel",
-  "enabled": false,
+  "enabled": true,
   "cases": [
     {
       "description": "Lens post: strings and integers shown with no formatting",
       "data": {
         "domain": {
-          "name": "LensHub",
+          "name": "Lens Protocol Profiles",
           "version": "2",
           "chainId": 137,
           "verifyingContract": "0xdb46d1dc155634fbc732f92e853b10b288ad5a1d"
@@ -96,7 +96,7 @@
       "description": "Rarible lazy mint: values read in arrays of structs",
       "data": {
         "domain": {
-          "name": "Rarible",
+          "name": "Mint721",
           "version": "1",
           "chainId": 1,
           "verifyingContract": "0xc9154424b823b10579895ccbe442d41b9abd96ed"
@@ -179,8 +179,8 @@
       "description": "DeGate transfer: ten descriptors in one message",
       "data": {
         "domain": {
-          "name": "DeGate",
-          "version": "1",
+          "name": "DeGate Protocol",
+          "version": "0.1.0",
           "chainId": 1,
           "verifyingContract": "0xe63602a9b3dfe983187525ac985fec4f57b24ed5"
         },
@@ -266,7 +266,7 @@
       "description": "Tally ballot: a message of two fields",
       "data": {
         "domain": {
-          "name": "Tally",
+          "name": "Uniswap Governor Bravo",
           "chainId": 1,
           "verifyingContract": "0x408ed6354d4973f66138c91495f2f2fcbd8724c3"
         },
@@ -274,12 +274,12 @@
         "types": {
           "EIP712Domain": [
             {
-              "name": "chainId",
-              "type": "uint256"
-            },
-            {
               "name": "name",
               "type": "string"
+            },
+            {
+              "name": "chainId",
+              "type": "uint256"
             },
             {
               "name": "verifyingContract",

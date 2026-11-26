@@ -63,6 +63,7 @@ export class HttpEip712V2DescriptorDataSource
   public async getDescriptors({
     verifyingContract,
     chainId,
+    domainSeparator,
     primaryTypeHash,
     deviceModelId,
   }: GetEip712V2DescriptorsParams): Promise<
@@ -73,8 +74,7 @@ export class HttpEip712V2DescriptorDataSource
       dto = (await this.http.get(`${this.config.cal.url}/dapps`, {
         params: {
           output: "descriptors_calldata_eip712",
-          chain_id: chainId,
-          contracts: verifyingContract,
+          domain_separators: domainSeparator,
           ref: `branch:${this.config.cal.branch}`,
         },
       })) as Eip712V2DescriptorDto[];
@@ -95,18 +95,19 @@ export class HttpEip712V2DescriptorDataSource
     }
 
     const address = verifyingContract.toLowerCase();
-    const typeHash = `0x${primaryTypeHash.replace(/^0x/i, "").toLowerCase()}`;
+    const separator = this.toKey(domainSeparator);
+    const typeHash = this.toKey(primaryTypeHash);
     const descriptor = dto
-      .map((item) => item?.descriptors_calldata_eip712?.[address]?.[typeHash])
+      .map((item) => item?.descriptors_calldata_eip712?.[separator]?.[typeHash])
       .find(
         (item): item is SignedDescriptor =>
-          item !== undefined && this.isDescriptor(item, chainId),
+          item !== undefined && this.isDescriptor(item, chainId, address),
       );
 
     if (descriptor === undefined) {
       return Left(
         new Error(
-          `[ContextModule] HttpEip712V2DescriptorDataSource: No EIP-712 V2 descriptor for contract ${address} on chain ${chainId} for primary type hash ${typeHash}`,
+          `[ContextModule] HttpEip712V2DescriptorDataSource: No EIP-712 V2 descriptor for contract ${address} on chain ${chainId} for domain separator ${separator} and primary type hash ${typeHash}`,
         ),
       );
     }
@@ -174,15 +175,21 @@ export class HttpEip712V2DescriptorDataSource
     return Right([info, ...enums, ...fields.unsafeCoerce()]);
   }
 
+  private toKey(hash: string): string {
+    return `0x${hash.replace(/^0x/i, "").toLowerCase()}`;
+  }
+
   private isDescriptor(
     data: Eip712V2Descriptor,
     chainId: number,
+    address: string,
   ): data is SignedDescriptor {
     return (
       typeof data === "object" &&
       data.type === "eip712" &&
       data.version === "v1" &&
       data.chain_id === chainId &&
+      data.address?.toLowerCase() === address &&
       typeof data.message_info?.descriptor?.data === "string" &&
       typeof data.message_info.descriptor.signatures?.[this.config.cal.mode] ===
         "string" &&

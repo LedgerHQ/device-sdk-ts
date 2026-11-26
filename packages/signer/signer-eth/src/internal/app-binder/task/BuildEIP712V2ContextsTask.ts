@@ -15,6 +15,7 @@ import {
   isSuccessCommandResult,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
+import { TypedDataEncoder } from "ethers";
 import { Either, Left, Right } from "purify-ts";
 
 import { type TypedData } from "@api/model/TypedData";
@@ -84,14 +85,21 @@ export class BuildEIP712V2ContextsTask {
     }
     const { types } = parsed.unsafeCoerce();
 
+    let domainSeparator: string;
     let primaryTypeHash: string;
     try {
+      domainSeparator = TypedDataEncoder.hashStruct(
+        "EIP712Domain",
+        { EIP712Domain: data.types["EIP712Domain"] ?? [] },
+        // ethers refuses a mixed-case address with a bad checksum, which the device hashes as is
+        { ...data.domain, verifyingContract: verifyingContract.toLowerCase() },
+      );
       primaryTypeHash = getEip712V2PrimaryTypeHash(
         data.types,
         data.primaryType,
       );
     } catch (error) {
-      this._logger.debug("[run] Cannot hash the primary type", {
+      this._logger.debug("[run] Cannot hash the domain or the primary type", {
         data: { error },
       });
       return [];
@@ -99,7 +107,13 @@ export class BuildEIP712V2ContextsTask {
 
     const contexts = (
       await contextModule.getContexts(
-        { verifyingContract, chainId, primaryTypeHash, deviceModelId },
+        {
+          verifyingContract,
+          chainId,
+          domainSeparator,
+          primaryTypeHash,
+          deviceModelId,
+        },
         [
           ClearSignContextType.ETHEREUM_EIP712_MESSAGE_INFO,
           ClearSignContextType.ETHEREUM_EIP712_FIELD_DESCRIPTION,

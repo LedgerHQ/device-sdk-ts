@@ -27,6 +27,7 @@ describe("Eip712V2ContextLoader", () => {
   const input: Eip712V2ContextInput = {
     verifyingContract: "0x000000000022d473030f116ddee9f6b43ac78ba3",
     chainId: 1,
+    domainSeparator: `0x${"cd".repeat(32)}`,
     primaryTypeHash: `0x${"ab".repeat(32)}`,
     deviceModelId: DeviceModelId.FLEX,
   };
@@ -57,6 +58,7 @@ describe("Eip712V2ContextLoader", () => {
     it.each([
       ["a Nano S", { deviceModelId: DeviceModelId.NANO_S }],
       ["no primary type hash", { primaryTypeHash: undefined }],
+      ["no domain separator", { domainSeparator: undefined }],
       ["a contract that is not hexadecimal", { verifyingContract: "permit2" }],
       ["a chain that is not a number", { chainId: "1" }],
     ])("should not handle %s", (_, overrides) => {

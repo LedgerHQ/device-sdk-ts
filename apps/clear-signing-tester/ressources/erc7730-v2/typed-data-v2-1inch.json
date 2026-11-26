@@ -7,14 +7,14 @@
   "osVersion": "1.7.0",
   "appVersion": "1.24.0",
   "mode": "parallel",
-  "enabled": false,
+  "enabled": true,
   "cases": [
     {
       "description": "1inch limit order: the tokens sent and received are read in the message",
       "data": {
         "domain": {
-          "name": "Permit2",
-          "version": "1",
+          "name": "1inch Aggregation Router",
+          "version": "6",
           "chainId": 1,
           "verifyingContract": "0x111111125421cA6dc452d289314280a0f8842A65"
         },
