@@ -2,6 +2,8 @@
 
 import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 
+import { BTC_LEGACY_COIN_APPS } from "@root/src/domain/models/Scenario";
+
 import {
   bumpAppVersions,
   type CatalogueDevices,
@@ -14,14 +16,7 @@ const FAMILIES: Record<string, string[]> = {
   ethereum: ["Ethereum"],
   solana: ["Solana"],
   tron: ["Tron"],
-  "btc-legacy": [
-    "Litecoin",
-    "Dogecoin",
-    "Bitcoin Cash",
-    "Bitcoin Gold",
-    "Horizen",
-    "Komodo",
-  ],
+  "btc-legacy": [...BTC_LEGACY_COIN_APPS],
 };
 
 const VERSIONS_FILE = "default_versions.json";

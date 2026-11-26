@@ -29,6 +29,7 @@ export const BTC_LEGACY_COIN_APPS = [
   "Horizen",
   "Komodo",
   "Dash",
+  "Digibyte",
 ] as const;
 
 export type BtcLegacyCoinApp = (typeof BTC_LEGACY_COIN_APPS)[number];
