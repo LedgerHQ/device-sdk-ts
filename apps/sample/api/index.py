@@ -62,6 +62,10 @@ CAL_CERTIFICATES_OVERRIDES = {
 # Served by /api/signer-info. Raise it when a client must tell this proxy from
 # an older one. 2: re-signs by key, forwards upstream statuses, proxies POST.
 RESIGNING_PROXY_VERSION = 2
+# Request headers the re-signing proxy passes on to the metadata service, so it
+# sees what a direct client sends: the body's type, and the context-module's
+# version and origin token. Never cookies or the proxy's own Host.
+FORWARDED_REQUEST_HEADERS = ("Content-Type", "X-Ledger-Client-Origin", "X-Ledger-Client-Version")
 # Metadata-service routes whose responses carry no keyId, mapped to the key the
 # device checks their descriptors under
 METADATA_ROUTE_KEY_IDS: List[Tuple[re.Pattern, str]] = [
@@ -719,8 +723,8 @@ def dynamic_descriptor_proxy(subpath: str) -> Union[Response, Tuple[Response, in
     network failure becomes a 502.
 
     The CAL interceptor sends every metadata-service GET and POST here; the
-    original path, query string, body and content type are forwarded to the
-    upstream metadata service.
+    original path, query string, body and FORWARDED_REQUEST_HEADERS are
+    forwarded to the upstream metadata service.
     """
     try:
         upstream_url = f"{DEFAULT_METADATA_SERVICE_URL}/{subpath}"
@@ -729,7 +733,7 @@ def dynamic_descriptor_proxy(subpath: str) -> Union[Response, Tuple[Response, in
             upstream_url,
             params=request.args,
             data=request.get_data() or None,
-            headers={"Content-Type": request.content_type} if request.content_type else {},
+            headers={name: request.headers[name] for name in FORWARDED_REQUEST_HEADERS if name in request.headers},
             timeout=10,
         )
     except requests.RequestException:

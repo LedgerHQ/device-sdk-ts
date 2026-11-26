@@ -12,7 +12,7 @@ import hashlib
 import json
 import os
 import unittest
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 from unittest import mock
 
 import ecdsa
@@ -290,7 +290,12 @@ class DynamicDescriptorProxyTest(ResignAssertions):
         self.client = index.app.test_client()
 
     def proxy(
-        self, path: str, upstream: Any, method: str = "GET", body: Optional[bytes] = None
+        self,
+        path: str,
+        upstream: Any,
+        method: str = "GET",
+        body: Optional[bytes] = None,
+        headers: Optional[Dict[str, str]] = None,
     ) -> Tuple[Any, mock.Mock]:
         """
         Send `path` through the proxy, with `upstream` as the metadata service's
@@ -303,6 +308,7 @@ class DynamicDescriptorProxyTest(ResignAssertions):
                 method=method,
                 data=body,
                 content_type="application/json" if body is not None else None,
+                headers=headers,
             )
         return response, send
 
@@ -333,6 +339,26 @@ class DynamicDescriptorProxyTest(ResignAssertions):
             data=PROXY_DELEGATE_BODY,
             headers={"Content-Type": "application/json"},
             timeout=10,
+        )
+
+    # The context-module sends its version and origin token to the metadata
+    # service; going through the proxy must not drop them
+    def test_forwards_the_ledger_client_headers_only(self) -> None:
+        with self.assertLogs(index.app.logger, "INFO"):
+            _, send = self.proxy(
+                SIGNED_DESCRIPTOR_FIXTURES["solana_owner.json"],
+                upstream_response(load_fixture_bytes("solana_owner.json")),
+                headers={
+                    "X-Ledger-Client-Origin": "origin-token",
+                    "X-Ledger-Client-Version": "context-module/1.0.0",
+                    "Cookie": "session=1",
+                    "Authorization": "Bearer token",
+                },
+            )
+
+        self.assertEqual(
+            send.call_args.kwargs["headers"],
+            {"X-Ledger-Client-Origin": "origin-token", "X-Ledger-Client-Version": "context-module/1.0.0"},
         )
 
     def test_serves_a_proxy_delegate_descriptor_resigned(self) -> None:
