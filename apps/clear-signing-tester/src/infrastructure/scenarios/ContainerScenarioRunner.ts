@@ -241,9 +241,9 @@ export class ContainerScenarioRunner implements ScenarioRunner {
           : {}),
       },
       cal: {
-        url: "https://global.api.prd.ledger.com/cal/v1",
+        url: "https://crypto-assets-service.api.aws.stg.ldg-tech.com/v1",
         mode: this.runtime.calMode,
-        branch: "main",
+        branch: "next",
       },
       ...(this.runtime.solanaRpcUrl
         ? { solanaRpc: { url: this.runtime.solanaRpcUrl } }

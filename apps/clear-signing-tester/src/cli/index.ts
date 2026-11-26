@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import "@root/src/setup/installUndici";
+import "@root/src/setup/installCalTestSignatures";
 
 import { ConsoleLogger } from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
@@ -284,7 +285,7 @@ async function runTest(
     files.length > 0 ? new ERC7730InterceptorService(cliLogger) : undefined;
   if (interceptor) await interceptor.setupFromFiles(files);
 
-  const runtime = buildRuntime(options, interceptor ? "test" : "prod");
+  const runtime = buildRuntime(options, "test");
 
   console.log(
     `Running ${runs.length} case(s) from ${scenarioRuns.length} scenario run(s) on ` +
