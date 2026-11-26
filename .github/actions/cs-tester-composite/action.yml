@@ -43,7 +43,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+    - uses: ./.github/actions/setup-composite
 
     # Build only the clear-signing-tester dependency chain, cold. Avoids the
     # slow **/lib build-cache upload/download and the full build:libs.
