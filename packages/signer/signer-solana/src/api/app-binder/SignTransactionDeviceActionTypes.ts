@@ -10,6 +10,7 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { type TokenAccountOwners } from "@api/app-binder/TokenAccountOwners";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
 import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
@@ -136,6 +137,11 @@ export type SignTransactionDAInternalState = {
   // failed generic clear-sign attempt without a new CAL lookup; null when
   // none was sent.
   readonly gatedSigningContext: SolanaGatedSigningContextSuccess | null;
+  // Set once a contact was sent to the device, so it is never sent twice.
+  readonly contactSent: boolean;
+  // Token account owners the last clear-sign provisioning attested to the
+  // device, matched against the address book before the terminal sign.
+  readonly tokenAccountOwners: TokenAccountOwners;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

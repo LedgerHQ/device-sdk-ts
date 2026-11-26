@@ -184,7 +184,7 @@ describe("extractTransferRecipient", () => {
       });
     });
 
-    it("gives up on a plain Transfer, which carries no mint", async () => {
+    it("returns the token account of a plain Transfer, without a mint", async () => {
       const recipient = await extractTransferRecipient(
         legacyMessage(
           createTransferInstruction(
@@ -196,7 +196,12 @@ describe("extractTransferRecipient", () => {
         ),
       );
 
-      expect(recipient).toBeUndefined();
+      expect(recipient).toEqual({
+        kind: "token",
+        tokenAccount: aliceTokenAccount,
+        mint: undefined,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      });
     });
   });
 

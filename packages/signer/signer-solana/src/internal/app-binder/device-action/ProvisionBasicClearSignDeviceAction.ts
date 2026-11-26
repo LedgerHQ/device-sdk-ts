@@ -19,6 +19,10 @@ import {
   type ProvisionBasicClearSignDAOutput,
 } from "@api/app-binder/ProvisionBasicClearSignDeviceActionTypes";
 import { signTransactionDAStateSteps } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import {
+  NO_TOKEN_ACCOUNT_OWNERS,
+  type TokenAccountOwners,
+} from "@api/app-binder/TokenAccountOwners";
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import {
   SolanaTransactionTypes,
@@ -47,7 +51,7 @@ export type MachineDependencies = {
   }) => Promise<CommandResult<BasicClearSignContext>>;
   readonly provideBasicClearSignContext: (arg0: {
     input: ProvideBasicClearSignContextTaskArgs;
-  }) => Promise<void>;
+  }) => Promise<TokenAccountOwners>;
 };
 
 /**
@@ -143,6 +147,7 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
         _internalState: {
           inspectorResult: null,
           solanaTransactionContext: null,
+          tokenAccountOwners: NO_TOKEN_ACCOUNT_OWNERS,
         },
       }),
       states: {
@@ -272,7 +277,15 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
                 loggerFactory: this.getLoggerFactory(internalApi),
               };
             },
-            onDone: { target: "Done" },
+            onDone: {
+              target: "Done",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  tokenAccountOwners: event.output,
+                }),
+              }),
+            },
             onError: {
               target: "Done",
               actions: ({ event }) =>
@@ -285,7 +298,10 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
         },
         Done: { type: "final" },
       },
-      output: () => Right(undefined),
+      output: ({ context }) =>
+        Right({
+          tokenAccountOwners: context._internalState.tokenAccountOwners,
+        }),
     });
   }
 

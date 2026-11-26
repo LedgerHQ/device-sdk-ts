@@ -60,6 +60,8 @@ describe("HttpOwnerInfoDataSource", () => {
     expect(result.isRight()).toBe(true);
     expect(result.extract()).toEqual({
       tlvDescriptor: hexaStringToBuffer(signedDescriptorHex),
+      tokenAccount: "token-account",
+      owner: "owner-address",
     });
   });
 
