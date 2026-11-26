@@ -14,18 +14,20 @@ import {
 } from "@ledgerhq/device-contacts-kit";
 
 import {
-  CONTACTS_APP_BY_FAMILY,
+  CONTACTS_FAMILY_LIST,
   type ContactsFamily,
-} from "@/lib/contacts/addressBook";
+} from "@/lib/contacts/families";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
 /**
  * One manager per blockchain family: app-owned Contacts operations must run in
- * the embedded app that serves the family (Ethereum, Tron). Rename is a
+ * the embedded app that serves the family. Rename is a
  * dashboard operation, so any of them serves it.
  */
-type ContactsManagers = Readonly<Record<ContactsFamily, ContactsManager>>;
+export type ContactsManagers = Readonly<
+  Record<ContactsFamily, ContactsManager>
+>;
 
 type ContactsContextType = {
   contactsManagers: ContactsManagers | null;
@@ -50,13 +52,14 @@ export const ContactsProvider: React.FC<PropsWithChildren> = ({ children }) => {
       return;
     }
 
-    const build = (appName: string) =>
-      new ContactsManagerBuilder({ dmk, sessionId, appName }).build();
-
-    setContactsManagers({
-      ethereum: build(CONTACTS_APP_BY_FAMILY.ethereum),
-      tron: build(CONTACTS_APP_BY_FAMILY.tron),
-    });
+    setContactsManagers(
+      Object.fromEntries(
+        CONTACTS_FAMILY_LIST.map(({ family, appName }) => [
+          family,
+          new ContactsManagerBuilder({ dmk, sessionId, appName }).build(),
+        ]),
+      ) as Record<ContactsFamily, ContactsManager>,
+    );
   }, [dmk, sessionId]);
 
   return (

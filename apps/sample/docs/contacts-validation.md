@@ -1,118 +1,119 @@
 # Contacts playground — manual validation matrix
 
 End-to-end validation for the Contacts (Address Book) section of the sample app.
-The playground drives the **four** public external-address management methods on
-`ContactsManager` (Ledger-account contacts are out of scope). It never calls kit internals (`UseCase`s, `Command`s, `DeviceAction`s,
-the app binder). The full address book is persisted to `localStorage` under the
-key **`dmk-sample-address-book`** and reloaded on page load.
+The **Contacts** page mocks the Ledger Wallet desktop Contacts flows (list +
+detail, dialogs, device step) on top of the **four** public external-address
+methods of `ContactsManager` (Ledger-account contacts are out of scope). The
+**Advanced** mode keeps the raw testers of those four methods. Neither calls kit
+internals (`UseCase`s, `Command`s, `DeviceAction`s, the app binder). The whole
+address book is persisted to `localStorage` under the key
+**`dmk-sample-address-book`** and reloaded on page load.
 
 ## Scope
 
-| #   | Public method                   | Device operation              | Rotates       |
-| --- | ------------------------------- | ----------------------------- | ------------- |
-| 1   | `registerExternalAddress`       | REGISTER IDENTITY             | issues proofs |
-| 2   | `renameContact`                 | EDIT CONTACT NAME (dashboard) | `hmacProof`   |
-| 3   | `editExternalAddressIdentifier` | EDIT IDENTIFIER               | `hmacRest`    |
-| 4   | `editExternalAddressScope`      | EDIT SCOPE                    | `hmacRest`    |
+| #   | Public method                   | Device operation              | Rotates       | Page flow                             |
+| --- | ------------------------------- | ----------------------------- | ------------- | ------------------------------------- |
+| 1   | `registerExternalAddress`       | REGISTER IDENTITY             | issues proofs | Add address                           |
+| 2   | `renameContact`                 | EDIT CONTACT NAME (dashboard) | `hmacProof`   | Edit contact (once it has an address) |
+| 3   | `editExternalAddressIdentifier` | EDIT IDENTIFIER               | `hmacRest`    | Edit address — address changed        |
+| 4   | `editExternalAddressScope`      | EDIT SCOPE                    | `hmacRest`    | Edit address — name changed           |
+
+As in Ledger Wallet, adding a contact, renaming a contact that has no address
+yet, and deleting contacts or addresses are **local only** (no device). A
+contact gets its `groupHandle` + `hmacProof` when its first address is
+registered. Editing both the address and its name runs EDIT IDENTIFIER, then
+EDIT SCOPE with the rotated `hmacRest` (the device step shows "Step 1 of 2").
 
 ## Prerequisites
 
-- A **compatible device** with an OS + Ethereum app that support Contacts:
+- A **compatible device** with an OS + app that support Contacts:
   - Register / Edit Identifier / Edit Scope validated on **Flex, OS 1.7.0-rc2,
     Ethereum 1.23.0-dev**.
-  - **Rename** needs the OS `EDIT CONTACT NAME` dashboard command, which ships in
-    a later OS RC (~mid-Sept 2025). On older OS it returns `686A` — expected.
+  - **Rename** needs the OS `EDIT CONTACT NAME` dashboard command; on an OS that
+    lacks it the device step shows "Ledger OS update required" or an error.
 - For Tron (section 5): **app-tron ≥ 0.8.0** (test provider **P4**).
-- Device connected (USB), unlocked, session selected in the sample app.
-- The **family** dropdown on Register / Edit Identifier / Edit Scope picks the
-  embedded app the operation runs in: `ethereum` → Ethereum, `tron` → Tron (see
-  `ContactsProvider`). Rename runs on the dashboard, whatever the family.
-- Open the sample app → **Contacts** in the left menu.
-
-Each method renders its progress / intermediate states and any error through the
-shared `DeviceActionsList` harness — watch that panel while confirming on-device.
+- **Solana** (section 7): **Solana app ≥ 1.19.0** (`MIN_SOLANA_APP_VERSION`).
+  On an older app the device step ends with **"App update required"**.
+- Open the sample app → **Contacts** in the left menu. The page works without a
+  device; the device step asks for one ("Ledger device required") and starts on
+  its own once a device is connected.
+- The network picked in **Add address** decides the app: EVM networks →
+  Ethereum (with that network's chainId), Tron → Tron, Solana → Solana. Rename
+  runs on the dashboard, whatever the family.
 
 ## Reset between runs
 
-Use the **Clear** button in the Address book panel (or clear the
-`dmk-sample-address-book` key in devtools) to start from an empty book. Use
-**Reload** to confirm the book survives a page refresh.
+Use **Reset** in the page header (or clear the `dmk-sample-address-book` key in
+devtools) to start from an empty book. **Reload** re-reads the book from storage.
 
 ## Sample contacts (no device)
 
-**Load samples** seeds placeholder contacts (idempotent — safe to click twice,
-and it won't disturb real device-registered entries). Use it to exercise the
-panel rendering, persistence/reload, and the `toProvideContactInput` adapter
-without a device. Their proofs are **fabricated**, so the device will reject them
-for any real Rename / Edit / Provide operation — validate those flows against
-device-registered contacts only.
+**Load samples** seeds placeholder contacts — Alice (2 Ethereum addresses) and
+Bob (1 Ethereum + 1 Solana address). It is idempotent and never disturbs real
+device-registered entries. Their proofs are **fabricated**, so the device will
+reject them for any real Rename / Edit / Provide operation — validate those
+flows against device-registered contacts only. **Device data (sample only)** in
+the contact detail shows the stored proof material.
+
+Local flows (add / rename / delete a contact, delete an address, search, name
+and address validation, the no-device state) are covered by
+`playwright/cases/contacts/contacts-page.spec.ts`.
 
 ---
 
-## 1. Register External Address — create a new group
+## 1. Add address — first address creates the contact on the device
 
-1. Open **Register External Address**. Defaults: `Alice` / `Eth main` /
-   identifier `de0b…7bae` / `ethereum` / chainId `1`; leave the _existing group_
-   fields empty.
-2. Execute. On device: review + approve the new contact.
-3. **Expect** output `mode: create` and non-empty `groupHandle`, `hmacProof`,
+1. **Add contact** → `Alice`. **Expect** it listed with "0 address" and the
+   "Not on a device yet" tag.
+2. **Add address** → **Ethereum** → address `0xde0b…7bae`, name `Eth main` →
+   **Continue to review**.
+3. On device: review + approve the new contact.
+4. **Expect** the dialog to close; Alice lists one address under **Ethereum**;
+   the tag is gone; **Device data** shows `groupHandle`, `hmacProof` and one
    `hmacRest`.
-4. **Address book panel**: one group `Alice` with one address (`Eth main`,
-   `de0b…7bae`).
-5. **Reload** → the group persists.
+5. Refresh the page → the contact persists.
 
-## 1b. Register External Address — link to existing group
+## 1b. Add address — next addresses link to the contact
 
-1. Re-open **Register External Address**. The _existing group handle_ / _hmac
-   proof_ fields are pre-filled from the latest group.
-2. Change `identifier` to a different address; keep the group fields.
-3. Execute + approve on device.
-4. **Expect** output `mode: link`; `groupHandle` + `hmacProof` **echo unchanged**,
-   a fresh `hmacRest`.
-5. **Panel**: the same `Alice` group now lists **two** addresses.
+1. On Alice: **Add address** → **Ethereum** → a different address, name
+   `Eth cold`. Approve on device.
+2. **Expect** two addresses; `groupHandle` + `hmacProof` **unchanged** in
+   Device data, a fresh `hmacRest` for the new address.
 
-## 2. Rename Contact
+## 2. Edit contact (rename)
 
-1. Open **Rename Contact** — pre-filled `previousContactName`, `groupHandle`,
-   `hmacProof` from the latest group; `newContactName: Bob`.
-2. Execute. On device (dashboard, no app): approve `Alice → Bob`.
-3. **Expect** a **new** `hmacProof`; `groupHandle` unchanged.
-4. **Panel**: group name is now `Bob`; its addresses (identifier / scope /
-   `hmacRest`) are **unchanged**. Only the group name + `hmacProof` changed.
-5. _(Old OS)_: expect error `686A` — Rename unsupported on this OS.
+1. On Alice: **Edit contact** (pen icon) → `Bob` → **Apply changes** (Ledger
+   logo = device step).
+2. On device (dashboard, no app): approve `Alice → Bob`.
+3. **Expect** the name `Bob` and a **new** `hmacProof`; `groupHandle` and the
+   addresses (identifier / name / `hmacRest`) are **unchanged**.
 
-## 3. Edit External Address Identifier
+## 3. Edit address — address
 
-1. Open **Edit External Address Identifier** — pre-filled from the latest
-   address (`previousIdentifier`, `groupHandle`, group `hmacProof`, address
-   `hmacRest`); `newIdentifier: 7099…79c8`.
-2. Execute + approve `old → new` address on device.
-3. **Expect** a **new** `hmacRest`; `hmacProof` echoes **unchanged**.
-4. **Panel**: that address now shows the new identifier + rotated `hmacRest`;
-   the group name / `hmacProof` and the _scope_ are unchanged.
+1. Open an address → **Edit** → change the address only → **Apply changes**.
+2. Approve `old → new` address on device.
+3. **Expect** the new address and a **new** `hmacRest`; the name and the
+   contact's `hmacProof` are unchanged.
 
-## 4. Edit External Address Scope
+## 4. Edit address — name, then both
 
-1. Open **Edit External Address Scope** — pre-filled from the latest address
-   (`previousScope`, `identifier`, group `hmacProof`, address `hmacRest`);
-   `newScope: Eth cold`.
-2. Execute + approve `old scope → new scope` on device.
-3. **Expect** a **new** `hmacRest`; `hmacProof` echoes **unchanged**.
-4. **Panel**: that address shows the new scope + rotated `hmacRest`; its
-   identifier, the group name and `hmacProof` are unchanged.
+1. **Edit** → change the name only → approve. **Expect** the new name and a new
+   `hmacRest`; identifier and `hmacProof` unchanged.
+2. **Edit** → change the address **and** the name → the device step runs
+   "Step 1 of 2 · Edit address" then "Step 2 of 2 · Edit address name"; approve
+   both. **Expect** both changes and one final `hmacRest`.
 
 ## 5. Tron — register, then clear-sign a transfer
 
-1. Open **Register External Address**, set family to `tron`, and enter the
-   recipient as a base58 `T…` address (a 21-byte `41…` hex also works).
-   `chainId` is ignored for Tron. Execute; the Tron app opens — approve.
-2. **Expect** `blockchainFamily: tron`; the panel lists the address in base58.
+1. **Add address** → **Tron** → a base58 `T…` address (a 21-byte `41…` hex also
+   works). The Tron app opens — approve.
+2. **Expect** the address under **Tron**, shown in base58.
 3. Build an unsigned TRX transfer (`TransferContract`) to that address — e.g.
    TronGrid Shasta/Nile `wallet/createtransaction` → `raw_data_hex`.
 4. Open **Signers → Tron** (re-open it after registering: the signer reads the
    book once, when the page mounts) → **Sign transaction** with that hex.
-5. **Expect** the device review to show the contact name + scope instead of the
-   raw address.
+5. **Expect** the device review to show the contact name + address name instead
+   of the raw address.
 6. **TRC20**: a `transfer(address,uint256)` (or `approve`) of a known TRC20
    token (e.g. USDT) to the registered address also shows the contact name —
    the signer matches the token recipient, as the Tron app does, not the token
@@ -122,29 +123,63 @@ device-registered contacts only.
 
 ## 6. Ethereum — clear-sign a transfer to a contact
 
-1. Register an Ethereum contact (section 1) with the chainId you will sign on.
+1. Register an Ethereum contact (section 1) on the network you will sign on.
 2. Open **Signers → Ethereum** → **Sign transaction** with an unsigned native
    transfer whose `to` is that address and whose chainId matches. The signer is
    rebuilt automatically whenever the book changes — no reload needed.
-3. **Expect** the device review to show the contact name + scope for the
-   recipient.
+3. **Expect** the device review to show the contact name + address name.
 4. **Negative**: a different chainId, an unregistered `to`, or Ethereum app
    < 1.23.0 shows the raw address. An ERC-20 `transfer` recipient (in calldata)
    is not matched by the Ethereum signer by design — only the transaction `to`.
 
+## 7. Solana — address entry and the version gate
+
+1. **Add address** → **Solana**. **Expect** the "Solana support" note.
+2. Enter a base58 wallet public key (32 bytes; `0x`-prefixed hex also works).
+   A short or non-base58 value shows "Incorrect address format.".
+3. **Continue to review** → the Solana app opens → **expect "App update
+   required"** (kit version gate), with the `ContactsVersionRequirementError`
+   in **Error details**. The book is left unchanged. Without the Solana app
+   installed, the open-app failure shows instead (Unknown error + details).
+4. Once a Solana app supports Contacts and the gate is lifted, run sections 1–4
+   on Solana.
+
 ---
+
+## Device step — expected screens
+
+| Situation                                        | Screen                                                          |
+| ------------------------------------------------ | --------------------------------------------------------------- |
+| No device session                                | Ledger device required + connect buttons                        |
+| Opening the app / sending                        | Preparing your Ledger device                                    |
+| Device locked                                    | Power on and unlock your {device}                               |
+| Waiting for the user                             | Continue on your {device}                                       |
+| Rejected on device (`0x6a80`, dashboard refusal) | Operation rejected on Ledger device — **Retry** reruns the step |
+| Proof from another seed (`0x6982`)               | Use the same Ledger device you used to add this contact         |
+| Invalid data (`0x6984`, kit validation)          | This address can't be saved                                     |
+| App / OS below the Contacts requirement          | App update required / Ledger OS update required (rename)        |
+| Anything else                                    | Unknown error                                                   |
+
+Every error screen has **Error details** with the raw kit error. A failed step
+leaves the book unchanged.
+
+## Advanced mode
+
+**Advanced** (page header) opens the raw testers of the four methods: every
+device field is editable (hex proofs, arbitrary group handles, skip open app)
+and the full output is shown. The forms are pre-filled from the latest entries
+of the book, and successful outputs are folded into the same book. Use it for
+firmware / kit debugging; it needs a device session.
 
 ## Cross-cutting checks
 
-- **Persist + reload**: after any successful op, **Reload** (and a full page
-  refresh) shows the same book — proof material intact.
-- **Proof-only updates**: rename touches only group name + `hmacProof`; both
-  edits touch only the one address's changed field + `hmacRest`. Nothing else in
-  the book mutates.
+- **Persist + reload**: after any successful op, a page refresh shows the same
+  book — proof material intact.
+- **Proof-only updates**: rename touches only the contact name + `hmacProof`;
+  both edits touch only the one address's changed field + `hmacRest`. Nothing
+  else in the book mutates.
 - **Canonical handle**: an address's `groupHandle` copy always equals its
-  group's canonical `groupHandle` (the `toProvideContactInput` adapter throws
+  contact's canonical `groupHandle` (the `toProvideContactInput` adapter throws
   otherwise).
-- **Errors surface**: reject on device, or run Rename on an unsupporting OS →
-  the error renders in the action panel; the book is left unchanged.
 - **No kit internals**: the Contacts UI imports only public types + methods from
   `@ledgerhq/device-contacts-kit`.
