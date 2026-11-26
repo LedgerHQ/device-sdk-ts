@@ -17,13 +17,22 @@ const DEFAULT_SIGNER_URL = "https://app.devicesdk.ledger-test.com";
  */
 const REQUIRED_RESIGNING_PROXY_VERSION = 2;
 
+/**
+ * The signer check runs before any emulator is acquired, so no scenario
+ * timeout covers it: a stalled signer must not hold the run up.
+ */
+const SIGNER_CHECK_TIMEOUT_MS = 15_000;
+
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-const readResigningProxyVersion = async (
-  response: Response,
-): Promise<number | undefined> => {
-  const body: unknown = await response.json().catch(() => undefined);
+const parseResigningProxyVersion = (text: string): number | undefined => {
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return undefined;
+  }
   return typeof body === "object" &&
     body !== null &&
     "resigningProxyVersion" in body &&
@@ -132,13 +141,18 @@ export class CalInterceptorService {
    * The deployed sample app can lag behind the checkout, and an old proxy
    * fails cases on the device rather than here.
    *
-   * @throws If the signer is unreachable, or too old
+   * @throws If the signer is unreachable or stalls, or is too old
    */
   private async checkSignerVersion(): Promise<void> {
     const url = `${this.signerUrl}/api/signer-info`;
     let response: Response;
+    let text = "";
     try {
-      response = await fetch(url);
+      // The signal also bounds reading the body, so it is read here.
+      response = await fetch(url, {
+        signal: AbortSignal.timeout(SIGNER_CHECK_TIMEOUT_MS),
+      });
+      if (response.ok) text = await response.text();
     } catch (error) {
       throw new Error(
         `Could not reach the CAL signer at ${this.signerUrl}: ${errorMessage(error)}. ` +
@@ -153,9 +167,7 @@ export class CalInterceptorService {
           `with HTTP ${response.status}.`,
       );
     }
-    const version = response.ok
-      ? await readResigningProxyVersion(response)
-      : undefined;
+    const version = response.ok ? parseResigningProxyVersion(text) : undefined;
     if (version === undefined || version < REQUIRED_RESIGNING_PROXY_VERSION) {
       throw new Error(
         `The CAL signer at ${this.signerUrl} is too old for this tester: its ` +

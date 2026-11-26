@@ -56,7 +56,10 @@ describe("CalInterceptorService", () => {
 
     await service.start([]);
 
-    expect(signer).toHaveBeenCalledWith(`${SIGNER_URL}/api/signer-info`);
+    const [, infoInit] = signer.mock.calls.find(
+      ([input]) => String(input) === `${SIGNER_URL}/api/signer-info`,
+    )!;
+    expect(infoInit?.signal).toBeInstanceOf(AbortSignal);
     expect(signer).toHaveBeenCalledWith(`${SIGNER_URL}/api/certificates`);
     expect(globalThis.fetch).not.toBe(signer);
     service.stop();
@@ -110,6 +113,30 @@ describe("CalInterceptorService", () => {
     );
     expect(signer).not.toHaveBeenCalledWith(`${SIGNER_URL}/api/certificates`);
     expect(globalThis.fetch).toBe(signer);
+  });
+
+  // The check runs before any emulator, so no scenario timeout would end it.
+  it("fails the run at startup when the signer stalls on its version", async () => {
+    const timeout = new DOMException(
+      "The operation was aborted due to timeout",
+      "TimeoutError",
+    );
+    serveSigner({
+      certificates: () => Response.json(CERTIFICATES),
+      // Headers sent, then the body times out
+      info: () =>
+        new Response(
+          new ReadableStream({
+            start: (controller) => controller.error(timeout),
+          }),
+        ),
+    });
+
+    await expect(service.start([])).rejects.toThrow(
+      `Could not reach the CAL signer at ${SIGNER_URL}: ` +
+        "The operation was aborted due to timeout",
+    );
+    expect(signer).not.toHaveBeenCalledWith(`${SIGNER_URL}/api/certificates`);
   });
 
   it("fails the run at startup when the signer cannot say its version", async () => {
