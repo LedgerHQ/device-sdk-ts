@@ -1,8 +1,30 @@
 import {
+  type CalBranch,
+  type CalMode,
+} from "@root/src/domain/models/config/CalConfig";
+import {
   type ScenarioOutcome,
   type ScenarioRunReport,
 } from "@root/src/domain/models/ScenarioOutcome";
 import { ResultFormatter } from "@root/src/domain/utils/ResultFormatter";
+
+/** The CAL snapshot a run read, so its results can be traced back to it. */
+export type CalRun = {
+  readonly branch: CalBranch;
+  readonly mode: CalMode;
+  /**
+   * The crypto-assets commit CAL served, read once at startup on a branch
+   * other than `main`. Absent on `main`, or when it could not be read.
+   */
+  readonly commit?: string;
+};
+
+/** One line for the run header, e.g. `CAL next @ 1a2b3c…, test mode`. */
+export function describeCal(cal: CalRun): string {
+  const commit =
+    cal.branch === "main" ? "" : ` @ ${cal.commit ?? "unknown commit"}`;
+  return `CAL ${cal.branch}${commit}, ${cal.mode} mode`;
+}
 
 const seconds = (ms: number): string => `${Math.round(ms / 1000)}s`;
 
@@ -17,7 +39,7 @@ const verdict = (outcome: ScenarioOutcome): string => {
  * A run spreads over many emulators, so its per-scenario logs interleave; the
  * table is what makes the outcome readable afterwards.
  */
-export function reportScenarios(report: ScenarioRunReport): void {
+export function reportScenarios(report: ScenarioRunReport, cal: CalRun): void {
   console.log("\n📋 SCENARIO RESULTS");
   console.table(
     report.outcomes.map((o) => ({
@@ -64,5 +86,11 @@ export function reportScenarios(report: ScenarioRunReport): void {
     { Metric: "Passed", Value: report.outcomes.length - failed.length },
     { Metric: "Failed", Value: failed.length },
     { Metric: "Failing cases", Value: report.failures },
+    // The summary is what a CI job keeps, so it names the CAL it ran against.
+    { Metric: "CAL branch", Value: cal.branch },
+    { Metric: "CAL mode", Value: cal.mode },
+    ...(cal.branch === "main"
+      ? []
+      : [{ Metric: "CAL commit", Value: cal.commit ?? "unknown" }]),
   ]);
 }

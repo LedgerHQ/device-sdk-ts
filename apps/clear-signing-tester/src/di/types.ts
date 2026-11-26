@@ -42,7 +42,6 @@ export const TYPES = {
   ScreenshotSaver: Symbol.for("ScreenshotSaver"),
   FileReader: Symbol.for("FileReader"),
   JsonParser: Symbol.for("JsonParser"),
-  CalAdapter: Symbol.for("CalAdapter"),
 
   // Device Controllers
   DeviceController: Symbol.for("DeviceController"),

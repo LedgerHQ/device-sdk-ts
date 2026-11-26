@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { TYPES } from "@root/src/di/types";
+import { type CalConfig } from "@root/src/domain/models/config/CalConfig";
 import { type SpeculinhoConfig } from "@root/src/domain/models/config/SpeculinhoConfig";
 import {
   type Scenario,
@@ -19,6 +20,7 @@ const RUNTIME: ScenarioRuntime = {
   logLevel: "none",
   originToken: "test-origin-token",
   calMode: "prod",
+  calBranch: "main",
 };
 
 const RUN: ScenarioRun = {
@@ -81,6 +83,42 @@ describe("ContainerScenarioRunner", () => {
       );
     },
   );
+
+  // Every signer reads CAL through this config, so a branch lost here would
+  // quietly test main.
+  it.each(["Ethereum", "Solana", "Tron", "Litecoin"] as const)(
+    "hands the run's CAL branch and mode to a %s container",
+    (coinApp) => {
+      const runner = new ContainerScenarioRunner({
+        ...RUNTIME,
+        calMode: "test",
+        calBranch: "next",
+      });
+
+      const container = runner["buildContainer"]({
+        scenario: { ...RUN.scenario, coinApp },
+        device: "stax",
+      });
+
+      expect(container.get<CalConfig>(TYPES.CalConfig)).toEqual({
+        url: "https://global.api.prd.ledger.com/cal/v1",
+        mode: "test",
+        branch: "next",
+      });
+    },
+  );
+
+  it("reads CAL main in prod mode by default", () => {
+    const container = new ContainerScenarioRunner(RUNTIME)["buildContainer"](
+      RUN,
+    );
+
+    expect(container.get<CalConfig>(TYPES.CalConfig)).toEqual({
+      url: "https://global.api.prd.ledger.com/cal/v1",
+      mode: "prod",
+      branch: "main",
+    });
+  });
 
   // Naming one elsewhere would run the scenario as if it had none.
   it("refuses an address book on a coin app whose signer takes none", async () => {
