@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       cs-scenarios: ${{ steps.select.outputs.scenarios }}
+      sample-api: ${{ steps.filter.outputs.sample-api }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -57,6 +58,10 @@ jobs:
             cs-tester:
               - 'apps/clear-signing-tester/**'
               - '.github/**'
+            sample-api:
+              - 'apps/sample/api/**'
+              - 'apps/sample/requirements.txt'
+              - '.github/workflows/pull_request.yml'
 
       - name: Select clear-signing groups
         id: select
@@ -281,12 +286,40 @@ jobs:
           fi
           echo "All checks passed."
 
+  # The sample's Python API is outside the Turbo tasks of `checks`. Its tests
+  # guard the CAL signer that test-mode clear-signing runs rely on.
+  sample-api-tests:
+    name: Sample API tests
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.sample-api == 'true'
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # The sample image's Python version
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/sample/requirements.txt
+
+      - name: Install the API requirements
+        run: python -m pip install --progress-bar off -r apps/sample/requirements.txt
+
+      - name: Test
+        working-directory: apps/sample
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -m unittest discover -s api -v
+
   health-check:
     name: Run health check
     # Aggregates the checks into a single required status so branch protection
     # only needs to require "Run health check". `!cancelled()` is what lets a
-    # skipped cs-tester through instead of skipping this too.
-    needs: [checks, cs-tester]
+    # skipped cs-tester or sample-api-tests through instead of skipping this too.
+    needs: [checks, cs-tester, sample-api-tests]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     steps:

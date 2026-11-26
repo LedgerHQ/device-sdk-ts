@@ -39,11 +39,98 @@ inputs:
     description: "Emulator seed, required by the solana-transaction-check group"
     required: false
     default: ""
+  cal-branch:
+    description: >-
+      CAL branch the scenarios read (`--cal-branch`): main, next or demo. Any
+      branch but main runs in test mode, which starts the CAL signer in the job.
+    required: false
+    default: "main"
+  cal-mode:
+    description: >-
+      CAL signature mode (`--cal-mode`): prod or test. Empty lets the CLI
+      choose: test when cal-branch is not main, prod otherwise. Test mode
+      starts the CAL signer in the job.
+    required: false
+    default: ""
 
 runs:
   using: "composite"
   steps:
+    # Resolves the mode the way the CLI does, so the signer runs exactly when the
+    # tester needs it. At the defaults (main, empty) nothing below changes: no
+    # signer, no new flags, and the same artifact and summary names.
+    - name: Resolve CAL mode
+      id: cal
+      shell: bash
+      env:
+        INPUT_CAL_BRANCH: ${{ inputs.cal-branch }}
+        INPUT_CAL_MODE: ${{ inputs.cal-mode }}
+      run: |
+        if [ "$INPUT_CAL_MODE" = "test" ] || { [ -z "$INPUT_CAL_MODE" ] && [ "$INPUT_CAL_BRANCH" != "main" ]; }; then
+          echo "test-mode=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "test-mode=false" >> "$GITHUB_OUTPUT"
+        fi
+
+        # Names a run off the default CAL setup, e.g. "next" or "main-test".
+        label=""
+        if [ "$INPUT_CAL_BRANCH" != "main" ] || [ -n "$INPUT_CAL_MODE" ]; then
+          label="${INPUT_CAL_BRANCH}${INPUT_CAL_MODE:+-$INPUT_CAL_MODE}"
+        fi
+        echo "label=$label" >> "$GITHUB_OUTPUT"
+
     - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+
+    # Test mode needs the sample's Python signer for the whole run: it serves the
+    # staging-key certificates and re-signs metadata-service descriptors. It runs
+    # from this checkout, on the sample image's Python version.
+    - name: Set up Python for the CAL signer
+      if: steps.cal.outputs.test-mode == 'true'
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+      with:
+        python-version: "3.12"
+        cache: pip
+        cache-dependency-path: apps/sample/requirements.txt
+
+    - name: Start the CAL signer
+      if: steps.cal.outputs.test-mode == 'true'
+      shell: bash
+      env:
+        PYTHONDONTWRITEBYTECODE: "1"
+        PYTHONUNBUFFERED: "1"
+      run: |
+        SIGNER_URL="http://127.0.0.1:5328"
+        SIGNER_LOG="/tmp/logs/cal-signer.log"
+        mkdir -p /tmp/logs
+
+        python -m pip install --progress-bar off -r apps/sample/requirements.txt gunicorn==23.0.0
+
+        if curl -s -o /dev/null --max-time 2 "$SIGNER_URL/"; then
+          echo "::error::Port 5328 is already in use, so the CAL signer cannot start."
+          exit 1
+        fi
+
+        # The sample image's server (apps/sample/docker-entrypoint.sh), plus threads
+        # because the tester runs up to `concurrency` cases against it at once.
+        nohup gunicorn --chdir apps/sample --bind 127.0.0.1:5328 --workers 2 --threads 4 \
+          --timeout 60 --access-logfile - api.index:app > "$SIGNER_LOG" 2>&1 &
+        signer_pid=$!
+
+        # /api/certificates calls CAL, so a 200 also proves CAL is reachable.
+        deadline=$((SECONDS + 120))
+        status=""
+        until [ "$status" = "200" ]; do
+          if ! kill -0 "$signer_pid" 2>/dev/null || [ "$SECONDS" -ge "$deadline" ]; then
+            echo "::error::The CAL signer did not answer GET /api/certificates with 200 (last status: ${status:-none})."
+            tail -n 50 "$SIGNER_LOG"
+            exit 1
+          fi
+          sleep 2
+          status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$SIGNER_URL/api/certificates" || true)
+        done
+
+        echo "ERC7730_API_URL=$SIGNER_URL" >> "$GITHUB_ENV"
+        echo "CAL signer ready at $SIGNER_URL"
 
     # Build only the clear-signing-tester dependency chain, cold. Avoids the
     # slow **/lib build-cache upload/download and the full build:libs.
@@ -62,6 +149,8 @@ runs:
         INPUT_LOG_LEVEL: ${{ inputs.log-level }}
         INPUT_ENABLE_FILE_LOGGING: ${{ inputs.enable-file-logging }}
         INPUT_SOLANA_RPC_URL: ${{ inputs.solana-rpc-url }}
+        INPUT_CAL_BRANCH: ${{ inputs.cal-branch }}
+        INPUT_CAL_MODE: ${{ inputs.cal-mode }}
         SPECULOS_SEED: ${{ inputs.speculos-seed }}
       run: |
         set -o pipefail
@@ -71,6 +160,15 @@ runs:
 
         if [ -n "$INPUT_LOG_LEVEL" ]; then
           ARGS+=("--log-level" "$INPUT_LOG_LEVEL")
+        fi
+
+        # Passed only off their defaults, so default runs keep today's command line.
+        if [ "$INPUT_CAL_BRANCH" != "main" ]; then
+          ARGS+=("--cal-branch" "$INPUT_CAL_BRANCH")
+        fi
+
+        if [ -n "$INPUT_CAL_MODE" ]; then
+          ARGS+=("--cal-mode" "$INPUT_CAL_MODE")
         fi
 
         if [ -n "$INPUT_SOLANA_RPC_URL" ]; then
@@ -96,9 +194,10 @@ runs:
         INPUT_SUMMARY_PREFIX: ${{ inputs.summary-prefix }}
         INPUT_DEVICE: ${{ inputs.device }}
         INPUT_SCENARIOS: ${{ inputs.scenarios }}
+        CAL_LABEL: ${{ steps.cal.outputs.label }}
       run: |
         {
-          echo "## ${INPUT_SUMMARY_PREFIX} (${INPUT_DEVICE} - ${INPUT_SCENARIOS})"
+          echo "## ${INPUT_SUMMARY_PREFIX}${CAL_LABEL:+ [CAL ${CAL_LABEL}]} (${INPUT_DEVICE} - ${INPUT_SCENARIOS})"
           echo ""
           if [ -f /tmp/cs-tester-output.log ]; then
             echo '```'
@@ -119,8 +218,9 @@ runs:
       env:
         INPUT_ARTIFACT_PREFIX: ${{ inputs.artifact-prefix }}
         INPUT_DEVICE: ${{ inputs.device }}
+        CAL_LABEL: ${{ steps.cal.outputs.label }}
       run: |
-        name=$(echo "${INPUT_ARTIFACT_PREFIX}-${INPUT_DEVICE}" | tr ':/ ' '-')
+        name=$(echo "${INPUT_ARTIFACT_PREFIX}${CAL_LABEL:+-${CAL_LABEL}}-${INPUT_DEVICE}" | tr ':/ ' '-')
         echo "name=$name" >> "$GITHUB_OUTPUT"
 
     - name: Upload logs
