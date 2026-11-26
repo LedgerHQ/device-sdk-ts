@@ -205,6 +205,7 @@ export class CalInterceptor {
     url,
     method,
     init,
+    readBody,
   }: InterceptedRequest): Promise<Response | null> {
     let parsedUrl: URL;
     try {
@@ -217,7 +218,7 @@ export class CalInterceptor {
     // Metadata-service descriptors carry a prod signature that only the
     // re-signing proxy can replace, so fetch them through it.
     if (this.isMetadataServiceRequest(parsedUrl, method)) {
-      return this.fetchThroughResigningProxy(parsedUrl, init);
+      return this.fetchThroughResigningProxy(parsedUrl, init, readBody);
     }
 
     const storedResponse = this.getStoredCalResponse(parsedUrl);
@@ -311,10 +312,14 @@ export class CalInterceptor {
    * Fetch a metadata-service request through the re-signing proxy and return
    * the proxy's response as it is, error statuses included. Returns null, so
    * the request goes through untouched, when there is no proxy to reach.
+   *
+   * @param readBody - Reads the body of a `Request` input, see
+   * InterceptedRequest
    */
   private async fetchThroughResigningProxy(
     parsedUrl: URL,
     init?: RequestInit,
+    readBody?: () => Promise<ArrayBuffer>,
   ): Promise<Response | null> {
     const baseUrl = this.getProxyBaseUrl();
     if (baseUrl === null) {
@@ -324,7 +329,10 @@ export class CalInterceptor {
     const origin = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const proxyUrl = `${origin}${DYNAMIC_DESCRIPTOR_PROXY_PREFIX}${parsedUrl.pathname}${parsedUrl.search}`;
     console.log(`Fetching ${parsedUrl.pathname} via re-signing proxy`);
-    return fetch(proxyUrl, init);
+    return fetch(
+      proxyUrl,
+      readBody === undefined ? init : { ...init, body: await readBody() },
+    );
   }
 
   /**

@@ -49,7 +49,7 @@ describe("FetchInterceptor", () => {
     });
   });
 
-  it("should read the method, headers, body and signal of a Request input", async () => {
+  it("should read the method, headers and signal of a Request input, and its body on demand", async () => {
     // GIVEN
     const controller = new AbortController();
     const request = new Request("https://example.test/path", {
@@ -69,9 +69,32 @@ describe("FetchInterceptor", () => {
     expect(intercepted.init?.method).toBe("POST");
     expect(intercepted.init?.headers).toBe(request.headers);
     expect(intercepted.init?.signal).toBe(request.signal);
-    expect(
-      new TextDecoder().decode(intercepted.init?.body as ArrayBuffer),
-    ).toBe("{}");
+    expect(intercepted.init?.body).toBeUndefined();
+    expect(new TextDecoder().decode(await intercepted.readBody!())).toBe("{}");
+  });
+
+  it("should not offer to read the body of a Request input without one", async () => {
+    // WHEN
+    await fetch(new Request("https://example.test/path"));
+
+    // THEN
+    expect(interceptRequest.mock.calls[0]![0].readBody).toBeUndefined();
+  });
+
+  // Reading the body up front would hold the request until the upload ends.
+  it("should let a Request input through without waiting for its body", async () => {
+    // GIVEN an upload that never ends
+    const request = new Request("https://example.test/path", {
+      method: "POST",
+      body: new ReadableStream(),
+      duplex: "half",
+    } as RequestInit);
+
+    // WHEN
+    await fetch(request);
+
+    // THEN
+    expect(fetchMock).toHaveBeenCalledWith(request, undefined);
   });
 
   // The body is read from a clone, so the original fetch can still send it.

@@ -6,11 +6,17 @@ export type InterceptedRequest = {
   /** Upper-case HTTP method. Defaults to GET, as `fetch` does. */
   method: string;
   /**
-   * The caller's init, or the method, headers, body and abort signal of a
-   * `Request` input. Pass it on when re-issuing the request, so its body,
-   * headers and timeout apply.
+   * The caller's init, or the method, headers and abort signal of a `Request`
+   * input. Pass it on when re-issuing the request, so its body, headers and
+   * timeout apply.
    */
   init?: RequestInit;
+  /**
+   * Reads the body of a `Request` input, which `init` leaves out. Call it only
+   * to re-issue the request: it waits for the whole upload. It reads a clone,
+   * so the original can still go through untouched.
+   */
+  readBody?: () => Promise<ArrayBuffer>;
 };
 
 /**
@@ -21,17 +27,12 @@ export type InterceptRequest = (
   request: InterceptedRequest,
 ) => Response | null | Promise<Response | null>;
 
-const toInterceptedRequest = async (
+const toInterceptedRequest = (
   input: RequestInfo | URL,
   init?: RequestInit,
-): Promise<InterceptedRequest> => {
+): InterceptedRequest => {
   if (input instanceof Request) {
     const method = (init?.method ?? input.method).toUpperCase();
-    // Read from a clone: the original must stay readable when the request
-    // goes through untouched.
-    const body =
-      init?.body ??
-      (input.body === null ? undefined : await input.clone().arrayBuffer());
     return {
       url: input.url,
       method,
@@ -40,8 +41,11 @@ const toInterceptedRequest = async (
         signal: input.signal,
         ...init,
         method,
-        body,
       },
+      // Lazy: a request let through must keep streaming its body as it comes.
+      ...(init?.body === undefined && input.body !== null
+        ? { readBody: () => input.clone().arrayBuffer() }
+        : {}),
     };
   }
   return {
@@ -73,7 +77,7 @@ export class FetchInterceptor {
       init?: RequestInit,
     ): Promise<Response> => {
       const response = await this.interceptRequest(
-        await toInterceptedRequest(input, init),
+        toInterceptedRequest(input, init),
       );
       return response ?? originalFetch(input, init);
     };
