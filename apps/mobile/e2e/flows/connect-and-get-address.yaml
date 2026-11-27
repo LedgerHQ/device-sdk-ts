@@ -1,0 +1,50 @@
+# Joins the session TOKEN of the mock server at MOCK_SERVER_URL, connects
+# DEVICE_NAME and runs Get address.
+appId: com.ledger.dmk.samplern
+---
+- launchApp:
+    clearState: true
+# A debug build downloads its bundle from Metro again after a state reset. The
+# default session's status is not awaited: CI can't reach the hosted mock
+# server, and the request then hangs.
+- extendedWaitUntil:
+    visible:
+      id: "mock-server-url-input"
+    timeout: 120000
+- tapOn:
+    id: "mock-server-url-input"
+- eraseText: 100
+- inputText: ${MOCK_SERVER_URL}
+- hideKeyboard
+- tapOn:
+    id: "mock-server-token-input"
+- eraseText: 100
+- inputText: ${TOKEN}
+- hideKeyboard
+- tapOn: "Use this session"
+# The panel names the token once the app has rebuilt on that session.
+- extendedWaitUntil:
+    visible: "(?s).*#token=${TOKEN}.*"
+    timeout: 30000
+- tapOn: "Connect to a device"
+- tapOn: "Scan mock server devices"
+- extendedWaitUntil:
+    visible: "${DEVICE_NAME}.*"
+    timeout: 30000
+- tapOn: "${DEVICE_NAME}.*"
+- extendedWaitUntil:
+    visible: "Open app"
+    timeout: 30000
+- scrollUntilVisible:
+    element: "Ethereum: Get address"
+# One more scroll, so the debug build's error toasts at the bottom don't cover it.
+- scroll
+- tapOn: "Ethereum: Get address"
+- extendedWaitUntil:
+    visible: "Send"
+    timeout: 30000
+- tapOn: "Send"
+- extendedWaitUntil:
+    visible: '(?is).*"completed".*${ADDRESS}.*'
+    timeout: 120000
+- tapOn: "Cancel"

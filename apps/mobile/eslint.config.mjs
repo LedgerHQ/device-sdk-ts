@@ -14,11 +14,17 @@ export default [
     },
   },
   {
-    files: ["eslint.config.mjs"],
+    files: ["eslint.config.mjs", "vitest.e2e.config.mjs"],
     languageOptions: {
       parserOptions: {
         project: null,
       },
+    },
+  },
+  {
+    files: ["e2e/**/*.ts"],
+    rules: {
+      "no-restricted-imports": "off",
     },
   },
   {
