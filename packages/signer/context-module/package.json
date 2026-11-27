@@ -45,12 +45,11 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",
-    "@types/crypto-js": "catalog:",
     "ts-node": "catalog:"
   },
   "dependencies": {
+    "@noble/hashes": "^1.8.0",
     "bs58": "catalog:",
-    "crypto-js": "catalog:",
     "ethers": "catalog:",
     "inversify": "catalog:",
     "purify-ts": "catalog:",

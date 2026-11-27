@@ -12,7 +12,7 @@
       "@root/*": ["./*"]
     },
     "resolveJsonModule": true,
-    "types": ["node", "vitest/globals", "crypto-js"]
+    "types": ["node", "vitest/globals"]
   },
   "include": ["index.ts", "src", "vitest.*.mjs"]
 }
