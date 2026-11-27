@@ -35,11 +35,13 @@ export class ExtractTransactionTask {
   run(): CommandResult<HexaString, BtcErrorCodes> {
     const { psbt } = this._args;
     const transaction = new ByteArrayBuilder();
-    const psbtVersion = psbt
-      .getGlobalValue(PsbtGlobal.VERSION)
+    // The transaction version is PSBT_GLOBAL_TX_VERSION, not the PSBT format
+    // version (PSBT_GLOBAL_VERSION), which is always 2 after normalization.
+    const txVersion = psbt
+      .getGlobalValue(PsbtGlobal.TX_VERSION)
       .chain((value) => this._valueParser.getUInt32LE(value.data))
       .orDefault(0);
-    transaction.add32BitUIntToData(psbtVersion, false);
+    transaction.add32BitUIntToData(txVersion, false);
     const isSegwit = psbt.getInputValue(0, PsbtIn.WITNESS_UTXO).isJust();
     if (isSegwit) {
       transaction.addBufferToData(Uint8Array.from([0, 0x01]));
@@ -67,10 +69,11 @@ export class ExtractTransactionTask {
         .mapOrDefault((v) => v.data, Uint8Array.from([]));
       transaction.addBufferToData(encodeVarint(scriptSig.length).extract()!);
       transaction.addBufferToData(scriptSig);
+      // BIP-370: an input without PSBT_IN_SEQUENCE has sequence 0xffffffff
       const sequence = psbt
         .getInputValue(i, PsbtIn.SEQUENCE)
         .chain((value) => this._valueParser.getUInt32LE(value.data))
-        .orDefault(0);
+        .orDefault(0xffffffff);
       transaction.add32BitUIntToData(sequence, false);
       if (isSegwit) {
         const witness = psbt
