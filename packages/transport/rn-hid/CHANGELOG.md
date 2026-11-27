@@ -1,5 +1,17 @@
 # @ledgerhq/device-transport-kit-react-native-hid
 
+## 1.1.0
+
+### Minor Changes
+
+- [#2225](https://github.com/LedgerHQ/device-sdk-ts/pull/2225) [`4d3af8b`](https://github.com/LedgerHQ/device-sdk-ts/commit/4d3af8b0c08fa10e5bcfd7a49152a9e2cd1dc7bc) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Give a USB device the same id in discovery and after connect. The discovered id changes from the Android device number (`1005`) to `usb_1005`, the id that the session already used. After a re-enumeration, discovery gives the id of the open session.
+
+### Patch Changes
+
+- [#2066](https://github.com/LedgerHQ/device-sdk-ts/pull/2066) [`c9653f1`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9653f1881baa8faa3c4cd60026d4c3fb83faae0) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Exclude test files from the published package
+
+- [#2062](https://github.com/LedgerHQ/device-sdk-ts/pull/2062) [`194dfcc`](https://github.com/LedgerHQ/device-sdk-ts/commit/194dfcc3e3eed4866831ec2132d87f3625b79bca) Thanks [@gre-ledger](https://github.com/gre-ledger)! - Remove unused @sentry/minimal dependency
+
 ## 1.0.4
 
 ### Patch Changes
