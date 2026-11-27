@@ -134,6 +134,74 @@ describe("SendSignPersonalMessageTask", () => {
       expect((result as any).data).toStrictEqual(signature);
     });
 
+    it.each([
+      { message: "\u00e9", bytes: [0xc3, 0xa9] },
+      { message: "\ud83d\ude00", bytes: [0xf0, 0x9f, 0x98, 0x80] },
+      { message: "\u4e2d", bytes: [0xe4, 0xb8, 0xad] },
+    ])("should send the UTF-8 bytes of $message", async ({ message, bytes }) => {
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        message,
+        logger: mockLogger,
+      };
+      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
+
+      const result = await new SendSignPersonalMessageTask(apiMock, args).run();
+
+      expect(apiMock.sendCommand).toHaveBeenCalledExactlyOnceWith(
+        new SignPersonalMessageCommand({
+          data: new Uint8Array([
+            ...SEND_MESSAGE_HELLO_WORLD_DATA.slice(0, 21),
+            0x00,
+            0x00,
+            0x00,
+            bytes.length,
+            ...bytes,
+          ]),
+          isFirstChunk: true,
+        }),
+      );
+      expect(result).toStrictEqual(CommandResultFactory({ data: signature }));
+    });
+
+    it("should preserve UTF-8 bytes across chunk boundaries", async () => {
+      const args = {
+        derivationPath: "44'/60'/0'/0/0",
+        message: "a" + "\u00e9".repeat(120),
+        logger: mockLogger,
+      };
+      const data = new Uint8Array([
+        ...SEND_MESSAGE_HELLO_WORLD_DATA.slice(0, 21),
+        0x00,
+        0x00,
+        0x00,
+        0xf1,
+        0x61,
+        ...Array.from({ length: 120 }, () => [0xc3, 0xa9]).flat(),
+      ]);
+      apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
+      apiMock.sendCommand.mockResolvedValueOnce(resultOk);
+
+      const result = await new SendSignPersonalMessageTask(apiMock, args).run();
+
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        1,
+        new SignPersonalMessageCommand({
+          data: data.slice(0, 255),
+          isFirstChunk: true,
+        }),
+      );
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        2,
+        new SignPersonalMessageCommand({
+          data: data.slice(255),
+          isFirstChunk: false,
+        }),
+      );
+      expect(result).toStrictEqual(CommandResultFactory({ data: signature }));
+    });
+
     it("should send the long message in chunks", async () => {
       // GIVEN
       const args = {

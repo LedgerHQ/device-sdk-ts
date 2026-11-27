@@ -46,10 +46,12 @@ export class SendSignPersonalMessageTask {
       },
     });
 
+    const messageBytes =
+      typeof message === "string" ? new TextEncoder().encode(message) : message;
     const paths = DerivationPathUtils.splitPath(derivationPath);
 
     const builder = new ByteArrayBuilder(
-      message.length + 1 + (paths.length + 1) * PATH_SIZE,
+      messageBytes.length + 1 + (paths.length + 1) * PATH_SIZE,
     );
     // add the derivation paths length
     builder.add8BitUIntToData(paths.length);
@@ -58,13 +60,9 @@ export class SendSignPersonalMessageTask {
       builder.add32BitUIntToData(path);
     });
     // add message length
-    builder.add32BitUIntToData(message.length);
+    builder.add32BitUIntToData(messageBytes.length);
     // add the message
-    if (typeof message === "string") {
-      builder.addAsciiStringToData(message);
-    } else {
-      builder.addBufferToData(message);
-    }
+    builder.addBufferToData(messageBytes);
 
     const buffer = builder.build();
 
