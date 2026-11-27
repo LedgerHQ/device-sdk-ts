@@ -1,7 +1,9 @@
+export type { InterceptedRequest, InterceptRequest } from "./AxiosInterceptor";
 export {
   FetchInterceptor as AxiosInterceptor,
   FetchInterceptor,
 } from "./AxiosInterceptor";
+export type { CalInterceptorOptions } from "./CalInterceptor";
 export { CalInterceptor } from "./CalInterceptor";
 export type {
   ERC7730ClientConfig,
