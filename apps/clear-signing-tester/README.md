@@ -19,11 +19,12 @@ pnpm build:libs
 
 ## Environment variables
 
-| Variable         | Required                       | Default                             | Description                                                         |
-| ---------------- | ------------------------------ | ----------------------------------- | ------------------------------------------------------------------- |
-| `GATING_TOKEN`   | For CAL origin-gated features  | —                                   | Origin token                                                        |
-| `SPECULINHO_URL` | No                             | `https://speculinho.ledgerlabs.net` | Speculinho operator URL                                             |
-| `SPECULOS_SEED`  | For `solana-transaction-check` | Speculos' default test mnemonic     | Seed that group's emulators boot with: a funded wallet's, see below |
+| Variable          | Required                       | Default                                 | Description                                                                  |
+| ----------------- | ------------------------------ | --------------------------------------- | ---------------------------------------------------------------------------- |
+| `GATING_TOKEN`    | For CAL origin-gated features  | —                                       | Origin token                                                                 |
+| `ERC7730_API_URL` | For CAL test mode              | `https://app.devicesdk.ledger-test.com` | The sample app's signer API, see [CAL branch and mode](#cal-branch-and-mode) |
+| `SPECULINHO_URL`  | No                             | `https://speculinho.ledgerlabs.net`     | Speculinho operator URL                                                      |
+| `SPECULOS_SEED`   | For `solana-transaction-check` | Speculos' default test mnemonic         | Seed that group's emulators boot with: a funded wallet's, see below          |
 
 ## Running scenarios
 
@@ -154,26 +155,28 @@ wallet's seed.
 
 ### Options
 
-| Option                         | Default           | Description                                        |
-| ------------------------------ | ----------------- | -------------------------------------------------- |
-| `--device <device>`            | every supported   | Run only scenarios supporting this device          |
-| `--concurrency <n>`            | `4`               | How many cases may hold an emulator at once        |
-| `--no-split`                   | split             | Run a whole fixture on one emulator, in order      |
-| `--log-level <level>`          | `info`            | Console log level                                  |
-| `--log-dir <path>`             | —                 | One log file per case                              |
-| `--file-log-level <level>`     | `--log-level`     | File log level                                     |
-| `--screenshot-folder-path`     | —                 | Save signing screenshots                           |
-| `--speculinho-url <url>`       | `SPECULINHO_URL`  | Speculinho operator URL                            |
-| `--speculos-http-timeout <ms>` | `0` (none)        | Timeout for Speculos pod requests                  |
-| `--rpc-url <url>`              | Ledger endpoint   | Solana RPC, unused while `solana-programs` is off  |
-| `--derivation-path <path>`     | `44'/60'/0'/0/0`  | Ethereum derivation path                           |
-| `--solana-derivation-path`     | `44'/501'/0'`     | Solana derivation path                             |
-| `--tron-derivation-path`       | `44'/195'/0'/0/0` | Tron derivation path                               |
-| `--os-version <version>`       | defaults file     | Override the default OS version for a one-off run  |
-| `--app-eth-version <version>`  | defaults file     | Override the default Ethereum app version          |
-| `--app-sol-version <version>`  | defaults file     | Override the default Solana app version            |
-| `--app-trx-version <version>`  | defaults file     | Override the default Tron app version              |
-| `--erc7730-files <files...>`   | —                 | Inject descriptors; also switches CAL to test mode |
+| Option                         | Default           | Description                                           |
+| ------------------------------ | ----------------- | ----------------------------------------------------- |
+| `--device <device>`            | every supported   | Run only scenarios supporting this device             |
+| `--concurrency <n>`            | `4`               | How many cases may hold an emulator at once           |
+| `--no-split`                   | split             | Run a whole fixture on one emulator, in order         |
+| `--log-level <level>`          | `info`            | Console log level                                     |
+| `--log-dir <path>`             | —                 | One log file per case                                 |
+| `--file-log-level <level>`     | `--log-level`     | File log level                                        |
+| `--screenshot-folder-path`     | —                 | Save signing screenshots                              |
+| `--speculinho-url <url>`       | `SPECULINHO_URL`  | Speculinho operator URL                               |
+| `--speculos-http-timeout <ms>` | `0` (none)        | Timeout for Speculos pod requests                     |
+| `--rpc-url <url>`              | Ledger endpoint   | Solana RPC, unused while `solana-programs` is off     |
+| `--derivation-path <path>`     | `44'/60'/0'/0/0`  | Ethereum derivation path                              |
+| `--solana-derivation-path`     | `44'/501'/0'`     | Solana derivation path                                |
+| `--tron-derivation-path`       | `44'/195'/0'/0/0` | Tron derivation path                                  |
+| `--os-version <version>`       | defaults file     | Override the default OS version for a one-off run     |
+| `--app-eth-version <version>`  | defaults file     | Override the default Ethereum app version             |
+| `--app-sol-version <version>`  | defaults file     | Override the default Solana app version               |
+| `--app-trx-version <version>`  | defaults file     | Override the default Tron app version                 |
+| `--cal-branch <branch>`        | `main`            | CAL branch to read: `main`, `next` or `demo`          |
+| `--cal-mode <mode>`            | `prod` on `main`  | CAL signatures to verify, `prod` or `test`; see below |
+| `--erc7730-files <files...>`   | —                 | Inject descriptors; implies `--cal-mode test`         |
 
 ### Scenario files
 
@@ -324,9 +327,68 @@ ready; merging stays manual. Dev and RC builds are ignored, and the OS only move
 when the current one does not carry the new version. The same bump runs locally
 with `pnpm bump-versions <family>`.
 
+## CAL branch and mode
+
+A run reads one CAL branch, `main` unless `--cal-branch` names another, and
+verifies one of CAL's two signature sets:
+
+| `--cal-mode` | The device verifies                        | Speculos                    | CAL interceptor |
+| ------------ | ------------------------------------------ | --------------------------- | --------------- |
+| `prod`       | CAL's production signatures                | production PKI root (`-p`)  | off             |
+| `test`       | CAL's staging-key signatures (`test` slot) | its own test root (no `-p`) | on              |
+
+Only `main` carries valid production signatures throughout. On `next`, an entry
+has none until the quorum signs it (once or twice a week), or the stale one of
+its previous payload, while its `test` signature is re-made on every push. So
+the mode defaults to `test` on any other branch, and with `--erc7730-files`,
+whose descriptors the test key signs; to `prod` otherwise. `--cal-mode prod`
+with either is refused before any emulator is acquired. Without either flag a
+run is unchanged: `main`, prod mode, no interceptor.
+
+Test mode starts the CAL interceptor from `@ledgerhq/cal-interceptor` for the
+whole process. It relies on the sample app's signer API, at `ERC7730_API_URL`:
+
+- `/api/certificates` serves CAL's certificates for the staging key, re-signed
+  with Speculos's test root. They load once at startup, and the run fails there
+  if they cannot be loaded;
+- metadata-service descriptors, which only carry a prod signature, are fetched
+  through its re-signing proxy, `/api/dynamic-descriptor-proxy/…`;
+- `--erc7730-files` go through `/api/process-erc7730-descriptor`.
+
+`pnpm sample flask-dev` serves the signer locally on port 5328. The run first
+checks `/api/signer-info` and stops if the signer's re-signing proxy is older
+than the tester needs, as the deployed sample app can be until its next deploy:
+run the signer locally then.
+
+```bash
+# CAL next
+pnpm cs-tester cli test erc7730 solana --cal-branch next
+
+# Parity: main's content through the interceptor, to compare case by case
+# with the same selection in prod mode
+pnpm cs-tester cli test all --device stax --cal-branch main --cal-mode test
+
+# Against a local signer
+ERC7730_API_URL=http://127.0.0.1:5328 pnpm cs-tester cli test erc7730:uniswap --cal-branch next
+```
+
+The run header and the summary name the branch and the mode. On another branch
+than `main`, they also name the crypto-assets commit CAL served, from the
+`X-Ledger-Commit` header of one request made at startup: `next` moves several
+times a day. If it cannot be read, the run warns and carries on.
+
+A branch other than `main` changes nothing for Tron, whose TRC10 descriptors
+carry the same prod payload in both signature slots, checked by a key built
+into the app, nor for the legacy Bitcoin apps, which use no CAL. The tester
+warns when such a run selects them.
+
+Local runs need `GATING_TOKEN`: CAL's `/dapps` answers 403 without an origin
+token and 401 with an invalid one, so no calldata descriptor would load.
+
 ## ERC7730 Clear Signing Support
 
-Inject custom ERC7730 descriptors to test contracts not yet in the production CAL:
+Inject custom ERC7730 descriptors to test contracts not yet in the production
+CAL. The run is in test mode, see [CAL branch and mode](#cal-branch-and-mode):
 
 ```bash
 # One descriptor, against a single scenario

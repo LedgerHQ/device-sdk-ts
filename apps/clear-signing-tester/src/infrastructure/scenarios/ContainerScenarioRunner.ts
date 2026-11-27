@@ -25,6 +25,11 @@ import { makeSolanaContainer } from "@root/src/di/solanaContainer";
 import { makeTronContainer } from "@root/src/di/tronContainer";
 import { TYPES } from "@root/src/di/types";
 import {
+  CAL_URL,
+  type CalBranch,
+  type CalMode,
+} from "@root/src/domain/models/config/CalConfig";
+import {
   type CliLogLevel,
   type LoggerConfig,
 } from "@root/src/domain/models/config/LoggerConfig";
@@ -69,10 +74,16 @@ export type ScenarioRuntime = {
    */
   readonly speculosSeed?: string;
   /**
-   * CAL mode. Injected ERC7730 descriptors are served with test certificates,
-   * so a run using them must not verify against the production PKI root.
+   * CAL mode. In test mode the interceptor serves certificates signed by
+   * Speculos's test root, so the run must not verify against the production
+   * PKI root.
    */
-  readonly calMode: "prod" | "test";
+  readonly calMode: CalMode;
+  /**
+   * CAL branch every request carrying a `ref` reads. Run-wide, since the
+   * interceptor patches fetch for the whole process.
+   */
+  readonly calBranch: CalBranch;
   /**
    * Overrides the default_versions.json pin for a one-off run. A scenario
    * carrying its own pin keeps it.
@@ -302,9 +313,9 @@ export class ContainerScenarioRunner implements ScenarioRunner {
           : {}),
       },
       cal: {
-        url: "https://global.api.prd.ledger.com/cal/v1",
+        url: CAL_URL,
         mode: this.runtime.calMode,
-        branch: "main",
+        branch: this.runtime.calBranch,
       },
       ...(this.runtime.solanaRpcUrl
         ? { solanaRpc: { url: this.runtime.solanaRpcUrl } }
