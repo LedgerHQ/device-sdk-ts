@@ -34,6 +34,8 @@ export const TLV_TAG = {
   TRIGGER_TYPE: 0xe9,
   ABSTRACTION: 0xdf,
   CLOID: 0xee,
+  // TODO(DEV-0): confirm tag byte with device-app ADR before release
+  REFERRAL_CODE: 0xef,
   GROUPING: 0xea,
   BUILDER_INFO: 0xeb,
   BUILDER_FEE: 0xec,
@@ -59,6 +61,8 @@ export const ACTION_TYPE = {
   APPROVAL_BUILDER_FEE: 0x04,
   UPDATE_ISOLATED_MARGIN: 0x05,
   USER_SET_ABSTRACTION: 0x06,
+  // TODO(DEV-0): confirm action_type byte with device-app ADR before release
+  SET_REFERRER: 0x07,
 } as const;
 
 /** order_type: limit, trigger (specs Order structure) */
@@ -106,6 +110,8 @@ function getActionTypeByte(action: HyperliquidAction): number {
       return ACTION_TYPE.UPDATE_ISOLATED_MARGIN;
     case "userSetAbstraction":
       return ACTION_TYPE.USER_SET_ABSTRACTION;
+    case "setReferrer":
+      return ACTION_TYPE.SET_REFERRER;
     default:
       throw new Error(
         `Unknown action type: ${(action as HyperliquidAction).type}`,
@@ -435,6 +441,9 @@ export function buildActionStructure(action: HyperliquidAction): Uint8Array {
       );
       break;
     }
+    case "setReferrer":
+      encodeInTlvFromAscii(b, TLV_TAG.REFERRAL_CODE, action.code);
+      break;
     default:
       break;
   }

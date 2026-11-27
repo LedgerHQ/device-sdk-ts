@@ -203,3 +203,46 @@ Example:
   }
 ]
 ```
+
+### Order with a builder fee and a referral code
+
+```json
+[
+  {
+    "type": "approveBuilderFee",
+    "hyperliquidChain": "Mainnet",
+    "signatureChainId": "0xa4b1",
+    "maxFeeRate": "0.1000%",
+    "builder": "0xc0708cdd6cd166d51da264e3f49a0422be26e35b",
+    "nonce": 1772440978175
+  },
+  {
+    "type": "setReferrer",
+    "code": "LEDGER",
+    "nonce": 1772440978176
+  },
+  {
+    "type": "updateLeverage",
+    "asset": 1,
+    "isCross": false,
+    "leverage": 10,
+    "nonce": 1772440978177
+  },
+  {
+    "type": "order",
+    "orders": [
+      {
+        "a": 1,
+        "b": true,
+        "p": "1978.8",
+        "s": "0.5154",
+        "r": false,
+        "t": { "limit": { "tif": "Ioc" } }
+      }
+    ],
+    "grouping": "na",
+    "builder": { "b": "0xc0708cdd6cd166d51da264e3f49a0422be26e35b", "f": 100 },
+    "nonce": 1772440978178
+  }
+]
+```
