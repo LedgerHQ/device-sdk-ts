@@ -100,8 +100,9 @@ internal class DefaultAndroidUsbTransport(
      * Gives the id of a USB device. Discovery and connect use the same id.
      *
      * - A device with an open connection gets the session id of that connection.
-     *   When the device re-enumerates (for example, when the user opens an app),
-     *   Android gives it a new device number. The reconnection gives the new
+     *   When the device re-enumerates (for example, when an app change on the
+     *   device triggers a disconnection/reconnection), Android gives it a new
+     *   device number. The reconnection gives the new
      *   [UsbDevice] to the open connection, so the device keeps its session id.
      * - A device without a connection gets [generateSessionId]. [connect] gives
      *   the same value as the session id.

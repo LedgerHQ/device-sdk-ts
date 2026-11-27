@@ -28,27 +28,30 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Android gives a USB device a new device number when it re-enumerates
- * (for example, when the user opens an app on the device). These tests check
- * that discovery and connect give the device the same id, before and after
- * a re-enumeration.
+ * Android gives a USB device a new device number when it re-enumerates, for
+ * example when an app change on the device triggers a disconnection/reconnection.
+ * These tests check that discovery and connect give the device the same id,
+ * before and after a re-enumeration.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultAndroidUsbTransportTest {
-    private val attachedDevices = mutableMapOf<String, UsbDevice>()
+    private val androidDevices = mutableMapOf<String, UsbDevice>()
 
     private val usbManager = mockk<UsbManager> {
-        every { deviceList } answers { HashMap(attachedDevices) }
+        every { deviceList } answers { HashMap(androidDevices) }
         every { hasPermission(any<UsbDevice>()) } returns true
         every { openDevice(any()) } answers { mockk(relaxed = true) }
     }
 
     private val eventDispatcher = mockk<SdkEventDispatcher>(relaxed = true)
 
+    private val beforeAppChange = nanoX(number = 1005)
+    private val afterAppChange = nanoX(number = 1006)
+
     @Test
     fun `GIVEN a device without connection WHEN discovered THEN its id is usb_number`() = runTest {
         val transport = createTransport()
-        attach(transport, nanoX(1005))
+        plugIn(beforeAppChange)
 
         assertEquals("usb_1005", scan(transport).uid)
     }
@@ -56,7 +59,7 @@ class DefaultAndroidUsbTransportTest {
     @Test
     fun `GIVEN a discovered device WHEN connected THEN the session id is the discovered id`() = runTest {
         val transport = createTransport()
-        attach(transport, nanoX(1005))
+        plugIn(beforeAppChange)
 
         assertEquals("usb_1005", connect(transport, scan(transport)).sessionId)
     }
@@ -64,10 +67,10 @@ class DefaultAndroidUsbTransportTest {
     @Test
     fun `GIVEN a connected device WHEN it re-enumerates THEN discovery gives the session id`() = runTest {
         val transport = createTransport()
-        attach(transport, nanoX(1005))
+        plugIn(beforeAppChange)
         connect(transport, scan(transport))
 
-        reEnumerate(transport, from = 1005, to = 1006)
+        reEnumerate(transport, from = beforeAppChange, to = afterAppChange)
 
         assertEquals("usb_1005", scan(transport).uid)
     }
@@ -75,9 +78,9 @@ class DefaultAndroidUsbTransportTest {
     @Test
     fun `GIVEN a re-enumerated device WHEN connected THEN the open connection is used`() = runTest {
         val transport = createTransport()
-        attach(transport, nanoX(1005))
+        plugIn(beforeAppChange)
         connect(transport, scan(transport))
-        reEnumerate(transport, from = 1005, to = 1006)
+        reEnumerate(transport, from = beforeAppChange, to = afterAppChange)
 
         val result = connect(transport, scan(transport))
 
@@ -89,9 +92,9 @@ class DefaultAndroidUsbTransportTest {
     @Test
     fun `GIVEN a re-enumerated device WHEN disconnected THEN its session ends`() = runTest {
         val transport = createTransport()
-        attach(transport, nanoX(1005))
+        plugIn(beforeAppChange)
         connect(transport, scan(transport))
-        reEnumerate(transport, from = 1005, to = 1006)
+        reEnumerate(transport, from = beforeAppChange, to = afterAppChange)
 
         transport.disconnect("usb_1005")
         runCurrent()
@@ -124,20 +127,32 @@ class DefaultAndroidUsbTransportTest {
     ): InternalConnectionResult.Connected =
         assertIs<InternalConnectionResult.Connected>(transport.connect(device))
 
-    private fun TestScope.attach(transport: DefaultAndroidUsbTransport, usbDevice: UsbDevice) {
-        attachedDevices[usbDevice.deviceName] = usbDevice
-        transport.updateUsbState(UsbState.Attached(usbDevice.toLedgerUsbDevice()!!))
-        // Less than the 5 s reconnection timeout, more than the 200 ms post-connection delay.
-        advanceTimeBy(1.seconds)
-        runCurrent()
+    /** Discovery reads the device list of Android, so plugging in a device needs no event. */
+    private fun plugIn(device: UsbDevice) {
+        androidDevices[device.deviceName] = device
     }
 
-    private fun TestScope.reEnumerate(transport: DefaultAndroidUsbTransport, from: Int, to: Int) {
-        val oldDevice = attachedDevices.values.single { it.deviceId == from }
-        attachedDevices.remove(oldDevice.deviceName)
-        transport.updateUsbState(UsbState.Detached(oldDevice.toLedgerUsbDevice()!!))
+    /**
+     * What Android does when an app change on the device triggers a
+     * disconnection/reconnection: it detaches the device, then attaches it
+     * again with a new device number.
+     */
+    private fun TestScope.reEnumerate(
+        transport: DefaultAndroidUsbTransport,
+        from: UsbDevice,
+        to: UsbDevice,
+    ) {
+        androidDevices.remove(from.deviceName)
+        transport.updateUsbState(UsbState.Detached(from.toLedgerUsbDevice()!!))
+        // The open connection now waits for its device.
         runCurrent()
-        attach(transport, nanoX(to))
+
+        androidDevices[to.deviceName] = to
+        transport.updateUsbState(UsbState.Attached(to.toLedgerUsbDevice()!!))
+        // The transport gives the new device to the waiting connection after
+        // 200 ms, and would end the session after 5 s.
+        advanceTimeBy(1.seconds)
+        runCurrent()
     }
 
     private fun nanoX(number: Int): UsbDevice {

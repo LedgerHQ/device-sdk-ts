@@ -88,4 +88,4 @@ const dmk = new DeviceManagementKitBuilder()
 
 A USB device has the same id in discovery and after connect, in the format `usb_<number>` (for example, `usb_1005`).
 
-When a device re-enumerates (for example, when the user opens or closes an app on it), Android gives it a new device number. If the device has an open session, discovery continues to give it the id of that session. If it has no open session, its id changes to the new number.
+When a device re-enumerates (for example, when an app change on the device triggers a disconnection/reconnection), Android gives it a new device number. If the device has an open session, discovery continues to give it the id of that session. If it has no open session, its id changes to the new number.
