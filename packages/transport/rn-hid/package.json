@@ -62,7 +62,7 @@
     "rxjs": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.13.0",
+    "@ledgerhq/device-management-kit": "workspace:^",
     "react-native": ">0.74.1",
     "rxjs": "catalog:"
   }
