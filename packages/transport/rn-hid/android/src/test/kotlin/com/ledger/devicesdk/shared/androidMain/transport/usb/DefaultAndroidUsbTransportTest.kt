@@ -76,6 +76,31 @@ class DefaultAndroidUsbTransportTest {
     }
 
     @Test
+    fun `GIVEN a device that re-enumerates WHEN discovered before the reconnection ends THEN discovery gives the session id`() = runTest {
+        val transport = createTransport()
+        plugIn(beforeAppChange)
+        connect(transport, scan(transport))
+
+        startReEnumeration(transport, from = beforeAppChange, to = afterAppChange)
+
+        assertEquals("usb_1005", scan(transport).uid)
+    }
+
+    @Test
+    fun `GIVEN a device that re-enumerates WHEN connected before the reconnection ends THEN the waiting connection is used`() = runTest {
+        val transport = createTransport()
+        plugIn(beforeAppChange)
+        connect(transport, scan(transport))
+        startReEnumeration(transport, from = beforeAppChange, to = afterAppChange)
+
+        val result = connect(transport, scan(transport))
+
+        assertEquals("usb_1005", result.sessionId)
+        // One opening for the first connection, one for the reconnection: connect opens no other.
+        verify(exactly = 2) { usbManager.openDevice(any()) }
+    }
+
+    @Test
     fun `GIVEN a re-enumerated device WHEN connected THEN the open connection is used`() = runTest {
         val transport = createTransport()
         plugIn(beforeAppChange)
@@ -142,6 +167,22 @@ class DefaultAndroidUsbTransportTest {
         from: UsbDevice,
         to: UsbDevice,
     ) {
+        startReEnumeration(transport, from, to)
+        // The transport gives the new device to the waiting connection after
+        // 200 ms, and would end the session after 5 s.
+        advanceTimeBy(1.seconds)
+        runCurrent()
+    }
+
+    /**
+     * The first part of [reEnumerate]: Android has attached the new device, and
+     * the transport has not given it to the waiting connection yet.
+     */
+    private fun TestScope.startReEnumeration(
+        transport: DefaultAndroidUsbTransport,
+        from: UsbDevice,
+        to: UsbDevice,
+    ) {
         androidDevices.remove(from.deviceName)
         transport.updateUsbState(UsbState.Detached(from.toLedgerUsbDevice()!!))
         // The open connection now waits for its device.
@@ -149,9 +190,6 @@ class DefaultAndroidUsbTransportTest {
 
         androidDevices[to.deviceName] = to
         transport.updateUsbState(UsbState.Attached(to.toLedgerUsbDevice()!!))
-        // The transport gives the new device to the waiting connection after
-        // 200 ms, and would end the session after 5 s.
-        advanceTimeBy(1.seconds)
         runCurrent()
     }
 

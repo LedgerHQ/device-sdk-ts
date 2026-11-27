@@ -67,6 +67,10 @@ internal class DefaultAndroidUsbTransport(
     private val usbConnectionsPendingReconnection: MutableSet<DeviceConnection<AndroidUsbApduSender.Dependencies>> =
         mutableSetOf()
 
+    // The attached device that each waiting connection is being reconnected to.
+    private val reconnectingDevices: MutableMap<DeviceConnection<AndroidUsbApduSender.Dependencies>, UsbDevice> =
+        ConcurrentHashMap()
+
     private var discoveryJob: Job? = null
 
     override fun startScan(): Flow<List<DiscoveryDevice>> {
@@ -104,6 +108,7 @@ internal class DefaultAndroidUsbTransport(
      *   device triggers a disconnection/reconnection), Android gives it a new
      *   device number. The reconnection gives the new
      *   [UsbDevice] to the open connection, so the device keeps its session id.
+     *   While the reconnection runs, the new [UsbDevice] already gets that id.
      * - A device without a connection gets [generateSessionId]. [connect] gives
      *   the same value as the session id.
      */
@@ -112,6 +117,7 @@ internal class DefaultAndroidUsbTransport(
 
     private fun findConnection(usbDevice: UsbDevice): DeviceConnection<AndroidUsbApduSender.Dependencies>? =
         usbConnections.values.firstOrNull { it.getApduSender().dependencies.usbDevice == usbDevice }
+            ?: reconnectingDevices.entries.firstOrNull { it.value == usbDevice }?.key
 
     override fun updateUsbState(state: UsbState) {
         when (state) {
@@ -173,6 +179,9 @@ internal class DefaultAndroidUsbTransport(
                     it.getApduSender()
                         .dependencies.ledgerUsbDevice.ledgerDevice == state.ledgerUsbDevice.ledgerDevice // we just find a similar device model since there is no way to uniquely identify a device between 2 connections
                 }.let { deviceConnection ->
+                    if (deviceConnection != null) {
+                        reconnectingDevices[deviceConnection] = usbDevice
+                    }
                     scope.launch {
                         if (deviceConnection == null) {
                             loggerService.log(
@@ -198,6 +207,7 @@ internal class DefaultAndroidUsbTransport(
                                     "Permission denied"
                                 )
                             )
+                            reconnectingDevices.remove(deviceConnection, usbDevice)
                             return@launch
                         }
                         loggerService.log(
@@ -228,11 +238,13 @@ internal class DefaultAndroidUsbTransport(
                              * a user interaction.
                              */
                             apduSender.release()
+                            reconnectingDevices.remove(deviceConnection, usbDevice)
                             return@launch
                         }
                         deviceConnection.handleDeviceConnected(apduSender)
                         usbConnectionsPendingReconnection.remove(deviceConnection)
                         usbConnections[deviceConnection.sessionId] = deviceConnection
+                        reconnectingDevices.remove(deviceConnection, usbDevice)
                     }
                 }
             }
@@ -360,6 +372,7 @@ internal class DefaultAndroidUsbTransport(
                     (it.getApduSender() as AndroidUsbApduSender).release()
                     usbConnections.remove(sessionId)
                     usbConnectionsPendingReconnection.remove(it)
+                    reconnectingDevices.remove(it)
                     eventDispatcher.dispatch(TransportEvent.DeviceConnectionLost(sessionId))
                 },
                 coroutineDispatcher = coroutineDispatcher,
