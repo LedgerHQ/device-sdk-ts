@@ -1,5 +1,18 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.19.0
+
+### Minor Changes
+
+- [#1718](https://github.com/LedgerHQ/device-sdk-ts/pull/1718) [`58b21a8`](https://github.com/LedgerHQ/device-sdk-ts/commit/58b21a849530fdd8b4424a321e81edbfd3bb26ba) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Support ERC-7730 v2 maps looked up by the device: provide the MAP_ENTRY matching the key read from the transaction (`PROVIDE MAP ENTRY` APDU `0x3A`) before the field referencing it, and resolve tokens and NFT collections from map entry values. Descriptors using maps are not clear signed on Ethereum app versions older than 1.23.0
+
+- [#2221](https://github.com/LedgerHQ/device-sdk-ts/pull/2221) [`90029af`](https://github.com/LedgerHQ/device-sdk-ts/commit/90029afab912afc72275c31f51ba2d343b2e521c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Stop sending v1 blind signing reports: each signing now only sends the v2 sign report.
+
+### Patch Changes
+
+- Updated dependencies [[`cc940b8`](https://github.com/LedgerHQ/device-sdk-ts/commit/cc940b8e988ac19ea357dc3c4222502975a1de06), [`db9083e`](https://github.com/LedgerHQ/device-sdk-ts/commit/db9083edf6104d2f0f5ec56111359682b3168974), [`64836fe`](https://github.com/LedgerHQ/device-sdk-ts/commit/64836fe4e2af2dd419baef9c8b3e1e027484fd64), [`5f9f06e`](https://github.com/LedgerHQ/device-sdk-ts/commit/5f9f06ebb3aa7cd7b5a1ecdb89b09e209f544d63), [`90029af`](https://github.com/LedgerHQ/device-sdk-ts/commit/90029afab912afc72275c31f51ba2d343b2e521c), [`5906edc`](https://github.com/LedgerHQ/device-sdk-ts/commit/5906edc769d71a13ec9c5545c1af95234bf05806)]:
+  - @ledgerhq/context-module@2.11.0
+
 ## 1.18.3
 
 ### Patch Changes
