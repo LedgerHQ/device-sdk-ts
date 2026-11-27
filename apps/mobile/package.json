@@ -9,7 +9,9 @@
     "pod": "cd ios && bundle exec pod install --repo-update",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
-    "start": "ROZENITE_DEV_MODE=@ledgerhq/device-management-kit-devtools-rozenite react-native start"
+    "start": "ROZENITE_DEV_MODE=@ledgerhq/device-management-kit-devtools-rozenite react-native start",
+    "e2e:android:build": "cd android && ./gradlew assembleDebug && adb install -r app/build/outputs/apk/debug/app-debug.apk && adb reverse tcp:8081 tcp:8081",
+    "e2e": "vitest run --config vitest.e2e.config.mjs"
   },
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
@@ -17,6 +19,7 @@
     "@ledgerhq/device-mockserver-react-native": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-rozenite": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-core": "workspace:^",
+    "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
     "@ledgerhq/device-transport-kit-react-native-ble": "workspace:^",
     "@ledgerhq/device-transport-kit-react-native-hid": "workspace:^",
     "@ledgerhq/device-transport-kit-mockserver": "workspace:^",
@@ -62,7 +65,8 @@
     "prettier": "catalog:",
     "react-native-get-random-values": "catalog:",
     "react-test-renderer": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=18"

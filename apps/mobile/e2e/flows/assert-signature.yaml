@@ -1,0 +1,6 @@
+# Waits for the signing to complete with the signature R and S.
+appId: com.ledger.dmk.samplern
+---
+- extendedWaitUntil:
+    visible: '(?is).*"completed".*${R}.*${S}.*'
+    timeout: 120000

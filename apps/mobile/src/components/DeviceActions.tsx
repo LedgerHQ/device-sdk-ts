@@ -13,6 +13,7 @@ import {
   type GoToDashboardDAIntermediateValue,
   type GoToDashboardDAOutput,
   GoToDashboardDeviceAction,
+  hexaStringToBuffer,
   type InstallAppDAError,
   type InstallAppDAInput,
   type InstallAppDAIntermediateValue,
@@ -39,9 +40,19 @@ import {
   type UninstallAppDAOutput,
   UninstallAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
+import {
+  type GetAddressDAError,
+  type GetAddressDAIntermediateValue,
+  type GetAddressDAOutput,
+  SignerEthBuilder,
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
+} from "@ledgerhq/device-signer-kit-ethereum";
 import { Flex, LegendInput } from "@ledgerhq/native-ui";
 
 const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
+const ETH_DERIVATION_PATH = "44'/60'/0'/0/0";
 
 export const getDeviceActions = (
   dmk: DeviceManagementKit,
@@ -239,5 +250,70 @@ export const getDeviceActions = (
     UninstallAppDAInput,
     UninstallAppDAError,
     UninstallAppDAIntermediateValue
+  >,
+  {
+    id: "eth_get_address",
+    title: "Ethereum: Get address",
+    description: "Get the Ethereum address of a derivation path",
+    executeDeviceAction: ({ derivationPath }) =>
+      new SignerEthBuilder({ dmk, sessionId })
+        .build()
+        .getAddress(derivationPath),
+    initialValues: { derivationPath: ETH_DERIVATION_PATH },
+    deviceModelId,
+    FormComponent: ({ values, setValue }) => (
+      <Flex>
+        <LegendInput
+          legend="Derivation path"
+          value={values.derivationPath}
+          onChange={derivationPath =>
+            setValue("derivationPath", derivationPath)
+          }
+        />
+      </Flex>
+    ),
+  } satisfies DeviceActionProps<
+    GetAddressDAOutput,
+    { derivationPath: string },
+    GetAddressDAError,
+    GetAddressDAIntermediateValue
+  >,
+  {
+    id: "eth_sign_transaction",
+    title: "Ethereum: Sign transaction",
+    description: "Sign a serialized unsigned Ethereum transaction (hex)",
+    executeDeviceAction: ({ derivationPath, transaction }) => {
+      const tx = hexaStringToBuffer(transaction);
+      if (!tx) {
+        throw new Error("Invalid transaction hex");
+      }
+      return new SignerEthBuilder({ dmk, sessionId })
+        .build()
+        .signTransaction(derivationPath, tx);
+    },
+    initialValues: { derivationPath: ETH_DERIVATION_PATH, transaction: "" },
+    deviceModelId,
+    FormComponent: ({ values, setValue }) => (
+      <Flex>
+        <LegendInput
+          legend="Derivation path"
+          value={values.derivationPath}
+          onChange={derivationPath =>
+            setValue("derivationPath", derivationPath)
+          }
+        />
+        <LegendInput
+          testID="eth-transaction-input"
+          legend="Transaction (hex)"
+          value={values.transaction}
+          onChange={transaction => setValue("transaction", transaction)}
+        />
+      </Flex>
+    ),
+  } satisfies DeviceActionProps<
+    SignTransactionDAOutput,
+    { derivationPath: string; transaction: string },
+    SignTransactionDAError,
+    SignTransactionDAIntermediateValue
   >,
 ];
