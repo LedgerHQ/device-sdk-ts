@@ -72,8 +72,8 @@ export class TransactionParser {
   }
 
   parse(rawBytes: Uint8Array): EitherAsync<ParserError, ParsedTransaction> {
-    // v1 (SIMD-0385) is read by our own validator: web3.js cannot decode it,
-    // and v1 has no lookup tables to resolve.
+    // v1 (SIMD-0385) is read by our own strict validator rather than
+    // web3.js, and v1 has no lookup tables to resolve.
     if (rawBytes[0] === V1_VERSION_BYTE) {
       return EitherAsync.liftEither(this.parseV1(rawBytes));
     }
@@ -264,15 +264,17 @@ function decodeMessage(
   const detected = new TransactionInputNormaliser().detect(rawBytes);
   if (detected) {
     try {
-      return Right(VersionedMessage.deserialize(detected.messageBytes));
+      return Right(
+        legacyOrV0(VersionedMessage.deserialize(detected.messageBytes)),
+      );
     } catch {
-      // Not decodable by web3.js (e.g. v1): fall through to report the error.
+      // Not decodable as legacy or v0: fall through to report the error.
     }
   }
 
   const versionedTx = tryDeserialiseVersioned(rawBytes);
   if (versionedTx.isRight()) {
-    return Right(versionedTx.extract() as Message | MessageV0);
+    return versionedTx;
   }
 
   const legacyTx = tryDeserialiseLegacy(rawBytes);
@@ -291,15 +293,27 @@ function decodeMessage(
   return Left(versionedTx.extract() as ParserError);
 }
 
+/**
+ * web3.js v3 decodes v1 messages as well. v1 goes through this parser's own
+ * SIMD-0385 validator (see `parse`), so a v1 result on the web3.js path is
+ * treated as a decoding failure, as it was when web3.js could not read v1.
+ */
+function legacyOrV0(message: VersionedMessage): Message | MessageV0 {
+  if (message.version === 1) {
+    throw new Error("v1 messages are not decoded through web3.js.");
+  }
+  return message;
+}
+
 function tryDeserialiseVersioned(
   rawBytes: Uint8Array,
 ): Either<ParserError, Message | MessageV0> {
   try {
     const tx = VersionedTransaction.deserialize(rawBytes);
-    return Right(tx.message as Message | MessageV0);
+    return Right(legacyOrV0(tx.message));
   } catch (signedErr) {
     try {
-      return Right(VersionedMessage.deserialize(rawBytes));
+      return Right(legacyOrV0(VersionedMessage.deserialize(rawBytes)));
     } catch (msgErr) {
       return Left(
         new MalformedTransactionError(

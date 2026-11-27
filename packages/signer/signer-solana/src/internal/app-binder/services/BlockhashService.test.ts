@@ -12,7 +12,12 @@ import {
   setTransactionMessageLifetimeUsingBlockhash,
   setTransactionMessageLifetimeUsingDurableNonce,
 } from "@solana/kit";
-import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import {
+  type Blockhash,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 import bs58 from "bs58";
 
 import { UNSIGNED_TWO_SIGNER_V0_TRANSACTION } from "./__test-utils__/unsignedTwoSignerV0Transaction";
@@ -33,7 +38,7 @@ vi.mock("@solana/web3.js", async (importOriginal) => {
   };
 });
 
-const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
+const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg" as Blockhash;
 const BLOCKHASH_BYTES = bs58.decode(BLOCKHASH);
 
 const payer = new PublicKey("2cHm11EeTGQixAkyaqNRFczpi1XB1n6rK7bSwNiZbCdB");
@@ -94,7 +99,7 @@ function buildKitMessage(options: {
       options.durableNonce
         ? setTransactionMessageLifetimeUsingDurableNonce(
             {
-              nonce: BLOCKHASH as Nonce,
+              nonce: BLOCKHASH as string as Nonce,
               nonceAccountAddress: KIT_NONCE_ACCOUNT,
               nonceAuthorityAddress: KIT_FEE_PAYER,
             },

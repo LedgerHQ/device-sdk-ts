@@ -42,6 +42,7 @@
     "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/device-contacts-kit": "workspace:^",
     "@ledgerhq/signer-utils": "workspace:^",
+    "@noble/hashes": "^1.8.0",
     "@solana/transaction-messages": "catalog:",
     "@solana/web3.js": "catalog:",
     "bs58": "catalog:",

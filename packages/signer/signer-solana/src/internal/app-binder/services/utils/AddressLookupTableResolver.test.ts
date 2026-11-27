@@ -1,5 +1,7 @@
-import { Connection, type VersionedMessage } from "@solana/web3.js";
-import { describe, expect, it } from "vitest";
+import { Connection, VersionedMessage } from "@solana/web3.js";
+import { describe, expect, it, vi } from "vitest";
+
+import { SPEC_V1_MESSAGE } from "@internal/app-binder/services/__test-utils__/v1Fixtures";
 
 import { RpcAddressLookupTableResolver } from "./AddressLookupTableResolver";
 
@@ -30,5 +32,14 @@ describe("RpcAddressLookupTableResolver", () => {
 
     const result = await resolver.resolve(fakeMsg);
     expect(result).toBeUndefined();
+  });
+
+  it("returns undefined for a v1 message without querying the RPC", async () => {
+    const getAddressLookupTable = vi.spyOn(connection, "getAddressLookupTable");
+    const resolver = new RpcAddressLookupTableResolver(connection);
+    const message = VersionedMessage.deserialize(SPEC_V1_MESSAGE);
+
+    await expect(resolver.resolve(message)).resolves.toBeUndefined();
+    expect(getAddressLookupTable).not.toHaveBeenCalled();
   });
 });

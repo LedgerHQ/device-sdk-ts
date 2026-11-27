@@ -1,4 +1,5 @@
 import {
+  type Blockhash,
   PublicKey,
   SystemProgram,
   Transaction,
@@ -21,11 +22,20 @@ vi.mock("@ledgerhq/device-management-kit", () => ({
   },
 }));
 
+import { buildV1MessageBytes } from "./__test-utils__/v1Message";
 import { deserializeToMessage, isFullTransaction } from "./deserialize";
+
+// v1 (SIMD-0385) input belongs to the V1 crafter; the web3.js path refuses it.
+const v1Message = buildV1MessageBytes();
+// A v1 transaction is message-first: the message, then one signature.
+const v1Transaction = new Uint8Array([...v1Message, ...new Uint8Array(64)]);
+const NEITHER =
+  "Input is neither a valid serialized message nor a valid serialized transaction.";
 
 const payer = new PublicKey("2cHm11EeTGQixAkyaqNRFczpi1XB1n6rK7bSwNiZbCdB");
 const recipient = new PublicKey("7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2");
-const recentBlockhash = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
+const recentBlockhash =
+  "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg" as Blockhash;
 
 function transferInstruction() {
   return SystemProgram.transfer({
@@ -44,10 +54,8 @@ function buildLegacyMessageBytes(): Uint8Array {
 function buildLegacyTransactionBytes(): Uint8Array {
   const tx = new Transaction({ recentBlockhash, feePayer: payer });
   tx.add(transferInstruction());
-  tx.signatures = [{ publicKey: payer, signature: null }];
-  return new Uint8Array(
-    tx.serialize({ requireAllSignatures: false, verifySignatures: false }),
-  );
+  // Signed wire format with a zero-filled signature.
+  return new VersionedTransaction(tx.compileMessage()).serialize();
 }
 
 function buildV0MessageBytes(): Uint8Array {
@@ -115,6 +123,16 @@ describe("deserializeToMessage", () => {
     );
   });
 
+  it("refuses a v1 message", () => {
+    expect(() => deserializeToMessage(toBase64(v1Message))).toThrow(NEITHER);
+  });
+
+  it("refuses a v1 transaction", () => {
+    expect(() => deserializeToMessage(toBase64(v1Transaction))).toThrow(
+      NEITHER,
+    );
+  });
+
   it("throws on base64 that is neither a message nor a transaction", () => {
     const garbage = toBase64(new Uint8Array([0xff, 0xff, 0xff, 0xff]));
 
@@ -141,6 +159,10 @@ describe("isFullTransaction", () => {
 
   it("is true for a full v0 transaction", () => {
     expect(isFullTransaction(toBase64(buildV0TransactionBytes()))).toBe(true);
+  });
+
+  it("does not report a v1 transaction as a full transaction", () => {
+    expect(isFullTransaction(toBase64(v1Transaction))).toBe(false);
   });
 
   it("is false for invalid base64", () => {

@@ -7,8 +7,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 import {
   AddressLookupTableAccount,
+  type Blockhash,
   ComputeBudgetProgram,
-  Keypair,
   MessageV0,
   PublicKey,
   SystemProgram,
@@ -19,10 +19,11 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { ProvideGatedSigningCommand } from "@internal/app-binder/command/ProvideGatedSigningCommand";
+import { testPublicKey } from "@internal/app-binder/services/__test-utils__/testKeys";
 
 import { ProvideGatedSigningTask } from "./ProvideGatedSigningTask";
 
-const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
+const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg" as Blockhash;
 const payer = new PublicKey("2cHm11EeTGQixAkyaqNRFczpi1XB1n6rK7bSwNiZbCdB");
 const recipient = new PublicKey("7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2");
 const PARTNER = new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
@@ -110,12 +111,12 @@ describe("ProvideGatedSigningTask", () => {
   });
 
   it("reads program IDs of a v0 message that uses a lookup table", async () => {
-    const lookedUp = Keypair.generate().publicKey;
+    const lookedUp = testPublicKey();
     const table = new AddressLookupTableAccount({
-      key: Keypair.generate().publicKey,
+      key: testPublicKey(),
       state: {
         deactivationSlot: BigInt("18446744073709551615"),
-        lastExtendedSlot: 0,
+        lastExtendedSlot: 0n,
         lastExtendedSlotStartIndex: 0,
         authority: undefined,
         addresses: [lookedUp],
@@ -158,7 +159,7 @@ describe("ProvideGatedSigningTask", () => {
       ],
       addressTableLookups: [
         {
-          accountKey: Keypair.generate().publicKey,
+          accountKey: testPublicKey(),
           writableIndexes: [],
           readonlyIndexes: [0],
         },

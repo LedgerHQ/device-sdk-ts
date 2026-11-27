@@ -1,3 +1,4 @@
+import { sha256 } from "@noble/hashes/sha2";
 import {
   type AccountMeta,
   PublicKey,
@@ -26,14 +27,44 @@ export function getAssociatedTokenAddressSync(
   tokenProgramId: PublicKey = TOKEN_PROGRAM_ID,
   associatedTokenProgramId: PublicKey = ASSOCIATED_TOKEN_PROGRAM_ID,
 ): PublicKey {
-  if (!allowOwnerOffCurve && !PublicKey.isOnCurve(owner.toBuffer())) {
+  if (!allowOwnerOffCurve && !PublicKey.isOnCurve(owner.toBytes())) {
     throw new Error("TokenOwnerOffCurveError");
   }
-  const [address] = PublicKey.findProgramAddressSync(
-    [owner.toBuffer(), tokenProgramId.toBuffer(), mint.toBuffer()],
+  const [address] = findProgramAddressSync(
+    [owner.toBytes(), tokenProgramId.toBytes(), mint.toBytes()],
     associatedTokenProgramId,
   );
   return address;
+}
+
+// ASCII bytes of the PDA marker, built without TextEncoder so this module adds
+// no runtime global requirement of its own.
+const PDA_MARKER = Uint8Array.from(
+  "ProgramDerivedAddress",
+  (char) => char.codePointAt(0) ?? 0,
+);
+
+// Synchronous PDA derivation. web3.js v3 only offers an async
+// `PublicKey.findProgramAddress`, and making token-account derivation async
+// would ripple through every caller.
+export function findProgramAddressSync(
+  seeds: Uint8Array[],
+  programId: PublicKey,
+): [PublicKey, number] {
+  const programIdBytes = programId.toBytes();
+  for (let bump = 255; bump >= 0; bump--) {
+    const hasher = sha256.create();
+    for (const seed of seeds) hasher.update(seed);
+    const hash = hasher
+      .update(new Uint8Array([bump]))
+      .update(programIdBytes)
+      .update(PDA_MARKER)
+      .digest();
+    if (!PublicKey.isOnCurve(hash)) {
+      return [new PublicKey(hash), bump];
+    }
+  }
+  throw new Error("Unable to find a viable program address bump seed");
 }
 
 type InstructionData = NonNullable<
