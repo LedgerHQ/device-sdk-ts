@@ -22,6 +22,7 @@ import {
   type ProvisionGenericClearSignDAOutput,
 } from "@api/app-binder/ProvisionGenericClearSignDeviceActionTypes";
 import { signTransactionDAStateSteps } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { NO_TOKEN_ACCOUNT_OWNERS } from "@api/app-binder/TokenAccountOwners";
 import { FinalizeGenericClearSignCommand } from "@internal/app-binder/command/FinalizeGenericClearSignCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import {
@@ -30,7 +31,10 @@ import {
   type GenericClearSignContext,
 } from "@internal/app-binder/task/BuildGenericClearSignContextTask";
 import { type ProvideContextErrorCodes } from "@internal/app-binder/task/context-providers/provideContextTypes";
-import { ProvideGenericClearSignContextTask } from "@internal/app-binder/task/ProvideGenericClearSignContextTask";
+import {
+  ProvideGenericClearSignContextTask,
+  type ProvideGenericClearSignContextTaskResult,
+} from "@internal/app-binder/task/ProvideGenericClearSignContextTask";
 
 export type MachineDependencies = {
   readonly buildGenericClearSignContext: (arg0: {
@@ -45,7 +49,12 @@ export type MachineDependencies = {
       instructionInfoContexts: ClearSignContext[];
       challengeBoundRequirements: ChallengeBoundRequirements;
     };
-  }) => Promise<CommandResult<void, ProvideContextErrorCodes>>;
+  }) => Promise<
+    CommandResult<
+      ProvideGenericClearSignContextTaskResult,
+      ProvideContextErrorCodes
+    >
+  >;
   readonly finalizeGenericClearSign: () => Promise<
     CommandResult<void, SolanaAppErrorCodes>
   >;
@@ -136,6 +145,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
           challengeBoundRequirements: null,
           unrecognizedProgramIds: [],
           staleDescriptor: false,
+          tokenAccountOwners: NO_TOKEN_ACCOUNT_OWNERS,
         },
       }),
       states: {
@@ -218,6 +228,16 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
               {
                 target: "Finalize",
                 guard: ({ event }) => isSuccessCommandResult(event.output),
+                actions: assign({
+                  _internalState: ({ event, context }) =>
+                    isSuccessCommandResult(event.output)
+                      ? {
+                          ...context._internalState,
+                          tokenAccountOwners:
+                            event.output.data.tokenAccountOwners,
+                        }
+                      : context._internalState,
+                }),
               },
               {
                 target: "Degraded",
@@ -302,6 +322,7 @@ export class ProvisionGenericClearSignDeviceAction extends XStateDeviceAction<
           status: context._internalState.outcome ?? "degraded",
           unrecognizedProgramIds: context._internalState.unrecognizedProgramIds,
           staleDescriptor: context._internalState.staleDescriptor,
+          tokenAccountOwners: context._internalState.tokenAccountOwners,
         }),
     });
   }

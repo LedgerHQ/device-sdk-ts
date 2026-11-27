@@ -41,6 +41,7 @@ describe("CalldataContextLoader", () => {
     ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
     ClearSignContextType.ETHEREUM_PROXY_INFO,
     ClearSignContextType.ETHEREUM_ENUM,
+    ClearSignContextType.ETHEREUM_MAP_ENTRY,
   ];
 
   beforeEach(() => {
@@ -79,6 +80,17 @@ describe("CalldataContextLoader", () => {
         loader.canHandle(validInput, [
           ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         ]),
+      ).toBe(false);
+      expect(
+        loader.canHandle(validInput, [ClearSignContextType.ETHEREUM_MAP_ENTRY]),
+      ).toBe(false);
+      expect(
+        loader.canHandle(
+          validInput,
+          SUPPORTED_TYPES.filter(
+            (type) => type !== ClearSignContextType.ETHEREUM_MAP_ENTRY,
+          ),
+        ),
       ).toBe(false);
     });
 

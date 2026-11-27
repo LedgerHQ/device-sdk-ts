@@ -1,5 +1,23 @@
 # @ledgerhq/context-module
 
+## 2.11.0
+
+### Minor Changes
+
+- [#1718](https://github.com/LedgerHQ/device-sdk-ts/pull/1718) [`db9083e`](https://github.com/LedgerHQ/device-sdk-ts/commit/db9083edf6104d2f0f5ec56111359682b3168974) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Support ERC-7730 v2 maps in calldata descriptors: accept `map` values and return `ETHEREUM_MAP_ENTRY` contexts, along with the map references of each field. The calldata loader now only runs when `ETHEREUM_MAP_ENTRY` is among the expected types: update `@ledgerhq/device-signer-kit-ethereum` together with this package
+
+- [#2220](https://github.com/LedgerHQ/device-sdk-ts/pull/2220) [`5f9f06e`](https://github.com/LedgerHQ/device-sdk-ts/commit/5f9f06ebb3aa7cd7b5a1ecdb89b09e209f544d63) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add setSignReporter to the context module builder so apps can plug in their own v2 sign reporter, like setBlindSigningReporter for v1.
+
+- [#2221](https://github.com/LedgerHQ/device-sdk-ts/pull/2221) [`90029af`](https://github.com/LedgerHQ/device-sdk-ts/commit/90029afab912afc72275c31f51ba2d343b2e521c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Deprecate the v1 blind signing reporter and turn it into a no-op: `setBlindSigningReporter`, the `customBlindSigningReporter` option, `ContextModule.report`, `DefaultBlindSigningReporter` and `HttpBlindSigningReporterDatasource` are kept for compatibility but send nothing, and the v1 implementation is removed. Use `setSignReporter` instead. The v1 API will be removed in the next major.
+
+- [#1981](https://github.com/LedgerHQ/device-sdk-ts/pull/1981) [`5906edc`](https://github.com/LedgerHQ/device-sdk-ts/commit/5906edc769d71a13ec9c5545c1af95234bf05806) Thanks [@daniel-choinski-ledger](https://github.com/daniel-choinski-ledger)! - Expose the token account owner attested by Solana descriptors: `owner` on the `SOLANA_TOKEN_ACCOUNT_STATE` payload, and `tokenAccountOwner` on the `SOLANA_BASIC_TRUSTED_NAME` context.
+
+### Patch Changes
+
+- [#2251](https://github.com/LedgerHQ/device-sdk-ts/pull/2251) [`cc940b8`](https://github.com/LedgerHQ/device-sdk-ts/commit/cc940b8e988ac19ea357dc3c4222502975a1de06) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Accept the TOKEN param of calldata descriptor fields (ERC-7730 tokenTicker)
+
+- [#2188](https://github.com/LedgerHQ/device-sdk-ts/pull/2188) [`64836fe`](https://github.com/LedgerHQ/device-sdk-ts/commit/64836fe4e2af2dd419baef9c8b3e1e027484fd64) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Replace deprecated `crypto-js` with `@noble/hashes` for the EIP-712 schema hash (output unchanged)
+
 ## 2.10.0
 
 ### Minor Changes

@@ -1,7 +1,7 @@
 import { Left, Right } from "purify-ts";
 
-import { BlindSignReason } from "@/modules/multichain/reporter/model/BlindSigningEvent";
 import { type SignReporterDatasource } from "@/modules/multichain/sign-reporter/data/SignReporterDatasource";
+import { BlindSignReason } from "@/modules/multichain/sign-reporter/model/BlindSignReason";
 import { type SolSignReportParams } from "@/modules/multichain/sign-reporter/model/SignReportParams";
 import { BlindSigningModelId } from "@/shared/model/BlindSigningModelId";
 

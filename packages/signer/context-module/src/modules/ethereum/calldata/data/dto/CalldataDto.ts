@@ -13,6 +13,7 @@ export interface CalldataDescriptorV1 {
   version: "v1";
   transaction_info: CalldataTransactionInfoV1;
   enums: CalldataEnumV1;
+  maps?: CalldataMapV1;
   fields: CalldataFieldV1[];
 }
 
@@ -41,6 +42,20 @@ export interface CalldataEnumV1 {
   };
 }
 
+/**
+ * MAP_ENTRY descriptors, indexed by map id then by map key.
+ * The key is hex encoded the way the device reads it from the transaction.
+ */
+export interface CalldataMapV1 {
+  [id: number]: {
+    [key: string]: CalldataMapEntryV1;
+  };
+}
+
+export type CalldataMapEntryV1 = CalldataTransactionDescriptor & {
+  value: string; // map value, hex encoded the way the device resolves it
+};
+
 export interface CalldataFieldV1 {
   descriptor: string;
   param: CalldataDescriptorParam;
@@ -50,6 +65,7 @@ export type CalldataDescriptorParam =
   | CalldataDescriptorParamRawV1
   | CalldataDescriptorParamAmountV1
   | CalldataDescriptorParamTokenAmountV1
+  | CalldataDescriptorParamTokenV1
   | CalldataDescriptorParamNFTV1
   | CalldataDescriptorParamDatetimeV1
   | CalldataDescriptorParamDurationV1
@@ -82,6 +98,11 @@ export interface CalldataDescriptorParamTokenAmountV1 {
   type: "TOKEN_AMOUNT";
   value: CalldataDescriptorValueV1;
   token?: CalldataDescriptorValueV1;
+}
+
+export interface CalldataDescriptorParamTokenV1 {
+  type: "TOKEN";
+  value: CalldataDescriptorValueV1;
 }
 
 export interface CalldataDescriptorParamNFTV1 {
@@ -134,9 +155,22 @@ export interface CalldataDescriptorValueConstantV1 {
   type_size?: number;
 }
 
+export interface CalldataDescriptorValueMapRefV1 {
+  type: "map";
+  map_ref: CalldataDescriptorMapRefV1;
+  type_family: CalldataDescriptorTypeFamilyV1;
+  type_size?: number;
+}
+
+export interface CalldataDescriptorMapRefV1 {
+  id: number;
+  key: CalldataDescriptorValueBinaryPathV1;
+}
+
 export type CalldataDescriptorValueV1 =
   | CalldataDescriptorValueBinaryPathV1
-  | CalldataDescriptorValueConstantV1;
+  | CalldataDescriptorValueConstantV1
+  | CalldataDescriptorValueMapRefV1;
 
 export interface CalldataDescriptorContainerPathV1 {
   type: "CONTAINER";

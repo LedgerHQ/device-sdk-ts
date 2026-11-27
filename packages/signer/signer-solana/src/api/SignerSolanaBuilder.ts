@@ -8,6 +8,7 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 
+import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import { type SolanaSignerFeaturesNames } from "@internal/app-binder/SolanaApplicationResolver";
 import { DefaultSignerSolana } from "@internal/DefaultSignerSolana";
 
@@ -33,6 +34,7 @@ export class SignerSolanaBuilder {
   private _sessionId: DeviceSessionId;
   private _customContextModule: ContextModule | undefined;
   private _originToken: string | undefined;
+  private _addressBook: SolanaAddressBook | undefined;
   private readonly _solanaRPCURL: string | undefined;
   private readonly _disabledFeatures:
     | ReadonlyArray<SolanaSignerFeaturesNames>
@@ -64,6 +66,27 @@ export class SignerSolanaBuilder {
   }
 
   /**
+   * Provide the user's address book, so the device shows a saved contact name
+   * in place of the raw recipient address when it reviews a transaction.
+   *
+   * - The snapshot must be complete, and it is read as-is: the signer neither
+   *   mutates nor persists it. Build a new signer to pick up later changes.
+   * - Only Solana entries belong here, each with its base58 wallet public key.
+   * - Best effort: a recipient that does not match, an app too old to support
+   *   contacts (Solana app 1.19.0, any model but Nano S) or a contact the
+   *   device rejects leave the transaction signing against the raw address.
+   *
+   * See the "Address book" section of the README for the matching rules.
+   *
+   * @param addressBook a complete Solana address-book snapshot
+   * @returns this
+   */
+  withAddressBook(addressBook: SolanaAddressBook) {
+    this._addressBook = addressBook;
+    return this;
+  }
+
+  /**
    * Build the solana signer
    *
    * @returns the solana signer
@@ -74,6 +97,7 @@ export class SignerSolanaBuilder {
       sessionId: this._sessionId,
       solanaRPCURL: this._solanaRPCURL,
       disabledFeatures: this._disabledFeatures,
+      addressBook: this._addressBook,
       contextModule:
         this._customContextModule ??
         new ContextModuleBuilder({

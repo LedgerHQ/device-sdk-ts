@@ -1,0 +1,19 @@
+# Starts Sign transaction for TRANSACTION and returns while the device reviews it.
+appId: com.ledger.dmk.samplern
+---
+- extendedWaitUntil:
+    visible: "Open app"
+    timeout: 30000
+- scrollUntilVisible:
+    element: "Ethereum: Sign transaction"
+# One more scroll, so the debug build's error toasts at the bottom don't cover it.
+- scroll
+- tapOn: "Ethereum: Sign transaction"
+- extendedWaitUntil:
+    visible: "Send"
+    timeout: 30000
+- tapOn:
+    id: "eth-transaction-input"
+- inputText: ${TRANSACTION}
+- hideKeyboard
+- tapOn: "Send"

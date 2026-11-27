@@ -10,8 +10,10 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { type TokenAccountOwners } from "@api/app-binder/TokenAccountOwners";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
+import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import {
   type InvalidSolanaTransactionError,
   type SolanaTransactionVersionNotSupportedError,
@@ -31,6 +33,7 @@ export const signTransactionDAStateSteps = Object.freeze({
   TRANSACTION_CHECKS_OPT_IN_RESULT:
     "signer.sol.steps.transactionChecksOptInResult",
   TRANSACTION_CHECKS_PROVIDE: "signer.sol.steps.transactionChecksProvide",
+  PROVIDE_CONTACT: "signer.sol.steps.provideContact",
   INSPECT_TRANSACTION: "signer.sol.steps.inspectTransaction",
   GET_PUB_KEY: "signer.sol.steps.getPubKey",
   BUILD_BASIC_CLEAR_SIGN_CONTEXT: "signer.sol.steps.buildBasicClearSignContext",
@@ -68,6 +71,8 @@ export type SignTransactionDAInput = {
   readonly solanaRPCURL?: string;
   readonly blockhashService?: BlockhashService;
   readonly disabledFeatures?: ReadonlyArray<SolanaSignerFeaturesNames>;
+  /** Contacts matched against the transfer recipient. Defaults to none. */
+  readonly addressBook?: SolanaAddressBook;
 };
 
 export type SignTransactionDAError =
@@ -132,6 +137,11 @@ export type SignTransactionDAInternalState = {
   // failed generic clear-sign attempt without a new CAL lookup; null when
   // none was sent.
   readonly gatedSigningContext: SolanaGatedSigningContextSuccess | null;
+  // Set once a contact was sent to the device, so it is never sent twice.
+  readonly contactSent: boolean;
+  // Token account owners the last clear-sign provisioning attested to the
+  // device, matched against the address book before the terminal sign.
+  readonly tokenAccountOwners: TokenAccountOwners;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

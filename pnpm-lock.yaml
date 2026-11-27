@@ -61,8 +61,8 @@ catalogs:
       specifier: 0.81.0
       version: 0.81.0
     '@react-native/codegen':
-      specifier: ^0.86.2
-      version: 0.86.2
+      specifier: ^0.76.6
+      version: 0.76.6
     '@react-native/gradle-plugin':
       specifier: ^0.76.6
       version: 0.76.6
@@ -603,7 +603,7 @@ importers:
         version: 4.19.2
       yaml:
         specifier: ^2.7.0
-        version: 2.7.0
+        version: 2.9.1
 
   apps/device-mock-server-ui:
     dependencies:
@@ -905,6 +905,9 @@ importers:
       '@ledgerhq/device-mockserver-react-native':
         specifier: workspace:^
         version: link:../../packages/mockserver-device-react-native
+      '@ledgerhq/device-signer-kit-ethereum':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-eth
       '@ledgerhq/device-transport-kit-mockserver':
         specifier: workspace:^
         version: link:../../packages/transport/mockserver
@@ -995,7 +998,7 @@ importers:
         version: 0.81.0(@babel/core@7.28.3)
       '@react-native/codegen':
         specifier: 'catalog:'
-        version: 0.86.2(@babel/core@7.28.3)
+        version: 0.76.6(@babel/preset-env@7.26.9(@babel/core@7.28.3))
       '@react-native/gradle-plugin':
         specifier: 'catalog:'
         version: 0.76.6
@@ -1038,6 +1041,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.2
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.6(@types/debug@4.1.12)(@types/node@26.6.5)(jiti@2.7.0)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1)
 
   apps/sample:
     dependencies:
@@ -1621,8 +1627,8 @@ importers:
   packages/ledger-wallet:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: ^1.3.0
-        version: 1.3.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer/signer-utils
       pako:
         specifier: ^2.1.0
         version: 2.1.0
@@ -1820,12 +1826,12 @@ importers:
 
   packages/signer/context-module:
     dependencies:
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
       bs58:
         specifier: 'catalog:'
         version: 6.0.0
-      crypto-js:
-        specifier: 'catalog:'
-        version: 4.2.0
       ethers:
         specifier: 'catalog:'
         version: 6.14.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -1857,9 +1863,6 @@ importers:
       '@ledgerhq/vitest-config-dmk':
         specifier: workspace:^
         version: link:../../config/vitest
-      '@types/crypto-js':
-        specifier: 'catalog:'
-        version: 4.2.2
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@26.6.5)(typescript@5.9.2)
@@ -2100,11 +2103,11 @@ importers:
   packages/signer/signer-eth:
     dependencies:
       '@ledgerhq/device-contacts-kit':
-        specifier: workspace:^
-        version: link:../../device-contacts-kit
+        specifier: ^0.5.0
+        version: 0.5.0(@ledgerhq/device-management-kit@packages+device-management-kit)
       '@ledgerhq/signer-utils':
-        specifier: workspace:^
-        version: link:../signer-utils
+        specifier: ^1.3.0
+        version: 1.3.0(@ledgerhq/device-management-kit@packages+device-management-kit)
       ethers:
         specifier: 'catalog:'
         version: 6.14.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -2292,6 +2295,9 @@ importers:
       '@ledgerhq/context-module':
         specifier: workspace:^
         version: link:../context-module
+      '@ledgerhq/device-contacts-kit':
+        specifier: workspace:^
+        version: link:../../device-contacts-kit
       '@ledgerhq/signer-utils':
         specifier: workspace:^
         version: link:../signer-utils
@@ -2443,8 +2449,8 @@ importers:
   packages/signer/signer-xrp:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: ^1.3.0
-        version: 1.3.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -2489,8 +2495,8 @@ importers:
   packages/signer/signer-zcash:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: workspace:^
-        version: link:../signer-utils
+        specifier: ^1.3.0
+        version: 1.3.0(@ledgerhq/device-management-kit@packages+device-management-kit)
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
@@ -5190,6 +5196,11 @@ packages:
       styled-components:
         optional: true
 
+  '@ledgerhq/device-contacts-kit@0.5.0':
+    resolution: {integrity: sha512-i8K0NSKalvIfg1mwrrOFEK00a5tPPFOqQBIHuSeTUUXWGH8VdnNulmTmAjNsw64Q+vskUs0+cd9DswAbtHHv9A==}
+    peerDependencies:
+      '@ledgerhq/device-management-kit': ^1.9.1
+
   '@ledgerhq/icons-ui@0.19.0':
     resolution: {integrity: sha512-eS7FVT11bOJpPJQZDz34t8lX1ijYmsZiANhCfz84UkyaCZGzyxPEwjkza/Q/4erOKuqU1wb4lPMSTHRseq7uCA==}
     deprecated: This package is no longer maintained. Use @ledgerhq/lumen-ui-react or @ledgerhq/lumen-ui-rnative instead.
@@ -7466,12 +7477,6 @@ packages:
       react: '>=16.8'
       react-dom: '>=16.8'
 
-  '@tanstack/react-virtual@3.10.8':
-    resolution: {integrity: sha512-VbzbVGSsZlQktyLrP5nxE+vE1ZR+U0NFAWPbJLoG2+DKPwd2D7dVICTVIIaYlJqX1ZCEnYDbaOpmMwbsyhBoIA==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-
   '@tanstack/react-virtual@3.13.16':
     resolution: {integrity: sha512-y4xLKvLu6UZWiGdNcgk3yYlzCznYIV0m8dSyUzr3eAC0dHLos5V74qhUHxutYddFGgGU8sWLkp6H5c2RCrsrXw==}
     peerDependencies:
@@ -7481,9 +7486,6 @@ packages:
   '@tanstack/table-core@8.21.3':
     resolution: {integrity: sha512-ldZXEhOBb8Is7xLs01fR3YEc3DERiz5silj8tnGkFZytt1abEvl/GhUmCE0PMLaMPTa3Jk4HbKmRlHmu+gCftg==}
     engines: {node: '>=12'}
-
-  '@tanstack/virtual-core@3.10.8':
-    resolution: {integrity: sha512-PBu00mtt95jbKFi6Llk9aik8bnR3tR/oQP1o3TSi+iG//+Q2RTIzCEgKkHG8BB86kxMNW6O8wku+Lmi+QFR6jA==}
 
   '@tanstack/virtual-core@3.13.16':
     resolution: {integrity: sha512-njazUC8mDkrxWmyZmn/3eXrDcP8Msb3chSr4q6a65RmwdSbMlMCdnOphv6/8mLO7O3Fuza5s4M4DclmvAO5w0w==}
@@ -11060,9 +11062,6 @@ packages:
   json-schema-traverse@1.0.0:
     resolution: {integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==}
 
-  json-schema-typed@8.0.1:
-    resolution: {integrity: sha512-XQmWYj2Sm4kn4WeTYvmpKEbyPsL7nBsb647c7pMe6l02/yx2+Jfc4dT6UZkEXnIUb5LhD55r2HPsJ1milQ4rDg==}
-
   json-schema-typed@8.0.2:
     resolution: {integrity: sha512-fQhoXdcvc3V28x7C7BMs4P5+kNlgUURe2jmUT1T//oBRMDrqy1QPelJimwZGo7Hg9VPV3EQV5Bnq4hbFy2vetA==}
 
@@ -11136,9 +11135,6 @@ packages:
   latest-version@9.0.0:
     resolution: {integrity: sha512-7W0vV3rqv5tokqkBAFV1LbR7HPOWzXQDpDgEuib/aJ1jsZZx6x3c2mBI+TJhJzOhkGeaLbCKEHXEXLfirtG2JA==}
     engines: {node: '>=18'}
-
-  launch-editor@2.11.1:
-    resolution: {integrity: sha512-SEET7oNfgSaB6Ym0jufAdCeo3meJVeCaaDyzRygy0xsp2BFKCprcfHljTq4QkzTLUxEKkFK6OK4811YM2oSrRg==}
 
   launch-editor@2.14.2:
     resolution: {integrity: sha512-NHJEb30MGBCkmZXLZwz25t37QR4aY03ZzPYUJXOJaOa92uWwExI9SBQUuIznBYc1xkD7cJNGX7oc3Nl3sq2kQQ==}
@@ -11898,11 +11894,6 @@ packages:
     resolution: {integrity: sha512-jtpsQDetTnvS2Ts1fiRdci5rx0VYws5jGyC+4IYOTnIQ/wwdf6JdomlHBwqC3bJYOvaKu0C2GSZ1A60anrYpaA==}
     engines: {node: '>=20.17'}
 
-  nanoid@3.3.19:
-    resolution: {integrity: sha512-Y2tUNy4ouw6tq5oDSKeQYGOyhkUBhNOcGV/02KC+6kd9eDGqdZd++mjMiIDilrBYvjEnCYvVtsuHCuP+okSfug==}
-    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
   nanoid@3.3.20:
     resolution: {integrity: sha512-uKdg2G3GNCKQn9byYOpxbGqrT2fGO5KRt5J/8b3pok8rT6qxGWF6hxMyJiEYtAf+FVyYuD9hRaDqX5uPFYJ4ZQ==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -12385,10 +12376,6 @@ packages:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
 
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
-    engines: {node: '>=12'}
-
   picomatch@4.0.7:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
@@ -12468,10 +12455,6 @@ packages:
 
   postcss@8.4.31:
     resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
-    engines: {node: ^10 || ^12 || >=14}
-
-  postcss@8.5.28:
-    resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
     engines: {node: ^10 || ^12 || >=14}
 
   postcss@8.5.32:
@@ -13391,10 +13374,6 @@ packages:
     resolution: {integrity: sha512-vfuYK48HXCTFD03G/1/zkIls3Ebr2YNa4qU9gHDZdblHLiqhJrJGkY3+0Nx0JpN9qBhJbVObc1CNciT1bIZJxw==}
     engines: {node: '>= 10.0.0', npm: '>= 3.0.0'}
     deprecated: please use 2.7.4 or 2.8.1 to fix package-lock issue
-
-  source-map-js@1.2.1:
-    resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
-    engines: {node: '>=0.10.0'}
 
   source-map-js@1.2.2:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
@@ -14613,11 +14592,6 @@ packages:
   yaml@2.0.0-1:
     resolution: {integrity: sha512-W7h5dEhywMKenDJh2iX/LABkbFnBxasD27oyXWDS/feDsxiw0dD5ncXdYXgkvAsXIY2MpW/ZKkr9IU30DBdMNQ==}
     engines: {node: '>= 6'}
-
-  yaml@2.7.0:
-    resolution: {integrity: sha512-+hSoy/QHluxmC9kCIJyL/uyFmLmc+e5CFR5Wa+bpIhIj85LVb9ZH2nVnqrHoSvKogwODv0ClqZkmiSSaIH5LTA==}
-    engines: {node: '>= 14'}
-    hasBin: true
 
   yaml@2.9.1:
     resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
@@ -16504,7 +16478,7 @@ snapshots:
       '@floating-ui/react': 0.26.28(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@react-aria/focus': 3.19.0(react@18.3.1)
       '@react-aria/interactions': 3.22.5(react@18.3.1)
-      '@tanstack/react-virtual': 3.10.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@tanstack/react-virtual': 3.13.16(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
@@ -16934,6 +16908,16 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       react-native: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
       styled-components: 5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)
+
+  '@ledgerhq/device-contacts-kit@0.5.0(@ledgerhq/device-management-kit@packages+device-management-kit)':
+    dependencies:
+      '@ledgerhq/device-management-kit': link:packages/device-management-kit
+      '@ledgerhq/signer-utils': 1.3.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+      inversify: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts: 2.1.0
+      reflect-metadata: 0.2.2
+      semver: 7.7.2
+      xstate: 5.19.2
 
   '@ledgerhq/icons-ui@0.19.0(@types/react@18.3.12)(react-native-svg@15.11.1(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
@@ -18036,7 +18020,7 @@ snapshots:
       chalk: 4.1.2
       execa: 5.1.1
       find-up: 5.0.0
-      launch-editor: 2.11.1
+      launch-editor: 2.14.2
       mime: 2.6.0
       ora: 5.4.1
       prompts: 2.4.2
@@ -18063,7 +18047,7 @@ snapshots:
       fs-extra: 8.1.0
       graceful-fs: 4.2.11
       prompts: 2.4.2
-      semver: 7.7.3
+      semver: 7.8.6
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -18477,10 +18461,10 @@ snapshots:
       '@rollup/pluginutils': 5.3.0(rollup@4.35.0)
       commondir: 1.0.1
       estree-walker: 2.0.2
-      fdir: 6.5.0(picomatch@4.0.3)
+      fdir: 6.5.0(picomatch@4.0.7)
       is-reference: 1.2.1
       magic-string: 0.30.21
-      picomatch: 4.0.3
+      picomatch: 4.0.7
     optionalDependencies:
       rollup: 4.35.0
 
@@ -18488,7 +18472,7 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.9
       estree-walker: 2.0.2
-      picomatch: 4.0.3
+      picomatch: 4.0.7
     optionalDependencies:
       rollup: 4.35.0
 
@@ -18496,7 +18480,7 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.9
       estree-walker: 2.0.2
-      picomatch: 4.0.3
+      picomatch: 4.0.7
     optionalDependencies:
       rollup: 4.55.1
 
@@ -19606,7 +19590,7 @@ snapshots:
       jiti: 2.7.0
       lightningcss: 1.32.0
       magic-string: 0.30.21
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
       tailwindcss: 4.3.3
 
   '@tailwindcss/oxide-android-arm64@4.3.3':
@@ -19688,12 +19672,6 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@tanstack/react-virtual@3.10.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@tanstack/virtual-core': 3.10.8
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-
   '@tanstack/react-virtual@3.13.16(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@tanstack/virtual-core': 3.13.16
@@ -19701,8 +19679,6 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
 
   '@tanstack/table-core@8.21.3': {}
-
-  '@tanstack/virtual-core@3.10.8': {}
 
   '@tanstack/virtual-core@3.13.16': {}
 
@@ -20379,7 +20355,7 @@ snapshots:
       '@vue/shared': 3.5.26
       entities: 7.0.0
       estree-walker: 2.0.2
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   '@vue/compiler-dom@3.5.26':
     dependencies:
@@ -21503,7 +21479,7 @@ snapshots:
       debounce-fn: 6.0.0
       dot-prop: 9.0.0
       env-paths: 3.0.0
-      json-schema-typed: 8.0.1
+      json-schema-typed: 8.0.2
       semver: 7.8.6
       uint8array-extras: 1.4.0
 
@@ -22929,9 +22905,9 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  fdir@6.5.0(picomatch@4.0.3):
+  fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
-      picomatch: 4.0.3
+      picomatch: 4.0.7
 
   fetch-blob@3.2.0:
     dependencies:
@@ -24010,7 +23986,7 @@ snapshots:
       '@babel/parser': 7.29.11
       '@istanbuljs/schema': 0.1.3
       istanbul-lib-coverage: 3.2.2
-      semver: 7.7.3
+      semver: 7.8.6
     transitivePeerDependencies:
       - supports-color
 
@@ -24262,8 +24238,6 @@ snapshots:
 
   json-schema-traverse@1.0.0: {}
 
-  json-schema-typed@8.0.1: {}
-
   json-schema-typed@8.0.2: {}
 
   json-stable-stringify-without-jsonify@1.0.1: {}
@@ -24346,11 +24320,6 @@ snapshots:
   latest-version@9.0.0:
     dependencies:
       package-json: 10.0.1
-
-  launch-editor@2.11.1:
-    dependencies:
-      picocolors: 1.1.1
-      shell-quote: 1.10.0
 
   launch-editor@2.14.2:
     dependencies:
@@ -24562,7 +24531,7 @@ snapshots:
     dependencies:
       '@babel/parser': 7.29.11
       '@babel/types': 7.29.11
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   make-dir@2.1.0:
     dependencies:
@@ -25565,8 +25534,6 @@ snapshots:
 
   nano-spawn@1.0.3: {}
 
-  nanoid@3.3.19: {}
-
   nanoid@3.3.20: {}
 
   nanoid@3.3.8: {}
@@ -25675,7 +25642,7 @@ snapshots:
       unist-util-remove: 4.0.0
       unist-util-visit: 5.0.0
       unist-util-visit-children: 3.0.0
-      yaml: 2.7.0
+      yaml: 2.9.1
       zod: 4.3.6
     transitivePeerDependencies:
       - acorn
@@ -26108,8 +26075,6 @@ snapshots:
 
   picomatch@2.3.1: {}
 
-  picomatch@4.0.3: {}
-
   picomatch@4.0.7: {}
 
   pify@4.0.1: {}
@@ -26188,15 +26153,9 @@ snapshots:
 
   postcss@8.4.31:
     dependencies:
-      nanoid: 3.3.19
+      nanoid: 3.3.20
       picocolors: 1.1.1
-      source-map-js: 1.2.1
-
-  postcss@8.5.28:
-    dependencies:
-      nanoid: 3.3.19
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   postcss@8.5.32:
     dependencies:
@@ -26547,7 +26506,7 @@ snapshots:
       react-refresh: 0.14.2
       regenerator-runtime: 0.13.11
       scheduler: 0.24.0-canary-efb381bbf-20230505
-      semver: 7.7.3
+      semver: 7.8.6
       stacktrace-parser: 0.1.10
       whatwg-fetch: 3.6.20
       ws: 6.2.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -27430,8 +27389,6 @@ snapshots:
       ip-address: 9.0.5
       smart-buffer: 4.2.0
 
-  source-map-js@1.2.1: {}
-
   source-map-js@1.2.2: {}
 
   source-map-support@0.5.21:
@@ -27794,8 +27751,8 @@ snapshots:
 
   tinyglobby@0.2.15:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
 
   tinypool@1.1.1: {}
 
@@ -28320,6 +28277,27 @@ snapshots:
       - tsx
       - yaml
 
+  vite-node@3.2.4(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1):
+    dependencies:
+      cac: 6.7.14
+      debug: 4.4.3(supports-color@5.5.0)
+      es-module-lexer: 1.7.0
+      pathe: 2.0.3
+      vite: 7.3.7(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1)
+    transitivePeerDependencies:
+      - '@types/node'
+      - jiti
+      - less
+      - lightningcss
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - yaml
+
   vite-plugin-dts@4.5.4(@types/node@26.6.5)(rollup@4.55.1)(typescript@5.9.2)(vite@7.3.7(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1)):
     dependencies:
       '@microsoft/api-extractor': 7.55.2(@types/node@26.6.5)
@@ -28346,9 +28324,9 @@ snapshots:
   vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1):
     dependencies:
       esbuild: 0.27.7
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
-      postcss: 8.5.28
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
+      postcss: 8.5.32
       rollup: 4.55.1
       tinyglobby: 0.2.15
     optionalDependencies:
@@ -28363,9 +28341,9 @@ snapshots:
   vite@7.3.7(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.19.2)(yaml@2.9.1):
     dependencies:
       esbuild: 0.27.7
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
-      postcss: 8.5.28
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
+      postcss: 8.5.32
       rollup: 4.55.1
       tinyglobby: 0.2.15
     optionalDependencies:
@@ -28380,9 +28358,9 @@ snapshots:
   vite@7.3.7(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1):
     dependencies:
       esbuild: 0.27.7
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
-      postcss: 8.5.28
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
+      postcss: 8.5.32
       rollup: 4.55.1
       tinyglobby: 0.2.15
     optionalDependencies:
@@ -28421,7 +28399,7 @@ snapshots:
       expect-type: 1.2.1
       magic-string: 0.30.21
       pathe: 2.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.7
       std-env: 3.9.0
       tinybench: 2.9.0
       tinyexec: 0.3.2
@@ -28464,7 +28442,7 @@ snapshots:
       expect-type: 1.2.1
       magic-string: 0.30.21
       pathe: 2.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.7
       std-env: 3.9.0
       tinybench: 2.9.0
       tinyexec: 0.3.2
@@ -28473,6 +28451,49 @@ snapshots:
       tinyrainbow: 2.0.0
       vite: 7.3.7(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.19.2)(yaml@2.9.1)
       vite-node: 3.2.4(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.19.2)(yaml@2.9.1)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/debug': 4.1.12
+      '@types/node': 26.6.5
+      jsdom: 26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - jiti
+      - less
+      - lightningcss
+      - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - yaml
+
+  vitest@3.2.6(@types/debug@4.1.12)(@types/node@26.6.5)(jiti@2.7.0)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1):
+    dependencies:
+      '@types/chai': 5.2.2
+      '@vitest/expect': 3.2.6
+      '@vitest/mocker': 3.2.6(vite@7.3.7(@types/node@24.13.2)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1))
+      '@vitest/pretty-format': 3.2.7
+      '@vitest/runner': 3.2.6
+      '@vitest/snapshot': 3.2.6
+      '@vitest/spy': 3.2.6
+      '@vitest/utils': 3.2.6
+      chai: 5.2.0
+      debug: 4.4.3(supports-color@5.5.0)
+      expect-type: 1.2.1
+      magic-string: 0.30.21
+      pathe: 2.0.3
+      picomatch: 4.0.7
+      std-env: 3.9.0
+      tinybench: 2.9.0
+      tinyexec: 0.3.2
+      tinyglobby: 0.2.15
+      tinypool: 1.1.1
+      tinyrainbow: 2.0.0
+      vite: 7.3.7(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1)
+      vite-node: 3.2.4(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.2)(tsx@4.20.3)(yaml@2.9.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/debug': 4.1.12
@@ -28766,8 +28787,6 @@ snapshots:
   yaml@1.10.2: {}
 
   yaml@2.0.0-1: {}
-
-  yaml@2.7.0: {}
 
   yaml@2.9.1: {}
 

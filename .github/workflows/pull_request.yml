@@ -31,6 +31,14 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       cs-scenarios: ${{ steps.select.outputs.scenarios }}
+      sample: ${{ steps.filter.outputs.sample }}
+      rn-hid-android: ${{ steps.filter.outputs.rn-hid-android }}
+      # Untrusted code (fork PRs, and Dependabot PRs whose freshly released
+      # dependencies may be malicious) runs on GitHub-hosted runners only, never
+      # on our self-hosted runners. Dependabot PRs are matched by author, so
+      # fixes pushed on them by Koda or a maintainer stay untrusted too.
+      untrusted: ${{ github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]' }}
+      runner: ${{ (github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]') && 'ubuntu-22.04' || 'ledgerhq-device-sdk' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -56,13 +64,31 @@ jobs:
               - 'packages/device-contacts-kit/**'
             cs-tester:
               - 'apps/clear-signing-tester/**'
-              - '.github/**'
+              - '.github/actions/cs-tester-composite/**'
+              - '.github/actions/setup-composite/**'
+              - '.github/workflows/pull_request.yml'
+            # Any package can be a dependency of the apps: the e2e jobs then
+            # ask Turbo whether their app is really affected.
+            sample:
+              - 'apps/sample/**'
+              - 'apps/device-mock-server/**'
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - 'turbo.json'
+              - '.github/actions/sample-e2e-composite/**'
+              - '.github/actions/setup-composite/**'
+              - '.github/workflows/pull_request.yml'
+            rn-hid-android:
+              - 'packages/transport/rn-hid/android/**'
+              - '.github/actions/setup-composite/**'
+              - '.github/workflows/pull_request.yml'
 
       - name: Select clear-signing groups
         id: select
         env:
-          # The tester, CI, and the packages every signer shares can affect any
-          # group.
+          # The tester, its CI files, and the packages every signer shares can
+          # affect any group.
           ALL: ${{ steps.filter.outputs.cs-tester == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' }}
           # Contacts sign through the eth signer, and a stored contact changes
           # what the eth review screens display, so the two move together.
@@ -94,26 +120,13 @@ jobs:
           echo "scenarios=$scenarios" >> "$GITHUB_OUTPUT"
           echo "clear-signing groups: ${scenarios:-<none>}"
 
-  # Untrusted code (fork PRs, and Dependabot PRs whose freshly released
-  # dependencies may be malicious) runs on GitHub-hosted runners only, never on
-  # our self-hosted runners. Dependabot PRs are matched by author, so fixes
-  # pushed on them by Koda or a maintainer stay untrusted too.
-  setup:
-    name: Setup toolchain and dependencies
-    runs-on: ${{ (github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]') && 'ubuntu-22.04' || 'ledgerhq-device-sdk' }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
-
   danger:
     name: Run Danger check
-    needs: [setup]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: ./.github/actions/setup-composite
 
       - name: Danger
         env:
@@ -129,12 +142,12 @@ jobs:
     # runs on one runner, build output stays on disk between steps, so there is
     # no cross-job build-cache upload/download. `--affected` restricts every
     # task to the packages changed versus the PR base branch.
-    needs: [setup]
-    runs-on: ${{ (github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]') && 'ubuntu-22.04' || 'ledgerhq-device-sdk' }}
+    needs: [detect-changes]
+    runs-on: ${{ needs.detect-changes.outputs.runner }}
     env:
       # Base reference used by `turbo run --affected` to detect changed packages.
       TURBO_SCM_BASE: origin/${{ github.event.pull_request.base.ref }}
-      UNTRUSTED: ${{ github.event.pull_request.head.repo.fork || github.event.pull_request.user.login == 'dependabot[bot]' }}
+      UNTRUSTED: ${{ needs.detect-changes.outputs.untrusted }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -145,7 +158,7 @@ jobs:
       - name: Fetch base branch for --affected
         run: git fetch origin ${{ github.event.pull_request.base.ref }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@69b58c7fd3370397e82e73047b1441667bd46386
+      - uses: ./.github/actions/setup-composite
 
       - name: Build
         id: build
@@ -183,59 +196,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      # Only run the (heavy) Playwright E2E when the sample app or one of its
-      # dependencies is in the affected set; skip it otherwise.
-      - name: Detect if sample app is affected
-        id: sample-affected
-        if: ${{ !cancelled() }}
-        run: |
-          affected=$(pnpm turbo run build --affected --dry=json 2>/dev/null \
-            | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{const j=JSON.parse(d);console.log((j.packages||[]).includes("@ledgerhq/device-management-kit-sample")?"true":"false")}catch(e){console.log("true")}})')
-          echo "affected=$affected" >> "$GITHUB_OUTPUT"
-          echo "sample app affected: $affected"
-
-      - name: Install Playwright browsers
-        if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' }}
-        run: pnpm --filter @ledgerhq/device-management-kit-sample exec playwright install --with-deps chromium
-
-      # GitHub-hosted runners cannot reach the hosted mock server nor
-      # Speculinho: untrusted PRs use a local mock server with no Speculos.
-      - name: Start local mock server
-        if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' && env.UNTRUSTED == 'true' }}
-        run: |
-          pnpm turbo run build --filter=@ledgerhq/device-mock-server
-          SPECULINHO_URL= nohup pnpm --filter @ledgerhq/device-mock-server start > mock-server.log 2>&1 &
-          timeout 60 sh -c 'until curl -sf http://127.0.0.1:9752/health; do sleep 1; done'
-
-      - name: Run sample Playwright tests
-        id: playwright
-        # The Playwright webServer (start-servers.sh) starts the sample app.
-        # Trusted PRs use the hosted mock server and its Speculos emulators.
-        # Untrusted PRs use the local one and skip the specs tagged @speculos.
-        if: ${{ !cancelled() && steps.sample-affected.outputs.affected == 'true' }}
-        continue-on-error: true
-        env:
-          # Injected into the sample settings at runtime by the Playwright setup,
-          # so the token is never built into the sample bundle. Untrusted PRs
-          # do not use Speculinho, so they never get the token.
-          GATING_TOKEN: ${{ env.UNTRUSTED != 'true' && secrets.GATING_TOKEN || '' }}
-        run: |
-          if [ "$UNTRUSTED" = "true" ]; then
-            MOCK_SERVER_URL=http://127.0.0.1:9752 pnpm --filter @ledgerhq/device-management-kit-sample test:playwright --grep-invert @speculos
-          else
-            pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
-          fi
-
-      # Playwright exits 0 once a retry passes, so uploading only on failure
-      # loses the traces of flaky tests, which are the ones worth reading.
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        if: ${{ !cancelled() && steps.playwright.outcome != 'skipped' }}
-        with:
-          name: sample-playwright-traces
-          path: apps/sample/test-results
-          if-no-files-found: ignore
-          retention-days: 7
-
       - name: Report
         if: ${{ !cancelled() }}
         env:
@@ -244,7 +204,6 @@ jobs:
           LINT_OUTCOME: ${{ steps.lint.outcome }}
           TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
           TEST_OUTCOME: ${{ steps.test.outcome }}
-          PLAYWRIGHT_OUTCOME: ${{ steps.playwright.outcome }}
         run: |
           icon() {
             case "$1" in
@@ -265,11 +224,10 @@ jobs:
             echo "| Lint | $(icon "$LINT_OUTCOME") |"
             echo "| Typecheck | $(icon "$TYPECHECK_OUTCOME") |"
             echo "| Test | $(icon "$TEST_OUTCOME") |"
-            echo "| Playwright (sample) | $(icon "$PLAYWRIGHT_OUTCOME") |"
           } >> "$GITHUB_STEP_SUMMARY"
 
           failed=0
-          for outcome in "$BUILD_OUTCOME" "$PRETTIER_OUTCOME" "$LINT_OUTCOME" "$TYPECHECK_OUTCOME" "$TEST_OUTCOME" "$PLAYWRIGHT_OUTCOME"; do
+          for outcome in "$BUILD_OUTCOME" "$PRETTIER_OUTCOME" "$LINT_OUTCOME" "$TYPECHECK_OUTCOME" "$TEST_OUTCOME"; do
             if [ "$outcome" = "failure" ]; then
               failed=1
             fi
@@ -281,12 +239,47 @@ jobs:
           fi
           echo "All checks passed."
 
+  rn-hid-android-tests:
+    name: RN HID Android unit tests
+    # The turbo `test` task runs only the TypeScript tests. This job runs the
+    # Kotlin tests of the native module, when the native code changes.
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.rn-hid-android == 'true'
+    runs-on: ${{ needs.detect-changes.outputs.runner }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: ./.github/actions/setup-composite
+
+      - name: Set Up JDK
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: "zulu"
+          java-version: "20"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+        with:
+          # The default also installs the legacy `tools` package, which the
+          # current command-line tools no longer provide, so sdkmanager fails.
+          # Gradle downloads the SDK platform and build tools that it needs.
+          packages: "platform-tools"
+
+      # The module builds only inside an app build: on its own, Gradle cannot
+      # find React Native. The mobile sample app links it from node_modules.
+      - name: Run Kotlin unit tests
+        working-directory: ./apps/mobile/android
+        run: ./gradlew :ledgerhq_device-transport-kit-react-native-hid:testDebugUnitTest
+
   health-check:
     name: Run health check
     # Aggregates the checks into a single required status so branch protection
     # only needs to require "Run health check". `!cancelled()` is what lets a
-    # skipped cs-tester through instead of skipping this too.
-    needs: [checks, cs-tester]
+    # skipped cs-tester or rn-hid-android-tests through instead of skipping
+    # this too.
+    needs: [detect-changes, checks, sample-e2e, cs-tester, rn-hid-android-tests]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     steps:
@@ -301,8 +294,8 @@ jobs:
   cs-tester:
     # Runs alongside `checks`, not after it: the composite builds its own
     # dependency chain, so it never consumed anything `checks` produced.
-    needs: [setup, detect-changes]
-    # Needs Speculinho and GATING_TOKEN: skipped for untrusted PRs (see setup).
+    needs: [detect-changes]
+    # Needs Speculinho and GATING_TOKEN: skipped for untrusted PRs (see checks).
     if: needs.detect-changes.outputs.cs-scenarios != '' && !github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]'
     name: Clear Signing Test (${{ matrix.device }})
     runs-on: ledgerhq-device-sdk
@@ -328,3 +321,26 @@ jobs:
           # A device registration flow is hard to diagnose from a bare log.
           enable-file-logging: "true"
           gating-token: ${{ secrets.GATING_TOKEN }}
+
+  sample-e2e:
+    name: Sample e2e (Playwright)
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.sample == 'true'
+    runs-on: ${{ needs.detect-changes.outputs.runner }}
+    env:
+      TURBO_SCM_BASE: origin/${{ github.event.pull_request.base.ref }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch for --affected
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
+
+      - uses: ./.github/actions/setup-composite
+
+      - uses: ./.github/actions/sample-e2e-composite
+        with:
+          untrusted: ${{ needs.detect-changes.outputs.untrusted }}
+          # Untrusted PRs do not use Speculinho, so they never get the token.
+          gating-token: ${{ needs.detect-changes.outputs.untrusted != 'true' && secrets.GATING_TOKEN || '' }}

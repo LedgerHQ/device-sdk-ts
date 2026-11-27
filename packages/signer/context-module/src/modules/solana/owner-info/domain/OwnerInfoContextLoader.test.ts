@@ -111,7 +111,7 @@ describe("OwnerInfoContextLoader", () => {
 
       vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue(mockCert);
       vi.spyOn(mockDataSource, "getOwnerInfo").mockResolvedValue(
-        Right({ tlvDescriptor }),
+        Right({ tlvDescriptor, tokenAccount: "token-account", owner: "owner" }),
       );
 
       const result = await loader.load(baseCtx);
@@ -128,6 +128,7 @@ describe("OwnerInfoContextLoader", () => {
           type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME,
           payload: tlvDescriptor,
           certificate: mockCert,
+          tokenAccountOwner: { tokenAccount: "token-account", owner: "owner" },
         },
       ]);
     });
@@ -137,7 +138,11 @@ describe("OwnerInfoContextLoader", () => {
 
       vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue(mockCert);
       vi.spyOn(mockDataSource, "getOwnerInfo").mockResolvedValue(
-        Right({ tlvDescriptor: undefined as unknown as Uint8Array }),
+        Right({
+          tlvDescriptor: undefined as unknown as Uint8Array,
+          tokenAccount: "token-account",
+          owner: "owner",
+        }),
       );
 
       const result = await loader.load(baseCtx);

@@ -8,6 +8,7 @@ import { AleoSignerDriver } from "./utils/drivers/AleoSignerDriver";
 import { BtcLegacySignerDriver } from "./utils/drivers/BtcLegacySignerDriver";
 import { BtcSignerDriver } from "./utils/drivers/BtcSignerDriver";
 import { CommandsDriver } from "./utils/drivers/CommandsDriver";
+import { ContactsDriver } from "./utils/drivers/ContactsDriver";
 import { CosmosSignerDriver } from "./utils/drivers/CosmosSignerDriver";
 import { DeviceActionsDriver } from "./utils/drivers/DeviceActionsDriver";
 import { EthSignerDriver } from "./utils/drivers/EthSignerDriver";
@@ -34,6 +35,7 @@ type Fixtures = {
   mockClient: MockClient;
   device: MockDeviceDriver;
   commands: CommandsDriver;
+  contacts: ContactsDriver;
   deviceActions: DeviceActionsDriver;
   settings: SettingsDriver;
   sidebar: SidebarDriver;
@@ -74,6 +76,9 @@ export const test = base.extend<Fixtures>({
   },
   commands: async ({ page }, use) => {
     await use(new CommandsDriver(page));
+  },
+  contacts: async ({ page }, use) => {
+    await use(new ContactsDriver(page));
   },
   deviceActions: async ({ page }, use) => {
     await use(new DeviceActionsDriver(page));

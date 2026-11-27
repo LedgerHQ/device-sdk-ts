@@ -9,6 +9,7 @@ import {
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { Just, Left, Nothing, Right } from "purify-ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -22,6 +23,7 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
+import { type SolanaAddressBook } from "@api/model/SolanaAddressBook";
 import { ProvideGatedSigningCommand } from "@internal/app-binder/command/ProvideGatedSigningCommand";
 import { SolanaAppCommandError } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import {
@@ -37,6 +39,7 @@ import {
 import { TransactionInputNormaliser } from "@internal/app-binder/services/TransactionInputNormaliser";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
 import {
+  SOLANA_FEATURES,
   SOLANA_MIN_GATED_SIGNING_VERSION,
   SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
   SOLANA_MIN_TRANSACTION_CHECKS_VERSION,
@@ -94,6 +97,8 @@ let reportSignMock: ReturnType<typeof vi.fn>;
 let resolveSigningRouteMock: ReturnType<typeof vi.fn>;
 // Gating descriptor
 let provideGatedSigningMock: ReturnType<typeof vi.fn>;
+// Contacts
+let provideContactMock: ReturnType<typeof vi.fn>;
 // Terminal sign-op deps (generic + basic) and the shared refresh task
 let promptUiDisplayMock: ReturnType<typeof vi.fn>;
 let previewMock: ReturnType<typeof vi.fn>;
@@ -202,6 +207,7 @@ function run(
     reportSign: reportSignMock,
     resolveSigningRoute: resolveSigningRouteMock,
     provideGatedSigning: provideGatedSigningMock,
+    provideContact: provideContactMock,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any) as unknown as ReturnType<typeof vi.spyOn>;
   const { observable } = action._execute(apiMock);
@@ -271,7 +277,9 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     });
     provideGenericMock = vi
       .fn()
-      .mockResolvedValue(CommandResultFactory({ data: undefined }));
+      .mockResolvedValue(
+        CommandResultFactory({ data: { tokenAccountOwners: {} } }),
+      );
     finalizeMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: undefined }));
@@ -288,7 +296,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         data: { loadersResults: [], contextErrorCount: 0 },
       }),
     );
-    provideBasicMock = vi.fn().mockResolvedValue(undefined);
+    provideBasicMock = vi.fn().mockResolvedValue({});
 
     // Terminal/delayed child: every path resolves to a signature.
     previewMock = vi
@@ -312,6 +320,7 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
     provideTxCheckMock = vi.fn().mockResolvedValue(undefined);
 
     reportSignMock = vi.fn().mockResolvedValue(undefined);
+    provideContactMock = vi.fn().mockResolvedValue(false);
 
     // No basic-flow rule matches by default.
     resolveSigningRouteMock = vi.fn().mockResolvedValue(null);
@@ -1323,6 +1332,652 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         reject,
       );
     }));
+
+  describe("ProvideContact step", () => {
+    const addressBook: SolanaAddressBook = {
+      contactGroups: [
+        {
+          contactName: "Alice",
+          groupHandle: new Uint8Array(64),
+          hmacProof: new Uint8Array(32),
+          externalAddresses: [
+            {
+              scope: "Solana",
+              address: "D2PPQSYFe83nDzk96FqGumVU8JA7J8vj2Rhjc2oXzEi5",
+              hmacRest: new Uint8Array(32),
+            },
+          ],
+        },
+      ],
+      ledgerAccounts: [],
+    };
+    const withContacts: SignTransactionDAInput = { ...baseInput, addressBook };
+    // The lowest Solana app version that supports contacts; each test starts
+    // there so that only the condition under test can skip the step.
+    const contactsVersion = SOLANA_FEATURES.contacts.minVersion;
+    const byRecipient = { by: "recipient" };
+
+    beforeEach(() => {
+      apiMock.getDeviceSessionState.mockReturnValue(session(contactsVersion));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: appConfig(contactsVersion) }),
+      );
+    });
+
+    it("is skipped when the signer has no contacts", () =>
+      new Promise<void>((resolve, reject) => {
+        run(
+          {
+            ...baseInput,
+            addressBook: { contactGroups: [], ledgerAccounts: [] },
+          },
+          (states) => {
+            try {
+              expect(provideContactMock).not.toHaveBeenCalled();
+              expect(stepSequence(states)).not.toContain(
+                signTransactionDAStateSteps.PROVIDE_CONTACT,
+              );
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("is skipped when contacts is in disabledFeatures", () =>
+      new Promise<void>((resolve, reject) => {
+        run(
+          { ...withContacts, disabledFeatures: ["contacts"] },
+          (states) => {
+            try {
+              expect(provideContactMock).not.toHaveBeenCalled();
+              expect(stepSequence(states)).not.toContain(
+                signTransactionDAStateSteps.PROVIDE_CONTACT,
+              );
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("is skipped when the app is below the contacts minimum", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(session(legacyVersion));
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({ data: appConfig(legacyVersion) }),
+        );
+        run(
+          withContacts,
+          (states) => {
+            try {
+              expect(provideContactMock).not.toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("is skipped on a model without contacts", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(contactsVersion, DeviceModelId.NANO_S),
+        );
+        run(
+          withContacts,
+          (states) => {
+            try {
+              expect(provideContactMock).not.toHaveBeenCalled();
+              expect(states[states.length - 1]!.status).toBe(
+                DeviceActionStatus.Completed,
+              );
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("provides the contact before basic clear-sign provisioning", () =>
+      new Promise<void>((resolve, reject) => {
+        run(
+          withContacts,
+          (states) => {
+            try {
+              // Once before the generic attempt, once again on its fallback.
+              expect(provideContactMock).toHaveBeenCalledTimes(2);
+              expect(provideContactMock).toHaveBeenNthCalledWith(
+                1,
+                expect.objectContaining({
+                  input: { messageBytes: exampleTx, match: byRecipient },
+                }),
+              );
+              expect(
+                provideContactMock.mock.invocationCallOrder[0]!,
+              ).toBeLessThan(inspectMock.mock.invocationCallOrder[0]!);
+              expect(stepSequence(states)).toContain(
+                signTransactionDAStateSteps.PROVIDE_CONTACT,
+              );
+              const last = states[states.length - 1]!;
+              expect(
+                last.status === DeviceActionStatus.Completed && last.output,
+              ).toEqual(signature);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("provides the contact before generic clear-sign provisioning", () =>
+      new Promise<void>((resolve, reject) => {
+        run(
+          withContacts,
+          () => {
+            try {
+              expect(buildGenericMock).toHaveBeenCalled();
+              expect(
+                provideContactMock.mock.invocationCallOrder[0]!,
+              ).toBeLessThan(buildGenericMock.mock.invocationCallOrder[0]!);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    it("provides the contact after transaction checks", () =>
+      new Promise<void>((resolve, reject) => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(contactsVersion, DeviceModelId.FLEX),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              ...appConfig(contactsVersion),
+              transactionChecksEnabled: true,
+              transactionChecksOptIn: true,
+            },
+          }),
+        );
+        run(
+          withContacts,
+          (states) => {
+            try {
+              const steps = stepSequence(states);
+              expect(
+                steps.indexOf(signTransactionDAStateSteps.PROVIDE_CONTACT),
+              ).toBeGreaterThan(
+                steps.indexOf(
+                  signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
+                ),
+              );
+              expect(
+                steps.indexOf(
+                  signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
+                ),
+              ).toBeGreaterThanOrEqual(0);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+
+    describe("on a generic-to-basic fallback", () => {
+      const preparedGeneric = {
+        mode: "full",
+        poolContexts: [],
+        instructionInfoContexts: [],
+        unrecognizedProgramIds: [],
+      };
+
+      it("provides the contact again after a failed generic provisioning", () =>
+        new Promise<void>((resolve, reject) => {
+          provideContactMock.mockResolvedValue(true);
+          buildGenericMock.mockResolvedValue(preparedGeneric);
+          finalizeMock.mockResolvedValue(
+            CommandResultFactory({
+              error: new InvalidStatusWordError("invalid descriptors"),
+            }),
+          );
+          run(
+            withContacts,
+            (states) => {
+              try {
+                expect(provideContactMock).toHaveBeenCalledTimes(2);
+                expect(provideContactMock).toHaveBeenLastCalledWith(
+                  expect.objectContaining({
+                    input: { messageBytes: exampleTx, match: byRecipient },
+                  }),
+                );
+                const again = provideContactMock.mock.invocationCallOrder[1]!;
+                expect(again).toBeGreaterThan(
+                  finalizeMock.mock.invocationCallOrder[0]!,
+                );
+                expect(again).toBeLessThan(
+                  inspectMock.mock.invocationCallOrder[0]!,
+                );
+                const last = states[states.length - 1]!;
+                expect(
+                  last.status === DeviceActionStatus.Completed && last.output,
+                ).toEqual(signature);
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+
+      it("provides the contact again after a degraded generic prompt", () =>
+        new Promise<void>((resolve, reject) => {
+          provideContactMock.mockResolvedValue(true);
+          buildGenericMock.mockResolvedValue(preparedGeneric);
+          promptUiDisplayMock.mockResolvedValue(
+            CommandResultFactory({
+              error: new SolanaAppCommandError({
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ...({ errorCode: "6f01", message: "Display error" } as any),
+              }),
+            }),
+          );
+          run(
+            withContacts,
+            () => {
+              try {
+                expect(provideContactMock).toHaveBeenCalledTimes(2);
+                const again = provideContactMock.mock.invocationCallOrder[1]!;
+                expect(again).toBeGreaterThan(
+                  promptUiDisplayMock.mock.invocationCallOrder[0]!,
+                );
+                expect(again).toBeLessThan(
+                  inspectMock.mock.invocationCallOrder[0]!,
+                );
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+
+      it("provides the contact by owner after basic provisioning when the re-sent one did not match", () =>
+        new Promise<void>((resolve, reject) => {
+          const tokenAccountOwners = { TokenAcc: "Owner" };
+          buildGenericMock.mockResolvedValue(preparedGeneric);
+          provideGenericMock.mockResolvedValue(
+            CommandResultFactory({ data: { tokenAccountOwners } }),
+          );
+          finalizeMock.mockResolvedValue(
+            CommandResultFactory({
+              error: new InvalidStatusWordError("invalid descriptors"),
+            }),
+          );
+          provideBasicMock.mockResolvedValue(tokenAccountOwners);
+          inspectMock.mockResolvedValue({
+            transactionType: SolanaTransactionTypes.SPL,
+            data: {},
+          });
+          run(
+            withContacts,
+            () => {
+              try {
+                expect(provideContactMock).toHaveBeenCalledTimes(3);
+                expect(provideContactMock).toHaveBeenLastCalledWith(
+                  expect.objectContaining({
+                    input: {
+                      messageBytes: exampleTx,
+                      match: { by: "tokenAccountOwner", tokenAccountOwners },
+                    },
+                  }),
+                );
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+
+      it("does not provide the contact again when the generic flow signs", () =>
+        new Promise<void>((resolve, reject) => {
+          provideContactMock.mockResolvedValue(true);
+          buildGenericMock.mockResolvedValue(preparedGeneric);
+          run(
+            withContacts,
+            () => {
+              try {
+                expect(provideContactMock).toHaveBeenCalledOnce();
+                expect(inspectMock).not.toHaveBeenCalled();
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+    });
+
+    describe("through an attested token account owner", () => {
+      const tokenAccountOwners = { TokenAcc: "Owner" };
+      const byOwner = { by: "tokenAccountOwner", tokenAccountOwners };
+
+      it("provides the contact after basic provisioning, before signing", () =>
+        new Promise<void>((resolve, reject) => {
+          provideBasicMock.mockResolvedValue(tokenAccountOwners);
+          inspectMock.mockResolvedValue({
+            transactionType: SolanaTransactionTypes.SPL,
+            data: {},
+          });
+          run(
+            withContacts,
+            (states) => {
+              try {
+                // Before generic, again on its fallback, then by owner.
+                expect(provideContactMock).toHaveBeenCalledTimes(3);
+                expect(provideContactMock).toHaveBeenLastCalledWith(
+                  expect.objectContaining({
+                    input: { messageBytes: exampleTx, match: byOwner },
+                  }),
+                );
+                const lateCall =
+                  provideContactMock.mock.invocationCallOrder[2]!;
+                expect(lateCall).toBeGreaterThan(
+                  provideBasicMock.mock.invocationCallOrder[0]!,
+                );
+                expect(lateCall).toBeLessThan(
+                  signMock.mock.invocationCallOrder[0]!,
+                );
+                const last = states[states.length - 1]!;
+                expect(
+                  last.status === DeviceActionStatus.Completed && last.output,
+                ).toEqual(signature);
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+
+      it("provides the contact after generic provisioning, before the prompt", () =>
+        new Promise<void>((resolve, reject) => {
+          buildGenericMock.mockResolvedValue({
+            mode: "full",
+            poolContexts: [],
+            instructionInfoContexts: [],
+            unrecognizedProgramIds: [],
+          });
+          provideGenericMock.mockResolvedValue(
+            CommandResultFactory({ data: { tokenAccountOwners } }),
+          );
+          run(
+            withContacts,
+            () => {
+              try {
+                expect(provideContactMock).toHaveBeenCalledTimes(2);
+                expect(provideContactMock).toHaveBeenLastCalledWith(
+                  expect.objectContaining({
+                    input: { messageBytes: exampleTx, match: byOwner },
+                  }),
+                );
+                const lateCall =
+                  provideContactMock.mock.invocationCallOrder[1]!;
+                expect(lateCall).toBeGreaterThan(
+                  finalizeMock.mock.invocationCallOrder[0]!,
+                );
+                expect(lateCall).toBeLessThan(
+                  promptUiDisplayMock.mock.invocationCallOrder[0]!,
+                );
+                expect(inspectMock).not.toHaveBeenCalled();
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+
+      it("is skipped once a contact was sent before provisioning", () =>
+        new Promise<void>((resolve, reject) => {
+          provideContactMock.mockResolvedValue(true);
+          provideBasicMock.mockResolvedValue(tokenAccountOwners);
+          inspectMock.mockResolvedValue({
+            transactionType: SolanaTransactionTypes.SPL,
+            data: {},
+          });
+          run(
+            withContacts,
+            () => {
+              try {
+                // Before generic and again on its fallback, never by owner.
+                expect(provideContactMock).toHaveBeenCalledTimes(2);
+                expect(provideContactMock).not.toHaveBeenCalledWith(
+                  expect.objectContaining({
+                    input: expect.objectContaining({ match: byOwner }),
+                  }),
+                );
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+
+      it("is skipped when provisioning attested no owner", () =>
+        new Promise<void>((resolve, reject) => {
+          inspectMock.mockResolvedValue({
+            transactionType: SolanaTransactionTypes.SPL,
+            data: {},
+          });
+          run(
+            withContacts,
+            () => {
+              try {
+                expect(provideContactMock).toHaveBeenCalledTimes(2);
+                expect(provideContactMock).not.toHaveBeenCalledWith(
+                  expect.objectContaining({
+                    input: expect.objectContaining({
+                      match: expect.objectContaining({
+                        by: "tokenAccountOwner",
+                      }),
+                    }),
+                  }),
+                );
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+
+      it("ignores owners from a generic attempt that fell back to basic", () =>
+        new Promise<void>((resolve, reject) => {
+          buildGenericMock.mockResolvedValue({
+            mode: "full",
+            poolContexts: [],
+            instructionInfoContexts: [],
+            unrecognizedProgramIds: [],
+          });
+          provideGenericMock.mockResolvedValue(
+            CommandResultFactory({ data: { tokenAccountOwners } }),
+          );
+          finalizeMock.mockResolvedValue(
+            CommandResultFactory({
+              error: new InvalidStatusWordError("invalid descriptors"),
+            }),
+          );
+          run(
+            withContacts,
+            () => {
+              try {
+                expect(inspectMock).toHaveBeenCalled();
+                // Before generic and again on its fallback, never by owner.
+                expect(provideContactMock).toHaveBeenCalledTimes(2);
+                expect(provideContactMock).not.toHaveBeenCalledWith(
+                  expect.objectContaining({
+                    input: expect.objectContaining({ match: byOwner }),
+                  }),
+                );
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+
+      it("is skipped when contacts is in disabledFeatures", () =>
+        new Promise<void>((resolve, reject) => {
+          provideBasicMock.mockResolvedValue(tokenAccountOwners);
+          inspectMock.mockResolvedValue({
+            transactionType: SolanaTransactionTypes.SPL,
+            data: {},
+          });
+          run(
+            { ...withContacts, disabledFeatures: ["contacts"] },
+            () => {
+              try {
+                expect(provideContactMock).not.toHaveBeenCalled();
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
+            },
+            reject,
+          );
+        }));
+    });
+
+    describe("on an app below the contacts minimum", () => {
+      // Recent enough for generic clear-signing, one minor short of contacts,
+      // so the paths this step hooks into all run without it.
+      const belowContactsVersion = "1.18.0";
+      const tokenAccountOwners = { TokenAcc: "Owner" };
+      const preparedGeneric = {
+        mode: "full",
+        poolContexts: [],
+        instructionInfoContexts: [],
+        unrecognizedProgramIds: [],
+      };
+
+      const runToEnd = (input: SignTransactionDAInput) =>
+        new Promise<
+          DeviceActionState<
+            Uint8Array,
+            SignTransactionDAError,
+            SignTransactionDAIntermediateValue
+          >[]
+        >((resolve, reject) => run(input, resolve, reject));
+
+      beforeEach(() => {
+        apiMock.getDeviceSessionState.mockReturnValue(
+          session(belowContactsVersion),
+        );
+        getAppConfigMock.mockResolvedValue(
+          CommandResultFactory({ data: appConfig(belowContactsVersion) }),
+        );
+        buildGenericMock.mockResolvedValue(preparedGeneric);
+        provideGenericMock.mockResolvedValue(
+          CommandResultFactory({ data: { tokenAccountOwners } }),
+        );
+        provideBasicMock.mockResolvedValue(tokenAccountOwners);
+        inspectMock.mockResolvedValue({
+          transactionType: SolanaTransactionTypes.SPL,
+          data: {},
+        });
+      });
+
+      it("runs the generic signature as without an address book", async () => {
+        const withBook = await runToEnd(withContacts);
+        const withoutBook = await runToEnd(baseInput);
+
+        expect(provideContactMock).not.toHaveBeenCalled();
+        expect(promptUiDisplayMock).toHaveBeenCalledTimes(2);
+        expect(inspectMock).not.toHaveBeenCalled();
+        expect(stepSequence(withBook)).toEqual(stepSequence(withoutBook));
+        const last = withBook[withBook.length - 1]!;
+        expect(
+          last.status === DeviceActionStatus.Completed && last.output,
+        ).toEqual(armedSig);
+      });
+
+      it("runs a generic-to-basic fallback as without an address book", async () => {
+        finalizeMock.mockResolvedValue(
+          CommandResultFactory({
+            error: new InvalidStatusWordError("invalid descriptors"),
+          }),
+        );
+        const withBook = await runToEnd(withContacts);
+        const withoutBook = await runToEnd(baseInput);
+
+        expect(provideContactMock).not.toHaveBeenCalled();
+        expect(provideBasicMock).toHaveBeenCalledTimes(2);
+        expect(stepSequence(withBook)).toEqual(stepSequence(withoutBook));
+        const last = withBook[withBook.length - 1]!;
+        expect(
+          last.status === DeviceActionStatus.Completed && last.output,
+        ).toEqual(signature);
+      });
+    });
+
+    it("still signs when providing the contact fails", () =>
+      new Promise<void>((resolve, reject) => {
+        provideContactMock.mockRejectedValue(new Error("boom"));
+        run(
+          withContacts,
+          (states) => {
+            try {
+              expect(provideContactMock).toHaveBeenCalledTimes(2);
+              const last = states[states.length - 1]!;
+              expect(
+                last.status === DeviceActionStatus.Completed && last.output,
+              ).toEqual(signature);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
+          },
+          reject,
+        );
+      }));
+  });
 
   describe("Report state — isBlindSign contract", () => {
     it("legacy path (generic gate skipped) → isBlindSign: true, reportSign called once", () =>

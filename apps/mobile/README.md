@@ -52,6 +52,23 @@ You've successfully run and modified your React Native App. :partying_face:
 - If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
 - If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
 
+# End-to-end tests
+
+`e2e/` signs an Ethereum transaction through the device mock server: Vitest sets up the mock server session and mocks the Ethereum app's APDU responses, [Maestro](https://maestro.dev) drives the app.
+
+Prerequisites: Maestro and JDK 17, an Android emulator with at least 4 cores and 4 GB of RAM, and a local mock server built with `pnpm --filter @ledgerhq/device-mock-server build`.
+
+```sh
+# Terminal 1: the mock server, without Speculos
+cd ../device-mock-server && SPECULINHO_URL= node lib/cjs/src/main.js
+# Terminal 2: Metro
+pnpm start
+# Terminal 3: install the debug app, forward the ports, run the test
+pnpm e2e:android:build
+adb reverse tcp:9752 tcp:9752
+pnpm e2e
+```
+
 # Troubleshooting
 
 If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.

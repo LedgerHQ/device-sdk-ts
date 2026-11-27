@@ -5,6 +5,12 @@
 export const MIN_ETH_APP_VERSION_FOR_GATED_SIGNING = "1.22.0";
 
 /**
+ * Minimum Ethereum app version that supports ERC-7730 maps looked up by the device
+ * (MAP_REF values in field descriptors and PROVIDE MAP ENTRY).
+ */
+export const MIN_ETH_APP_VERSION_FOR_MAPS = "1.23.0";
+
+/**
  * Version threshold for generic parser (ERC-7730) support. The app must be strictly newer
  * than this version (withMinVersionExclusive), i.e. 1.15.0 or above.
  */

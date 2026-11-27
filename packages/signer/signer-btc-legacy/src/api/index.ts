@@ -32,6 +32,8 @@ export type {
 export type { TransactionOptions } from "@api/model/TransactionOptions";
 export { BITCOIN_CASH_PROFILE } from "@api/profiles/bitcoinCashProfile";
 export { BITCOIN_GOLD_PROFILE } from "@api/profiles/bitcoinGoldProfile";
+export { DASH_PROFILE } from "@api/profiles/dashProfile";
+export { DIGIBYTE_PROFILE } from "@api/profiles/digibyteProfile";
 export { DOGECOIN_PROFILE } from "@api/profiles/dogecoinProfile";
 export { HORIZEN_PROFILE } from "@api/profiles/horizenProfile";
 export { KOMODO_PROFILE } from "@api/profiles/komodoProfile";

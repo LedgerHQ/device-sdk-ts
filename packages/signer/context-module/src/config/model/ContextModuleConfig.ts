@@ -2,7 +2,8 @@ import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 import { type TrustedNameDataSource } from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
-import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
+import { type BlindSigningReporter } from "@/modules/multichain/reporter/BlindSigningReporterV1";
+import { type SignReporter } from "@/modules/multichain/sign-reporter/domain/SignReporter";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { type ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
@@ -53,6 +54,8 @@ export type ContextModuleLoaderConfig = {
   customFieldLoaders: ContextFieldLoader[];
   customLoaders: ContextLoader[];
   customTypedDataLoader?: TypedDataContextLoader;
+  /** @deprecated Ignored: v1 blind signing reports are no longer sent. Use customSignReporter instead; will be removed in the next major. */
   customBlindSigningReporter?: BlindSigningReporter;
+  customSignReporter?: SignReporter;
   customTrustedNameDataSource?: TrustedNameDataSource;
 };

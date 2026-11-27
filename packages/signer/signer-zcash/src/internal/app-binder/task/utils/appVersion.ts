@@ -1,4 +1,7 @@
-/** First Zcash app version that accepts the user address receivers. */
+/** First Zcash app version that accepts the output extension block, and so the account declaration (tag `0x01`). */
+export const MIN_APP_VERSION_FOR_OUTPUT_ACCOUNT = "3.10.0";
+
+/** First Zcash app version that accepts the user address receivers (tag `0x02`). */
 export const MIN_APP_VERSION_FOR_USER_ADDRESS = "3.11.0";
 
 const parseVersion = (version: string): [number, number, number] | null => {

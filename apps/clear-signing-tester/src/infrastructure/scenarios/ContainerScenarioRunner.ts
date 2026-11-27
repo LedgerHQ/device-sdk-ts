@@ -2,6 +2,8 @@ import {
   BITCOIN_CASH_PROFILE,
   BITCOIN_GOLD_PROFILE,
   type BtcLegacyErrorCodes,
+  DASH_PROFILE,
+  DIGIBYTE_PROFILE,
   DOGECOIN_PROFILE,
   HORIZEN_PROFILE,
   KOMODO_PROFILE,
@@ -132,6 +134,8 @@ const BTC_LEGACY_PROFILES: Record<
   "Bitcoin Gold": BITCOIN_GOLD_PROFILE,
   Horizen: HORIZEN_PROFILE,
   Komodo: KOMODO_PROFILE,
+  Dash: DASH_PROFILE,
+  Digibyte: DIGIBYTE_PROFILE,
 };
 
 const COIN_APP_SLICES: Record<ScenarioCoinApp, CoinAppSlice> = {

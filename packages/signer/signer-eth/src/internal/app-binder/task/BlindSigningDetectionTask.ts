@@ -1,6 +1,4 @@
 import {
-  BlindSigningMethod,
-  type BlindSigningReportParams,
   BlindSignReason,
   ClearSignContextType,
   type ContextModule,
@@ -77,35 +75,6 @@ function computeBlindSignReason(
   return BlindSignReason.NO_CLEAR_SIGNING_CONTEXT;
 }
 
-function buildReportParams(
-  input: BlindSigningDetectionInput,
-  isBlindSign: boolean,
-): BlindSigningReportParams {
-  const signingMethod =
-    input.type === "transaction"
-      ? BlindSigningMethod.ETH_SIGN_TRANSACTION
-      : BlindSigningMethod.ETH_SIGN_TYPED_DATA;
-
-  return {
-    signatureId: generateSignatureId(),
-    signingMethod,
-    isBlindSign,
-    chainId: input.chainId,
-    targetAddress: input.targetAddress,
-    blindSignReason: isBlindSign ? computeBlindSignReason(input) : null,
-    modelId: mapDeviceModelId(input.deviceModelId),
-    signerAppVersion: input.signerAppVersion,
-    deviceVersion: input.deviceVersion,
-    ethContext:
-      input.clearSigningType !== null
-        ? {
-            clearSigningType: input.clearSigningType,
-            partialContextErrors: input.partialContextErrors,
-          }
-        : null,
-  };
-}
-
 function buildSignReportParams(
   input: BlindSigningDetectionInput,
   isBlindSign: boolean,
@@ -150,15 +119,6 @@ export class BlindSigningDetectionTask {
     this._logger.debug("[run] Blind signing detection result", {
       data: { isBlindSign, type: input.type },
     });
-
-    try {
-      const params = buildReportParams(input, isBlindSign);
-      await contextModule.report(params);
-    } catch (error) {
-      this._logger.error("[run] Failed to report blind signing event", {
-        data: { error },
-      });
-    }
 
     try {
       const signParams = buildSignReportParams(input, isBlindSign);

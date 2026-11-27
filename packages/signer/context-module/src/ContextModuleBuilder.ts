@@ -16,7 +16,8 @@ import {
 } from "./config/model/ContextModuleConfig";
 import { type TrustedNameDataSource } from "./modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
-import { type BlindSigningReporter } from "./modules/multichain/reporter/domain/BlindSigningReporter";
+import { type BlindSigningReporter } from "./modules/multichain/reporter/BlindSigningReporterV1";
+import { type SignReporter } from "./modules/multichain/sign-reporter/domain/SignReporter";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { type ContextModule } from "./ContextModule";
@@ -64,7 +65,7 @@ const DEFAULT_LOADER_CONFIG: ContextModuleLoaderConfig = {
   customLoaders: [],
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
-  customBlindSigningReporter: undefined,
+  customSignReporter: undefined,
   customTrustedNameDataSource: undefined,
 };
 
@@ -190,11 +191,22 @@ export class ContextModuleBuilder {
   /**
    * Set a custom blind signing reporter
    *
-   * @param reporter reporter to use for blind signing events
+   * @param _reporter ignored
+   * @returns this
+   * @deprecated Does nothing: v1 blind signing reports are no longer sent. Use setSignReporter instead; will be removed in the next major.
+   */
+  setBlindSigningReporter(_reporter: BlindSigningReporter) {
+    return this;
+  }
+
+  /**
+   * Set a custom sign reporter
+   *
+   * @param reporter reporter to use for sign events
    * @returns this
    */
-  setBlindSigningReporter(reporter: BlindSigningReporter) {
-    this.config.customBlindSigningReporter = reporter;
+  setSignReporter(reporter: SignReporter) {
+    this.config.customSignReporter = reporter;
     return this;
   }
 

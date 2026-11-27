@@ -410,6 +410,26 @@ describe("DefaultContextModule", () => {
       },
     );
 
+    it("should delegate to the custom sign reporter when provided", async () => {
+      // GIVEN
+      const defaultReportSpy = vi.spyOn(
+        DefaultSignReporter.prototype,
+        "report",
+      );
+      const report = vi.fn().mockResolvedValue(Right(undefined));
+      const contextModule = new DefaultContextModule({
+        ...defaultContextModuleConfig,
+        customSignReporter: { report },
+      });
+
+      // WHEN
+      await contextModule.signReport(params);
+
+      // THEN
+      expect(report).toHaveBeenCalledWith(params);
+      expect(defaultReportSpy).not.toHaveBeenCalled();
+    });
+
     it("should be a no-op when no sign reporter is bound", async () => {
       // GIVEN
       const reportSpy = vi.spyOn(DefaultSignReporter.prototype, "report");

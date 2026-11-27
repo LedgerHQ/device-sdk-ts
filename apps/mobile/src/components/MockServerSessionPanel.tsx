@@ -52,6 +52,7 @@ export const MockServerSessionPanel: React.FC = () => {
         {status}
       </Text>
       <BaseInput
+        testID="mock-server-url-input"
         value={url}
         onChange={setUrl}
         placeholder="Mock server URL"
@@ -59,6 +60,7 @@ export const MockServerSessionPanel: React.FC = () => {
         autoCorrect={false}
       />
       <BaseInput
+        testID="mock-server-token-input"
         value={token}
         onChange={setToken}
         placeholder="Session token, or empty for a new session"

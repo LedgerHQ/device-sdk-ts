@@ -1,0 +1,20 @@
+name: "Setup toolchain and dependencies"
+description: "Setup toolchain and install pnpm dependencies"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: moonrepo/setup-toolchain@261c62cb5b0f580c7be7c8cd0f023a2e96756095 # v0
+
+    - name: Install toolchain and setup PATH
+      shell: bash
+      run: |
+        proto use
+        # Get actual binary directories and add to PATH
+        echo "$(dirname $(proto bin node))" >> $GITHUB_PATH
+        echo "$(dirname $(proto bin pnpm))" >> $GITHUB_PATH
+        echo "$HOME/.proto/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      shell: bash
+      run: proto run pnpm -- install

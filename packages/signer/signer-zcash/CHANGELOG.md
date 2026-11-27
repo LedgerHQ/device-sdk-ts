@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.0
+
+### Minor Changes
+
+- [#2016](https://github.com/LedgerHQ/device-sdk-ts/pull/2016) [`a1785fc`](https://github.com/LedgerHQ/device-sdk-ts/commit/a1785fc6dc221b120847a9ac90884f0ec3a8063f) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Declare the account of the same seed a shielded output pays: Orchard and Ironwood actions accept an optional `outputZip32Derivation`, sent only to Zcash app 3.10.0 or later, in place of the user address receivers of that action, with typed errors for an older app and for a declaration the device refuses.
+
 ## 0.10.0
 
 ### Minor Changes
