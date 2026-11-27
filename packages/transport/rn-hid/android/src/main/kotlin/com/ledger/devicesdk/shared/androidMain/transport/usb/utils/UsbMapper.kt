@@ -15,15 +15,17 @@ import com.ledger.devicesdk.shared.androidMain.transport.usb.model.VendorId
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.ProductId
 import com.ledger.devicesdk.shared.androidMain.transport.usb.model.LedgerUsbDevice
 
-internal fun LedgerUsbDevice.toScannedDevice() =
+/**
+ * [uid] is the id of the device for the client. It is not [LedgerUsbDevice.uid],
+ * which is the Android device number and changes when the device re-enumerates.
+ */
+internal fun LedgerUsbDevice.toScannedDevice(uid: String) =
    DiscoveryDevice(
-        uid = this.uid,
+        uid = uid,
         name = this.name,
         ledgerDevice = this.ledgerDevice,
         connectivityType = ConnectivityType.Usb,
     )
-
-internal fun List<android.hardware.usb.UsbDevice>.toUsbDevices(): List<LedgerUsbDevice> = mapNotNull { it.toLedgerUsbDevice() }
 
 internal fun android.hardware.usb.UsbDevice.toLedgerUsbDevice(): LedgerUsbDevice? {
     val productId = ProductId(this.productId)
